@@ -6,6 +6,9 @@ TEMPLATE_DEBUG = DEBUG
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
+import os
+COMMCARE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../"))
+COMMCARE_THEME = 'default' 
 
 MANAGERS = ADMINS
 
@@ -70,6 +73,8 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    os.path.join(os.path.dirname(__file__),'templates'),
+    os.path.join(COMMCARE_ROOT,'templates',COMMCARE_THEME)
 )
 TEMPLATE_CONTEXT_PROCESSORS = ( 
     "django.core.context_processors.auth",
