@@ -86,7 +86,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # Patch the python path quick, since we want
 # to keep our apps in a different directory
 import sys
-#print settings.__file__
 current_path = os.path.dirname(__file__)
 sys.path.append(os.path.join(current_path,"../../apps"))
 
