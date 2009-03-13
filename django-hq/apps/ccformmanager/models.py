@@ -1,5 +1,5 @@
 from django.db import models
-#from ccformdef.models import Group
+#import Group
 
 class ElementDef(models.Model):
   DATA_TYPE_CHOICES = (
@@ -28,25 +28,25 @@ class ElementDef(models.Model):
     ('geopoint', 'geopoint')
   )
 
-  #def __init__(self, *args, **kwargs):
-  #  self.fields['language'].choices = [enum.name for enum in Enum.objects.all()]
-  
-  name = models.CharField(max_length=512)
+  table_name = models.CharField(max_length=512, unique=True)
   is_repeatable = models.BooleanField(default=False)
   binding = models.CharField(max_length=512)
   datatype = models.CharField(max_length=12, choices=DATA_TYPE_CHOICES)
   is_attribute = models.BooleanField(default=False)
   parent_id = models.ForeignKey("self", null=True)
-  #allowable_values = models.CharField(max_length=512, choices=())  
+  # For now, store all allowable values/enum definitions in one table per form
+  allowable_values_table = models.CharField(max_length=512)
    
   def __unicode__(self):
     return self.name
 
 class FormDef(models.Model):
-  name = models.CharField(max_length=511)
+  form_name = models.CharField(max_length=511, unique=True)
   date_created = models.DateField()
   element_id = models.OneToOneField(ElementDef)
   #group_id = models.ForeignKey(Group)
-    
+  #blobs aren't supported in django, so we just store the filename
+  xsd_filename = models.CharField(max_length=256)
+
   def __unicode__(self):
     return self.name
