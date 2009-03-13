@@ -27,26 +27,29 @@ class ElementDef(models.Model):
     ('select', 'select'),
     ('geopoint', 'geopoint')
   )
-
-  table_name = models.CharField(max_length=512, unique=True)
+  
+  id = models.AutoField(primary_key=True)
+  table_name = models.CharField(max_length=255, unique=True)
   is_repeatable = models.BooleanField(default=False)
-  binding = models.CharField(max_length=512)
-  datatype = models.CharField(max_length=12, choices=DATA_TYPE_CHOICES)
+  #I don't think we fully support this yes
+  #restriction = models.CharField(max_length=255)
+  datatype = models.CharField(max_length=20, choices=DATA_TYPE_CHOICES)
   is_attribute = models.BooleanField(default=False)
-  parent_id = models.ForeignKey("self", null=True)
+  parent = models.ForeignKey("self", null=True)
   # For now, store all allowable values/enum definitions in one table per form
-  allowable_values_table = models.CharField(max_length=512)
+  allowable_values_table = models.CharField(max_length=255, null=True)
    
   def __unicode__(self):
-    return self.name
+    return self.table_name
 
 class FormDef(models.Model):
-  form_name = models.CharField(max_length=511, unique=True)
+  id = models.AutoField(primary_key=True)
+  form_name = models.CharField(max_length=255, unique=True)
   date_created = models.DateField()
-  element_id = models.OneToOneField(ElementDef)
+  element = models.OneToOneField(ElementDef)
   #group_id = models.ForeignKey(Group)
   #blobs aren't supported in django, so we just store the filename
-  xsd_filename = models.CharField(max_length=256)
+  xsd_filename = models.CharField(max_length=255)
 
   def __unicode__(self):
-    return self.name
+    return self.form_name
