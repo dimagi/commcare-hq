@@ -74,7 +74,7 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(os.path.dirname(__file__),'templates'),
-    os.path.join(COMMCARE_ROOT,'templates',COMMCARE_THEME)
+    #os.path.join(COMMCARE_ROOT,'templates',COMMCARE_THEME)
 )
 TEMPLATE_CONTEXT_PROCESSORS = ( 
     "django.core.context_processors.auth",

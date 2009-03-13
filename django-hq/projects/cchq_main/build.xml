@@ -72,7 +72,7 @@
 		</py-run>
 	</target>
 	
-	<target name="syncdb" depends="django-tests-all">
+	<target name="syncdb" depends="compile,django-tests-all">
 		<py-run script="manage.py" pythonpath="${project.dir}">
 			<arg value="syncdb" />
 			<arg value="--noinput" />
