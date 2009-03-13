@@ -7,6 +7,7 @@ class BasicTestCases(unittest.TestCase):
     def setup(selfs):
         pass
 
-    def testCreateUserHierarchy(self):
-        
+    def testCreateUserHierarchy(self):        
         pass
+    def testFail(self):
+        self.assertFalse(True)
