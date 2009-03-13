@@ -3,10 +3,10 @@
 <project name="cchq_main_build" default="compile">
 
 	<taskdef resource="pyAntTasks.properties"/>
-	<property name="src.dir" value="."/>
+	<property name="project.dir" value="."/>
 	<property name="apps.dir" value="../../apps"/>	
 	<property name="pydoc.dir" value="../../pydocs"/>
-	<property name="lib.dir" value="../../libs" />
+	<property name="libs.dir" value="../../libs" />
 	<property name="scripts.dir" value="../../scripts" />
 	
 	<target name="init">
@@ -18,7 +18,7 @@
 	-->
 	<target name="clean" depends="init">
 		<delete>
-			<fileset dir="${src.dir}">
+			<fileset dir="${project.dir}">
 		    	<include name="**/*.pyc"/>
 		        <include name="**/*.pyo"/>
 		    </fileset>
@@ -42,30 +42,42 @@
 
 	
 	<target name="compile">
-		<py-compile dir="${src.dir}" pythonpath="${src.dir}" optimize="0"/>
+		<py-compile dir="${project.dir}" pythonpath="${project.dir}" optimize="0"/>
 	</target>	
 
-	<target name="run.feedparser" depends="compile">
-		<py-run script="src/feedparser/feedparser.py" pythonpath="${src.dir}" optimize="0">
-			<arg value="http://www-106.ibm.com/developerworks/news/dw_dwtp.rss" />
-			</py-run>
-		</target>
-
-		<property name="pydoc.dir" value="pydoc"/>
-
+	<!--
+		Execute Non Django Python unit tests.
+		This will treat any files under src/ that end in Test.py as a Python
+		unit test module.
+	-->
+	<target name="libtests" depends="compile">
+		<py-test pythonpath="${project.dir}" dir="${project.dir}">
+			<fileset dir="${libs.dir}">
+				<include name="**/*Test.py"/>
+			</fileset>
+		</py-test>
+	</target>	
 	
-
-		<target name="pydoc" depends="init,compile">
-			<py-doc pythonpath="${src.dir}" destdir="${pydoc.dir}">
-				<fileset dir="${src.dir}">
-					<include name="**/*"/>
-				</fileset>
-			</py-doc>
-		</target>
-
-
-
-	</project>
+	<target name="django-tests-all" depends="compile">
+		<py-run script="manage.py" pythonpath="${project.dir}" optimize="0">
+			<arg value="test" />
+		</py-run>
+	</target>
+	
+	<target name="syncdb" depends="django-tests-all">
+		<py-run script="manage.py" pythonpath="${project.dir}" optimize="0">
+			<arg value="syncdb" />
+			</py-run>
+	</target>
+		
+	<target name="pydoc" depends="init,compile">
+		<py-doc pythonpath="${project.dir}" destdir="${pydoc.dir}">
+			<fileset dir="${project.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</py-doc>
+	</target>
+</project>
 
 
 
