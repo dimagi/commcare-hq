@@ -6,7 +6,6 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # (r'^cchq_groups/', include('cchq_groups.foo.urls')),
-    (r'^ccformdef/', include('ccformdef.urls')),
 
     # Uncomment the next line to enable the admin:
     (r'^admin/(.*)', admin.site.root),

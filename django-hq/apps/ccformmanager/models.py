@@ -30,14 +30,14 @@ class ElementDef(models.Model):
   
   id = models.AutoField(primary_key=True)
   table_name = models.CharField(max_length=255, unique=True)
-  is_repeatable = models.BooleanField(default=False)
-  #I don't think we fully support this yes
-  #restriction = models.CharField(max_length=255)
   datatype = models.CharField(max_length=20, choices=DATA_TYPE_CHOICES)
-  is_attribute = models.BooleanField(default=False)
   parent = models.ForeignKey("self", null=True)
   # For now, store all allowable values/enum definitions in one table per form
   allowable_values_table = models.CharField(max_length=255, null=True)
+  is_attribute = models.BooleanField(default=False)
+  is_repeatable = models.BooleanField(default=False)
+  #I don't think we fully support this yet
+  #restriction = models.CharField(max_length=255)
    
   def __unicode__(self):
     return self.table_name
