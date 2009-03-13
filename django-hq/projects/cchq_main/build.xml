@@ -12,6 +12,10 @@
 	
 	
 	<taskdef resource="pyAntTasks.properties" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
+	<taskdef name="py-run" classname="org.pyant.tasks.PythonRunTask" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
+	<taskdef name="py-compile" classname="org.pyant.tasks.PythonCompileTask" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
+	<taskdef name="py-test" classname="org.pyant.tasks.PythonTestTask" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
+	<taskdef name="py-doc" classname="org.pyant.tasks.PythonDocTask" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
 	
 	<target name="init">
 		<mkdir dir="${pydoc.dir}"/>

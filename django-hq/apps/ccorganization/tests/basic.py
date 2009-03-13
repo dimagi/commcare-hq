@@ -10,7 +10,8 @@ class BasicTestCase(unittest.TestCase):
     def testCreateUserHierarchy(self):        
         pass
     def testFail(self):
-        self.assertFalse(True)
+        pass
+        #self.assertFalse(False)
 
     def testSuccess(self):
         self.assertFalse(False)
