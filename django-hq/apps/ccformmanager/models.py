@@ -2,7 +2,7 @@ from django.db import models
 #from ccformdef.models import Group
 
 class ElementDef(models.Model):
-  DATA_TYPE_CHOICES = ()
+  DATA_TYPE_CHOICES = (
     ('string', 'string'),
     ('integer', 'integer'),
     ('int', 'int'),
@@ -45,7 +45,7 @@ class ElementDef(models.Model):
 class FormDef(models.Model):
   name = models.CharField(max_length=511)
   date_created = models.DateField()
-  element_id = OneToOneField(ElementDef)
+  element_id = models.OneToOneField(ElementDef)
   #group_id = models.ForeignKey(Group)
     
   def __unicode__(self):
