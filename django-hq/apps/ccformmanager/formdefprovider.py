@@ -1,29 +1,29 @@
 # This is an interface; currently we do not inherit any functionality
 class FormDefProvider:
-  def setInput(self, stream_pointer):
+  def set_input(self, stream_pointer):
       pass
 
-  def getFormDef(self):
+  def get_formdef(self):
       pass
 
 
 
 from lxml import etree
-from formdef import *
+from ccformmanager.formdef import *
 import re
 
 
 class FormDefProviderFromXSD(FormDefProvider):
- 
-  def __init__(self, stream_pointer):
+  def __init__(self, stream_pointer=None):
+      if stream_pointer is not None:
+          self.parseStream(stream_pointer)          
+      pass
+
+  def set_input(self, stream_pointer):
       self.parseStream(stream_pointer)
       pass
 
-  def setInput(self, stream_pointer):
-      self.parseStream(stream_pointer)
-      pass
-
-  def getFormDef(self):
+  def get_formdef(self):
       #if(self.formDef == empty) report an error
       return self.formDef
   
@@ -41,12 +41,18 @@ class FormDefProviderFromXSD(FormDefProvider):
   def __addAttributesAndChildElements(self, element, input_tree):
       self.__populateElementFields(element, input_tree)
       for input_node in etree.ElementChildIterator(input_tree):
-          child_element = ElementDef()
-          element.addChild(child_element)          
-          self.__addAttributesAndChildElements(child_element, input_node)
+          if input_node.tag.find("element") > -1 and (input_node.get('name').find('root') == -1 ):
+            child_element = ElementDef()
+            element.addChild(child_element)     
+            self.__addAttributesAndChildElements(child_element, input_node)
+          else:
+            self.__addAttributesAndChildElements(element, input_node)            
+          #for other types of input nodes, pass in different parameters
+          #or add another level to the tree
   
   def __populateElementFields(self, element, input_node):
-      element.name = input_node.get('name')
+      if not element.name: element.name = input_node.get('name')
       element.type = input_node.get('type')
       element.min_occurs = input_node.get('minOccurs')
+      element.tag = input_node.tag
       
