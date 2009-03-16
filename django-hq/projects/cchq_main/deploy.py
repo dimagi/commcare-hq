@@ -102,11 +102,12 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport, 'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
     print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
     print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))    
+    print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
+    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))
     print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
-    print run(transport,'rm %s' % (target_abs_path+"/builds"+basename[0:-3]))
+    print run(transport,'gzip %s' % (target_abs_path+"/builds"+basename[0:-3]))
     
-    print run(transport,'chmod 777 %s/projects/cchq_main/' % (target_abs_path))
-    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (target_abs_path))
+    
     print run(transport,'/etc/init.d/apache2 reload')
     transport.close()
 
