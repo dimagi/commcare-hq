@@ -90,7 +90,7 @@
 		</py-doc>
 	</target>	
 	
-	<target name="deploy-to-test" depends="compile,django-tests-all">
+	<target name="deploy-to-server" depends="compile,django-tests-all">
 		<py-run script="deploy.py" pythonpath="${project.dir}">			
 		</py-run>
 	</target>
