@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ccorganization.models import *
+from modelrelationship.models import *
 
 class EdgeTypeAdmin(admin.ModelAdmin):
     list_display = ('name','description','directional')

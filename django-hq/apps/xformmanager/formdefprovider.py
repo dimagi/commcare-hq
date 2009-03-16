@@ -9,7 +9,7 @@ class FormDefProvider:
 
 
 from lxml import etree
-from ccformmanager.formdef import *
+from xformmanager.formdef import *
 import re
 
 

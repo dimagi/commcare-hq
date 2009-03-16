@@ -1,6 +1,6 @@
 from django.db import connection, transaction, DatabaseError
-from ccformmanager.models import ElementDefData, FormDefData
-from ccformmanager.formdata import *
+from xformmanager.models import ElementDefData, FormDefData
+from xformmanager.formdata import *
 
 
 class FormStorageProvider():

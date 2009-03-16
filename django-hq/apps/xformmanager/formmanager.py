@@ -1,7 +1,7 @@
 #import FormDef #can we comment these out?
 #import ElementDef
-from ccformmanager.formdefprovider import * 
-from ccformmanager.formstorageprovider import *
+from xformmanager.formdefprovider import * 
+from xformmanager.formstorageprovider import *
 
 class FormManager():
   """ This will take the formdef provided by formdef provider
