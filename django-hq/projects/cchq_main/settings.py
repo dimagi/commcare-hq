@@ -98,6 +98,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'ccorganization',
+    'ccformmanager',
 )
 
 #COMMCARE VARS EXAMPLE, will be appended at the end.
