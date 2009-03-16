@@ -101,7 +101,9 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
     print run(transport, 'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
     print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
-    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))    
+    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))   
+    print run(transport,'echo %s/projects/cchq_main/manage.py syncdb' % (basedir))
+     
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))
 
