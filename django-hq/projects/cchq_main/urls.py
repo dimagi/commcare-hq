@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     # Example:
     # (r'^cchq_groups/', include('cchq_groups.foo.urls')),
     (r'^ccorganization/', include('ccorganization.urls')),
+    (r'^ccformmanager/', include('ccformmanager.urls')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
