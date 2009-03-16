@@ -68,7 +68,7 @@
 			</fileset>
 		</py-test>
 	</target>	
-	
+
 	<target name="django-tests-all" depends="compile">
 		<py-run script="manage.py" pythonpath="${project.dir}" optimize="0">
 			<arg value="test" />

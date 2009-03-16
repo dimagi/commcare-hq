@@ -67,6 +67,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     
     #make the archive    
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
     
     basedir = os.path.basename(os.path.abspath('../../'))    
@@ -89,23 +90,24 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print "starting sftp session"
     sftp = paramiko.SFTPClient.from_transport(transport)
     basename = os.path.basename(archive_to_deploy)
-    sftp.put(archive_to_deploy,target_abs_path + "/" + basename)
+    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
     sftp.close()
     
     print "sftp file transferred, remoting in to deploy archive"    
     
     #print run(transport, 'cd %s' %(target_abs_path))
     print run(transport, 'rm -rf %s/%s' % (target_abs_path,target_deploy_path)) 
-    print run(transport,'gunzip %s/%s' % (target_abs_path,basename))
-    print run(transport,'tar -xf %s/%s' % (target_abs_path,basename[0:-3]))    
-    print run(transport, 'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/%s/projects/cchq_main/settings.py')
-    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/%s/projects/cchq_main/settings.py' % (build_number,target_abs_path,basedir))
-    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/%s/projects/cchq_main/settings.py' % (revision_number,target_abs_path,basedir))    
+    print run(transport,'gunzip %s/%s' % (target_abs_path+"/builds",basename))
+    print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
+    print run(transport, 'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
+    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
+    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))    
     print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
-    print run(transport,'rm %s' % (basename[0:-3]))
+    print run(transport,'rm %s' % (target_abs_path+"/builds"+basename[0:-3]))
     
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (target_abs_path))
     print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (target_abs_path))
+    print run(transport,'/etc/init.d/apache2 reload')
     transport.close()
 
 
