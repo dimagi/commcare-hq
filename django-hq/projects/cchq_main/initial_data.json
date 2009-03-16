@@ -1,0 +1,20 @@
+[
+  {
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "testadmin", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": true, 
+      "is_staff": true, 
+      "last_login": "2008-09-04 14:25:29", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$test", 
+      "email": "test@commcarehq.org", 
+      "date_joined": "2009-01-01 11:59:59"
+    }
+  }
+]
