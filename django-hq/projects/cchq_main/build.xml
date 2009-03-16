@@ -50,7 +50,10 @@
 
 	
 	<target name="compile">
+		<py-compile dir="${libs.dir}" pythonpath="${libs.dir}" optimize="0"/>
+		<py-compile dir="${apps.dir}" pythonpath="${apps.dir}" optimize="0"/>
 		<py-compile dir="${project.dir}" pythonpath="${project.dir}" optimize="0"/>
+		<py-compile dir="${scripts.dir}" pythonpath="${scripts.dir}" optimize="0"/>		
 	</target>	
 
 	<!--
@@ -86,6 +89,12 @@
 			</fileset>
 		</py-doc>
 	</target>
+	
+	
+	<target name="deploy-to-test" depends="init,compile,django-tests-all">
+		<py-run script="deploy.py" pythonpath="${project.dir}">			
+		</py-run>
+		</target>
 </project>
 
 
