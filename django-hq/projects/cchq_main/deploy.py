@@ -37,6 +37,7 @@ def run(t, cmd):
 
     if debug: print 'DEBUG: Running cmd:', cmd
     chan = t.open_session()
+    
     #chan.setblosesscking(0)
 
     try:
@@ -118,8 +119,12 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
     
     
-    print run(transport,'sudo /etc/init.d/apache2 reload')
-    transport.close()
+    print run(transport,'sudo /etc/init.d/apache2 restart')
+    try:
+        transport.close()
+    except:
+        pass
+    print "Finished deployment"
 
 
 if __name__ == "__main__":
