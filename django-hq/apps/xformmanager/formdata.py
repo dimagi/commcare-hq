@@ -1,18 +1,40 @@
 from lxml import etree
 
-class ElementData():
+class ElementData(object):
+    """ This class holds xml instance data.
+    
+    It is basically a wrapper for lxml.etree. 
+    
+    """    
+    
     def __init__(self, stream_pointer):
         self.tree = etree.parse(stream_pointer)
+        self.element = self.tree.getroot()
 
     def child_iterator(self):
-        return etree.ElementChildIterator(self.tree.getroot())
+        return ElementDataIterator( self.element, etree.ElementChildIterator(self.element) )
     
     def next(self):
-        return self.iter.next()
+        self.element = self.iter.next()
+        return self.element
     
-    def getroot(self):
-        return self.tree.getroot()
-
 class FormData(ElementData):
+    """ This class holds xml instance data."""
     pass
 
+class ElementDataIterator(object):
+    """ This is an iterator for children of ElementData"""
+    
+    def __init__(self, element, iter):
+        self.element = element
+        self.iter = iter
+        
+    def next(self):
+        self.element = self.iter.next()
+        return self.element
+    
+    def __iter__(self):
+        return self
+    
+    def get_child_iterator(self):
+        return ElementDataIterator( self.element, etree.ElementChildIterator( self.element  ) )        
