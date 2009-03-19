@@ -1,6 +1,7 @@
 import unittest
 from xformmanager.formdefprovider import * 
 from xformmanager.formmanager import FormManager
+import os
 
 class BasicTestCase(unittest.TestCase):
     def setup(selfs):
