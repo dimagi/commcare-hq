@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Django settings for cchq_groups project.
 
 DEBUG = True
@@ -35,6 +36,7 @@ SITE_ID = 1
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
+
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -74,13 +76,20 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(os.path.dirname(__file__),'templates'),
-    #os.path.join(COMMCARE_ROOT,'templates',COMMCARE_THEME)
+    
+    os.path.join('../../apps','modelrelationship','templates'),
+    os.path.join('../../apps','xformmanager','templates'),
+    os.path.join('../../apps','submitlogger','templates'),
+    #os.path.join('../../apps','registrationdata','templates'),
 )
 TEMPLATE_CONTEXT_PROCESSORS = ( 
     "django.core.context_processors.auth",
-    "django.core.context_processors.request",
+    "django.core.context_processors.debug",    
+    "django.core.context_processors.i18n",
     "django.core.context_processors.media",
-    "django.core.context_processors.debug",)
+    "django.core.context_processors.request",
+    
+    )
 
 
 # Patch the python path quick, since we want
@@ -98,8 +107,33 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'submitlogger',
     'modelrelationship',
     'xformmanager',
+    
+    #'registrationdata',
+)
+
+
+ugettext = lambda s: s
+LANGUAGES = (
+  ('en', u'English'),
+  ('de', u'Deutsch'),
+#  ('es', u'Español'),
+#  ('fr', u'Français'),
+#  ('sv', u'Svenska'),
+#  ('pt-br', u'Português brasileiro'),
+#  ('he', u'עברית'),
+#  ('ar', u'العربية'),
+#  ('it', u'Italiano'),
+)
+
+import logging
+logging.basicConfig(
+    level = logging.DEBUG,
+    format = '%(asctime)s %(levelname)s %(message)s',
+    filename = 'cchq.log',
+    filemode = 'w'
 )
 
 #COMMCARE VARS EXAMPLE, will be appended at the end.

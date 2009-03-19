@@ -1,0 +1,13 @@
+{% extends "submitlog_base.html" %}
+{% block head_title %}{% trans "All Submissions" %}{% endblock %}
+{% block content %}
+<h2>{% trans All Submissions %}</h2>
+   {% for submit_log in submissionlog_items %}      
+   	<li>
+   		<a href="{% url submissionlogger.views.single_submission submit_log.id %}">
+   			{% blocktrans with submit_log.submit_time|date as date_t and submit_log.submit_time|time as time_t %}
+   				Submit date: {{date_t}} - {{time_t}} :: IP Address: {{submit_log.submit_ip}}
+   			{% endblocktrans}</a>   			            
+   	</li>   	
+   {% endfor %}
+{% endblock %}
