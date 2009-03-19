@@ -42,12 +42,12 @@ class FormDefProviderFromXSD(FormDefProvider):
         schema = self.tree.getroot()
         r = re.search('{[a-zA-Z0-9\.\/\:]*}', schema.tag)
         xmlns = r.group(0).strip('{').strip('}')
-        self.formDef = FormDef(xmlns, ) # add date, time, etc. to creation later
+        self.formDef = FormDef(xmlns) # add date, time, etc. to creation later
 
         root = schema[0]
-        self.__populateElementFields(self.formDef, root, '.')
-        self.formDef.xpath = "."
-        self.__addAttributesAndChildElements(self.formDef, root, '.')
+        self.__populateElementFields(self.formDef, root, '')
+        self.formDef.xpath = ""
+        self.__addAttributesAndChildElements(self.formDef, root, '')
         return self.formDef
       
     def __addAttributesAndChildElements(self, element, input_tree, xpath):
@@ -69,9 +69,11 @@ class FormDefProviderFromXSD(FormDefProvider):
                 #or add another level to the tree
     
     def __populateElementFields(self, element, input_node, xpath):
-        element.name = input_node.get('name')
+        if not element.name: element.name = input_node.get('name')
         element.type = input_node.get('type')
         element.min_occurs = input_node.get('minOccurs')
         element.tag = input_node.tag
-        element.xpath = xpath + "//" + element.name
+        if xpath: element.xpath = xpath + "/x:" + element.name
+        else: element.xpath = "x:" + element.name
+        
         

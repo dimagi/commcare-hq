@@ -1,6 +1,7 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.formdata import *
+from lxml import etree
 
 class FormStorageProvider(object):
     """ This class handles everything that touches the database - both form and instance data."""
@@ -15,7 +16,7 @@ class FormStorageProvider(object):
         pass
     
     def save_form_data(self, data, formdef):
-        self.populate_data_tables(formdef, data.child_iterator())
+        self.populate_data_tables(data=data, elementdef=formdef, namespace=formdef.xmlns)
 
     def update_formdef_meta(self, formdef):
         """ save form metadata """
@@ -68,10 +69,11 @@ class FormStorageProvider(object):
 
 
   
-    def populate_data_tables(self, elementdef, data_iterator, parent_name=''):
-      if not data_iterator : return
+    def populate_data_tables(self, data, elementdef, namespace='', parent_name='' ):
+      if data is None : return
+      if not elementdef: return
 
-      field_values = self.__populate_children_tables(elementdef, data_iterator, parent_name )
+      field_values = self.__populate_children_tables(data=data, elementdef=elementdef, namespace=namespace, parent_name=parent_name )
 
       # populate the tables
       s = "INSERT INTO " + self.__table_name( self.__name(parent_name, elementdef.name) ) + " (";
@@ -89,55 +91,65 @@ class FormStorageProvider(object):
                  transaction.commit_unless_managed()
                  return True"""
 
-    def __populate_children_tables(self, elementdef, data_iterator, parent_name=''):
+    def __populate_children_tables(self, data, elementdef, namespace, parent_name='' ):
+      if data is None: return
       if not elementdef : return
-      if not data_iterator: return
       local_fields = '';
       values = '';
       
-      try:
-          data = data_iterator.next()
-      except StopIteration:
-          return {'fields':local_fields, 'values':values}
+      """      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+                 local_fields = local_fields + elementdef.name + ", "
+                 values = values + "'" + data.text + "', "
+                 return {'fields':local_fields, 'values':values}
+        
+      """
       
-
-      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          local_fields = local_fields + elementdef.name + ", "
-          values = values + "'" + data.text + "', "
-          return {'fields':local_fields, 'values':values}
+      #if not elementdef.child_elements: return {'fields':local_fields, 'values':values}
+      """if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+          elements = data.xpath(child.xpath, namespaces={'x':namespace})
+          for element in elements:
+              local_fields = local_fields + child.name + ", "
+              values = values + "'" + element.text + "', "
+          return {'fields':local_fields, 'values':values}"""
       for child in elementdef.child_elements:
         # put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
         if child.is_repeatable :
-            #if repeatable type data has child elements, then just skip current xml node
-            if( len(child.child_elements)>0 ):
-                child_iterator = None
-                if data_iterator: child_iterator = data_iterator.get_child_iterator()
-                if child_iterator: self.populate_data_tables(child, child_iterator, next_parent_name )
+
+            """ elements = data.xpath(child.xpath, namespaces={'x':namespace})
+            for element in elements:
+                self.populate_data_tables(element, child, namespace, next_parent_name ) 
+                                
+            """
+            # COME BACK TO SHI
+            # elements = data.xpath(child.xpath, namespaces={'x':namespace})
+            # for element in elements:
+
+
+            
+            #if child.child_elements :
+            if len(child.child_elements)>0 :
+                self.populate_data_tables(data, child, namespace, next_parent_name )
             else:
-                self.populate_data_tables(child, data_iterator, next_parent_name )
+                elements = data.xpath(child.xpath, namespaces={'x':namespace})
+                for element in elements:
+                    self.populate_data_tables(element, child, namespace, next_parent_name )
+
         else:
             if( len(child.child_elements)>0 ):
                 # get child iterator
-                child_iterator = None
-                if data_iterator: child_iterator = data_iterator.get_child_iterator()
-                if child_iterator: 
-                    field_values = self.__populate_children_tables(child, child_iterator, next_parent_name )
-                    local_fields = local_fields + field_values['fields']
-                    values  = values + field_values['values']
-                    print " fields: " + local_fields
-                    print " values: " + values
-                    #assume elements of complextype alwasy have <complextype> as first child
+                field_values = self.__populate_children_tables(data=data, elementdef=child, namespace=namespace, parent_name=parent_name )
+                local_fields = local_fields + field_values['fields']
+                values  = values + field_values['values']
+                #assume elements of complextype alwasy have <complextype> as first child
             else:
-                local_fields = local_fields + child.name + ", "
-                values = values + "'" + data.text + "', "
-                print " fields: " + local_fields
-                print " values: " + values
-        try:
-            data = data_iterator.next()
-        except StopIteration:
-            return {'fields':local_fields, 'values':values}
+                elements = data.xpath(child.xpath, namespaces={'x':namespace})
+                for element in elements:
+                    local_fields = local_fields + child.name + ", "
+                    values = values + "'" + element.text + "', "
       # ah, python, so cool... but is this bad form?
+      print local_fields
+      print values
       return {'fields':local_fields, 'values':values}
 
     def __trim2chars(self, string):
@@ -152,7 +164,7 @@ class FormStorageProvider(object):
     def __table_name(self, name):
         # check for uniqueness!
         # current hack, fix later: 122 is mysql table limit, i think
-        MAX_LENGTH = 122
+        MAX_LENGTH = 80
         start = 0
         if len(name) > MAX_LENGTH:
             start = len(name)-MAX_LENGTH

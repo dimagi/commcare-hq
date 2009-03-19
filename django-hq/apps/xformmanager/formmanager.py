@@ -12,7 +12,7 @@ class FormManager(object):
     """
     
     def __init__(self):
-        self.registered_forms = []
+        self.registered_forms = ''
         
         # These are default providers. Can be changed dynamically.
         self.formdef_provider = FormDefProviderFromXSD()
@@ -28,18 +28,24 @@ class FormManager(object):
         self.formdef_provider.set_input(stream_pointer)
         formdef = self.formdef_provider.get_formdef()
         self.storage_provider.add_formdef(formdef)
-        self.registered_forms.append(formdef)
+        #self.registered_forms.append(formdef)
+        self.registered_forms = formdef
+        
+    #remove this function later
+    def get_formdef(self):
+        return self.registered_forms
       
     # not supported yet!
     def delete_formdef(self, name):
         self.storage_provider.remove_formdef(formdef)
-        self.registered_forms.remove(name)
+        #self.registered_forms.remove(name)
       
     def save_form_data(self, stream_pointer):
         #check whether this matches an existing xmlns else puke
         data = FormData(stream_pointer)
         #do something to match xml to xsd
-        self.storage_provider.save_form_data(data, self.registered_forms.pop())
+        #self.storage_provider.save_form_data(data, self.registered_forms.pop())
+        self.storage_provider.save_form_data(data, self.registered_forms)
         pass
     
     def delete_form_data(self, name):

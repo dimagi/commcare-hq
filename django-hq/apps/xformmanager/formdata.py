@@ -14,6 +14,15 @@ class ElementData(object):
     def child_iterator(self):
         return ElementDataIterator( self.element, etree.ElementChildIterator(self.element) )
     
+    def find(self, xpath):
+        return self.element.find(xpath)
+    
+    def find_all(self, xpath):
+        return self.element.find_all(xpath)
+    
+    def xpath(self, location, namespaces):
+        return (self.tree).xpath(location, namespaces=namespaces)
+    
     def next(self):
         self.element = self.iter.next()
         return self.element

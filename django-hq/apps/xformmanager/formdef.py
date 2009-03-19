@@ -13,10 +13,10 @@ class ElementDef(object):
     restriction #string - should be private? 
     """
 
-    def __init__(self, is_repeatable=False):
+    def __init__(self, name='', is_repeatable=False):
         self.child_elements = []
         self.allowable_values = []
-        self.name = ''
+        self.name = name
         self.type = ''
         self.is_repeatable = is_repeatable
         self.xpath = ''
@@ -40,7 +40,7 @@ class FormDef(ElementDef):
     
     def __init__(self, xmlns):
         self.xmlns = xmlns
-        ElementDef.__init__(self)
+        ElementDef.__init__(self, xmlns)
 
     #date_created
     #group_id
