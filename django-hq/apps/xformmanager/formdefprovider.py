@@ -39,31 +39,39 @@ class FormDefProviderFromXSD(FormDefProvider):
         #if( stream_pointer == null ) throw exception, if parent is None: 
         self.tree = etree.parse(stream_pointer)
 
-        r = re.search('{[a-zA-Z0-9\.\/\:]*}', self.tree.getroot().tag)
+        schema = self.tree.getroot()
+        r = re.search('{[a-zA-Z0-9\.\/\:]*}', schema.tag)
         xmlns = r.group(0).strip('{').strip('}')
-        self.formDef = FormDef(xmlns) # add date, time, etc. to creation later
+        self.formDef = FormDef(xmlns, ) # add date, time, etc. to creation later
 
-        self.__addAttributesAndChildElements(self.formDef, self.tree.getroot())
+        root = schema[0]
+        self.__populateElementFields(self.formDef, root, '.')
+        self.formDef.xpath = "."
+        self.__addAttributesAndChildElements(self.formDef, root, '.')
         return self.formDef
       
-    def __addAttributesAndChildElements(self, element, input_tree):
-        self.__populateElementFields(element, input_tree)
+    def __addAttributesAndChildElements(self, element, input_tree, xpath):
+        print "1" + element.name + " xpath:" + xpath
+        #self.__populateElementFields(element, input_tree, xpath)
         for input_node in etree.ElementChildIterator(input_tree):
             if input_node.tag.find("element") > -1 and (input_node.get('name').find('root') == -1 ):
                 if input_node.get('maxOccurs') > 1: 
                     child_element = ElementDef(is_repeatable=True)
-                else: 
+                else:
                     child_element = ElementDef()
                 element.addChild(child_element)     
-                self.__addAttributesAndChildElements(child_element, input_node)
+                self.__populateElementFields(child_element, input_node, element.xpath)
+                self.__addAttributesAndChildElements(child_element, input_node, element.xpath)
             else:
-                self.__addAttributesAndChildElements(element, input_node)            
+                # Non-element
+                self.__addAttributesAndChildElements(element, input_node, element.xpath)
                 #for other types of input nodes, pass in different parameters
                 #or add another level to the tree
     
-    def __populateElementFields(self, element, input_node):
-        if not element.name: element.name = input_node.get('name')
+    def __populateElementFields(self, element, input_node, xpath):
+        element.name = input_node.get('name')
         element.type = input_node.get('type')
         element.min_occurs = input_node.get('minOccurs')
         element.tag = input_node.tag
+        element.xpath = xpath + "//" + element.name
         
