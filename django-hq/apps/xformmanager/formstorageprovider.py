@@ -25,12 +25,12 @@ class FormStorageProvider(object):
         fdd = FormDefData(form_name=self.__table_name(formdef.name), xmlns=formdef.xmlns, element_id=ed.id)
         fdd.save()
 
-    def create_data_tables(self, elementdef, parent_name=''):
-        if not elementdef.child_elements : return
 
+
+    def create_data_tables(self, elementdef, parent_name=''):
         fields = self.__handle_children_tables(elementdef=elementdef, parent_name=parent_name )
         fields = self.__trim2chars(fields);
-             
+
         table_name = self.__table_name( self.__name(parent_name, elementdef.name) )
         s = "CREATE TABLE "+ table_name +" ( " + fields + " );"
         print s
@@ -38,9 +38,36 @@ class FormStorageProvider(object):
         cursor = connection.cursor()
         cursor.execute(s)
       
+    def __handle_children_tables(self, elementdef, parent_name=''):
+      """ This is 'handle' instead of 'create'(_children_tables) because not only are we 
+      creating children tables, we are also gathering/passing children/field information back to the parent.
+      """
+      
+      if not elementdef: return
+      local_fields = '';
+
+      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+          return elementdef.name + " VARCHAR(100), "
+      for child in elementdef.child_elements:
+          # put in a check for root.isRepeatable
+          next_parent_name = self.__name(parent_name, elementdef.name)
+          if child.is_repeatable :
+              # repeatable elements must generate a new table
+              ed = ElementDefData(name=str(child.name), datatype=str(child.type), 
+                                  table_name = self.__table_name( self.__name(next_parent_name, child.name) ) )
+              ed.save()
+              self.create_data_tables(child, next_parent_name )
+          else: 
+            #assume elements of complextype alwasy have <complextype> as first child
+            if len(child.child_elements) > 0 :
+                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=self.__name( next_parent_name, child.name ) )
+            else:
+                local_fields = local_fields + child.name + " VARCHAR(100), "
+                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=next_parent_name )
+      return local_fields
 
 
-
+  
     def populate_data_tables(self, elementdef, data_iterator, parent_name=''):
       if not data_iterator : return
 
@@ -62,33 +89,6 @@ class FormStorageProvider(object):
                  transaction.commit_unless_managed()
                  return True"""
 
-
-    def __handle_children_tables(self, elementdef, parent_name=''):
-      """ This is 'handle' instead of 'create'(_children_tables) because not only are we 
-      creating children tables, we are also gathering/passing children/field information back to the parent.
-      """
-      
-      if not elementdef: return
-      local_fields = '';
-
-      for child in elementdef.child_elements:
-        # put in a check for root.isRepeatable
-        next_parent_name = self.__name(parent_name, elementdef.name)
-        if child.is_repeatable :
-            # repeatable elements must generate a new table
-            ed = ElementDefData(name=str(child.name), datatype=str(child.type), 
-                            table_name = self.__table_name( self.__name(next_parent_name, child.name) ) )
-            ed.save()
-            self.create_data_tables(child, next_parent_name )
-        else: 
-            #assume elements of complextype alwasy have <complextype> as first child
-            if len(child.child_elements) > 0 :
-                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=self.__name( next_parent_name, child.name ) )
-            else:
-                local_fields = local_fields + child.name + " VARCHAR(100), "
-                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=next_parent_name )
-      return local_fields
-  
     def __populate_children_tables(self, elementdef, data_iterator, parent_name=''):
       if not elementdef : return
       if not data_iterator: return
@@ -100,6 +100,11 @@ class FormStorageProvider(object):
       except StopIteration:
           return {'fields':local_fields, 'values':values}
       
+
+      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+          local_fields = local_fields + elementdef.name + ", "
+          values = values + "'" + data.text + "', "
+          return {'fields':local_fields, 'values':values}
       for child in elementdef.child_elements:
         # put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
@@ -110,9 +115,7 @@ class FormStorageProvider(object):
                 if data_iterator: child_iterator = data_iterator.get_child_iterator()
                 if child_iterator: self.populate_data_tables(child, child_iterator, next_parent_name )
             else:
-                pass
-                # save singular repeatable element directly to its table
-                # store(child.name, data.text, parent_name)             
+                self.populate_data_tables(child, data_iterator, next_parent_name )
         else:
             if( len(child.child_elements)>0 ):
                 # get child iterator
@@ -148,7 +151,7 @@ class FormStorageProvider(object):
 
     def __table_name(self, name):
         # check for uniqueness!
-        # 122 is mysql table limit, i think
+        # current hack, fix later: 122 is mysql table limit, i think
         MAX_LENGTH = 122
         start = 0
         if len(name) > MAX_LENGTH:
