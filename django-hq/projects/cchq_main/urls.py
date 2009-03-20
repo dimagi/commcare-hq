@@ -8,6 +8,8 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Example:
     # (r'^cchq_groups/', include('cchq_groups.foo.urls')),
+    (r'^accounts/login/$', 'django.contrib.auth.views.login'),
+    (r'^accounts/logout/$', 'django.contrib.auth.views.logout_then_login'),
     
     (r'^i18n/$', include('django.conf.urls.i18n')),
     #(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {}),

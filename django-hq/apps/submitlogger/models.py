@@ -13,7 +13,7 @@ class SubmitLog(models.Model):
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
     raw_header = models.TextField(_('Raw Header'))    
-    raw_post = models.FilePathField(_('Raw Request Blob'),match='*.postdata', path=settings.XFORM_SUBMISSION_PATH)    
+    raw_post = models.FilePathField(_('Raw Request Blob'),match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH)    
         
     class Meta:
         ordering = ('-submit_time',)
@@ -27,7 +27,7 @@ class SubmitLog(models.Model):
 class Attachment(models.Model):
     submission = models.ForeignKey(SubmitLog)
     attachent_uri = models.CharField(_('File attachment URI'),max_length=255)
-    filepath = models.FilePathField(_('Attachment File'),match='*.attach',path=settings.XFORM_SUBMISSION_PATH,max_length=255)
+    filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.XFORM_SUBMISSION_PATH,max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     
     class Meta:
