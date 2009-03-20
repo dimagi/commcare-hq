@@ -93,7 +93,7 @@ class FormStorageProvider(object):
       local_fields = '';
 
       if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          return elementdef.name + " " + self.__get_db_type( elementdef.type ) + ", "
+          return self.__db_field_name(elementdef.name)
       for child in elementdef.child_elements:
           # put in a check for root.isRepeatable
           next_parent_name = self.__name(parent_name, elementdef.name)
@@ -108,7 +108,7 @@ class FormStorageProvider(object):
             if len(child.child_elements) > 0 :
                 local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=self.__name( next_parent_name, child.name ) )
             else:
-                local_fields = local_fields + child.name + " " + self.__get_db_type( child.type ) + ", "
+                local_fields = local_fields + self.__db_field_name(child) 
                 local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=next_parent_name )
       return local_fields
 
@@ -160,7 +160,7 @@ class FormStorageProvider(object):
             else:
                 elements = data.xpath(child.xpath, namespaces={'x':namespace})
                 for element in elements:
-                    local_fields = local_fields + child.name + ", "
+                    local_fields = local_fields + self.__sanitize(child.name) + ", "
                     values = values + self.__quote(child.type, element.text) + ", "
       
       # ah, python... but is this bad form?
@@ -197,3 +197,13 @@ class FormStorageProvider(object):
             return "'" + text + "'"
         else: 
             return text
+
+    # todo: put all sorts of useful db fieldname sanitizing stuff in here
+    def __sanitize(self, name):
+        if name.lower() == "where":
+            return "_" + name
+        else:
+            return name
+
+    def __db_field_name(self, elementdef):
+        return self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type ) + ", "
