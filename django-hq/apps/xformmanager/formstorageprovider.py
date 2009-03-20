@@ -3,7 +3,52 @@ from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.formdata import *
 from lxml import etree
 
+#COME BACK LATER and sanitize all inputs to avoid database keywords
+# e.g. no 'where' columns, etc.
+
+STRING = 's'
+FLOAT = 'f'
+DOUBLE = 'g'
+INTEGER = 'i'
+DATETIME = 'i'    
+
 class FormStorageProvider(object):
+    # should pull this out into a rsc file...
+
+    
+    # Data types taken from mysql. 
+    # This should really draw from django biult-in utilities which are database independent. 
+    XSD_TO_DB_TYPES = {
+        'string':'VARCHAR(255)',
+        'integer':'INT(11)',
+        'int':'INT(11)',
+        'decimal':'DECIMAL(5,2)',
+        'double':'DOUBLE',
+        'float':'DOUBLE',
+        'dateTime':'DATETIME', # string
+        'date':'DATE', # string
+        'time':'TIME', # string
+        'gyear':'INT(11)',
+        'gmonth':'INT(11)',
+        'gday':'INT(11)',
+        'gyearmonth':'INT(11)',
+        'gmonthday':'INT(11)',
+        'boolean':'TINYINT(1)',
+        'base64binary':'DOUBLE', #i don't know...
+        'hexbinary':'DOUBLE', #..meh.
+        'anyuri':'VARCHAR(200)', # string
+        'default':'VARCHAR(255)',
+    } 
+
+    DB_STRING_TYPES = (
+        'string',
+        'dateTime',
+        'date',
+        'time',
+        'anyuri'
+    )
+    
+
     """ This class handles everything that touches the database - both form and instance data."""
 
     def add_formdef(self, formdef):
@@ -20,7 +65,7 @@ class FormStorageProvider(object):
 
     def update_formdef_meta(self, formdef):
         """ save form metadata """
-        ed = ElementDefData(name=str(formdef.name), datatype=str(formdef.type), 
+        ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
                             table_name=self.__table_name(formdef.xmlns))
         ed.save()
         fdd = FormDefData(form_name=self.__table_name(formdef.name), xmlns=formdef.xmlns, element_id=ed.id)
@@ -48,13 +93,13 @@ class FormStorageProvider(object):
       local_fields = '';
 
       if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          return elementdef.name + " VARCHAR(100), "
+          return elementdef.name + " " + self.__get_db_type( elementdef.type ) + ", "
       for child in elementdef.child_elements:
           # put in a check for root.isRepeatable
           next_parent_name = self.__name(parent_name, elementdef.name)
           if child.is_repeatable :
               # repeatable elements must generate a new table
-              ed = ElementDefData(name=str(child.name), datatype=str(child.type), 
+              ed = ElementDefData(name=str(child.name), type=str(child.type),
                                   table_name = self.__table_name( self.__name(next_parent_name, child.name) ) )
               ed.save()
               self.create_data_tables(child, next_parent_name )
@@ -63,7 +108,7 @@ class FormStorageProvider(object):
             if len(child.child_elements) > 0 :
                 local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=self.__name( next_parent_name, child.name ) )
             else:
-                local_fields = local_fields + child.name + " VARCHAR(100), "
+                local_fields = local_fields + child.name + " " + self.__get_db_type( child.type ) + ", "
                 local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_name=next_parent_name )
       return local_fields
 
@@ -81,15 +126,13 @@ class FormStorageProvider(object):
       print s
       if not field_values.values: return # move this up later
       cursor = connection.cursor()
-      cursor.execute(s)
+
+      try:
+          cursor.execute(s)
+      except DatabaseError:
+          return
+
       transaction.commit_unless_managed()
-    
-      """except DatabaseError: To be threadsafe, updates/inserts are allowed to fail silently
-      transaction.rollback()
-           return False
-             else:
-                 transaction.commit_unless_managed()
-                 return True"""
 
     def __populate_children_tables(self, data, elementdef, namespace, parent_name='' ):
       if data is None: return
@@ -97,44 +140,16 @@ class FormStorageProvider(object):
       local_fields = '';
       values = '';
       
-      """      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-                 local_fields = local_fields + elementdef.name + ", "
-                 values = values + "'" + data.text + "', "
-                 return {'fields':local_fields, 'values':values}
-        
-      """
-      
-      #if not elementdef.child_elements: return {'fields':local_fields, 'values':values}
-      """if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          elements = data.xpath(child.xpath, namespaces={'x':namespace})
-          for element in elements:
-              local_fields = local_fields + child.name + ", "
-              values = values + "'" + element.text + "', "
-          return {'fields':local_fields, 'values':values}"""
       for child in elementdef.child_elements:
         # put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
         if child.is_repeatable :
-
-            """ elements = data.xpath(child.xpath, namespaces={'x':namespace})
-            for element in elements:
-                self.populate_data_tables(element, child, namespace, next_parent_name ) 
-                                
-            """
-            # COME BACK TO SHI
-            # elements = data.xpath(child.xpath, namespaces={'x':namespace})
-            # for element in elements:
-
-
-            
-            #if child.child_elements :
             if len(child.child_elements)>0 :
                 self.populate_data_tables(data, child, namespace, next_parent_name )
             else:
                 elements = data.xpath(child.xpath, namespaces={'x':namespace})
                 for element in elements:
                     self.populate_data_tables(element, child, namespace, next_parent_name )
-
         else:
             if( len(child.child_elements)>0 ):
                 # get child iterator
@@ -146,8 +161,9 @@ class FormStorageProvider(object):
                 elements = data.xpath(child.xpath, namespaces={'x':namespace})
                 for element in elements:
                     local_fields = local_fields + child.name + ", "
-                    values = values + "'" + element.text + "', "
-      # ah, python, so cool... but is this bad form?
+                    values = values + self.__quote(child.type, element.text) + ", "
+      
+      # ah, python... but is this bad form?
       print local_fields
       print values
       return {'fields':local_fields, 'values':values}
@@ -170,3 +186,14 @@ class FormStorageProvider(object):
             start = len(name)-MAX_LENGTH
         return str(name[start:len(name)]).replace("/","_").replace(":","").replace(".","_").lower()
         
+    def __get_db_type(self, type):
+        if type.lower() in self.XSD_TO_DB_TYPES: 
+            return self.XSD_TO_DB_TYPES[type]
+        else: 
+            return self.XSD_TO_DB_TYPES['default']
+        
+    def __quote(self, type, text):
+        if type in self.DB_STRING_TYPES:
+            return "'" + text + "'"
+        else: 
+            return text

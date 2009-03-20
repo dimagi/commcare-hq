@@ -2,7 +2,7 @@ from django.db import models
 #import Group
 
 class ElementDefData(models.Model):
-    DATA_TYPE_CHOICES = (
+    TYPE_CHOICES = (
         ('string', 'string'),
         ('integer', 'integer'),
         ('int', 'int'),
@@ -31,7 +31,7 @@ class ElementDefData(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     table_name = models.CharField(max_length=255, unique=True)
-    datatype = models.CharField(max_length=20, choices=DATA_TYPE_CHOICES)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     parent = models.ForeignKey("self", null=True)
     # For now, store all allowable values/enum definitions in one table per form
     allowable_values_table = models.CharField(max_length=255, null=True)
@@ -55,3 +55,4 @@ class FormDefData(models.Model):
     
     def __unicode__(self):
         return self.form_name
+
