@@ -139,7 +139,7 @@ import logging
 logging.basicConfig(
     level = logging.DEBUG,
     format = '%(asctime)s %(levelname)s %(message)s',
-    filename = '/tmp/cchq.log',
+    filename = os.path.join(os.path.dirname(__file__),'cchq.log'),
     filemode = 'w'
 )
 
