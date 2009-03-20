@@ -9,7 +9,7 @@ urlpatterns = patterns('',
     # Example:
     # (r'^cchq_groups/', include('cchq_groups.foo.urls')),
     
-    (r'^i18n/$', include('django.conf.urls.il8n')),
+    (r'^i18n/$', include('django.conf.urls.i18n')),
     #(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {}),
     (r'^formreceiver/', include('submitlogger.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),

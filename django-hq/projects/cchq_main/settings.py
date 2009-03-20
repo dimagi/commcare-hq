@@ -100,17 +100,21 @@ current_path = os.path.dirname(__file__)
 sys.path.append(os.path.join(current_path,"../../apps"))
 sys.path.append(os.path.join(current_path,"../../libs"))
 
+
+
 INSTALLED_APPS = (
     'django.contrib.auth',    
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.admin',
+    'django.contrib.admin',    
     'django.contrib.admindocs',
+    'django_extensions',
+    
     'submitlogger',
     'modelrelationship',
     'xformmanager',
-    
+        
     #'registrationdata',
 )
 
@@ -128,11 +132,14 @@ LANGUAGES = (
 #  ('it', u'Italiano'),
 )
 
+XFORM_SUBMISSION_PATH = os.path.join(os.path.dirname(__file__),'xform-data')
+XSD_REPOSITORY_PATH = os.path.join(os.path.dirname(__file__),'schemas')
+
 import logging
 logging.basicConfig(
     level = logging.DEBUG,
     format = '%(asctime)s %(levelname)s %(message)s',
-    filename = 'cchq.log',
+    filename = '/tmp/cchq.log',
     filemode = 'w'
 )
 

@@ -104,18 +104,19 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
     print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))   
     
+    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
+    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'schemas'))    
      
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
+    print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))
-
+    print run(transport,'rm -rf /var/commcarehq-test')
+    
+    
     print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
-    
-    
-    
+        
     print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
-    
-    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py syncdb' % (target_abs_path,target_deploy_path))    
-    
+    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py syncdb;python manage.py graph_models -a -g -o media/fullgraph.png' % (target_abs_path,target_deploy_path))    
     print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
     
     
