@@ -39,13 +39,12 @@ class FormDefProviderFromXSD(FormDefProvider):
         #if( stream_pointer == null ) throw exception, if parent is None: 
         self.tree = etree.parse(stream_pointer)
 
-        schema = self.tree.getroot()
-        r = re.search('{[a-zA-Z0-9\.\/\:]*}', schema.tag)
+        root = self.tree.getroot()
+        r = re.search('{[a-zA-Z0-9\.\/\:]*}', root.tag)
         xmlns = r.group(0).strip('{').strip('}')
         self.formDef = FormDef(xmlns) # add date, time, etc. to creation later
 
-        root = schema[0]
-        self.__populateElementFields(self.formDef, root, '')
+        #self.__populateElementFields(self.formDef, root, '')
         self.formDef.xpath = ""
         self.__addAttributesAndChildElements(self.formDef, root, '')
         return self.formDef
