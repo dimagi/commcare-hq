@@ -51,7 +51,6 @@ class FormDefProviderFromXSD(FormDefProvider):
         return self.formDef
       
     def __addAttributesAndChildElements(self, element, input_tree, xpath):
-        print "1" + element.name + " xpath:" + xpath
         #self.__populateElementFields(element, input_tree, xpath)
         for input_node in etree.ElementChildIterator(input_tree):
             if input_node.tag.find("element") > -1 and (input_node.get('name').find('root') == -1 ):
