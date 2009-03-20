@@ -38,9 +38,9 @@ class ElementDef(object):
 class FormDef(ElementDef):
     """ Stores metadata about forms """
     
-    def __init__(self, xmlns):
-        self.xmlns = xmlns
-        ElementDef.__init__(self, xmlns)
+    def __init__(self, target_namespace):
+        self.target_namespace = target_namespace
+        ElementDef.__init__(self, target_namespace)
 
     #date_created
     #group_id

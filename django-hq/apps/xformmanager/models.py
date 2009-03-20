@@ -46,7 +46,7 @@ class ElementDefData(models.Model):
 class FormDefData(models.Model):
     id = models.AutoField(primary_key=True)
     form_name = models.CharField(max_length=255, unique=True)
-    xmlns = models.CharField(max_length=255, unique=True)
+    target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
     element = models.OneToOneField(ElementDefData)
     #group_id = models.ForeignKey(Group)

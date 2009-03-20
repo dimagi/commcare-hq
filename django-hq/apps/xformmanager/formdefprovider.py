@@ -40,9 +40,8 @@ class FormDefProviderFromXSD(FormDefProvider):
         self.tree = etree.parse(stream_pointer)
 
         root = self.tree.getroot()
-        r = re.search('{[a-zA-Z0-9\.\/\:]*}', root.tag)
-        xmlns = r.group(0).strip('{').strip('}')
-        self.formDef = FormDef(xmlns) # add date, time, etc. to creation later
+        target_namespace = root.get('targetNamespace')
+        self.formDef = FormDef(target_namespace) # add date, time, etc. to creation later
 
         #self.__populateElementFields(self.formDef, root, '')
         self.formDef.xpath = ""

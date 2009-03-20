@@ -61,14 +61,14 @@ class FormStorageProvider(object):
         pass
     
     def save_form_data(self, data, formdef):
-        self.populate_data_tables(data=data, elementdef=formdef, namespace=formdef.xmlns)
+        self.populate_data_tables(data=data, elementdef=formdef, namespace=formdef.target_namespace)
 
     def update_formdef_meta(self, formdef):
         """ save form metadata """
         ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
-                            table_name=self.__table_name(formdef.xmlns))
+                            table_name=self.__table_name(formdef.target_namespace))
         ed.save()
-        fdd = FormDefData(form_name=self.__table_name(formdef.name), xmlns=formdef.xmlns, element_id=ed.id)
+        fdd = FormDefData(form_name=self.__table_name(formdef.name), target_namespace=formdef.target_namespace, element_id=ed.id)
         fdd.save()
 
 

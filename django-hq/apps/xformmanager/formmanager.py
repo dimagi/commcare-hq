@@ -3,6 +3,8 @@
 from xformmanager.formdefprovider import * 
 from xformmanager.formstorageprovider import *
 
+
+
 class FormManager(object):
     """ This takes the formdef provided by formdef provider and passes it to FormStorageProvider.
     
@@ -24,8 +26,8 @@ class FormManager(object):
     def set_storage_provider(self, storage_provider):
         self.storage_provider = storage_provider
 
-    def add_formdef(self, stream_pointer):
-        self.formdef_provider.set_input(stream_pointer)
+    def add_formdef(self, stream):
+        self.formdef_provider.set_input(stream)
         formdef = self.formdef_provider.get_formdef()
         self.storage_provider.add_formdef(formdef)
         #self.registered_forms.append(formdef)
