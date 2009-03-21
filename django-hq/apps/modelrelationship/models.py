@@ -11,7 +11,8 @@ class EdgeType(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
-        verbose_name = _("Edge Type")
+        #verbose_name = _("Edge Type")
+        abstract=True
     
     def __unicode__(self):
         if self.directional:
@@ -31,7 +32,8 @@ class Edge(models.Model):
     child_object = generic.GenericForeignKey('child_type', 'child_id')    
     
     class Meta:
-        verbose_name = _("Edge")
+#        verbose_name = _("Edge")
+        abstract=True
    
     def __unicode__(self):
         return "(" + unicode(self.parent_object) + unicode(self.relationship) + unicode(self.child_object) + ")" 
