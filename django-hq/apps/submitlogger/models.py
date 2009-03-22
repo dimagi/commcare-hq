@@ -13,7 +13,7 @@ class SubmitLog(models.Model):
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
     raw_header = models.TextField(_('Raw Header'))    
-    raw_post = models.FilePathField(_('Raw Request Blob'),match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH)    
+    raw_post = models.FilePathField(_('Raw Request Blob'), match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH, max_length=255)    
         
     class Meta:
         ordering = ('-submit_time',)
