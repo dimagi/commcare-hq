@@ -111,4 +111,4 @@ class Attachment(models.Model):
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
     def __unicode__(self):
-        return "Attachment " + unicode(self.uri)
+        return "Attachment " + unicode(self.attachment_uri)
