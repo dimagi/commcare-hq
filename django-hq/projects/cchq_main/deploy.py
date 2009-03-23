@@ -117,7 +117,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))
-    #print run(transport,'rm -rf /var/commcarehq-test')
+    print run(transport,'rm -rf /var/django-sites/commcarehq-test')
     
     
     print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
