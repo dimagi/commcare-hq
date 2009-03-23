@@ -1,4 +1,5 @@
 from lxml import etree
+import logging
 
 class ElementData(object):
     """ This class holds xml instance data.
@@ -8,6 +9,8 @@ class ElementData(object):
     """    
     
     def __init__(self, stream_pointer):
+        logging.debug("ElementData: create form data object")
+        #put in checking to make sure this returns properly even when inputting bad data
         self.tree = etree.parse(stream_pointer)
         self.element = self.tree.getroot()
 
@@ -25,6 +28,9 @@ class ElementData(object):
     
     def next(self):
         self.element = self.iter.next()
+        return self.element
+    
+    def getroot(self):
         return self.element
     
 class FormData(ElementData):

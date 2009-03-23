@@ -2,6 +2,7 @@ from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.formdata import *
 from lxml import etree
+import logging
 
 #COME BACK LATER and sanitize all inputs to avoid database keywords
 # e.g. no 'where' columns, etc.
@@ -52,8 +53,9 @@ class FormStorageProvider(object):
     """ This class handles everything that touches the database - both form and instance data."""
 
     def add_formdef(self, formdef):
-        self.update_formdef_meta(formdef)
+        id = self.update_formdef_meta(formdef)
         self.create_data_tables(formdef)
+        return id
 
     def remove_formdef(self, name):
         # update formdef meta tables
@@ -61,6 +63,7 @@ class FormStorageProvider(object):
         pass
     
     def save_form_data(self, data, formdef):
+        logging.debug("StorageProvider: saving form data")
         self.populate_data_tables(data=data, elementdef=formdef, namespace=formdef.target_namespace)
 
     def update_formdef_meta(self, formdef):
@@ -68,8 +71,9 @@ class FormStorageProvider(object):
         ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
                             table_name=self.__table_name(formdef.target_namespace))
         ed.save()
-        fdd = FormDefData(form_name=self.__table_name(formdef.name), target_namespace=formdef.target_namespace, element_id=ed.id)
-        fdd.save()
+        return ed.id
+        #fdd = FormDefData(form_name=self.__table_name(formdef.name), target_namespace=formdef.target_namespace, element_id=ed.id)
+        #fdd.save()
 
 
 
@@ -117,13 +121,13 @@ class FormStorageProvider(object):
     def populate_data_tables(self, data, elementdef, namespace='', parent_name='' ):
       if data is None : return
       if not elementdef: return
-
+      
       field_values = self.__populate_children_tables(data=data, elementdef=elementdef, namespace=namespace, parent_name=parent_name )
-
+      
       # populate the tables
       s = "INSERT INTO " + self.__table_name( self.__name(parent_name, elementdef.name) ) + " (";
       s = s + self.__trim2chars(field_values['fields']) + ") VALUES( " + self.__trim2chars(field_values['values']) + ");"
-      print s
+      logging.debug(s)
       if not field_values.values: return # move this up later
       cursor = connection.cursor()
 
@@ -139,7 +143,8 @@ class FormStorageProvider(object):
       if not elementdef : return
       local_fields = '';
       values = '';
-      
+
+      logging.debug("Saving data")      
       for child in elementdef.child_elements:
         # put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)

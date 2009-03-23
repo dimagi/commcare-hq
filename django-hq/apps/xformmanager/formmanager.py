@@ -2,6 +2,7 @@
 #import ElementDef
 from xformmanager.formdefprovider import * 
 from xformmanager.formstorageprovider import *
+import logging
 
 
 
@@ -33,21 +34,32 @@ class FormManager(object):
         #self.registered_forms.append(formdef)
         self.registered_forms = formdef
         
-    #remove this function later
     def get_formdef(self):
         return self.registered_forms
       
+    def get_formdef(self, form_name):
+        return self.registered_forms
+      
+    def set_formdef(self, formdef):
+        self.registered_forms = formdef
+        return 
+
     # not supported yet!
     def delete_formdef(self, name):
         self.storage_provider.remove_formdef(formdef)
         #self.registered_forms.remove(name)
       
-    def save_form_data(self, stream_pointer):
+    def save_form_data(self, stream_pointer, formdef=''):
         #check whether this matches an existing xmlns else puke
+        logging.debug("Manager: create form data object")
         data = FormData(stream_pointer)
+
         #do something to match xml to xsd
         #self.storage_provider.save_form_data(data, self.registered_forms.pop())
-        self.storage_provider.save_form_data(data, self.registered_forms)
+        if formdef:
+            self.storage_provider.save_form_data(data, formdef)
+        else:
+            self.storage_provider.save_form_data(data, self.registered_forms)
         pass
     
     def delete_form_data(self, name):
