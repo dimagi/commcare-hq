@@ -1,0 +1,50 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Upload your xforms here{% endblock %}
+{% block content %}
+
+<div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
+    {% if form.message.errors %}
+        <ol>
+        {% for error in form.message.errors %}
+            <li><strong>{{ error|escape }}</strong></li>
+        {% endfor %}
+        </ol>
+    {% endif %}
+    {{ form.message }}
+</div>
+
+<div class="fieldWrapper{% if errors %} errors{% endif %}">
+    {% if errors %}
+            <li><strong>{{ errors|escape }}</strong></li>
+    {% endif %}
+</div>
+
+
+<h1>Register a New XForm</h1>
+<form action="" method="POST" enctype="multipart/form-data">
+{{ upload_form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+
+<h2>{% trans "Registered XForms" %}</h2>
+
+<strong>
+<ol>
+   {% for form in registered_forms %}   
+   <li>   
+   		<a href="{% url xformmanager.views.single_xform form.id %}">
+   			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
+   				Submit date: {{date_t}} - {{time_t}}
+   			{% endblocktrans %}</a>
+   			{% trans "From: " %} : {{form.submit_ip}}
+   			{% trans "Name: " %} : {{form.form_name}}
+   </li>
+   {% endfor %}
+
+</ol>
+</strong>
+
+
+{% endblock %}
+
