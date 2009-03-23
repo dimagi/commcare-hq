@@ -86,30 +86,6 @@ class ElementData(object):
         if first_part is '':
             return second_part
         return first_part + "_" + second_part
-
-""" Old CSV format. Just keeping this around for kicks
-    def toCSV(self):
-        self.id = 0
-        csv = "id, parent_id, name, value, attribute\n"
-        #csv = "id, parent_id, xpath, name, value, attribute\n"
-        id = self.__plusplus()
-        csv = csv + str(id) + ', ' + '0' + ', ' + str(self.element.tag) + ', ' + str(self.element.text) + '\n'
-        csv = csv + self.__get_csv( etree.ElementChildIterator( self.element ), id )
-        return csv
-
-    def __get_csv( self, children_iterator, parent_id ):
-        csv = ''
-        for element in children_iterator.next():
-            id = self.__plusplus()
-            csv = csv + id + ', ' + parent_id + ', ' + str(element.tag) + ', ' + str(element.text) + '\n'
-            csv = csv + self.__get_csv(  etree.ElementChildIterator( element ), id )
-            #csv = id + ', ' + parent_id + ', ' + element.xpath + ', ' + element.tag + ', ' + element.text + '\n'
-        return csv
-        
-    def __plusplus(self):
-        self.id = self.id + 1
-        return self.id
-"""
     
 class FormData(ElementData):
     """ This class holds xml instance data (presumably representing an xsd form schema) """
