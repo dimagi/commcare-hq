@@ -23,6 +23,7 @@ import traceback
 import sys
 import os
 import string
+import submitprocessor
 
 
 #@login_required()
@@ -42,46 +43,17 @@ def single_submission(request, submit_id, template_name="submitlog_single_submis
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
     processed_header = eval(rawstring)
-    context ['processed_header'] = processed_header
-    
+    context ['processed_header'] = processed_header    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-@transaction.commit_on_success
 def raw_submit(request, template_name="submitlog_submit.html"):
     context = {}            
     logging.debug("begin raw_submit()")
     if request.method == 'POST':
-        logging.debug("It's a post!")
-        transaction = str(uuid.uuid1())
-        new_submit = SubmitLog()
-        new_submit.transaction_uuid = transaction
-        logging.debug("Get remote addr")
-        new_submit.submit_ip = request.META['REMOTE_ADDR']
-        new_submit.raw_header = repr(request.META)
-        logging.debug("compute checksum")
-        new_submit.checksum = hashlib.md5(request.raw_post_data).hexdigest()
-        logging.debug("Get bytes")
-        #new_submit.bytes_received = int(request.META['HTTP_CONTENT_LENGTH'])
-        new_submit.bytes_received = len(request.raw_post_data)
-        
-        try:            
-            newfilename = os.path.join(settings.XFORM_SUBMISSION_PATH,transaction + '.postdata')
-            logging.debug("try to write file")
-            fout = open(newfilename, 'w')
-            fout.write(request.raw_post_data)
-            fout.close()
-            logging.debug("write successful")
-            new_submit.raw_post = newfilename
-        except:
-            logging.error("Unable to write raw post data")
-            logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))
-            logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
-            template_name="submitlog_submit_failed.html"
-            return render_to_response(template_name, context, context_instance=RequestContext(request))
-            
-        logging.debug("try to write model")        
-        new_submit.save()
-        logging.debug("save to db successful")
-        context['transaction_id'] = transaction    
-        template_name="submitlog_submit_complete.html"             
+        transaction = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+        if transaction == '[error]':
+            template_name="submitlog_submit_failed.html"            
+        else:
+            context['transaction_id'] = transaction
+            template_name="submitlog_submit_complete.html"                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
