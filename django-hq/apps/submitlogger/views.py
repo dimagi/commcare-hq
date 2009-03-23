@@ -15,7 +15,7 @@ import uuid
 from models import *
 from django.contrib.auth.models import User 
 
-from forms import *
+#from forms import *
 import logging
 import hashlib
 import settings
@@ -43,7 +43,10 @@ def single_submission(request, submit_id, template_name="submitlog_single_submis
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
     processed_header = eval(rawstring)
-    context ['processed_header'] = processed_header    
+    
+    attachments = Attachment.objects.all().filter(submission=slog[0])
+    context ['processed_header'] = processed_header
+    context['attachments'] = attachments
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def raw_submit(request, template_name="submitlog_submit.html"):

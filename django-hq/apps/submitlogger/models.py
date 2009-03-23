@@ -50,8 +50,7 @@ class SubmitLog(models.Model):
         And write to file and make new Attachment entries linked back to this SubmitLog"""
         fin = open(self.raw_post,'rb')
         body = fin.read()        
-        fin.close()
-        #print body[0:500]
+        fin.close()        
         try:
             parsed_message = email.message_from_string(body)   
             
@@ -59,7 +58,7 @@ class SubmitLog(models.Model):
                print "CONTENT-TYPE: " + str(part.get_content_type())     
                if part.get_content_type() == 'multipart/mixed':
                    #it's a multipart message, oh yeah
-                   print "multipart: "
+                   logging.debug("Multipart part")
                    #print part['Content-ID']
                    #continue
                else:                   
@@ -70,7 +69,7 @@ class SubmitLog(models.Model):
                        new_attach.attachment_uri = 'xform'
                        filename='-xform.xml'
                    else:
-                       print 'not xml: ' + part['Content-ID'] 
+                       logging.debug("non XML section: " + part['Content-ID'])
                        new_attach.attachment_uri = part['Content-ID']
                        filename='-%s' % os.path.basename(new_attach.attachment_uri)
                        
@@ -82,25 +81,27 @@ class SubmitLog(models.Model):
                    fout.close() 
                    new_attach.filepath = os.path.join(settings.ATTACHMENTS_PATH,self.transaction_uuid + filename)
                    new_attach.save()                
-                   print "save complete"  
-                   #json = serializers.serialize('json',[new_attach])
-                   #print json 
+                   logging.debug("Attachment Save complete")                    
         except:
             logging.error("error parsing attachments") 
-            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
-            print "error parsing attachments: Exception: " + str(sys.exc_info()[0])
+            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))            
             logging.error("error parsing attachments: Traceback: " + str(sys.exc_info()[1]))
-            print "error parsing attachments: Traceback: " + str(sys.exc_info()[1])
+            
 
     
     
 class Attachment(models.Model):
     submission = models.ForeignKey(SubmitLog)
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
-    attachent_uri = models.CharField(_('File attachment URI'),max_length=255)
+    attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
     filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.XFORM_SUBMISSION_PATH,max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     checksum = models.CharField(_('Attachment MD5 Checksum'),max_length=32)
+    
+    def get_media_url(self):
+        basename = os.path.basename(self.filepath)
+        return settings.MEDIA_URL + "attachment/" + basename
+
     
     def delete(self, **kwargs):       
         os.remove(self.filepath)        
