@@ -133,15 +133,25 @@ LANGUAGES = (
 #  ('it', u'Italiano'),
 )
 
+
 XFORM_SUBMISSION_PATH = os.path.join(os.path.dirname(__file__),'xform-data')
 XSD_REPOSITORY_PATH = os.path.join(os.path.dirname(__file__),'schemas')
+ATTACHMENTS_PATH = os.path.join(MEDIA_ROOT,'attachment')
+if not os.path.exists(ATTACHMENTS_PATH):
+    os.mkdir(ATTACHMENTS_PATH)
+
+if not os.path.exists(XFORM_SUBMISSION_PATH):
+    os.mkdir(XFORM_SUBMISSION_PATH)
+                     
+if not os.path.exists(XSD_REPOSITORY_PATH):
+    os.mkdir(XSD_REPOSITORY_PATH) 
 
 import logging
 logging.basicConfig(
     level = logging.DEBUG,
     format = '%(asctime)s %(levelname)s %(message)s',
     filename = os.path.join(os.path.dirname(__file__),'cchq.log'),
-    filemode = 'w'
+    filemode = 'w+'
 )
 
 #COMMCARE VARS EXAMPLE, will be appended at the end.

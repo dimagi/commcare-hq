@@ -87,6 +87,9 @@
 			<fileset dir="${project.dir}">
 				<include name="**/*"/>
 			</fileset>
+			<fileset dir="${apps.dir}">
+				<include name="**/*"/>
+			</fileset>
 		</py-doc>
 	</target>	
 	
