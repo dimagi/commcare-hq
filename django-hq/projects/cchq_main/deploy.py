@@ -97,6 +97,8 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print "sftp file transferred, remoting in to deploy archive"    
     
     #print run(transport, 'cd %s' %(target_abs_path))
+    print run(transport,'sudo /etc/init.d/apache2 stop')
+    
     print run(transport, 'rm -rf %s/%s' % (target_abs_path,target_deploy_path)) 
     print run(transport,'gunzip %s/%s' % (target_abs_path+"/builds",basename))
     print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
@@ -116,9 +118,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
      
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
-    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))
-    print run(transport,'rm -rf /var/django-sites/commcarehq-test')
-    
+    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))    
     
     print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
         
@@ -127,7 +127,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
     
     
-    print run(transport,'sudo /etc/init.d/apache2 restart')
+    print run(transport,'sudo /etc/init.d/apache2 start')
     try:
         transport.close()
     except:
