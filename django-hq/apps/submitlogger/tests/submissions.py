@@ -15,11 +15,11 @@ class ProcessingTestCase(unittest.TestCase):
             submit.delete()
         
         
-        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
-        self.assertEquals(0,len(submits))
-        
-        attaches = os.listdir(settings.ATTACHMENTS_PATH)
-        self.assertEquals(0,len(attaches))
+#        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
+#        self.assertEquals(0,len(submits))
+#        
+#        attaches = os.listdir(settings.ATTACHMENTS_PATH)
+#        self.assertEquals(0,len(attaches))
     
     def _makeNewEntry(self,headerfile, bodyfile):
         newsubmit = SubmitLog()
@@ -85,14 +85,14 @@ class ProcessingTestCase(unittest.TestCase):
 #        for attach in attaches:
 #            attach.delete()
         
-        allsubmits = SubmitLog.objects.all()
-        for submit in allsubmits:
-            submit.delete()
+#        allsubmits = SubmitLog.objects.all()
+#        for submit in allsubmits:
+#            submit.delete()
+#        
         
-        
-        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
-        self.assertEquals(0,len(submits))        
-        attaches = os.listdir(settings.ATTACHMENTS_PATH)
-        self.assertEquals(0,len(attaches))
+#        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
+#        self.assertEquals(0,len(submits))        
+#        attaches = os.listdir(settings.ATTACHMENTS_PATH)
+#        self.assertEquals(0,len(attaches))
         
        

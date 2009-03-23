@@ -6,6 +6,8 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.5</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/commcare-hq-full/apps</path>
-<path>/commcare-hq-full/projects/cchq_groups</path>
+<path>/commcare-hq-full/libs</path>
+<path>/commcare-hq-full/projects/cchq_main</path>
+<path>/commcare-hq-full/projects</path>
 </pydev_pathproperty>
 </pydev_project>
