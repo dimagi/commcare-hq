@@ -65,7 +65,7 @@ class SubmitLog(models.Model):
                    new_attach= Attachment()
                    new_attach.submission = self
                    new_attach.attachment_content_type=part.get_content_type()
-                   if part.get_content_type() == 'text/xml':                       
+                   if part.get_content_type().startswith('text/'):                       
                        new_attach.attachment_uri = 'xform'
                        filename='-xform.xml'
                    else:
@@ -112,3 +112,19 @@ class Attachment(models.Model):
         verbose_name = _("Submission Attachment")        
     def __unicode__(self):
         return "Attachment " + unicode(self.attachment_uri)
+    
+    
+    
+
+
+#signals baby!
+
+from django.db.models.signals import post_save
+def attachment_postsave_handler(sender, **kwargs):
+    print "saved attachment!!!"
+    print sender
+    print sender.submission
+    print sender.attachment_uri
+    
+    
+post_save.connect(attachment_postsave_handler, sender=Attachment)
