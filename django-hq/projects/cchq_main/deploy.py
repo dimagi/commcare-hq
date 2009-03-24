@@ -113,8 +113,8 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (build_number,basedir))
     print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (revision_number,basedir))
     
-    print run(transport,'rm -rf * %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
-    print run(transport,'rm -rf * %s/projects/cchq_main/%s' % (basedir, 'media'))
+    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
+    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'media'))
     
     print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
     print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'media'))
