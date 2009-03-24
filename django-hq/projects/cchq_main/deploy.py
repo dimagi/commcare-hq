@@ -68,9 +68,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     
     #make the archive    
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    os.rmdir('xform-data')
-    os.rmdir('media')
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
     
     basedir = os.path.basename(os.path.abspath('../../'))    
