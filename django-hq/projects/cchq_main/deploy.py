@@ -37,7 +37,7 @@ def run(t, cmd):
 
     if debug: print 'DEBUG: Running cmd:', cmd
     chan = t.open_session()
-    
+    chan.setblocking(1)
     #chan.setblosesscking(0)
 
     try:
@@ -102,10 +102,10 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport, 'rm -rf %s/%s' % (target_abs_path,target_deploy_path)) 
     print run(transport,'gunzip %s/%s' % (target_abs_path+"/builds",basename))
     print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
-    
-    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
-    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
-    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))
+
+#    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
+#    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
+#    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))
     
     print run(transport,'touch %s/projects/cchq_main/media/version.txt' % (basedir))
     print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/media/version.txt' % (basedir))
@@ -114,7 +114,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     
     print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
-    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'schemas'))    
+    #lsprint run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'schemas'))    
      
     print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
     print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
@@ -123,7 +123,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
         
     print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
-    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py syncdb;python manage.py graph_models -a -g -o media/fullgraph.png' % (target_abs_path,target_deploy_path))    
+    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py reset_db --nopinput;python manage.py syncdb --noinput;python manage.py graph_models -a -g -o media/fullgraph.png' % (target_abs_path,target_deploy_path))    
     print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
     
     
