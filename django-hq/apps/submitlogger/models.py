@@ -122,9 +122,9 @@ class Attachment(models.Model):
 from django.db.models.signals import post_save
 def attachment_postsave_handler(sender, **kwargs):
     print "saved attachment!!!"
-    print sender
-    print sender.submission
-    print sender.attachment_uri
+#    print sender #bad bad bad!
+#    print sender.submission
+#    print sender.attachment_uri
     
     
 post_save.connect(attachment_postsave_handler, sender=Attachment)
