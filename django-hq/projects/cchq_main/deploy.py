@@ -96,10 +96,10 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     transport.connect(username=username, password=password)
     
     print "starting sftp session"
-#    sftp = paramiko.SFTPClient.from_transport(transport)
-#    basename = os.path.basename(archive_to_deploy)
-#    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
-#    sftp.close()
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    basename = os.path.basename(archive_to_deploy)
+    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
+    sftp.close()
     
     print "sftp file transferred, remoting in to deploy archive"    
     
