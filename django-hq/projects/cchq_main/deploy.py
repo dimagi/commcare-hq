@@ -15,6 +15,7 @@ import gzip
 
 import sys, os, select
 import paramiko
+import socket
 
 debug = True
 
@@ -48,13 +49,19 @@ def run(t, cmd):
     
 
     ### Read when data is available
-#    while select.select([chan,], [], []):
-#        x = chan.recv(1024)
-#        if not x: break
-#        out += x
-#        select.select([],[],[],.1)
-#
-#    if debug: print 'DEBUG: cmd results:', out
+    while True:
+        r,w,e = select.select([chan,], [], [])
+        if chan in r:
+            try:
+                x = chan.recv(1024)
+                if len(x) == 0:
+                    print "EOF"
+                    break;
+                out += x
+            except socket.timeout:
+                pass
+
+    if debug: print 'DEBUG: cmd results:', out
     chan.close()
     return out
 
@@ -89,49 +96,51 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     transport.connect(username=username, password=password)
     
     print "starting sftp session"
-    sftp = paramiko.SFTPClient.from_transport(transport)
-    basename = os.path.basename(archive_to_deploy)
-    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
-    sftp.close()
+#    sftp = paramiko.SFTPClient.from_transport(transport)
+#    basename = os.path.basename(archive_to_deploy)
+#    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
+#    sftp.close()
     
     print "sftp file transferred, remoting in to deploy archive"    
     
-    #print run(transport, 'cd %s' %(target_abs_path))
-    print run(transport,'sudo /etc/init.d/apache2 stop')
+    print run(transport,'/var/django-sites/builds/deploy.sh  deploy-b%s-rev%s %s commcarehq-test' % (build_number, revision_number,basedir))
     
-    print run(transport, 'rm -rf %s/%s' % (target_abs_path,target_deploy_path)) 
-    print run(transport,'gunzip %s/%s' % (target_abs_path+"/builds",basename))
-    print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
-
-#    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
-#    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
-#    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))
-    
-    
-    print run(transport,'touch %s/projects/cchq_main/media/version.txt' % (basedir))
-    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/media/version.txt' % (basedir))
-    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (build_number,basedir))
-    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (revision_number,basedir))
-    
-    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
-    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'media'))
-    
-    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
-    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'media'))
-    #print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'schemas'))    
-     
-    print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
-    print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
-    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))    
-    
-    print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
-        
-    print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
-    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py reset_db --noinput;python manage.py syncdb --noinput;python manage.py graph_models -a -g -o media/fullgraph.png' % (target_abs_path,target_deploy_path))    
-    print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
-    
-    
-    print run(transport,'sudo /etc/init.d/apache2 start')
+#    #print run(transport, 'cd %s' %(target_abs_path))
+#    print run(transport,'sudo /etc/init.d/apache2 stop')
+#    
+#    print run(transport, 'rm -rf %s/%s' % (target_abs_path,target_deploy_path)) 
+#    print run(transport,'gunzip %s/%s' % (target_abs_path+"/builds",basename))
+#    print run(transport,'tar -xf %s/%s' % (target_abs_path+"/builds",basename[0:-3]))    
+#
+##    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/settings.py' % (basedir))
+##    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (build_number,basedir))
+##    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/settings.py' % (revision_number,basedir))
+#    
+#    
+#    print run(transport,'touch %s/projects/cchq_main/media/version.txt' % (basedir))
+#    print run(transport,'echo CCHQ_BUILD_DATE=\\"`date`\\" >> %s/projects/cchq_main/media/version.txt' % (basedir))
+#    print run(transport,'echo CCHQ_BUILD_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (build_number,basedir))
+#    print run(transport,'echo CCHQ_REVISION_NUMBER=%s >> %s/projects/cchq_main/media/version.txt' % (revision_number,basedir))
+#    
+#    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
+#    print run(transport,'rm -rf %s/projects/cchq_main/%s' % (basedir, 'media'))
+#    
+#    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'xform-data'))
+#    print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'media'))
+#    #print run(transport,'mkdir %s/projects/cchq_main/%s' % (basedir, 'schemas'))    
+#     
+#    print run(transport,'chmod 777 %s/projects/cchq_main/' % (basedir))
+#    print run(transport,'chmod -R 777 %s/projects/cchq_main/' % (basedir))
+#    print run(transport,'chmod 777 %s/projects/cchq_main/cchq.db' % (basedir))    
+#    
+#    print run(transport,'ln -s /usr/lib/python2.5/site-packages/django/contrib/admin/media/ %s' % (basedir + "/projects/cchq_main/media/admin-media"))
+#        
+#    print run(transport,'mv %s %s/%s' % (basedir,target_abs_path,target_deploy_path))
+#    print run(transport,'cd %s/%s/projects/cchq_main;python manage.py reset_db --noinput;python manage.py syncdb --noinput;python manage.py graph_models -a -g -o media/fullgraph.png' % (target_abs_path,target_deploy_path))    
+#    print run(transport,'gzip %s' % (target_abs_path+"/builds/"+basename[0:-3]))
+#    
+#    
+#    print run(transport,'sudo /etc/init.d/apache2 start')
     try:
         transport.close()
     except:
