@@ -7,7 +7,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Example:
-    # (r'^cchq_groups/', include('cchq_groups.foo.urls')),
+    (r'^$', 'views.homepage'),
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout_then_login'),
     
@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     (r'^formreceiver/', include('submitlogger.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
+    
     
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
