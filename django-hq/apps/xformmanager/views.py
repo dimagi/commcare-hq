@@ -21,13 +21,15 @@ from StringIO import StringIO
 from submitlogger.models import Attachment
 from django.db.models.signals import post_save
 
-# Register to receive signals from submitlogger
-post_save.connect(process, sender=Attachment)
 
 def process(sender, **kwargs): #get sender, instance, created
     xml_file_name = kwargs["instance"].filepath
     su = StorageUtility()
     su.save_form_data(xml_file_name)
+    
+# Register to receive signals from submitlogger
+post_save.connect(process, sender=Attachment)
+
     
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
