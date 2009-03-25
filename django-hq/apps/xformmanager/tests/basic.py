@@ -1,6 +1,10 @@
+from django.db import connection, transaction, DatabaseError
+from xformmanager.xformdata import * 
+from xformmanager.xformdef import *
+from xformmanager.storageutility import *
+
+from datetime import datetime
 import unittest
-from xformmanager.formdefprovider import * 
-from xformmanager.formmanager import FormManager
 import os
 
 class BasicTestCase(unittest.TestCase):
@@ -9,32 +13,92 @@ class BasicTestCase(unittest.TestCase):
 
     def testCreateFormDef(self):
         """ Test that form definitions are created correctly """
-        
-        # ro -I'll put this back in once we've standardized on a good input file
-        """f = open(os.path.join(os.path.dirname(__file__),"xsd_basic.in"),"r")
-	provider = FormDefProviderFromXSD(f)
-        formDef = provider.get_formdef()
-        print formDef.tostring()
-	# see if output looks right
-        f.close()
-        """
-        pass
+        self.__create_formdef("1_xsd_basic.in")
 
-    def testSaveFormData(self):
-        """ Test that a basic form definition can be created and basic form data saved """
+    def testSaveFormData_1(self):
+        """ Test basic form definition created and data saved """
+        self.__create_xsd_and_populate("1_xsd_basic.in", "1_xml_basic.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_basic")
+        row = cursor.fetchone()
+        self.assertEquals(row[0],1)
+        self.assertEquals(row[1],"userid0")
+        self.assertEquals(row[2],"deviceid0")
+        self.assertEquals(row[3],"starttime")
+        self.assertEquals(row[4],"endtime")
         
-        """ ro- I'll put this back in once we've standardized on a good input file
+    def testSaveFormData_2(self):
+        """ Test basic form definition created and data saved """
+        self.__create_xsd_and_populate("2_xsd_types.in", "2_xml_types.in")
+        cursor = connection.cursor()
+        cursor.execute("DESCRIBE xml_types")
+        row = cursor.fetchall()
+        self.assertEquals(row[1][1],"varchar(255)")
+        self.assertEquals(row[2][1],"int(11)")
+        self.assertEquals(row[3][1],"int(11)")
+        self.assertEquals(row[4][1],"decimal(5,2)")
+        self.assertEquals(row[5][1],"date")
+        self.assertEquals(row[6][1],"double")
+        self.assertEquals(row[7][1],"varchar(255)")
+    
+    def testSaveFormData_3(self):
+        """ Test basic form definition created and data saved """
+        self.__create_xsd_and_populate("3_xsd_deep.in", "3_xml_deep.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_deep")
+        row = cursor.fetchone()
+        self.assertEquals(row[1],"userid0")
+        self.assertEquals(row[2],"abc")
+        self.assertEquals(row[3],"xyz")
+        self.assertEquals(row[4],222)
+        self.assertEquals(row[5],"otherchild1")
+
+        
+        # self.__create_xsd_and_populate("3_xsd_deep.in", "1_xml_deep.in")
+        # self.__create_xsd_and_populate("4_xsd_singlerepeat.in", "1_xml_singlerepeat.in")
+        # self.__create_xsd_and_populate("5_xsd_nestedrepeats.in", "1_xml_nestedrepeats.in")
+
+    """ def testSaveData(self):
+        # Test basic form definition created and data saved
+        self.__populate("1_xsd_basic.in", "1_xml_basic.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_basic")
+        row = cursor.fetchone()
+        self.assertEquals(row[0],1)
+        self.assertEquals(row['UserID'],"userid0")
+        self.assertEquals(row['DevicID'],"deviceid0")
+        self.assertEquals(row['TimeStartRecorded'],"starttime")
+        self.assertEquals(row['TimeEndRecorded'],"endtime")
+    """
+
+    def __create_formdef(self, xsd_file_name):
         # Create a new form definition
-        f = open(os.path.join(os.path.dirname(__file__),"xsd_basic.in"),"r")
-        manager = FormManager()
-        manager.add_formdef(f)
+        f = open( os.path.join(os.path.dirname(__file__),xsd_file_name),"r" )
+        formDef = FormDef(f)
+        print formDef.tostring()
+        # see if output looks right
         f.close()
-
-        # and input one xml instance
-        f = open(os.path.join(os.path.dirname(__file__),"xml_basic.in"),"r")
-        manager.save_form_data(f)
-	    # make sure tables are created the way you'd like
-        f.close()
-        """
         pass
-
+    
+    def __create_xsd_and_populate(self, xsd_file_name, xml_file_name):
+        # Create a new form definition
+        su = StorageUtility()
+        
+        f = open(os.path.join(os.path.dirname(__file__),xsd_file_name),"r")
+        formDef = FormDef(f)
+        su.add_formdef(formDef)
+        f.close()
+        
+        # and input one xml instance
+        f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
+        su.save_form_data_matching_formdef(f, formDef)
+        # make sure tables are created the way you'd like
+        f.close()
+        
+    """def __populate(self, xml_file_name):
+        # and input one xml instance
+        f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
+        manager.save_form_data(f)
+        # make sure tables are created the way you'd like
+        f.close()
+    """

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="xml_deep">
+	<UserID>userid0</UserID>
+	<DeviceID>
+		<grandchild>
+			<greatgrandchild> great_grand1 </greatgrandchild>
+			<greatgrandchild> great_grand2 </greatgrandchild>
+		</grandchild>
+	</DeviceID>
+	<TimeStartRecorded>222</TimeStartRecorded>
+	<TimeEndRecorded>
+		<otherchild> otherchild1 </otherchild>
+	</TimeEndRecorded>
+	<Date>2002-09-24</Date>
+</root>
+

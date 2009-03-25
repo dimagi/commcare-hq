@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xml_nestedrepeats" xmlns="http://www.w3.org/2001/XMLSchema">
+     <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+                        <element name="Meta" minOccurs="0" maxOccurs="3">
+                              <complexType>
+                                    <sequence>
+                                          <element name="UserID" minOccurs="0" type="string"  maxOccurs="3"/>
+                                          <element name="DeviceID" minOccurs="0" type="string" />
+										  <element name="TimeStartRecorded" minOccurs="0" type="dateTime">
+										  </element>
+                                          <element name="TimeEndRecorded" minOccurs="0" type="dateTime" />
+                                    </sequence>
+                              </complexType>
+                        </element>
+                        <element name="LocFSSCother" minOccurs="0" type="string" />
+                        <element name="LocLPSCother" minOccurs="0" type="string" />
+                        <element name="LocMPSCother" minOccurs="0" type="string" />
+                        <element name="LocNCSCother" minOccurs="0" type="string" />
+                  </sequence>
+            </complexType>
+      </element>
+</schema>
+

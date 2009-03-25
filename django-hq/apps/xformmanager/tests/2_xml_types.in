@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="xml_types">
+	<UserID>userid0</UserID>
+	<DeviceID>111</DeviceID>
+	<TimeStartRecorded>222</TimeStartRecorded>
+	<TimeEndRecorded>3.2</TimeEndRecorded>
+	<Date>2002-09-24</Date>
+	<Prov>2002.09</Prov>
+	<Whereother>2007-12-31 23:59:59.999999</Whereother>
+</root>
+

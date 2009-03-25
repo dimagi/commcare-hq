@@ -5,11 +5,11 @@ from django.db import transaction
 import uuid
 import hashlib
 
-from xformmanager.formmanager import FormManager
 from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefData
-from xformmanager.formdefprovider import * 
-from xformmanager.formstorageprovider import *
+from xformmanager.xformdef import * 
+from xformmanager.xformdata import *
+from xformmanager.storageutility import * 
 import settings, os, sys
 import logging
 
@@ -18,28 +18,16 @@ from lxml import etree
 
 from StringIO import StringIO
 
-def process(xml_file_name):
-    logging.debug("Getting data from xml file at " + xml_file_name)
-    f = open(xml_file_name, "r")
-    xsd_form_name = __get_xmlns(f)
-    logging.debug("Form name is" + xsd_form_name)
-    xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
-    xsd_file_name = str(xsd[0].raw_post)
-    f.close()
-    
-    logging.debug("Opening xsd file: " + xsd_file_name )
-    g = open( xsd_file_name ,"r")
-    formdef = FormDefProviderFromXSD(g).get_formdef()
-    g.close()
-    
-    logging.debug("Saving form data from file: " + xml_file_name)
-    # use seek() instead of closing/opening file again
-    f = open(xml_file_name, "r")
-    manager = FormManager()
-    manager.save_form_data(f, formdef)
-    f.close()
-    logging.debug("Form data successfully saved")
-    return
+from submitlogger.models import Attachment
+from django.db.models.signals import post_save
+
+# Register to receive signals from submitlogger
+post_save.connect(process, sender=Attachment)
+
+def process(sender, **kwargs): #get sender, instance, created
+    xml_file_name = kwargs["instance"].filepath
+    su = StorageUtility()
+    su.save_form_data(xml_file_name)
     
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
@@ -48,7 +36,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
         if form.is_valid():
             transaction = str(uuid.uuid1())
             try:
-                logging.debug("file name is " + transaction)                
+                logging.debug("temporary file name is " + transaction)                
                 new_file_name = __file_name(transaction)
                 logging.debug("try to write file")
                 fout = open(new_file_name, 'w')
@@ -75,7 +63,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fdd.form_name = formdef.name
                 fdd.target_namespace = formdef.target_namespace
                 fdd.element_id = element_id
-                fdd.raw_post = new_file_name
+                fdd.xsd_file_location = new_file_name
                 fdd.save() 
                 
                 logging.debug("xform registered")

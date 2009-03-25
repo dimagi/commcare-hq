@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="xml_nestedrepeats">
+	<Meta>
+	  <UserID>userid0</UserID>
+	  <UserID>userid1</UserID>
+	  <UserID>userid2</UserID>
+	  <DeviceID>deviceid0</DeviceID>
+	  <TimeStartRecorded>starttime</TimeStartRecorded>
+	  <TimeEndRecorded>endtime</TimeEndRecorded>
+	</Meta>
+	<Meta>
+	  <UserID>userid2_0</UserID>
+	  <UserID>userid2_1</UserID>
+	  <UserID>userid2_2</UserID>
+	  <DeviceID>deviceid2_0</DeviceID>
+	  <TimeStartRecorded>starttime_2</TimeStartRecorded>
+	  <TimeEndRecorded>endtime_2</TimeEndRecorded>
+	</Meta>
+    <LocFSSCother>deviceid0</LocFSSCother>
+    <LocLPSCother>deviceid1</LocLPSCother>
+    <LocMPSCother>deviceid2</LocMPSCother>
+</root>
+
