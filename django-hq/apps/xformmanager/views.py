@@ -54,10 +54,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 element_id = storage_provider.add_formdef(formdef)
                 
                 fdd = FormDefData()
-                fdd.transaction_uuid = transaction
                 fdd.submit_ip = request.META['REMOTE_ADDR']
-                fdd.raw_header = repr(request.META)
-                fdd.checksum = hashlib.md5(request.raw_post_data).hexdigest()
                 fdd.bytes_received =  request.FILES['file'].size
                 
                 fdd.form_name = formdef.name
@@ -80,10 +77,6 @@ def single_xform(request, submit_id, template_name="single_xform.html"):
     context = {}        
     xform = FormDefData.objects.all().filter(id=submit_id)
     context['xform_item'] = xform[0]
-    rawstring = str(xform[0].raw_header)
-    rawstring = rawstring.replace(': <',': "<')
-    rawstring = rawstring.replace('>,','>",')
-    processed_header = eval(rawstring)
     return render_to_response(template_name, context, context_instance=RequestContext(request))
     #return HttpResponse("YES")
 
@@ -93,7 +86,6 @@ def __file_name(name):
 #temporary measure to get target form
 #decide later whether this is better, or should we know from the url?
 def __get_xmlns(stream):
-    #skip junk line
     tree = etree.parse(stream)
     root = tree.getroot()
     r = re.search('{[a-zA-Z0-9\.\/\:]*}', root.tag)

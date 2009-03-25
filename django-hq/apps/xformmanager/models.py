@@ -53,13 +53,12 @@ class FormDefData(models.Model):
     
     #These fields are inherited directly from SubmitLog, but let's keep the xsd and xml databases separate
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
-    transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
     submit_ip = models.IPAddressField(_('Submitting IP Address'))
-    checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
-    raw_header = models.TextField(_('Raw Header'))    
-    raw_post = models.FilePathField(_('Raw XSD'), match='.*\.postdata$', path=settings.XSD_REPOSITORY_PATH, max_length=255)    
+
+    # META fields
     
+    xsd_file_location = models.FilePathField(_('Raw XSD'), match='.*\.postdata$', path=settings.XSD_REPOSITORY_PATH, max_length=255)
     form_name = models.CharField(max_length=255, unique=True)
     target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
