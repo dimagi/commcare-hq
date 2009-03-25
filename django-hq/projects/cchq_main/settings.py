@@ -13,8 +13,8 @@ COMMCARE_THEME = 'default'
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'cchq'           # Or path to database file if using sqlite3.
+DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -46,6 +46,12 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__),'media')
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = 'http://test.commcarehq.org/media/'
+
+#for local testing with localmediaserver.py
+#import socket
+#MEDIA_HOSTADDR = socket.gethostbyname(socket.gethostname())
+#MEDIA_HOST= MEDIA_HOSTADDR + ":" + str(8090)
+#MEDIA_URL = 'http://' + MEDIA_HOST + '/media/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -113,7 +119,7 @@ INSTALLED_APPS = (
     'django_extensions',
     
     'submitlogger',
-    #'modelrelationship',
+    'modelrelationship',
     'xformmanager',
     'monitorregistry',
     'organization',        
@@ -148,7 +154,7 @@ if not os.path.exists(XSD_REPOSITORY_PATH):
 
 import logging
 logging.basicConfig(
-    level = logging.DEBUG,
+    level = 0,
     format = '%(asctime)s %(levelname)s %(message)s',
     filename = os.path.join(os.path.dirname(__file__),'cchq.log'),
     filemode = 'w+'
