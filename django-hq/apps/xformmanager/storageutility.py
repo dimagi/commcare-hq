@@ -2,6 +2,7 @@ from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.xformdata import *
 from lxml import etree
+import settings
 import logging
 import re
 
@@ -112,8 +113,11 @@ class StorageUtility(object):
         table_name = self.__table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
         #this is obviously quite dangerous, so makre sure to roll back on fail
-        s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
-        # SQLITE s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
+        s = ''
+        if settings.DATABASE_ENGINE=='mysql' :
+            s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
+        else: 
+            s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
         logging.debug(s)
         cursor.execute(s)
 
@@ -128,13 +132,15 @@ class StorageUtility(object):
               s = "ALTER TABLE "+ table_name + str(field)
               logging.debug(s)
               cursor.execute(s)
-        s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
-        cursor.execute(s)
         
         if parent_id is not '':
             # should be NOT NULL?
-            # SQLITE s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
-            s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            if settings.DATABASE_ENGINE=='mysql' :
+                s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
+                cursor.execute(s)
+                s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            else:
+                s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
         if not fields: return # move this up later
         logging.debug(s)
         cursor.execute(s)
