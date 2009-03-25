@@ -109,7 +109,10 @@ class StorageUtility(object):
         table_name = self.__table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
         #this is obviously quite dangerous, so makre sure to roll back on fail
-        s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
+        #s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
+        s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
+        # MYSQL: s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL, PRIMARY KEY (id) );"
+        logging.debug(s)
         cursor.execute(s)
 
         #if parent_table_name is not elementdef.name:
@@ -117,14 +120,21 @@ class StorageUtility(object):
         fields = self.__handle_children_tables(elementdef=elementdef, parent_id=parent_id, parent_name=parent_name, parent_table_name=parent_table_name )
         #fields = self.__trim2chars(fields);
 
-        s = "ALTER TABLE "+ table_name + fields
-        s = s + " ADD COLUMN parent_id INT(11);"
-        cursor.execute(s)
+        # Iterate through all the "ALTER" statements to support sqlite's limitations
+        for field in fields:
+            if len(field)>0:
+              s = "ALTER TABLE "+ table_name + str(field)
+              logging.debug(s)
+              cursor.execute(s)
+        #s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
+        #cursor.execute(s)
         
         if parent_id is not '':
             # should be NOT NULL?
-            s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            # MYSQL s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
         if not fields: return # move this up later
+        logging.debug(s)
         cursor.execute(s)
     
     def __handle_children_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
@@ -133,7 +143,7 @@ class StorageUtility(object):
       """
       
       if not elementdef: return
-      local_fields = '';
+      local_fields = [];
 
       if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
           return self.__db_field_name(elementdef)
@@ -149,10 +159,10 @@ class StorageUtility(object):
           else: 
             #assume elements of complextype alwasy have <complextype> as first child
             if len(child.child_elements) > 0 :
-                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
+                local_fields = local_fields + ( self.__handle_children_tables(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) ) #next-parent-name
             else:
-                local_fields = local_fields + self.__db_field_name(child) 
-                local_fields = local_fields + self.__handle_children_tables(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
+                local_fields.append( self.__db_field_name(child) )
+                local_fields = local_fields + ( self.__handle_children_tables(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) ) #next-parent-name
       return local_fields
       
     def populate_data_tables(self, data_tree, elementdef, namespace='', parent_name='', parent_table_name='' ):
@@ -262,4 +272,4 @@ class StorageUtility(object):
             return name
 
     def __db_field_name(self, elementdef):
-        return " ADD COLUMN " + self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type ) + ", "
+        return " ADD COLUMN " + self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type )
