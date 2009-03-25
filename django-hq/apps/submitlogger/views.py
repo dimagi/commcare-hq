@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
+from django.core.urlresolvers import reverse
 
 from datetime import timedelta
 from django.db import transaction
@@ -27,7 +28,7 @@ import submitprocessor
 
 
 #@login_required()
-def show_submits(request, template_name="submitlog_show_submits.html"):    
+def show_submits(request, template_name="submitlogger/show_submits.html"):    
     context = {}
     slogs = SubmitLog.objects.all()
     context['submissionlog_items'] = slogs    
@@ -35,7 +36,7 @@ def show_submits(request, template_name="submitlog_show_submits.html"):
 
 
 #@login_required()    
-def single_submission(request, submit_id, template_name="submitlog_single_submission.html"):
+def single_submission(request, submit_id, template_name="submitlogger/single_submission.html"):
     context = {}        
     slog = SubmitLog.objects.all().filter(id=submit_id)
     context['submitlog_item'] = slog[0]    
@@ -49,14 +50,14 @@ def single_submission(request, submit_id, template_name="submitlog_single_submis
     context['attachments'] = attachments
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def raw_submit(request, template_name="submitlog_submit.html"):
+def raw_submit(request, template_name="submitlogger/submit.html"):
     context = {}            
     logging.debug("begin raw_submit()")
     if request.method == 'POST':
         transaction = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
         if transaction == '[error]':
-            template_name="submitlog_submit_failed.html"            
+            template_name="submitlogger/submit_failed.html"            
         else:
             context['transaction_id'] = transaction
-            template_name="submitlog_submit_complete.html"                                     
+            template_name="submitlogger/submit_complete.html"                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
