@@ -20,6 +20,7 @@ from StringIO import StringIO
 
 from submitlogger.models import Attachment
 from django.db.models.signals import post_save
+from django.db.models import signals
 
 
 def process(sender, **kwargs): #get sender, instance, created
@@ -27,6 +28,9 @@ def process(sender, **kwargs): #get sender, instance, created
     su = StorageUtility()
     su.save_form_data(xml_file_name)
     
+# Register to receive signals from submitlogger
+post_save.connect(process, sender=Attachment)
+
 # Register to receive signals from submitlogger
 post_save.connect(process, sender=Attachment)
 
@@ -47,12 +51,11 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
-                formdef_provider = FormDefProviderFromXSD(fout)
+                formdef = FormDef(fout)
                 fout.close()
-                formdef = formdef_provider.get_formdef()
                 
                 #create dynamic tables
-                storage_provider = FormStorageProvider()
+                storage_provider = StorageUtility()
                 element_id = storage_provider.add_formdef(formdef)
                 
                 fdd = FormDefData()
@@ -84,15 +87,6 @@ def single_xform(request, submit_id, template_name="single_xform.html"):
 
 def __file_name(name):
     return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '.postdata')
-
-#temporary measure to get target form
-#decide later whether this is better, or should we know from the url?
-def __get_xmlns(stream):
-    tree = etree.parse(stream)
-    root = tree.getroot()
-    r = re.search('{[a-zA-Z0-9\.\/\:]*}', root.tag)
-    xmlns = r.group(0).strip('{').strip('}')
-    return xmlns
 
 """ UNUSED. For now.
 
