@@ -3,6 +3,7 @@ from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.xformdata import *
 from lxml import etree
 import logging
+import re
 
 #COME BACK LATER and sanitize all inputs to avoid database keywords
 # e.g. no 'where' columns, etc.
@@ -72,10 +73,12 @@ class StorageUtility(object):
     def save_form_data(self, xml_file_name):
         logging.debug("RO: Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
-        xsd_form_name = __get_xmlns(f)
-        logging.debug("Form name is" + xsd_form_name)
+        xsd_form_name = self.__get_xmlns(f)
+        logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
-        xsd_file_name = __file_name( xsd[0].target_namespace )
+        logging.debug("Form name is " + xsd[0].target_namespace )
+        xsd_file_name = self.__file_name( xsd[0].target_namespace )
+        logging.debug("Form name is " + xsd_file_name )
         f.close()
         
         logging.debug("Opening xsd file: " + xsd_file_name )
@@ -109,9 +112,8 @@ class StorageUtility(object):
         table_name = self.__table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
         #this is obviously quite dangerous, so makre sure to roll back on fail
-        #s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
-        s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
-        # MYSQL: s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL, PRIMARY KEY (id) );"
+        s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
+        # SQLITE s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
         logging.debug(s)
         cursor.execute(s)
 
@@ -126,13 +128,13 @@ class StorageUtility(object):
               s = "ALTER TABLE "+ table_name + str(field)
               logging.debug(s)
               cursor.execute(s)
-        #s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
-        #cursor.execute(s)
+        s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
+        cursor.execute(s)
         
         if parent_id is not '':
             # should be NOT NULL?
-            s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
-            # MYSQL s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            # SQLITE s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+            s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
         if not fields: return # move this up later
         logging.debug(s)
         cursor.execute(s)
@@ -273,3 +275,23 @@ class StorageUtility(object):
 
     def __db_field_name(self, elementdef):
         return " ADD COLUMN " + self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type )
+    
+    #temporary measure to get target form
+    #decide later whether this is better, or should we know from the url?
+    def __get_xmlns(self, stream):
+        logging.debug("Trying to parse xml_file")
+        tree = etree.parse(stream)
+        root = tree.getroot()
+        logging.debug("Parsing xml file successful")
+        logging.debug("Find xmlns from " + root.tag)
+        #todo - add checks in case we don't have a well-formatted xmlns
+        r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
+        logging.debug( "Return " + r.group(0) )
+        xmlns = r.group(0).strip('{').strip('}')
+        logging.debug("Return " + xmlns)
+        return xmlns
+    
+    def __file_name(self, name):
+        logging.debug(" path is " + os.path.join(settings.XSD_REPOSITORY_PATH, (str(name) + '.postdata') ) )
+        return os.path.join(settings.XSD_REPOSITORY_PATH, (str(name) + '.postdata') )
+
