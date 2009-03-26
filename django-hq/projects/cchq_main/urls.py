@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     (r'^formreceiver/', include('submitlogger.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
+    (r'^charts/', include('djflot.urls')),
     
     
 

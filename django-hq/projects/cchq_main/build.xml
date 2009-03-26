@@ -100,7 +100,7 @@
 	</target>
 	
 	
-	<target name="post-deploy-tests" depends="django-tests-all">
+	<target name="post-deploy-tests" depends="deploy-to-server">
 			<py-run script="${postdeploy.dir}/testRegisterAndSubmitData.py" pythonpath="${postdeploy.dir}">			
 			</py-run>
 		</target>
