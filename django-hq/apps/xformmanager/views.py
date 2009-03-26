@@ -11,6 +11,7 @@ from xformmanager.xformdef import FormDef
 from xformmanager.storageutility import * 
 import settings, os, sys
 import logging
+import traceback
 
 #temporary
 from lxml import etree
@@ -57,7 +58,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fdd.submit_ip = request.META['REMOTE_ADDR']
                 fdd.bytes_received =  request.FILES['file'].size
                 
-                fdd.form_name = formdef.name
+                fdd.form_name = get_table_name(formdef.target_namespace)
                 fdd.target_namespace = formdef.target_namespace
                 fdd.element_id = element_id
                 fdd.xsd_file_location = new_file_name
@@ -68,6 +69,9 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 logging.error("Unable to write raw post data")
                 logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))
                 logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
+                type, value, tb = sys.exc_info()
+                logging.error(type.__name__, ":", value)
+                logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefData.objects.all()

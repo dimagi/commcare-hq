@@ -1,4 +1,4 @@
-from xformmanager.util import skip_junk
+from xformmanager.util import *
 from lxml import etree
 import re
 
@@ -16,10 +16,10 @@ class ElementDef(object):
     restriction #string - should be private? 
     """
 
-    def __init__(self, name='', is_repeatable=False):
+    def __init__(self, target_namespace='', is_repeatable=False):
         self.child_elements = []
         self.allowable_values = []
-        self.name = name
+        self.name = target_namespace
         self.type = ''
         self.is_repeatable = is_repeatable
         self.xpath = ''

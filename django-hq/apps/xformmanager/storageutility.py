@@ -1,7 +1,7 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefData, FormDefData
 from xformmanager.xformdata import *
-from xformmanager.util import skip_junk
+from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from lxml import etree
 import settings
@@ -32,7 +32,7 @@ class StorageUtility(object):
         'double':'DOUBLE',
         'float':'DOUBLE',
         'dateTime':'DATETIME', # string
-        'date':'DATE', # string
+        'date':'INT(11)', # string
         'time':'TIME', # string
         'gyear':'INT(11)',
         'gmonth':'INT(11)',
@@ -45,6 +45,22 @@ class StorageUtility(object):
         'anyuri':'VARCHAR(200)', # string
         'default':'VARCHAR(255)',
     } 
+
+    DB_NON_STRING_TYPES = (
+        'integer',
+        'int',
+        'decimal',
+        'double',
+        'float'
+        'dateTime',
+        'date',
+        'time'
+        'gyear',
+        'gmonthday',
+        'boolean'
+        'base64binary',
+        'hexbinary',
+    )
 
     DB_STRING_TYPES = (
         'string',
@@ -81,12 +97,12 @@ class StorageUtility(object):
         xsd_form_name = self.__get_xmlns(f)
         logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
-        logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         f.close()
         
         if xsd[0].xsd_file_location is None:
             logging.debug("No matching schema found!")
             return            
+        logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         g = open( xsd[0].xsd_file_location ,"r")
         formdef = FormDef(g)
         g.close()
@@ -102,7 +118,7 @@ class StorageUtility(object):
     def update_formdef_meta(self, formdef):
         """ save form metadata """
         ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
-                            table_name=self.__table_name(formdef.target_namespace))
+                            table_name=get_table_name(formdef.target_namespace))
         ed.save()
         return ed.id
         #fdd = FormDefData(form_name=self.__table_name(formdef.name), target_namespace=formdef.target_namespace, element_id=ed.id)
@@ -114,7 +130,7 @@ class StorageUtility(object):
         cursor = connection.cursor()
         
         #table_name = self.__table_name( parent_name )
-        table_name = self.__table_name( self.__name(parent_name, elementdef.name) )
+        table_name = get_table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
         #this is obviously quite dangerous, so makre sure to roll back on fail
         s = ''
@@ -142,13 +158,14 @@ class StorageUtility(object):
             if settings.DATABASE_ENGINE=='mysql' :
                 s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
                 cursor.execute(s)
-                s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+                s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL;"
             else:
-                s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + parent_table_name + "(id) ON DELETE SET NULL;"
+                s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL;"
         if not fields: return # move this up later
         logging.debug(s)
         cursor.execute(s)
     
+    # todo - set parent_id's correctly
     def __handle_children_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
       """ This is 'handle' instead of 'create'(_children_tables) because not only are we 
       creating children tables, we are also gathering/passing children/field information back to the parent.
@@ -165,7 +182,7 @@ class StorageUtility(object):
           if child.is_repeatable :
               # repeatable elements must generate a new table
               ed = ElementDefData(name=str(child.name), type=str(child.type), parent_id=parent_id, 
-                                  table_name = self.__table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
+                                  table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
               ed.save()
               self.create_data_tables(child,  ed.id , parent_name, parent_table_name )
           else: 
@@ -177,13 +194,14 @@ class StorageUtility(object):
                 local_fields = local_fields + ( self.__handle_children_tables(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) ) #next-parent-name
       return local_fields
       
+    # todo - handle the case where a field is in the data_tree but has no text
     def populate_data_tables(self, data_tree, elementdef, namespace='', parent_name='', parent_table_name='' ):
       if data_tree is None : return
       if not elementdef: return
       
       field_values = self.__populate_children_tables(data_tree=data_tree, elementdef=elementdef, namespace=namespace, parent_name=parent_name, parent_table_name=parent_table_name )
 
-      table_name = self.__table_name( self.__name(parent_name, elementdef.name) )      
+      table_name = get_table_name( self.__name(parent_name, elementdef.name) )      
       # populate the tables
       s = "INSERT INTO " + table_name + " (";
       s = s + self.__trim2chars(field_values['fields']) + ") VALUES( " + self.__trim2chars(field_values['values']) + ");"
@@ -254,15 +272,6 @@ class StorageUtility(object):
             if parent_name.lower() != child_name.lower():
                 return str(parent_name) + "_" + str(child_name)
         return str(child_name)
-
-    def __table_name(self, name):
-        # check for uniqueness!
-        # current hack, fix later: 122 is mysql table limit, i think
-        MAX_LENGTH = 80
-        start = 0
-        if len(name) > MAX_LENGTH:
-            start = len(name)-MAX_LENGTH
-        return str(name[start:len(name)]).replace("/","_").replace(":","").replace(".","_").lower()
         
     def __get_db_type(self, type):
         if type.lower() in self.XSD_TO_DB_TYPES: 
@@ -271,10 +280,13 @@ class StorageUtility(object):
             return self.XSD_TO_DB_TYPES['default']
         
     def __db_format(self, type, text):
-        if type in self.DB_STRING_TYPES:
-            return "'" + text.strip() + "'"
-        else: 
+        if text == '':
+            logging.error("Poorly formatted xml input!")
+            return ''
+        if type in self.DB_NON_STRING_TYPES:
             return text.strip()
+        else: 
+            return "'" + text.strip() + "'"
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here
     def __sanitize(self, name):
@@ -297,8 +309,13 @@ class StorageUtility(object):
         logging.debug("Find xmlns from " + root.tag)
         #todo - add checks in case we don't have a well-formatted xmlns
         r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
+        if r.groups == 0: 
+            logging.error( "NO NAMESPACE FOUND" )
+            return ''
         logging.debug( "Return " + r.group(0) )
-        xmlns = r.group(0).strip('{').strip('}')
-        logging.debug("Return " + xmlns)
+        xmlns = get_table_name( r.group(0).strip('{').strip('}') )
+        #start = xmlns.rfind(xmlns, '/')
+        #short_xmlns = xmlns[start+1:len(xmlns)]
+        logging.debug("Return short xmlns: " + xmlns)
         return xmlns
     
