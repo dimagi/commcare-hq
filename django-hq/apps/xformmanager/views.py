@@ -7,8 +7,7 @@ import hashlib
 
 from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefData
-from xformmanager.xformdef import * 
-from xformmanager.xformdata import *
+from xformmanager.xformdef import FormDef
 from xformmanager.storageutility import * 
 import settings, os, sys
 import logging
@@ -22,18 +21,14 @@ from submitlogger.models import Attachment
 from django.db.models.signals import post_save
 from django.db.models import signals
 
-
-def process(sender, **kwargs): #get sender, instance, created
-    xml_file_name = kwargs["instance"].filepath
+def process(sender, instance, **kwargs): #get sender, instance, created
+    xml_file_name = instance.filepath
+    logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     su = StorageUtility()
     su.save_form_data(xml_file_name)
     
 # Register to receive signals from submitlogger
 post_save.connect(process, sender=Attachment)
-
-# Register to receive signals from submitlogger
-post_save.connect(process, sender=Attachment)
-
     
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
@@ -78,15 +73,29 @@ def register_xform(request, template='register_and_list_xforms.html'):
     context['registered_forms'] = FormDefData.objects.all()
     return render_to_response(template, context, context_instance=RequestContext(request))
 
-def single_xform(request, submit_id, template_name="single_xform.html"):
+def single_xform(request, formdef_name, template_name="single_xform.html"):
     context = {}        
-    xform = FormDefData.objects.all().filter(id=submit_id)
+    xform = FormDefData.objects.all().filter(form_name=formdef_name)
     context['xform_item'] = xform[0]
     return render_to_response(template_name, context, context_instance=RequestContext(request))
     #return HttpResponse("YES")
 
+def data(request, formdef_name, template_name="data.html"):
+    context = {}
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM " + formdef_name)
+    rows = cursor.fetchall()
+    context['form_name'] = formdef_name
+    context['data'] = []
+    for row in rows:
+        record = []
+        for field in row:
+            record.append(field)
+        context['data'].append(record)
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
 def __file_name(name):
-    return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '.postdata')
+    return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')
 
 """ UNUSED. For now.
 

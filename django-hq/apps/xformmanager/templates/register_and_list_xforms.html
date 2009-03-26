@@ -33,7 +33,7 @@
 <ol>
    {% for form in registered_forms %}   
    <li>   
-   		<a href="{% url xformmanager.views.single_xform form.id %}">
+   		<a href="{% url xformmanager.views.data form.form_name %}">
    			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
    				Submit date: {{date_t}} - {{time_t}}
    			{% endblocktrans %}</a>
