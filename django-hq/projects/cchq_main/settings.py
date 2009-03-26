@@ -88,6 +88,7 @@ TEMPLATE_DIRS = (
     os.path.join('../../apps','submitlogger','templates'),
     os.path.join('../../apps','monitorregistry','templates'),
     os.path.join('../../apps','organization','templates'),
+    os.path.join('../../apps','djflot','templates'),
 )
 TEMPLATE_CONTEXT_PROCESSORS = ( 
     "django.core.context_processors.auth",
@@ -106,6 +107,7 @@ import sys
 current_path = os.path.dirname(__file__)
 sys.path.append(os.path.join(current_path,"../../apps"))
 sys.path.append(os.path.join(current_path,"../../libs"))
+sys.path.append(os.path.join(current_path,"../../scripts"))
 
 
 
@@ -122,7 +124,8 @@ INSTALLED_APPS = (
     'modelrelationship',
     'xformmanager',
     'monitorregistry',
-    'organization',        
+    'organization',     
+    'djflot',   
 )
 
 
