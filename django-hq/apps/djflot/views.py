@@ -26,6 +26,10 @@ import string
 
 def summary_trend(request, template_name="djflot/summary_trend.html"):    
     context = {}        
+    context['usa_datapoint'] = 'usa'
+    context['usa_label'] = "USA"
+    arr = [[1988, 483994], [1989, 479060], [1990, 457648], [1991, 401949], [1992, 424705], [1993, 402375], [1994, 377867], [1995, 357382], [1996, 337946], [1997, 336185], [1998, 328611], [1999, 329421], [2000, 342172], [2001, 344932], [2002, 387303], [2003, 440813], [2004, 480451], [2005, 504638], [2006, 528692]]
+    context['usa_data'] = str(arr)
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
