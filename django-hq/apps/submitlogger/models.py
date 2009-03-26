@@ -2,6 +2,7 @@ from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
+
 import uuid
 import settings
 import email
@@ -10,6 +11,7 @@ import string
 import hashlib
 import sys
 import os
+import traceback
 
 
 class SubmitLog(models.Model):   
@@ -84,8 +86,12 @@ class SubmitLog(models.Model):
                    logging.debug("Attachment Save complete")                    
         except:
             logging.error("error parsing attachments") 
-            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))            
-            logging.error("error parsing attachments: Traceback: " + str(sys.exc_info()[1]))
+            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
+            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
+            type, value, tb = sys.exc_info()
+            logging.error(type.__name__, ":", value)
+            logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb))
+)
             
 
     
