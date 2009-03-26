@@ -232,8 +232,9 @@ class StorageUtility(object):
             else:
                 # if there are children (which are not repeatable) then flatten the table
                 for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
-                    local_fields = local_fields + self.__sanitize(def_child.name) + ", "
-                    values = values + self.__db_format(def_child.type, data_child.text) + ", "      
+                    if data_child.text is not None :
+                        local_fields = local_fields + self.__sanitize(def_child.name) + ", "
+                        values = values + self.__db_format(def_child.type, data_child.text) + ", "      
                     field_values = self.__populate_children_tables(data_child, def_child, next_parent_name, parent_table_name)
                     local_fields = local_fields + field_values['fields']
                     values  = values + field_values['values']
