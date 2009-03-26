@@ -60,5 +60,7 @@ def raw_submit(request, template_name="submitlogger/submit.html"):
         else:
             context['transaction_id'] = new_submission.transaction_uuid
             context['submission'] = new_submission
+            attachments = Attachment.objects.all().filter(submission=new_submission)            
+            context['attachments'] = attachments            
             template_name="submitlogger/submit_complete.html"                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))

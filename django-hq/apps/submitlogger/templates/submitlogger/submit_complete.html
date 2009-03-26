@@ -3,5 +3,9 @@
 {% block head_title %}{% trans "Single Submission" %}{% endblock %}
 {% block content %}
 <h2>{% trans "Submission received, thank you" %}</h2>
-<p><a href="{% url submitlogger.views.single_submission submission.id %}">{%trans "Transaction ID" %} {{transaction_id}}</a></p>
+<p><a href="{% url submitlogger.views.single_submission submission.id %}">{%trans "Transaction ID" %} 
+		{{transaction_id}}</a></p>
+
+<p>{%trans "SubmitID:"%}{{submission.id}}</p>
+<p>{%trans "Attachments:"%}{{attachments|length}}</p>
 {% endblock %}
