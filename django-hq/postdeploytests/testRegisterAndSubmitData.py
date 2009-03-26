@@ -54,7 +54,6 @@ class RegisterAndSubmit(unittest.TestCase):
             self.assertEquals(datafiles[i].split('.')[0],schemafiles[i].split('.')[0])
     
     def testPostAndVerifySchema(self):      
-        return  
         curdir = os.path.dirname(__file__)        
         schemadir = os.path.join(curdir,'schemas')        
         schemafiles = os.listdir(schemadir)
