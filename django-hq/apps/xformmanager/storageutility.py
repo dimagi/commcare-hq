@@ -82,7 +82,7 @@ class StorageUtility(object):
         logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
         
-        if xsd[0] is None:
+        if xsd is None:
             logging.error("NO MATCHING SCHEMA FOUND")
             return
         logging.debug("Schema is located at " + xsd[0].xsd_file_location)
