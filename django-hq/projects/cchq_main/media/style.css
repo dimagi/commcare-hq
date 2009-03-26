@@ -187,6 +187,14 @@ a:hover {
 	text-decoration: underline;
 }
 
+#xform-register-block {
+	float: right;
+	width: 300px;		
+	color: #787878;
+	border: 1px solid black;
+	padding:12px;
+}
+
 /* Page */
 
 #page {
@@ -359,7 +367,7 @@ color: #404040;
 vertical-align:top;
 }
 
-td.dbodyfield
+tr.dbodyroweven
 { 
 border-bottom: 1px solid #9CF;
 border-top: 0px;
@@ -367,7 +375,24 @@ border-right: 1px solid #9CF;
 text-align: left;
 
 font-family: Verdana, sans-serif, Arial;
-font-weight: bold;
+
+font-size: 11px;
+color: #404040;
+list-style: none;
+background-color: lightgrey;
+vertical-align:top;
+padding:8px;
+
+}
+
+tr.dbodyrowodd
+{ 
+border-bottom: 1px solid #9CF;
+border-top: 0px;
+border-right: 1px solid #9CF;
+text-align: left;
+
+font-family: Verdana, sans-serif, Arial;
 font-size: 11px;
 color: #404040;
 list-style: none;
@@ -376,6 +401,7 @@ vertical-align:top;
 padding:8px;
 
 }
+
 
 td.dbody
 { 

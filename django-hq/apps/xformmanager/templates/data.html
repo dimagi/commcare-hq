@@ -10,19 +10,25 @@ more information about this schema<br/>
 </a>
 <br/>
 
-<strong>
-<ul>
-   {% for record in data %}   
-   <li>   
+
+<table class="sofT">
+	
+	<tr>
+	{% for col in columns %}
+		<td class="helpHed">{{col}}</td>	
+	{% endfor%}
+	</tr>
+   {% for record in data %}   	
+   	<tr class="dbodyrow{% cycle 'odd' 'even' %}">  
 	   {% for field in record %}   
-	   		 {{field}} | 
+	   		 <td>{{field}}</td> 
 	   {% endfor %}
-   </li>
+	</tr>
    {% endfor %}
 
 
-</ul>
-</strong>
+   </table>
+
 
 {% endblock %}
 

@@ -89,6 +89,11 @@ def data(request, formdef_name, template_name="data.html"):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM " + formdef_name)
     rows = cursor.fetchall()
+    
+    rawcolumns = cursor.description # in ((name,,,,,),(name,,,,,)...)
+    context['columns'] = []
+    for col in rawcolumns:
+        context['columns'].append(col[0])    
     context['form_name'] = formdef_name
     context['data'] = []
     for row in rows:

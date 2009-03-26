@@ -20,12 +20,15 @@
     {% endif %}
 </div>
 
-
+<div id="xform-register-block">
 <h1>Register a New XForm</h1>
 <form action="" method="POST" enctype="multipart/form-data">
-{{ upload_form.as_p }}
+<table>
+{{ upload_form.as_table }}
+</table>
 <input type="submit" value="Submit" />
 </form>
+</div>
 
 <h2>{% trans "Registered XForms" %}</h2>
 
