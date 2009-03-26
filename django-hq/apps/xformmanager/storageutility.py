@@ -309,7 +309,7 @@ class StorageUtility(object):
         logging.debug("Find xmlns from " + root.tag)
         #todo - add checks in case we don't have a well-formatted xmlns
         r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
-        if r.groups == 0: 
+        if r is None: 
             logging.error( "NO NAMESPACE FOUND" )
             return ''
         logging.debug( "Return " + r.group(0) )
