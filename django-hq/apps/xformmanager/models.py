@@ -1,4 +1,3 @@
-from submitlogger.models import SubmitLog
 from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
@@ -59,6 +58,7 @@ class FormDefData(models.Model):
     # META fields
     
     xsd_file_location = models.FilePathField(_('Raw XSD'), match='.*\.postdata$', path=settings.XSD_REPOSITORY_PATH, max_length=255)
+    #form_name is used as the table name
     form_name = models.CharField(max_length=255, unique=True)
     target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
@@ -68,3 +68,5 @@ class FormDefData(models.Model):
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)
+
+

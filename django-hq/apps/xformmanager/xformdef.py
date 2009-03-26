@@ -1,3 +1,4 @@
+from xformmanager.util import skip_junk
 from lxml import etree
 import re
 
@@ -42,6 +43,7 @@ class FormDef(ElementDef):
 
     def __init__(self, stream_pointer=None):
         if stream_pointer is not None:
+            skip_junk(stream_pointer)
             self.parseStream(stream_pointer)
     
 
