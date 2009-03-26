@@ -2,15 +2,16 @@ import sys
 from datetime import datetime
 import unittest
 import os
+import time
 
 
 import subprocess
 import sys
 from subprocess import PIPE
 
+serverhost = 'test.commcarehq.org'
+#serverhost = 'localhost:8000'
 
-sys.path.append(os.path.join(os.path.dirname(__file__),"../scripts"))
-import formposter
 
 curl_command = 'C:\curl\curl.exe'
 #example post to a form
@@ -20,6 +21,22 @@ class RegisterAndSubmit(unittest.TestCase):
     def setup(self):
         pass
     
+    def _scanBlockForInt(self, results, startword,endtag):
+        try:
+            id_start = results.index(startword)            
+            submit_len = len(startword)         
+            
+            sub_block = results[id_start:]               
+            
+            id_endtag = sub_block.index(endtag)
+            submit_id = sub_block[submit_len:id_endtag]
+            id = int(submit_id)
+            return id
+        except:
+            return -1
+            
+            
+        
     
     def testCheckTestDirectoryIsCorrect(self):
         curdir = os.path.dirname(__file__)
@@ -36,13 +53,16 @@ class RegisterAndSubmit(unittest.TestCase):
                 continue
             self.assertEquals(datafiles[i].split('.')[0],schemafiles[i].split('.')[0])
     
-    def testPostAndVerifySchema(self):
-        return
+    def testPostAndVerifySchema(self):      
+        return  
         curdir = os.path.dirname(__file__)        
         schemadir = os.path.join(curdir,'schemas')        
         schemafiles = os.listdir(schemadir)
         
         for schemafile in schemafiles:
+            time.sleep(.2)
+            if schemafile == ".svn":
+                continue            
             print schemafile
             fin = open(os.path.join(schemadir,schemafile),'r')
             schema = fin.read()
@@ -58,44 +78,60 @@ class RegisterAndSubmit(unittest.TestCase):
             
             
             fullpath = os.path.join(schemadir,schemafile)
-            print "posting %s" % fullpath
-            #results = formposter.do_httplib_post('test.commcarehq.org','/xformmanager/', header_hash, params)            
-            #results = formposter.do_urllib2_post('http://localhost:8000','/xformmanager/',header_hash,params)
-            #results = formposter.do_urllib_post('http://localhost:8000','/xformmanager/',params)
-            #-F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
-            p = subprocess.Popen([curl_command,'-F file=@%s' % fullpath, '--request', 'POST', 'http://localhost:8000/xformmanager/'],stdout=PIPE,shell=False)
+            print "posting %s" % fullpath            
+            p = subprocess.Popen([curl_command,'-F file=@%s' % fullpath, '--request', 'POST', 'http://%s/xformmanager/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
-            print results
             
+            #ok, verify that it's there.
+            #self.assertEqual(1,results.count("<h2>Submission received, thank you</h2>",0,len(results)))
             
-            
+            #next, verify that there's an attachment there too            
+                        
     def testPostAndVerifySimpleData(self):
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'data')        
         datafiles = os.listdir(datadir)
         for file in datafiles:
+            time.sleep(.5)
+            if file == ".svn":
+                continue
             fullpath = os.path.join(datadir,file)
             fin = open(fullpath,'r')
             filestr= fin.read()
             fin.close()
             # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
-            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://localhost:8000/formreceiver/submit/'],stdout=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/formreceiver/submit/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
-            self.assertEqual(1,results.count("<h2>Submission received, thank you</h2>",0,len(results)))        
+            self.assertEqual(1,results.count("<h2>Submission received, thank you</h2>",0,len(results)))
+            
+            submit_id = self._scanBlockForInt(results,"SubmitID:",'</p>')
+            self.assertNotEqual(-1,submit_id)        
+            
+            attachment_count = self._scanBlockForInt(results,"Attachments:",'</p>')
+            self.assertEqual(1,attachment_count)
             
     def testPostAndVerifyMultipart(self):
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'multipart')        
         datafiles = os.listdir(datadir)
         for file in datafiles:
+            time.sleep(.2)
+            if file == ".svn":
+                continue
             fullpath = os.path.join(datadir,file)
             fin = open(fullpath,'rb')
             filestr= fin.read()
             fin.close()
             # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
-            p = subprocess.Popen([curl_command,'--header','Content-type: multipart/mixed; boundary=newdivider', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://localhost:8000/formreceiver/submit/'],stdout=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type: multipart/mixed; boundary=newdivider', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/formreceiver/submit/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
-            self.assertEqual(1,results.count("<h2>Submission received, thank you</h2>",0,len(results)))        
+            self.assertEqual(1,results.count("<h2>Submission received, thank you</h2>",0,len(results)))
+            
+            submit_id = self._scanBlockForInt(results, "SubmitID:",'</p>')
+            self.assertNotEqual(-1,submit_id)        
+            
+            attachment_count = self._scanBlockForInt(results,"Attachments:",'</p>')
+            self.assertEqual(3,attachment_count)        
             
             
 if __name__ == "__main__":
