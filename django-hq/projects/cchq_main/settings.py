@@ -143,6 +143,7 @@ LANGUAGES = (
 )
 
 
+CSV_PATH = os.path.join(MEDIA_ROOT,'csv')
 XFORM_SUBMISSION_PATH = os.path.join(os.path.dirname(__file__),'xform-data')
 XSD_REPOSITORY_PATH = os.path.join(os.path.dirname(__file__),'schemas')
 ATTACHMENTS_PATH = os.path.join(MEDIA_ROOT,'attachment')
@@ -154,6 +155,9 @@ if not os.path.exists(XFORM_SUBMISSION_PATH):
                      
 if not os.path.exists(XSD_REPOSITORY_PATH):
     os.mkdir(XSD_REPOSITORY_PATH) 
+
+if not os.path.exists(CSV_PATH):
+    os.mkdir(CSV_PATH)
 
 import logging
 logging.basicConfig(
