@@ -1,21 +1,11 @@
 from xformmanager.util import *
 from lxml import etree
 import re
+import logging
 
 class ElementDef(object):
     """ Stores metadata about simple and complex types """
-    #name = "name"
-    #type = "type" #enum of int/float/etc.
-    #minoccurs = ''
-    #children = [] #type ElementDef
  
-    """ minOccurs
-    attributes #type ElementDef
-    allowable_values #user-defined values
-    repeatable #boolean
-    restriction #string - should be private? 
-    """
-
     def __init__(self, target_namespace='', is_repeatable=False):
         self.child_elements = []
         self.allowable_values = []
@@ -23,8 +13,9 @@ class ElementDef(object):
         self.type = ''
         self.is_repeatable = is_repeatable
         self.xpath = ''
+        #self.attributes - not supported yet
       
-    def isValid(): #boolean
+    def isValid(): # to do: place restriction functions in here
         pass
 
     def addChild(self, element_def):
@@ -32,7 +23,7 @@ class ElementDef(object):
 
     def tostring(self, depth=0, string='', ):
         indent = ' '*depth
-        string = indent + "xpath=" + str(self.xpath) + "\n"
+        string = indent + "xpath=" + str(self.name) + "\n"
         string = string + indent + "name=" + str(self.name) + ", type=" + str(self.type) + ", repeatable=" + str(self.is_repeatable)  + "\n"
         for child in self.child_elements:
             string = string + child.tostring(depth+1, string)
@@ -45,33 +36,24 @@ class FormDef(ElementDef):
         if stream_pointer is not None:
             skip_junk(stream_pointer)
             self.parseStream(stream_pointer)
-    
-
-    #date_created
-    #group_id
           
     def __str__(self):
         return str(self.name) + '\n' + ElementDef.tostring(self)
 
-    #def __init__(self):
-    #    ElementDef.__init__(self)
-
-
     def parseStream(self, stream_pointer):
-        #if( stream_pointer == null ) throw exception, if parent is None: 
         tree = etree.parse(stream_pointer)
 
         root = tree.getroot()
         target_namespace = root.get('targetNamespace')
+        if target_namespace is None:
+            logging.error("Target namespace is not found in xsd schema")
         self.target_namespace = target_namespace
         ElementDef.__init__(self, target_namespace)
 
-        #self.__populateElementFields(self.formDef, root, '')
         self.xpath = ""
         self.__addAttributesAndChildElements(self, root, '')
       
     def __addAttributesAndChildElements(self, element, input_tree, xpath):
-        #self.__populateElementFields(element, input_tree, xpath)
         for input_node in etree.ElementChildIterator(input_tree):
             if (str(input_node.tag)).find("element") > -1 and ( (str(input_node.get('name'))).find('root') == -1 ):
                 if input_node.get('maxOccurs') > 1: 
@@ -82,10 +64,8 @@ class FormDef(ElementDef):
                 self.__populateElementFields(child_element, input_node, element.xpath)
                 self.__addAttributesAndChildElements(child_element, input_node, element.xpath)
             else:
-                # Non-element
+                # Skip non-elements (e.g. <sequence>, <complex-type>
                 self.__addAttributesAndChildElements(element, input_node, element.xpath)
-                #for other types of input nodes, pass in different parameters
-                #or add another level to the tree
     
     def __populateElementFields(self, element, input_node, xpath):
         if not element.name: element.name = input_node.get('name')

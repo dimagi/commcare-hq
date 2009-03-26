@@ -50,14 +50,13 @@ class ElementDefData(models.Model):
 class FormDefData(models.Model):
     id = models.AutoField(primary_key=True)
     
-    #These fields are inherited directly from SubmitLog, but let's keep the xsd and xml databases separate
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     submit_ip = models.IPAddressField(_('Submitting IP Address'))
     bytes_received = models.IntegerField(_('Bytes Received'))
 
-    # META fields
+    # META fields to be placed here eventually
     
-    xsd_file_location = models.FilePathField(_('Raw XSD'), match='.*\.postdata$', path=settings.XSD_REPOSITORY_PATH, max_length=255)
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XSD_REPOSITORY_PATH, max_length=255)
     #form_name is used as the table name
     form_name = models.CharField(max_length=255, unique=True)
     target_namespace = models.CharField(max_length=255, unique=True)

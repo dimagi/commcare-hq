@@ -53,7 +53,21 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[4],222)
         self.assertEquals(row[5],"otherchild1")
 
-        
+    def testPopulate_1(self):
+        """ Test basic form definition created and data saved
+        self.__populate("1_xml_basic.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_deep")
+        rows = cursor.fetchone()
+        self.assertTrue(  len(rows)== 2 )
+        for row in rows:
+            self.assertEquals(row[1],"userid0")
+            self.assertEquals(row[2],"abc")
+            self.assertEquals(row[3],"xyz")
+            self.assertEquals(row[4],222)
+            self.assertEquals(row[5],"otherchild1")        
+        """
+
         # self.__create_xsd_and_populate("3_xsd_deep.in", "1_xml_deep.in")
         # self.__create_xsd_and_populate("4_xsd_singlerepeat.in", "1_xml_singlerepeat.in")
         # self.__create_xsd_and_populate("5_xsd_nestedrepeats.in", "1_xml_nestedrepeats.in")
@@ -95,10 +109,8 @@ class BasicTestCase(unittest.TestCase):
         # make sure tables are created the way you'd like
         f.close()
         
-    """def __populate(self, xml_file_name):
+    def __populate(self, xml_file_name):
         # and input one xml instance
-        f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
-        manager.save_form_data(f)
+        su = StorageUtility()
+        su.save_form_data( os.path.join(os.path.dirname(__file__),xml_file_name) )
         # make sure tables are created the way you'd like
-        f.close()
-    """

@@ -51,6 +51,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fout.close()
                 
                 #create dynamic tables
+                # must add_formdef to storage provide first since forms are linked to elements 
                 storage_provider = StorageUtility()
                 element_id = storage_provider.add_formdef(formdef)
                 
@@ -106,17 +107,3 @@ def data(request, formdef_name, template_name="data.html"):
 def __file_name(name):
     return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')
 
-""" UNUSED. For now.
-
-def list_posted(request):
-    return show_submits(request, "list_posted.html")
-
-def show_xml(request, submit_id):
-    return single_submission(request, submit_id, "show_xml.html")
-
-def list_xforms(request, template_name="list_xforms.html"):
-    context = {}
-    context['registered_forms'] = FormDefData.objects.all()  
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
-
-"""

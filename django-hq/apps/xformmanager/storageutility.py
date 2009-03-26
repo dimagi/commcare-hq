@@ -9,18 +9,12 @@ import logging
 import re
 import os
 
-#COME BACK LATER and sanitize all inputs to avoid database keywords
+# TODO: sanitize all inputs to avoid database keywords
 # e.g. no 'where' columns, etc.
 
-STRING = 's'
-FLOAT = 'f'
-DOUBLE = 'g'
-INTEGER = 'i'
-DATETIME = 'i'    
-
 class StorageUtility(object):
+    """ This class handles everything that touches the database - both form and instance data."""
     # should pull this out into a rsc file...
-
     
     # Data types taken from mysql. 
     # This should really draw from django biult-in utilities which are database independent. 
@@ -62,19 +56,8 @@ class StorageUtility(object):
         'hexbinary',
     )
 
-    DB_STRING_TYPES = (
-        'string',
-        'dateTime',
-        'date',
-        'time',
-        'anyuri'
-    )
-    
-
-    """ This class handles everything that touches the database - both form and instance data."""
-
     def add_formdef(self, formdef):
-        id = self.update_formdef_meta(formdef)
+        id = self.update_elementdefdef_meta(formdef)
         self.create_data_tables(formdef, id, formdef.name, formdef.name)
         return id
 
@@ -88,48 +71,42 @@ class StorageUtility(object):
         skip_junk(data_stream_pointer)
         tree = etree.parse(data_stream_pointer)
         root = tree.getroot()
-        self.populate_data_tables(data_tree=root, elementdef=formdef, namespace=formdef.target_namespace, parent_name=formdef.name )
-
+        self.namespace = formdef.target_namespace
+        self.populate_data_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
 
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
         xsd_form_name = self.__get_xmlns(f)
+        if xsd_form_name is None: return
         logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
-        f.close()
         
-        if xsd[0].xsd_file_location is None:
-            logging.debug("No matching schema found!")
-            return            
+        if xsd[0] is None:
+            logging.error("NO MATCHING SCHEMA FOUND")
+            return
         logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         g = open( xsd[0].xsd_file_location ,"r")
         formdef = FormDef(g)
         g.close()
         
         logging.debug("Saving form data with known xsd")
-        # use seek() instead of closing/opening file again
-        f = open(xml_file_name, "r")
+        f.seek(0,0)
         self.save_form_data_matching_formdef(f, formdef)
         f.close()
         logging.debug("Form data successfully saved")
         return
 
-    def update_formdef_meta(self, formdef):
-        """ save form metadata """
+    def update_elementdefdef_meta(self, formdef):
+        """ save element metadata """
         ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
                             table_name=get_table_name(formdef.target_namespace))
         ed.save()
         return ed.id
-        #fdd = FormDefData(form_name=self.__table_name(formdef.name), target_namespace=formdef.target_namespace, element_id=ed.id)
-        #fdd.save()
-
-
 
     def create_data_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
         cursor = connection.cursor()
         
-        #table_name = self.__table_name( parent_name )
         table_name = get_table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
         #this is obviously quite dangerous, so makre sure to roll back on fail
@@ -195,11 +172,11 @@ class StorageUtility(object):
       return local_fields
       
     # todo - handle the case where a field is in the data_tree but has no text
-    def populate_data_tables(self, data_tree, elementdef, namespace='', parent_name='', parent_table_name='' ):
+    def populate_data_tables(self, data_tree, elementdef, parent_name='', parent_table_name='' ):
       if data_tree is None : return
       if not elementdef: return
       
-      field_values = self.__populate_children_tables(data_tree=data_tree, elementdef=elementdef, namespace=namespace, parent_name=parent_name, parent_table_name=parent_table_name )
+      field_values = self.__populate_children_tables(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=parent_table_name )
 
       table_name = get_table_name( self.__name(parent_name, elementdef.name) )      
       # populate the tables
@@ -216,7 +193,7 @@ class StorageUtility(object):
 
       transaction.commit_unless_managed()
 
-    def __populate_children_tables(self, data_tree, elementdef, namespace, parent_name='', parent_table_name='' ):
+    def __populate_children_tables(self, data_tree, elementdef, parent_name='', parent_table_name='' ):
       if data_tree is None: return
       if not elementdef : return
       local_fields = '';
@@ -227,7 +204,7 @@ class StorageUtility(object):
 
         data_node = None
         #come back and make sure this works in a case-insensitive way
-        for data_child in data_tree.iter('{'+namespace+'}'+def_child.name):
+        for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
             data_node = data_child
         
         # put in a check for root.isRepeatable
@@ -236,35 +213,33 @@ class StorageUtility(object):
             if len(def_child.child_elements)>0 :
                 # if a repeatable element has children, create a table with all children
                 if data_node is not None:
-                  self.populate_data_tables(data_node, def_child, namespace, next_parent_name, parent_table_name )
+                  self.populate_data_tables(data_node, def_child, next_parent_name, parent_table_name )
             else:
                 # if a repeatable element has no children, create a table with just this element
                 
                 # find all elements matching
-                for data_child in data_tree.iter('{'+namespace+'}'+def_child.name):
-                    self.populate_data_tables(data_child, def_child, namespace, next_parent_name )
+                for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
+                    self.populate_data_tables(data_child, def_child, next_parent_name )
         else:
             if( len(def_child.child_elements)>0 ):
                 
                 # if there are no children, then add values to the table
                 if data_node is not None:
-                    field_values = self.__populate_children_tables(data_tree=data_node, elementdef=def_child, namespace=namespace, parent_name=parent_name, parent_table_name=parent_table_name )
+                    field_values = self.__populate_children_tables(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
                     local_fields = local_fields + field_values['fields']
                     values  = values + field_values['values']
                     #assume elements of complextype always have <complextyp> as first child
             else:
                 # if there are children (which are not repeatable) then flatten the table
-                for data_child in data_tree.iter('{'+namespace+'}'+def_child.name):
+                for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
                     local_fields = local_fields + self.__sanitize(def_child.name) + ", "
                     values = values + self.__db_format(def_child.type, data_child.text) + ", "      
-                    field_values = self.__populate_children_tables(data_child, def_child, namespace, next_parent_name, parent_table_name)
+                    field_values = self.__populate_children_tables(data_child, def_child, next_parent_name, parent_table_name)
                     local_fields = local_fields + field_values['fields']
                     values  = values + field_values['values']
       return {'fields':local_fields, 'values':values}
 
     def __trim2chars(self, string):
-        # ro - hack to fix recursion namespace weirdness
-        #add_comma = False; if add_comma: s = s + ', ' else: add_coma = True
         return string[0:len(string)-2]
         
     def __name(self, parent_name, child_name):
@@ -299,7 +274,7 @@ class StorageUtility(object):
         return " ADD COLUMN " + self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type )
     
     #temporary measure to get target form
-    #decide later whether this is better, or should we know from the url?
+    # todo - fix this to be more efficient, so we don't parse the file twice
     def __get_xmlns(self, stream):
         logging.debug("Trying to parse xml_file")
         skip_junk(stream)
@@ -311,11 +286,8 @@ class StorageUtility(object):
         r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
         if r is None: 
             logging.error( "NO NAMESPACE FOUND" )
-            return ''
-        logging.debug( "Return " + r.group(0) )
+            return None
         xmlns = get_table_name( r.group(0).strip('{').strip('}') )
-        #start = xmlns.rfind(xmlns, '/')
-        #short_xmlns = xmlns[start+1:len(xmlns)]
-        logging.debug("Return short xmlns: " + xmlns)
+        logging.debug( "Xmlns is " + xmlns )
         return xmlns
     

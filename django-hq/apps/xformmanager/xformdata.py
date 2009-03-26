@@ -12,7 +12,7 @@ class ElementData(object):
     
     def __init__(self, stream_pointer):
         logging.debug("ElementData: create form data object")
-        #put in checking to make sure this returns properly even when inputting bad data
+        # todo - put in checking to make sure this returns properly even when inputting bad data
         self.tree = etree.parse(stream_pointer)
         self.element = self.tree.getroot()
 
