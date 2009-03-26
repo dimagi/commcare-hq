@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xml_types" xmlns="http://www.w3.org/2001/XMLSchema">
+      <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+	                    <element name="UserID" type="string"/>
+	                    <element name="DeviceID" type="integer"/>
+	                    <element name="TimeStartRecorded" type="int"/>
+			 		    <element name="TimeEndRecorded" type="decimal"/>
+			 		    <element name="Date" minOccurs="0" type="date" />
+	                    <element name="Prov" minOccurs="0" type="double" />
+	                    <element name="Whereother" minOccurs="0" type="dateTime" />
+					    <!--<element name="LocWCHC" minOccurs="0" type="listItem" />-->
+					    <!--<element name="LocWCHCother" minOccurs="0" type="listItems" />-->
+                  </sequence>
+            </complexType>
+	  </element>
+</schema>
+

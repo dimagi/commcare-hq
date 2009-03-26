@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xml_basic" xmlns="http://www.w3.org/2001/XMLSchema">
+      <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+                    <element name="UserID" type="string"/>
+                    <element name="DeviceID" type="string"/>
+                    <element name="TimeStartRecorded" type="string"/>
+                    <element name="TimeEndRecorded" type="string"/>
+                  </sequence>
+            </complexType>
+	  </element>
+</schema>
+

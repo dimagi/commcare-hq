@@ -18,9 +18,11 @@ def do_raw_submission(metadata, payload):
     logging.debug("Get remote addr")    
     if metadata.has_key('HTTP_X_FORWARDED_FOR'):
         new_submit.submit_ip = metadata['HTTP_X_FORWARDED_FOR']
-    else:
+    elif metadata.has_key('REMOTE_HOST'):
         new_submit.submit_ip = metadata['REMOTE_HOST']
-    
+    else:
+        new_submit.submit_ip = '127.0.0.1'
+        
     if metadata.has_key('HTTP_CONTENT_TYPE'):
         content_type = metadata['HTTP_CONTENT_TYPE']
     else:
@@ -55,4 +57,4 @@ def do_raw_submission(metadata, payload):
     logging.debug("try to write model")        
     new_submit.save()
     logging.debug("save to db successful")
-    return transaction
+    return new_submit

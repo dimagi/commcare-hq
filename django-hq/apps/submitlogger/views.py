@@ -54,10 +54,11 @@ def raw_submit(request, template_name="submitlogger/submit.html"):
     context = {}            
     logging.debug("begin raw_submit()")
     if request.method == 'POST':
-        transaction = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
-        if transaction == '[error]':
+        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+        if new_submission == '[error]':
             template_name="submitlogger/submit_failed.html"            
         else:
-            context['transaction_id'] = transaction
+            context['transaction_id'] = new_submission.transaction_uuid
+            context['submission'] = new_submission
             template_name="submitlogger/submit_complete.html"                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))

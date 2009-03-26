@@ -9,6 +9,7 @@
 	<property name="libs.dir" value="../../libs" />
 	<property name="scripts.dir" value="../../scripts" />
 	<property name="antdepends.dir" value="../../antdepends" />
+	<property name="postdeploy.dir" value="../../postdeploytests" />
 	
 	
 	<taskdef resource="pyAntTasks.properties" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
@@ -97,6 +98,12 @@
 		<py-run script="deploy.py" pythonpath="${project.dir}">			
 		</py-run>
 	</target>
+	
+	
+	<target name="post-deploy-tests" depends="django-tests-all">
+			<py-run script="${postdeploy.dir}/testRegisterAndSubmitData.py" pythonpath="${postdeploy.dir}">			
+			</py-run>
+		</target>
 </project>
 
 

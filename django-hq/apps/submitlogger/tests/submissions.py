@@ -52,7 +52,7 @@ class ProcessingTestCase(unittest.TestCase):
         num2 = len(SubmitLog.objects.all())        
         self.assertEquals(num+1,num2)
         mysub = SubmitLog.objects.all()[0]
-        print mysub
+        
         attaches = Attachment.objects.all().filter(submission=mysub)        
         self.assertEquals(1,len(attaches))        
     
