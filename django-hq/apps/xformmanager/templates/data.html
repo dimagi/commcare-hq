@@ -8,6 +8,16 @@
 <a href="{% url xformmanager.views.single_xform form_name %}">
 more information about this schema<br/>
 </a>
+
+{% if csv_file %}
+
+<a href="{{MEDIA_URL}}csv/{{csv_file}}">
+download csv file<br/>
+</a>
+
+{% endif %}
+
+
 <br/>
 
 

@@ -95,7 +95,7 @@ class StorageUtility(object):
         self.save_form_data_matching_formdef(f, formdef)
         f.close()
         logging.debug("Form data successfully saved")
-        return
+        return xsd_form_name
 
     def update_elementdefdef_meta(self, formdef):
         """ save element metadata """

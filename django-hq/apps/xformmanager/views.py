@@ -9,6 +9,7 @@ from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefData
 from xformmanager.xformdef import FormDef
 from xformmanager.storageutility import * 
+from xformmanager.csv import generate_CSV
 import settings, os, sys
 import logging
 import traceback
@@ -26,7 +27,8 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     su = StorageUtility()
-    su.save_form_data(xml_file_name)
+    table_name = su.save_form_data(xml_file_name)
+    generate_CSV(table_name)
     
 # Register to receive signals from submitlogger
 post_save.connect(process, sender=Attachment)
@@ -102,8 +104,10 @@ def data(request, formdef_name, template_name="data.html"):
         for field in row:
             record.append(field)
         context['data'].append(record)
+    file_name = formdef_name+".csv"
+    if os.path.exists( os.path.join(settings.CSV_PATH,file_name ) ):
+         context['csv_file'] = file_name
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def __file_name(name):
     return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')
-
