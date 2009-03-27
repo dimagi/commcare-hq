@@ -53,6 +53,18 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[4],222)
         self.assertEquals(row[5],"otherchild1")
 
+    def testSaveFormData_4(self):
+        """ Test basic form definition created and data saved """
+        self.__create_xsd_and_populate("4_xsd_verydeep.in", "4_xml_verydeep.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_verydeep")
+        row = cursor.fetchone()
+        self.assertEquals(row[1],"userid0")
+        self.assertEquals(row[2],"great_grand1")
+        self.assertEquals(row[3],222)
+        self.assertEquals(row[4],1159)
+        self.assertEquals(row[5],2002)
+
     def testPopulate_1(self):
         """ Test basic form definition created and data saved
         self.__populate("1_xml_basic.in")

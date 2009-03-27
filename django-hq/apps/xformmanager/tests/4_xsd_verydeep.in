@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
-<schema targetNamespace="xml_types" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="xml_verydeep" xmlns="http://www.w3.org/2001/XMLSchema">
       <element name="root" minOccurs="0">
             <complexType>
                   <sequence>
@@ -16,12 +16,8 @@
                           </complexType>
                     </element>            
 		            <element name="TimeStartRecorded" type="int"/>
-				    <element name="TimeEndRecorded" minOccurs="0">
-            			<complexType>
-	                    	<element name="otherchild" minOccurs="0" type="string" />
-			            <complexType>
-				    </element>
-				    <element name="Date" minOccurs="0" type="date" />
+				    <element name="TimeEndRecorded" type="int"/>
+				    <element name="Date" minOccurs="0" type="int" />
                   </sequence>
             </complexType>
 	    </element>
