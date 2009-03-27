@@ -1,22 +1,14 @@
-{% extends "base.html" %}
+{% extends "djflot/flot_base.html" %}
 {% load i18n %}
-{% block script_includes %}
-    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.js"></script> 
-    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.flot.js"></script>
-    
-    {{ form.media }}
-{% endblock %} 
-{%block content%}
-	<h1>Data Chart</h1>
-    <div id="placeholder" style="width:800px;height:600px;"></div>
-    
-    
-      
-    <p id="choices">Show:</p>
-    <p>Zoom to: <button id="whole">Whole period</button>
-      <button id="nineties">1990-2000</button>
-      <button id="ninetynine">1999</button></p>
-
+{% block chart_extras %}
+	<p id="choices">Show:</p>
+	<p>Zoom to: <button id="whole">Whole period</button>
+	<button id="nineties">1990-2000</button>
+	<button id="ninetynine">1999</button></p>
+{%endblock%}
+		
+		
+{% block chart_script %}
 <script id="source" language="javascript" type="text/javascript">
 $(function () {
     var datasets = {
@@ -111,5 +103,5 @@ $(function () {
     plotAccordingToChoices();
 });
 </script>
+{%endblock%}
     
-{% endblock %}

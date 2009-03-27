@@ -24,9 +24,11 @@ class EdgeType(models.Model):
     
     def __unicode__(self):
         if self.directional:
-            return " << " + self.name + " << "
+            direction = " ==> "
         else:
-            return " - " + self.name + " - "
+            direction = " <--> "
+        
+        return " Edge Type: %s [%s %s %s] %s" % (self.name,self.parent_type,direction,self.child_type,self.description)
 
 
 class Edge(models.Model):    

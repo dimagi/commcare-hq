@@ -2,6 +2,9 @@ from django.conf.urls.defaults import *
 
 
 urlpatterns = patterns('',
+    url(r'^$', 'modelrelationship.views.all_types', name='view_all_types'),
+    url(r'^content/$', 'modelrelationship.views.view_content_item', name='view_content_item'),
+    url(r'^contenttype/(?P<contenttype_id>\d+)$', 'modelrelationship.views.single_contenttype', name='view_single_contenttype'),
     url(r'^edgetype/all/$', 'modelrelationship.views.all_edgetypes', name='view_all_edgetypes'),
     url(r'^edgetype/new/$', 'modelrelationship.views.new_edgetype', name='new_edgetype'),
     url(r'^edgetype/(?P<edgetype_id>\d+)$', 'modelrelationship.views.single_edgetype', name='view_single_edgetype'),
@@ -10,4 +13,7 @@ urlpatterns = patterns('',
     
     url(r'^edge/all/$', 'modelrelationship.views.all_edges', name='view_all_edges'),
     url(r'^edge/(?P<edge_id>\d+)/$', 'modelrelationship.views.view_single_edge', name='view_single_edge'),
+    
+    
+    
 )

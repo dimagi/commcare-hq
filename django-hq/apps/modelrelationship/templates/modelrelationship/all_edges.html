@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends "modelrelationship/base.html" %}
 {% load i18n %}
 {% block head_title %}{% trans "All Edges" %}{% endblock %}
-{% block content %}
+{% block mr_bcontent %}
 <h2>{% trans "All Edges" %}</h2>
 	<ul>
    {% for edge in edge_items %}      

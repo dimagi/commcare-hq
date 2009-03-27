@@ -4,12 +4,22 @@ from django.forms import ModelForm
 from django.forms import widgets
 from models import *
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
 
-class EdgeTypeForm(ModelForm):    
+class EdgeTypeForm(ModelForm):
+        
+    parent_type = forms.ModelChoiceField(label=_('Parent Object'),queryset=ContentType.objects.all())
+    child_type = forms.ModelChoiceField(label=_('Child Object'),queryset=ContentType.objects.all())
+    
     class Meta:
         model = EdgeType
-
-
+        
+    def __init__(self,parent_typeid=None,child_typeid=None,*args,**kwargs):
+        super(EdgeTypeForm,self).__init__(*args,**kwargs)
+        if parent_typeid is not None:
+            self.fields['parent_type'].queryset = ContentType.objects.all().filter(id=parent_typeid)            
+        if child_typeid is not None:
+            self.fields['child_type'].queryset = ContentType.objects.all().filter(id=child_typeid)
 
 class EdgeForm(ModelForm):    
     

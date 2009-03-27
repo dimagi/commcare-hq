@@ -17,6 +17,7 @@ from django.db import transaction
 from modelrelationship.models import *
 from modelrelationship.forms import *
 from django.contrib.auth.models import User 
+from django.contrib.contenttypes.models import ContentType
 
 #from forms import *
 import logging
@@ -28,6 +29,21 @@ import os
 import string
 
 
+def all_types(request, template_name="modelrelationship/all_types.html"):
+    context = {}
+    edgetypes = ContentType.objects.all()
+    context['content_types'] = edgetypes    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+def single_contenttype(request, contenttype_id, template_name="modelrelationship/single_contenttype.html"):
+    context = {}
+    ctype = ContentType.objects.all().get(id=contenttype_id)
+    context['content_type'] = ctype
+    context['edgetypes_parent'] = EdgeType.objects.all().filter(parent_type=ctype)
+    context['edgetypes_child'] = EdgeType.objects.all().filter(child_type=ctype)    
+    context['instances'] = ctype.model_class().objects.all()
+    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def all_edgetypes(request, template_name="modelrelationship/all_edgetypes.html"):
     context = {}
@@ -44,7 +60,15 @@ def single_edgetype(request, edgetype_id, template_name="modelrelationship/singl
     
 def new_edgetype(request, form_class=EdgeTypeForm, template_name="modelrelationship/new_edgetype.html"):
     context = {}    
-    new_form = form_class()
+    parent_typeid=None
+    child_typeid=None
+    for item in request.GET.items():
+        if item[0] == 'parent_type':
+            parent_typeid=item[1]
+        if item[0] == 'child_type':
+            child_typeid=item[1]
+    
+    new_form = form_class(parent_typeid=parent_typeid,child_typeid=child_typeid)
     context['form'] = new_form
     if request.method == 'POST':
         if request.POST["action"] == "create":
@@ -83,5 +107,40 @@ def view_single_edge(request, edge_id, template_name="modelrelationship/single_e
     context = {}
     edge = Edge.objects.all().get(id=edge_id)
     context['edge'] = edge        
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+def view_content_item(request,template_name="modelrelationship/single_content_item.html"):
+    context = {}
+    contenttype_id = -1
+    content_id =-1
+    
+    for item in request.GET.items():
+        if item[0] == 'content_type':
+            contenttype_id=item[1]
+        if item[0] == 'content_id':
+            content_id=item[1]
+    
+    ctype = ContentType.objects.all().get(id=contenttype_id)
+    context['content_type'] = ctype
+    content_instance = ctype.model_class().objects.all().get(id=content_id)
+    context['content_instance'] =  content_instance
+    
+    parent_edgetypes = EdgeType.objects.all().filter(parent_type=ctype)
+    
+    parent_edges = {}
+    for edgetype in parent_edgetypes:
+        parent_edges[edgetype] = Edge.objects.all().filter(relationship=edgetype, parent_type=ctype,parent_id=content_instance.id)
+    
+    child_edgetypes = EdgeType.objects.all().filter(child_type=ctype)
+    
+    child_edges = {}
+    for edgetype in child_edgetypes:
+        child_edges[edgetype] = Edge.objects.all().filter(relationship=edgetype, child_type=ctype,child_id=content_instance.id)
+    
+    
+    context['parent_edges'] = parent_edges
+    context['child_edges'] = child_edges    
+    
+            
     return render_to_response(template_name, context, context_instance=RequestContext(request))
     

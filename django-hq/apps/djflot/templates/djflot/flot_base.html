@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block script_includes %}
+    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.flot.js"></script>
+    {{ form.media }}
+{% endblock %} 
+{%block content%}
+
+<h1>{{chart_title}}</h1>
+<div id="placeholder" style="width:800px;height:600px;"></div>
+
+{% block chart_extras %}
+<!-- navigational elements go here -->
+
+{%endblock%}
+{% block chart_script %}
+<!-- your actual script info for the flot chart. -->
+{%endblock%}
+
+{%endblock%}
