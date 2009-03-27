@@ -109,7 +109,7 @@ class StorageUtility(object):
         
         table_name = get_table_name( self.__name(parent_name, elementdef.name) )
         #must create table so that parent_id references can be initialized properly
-        #this is obviously quite dangerous, so makre sure to roll back on fail
+        # todo - this is obviously quite dangerous, so make sure to roll back on fail
         s = ''
         if settings.DATABASE_ENGINE=='mysql' :
             s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
@@ -120,7 +120,7 @@ class StorageUtility(object):
 
         #if parent_table_name is not elementdef.name:
         #    parent_table_name = self.__name(parent_table_name, elementdef.name)              
-        fields = self.__handle_children_tables(elementdef=elementdef, parent_id=parent_id, parent_name=parent_name, parent_table_name=parent_table_name )
+        fields = self.__handle_children_tables(elementdef, parent_id, parent_name, parent_table_name )
         #fields = self.__trim2chars(fields);
 
         # Iterate through all the "ALTER" statements to support sqlite's limitations
@@ -203,11 +203,12 @@ class StorageUtility(object):
       for def_child in elementdef.child_elements:
 
         data_node = None
-        #come back and make sure this works in a case-insensitive way
+        # todo - make sure this works in a case-insensitive way
+        # find the data matching the current elementdef
         for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
             data_node = data_child
         
-        # put in a check for root.isRepeatable
+        # todo - put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
         if def_child.is_repeatable :
             if len(def_child.child_elements)>0 :
