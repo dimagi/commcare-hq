@@ -65,6 +65,24 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[4],1159)
         self.assertEquals(row[5],2002)
 
+    def testSaveFormData_5(self):
+        """ Test basic form definition created and data saved """
+        self.__create_xsd_and_populate("5_xsd_singlerepeat.in", "5_xml_singlerepeat.in")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xml_singlerepeat")
+        row = cursor.fetchone()
+        self.assertEquals(row[1],"deviceid0")
+        self.assertEquals(row[2],"starttime")
+        self.assertEquals(row[3],"endtime")
+        cursor.execute("SELECT * FROM xml_singlerepeat_userid")
+        row = cursor.fetchall()
+        self.assertEquals(row[0][1],"userid0")
+        self.assertEquals(row[1][1],"userid2")
+        self.assertEquals(row[2][1],"userid3")
+        self.assertEquals(row[0][2],1)
+        self.assertEquals(row[1][2],1)
+        self.assertEquals(row[2][2],1)
+
     def testPopulate_1(self):
         """ Test basic form definition created and data saved
         self.__populate("1_xml_basic.in")

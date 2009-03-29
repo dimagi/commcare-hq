@@ -58,9 +58,10 @@ class StorageUtility(object):
 
     def add_formdef(self, formdef):
         id = self.update_elementdefdef_meta(formdef)
-        self.create_data_tables(formdef, id, formdef.name, formdef.name)
+        queries = self.queries_to_create_instance_tables(formdef, id, formdef.name, formdef.name)
+        self.__execute_queries(queries)
         return id
-
+    
     def remove_formdef(self, name):
         # update formdef meta tables
         # drop formdef data tables
@@ -72,7 +73,10 @@ class StorageUtility(object):
         tree = etree.parse(data_stream_pointer)
         root = tree.getroot()
         self.namespace = formdef.target_namespace
-        self.populate_data_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
+        queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
+        self.__execute_queries(queries)
+        #I don't know why we need this.... but if we don't, unit tests break
+        transaction.commit_unless_managed()
 
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
@@ -104,55 +108,49 @@ class StorageUtility(object):
         ed.save()
         return ed.id
 
-    def create_data_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
-        cursor = connection.cursor()
-        
+    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
         table_name = get_table_name( self.__name(parent_name, elementdef.name) )
-        #must create table so that parent_id references can be initialized properly
-        # todo - this is obviously quite dangerous, so make sure to roll back on fail
-        s = ''
-        if settings.DATABASE_ENGINE=='mysql' :
-            s = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) );"
-        else: 
-            s = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY );"
-        logging.debug(s)
-        cursor.execute(s)
-
-        #if parent_table_name is not elementdef.name:
-        #    parent_table_name = self.__name(parent_table_name, elementdef.name)              
-        fields = self.__handle_children_tables(elementdef, parent_id, parent_name, parent_table_name )
-        #fields = self.__trim2chars(fields);
-
-        # Iterate through all the "ALTER" statements to support sqlite's limitations
-        for field in fields:
-            if len(field)>0:
-              s = "ALTER TABLE "+ table_name + str(field)
-              logging.debug(s)
-              cursor.execute(s)
         
+        (next_query, fields) = self.__create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
+        # add this later - should never be called during unit tests
+        if not fields: return next_query
+        
+        queries = ''
+        if settings.DATABASE_ENGINE=='mysql' :
+            queries = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+        else: 
+            queries = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY, "
+        
+        if len(fields[0]) == 1:
+            queries = queries + str(fields)
+        else:
+            for field in fields:
+                if len(field)>0:
+                    queries = queries + str(field)
+        
+        # we don't really need a parent_id in our top-level table...
+        # should be NOT NULL?
         if parent_id is not '':
-            # should be NOT NULL?
             if settings.DATABASE_ENGINE=='mysql' :
-                s = "ALTER TABLE "+ table_name + " ADD COLUMN parent_id INT(11);"
-                cursor.execute(s)
-                s = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (parent_id) REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL;"
+                queries = queries + " parent_id INT(11), "
+                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
             else:
-                s = "ALTER TABLE " + table_name + " ADD COLUMN parent_id REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL;"
-        if not fields: return # move this up later
-        logging.debug(s)
-        cursor.execute(s)
+                queries = queries + " parent_id REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
+        queries = queries + " );"
+        queries = queries + next_query;
+        return queries
     
-    # todo - set parent_id's correctly
-    def __handle_children_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
+    def __create_instance_tables_query_inner_loop(self, elementdef, parent_id, parent_name='', parent_table_name=''):
       """ This is 'handle' instead of 'create'(_children_tables) because not only are we 
       creating children tables, we are also gathering/passing children/field information back to the parent.
       """
       
       if not elementdef: return
       local_fields = [];
-
+      
+      next_query = ''
       if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          return self.__db_field_name(elementdef)
+          return (next_query, self.__db_field_name(elementdef) )
       for child in elementdef.child_elements:
           # put in a check for root.isRepeatable
           next_parent_name = self.__name(parent_name, elementdef.name)
@@ -161,85 +159,96 @@ class StorageUtility(object):
               ed = ElementDefData(name=str(child.name), type=str(child.type), parent_id=parent_id, 
                                   table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
               ed.save()
-              self.create_data_tables(child,  ed.id , parent_name, parent_table_name )
+              next_query = self.queries_to_create_instance_tables(child,  ed.id , parent_name, parent_table_name )
           else: 
-            #assume elements of complextype alwasy have <complextype> as first child
             if len(child.child_elements) > 0 :
-                local_fields = local_fields + ( self.__handle_children_tables(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) ) #next-parent-name
+                (q, f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
             else:
                 local_fields.append( self.__db_field_name(child) )
-                local_fields = local_fields + ( self.__handle_children_tables(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) ) #next-parent-name
-      return local_fields
-      
-    # todo - handle the case where a field is in the data_tree but has no text
-    def populate_data_tables(self, data_tree, elementdef, parent_name='', parent_table_name='' ):
+                (q,f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
+            next_query = next_query + q
+            local_fields = local_fields + f
+      return (next_query, local_fields)
+    
+    def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
       if data_tree is None : return
       if not elementdef: return
       
-      field_values = self.__populate_children_tables(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=parent_table_name )
-
       table_name = get_table_name( self.__name(parent_name, elementdef.name) )      
-      # populate the tables
-      s = "INSERT INTO " + table_name + " (";
-      s = s + self.__trim2chars(field_values['fields']) + ") VALUES( " + self.__trim2chars(field_values['values']) + ");"
-      logging.debug(s)
-      if not field_values.values: return # move this up later
-      cursor = connection.cursor()
-
-      try:
+      if len( parent_table_name ) > 0:          
+          # todo - make sure this is thread-safe (in case someone else is updating table). ;)
+          # currently this assumes that we update child elements at exactly the same time we update parents =b
+          cursor = connection.cursor()
+          s = "SELECT id FROM " + str(parent_table_name)
+          logging.debug(s)
           cursor.execute(s)
-      except DatabaseError:
-          return
+          row = cursor.fetchone()
+          if row is not None:
+              parent_id = row[0]
+          else:
+              parent_id = 1
+      
+      (next_query, fields, values) = self.__populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=table_name, parent_id=parent_id )
+      if not values: return next_query
 
-      transaction.commit_unless_managed()
+      queries = "INSERT INTO " + table_name + " (";
+      queries = queries + self.__trim2chars(fields)
+      if parent_id > 0: queries = queries + ", parent_id"
+      queries = queries + ") VALUES( "
+      queries = queries + self.__trim2chars(values)
+      if parent_id > 0: queries = queries + ", " + str(parent_id)
+      queries = queries +  ");"
+      queries = queries + next_query
+      return queries
 
-    def __populate_children_tables(self, data_tree, elementdef, parent_name='', parent_table_name='' ):
+    def __populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
       if data_tree is None: return
       if not elementdef : return
       local_fields = '';
       values = '';
-
-      logging.debug("Saving data")      
-      for def_child in elementdef.child_elements:
-
+      
+      next_query = ''
+      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+          local_fields = self.__sanitize(elementdef.name) + ", "
+          values = self.__db_format(elementdef.type, data_tree.text) + ", "      
+          return (next_query, local_fields, values)
+      for def_child in elementdef.child_elements:        
         data_node = None
         # todo - make sure this works in a case-insensitive way
         # find the data matching the current elementdef
         for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
             data_node = data_child
-        
+            
         # todo - put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
         if def_child.is_repeatable :
             if len(def_child.child_elements)>0 :
                 # if a repeatable element has children, create a table with all children
                 if data_node is not None:
-                  self.populate_data_tables(data_node, def_child, next_parent_name, parent_table_name )
+                  next_query = next_query + self.queries_to_populate_instance_tables(data_node, def_child, next_parent_name, parent_table_name, parent_id )
             else:
-                # if a repeatable element has no children, create a table with just this element
-                
-                # find all elements matching
+                # if a repeatable element has no children, create a table with just this element                
                 for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
-                    self.populate_data_tables(data_child, def_child, next_parent_name )
+                  next_query = next_query + self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
         else:
             if( len(def_child.child_elements)>0 ):
-                
                 # if there are no children, then add values to the table
                 if data_node is not None:
-                    field_values = self.__populate_children_tables(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
-                    local_fields = local_fields + field_values['fields']
-                    values  = values + field_values['values']
-                    #assume elements of complextype always have <complextyp> as first child
+                    (q,f,v) = self.__populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
+                    next_query = next_query + q
+                    local_fields = local_fields + f
+                    values  = values + v
             else:
                 # if there are children (which are not repeatable) then flatten the table
                 for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
                     if data_child.text is not None :
                         local_fields = local_fields + self.__sanitize(def_child.name) + ", "
                         values = values + self.__db_format(def_child.type, data_child.text) + ", "      
-                    field_values = self.__populate_children_tables(data_child, def_child, next_parent_name, parent_table_name)
-                    local_fields = local_fields + field_values['fields']
-                    values  = values + field_values['values']
-      return {'fields':local_fields, 'values':values}
+                    (q, f, v) = self.__populate_instance_tables_inner_loop(data_child, def_child, next_parent_name, parent_table_name)
+                    next_query = next_query + q
+                    local_fields = local_fields + f
+                    values  = values + v
+      return (next_query, local_fields, values)
 
     def __trim2chars(self, string):
         return string[0:len(string)-2]
@@ -273,7 +282,7 @@ class StorageUtility(object):
             return name
 
     def __db_field_name(self, elementdef):
-        return " ADD COLUMN " + self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type )
+        return self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type ) + ", "
     
     #temporary measure to get target form
     # todo - fix this to be more efficient, so we don't parse the file twice
@@ -292,4 +301,16 @@ class StorageUtility(object):
         xmlns = get_table_name( r.group(0).strip('{').strip('}') )
         logging.debug( "Xmlns is " + xmlns )
         return xmlns
+    
+    def __execute_queries(self, queries):
+        # todo - rollback on fail
+        logging.debug(queries)
+        cursor = connection.cursor()
+        if settings.DATABASE_ENGINE=='mysql' :
+            cursor.execute(queries)            
+        else:
+            simple_queries = queries.split(';')
+            for query in simple_queries: 
+                cursor.execute(query)
+        
     
