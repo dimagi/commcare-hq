@@ -19,7 +19,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         self.__create_xsd_and_populate("1_xsd_basic.in", "1_xml_basic.in")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xml_basic")
+        cursor.execute("SELECT * FROM x_xml_basic")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         self.assertEquals(row[1],"userid0")
@@ -45,7 +45,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         self.__create_xsd_and_populate("3_xsd_deep.in", "3_xml_deep.in")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xml_deep")
+        cursor.execute("SELECT * FROM x_xml_deep")
         row = cursor.fetchone()
         self.assertEquals(row[1],"userid0")
         self.assertEquals(row[2],"abc")
@@ -57,7 +57,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         self.__create_xsd_and_populate("4_xsd_verydeep.in", "4_xml_verydeep.in")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xml_verydeep")
+        cursor.execute("SELECT * FROM x_xml_verydeep")
         row = cursor.fetchone()
         self.assertEquals(row[1],"userid0")
         self.assertEquals(row[2],"great_grand1")
@@ -69,12 +69,12 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         self.__create_xsd_and_populate("5_xsd_singlerepeat.in", "5_xml_singlerepeat.in")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xml_singlerepeat")
+        cursor.execute("SELECT * FROM x_xml_singlerepeat")
         row = cursor.fetchone()
         self.assertEquals(row[1],"deviceid0")
         self.assertEquals(row[2],"starttime")
         self.assertEquals(row[3],"endtime")
-        cursor.execute("SELECT * FROM xml_singlerepeat_userid")
+        cursor.execute("SELECT * FROM x_xml_singlerepeat_userid")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[1][1],"userid2")
@@ -87,7 +87,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved
         self.__populate("1_xml_basic.in")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xml_deep")
+        cursor.execute("SELECT * FROM x_xml_deep")
         rows = cursor.fetchone()
         self.assertTrue(  len(rows)== 2 )
         for row in rows:

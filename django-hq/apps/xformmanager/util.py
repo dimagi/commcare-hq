@@ -1,5 +1,7 @@
 import os
 
+TABLE_PREFIX = "x_"
+
 def skip_junk(stream_pointer):
     """ This promises to be a useful file """
     c = ''
@@ -15,4 +17,4 @@ def get_table_name(name):
     if len(name) > MAX_LENGTH:
         start = len(name)-MAX_LENGTH
     sanitized_name = str(name[start:len(name)]).replace("/","_").replace(":","").replace(".","_").lower()
-    return sanitized_name
+    return TABLE_PREFIX + sanitized_name
