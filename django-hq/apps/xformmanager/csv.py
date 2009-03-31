@@ -6,6 +6,9 @@ import os
 SEPARATOR = ','
 
 def generate_CSV(form_name):
+    if form_name is None:
+        logging.debug("Cannot generate CSV. No form name identified.")
+        return
     logging.debug("Generating CSV for " + form_name)
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM " + form_name)
