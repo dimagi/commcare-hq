@@ -449,7 +449,7 @@ border-spacing: 0px;
 
 
 div.parents {
-	width: 400px;
+	width: 350px;
 	padding: 10px;
 	margin: 5px;
 	border: 1px solid black;
@@ -459,6 +459,17 @@ div.parents {
 div.parents ul {
 	list-style-image: url(/media/parentarrow.png);
 }
+
+div.reports {	
+	padding: 10px;
+	margin: 5px;
+	border: 1px solid black;	
+}
+
+div.reports ul {
+	list-style-type:None;
+}
+
 
 div.descendants {
 	width: 400px;
@@ -470,6 +481,7 @@ div.descendants {
 
 div.descendants ul {
 	list-style-image: url(/media/childarrow.png);
+	list-style-type:None;
 }
 
 
