@@ -17,7 +17,7 @@ urlpatterns = patterns('',
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
     (r'^charts/', include('djflot.urls')),
-    
+    (r'^organization/', include('organization.urls')),    
     
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
