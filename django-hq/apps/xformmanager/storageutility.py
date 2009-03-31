@@ -86,8 +86,8 @@ class StorageUtility(object):
         logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
         
-        if xsd is None:
-            logging.error("NO MATCHING SCHEMA FOUND")
+        if xsd is None or len(xsd) == 0:
+            logging.error("NO XMLNS FOUND IN SUBMITTED FORM")
             return
         logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         g = open( xsd[0].xsd_file_location ,"r")
@@ -208,46 +208,41 @@ class StorageUtility(object):
       values = '';
       
       next_query = ''
-      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          local_fields = self.__sanitize(elementdef.name) + ", "
-          values = self.__db_format(elementdef.type, data_tree.text) + ", "      
+      if len(elementdef.child_elements)== 0:
+          if elementdef.is_repeatable :
+              local_fields = self.__sanitize(elementdef.name) + ", "
+              values = self.__db_format(elementdef.type, data_tree.text) + ", "      
           return (next_query, local_fields, values)
       for def_child in elementdef.child_elements:        
         data_node = None
+        
         # todo - make sure this works in a case-insensitive way
         # find the data matching the current elementdef
-        for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
-            data_node = data_child
-            
         # todo - put in a check for root.isRepeatable
         next_parent_name = self.__name(parent_name, elementdef.name)
         if def_child.is_repeatable :
-            if len(def_child.child_elements)>0 :
-                # if a repeatable element has children, create a table with all children
-                if data_node is not None:
-                  next_query = next_query + self.queries_to_populate_instance_tables(data_node, def_child, next_parent_name, parent_table_name, parent_id )
-            else:
-                # if a repeatable element has no children, create a table with just this element                
-                for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
-                  next_query = next_query + self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
+            for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
+                next_query = next_query + self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
         else:
+            # if there are children (which are not repeatable) then flatten the table
+            for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
+                data_node = data_child
+                break;
             if( len(def_child.child_elements)>0 ):
-                # if there are no children, then add values to the table
                 if data_node is not None:
                     (q,f,v) = self.__populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
                     next_query = next_query + q
                     local_fields = local_fields + f
                     values  = values + v
             else:
-                # if there are children (which are not repeatable) then flatten the table
-                for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
-                    if data_child.text is not None :
-                        local_fields = local_fields + self.__sanitize(def_child.name) + ", "
-                        values = values + self.__db_format(def_child.type, data_child.text) + ", "      
-                    (q, f, v) = self.__populate_instance_tables_inner_loop(data_child, def_child, next_parent_name, parent_table_name)
-                    next_query = next_query + q
-                    local_fields = local_fields + f
-                    values  = values + v
+                # if there are no children, then add values to the table
+                if data_child.text is not None :
+                    local_fields = local_fields + self.__sanitize(def_child.name) + ", "
+                    values = values + self.__db_format(def_child.type, data_child.text) + ", "
+                (q, f, v) = self.__populate_instance_tables_inner_loop(data_child, def_child, next_parent_name, parent_table_name)
+                next_query = next_query + q
+                local_fields = local_fields + f
+                values  = values + v
       return (next_query, local_fields, values)
 
     def __trim2chars(self, string):
@@ -289,13 +284,16 @@ class StorageUtility(object):
     def __get_xmlns(self, stream):
         logging.debug("Trying to parse xml_file")
         skip_junk(stream)
-        tree = etree.parse(stream)
+        try: 
+            tree = etree.parse(stream)
+        except:
+            logging.debug("ERROR PARSING XML INSTANCE DATA")  
         root = tree.getroot()
         logging.debug("Parsing xml file successful")
         logging.debug("Find xmlns from " + root.tag)
         #todo - add checks in case we don't have a well-formatted xmlns
         r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
-        if r is None: 
+        if r is None:
             logging.error( "NO NAMESPACE FOUND" )
             return None
         xmlns = get_table_name( r.group(0).strip('{').strip('}') )
