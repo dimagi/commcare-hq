@@ -15,7 +15,7 @@ def generate_CSV(form_name):
     rows = cursor.fetchall()
     
     if rows is None:
-        logging.error("CVS: Form_name not recognized!")
+        logging.error("CSV: Form_name not recognized!")
         return
     f = open(  os.path.join(settings.CSV_PATH,form_name+".csv") , "w" )
 

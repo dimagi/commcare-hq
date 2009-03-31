@@ -3,6 +3,7 @@ from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 import uuid
 import settings
+from django.contrib.auth.models import Group, User
 #import Group
 
 class ElementDefData(models.Model):
@@ -61,7 +62,7 @@ class FormDefData(models.Model):
     form_name = models.CharField(max_length=255, unique=True)
     target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
-    element = models.OneToOneField(ElementDefData)
+    element = models.OneToOneField(ElementDefData)    
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     
