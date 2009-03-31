@@ -178,29 +178,32 @@ def render_edgetree_as_ul(arr, direction):
 #    if len(arr) == 1:
 #        ctype = ContentType.objects.get_for_model(arr[0])
 #        return '<td><a href="%s?content_type=%s&content_id=%s">%s</a></td>' % (reverse('view_content_item', kwargs= {}),ctype.id,arr[0].id,arr[0])
-#    
+    
     fullret = ''
     
     prior_edgetype = None
     group_edge = False
     
+    
     for edges in arr:
         subitems = ''
         sublist = ''
-        edge = None            
+        edge = None
+        do_continue = True       
+        
         
         if isinstance(edges,ListType):
-            if len(edges) > 1:    
-                sublist += '\n<ul>'    
-                sublist += render_edgetree_as_ul(edges,direction)
-                sublist += '</ul>'
-                sublist += '</ul>'
-            else:               
-                edge = edges[0]
-                                        
-        else:            
+            #if len(edges) > 1:            
+            sublist += '\n<ul>'    
+            sublist += render_edgetree_as_ul(edges,direction)
+            sublist += '</ul>'
+            sublist += '</ul>'
+            do_continue=False                  
+        
+        if do_continue:            
             if edge == None:            
                 edge = edges
+                    
             if edge.relationship != prior_edgetype:      
                 if group_edge:
                     group_edge = False
@@ -214,7 +217,7 @@ def render_edgetree_as_ul(arr, direction):
             subitems += '\t<li>'
             if direction == 'children':
                 subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('view_content_item', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)         
-            else:
+            else:                
                 subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('view_content_item', kwargs= {}),edge.parent_type.id,edge.parent_object.id,edge.parent_object)
             subitems += '\t</li>'                        
             subitems += '</li>'    
@@ -241,7 +244,7 @@ def get_descendents(content_obj):
 @register.simple_tag
 def get_ancestors(content_obj):
     
-    ancestors = traversal.getAncestorEdgesForObject(content_obj)
+    ancestors = traversal.getAncestorEdgesForObject(content_obj)    
     if len(ancestors) > 0:
         return '<div class="parents"><h3>Parents</h3><h4>' + str(content_obj) + '</h4><ul>' + render_edgetree_as_ul(ancestors,'parents') + '</ul></div>'
     else:

@@ -36,6 +36,23 @@ def manager(request, template_name="organization/manager.html"):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
+    contenttype_id = None
+    content_id = None
+    
+    for item in request.GET.items():
+        if item[0] == 'content_type':
+            contenttype_id=item[1]
+        if item[0] == 'content_id':
+            content_id=item[1]
+    
+    if contenttype_id != None and content_id != None:
+        ctype = ContentType.objects.all().get(id=contenttype_id)
+        context['selected_type'] = ctype
+        content_instance = ctype.model_class().objects.all().get(id=content_id)
+        context['selected_object'] =  content_instance
+    else:
+        context['selected_object'] = None
+    
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser    
     return render_to_response(template_name, context, context_instance=RequestContext(request))

@@ -4,6 +4,15 @@ from types import ListType,TupleType
 
 
 
+def getImmediateRelationsForObject(content_obj):
+    ctype = ContentType.objects.get_for_model(content_obj)
+    cid = content_obj.id
+    parent_edges = Edge.objects.all().filter(child_type=ctype,child_id=cid)
+    child_edges = Edge.objects.all().filter(parent_type=ctype,parent_id=cid)    
+    return (parent_edges, child_edges)
+    
+
+
 def getAncestorEdgesForObject(content_obj):
     #todo:  get all edges
     # for each edge, get full lineage
@@ -12,16 +21,16 @@ def getAncestorEdgesForObject(content_obj):
     ctype = ContentType.objects.get_for_model(content_obj)
     cid = content_obj.id
     parent_edges = Edge.objects.all().filter(child_type=ctype,child_id=cid)
-    
     if len(parent_edges) == 0:
         return []
     else:
         ret = []        
         for edge in parent_edges:
-            ret.append(edge)
-            parents = getAncestorEdgesForObject(edge.parent_object)            
+            ret.append(edge)            
+            parents = getAncestorEdgesForObject(edge.parent_object) 
+                                 
             if len(parents) > 0:
-                ret.append(parents)
+                ret.append(parents)        
         return ret
 
 def getDescendentEdgesForObject(content_obj):    

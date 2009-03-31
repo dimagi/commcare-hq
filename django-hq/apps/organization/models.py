@@ -23,12 +23,12 @@ class OrganizationType(models.Model):
     class Meta:
         verbose_name = _("Organization Type")
 
+
 class ExtRole(models.Model):
     name = models.CharField(max_length=64, unique=True)
     domain = models.ForeignKey(Domain)
     description = models.CharField(max_length=255, null=True, blank=True)
-    level = models.IntegerField()
-    
+    level = models.IntegerField()    
     
     def __unicode__(self):
         return self.name
@@ -46,8 +46,7 @@ class ExtRole(models.Model):
 class ExtUser(User):    
     primary_phone = models.CharField(max_length=30, unique=True, null=True,blank=True, help_text="e.g., +251912555555")
     domain = models.ForeignKey(Domain)
-    identity = models.OneToOneField(MonitorIdentity,blank=True,null=True)
-    
+    identity = models.OneToOneField(MonitorIdentity,blank=True,null=True)    
       
     def __unicode__(self):
         return self.username
