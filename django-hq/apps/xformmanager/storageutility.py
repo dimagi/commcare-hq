@@ -271,7 +271,7 @@ class StorageUtility(object):
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here
     def __sanitize(self, name):
-        if name.lower() == "where":
+        if name.lower() == "where" or name.lower() == "when":
             return "_" + name
         else:
             return name
