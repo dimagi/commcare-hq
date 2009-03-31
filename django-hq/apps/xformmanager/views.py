@@ -13,6 +13,7 @@ from xformmanager.csv import generate_CSV
 import settings, os, sys
 import logging
 import traceback
+import subprocess
 
 #temporary
 from lxml import etree
@@ -41,12 +42,24 @@ def register_xform(request, template='register_and_list_xforms.html'):
             transaction = str(uuid.uuid1())
             try:
                 logging.debug("temporary file name is " + transaction)                
-                new_file_name = __file_name(transaction)
-                logging.debug("try to write file")
-                fout = open(new_file_name, 'w')
-                fout.write( request.FILES['file'].read() )
-                fout.close()
-                
+
+                new_file_name = __xsd_file_name(transaction)
+                if request.FILES['file'].name.endswith("xsd"):
+                    fout = open(new_file_name, 'w')
+                    fout.write( request.FILES['file'].read() )
+                    fout.close()
+                else: 
+                    #user has uploaded an xhtml/xform file
+                    xform_file_name = __xform_file_name(transaction)
+                    fout = open(xform_file_name, 'w')
+                    fout.write( request.FILES['file'].read() )
+                    fout.close()
+                    logging.debug ("java -jar form_translate.jar schema < " + xform_file_name + ">" + new_file_name)
+                    retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
+                    if retcode == 1:
+                        context['errors'] = request.FILES['file'].name+" could not be processed"
+                        raise Exception(request.FILES['file'].name+" could not be processed")
+                        
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
                 formdef = FormDef(fout)
@@ -68,9 +81,10 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fdd.save() 
                 
                 logging.debug("xform registered")
-            except:
-                logging.error("Unable to write raw post data")
-                logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))
+            except Exception, e:
+                logging.error(e)
+                logging.error("Unable to write raw post data<br/>")
+                logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]) + "<br/>")
                 logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
                 type, value, tb = sys.exc_info()
                 logging.error(type.__name__, ":", value)
@@ -109,5 +123,8 @@ def data(request, formdef_name, template_name="data.html"):
          context['csv_file'] = file_name
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def __file_name(name):
+def __xsd_file_name(name):
     return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')
+
+def __xform_file_name(name):
+    return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xform.xml')

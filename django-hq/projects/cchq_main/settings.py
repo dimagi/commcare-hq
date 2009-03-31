@@ -142,7 +142,7 @@ LANGUAGES = (
 #  ('it', u'Italiano'),
 )
 
-
+SCRIPT_PATH = (os.path.join(current_path,"../../scripts"))
 CSV_PATH = os.path.join(MEDIA_ROOT,'csv')
 XFORM_SUBMISSION_PATH = os.path.join(os.path.dirname(__file__),'xform-data')
 XSD_REPOSITORY_PATH = os.path.join(os.path.dirname(__file__),'schemas')
@@ -150,6 +150,9 @@ ATTACHMENTS_PATH = os.path.join(MEDIA_ROOT,'attachment')
 if not os.path.exists(ATTACHMENTS_PATH):
     os.mkdir(ATTACHMENTS_PATH)
 
+if not os.path.exists(SCRIPT_PATH):
+    os.mkdir(SCRIPT_PATH)
+                     
 if not os.path.exists(XFORM_SUBMISSION_PATH):
     os.mkdir(XFORM_SUBMISSION_PATH)
                      
