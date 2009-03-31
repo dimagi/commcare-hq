@@ -1,0 +1,7 @@
+INSTALLATION
+
+1. Install the latest Django (at least version 1.0)
+2. Install the lxml module for python
+3. Run projects/cchq_main/manage.py syncdb
+4. Run projects/cchq_main/manage.py runserver
+5. Point your browser to http://127.0.0.1:8000/
