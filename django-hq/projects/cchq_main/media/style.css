@@ -448,6 +448,31 @@ border-spacing: 0px;
 }
 
 
+div.parents {
+	width: 400px;
+	padding: 10px;
+	margin: 5px;
+	border: 1px solid black;
+	float:left;
+}
+
+div.parents ul {
+	list-style-image: url(/media/parentarrow.png);
+}
+
+div.descendants {
+	width: 400px;
+	padding: 10px;
+	margin: 5px;
+	border: 1px solid black;
+	float:left;
+}
+
+div.descendants ul {
+	list-style-image: url(/media/childarrow.png);
+}
+
+
 div.container
 {
 	width:100%;

@@ -1,0 +1,35 @@
+[
+{
+    "pk": 1, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Is parent organization of", 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "name": "is parent organization of", 
+      "directional": true
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Organization Supervisor", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "Has Supervisors", 
+      "directional": true
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "organization members", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "Has members", 
+      "directional": true
+    }
+  }
+]

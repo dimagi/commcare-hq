@@ -21,7 +21,7 @@ class Hardware(models.Model):
     
     
 class MonitorDevice(models.Model):
-    identity = models.ManyToManyField(MonitorIdentity)
+    identity = models.ForeignKey(MonitorIdentity)
     phone = models.CharField(max_length=30, unique=True, blank=True, help_text="e.g., +251912555555")
     incoming_messages = models.PositiveIntegerField(help_text="The number of messages that uniSMS has received from this Monitor",default=0)
     date_registered = models.DateTimeField(default = datetime.now())

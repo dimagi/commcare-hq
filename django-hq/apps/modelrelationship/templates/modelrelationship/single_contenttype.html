@@ -18,9 +18,9 @@
 	{%for edgetype in edgetypes_parent %}
 		<li>
 		<a href="{% url modelrelationship.views.single_edgetype edgetype.id %}">{{edgetype}} </a>
-		</li>
-   	</ul>
+		</li>   	
 	{% endfor %}
+	</ul>
 	
 	{%else%}
 	<strong>No edge types</strong>

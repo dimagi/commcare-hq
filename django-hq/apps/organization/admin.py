@@ -1,20 +1,27 @@
 from django.contrib import admin
-from organization.models import *
+from organization.models import * 
+from django.contrib.auth.models import Group, User
 
-class OrganizationTypeAdmin(admin.ModelAdmin):
+class DomainAdmin(admin.ModelAdmin):
     list_display = ('id','name','description')
     list_filter = []  
 
+
+class OrganizationTypeAdmin(admin.ModelAdmin):
+    list_display = ('id','name','description','domain')
+    list_filter = []  
+
 class ExtUserAdmin(admin.ModelAdmin):
-    list_display = ('id','username','primary_phone','email')
+    list_display = ('id','username','primary_phone','email','domain')
     list_filter = []
     
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('id','name','description','member_of')
-    list_filter = ['member_of',]  
+    fields = ('name','description','organization_type','domain')
+    list_display = ('id','name','description',)
+    list_filter = []  
     
 class ExtRoleAdmin(admin.ModelAdmin):
-    list_display = ('id','name','description',)
+    list_display = ('id','name','description','domain')
     list_filter = []      
     
 #
@@ -34,4 +41,5 @@ admin.site.register(ExtRole,ExtRoleAdmin)
 admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)
+admin.site.register(Domain,DomainAdmin)
 

@@ -72,7 +72,7 @@ def new_edgetype(request, form_class=EdgeTypeForm, template_name="modelrelations
     context['form'] = new_form
     if request.method == 'POST':
         if request.POST["action"] == "create":
-            new_form = form_class(request.POST)
+            new_form = form_class(parent_typeid,child_typeid,request.POST)
             if new_form.is_valid():                
                 newedgetype = new_form.save(commit=False)
                 newedgetype.save()
@@ -84,10 +84,21 @@ def new_edgetype(request, form_class=EdgeTypeForm, template_name="modelrelations
 def new_edge(request, edgetype_id, form_class=EdgeForm, template_name="modelrelationship/new_edge.html"):
     context = {}    
     new_form = form_class(edgetype_id)
-    context['form'] = new_form
+    
+    parent_item_id=None
+    child_item_id=None
+    print request.GET.items()
+    for item in request.GET.items():
+        if item[0] == 'parent_id':
+            parent_item_id=item[1]                    
+        if item[0] == 'child_id':
+            child_item_id=item[1]    
+
+    new_form = form_class(edgetype_id, parent_item_id,child_item_id)     
+    context['form'] = new_form                           
     if request.method == 'POST':
-        if request.POST["action"] == "create":
-            new_form = form_class(edgetype_id, request.POST)
+        if request.POST["action"] == "create":                        
+            new_form = form_class(edgetype_id, parent_item_id,child_item_id,request.POST)
             if new_form.is_valid():                
                 newedgetype = new_form.save(commit=False)
                 newedgetype.save()
@@ -103,7 +114,7 @@ def all_edges(request, template_name="modelrelationship/all_edges.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
-def view_single_edge(request, edge_id, template_name="modelrelationship/single_edge.html"):
+def single_edge(request, edge_id, template_name="modelrelationship/single_edge.html"):
     context = {}
     edge = Edge.objects.all().get(id=edge_id)
     context['edge'] = edge        
@@ -140,6 +151,9 @@ def view_content_item(request,template_name="modelrelationship/single_content_it
     
     context['parent_edges'] = parent_edges
     context['child_edges'] = child_edges    
+    
+    context['parent_edgetypes'] = EdgeType.objects.all().filter(parent_type=ctype)
+    context['child_edgetypes'] = EdgeType.objects.all().filter(child_type=ctype)
     
             
     return render_to_response(template_name, context, context_instance=RequestContext(request))
