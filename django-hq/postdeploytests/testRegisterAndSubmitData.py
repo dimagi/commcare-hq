@@ -9,8 +9,8 @@ import subprocess
 import sys
 from subprocess import PIPE
 
-#serverhost = 'test.commcarehq.org'
-serverhost = 'localhost:8000'
+serverhost = 'test.commcarehq.org'
+#serverhost = 'localhost:8000'
 
 
 curl_command = 'C:\curl\curl.exe'
