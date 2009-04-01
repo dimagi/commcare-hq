@@ -1,5 +1,148 @@
 [
   {
+    "pk": 1, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Parent Organization", 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "name": "is parent organization", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Organization Supervisor", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "has supervisors", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Organization Group Members", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "has members", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Domain Root", 
+      "child_type": 23, 
+      "parent_type": 19, 
+      "name": "is domain root", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 2, 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "relationship": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 3, 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "relationship": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 2, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 3, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 4, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 5, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 3, 
+      "child_id": 2, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 3, 
+      "child_id": 6, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 1, 
+      "child_type": 23, 
+      "parent_type": 19, 
+      "relationship": 4
+    }
+  },
+  {
     "pk": 22, 
     "model": "auth.permission", 
     "fields": {
@@ -630,7 +773,7 @@
       "is_active": 1, 
       "is_superuser": 1, 
       "is_staff": 1, 
-      "last_login": "2009-03-31 01:01:45", 
+      "last_login": "2009-04-01 12:23:31", 
       "groups": [], 
       "user_permissions": [], 
       "password": "sha1$a1fb1$fd884038d5cf2077d12f805fa88b512f9cdc7ba8", 
@@ -648,7 +791,7 @@
       "is_active": 1, 
       "is_superuser": 1, 
       "is_staff": 1, 
-      "last_login": "2009-03-31 01:03:15", 
+      "last_login": "2009-04-01 10:44:14", 
       "groups": [], 
       "user_permissions": [], 
       "password": "sha1$9bc9f$2d0448052960a387e4c38792a42c171069e4e402", 
@@ -727,418 +870,12 @@
       "email": "", 
       "date_joined": "2009-03-30 16:39:51"
     }
-  }, 
-  {
-    "pk": 5, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "contenttype", 
-      "name": "content type", 
-      "app_label": "contenttypes"
-    }
-  }, 
-  {
-    "pk": 19, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "domain", 
-      "name": "Domain Account", 
-      "app_label": "organization"
-    }
-  }, 
-  {
-    "pk": 12, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "edge", 
-      "name": "edge", 
-      "app_label": "modelrelationship"
-    }
-  }, 
-  {
-    "pk": 11, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "edgetype", 
-      "name": "edge type", 
-      "app_label": "modelrelationship"
-    }
-  }, 
-  {
-    "pk": 13, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "elementdefdata", 
-      "name": "element def data", 
-      "app_label": "xformmanager"
-    }
-  }, 
-  {
-    "pk": 22, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "extuser", 
-      "name": "Extended User", 
-      "app_label": "organization"
-    }
-  }, 
-  {
-    "pk": 21, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "extrole", 
-      "name": "Extended User Role", 
-      "app_label": "organization"
-    }
-  }, 
-  {
-    "pk": 14, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "formdefdata", 
-      "name": "form def data", 
-      "app_label": "xformmanager"
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "group", 
-      "name": "group", 
-      "app_label": "auth"
-    }
-  }, 
-  {
-    "pk": 16, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "hardware", 
-      "name": "hardware", 
-      "app_label": "monitorregistry"
-    }
-  }, 
-  {
-    "pk": 8, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "logentry", 
-      "name": "log entry", 
-      "app_label": "admin"
-    }
-  }, 
-  {
-    "pk": 4, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "message", 
-      "name": "message", 
-      "app_label": "auth"
-    }
-  }, 
-  {
-    "pk": 17, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "monitordevice", 
-      "name": "monitor device", 
-      "app_label": "monitorregistry"
-    }
-  }, 
-  {
-    "pk": 18, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "monitorgroup", 
-      "name": "monitor group", 
-      "app_label": "monitorregistry"
-    }
-  }, 
-  {
-    "pk": 15, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "monitoridentity", 
-      "name": "monitor identity", 
-      "app_label": "monitorregistry"
-    }
-  }, 
-  {
-    "pk": 23, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "organization", 
-      "name": "Organization", 
-      "app_label": "organization"
-    }
-  }, 
-  {
-    "pk": 20, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "organizationtype", 
-      "name": "Organization Type", 
-      "app_label": "organization"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "permission", 
-      "name": "permission", 
-      "app_label": "auth"
-    }
-  }, 
-  {
-    "pk": 6, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "session", 
-      "name": "session", 
-      "app_label": "sessions"
-    }
-  }, 
-  {
-    "pk": 7, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "site", 
-      "name": "site", 
-      "app_label": "sites"
-    }
-  }, 
-  {
-    "pk": 10, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "attachment", 
-      "name": "Submission Attachment", 
-      "app_label": "submitlogger"
-    }
-  }, 
-  {
-    "pk": 9, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "submitlog", 
-      "name": "Submission Log", 
-      "app_label": "submitlogger"
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "contenttypes.contenttype", 
-    "fields": {
-      "model": "user", 
-      "name": "user", 
-      "app_label": "auth"
-    }
-  }, 
-  {
-    "pk": "08b1e4b09e1bb2e30806b87b1d52edbc", 
-    "model": "sessions.session", 
-    "fields": {
-      "expire_date": "2009-04-14 01:03:15", 
-      "session_data": "gAJ9cQEoVRJfYXV0aF91c2VyX2JhY2tlbmRxAlUpZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5k\ncy5Nb2RlbEJhY2tlbmRxA1UNX2F1dGhfdXNlcl9pZHEEigECdS5lZjQ3ODRkZGUzMjhmY2I4Y2Iz\nODYwZjEyOTFmMjZhNw==\n"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "sites.site", 
-    "fields": {
-      "domain": "example.com", 
-      "name": "example.com"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "admin.logentry", 
-    "fields": {
-      "action_flag": 1, 
-      "action_time": "2009-03-31 01:02:32", 
-      "object_repr": "EdgeType (Domain Account [== is domain root ==>] Organization :: Domain Root)", 
-      "object_id": "4", 
-      "change_message": "", 
-      "user": 1, 
-      "content_type": 11
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "modelrelationship.edgetype", 
-    "fields": {
-      "description": "Is parent organization of", 
-      "child_type": 23, 
-      "parent_type": 23, 
-      "name": "is parent organization of", 
-      "directional": 1
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "modelrelationship.edgetype", 
-    "fields": {
-      "description": "Organization Supervisor", 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "name": "Has Supervisors", 
-      "directional": 1
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "modelrelationship.edgetype", 
-    "fields": {
-      "description": "organization members", 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "name": "Has members", 
-      "directional": 1
-    }
-  }, 
-  {
-    "pk": 4, 
-    "model": "modelrelationship.edgetype", 
-    "fields": {
-      "description": "Domain Root", 
-      "child_type": 23, 
-      "parent_type": 19, 
-      "name": "is domain root", 
-      "directional": 1
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 1, 
-      "child_id": 2, 
-      "child_type": 23, 
-      "parent_type": 23, 
-      "relationship": 1
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 1, 
-      "child_id": 3, 
-      "child_type": 23, 
-      "parent_type": 23, 
-      "relationship": 1
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 2, 
-      "child_id": 2, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 2
-    }
-  }, 
-  {
-    "pk": 4, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 2, 
-      "child_id": 3, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 2
-    }
-  }, 
-  {
-    "pk": 5, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 2, 
-      "child_id": 4, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 3
-    }
-  }, 
-  {
-    "pk": 6, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 2, 
-      "child_id": 5, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 3
-    }
-  }, 
-  {
-    "pk": 7, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 3, 
-      "child_id": 2, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 2
-    }
-  }, 
-  {
-    "pk": 8, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 3, 
-      "child_id": 6, 
-      "child_type": 22, 
-      "parent_type": 23, 
-      "relationship": 3
-    }
-  }, 
-  {
-    "pk": 9, 
-    "model": "modelrelationship.edge", 
-    "fields": {
-      "parent_id": 1, 
-      "child_id": 1, 
-      "child_type": 23, 
-      "parent_type": 19, 
-      "relationship": 4
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "xformmanager.elementdefdata", 
-    "fields": {
-      "allowable_values_table": null, 
-      "name": "", 
-      "parent": null, 
-      "is_attribute": 0, 
-      "table_name": "x_", 
-      "is_repeatable": 0, 
-      "type": ""
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "xformmanager.formdefdata", 
-    "fields": {
-      "target_namespace": "", 
-      "submit_ip": "127.0.0.1", 
-      "element": 1, 
-      "date_created": "2009-03-30", 
-      "xsd_file_location": "C:\\home\\dmyung\\work\\dimagi\\workspaces\\djangowork\\commcare-hq-full\\projects\\cchq_main\\schemas\\b4c07c1e-1da0-11de-89a7-001641e25144-xsd.xml", 
-      "submit_time": "2009-03-30 23:04:35", 
-      "form_name": "x_", 
-      "bytes_received": 4104
-    }
-  }, 
+  },
   {
     "pk": 1, 
     "model": "organization.domain", 
     "fields": {
-      "name": "BRAC", 
+      "name": "HelperOrganization", 
       "description": ""
     }
   }, 
@@ -1230,7 +967,7 @@
         1
       ], 
       "domain": 1, 
-      "name": "BRAC", 
+      "name": "HelperOrganization", 
       "description": ""
     }
   }, 
@@ -1242,7 +979,7 @@
         1
       ], 
       "domain": 1, 
-      "name": "BRAC-CHP", 
+      "name": "HelpOrg - CHP", 
       "description": ""
     }
   }, 
@@ -1254,8 +991,9 @@
         1
       ], 
       "domain": 1, 
-      "name": "BRAC-CHW", 
+      "name": "HelpOrg - CHW", 
       "description": ""
     }
   }
 ]
+

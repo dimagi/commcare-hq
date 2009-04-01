@@ -19,9 +19,8 @@ import logging
 
 def homepage(request,template_name='cchq_main_homepage.html'):
     return_dict = {}    
-    current_user = request.user
-    #return_dict['user'] = current_user        
-    return render_to_response(template_name,return_dict, context_instance=RequestContext(request))
+    current_user = request.user    
+    return render_to_response(template_name, return_dict, context_instance=RequestContext(request))
 
 
 

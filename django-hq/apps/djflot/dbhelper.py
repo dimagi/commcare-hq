@@ -9,7 +9,7 @@ int_type_codes = [3]
 date_type_codes = [12]
 bool_type_codes = [1]
 
-xmldate_format= '%Y-%m-%dT%H:%M:%S.000'
+xmldate_format= '%Y-%m-%dT%H:%M:%S'
 
 output_format = '%Y-%m-%d %H:%M'
 
@@ -63,7 +63,7 @@ class DbHelper(object):
         rows = self.__doquery(query)
         ret = []
         for row in rows:
-            datelong= time.mktime(time.strptime(str(row[0]),xmldate_format))
+            datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
             val = int(row[1])
             ret.append([datelong,val])
         
@@ -85,7 +85,7 @@ class DbHelper(object):
            rows = self.__doquery(query)
            vals = []
            for row in rows:
-               datelong= time.mktime(time.strptime(str(row[0]),xmldate_format))
+               datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
                if row[1] != None:
                    val = int(row[1])
                else:

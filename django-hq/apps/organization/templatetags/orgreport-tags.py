@@ -18,7 +18,7 @@ register = template.Library()
 
 import time
 
-xmldate_format= '%Y-%m-%dT%H:%M:%S.000'
+xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
 
 pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
@@ -105,7 +105,7 @@ def get_aggregate_formcounts_for_obj(content_obj):
                 i = 0
                 for f in dat:
                     if i == 1 and f != None:
-                        ret += "<td>%s</td>" % time.strftime(output_format, time.strptime(str(f),xmldate_format))
+                        ret += "<td>%s</td>" % time.strftime(output_format, time.strptime(str(f)[0:-4],xmldate_format))
                         #ret += "<td>%s</td>" % str(f)
                     else:
                         ret += "<td>%s</td>" % str(f)
