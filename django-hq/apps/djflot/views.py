@@ -58,7 +58,7 @@ def summary_trend(request, template_name="djflot/summary_trend.html"):
             context['dataset'][tbl.__str__()] = d.get_counts_dataset(None,None)                    
     
     else:
-        context['chart_title'] = formname
+        context['chart_title'] = dbhelper.hack_pretty_table_names[formname]
         d = dbhelper.DbHelper(formname)        
         context['dataset'] = d.get_integer_series_dataset()
     

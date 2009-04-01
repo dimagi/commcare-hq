@@ -11,6 +11,7 @@ import modelrelationship.traversal as traversal
 from modelrelationship.models import *
 
 from organization.models import *
+import djflot.dbhelper as dbhelper  
 
 import xformmanager.adapter.querytools as qtools
 
@@ -32,7 +33,7 @@ def get_form_links(extuser):
     ret += "<ul>"
     ret += '<li><a href="%s">%s</a></li>' % (base_link, "Show all")    
     for fdef in defs:                
-        ret += '<li><a href="%s?formname=%s">%s</a></li>' % (base_link, fdef.element.table_name,fdef.element.table_name)        
+        ret += '<li><a href="%s?formname=%s">%s</a></li>' % (base_link, fdef.element.table_name,dbhelper.hack_pretty_table_names[fdef.element.table_name])        
     
     ret+="</ul>"
     return ret

@@ -13,6 +13,10 @@ xmldate_format= '%Y-%m-%dT%H:%M:%S.000'
 
 output_format = '%Y-%m-%d %H:%M'
 
+hack_pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
+                      'x_http__www_commcare_org_mvp_safe_motherhood_followup_v0_1': 'Safe Motherhood Followup',
+                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration",
+                      'x_http__www_commcare_org_mvp_safe_motherhood_referral_v0_1': "Safe Motherhood Referral"}
 
 
 
@@ -53,7 +57,7 @@ class DbHelper(object):
     #time.mktime(datetime.datetime.now().timetuple())
     def get_counts_dataset(self,startdate,enddate):
         #select date_format(timestart,'%d'), count(*) from formname group by DATE_FORMAT(timestart,'%d') order by date_format(timestart,'%d');
-        query = "select timeend, count(*) from " + self.tablename + " group by DATE_FORMAT(timeend,'%%m/%%d/%%Y') order by date_format(timeend,'%%m/%%d/%%Y')";
+        query = "select timeend, count(*) from """ + self.tablename + " group by DATE_FORMAT(timeend,'%%m') order by timeend"
         #query = 'select timeend, id from ' + self.tablename
         #print query
         rows = self.__doquery(query)
@@ -69,7 +73,7 @@ class DbHelper(object):
 #        },
         
         dset = {}
-        dset["label"] = self.tablename.__str__()
+        dset["label"] = hack_pretty_table_names[self.tablename.__str__()]
         dset["data"] = ret
         return dset
     

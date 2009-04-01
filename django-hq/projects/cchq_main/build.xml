@@ -94,13 +94,13 @@
 		</py-doc>
 	</target>	
 	
-	<target name="deploy-to-server" depends="compile,django-tests-all">
+	<target name="deploy-to-server" depends="compile,django-tests-all,syncdb">
 		<py-run script="deploy.py" pythonpath="${project.dir}">			
 		</py-run>
 	</target>
 	
 	
-	<target name="post-deploy-tests" depends="deploy-to-server">
+	<target name="post-deploy-tests" depends="compile,django-tests-all,deploy-to-server">
 			<py-run script="${postdeploy.dir}/testRegisterAndSubmitData.py" pythonpath="${postdeploy.dir}">			
 			</py-run>
 		</target>

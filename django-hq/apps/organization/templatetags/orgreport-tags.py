@@ -23,7 +23,8 @@ output_format = '%Y-%m-%d %H:%M'
 
 pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
                       'x_http__www_commcare_org_mvp_safe_motherhood_followup_v0_1': 'Safe Motherhood Followup',
-                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration"}
+                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration",
+                      'x_http__www_commcare_org_mvp_safe_motherhood_referral_v0_1': "Safe Motherhood Referral"}
 
 
 @register.simple_tag

@@ -1,0 +1,1261 @@
+[
+  {
+    "pk": 22, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_logentry", 
+      "name": "Can add log entry", 
+      "content_type": 8
+    }
+  }, 
+  {
+    "pk": 23, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_logentry", 
+      "name": "Can change log entry", 
+      "content_type": 8
+    }
+  }, 
+  {
+    "pk": 24, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_logentry", 
+      "name": "Can delete log entry", 
+      "content_type": 8
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_group", 
+      "name": "Can add group", 
+      "content_type": 2
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_message", 
+      "name": "Can add message", 
+      "content_type": 4
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_permission", 
+      "name": "Can add permission", 
+      "content_type": 1
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_user", 
+      "name": "Can add user", 
+      "content_type": 3
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_group", 
+      "name": "Can change group", 
+      "content_type": 2
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_message", 
+      "name": "Can change message", 
+      "content_type": 4
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_permission", 
+      "name": "Can change permission", 
+      "content_type": 1
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_user", 
+      "name": "Can change user", 
+      "content_type": 3
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_group", 
+      "name": "Can delete group", 
+      "content_type": 2
+    }
+  }, 
+  {
+    "pk": 12, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_message", 
+      "name": "Can delete message", 
+      "content_type": 4
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_permission", 
+      "name": "Can delete permission", 
+      "content_type": 1
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_user", 
+      "name": "Can delete user", 
+      "content_type": 3
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_contenttype", 
+      "name": "Can add content type", 
+      "content_type": 5
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_contenttype", 
+      "name": "Can change content type", 
+      "content_type": 5
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_contenttype", 
+      "name": "Can delete content type", 
+      "content_type": 5
+    }
+  }, 
+  {
+    "pk": 34, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_edge", 
+      "name": "Can add edge", 
+      "content_type": 12
+    }
+  }, 
+  {
+    "pk": 31, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_edgetype", 
+      "name": "Can add edge type", 
+      "content_type": 11
+    }
+  }, 
+  {
+    "pk": 35, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_edge", 
+      "name": "Can change edge", 
+      "content_type": 12
+    }
+  }, 
+  {
+    "pk": 32, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_edgetype", 
+      "name": "Can change edge type", 
+      "content_type": 11
+    }
+  }, 
+  {
+    "pk": 36, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_edge", 
+      "name": "Can delete edge", 
+      "content_type": 12
+    }
+  }, 
+  {
+    "pk": 33, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_edgetype", 
+      "name": "Can delete edge type", 
+      "content_type": 11
+    }
+  }, 
+  {
+    "pk": 46, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_hardware", 
+      "name": "Can add hardware", 
+      "content_type": 16
+    }
+  }, 
+  {
+    "pk": 49, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_monitordevice", 
+      "name": "Can add monitor device", 
+      "content_type": 17
+    }
+  }, 
+  {
+    "pk": 52, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_monitorgroup", 
+      "name": "Can add monitor group", 
+      "content_type": 18
+    }
+  }, 
+  {
+    "pk": 43, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_monitoridentity", 
+      "name": "Can add monitor identity", 
+      "content_type": 15
+    }
+  }, 
+  {
+    "pk": 47, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_hardware", 
+      "name": "Can change hardware", 
+      "content_type": 16
+    }
+  }, 
+  {
+    "pk": 50, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_monitordevice", 
+      "name": "Can change monitor device", 
+      "content_type": 17
+    }
+  }, 
+  {
+    "pk": 53, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_monitorgroup", 
+      "name": "Can change monitor group", 
+      "content_type": 18
+    }
+  }, 
+  {
+    "pk": 44, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_monitoridentity", 
+      "name": "Can change monitor identity", 
+      "content_type": 15
+    }
+  }, 
+  {
+    "pk": 48, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_hardware", 
+      "name": "Can delete hardware", 
+      "content_type": 16
+    }
+  }, 
+  {
+    "pk": 51, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_monitordevice", 
+      "name": "Can delete monitor device", 
+      "content_type": 17
+    }
+  }, 
+  {
+    "pk": 54, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_monitorgroup", 
+      "name": "Can delete monitor group", 
+      "content_type": 18
+    }
+  }, 
+  {
+    "pk": 45, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_monitoridentity", 
+      "name": "Can delete monitor identity", 
+      "content_type": 15
+    }
+  }, 
+  {
+    "pk": 55, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_domain", 
+      "name": "Can add Domain Account", 
+      "content_type": 19
+    }
+  }, 
+  {
+    "pk": 61, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_extrole", 
+      "name": "Can add Extended User Role", 
+      "content_type": 21
+    }
+  }, 
+  {
+    "pk": 64, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_extuser", 
+      "name": "Can add Extended User", 
+      "content_type": 22
+    }
+  }, 
+  {
+    "pk": 67, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_organization", 
+      "name": "Can add Organization", 
+      "content_type": 23
+    }
+  }, 
+  {
+    "pk": 58, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_organizationtype", 
+      "name": "Can add Organization Type", 
+      "content_type": 20
+    }
+  }, 
+  {
+    "pk": 56, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_domain", 
+      "name": "Can change Domain Account", 
+      "content_type": 19
+    }
+  }, 
+  {
+    "pk": 62, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_extrole", 
+      "name": "Can change Extended User Role", 
+      "content_type": 21
+    }
+  }, 
+  {
+    "pk": 65, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_extuser", 
+      "name": "Can change Extended User", 
+      "content_type": 22
+    }
+  }, 
+  {
+    "pk": 68, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_organization", 
+      "name": "Can change Organization", 
+      "content_type": 23
+    }
+  }, 
+  {
+    "pk": 59, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_organizationtype", 
+      "name": "Can change Organization Type", 
+      "content_type": 20
+    }
+  }, 
+  {
+    "pk": 57, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_domain", 
+      "name": "Can delete Domain Account", 
+      "content_type": 19
+    }
+  }, 
+  {
+    "pk": 63, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_extrole", 
+      "name": "Can delete Extended User Role", 
+      "content_type": 21
+    }
+  }, 
+  {
+    "pk": 66, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_extuser", 
+      "name": "Can delete Extended User", 
+      "content_type": 22
+    }
+  }, 
+  {
+    "pk": 69, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_organization", 
+      "name": "Can delete Organization", 
+      "content_type": 23
+    }
+  }, 
+  {
+    "pk": 60, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_organizationtype", 
+      "name": "Can delete Organization Type", 
+      "content_type": 20
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_session", 
+      "name": "Can add session", 
+      "content_type": 6
+    }
+  }, 
+  {
+    "pk": 17, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_session", 
+      "name": "Can change session", 
+      "content_type": 6
+    }
+  }, 
+  {
+    "pk": 18, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_session", 
+      "name": "Can delete session", 
+      "content_type": 6
+    }
+  }, 
+  {
+    "pk": 19, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_site", 
+      "name": "Can add site", 
+      "content_type": 7
+    }
+  }, 
+  {
+    "pk": 20, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_site", 
+      "name": "Can change site", 
+      "content_type": 7
+    }
+  }, 
+  {
+    "pk": 21, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_site", 
+      "name": "Can delete site", 
+      "content_type": 7
+    }
+  }, 
+  {
+    "pk": 28, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_attachment", 
+      "name": "Can add Submission Attachment", 
+      "content_type": 10
+    }
+  }, 
+  {
+    "pk": 25, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_submitlog", 
+      "name": "Can add Submission Log", 
+      "content_type": 9
+    }
+  }, 
+  {
+    "pk": 29, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_attachment", 
+      "name": "Can change Submission Attachment", 
+      "content_type": 10
+    }
+  }, 
+  {
+    "pk": 26, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_submitlog", 
+      "name": "Can change Submission Log", 
+      "content_type": 9
+    }
+  }, 
+  {
+    "pk": 30, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_attachment", 
+      "name": "Can delete Submission Attachment", 
+      "content_type": 10
+    }
+  }, 
+  {
+    "pk": 27, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_submitlog", 
+      "name": "Can delete Submission Log", 
+      "content_type": 9
+    }
+  }, 
+  {
+    "pk": 37, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_elementdefdata", 
+      "name": "Can add element def data", 
+      "content_type": 13
+    }
+  }, 
+  {
+    "pk": 40, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "add_formdefdata", 
+      "name": "Can add form def data", 
+      "content_type": 14
+    }
+  }, 
+  {
+    "pk": 38, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_elementdefdata", 
+      "name": "Can change element def data", 
+      "content_type": 13
+    }
+  }, 
+  {
+    "pk": 41, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "change_formdefdata", 
+      "name": "Can change form def data", 
+      "content_type": 14
+    }
+  }, 
+  {
+    "pk": 39, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_elementdefdata", 
+      "name": "Can delete element def data", 
+      "content_type": 13
+    }
+  }, 
+  {
+    "pk": 42, 
+    "model": "auth.permission", 
+    "fields": {
+      "codename": "delete_formdefdata", 
+      "name": "Can delete form def data", 
+      "content_type": 14
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "testadmin", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 1, 
+      "is_staff": 1, 
+      "last_login": "2009-03-31 01:01:45", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$a1fb1$fd884038d5cf2077d12f805fa88b512f9cdc7ba8", 
+      "email": "test@commcarehq.org", 
+      "date_joined": "2009-03-16 15:11:56"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "brian", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 1, 
+      "is_staff": 1, 
+      "last_login": "2009-03-31 01:03:15", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$9bc9f$2d0448052960a387e4c38792a42c171069e4e402", 
+      "email": "", 
+      "date_joined": "2009-03-30 16:38:50"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "gayo", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 0, 
+      "is_staff": 0, 
+      "last_login": "2009-03-30 16:39:06", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$991d2$88984dd1d4516e35041785d1410eded1ae222814", 
+      "email": "", 
+      "date_joined": "2009-03-30 16:39:06"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "mobile1", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 0, 
+      "is_staff": 0, 
+      "last_login": "2009-03-30 16:39:23", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$214fa$1798dfe80ded098ec17df752466bf9619f026be4", 
+      "email": "", 
+      "date_joined": "2009-03-30 16:39:23"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "mobile2", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 0, 
+      "is_staff": 0, 
+      "last_login": "2009-03-30 16:39:35", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$daa1b$d6b7bee6be830b104b56254ea9c1aabbe477e9cb", 
+      "email": "", 
+      "date_joined": "2009-03-30 16:39:35"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "mobile3", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": 1, 
+      "is_superuser": 0, 
+      "is_staff": 0, 
+      "last_login": "2009-03-30 16:39:51", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$ab083$33ab7e7737e585d6428de17ac60e6a78b86c795c", 
+      "email": "", 
+      "date_joined": "2009-03-30 16:39:51"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "contenttype", 
+      "name": "content type", 
+      "app_label": "contenttypes"
+    }
+  }, 
+  {
+    "pk": 19, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "domain", 
+      "name": "Domain Account", 
+      "app_label": "organization"
+    }
+  }, 
+  {
+    "pk": 12, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "edge", 
+      "name": "edge", 
+      "app_label": "modelrelationship"
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "edgetype", 
+      "name": "edge type", 
+      "app_label": "modelrelationship"
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "elementdefdata", 
+      "name": "element def data", 
+      "app_label": "xformmanager"
+    }
+  }, 
+  {
+    "pk": 22, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "extuser", 
+      "name": "Extended User", 
+      "app_label": "organization"
+    }
+  }, 
+  {
+    "pk": 21, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "extrole", 
+      "name": "Extended User Role", 
+      "app_label": "organization"
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "formdefdata", 
+      "name": "form def data", 
+      "app_label": "xformmanager"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "group", 
+      "name": "group", 
+      "app_label": "auth"
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "hardware", 
+      "name": "hardware", 
+      "app_label": "monitorregistry"
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "logentry", 
+      "name": "log entry", 
+      "app_label": "admin"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "message", 
+      "name": "message", 
+      "app_label": "auth"
+    }
+  }, 
+  {
+    "pk": 17, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "monitordevice", 
+      "name": "monitor device", 
+      "app_label": "monitorregistry"
+    }
+  }, 
+  {
+    "pk": 18, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "monitorgroup", 
+      "name": "monitor group", 
+      "app_label": "monitorregistry"
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "monitoridentity", 
+      "name": "monitor identity", 
+      "app_label": "monitorregistry"
+    }
+  }, 
+  {
+    "pk": 23, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "organization", 
+      "name": "Organization", 
+      "app_label": "organization"
+    }
+  }, 
+  {
+    "pk": 20, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "organizationtype", 
+      "name": "Organization Type", 
+      "app_label": "organization"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "permission", 
+      "name": "permission", 
+      "app_label": "auth"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "session", 
+      "name": "session", 
+      "app_label": "sessions"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "site", 
+      "name": "site", 
+      "app_label": "sites"
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "attachment", 
+      "name": "Submission Attachment", 
+      "app_label": "submitlogger"
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "submitlog", 
+      "name": "Submission Log", 
+      "app_label": "submitlogger"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "contenttypes.contenttype", 
+    "fields": {
+      "model": "user", 
+      "name": "user", 
+      "app_label": "auth"
+    }
+  }, 
+  {
+    "pk": "08b1e4b09e1bb2e30806b87b1d52edbc", 
+    "model": "sessions.session", 
+    "fields": {
+      "expire_date": "2009-04-14 01:03:15", 
+      "session_data": "gAJ9cQEoVRJfYXV0aF91c2VyX2JhY2tlbmRxAlUpZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5k\ncy5Nb2RlbEJhY2tlbmRxA1UNX2F1dGhfdXNlcl9pZHEEigECdS5lZjQ3ODRkZGUzMjhmY2I4Y2Iz\nODYwZjEyOTFmMjZhNw==\n"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "sites.site", 
+    "fields": {
+      "domain": "example.com", 
+      "name": "example.com"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "admin.logentry", 
+    "fields": {
+      "action_flag": 1, 
+      "action_time": "2009-03-31 01:02:32", 
+      "object_repr": "EdgeType (Domain Account [== is domain root ==>] Organization :: Domain Root)", 
+      "object_id": "4", 
+      "change_message": "", 
+      "user": 1, 
+      "content_type": 11
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Is parent organization of", 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "name": "is parent organization of", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Organization Supervisor", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "Has Supervisors", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "organization members", 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "name": "Has members", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "modelrelationship.edgetype", 
+    "fields": {
+      "description": "Domain Root", 
+      "child_type": 23, 
+      "parent_type": 19, 
+      "name": "is domain root", 
+      "directional": 1
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 2, 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "relationship": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 3, 
+      "child_type": 23, 
+      "parent_type": 23, 
+      "relationship": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 2, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 3, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 4, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 2, 
+      "child_id": 5, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 3, 
+      "child_id": 2, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 2
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 3, 
+      "child_id": 6, 
+      "child_type": 22, 
+      "parent_type": 23, 
+      "relationship": 3
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "modelrelationship.edge", 
+    "fields": {
+      "parent_id": 1, 
+      "child_id": 1, 
+      "child_type": 23, 
+      "parent_type": 19, 
+      "relationship": 4
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "xformmanager.elementdefdata", 
+    "fields": {
+      "allowable_values_table": null, 
+      "name": "", 
+      "parent": null, 
+      "is_attribute": 0, 
+      "table_name": "x_", 
+      "is_repeatable": 0, 
+      "type": ""
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "xformmanager.formdefdata", 
+    "fields": {
+      "target_namespace": "", 
+      "submit_ip": "127.0.0.1", 
+      "element": 1, 
+      "date_created": "2009-03-30", 
+      "xsd_file_location": "C:\\home\\dmyung\\work\\dimagi\\workspaces\\djangowork\\commcare-hq-full\\projects\\cchq_main\\schemas\\b4c07c1e-1da0-11de-89a7-001641e25144-xsd.xml", 
+      "submit_time": "2009-03-30 23:04:35", 
+      "form_name": "x_", 
+      "bytes_received": 4104
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "organization.domain", 
+    "fields": {
+      "name": "BRAC", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "organization.domain", 
+    "fields": {
+      "name": "Intel-Grameen", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "organization.domain", 
+    "fields": {
+      "name": "Pathfinder", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "organization.organizationtype", 
+    "fields": {
+      "domain": 1, 
+      "name": "NGO", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "organization.extuser", 
+    "fields": {
+      "groups": [], 
+      "user_permissions": [], 
+      "domain": 1, 
+      "identity": null, 
+      "primary_phone": ""
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "organization.extuser", 
+    "fields": {
+      "groups": [], 
+      "user_permissions": [], 
+      "domain": 1, 
+      "identity": null, 
+      "primary_phone": "123456"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "organization.extuser", 
+    "fields": {
+      "groups": [], 
+      "user_permissions": [], 
+      "domain": 1, 
+      "identity": null, 
+      "primary_phone": "123154123"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "organization.extuser", 
+    "fields": {
+      "groups": [], 
+      "user_permissions": [], 
+      "domain": 1, 
+      "identity": null, 
+      "primary_phone": "462168798"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "organization.extuser", 
+    "fields": {
+      "groups": [], 
+      "user_permissions": [], 
+      "domain": 1, 
+      "identity": null, 
+      "primary_phone": "646137894152"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "organization.organization", 
+    "fields": {
+      "organization_type": [
+        1
+      ], 
+      "domain": 1, 
+      "name": "BRAC", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "organization.organization", 
+    "fields": {
+      "organization_type": [
+        1
+      ], 
+      "domain": 1, 
+      "name": "BRAC-CHP", 
+      "description": ""
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "organization.organization", 
+    "fields": {
+      "organization_type": [
+        1
+      ], 
+      "domain": 1, 
+      "name": "BRAC-CHW", 
+      "description": ""
+    }
+  }
+]
