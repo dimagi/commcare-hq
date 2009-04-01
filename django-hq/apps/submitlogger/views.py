@@ -62,5 +62,9 @@ def raw_submit(request, template_name="submitlogger/submit.html"):
             context['submission'] = new_submission
             attachments = Attachment.objects.all().filter(submission=new_submission)            
             context['attachments'] = attachments            
-            template_name="submitlogger/submit_complete.html"                                     
+            template_name="submitlogger/submit_complete.html"
+            
+    #for real submissions from phone, the content-type should be:
+    #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
+

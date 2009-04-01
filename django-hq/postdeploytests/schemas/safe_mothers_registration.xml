@@ -1,0 +1,571 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+
+        xmlns="http://www.w3.org/2002/xforms"
+
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  
+	  xmlns:jr="http://openrosa.org/javarosa">
+
+	<h:head>
+
+		<h:title>safe mothers</h:title>
+		<meta jr:name="safe_mothers_registration_0.0.1"/>
+
+		<model>
+
+		<itext>
+
+<translation lang="English">
+				
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+
+				<text id="no">
+					<value>No</value>
+				</text>
+
+				<text id="more">
+					<value>More Details</value>
+				</text>				
+						
+				<text id="family_name">
+					<value>Client family name</value>
+				</text>
+				<text id="given_name">
+					<value>Client name</value>
+				</text>
+				<text id="middle_name">
+					<value>Client middle name</value>
+				</text>
+				
+				<text id="positive">
+
+					<value>HIV Positive</value>
+
+				</text>
+				
+				<text id="negative">
+
+					<value>HIV Negative</value>
+
+				</text>
+				
+				<text id="household">
+					<value>What household are you in</value>
+				</text>
+				
+				<text id="age">
+					<value>How old are you</value>
+				</text>
+				
+				<text id="pregnant">
+					<value>For how many months have you been pregnant?</value>
+				</text>
+				
+				<text id="disability">
+					<value>Do you have physical disabilities</value>
+				</text>
+				
+				<text id="disabilities">
+					<value>What physical disabilities does this woman have</value>
+				</text>
+
+				<text id="given_birth">
+					<value>Have you given birth before?</value>
+				</text>
+				
+				<text id="numb_birth">
+					<value>How many times have you given birth already?</value>
+				</text>
+				
+				<text id="complications">
+					<value>Did you have any complications in previous pregnancies?</value>
+				</text>
+				
+				<text id="breastfeeding">
+					<value>Did you have problems breastfeeding your children?</value>
+				</text>
+				
+				<text id="nchildren">
+					<value>How many children do you take care of now?</value>
+				</text>
+				<text id="hiv_test">
+					<value>Have you tested for HIV?</value>
+				</text>
+				
+				<text id="hiv_result">
+					<value>What were the results from your test?</value>
+				</text>
+				
+				<text id="hi_risk">
+
+					<value form="long">Explain to the woman that she is at high risk for problems during birth that require a clinician.</value>
+
+					<value form="short">explanations.</value>
+
+				</text>
+				
+				<text id="more_details">
+					<value>Any other more details that you observed from the woman?</value>
+				</text>
+				
+				<text id="narrative2">
+
+					<value form="long">Having physical disabilities means that it is difficult to give birth</value>
+
+					<value form="short">Physical disabilities.</value>
+
+				</text>
+				
+				<text id="narrative3">
+
+					<value form="long">Women who have had a complication during a past pregnancy or birth, often have a complications in future pregnancies</value>
+
+					<value form="short">Complication during a past pregnancy.</value>
+
+				</text>
+				
+				<text id="narrative4">
+
+					<value form="long">Women who have had many pregnancies often have complications.</value>
+
+					<value form="short">Women who have had many pregnancies.</value>
+
+				</text>
+				
+				<text id="narrative5">
+
+					<value form="long">Women older than 35 are at risk for complicated pregnancy.</value>
+
+					<value form="short">Women older than 35.</value>
+
+				</text>
+
+
+
+				<text id="narrative6">
+
+					<value form="long">Women who are HIV positive usually have complicated pregnancies and must get treatment to prevent their children from getting HIV.</value>
+
+					<value form="short">Women who are HIV positive have complications.</value>
+
+				</text>
+				
+
+				<text id="narrative7">
+
+					<value form="long">Women younger than 18 are at risk for complicated pregnancy.</value>
+
+					<value form="short">Women younger than 18.</value>
+
+				</text>
+				
+				
+				<text id="narrative8">
+
+					<value form="long">It is important for pregnant women to know their HIV status. Advise the mother to go to the clinic for an HIV test as soon as possible.</value>
+
+					<value form="short">Know your HIV status.</value>
+
+				</text>
+				
+				<text id="narrative9">
+					
+					<value form="long">Women who have had trouble breastfeeding are...</value>
+					
+					<value form="short">Breastfeeding problems.</value>
+					
+				</text>
+
+
+			</translation>
+
+			<translation lang="Swahili">
+			<text id="yes">
+					<value>Ndiyo</value>
+				</text>
+
+				<text id="no">
+					<value>Hapana</value>
+				</text>
+
+				<text id="more">
+					<value>Zaidi</value>
+				</text>
+				
+				<text id="hiv">
+					<value>VVU</value>
+				</text>
+				
+				<text id="family_name">
+					<value>Jina la Ukoo</value>
+				</text>
+				<text id="given_name">
+					<value>Jina la kwanza</value>
+				</text>
+				<text id="middle_name">
+					<value>Jina la Baba</value>
+				</text>
+				
+				<text id="positive">
+
+					<value>Ana VVU</value>
+
+				</text>
+				
+				<text id="negative">
+
+					<value>Hana VVU</value>
+
+				</text>
+				
+				<text id="household">
+					<value>Unatembelea nyumba gani</value>
+				</text>
+				
+				<text id="age">
+					<value>Una miaka mingapi</value>
+				</text>
+				
+				<text id="pregnant">
+					<value>Una mimba ya miezi mingapi?</value>
+				</text>
+				
+				<text id="disability">
+					<value>Je anaulemavu wowote wa mwili</value>
+				</text>
+				
+				<text id="disabilities">
+					<value>Ana ulemavu gani?</value>
+				</text>
+			
+				<text id="given_birth">
+					<value>Ameshawahi kubeba mimba maishani mwake?</value>
+				</text>
+				
+				<text id="numb_birth">
+					<value>Umeshabeba mimba mara ngapi?</value>
+				</text>
+				
+				<text id="complications">
+					<value>Ameshawahi kupata matatizo yeyote wakati wa ujauzito siku zilizopita?</value>
+				</text>
+				
+				<text id="breastfeeding">
+					<value>Did you have problems breastfeeding your children?</value>
+				</text>
+				
+				<text id="nchildren">
+					<value>Una watoto wangapi unaowatunza?</value>
+				</text>
+				<text id="hiv_test">
+					<value>Umeshawahi kupima Virus vya Ukimwi?</value>
+				</text>
+				
+				<text id="hiv_result">
+					<value>Majibu ya vipimo hivyo yalikuwaje?</value>
+				</text>
+				
+				<text id="hi_risk">
+
+					<value form="long">Toa maelezo kwa mama huyo kuwa anadalili za hatari hivyo anahitaji kuwa karibu na wahudumu wa afya wakati wa kujifungua.</value>
+
+					<value form="short">Maelezo.</value>
+
+				</text>
+				
+				<text id="more_details">
+					<value>Kuna mambo mengine uliyoyaona kwa mama huyu?</value>
+				</text>
+				
+				<text id="narrative2">
+
+					<value form="long">Kuwa na ulemavu wa mwili kunahitaji uangalizi wa karibu wakati wa kujifungua</value>
+
+					<value form="short">Maelezo ya ulemavu.</value>
+
+				</text>
+				
+				<text id="narrative3">
+
+					<value form="long">Mwanamke aliyewahi kupata matatizo wakati wa kujifungua, mara nyingi anaweza kupata matatizo wakati wa kujifungua wakati mwingine</value>
+
+					<value form="short">Matatizo wakati wa kujifungua.</value>
+
+				</text>
+				
+				<text id="narrative4">
+
+					<value form="long">Mwanamke aliyebeba mimba mara nyingi anaweza kupata matatizo wakati wa ujauzito wake.</value>
+
+					<value form="short">Mwanamke aliyebeba mimba mara nyingi.</value>
+
+				</text>
+				
+				<text id="narrative5">
+
+					<value form="long">Wanawake walio na umri zaidi ya miaka 35 wako kwenye hatari ya kupata matatizo wakati wa kubeba mimba.</value>
+
+					<value form="short">Wanawake wenye umri zaidi ya 35.</value>
+
+				</text>
+
+
+
+				<text id="narrative6">
+
+					<value form="long">Wanawake wenye virus vya UKIMWI wanahitaji uangalizi wa karibu wakati wa kujifungua ilikuepuka maambukizo ya HIV kwa mtoto.</value>
+
+					<value form="short">Matatizo ya Mwanamke mwenye VVU wakati wa uja uzito.</value>
+
+				</text>
+
+				<text id="narrative7">
+
+					<value form="long">Women younger than 18 are at risk for complicated pregnancy..</value>
+
+					<value form="short">Women younger than 18.</value>
+
+				</text>
+
+				<text id="narrative8">
+
+					<value form="long">It is important for pregnant women to know their HIV status. Advise the mother to go to the clinic for an HIV test as soon as possible.</value>
+
+					<value form="short">Know your HIV status.</value>
+
+				</text>
+				
+				<text id="narrative9">
+					
+					<value form="long">Women who have had trouble breastfeeding are...</value>
+					
+					<value form="short">Breastfeeding problems.</value>
+					
+				</text>
+				
+			</translation>
+		</itext>
+
+		<instance>
+			<sampledata xmlns="http://www.commcare.org/MVP/safe_motherhood/registration_v0.1">
+			<Meta>
+				<formName>Safe Pregnancy Registration</formName>
+				<formVersion>0.0.1</formVersion>
+				<DeviceID />
+				<TimeStart />
+				<TimeEnd />
+				<username />
+				<userid />			
+			</Meta>
+		
+      <given_name />
+      <middle_name />
+      <family_name />
+			<household />
+			<age />
+			<pregnant />
+      <disability />
+			<disabilities />
+      <date_of_birth />
+			<given_birth />
+			<numb_birth />
+			<complications />
+			<breastfeeding />
+			<nchildren />
+			<hiv_test />
+			<hiv_result />
+			<more_details />
+			  
+      <hi_risk_info />
+			<hi_risk_info_disab />
+			<hi_risk_info_compl />
+			<hi_risk_info_many />
+			<hi_risk_info_old />
+			<hi_risk_info_hiv />
+			<hi_risk_info_young />
+			<hi_risk_info_trouble_breastfeeding />
+			<get_tested_info />
+			  
+			</sampledata>
+			</instance>
+
+      <bind nodeset="Meta/DeviceID" jr:preload="property" jr:preloadParams="DeviceID" />
+      <bind nodeset="Meta/username" jr:preload="context" jr:preloadParams="UserName" />
+      <bind nodeset="Meta/userid" jr:preload="context" jr:preloadParams="UserID" />
+      <bind nodeset="Meta/TimeStart" type="dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+      <bind nodeset="Meta/TimeEnd" type="dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+      <bind id="given_name" nodeset="/sampledata/given_name"  type="xsd:string" required="true()" />
+			<bind id="middle_name" nodeset="/sampledata/middle_name"  type="xsd:string" required="true()" />
+			<bind id="family_name" nodeset="/sampledata/family_name"  type="xsd:string" required="true()" />
+			<bind id="household" nodeset="/sampledata/household"  type="xsd:string" required="true()" />
+			<bind id="age" nodeset="/sampledata/age"  type="xsd:int" required="true()" constraint=". &gt;= 10 and . &lt;= 60" jr:constraintMsg="Age must be between 10 and 60" />
+			<bind id="pregnant" nodeset="/sampledata/pregnant" type="xsd:int" required="true()" constraint=" .&lt; 12" jr:constraintMsg="Number of Months Pregnant Must be Less than 12"/>
+			<bind id="disability" nodeset="/sampledata/disability"  type="xsd:string" required="true()" />
+			<bind id="given_birth" nodeset="/sampledata/given_birth"  type="xsd:string" required="true()" />
+			<bind id="numb_birth" nodeset="/sampledata/numb_birth"  type="xsd:int" relevant="/sampledata/given_birth='yes'" constraint=" .&lt; 30" jr:constraintMsg="Number of Previous Births Too High"/>
+			
+			<bind id="complications" nodeset="/sampledata/complications"  type="xsd:string" relevant="/sampledata/given_birth='yes'" />
+			<bind id="breastfeeding" nodeset="/sampledata/breastfeeding" type="xsd:string" required="true()" relevant="/sampledata/given_birth='yes'" />
+			<bind id="nchildren" nodeset="/sampledata/nchildren"  type="xsd:int" required="true()" constraint=". &lt; 50" jr:constrantMsg="Number of children too high"/>
+			<bind id="hiv_test" nodeset="/sampledata/hiv_test" type="xsd:string" required="true()" />
+			<bind id="hiv_result" nodeset="/sampledata/hiv_result" type="xsd:string" relevant="/sampledata/hiv_test='yes'" />
+			
+			<bind nodeset="hi_risk_info" relevant="../disability = 'yes' or ../complications = 'yes' or
+			                                       ../numb_birth &gt;= 4 or  ../hiv_result = 'positive' or
+			                                       ../age &gt;= 35 or ../age &lt;= 18 or
+			                                       ../breastfeeding = 'yes'" />	
+			<bind nodeset="hi_risk_info_disab" relevant="../disability = 'yes'" />
+			<bind nodeset="hi_risk_info_compl" relevant="../complications = 'yes'" />
+			<bind nodeset="hi_risk_info_many" relevant="../numb_birth &gt;= 4" />
+			<bind nodeset="hi_risk_info_old" relevant="../age &gt;= 35" /> 
+			<bind nodeset="hi_risk_info_hiv" relevant="../hiv_result = 'positive'" />
+			<bind nodeset="hi_risk_info_young" relevant="../age &lt;= 18" />
+			<bind nodeset="hi_risk_info_trouble_breastfeeding" relevant="../breastfeeding = 'yes'" />
+			<bind nodeset="get_tested_info" relevant="../hiv_test = 'no'" />
+			
+</model>
+
+	</h:head>
+
+	<h:body>
+	
+	<input bind="given_name"><label ref="jr:itext('given_name')"></label></input>
+	<input bind="middle_name"><label ref="jr:itext('middle_name')"></label></input>
+	<input bind="family_name"><label ref="jr:itext('family_name')"></label></input>
+	<input bind="household"><label ref="jr:itext('household')"></label></input>
+	<input bind="age"><label ref="jr:itext('age')"></label></input>
+	<input bind="pregnant"><label ref="jr:itext('pregnant')"></label></input>
+	
+	<select1 ref="/sampledata/disability">
+
+           <label  ref="jr:itext('disability')"></label>
+
+            <item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+
+            <item><label ref="jr:itext('no')"></label><value>no</value></item>
+
+		</select1>
+	
+	<select1 ref="/sampledata/given_birth">
+
+           <label  ref="jr:itext('given_birth')"></label>
+
+            <item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+
+            <item><label ref="jr:itext('no')"></label><value>no</value></item>
+
+			</select1>
+			
+		<input bind="numb_birth"><label ref="jr:itext('numb_birth')"></label></input>			
+		
+			<select1 ref="/sampledata/complications">
+
+				<label  ref="jr:itext('complications')"></label>
+
+				<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+
+				<item><label ref="jr:itext('no')"></label><value>no</value></item>
+
+			</select1>
+			
+			<select1 ref="/sampledata/breastfeeding">
+				
+				<label ref="jr:itext('breastfeeding')"></label>
+				
+				<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+
+				<item><label ref="jr:itext('no')"></label><value>no</value></item>
+
+			</select1>
+
+			<input bind="nchildren"><label ref="jr:itext('nchildren')"></label></input>
+			
+			<select1 ref="/sampledata/hiv_test">
+
+           <label  ref="jr:itext('hiv_test')"></label>
+
+            <item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+
+            <item><label ref="jr:itext('no')"></label><value>no</value></item>
+
+			</select1>
+			
+		<trigger ref="get_tested_info">
+		
+			<label ref="jr:itext('narrative8')"></label>
+			
+		</trigger>
+			
+			<select1 ref="/sampledata/hiv_result">
+
+			<label ref="jr:itext('hiv_result')"></label>
+
+			<item><label ref="jr:itext('positive')"></label><value>positive</value></item>
+
+			<item><label ref="jr:itext('negative')"></label><value>negative</value></item>
+			
+			</select1>
+		
+			
+		<trigger ref="hi_risk_info">
+
+            <label ref="jr:itext('hi_risk')"></label> 
+
+			<!--item><label>OK</label><value>1</value></item-->
+			<!--item><label ref="jr:itext('more')"></label><value>2</value></item-->
+
+		</trigger>
+		
+	
+		<trigger ref="hi_risk_info_disab">
+
+            <label ref="jr:itext('narrative2')"></label> 
+
+		</trigger>
+
+			
+
+		<trigger ref="hi_risk_info_compl">
+
+            <label ref="jr:itext('narrative3')"></label>
+
+		</trigger>
+		
+		<trigger ref="hi_risk_info_many">
+
+            <label ref="jr:itext('narrative4')"></label>
+
+		</trigger>
+		
+		<trigger ref="hi_risk_info_old">
+
+            <label ref="jr:itext('narrative5')"></label>
+
+		</trigger>
+		
+		<trigger ref="hi_risk_info_hiv">
+
+            <label ref="jr:itext('narrative6')"></label>
+
+		</trigger>
+		
+		<trigger ref="hi_risk_info_young">
+		
+			<label ref="jr:itext('narrative7')"></label>
+			
+		</trigger>
+
+		<trigger ref="hi_risk_info_trouble_breastfeeding">
+		
+			<label ref="jr:itext('narrative9')"></label>
+			
+		</trigger>
+		
+	</h:body>
+
+</h:html>

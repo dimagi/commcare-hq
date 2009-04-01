@@ -151,7 +151,8 @@ def get_my_organization(extuser):
         return '<h1>Error</h1>'
     root_org = root_orgs[0]
     
-    descendents = traversal.getDescendentEdgesForObject(root_org.child_object)
+    descendents = traversal.getDescendentEdgesForObject(root_org.child_object)  #if we do domain, we go too high
+    
     if len(descendents) > 0:
         ret = '<div class="reports"><h4>Domain: ' + str(root_org.child_object) + '</h4><ul>' + render_edgetree_as_ul(descendents,'children') + '</ul></div>'
         #ret += '<div class="reports"><h4>Reports</h4><ul>' + render_edgetree_reports_as_ul(descendents,'children') + '</ul></div>'

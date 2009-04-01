@@ -17,12 +17,13 @@ import traceback
 class SubmitLog(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
+    #transaction_num = models.IntegerField(_('Submission Integer ID for Phone'),unique=True,null=False)
     
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
     raw_header = models.TextField(_('Raw Header'))    
-    raw_post = models.FilePathField(_('Raw Request Blob'), match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH, max_length=255)    
+    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH, max_length=255)    
         
     class Meta:
         ordering = ('-submit_time',)

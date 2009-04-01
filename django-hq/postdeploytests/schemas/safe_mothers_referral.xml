@@ -1,0 +1,248 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"  
+       xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>  
+    <h:title>safe pregnancy referral</h:title>
+    <meta jr:name="safe_mothers_referral_0.0.1"/>
+    <model>
+		<itext>
+			<translation lang="English">
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+				<text id="no">
+					<value>No</value>
+				</text>
+				<text id="visited_clinic">
+					<value form="long">Did you go to the clinic?</value>
+					<value form="short">Visited clinic</value>
+				</text>
+				<text id="go_soon">
+					<value form="long">Will you go soon?</value>
+					<value form="short">Go soon</value>
+				</text>
+				<text id="why_not">
+					<value form="long">Why not?</value>
+					<value form="short">Why</value>
+				</text>
+					<text id="feeling_better">
+						<value>Feeling better</value>
+					</text>
+					<text id="skeptical_clinic">
+						<value>Does not think clinic will help</value>
+					</text>
+					<text id="busy">
+						<value>Too busy</value>
+					</text>
+					<text id="transport">
+						<value>Cannot afford transport</value>
+					</text>
+					<text id="other_why_not">
+						<value>Other</value>
+					</text>
+					<text id="feeling_better_prompt">
+						<value>Thank you. This referral case has been closed.</value>
+					</text>
+					<text id="skeptical_clinic_prompt">
+						<value>Please explain the importance of visiting the clinic, and follow up soon.</value>
+					</text>
+					<text id="busy_prompt">
+						<value>Please discuss possible times for the patient to go to the clinic.</value>
+					</text>
+					<text id="transport_prompt">
+						<value>Please contact the clinical officer and arrange transport.</value>
+					</text>
+				<text id="when">
+					<value>When will you go?</value>
+				</text>
+					<text id="today">
+						<value>Today</value>
+					</text>
+					<text id="tomorrow">
+						<value>Tomorrow</value>
+					</text>
+					<text id="this_week">
+						<value>This week</value>
+					</text>
+					<text id="other_when">
+						<value>Other</value>
+					</text>
+					
+				<text id="when_prompt">
+					<value>Please follow up with the patient after this amount of time has passed.</value>
+				</text>
+				
+				<text id="attendant">
+					<value form="long">Who did you see at the clinic?</value>
+					<value form="short">Attendant</value>
+				</text>				
+					<text id="doctor">
+						<value>Doctor/Clinical Officer</value>
+					</text>
+					<text id="nurse">
+						<value>Nurse/Midwife</value>
+					</text>
+					<text id="chw">
+						<value>Community Health Worker</value>
+					</text>
+					<text id="no_one">
+						<value>No one</value>
+					</text>
+					<text id="dont_know">
+						<value>Don't know/Not sure</value>
+					</text>
+					<text id="other_attendant">
+						<value>Other</value>
+					</text>
+				<text id="treatment">
+					<value form="long">Did you receive treatment?</value>
+					<value form="short">Treatment</value>
+				</text>
+				<text id="treatment_type">
+					<value>Which treatment?</value>
+				</text>
+			</translation>
+			
+			</itext>
+			
+		<instance>
+			<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/referral_v0.1">
+				<Meta>
+					<formName>safepregnancyreferral</formName>
+					<formVersion>0.0.1</formVersion>
+          <DeviceID />
+          <TimeStart />
+          <TimeEnd />
+          <username />
+          <userid />
+        </Meta>
+
+        <visited_clinic />
+				<go_soon />
+				<why_not />
+				<other_why_not />
+				<feeling_better_prompt />
+				<skeptical_clinic_prompt />
+				<busy_prompt />
+				<transport_prompt />
+				<when />
+				<other_when />
+				<when_prompt />
+				<attendant />
+				<other_attendant />
+				<treatment />
+				<treatment_type />
+			</safe_pregnancy>
+		</instance>
+
+      <bind nodeset="Meta/DeviceID" jr:preload="property" jr:preloadParams="DeviceID" />
+      <bind nodeset="Meta/username" jr:preload="context" jr:preloadParams="UserName" />
+      <bind nodeset="Meta/userid" jr:preload="context" jr:preloadParams="UserID" />
+      <bind nodeset="Meta/TimeStart" type="dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+      <bind nodeset="Meta/TimeEnd" type="dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+      <bind id="go_soon" nodeset="/safe_pregnancy/go_soon" type="xsd:string" required="true()" relevant="/safe_pregnancy/visited_clinic='no'" />
+			<bind id="why_not" nodeset="/safe_pregnancy/why_not" type="xsd:string" required="true()" relevant="/safe_pregnancy/go_soon='no'" />
+			<bind id="other_why_not" nodeset="/safe_pregnancy/other_why_not" type="xsd:string" required="true()" relevant="/safe_pregnancy/why_not='other'" />
+			<bind id="feeling_better_prompt" nodeset="/safe_pregnancy/feeling_better_prompt" type="xsd:string" required="true()" relevant="/safe_pregnancy/why_not='feeling_better'" />
+			<bind id="skeptical_clinic_prompt" nodeset="/safe_pregnancy/skeptical_clinic_prompt" type="xsd:string" required="true()" relevant="/safe_pregnancy/why_not='skeptical_clinic'" />
+			<bind id="busy_prompt" nodeset="/safe_pregnancy/busy_prompt" type="xsd:string" required="true()" relevant="/safe_pregnancy/why_not='busy'" />
+			<bind id="transport_prompt" nodeset="/safe_pregnancy/transport_prompt" type="xsd:string" required="true()" relevant="/safe_pregnancy/why_not='transport'" />
+			
+			<bind id="when" nodeset="/safe_pregnancy/when" type="xsd:string" required="true()" relevant="/safe_pregnancy/go_soon='yes'" />
+			<bind id="other_when" nodeset="/safe_pregnancy/other_when" type="xsd:string" required="true()" relevant="/safe_pregnancy/when='other'" />
+			<bind id="when_prompt" nodeset="/safe_pregnancy/when_prompt" type="xsd:string" required="true()" relevant="/safe_pregnancy/go_soon='yes'" />
+			
+			<bind id="attendant" nodeset="/safe_pregnancy/attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/visited_clinic='yes'" />
+			<bind id="other_attendant" nodeset="/safe_pregnancy/other_attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/attendant='other'" />
+			<bind id="treatment" nodeset="/safe_pregnancy/treatment" type="xsd:string" required="true()" relevant="/safe_pregnancy/visited_clinic='yes'" />
+			<bind id="treatment_type" nodeset="/safe_pregnancy/treatment_type" type="xsd:string" required="true()" relevant="/safe_pregnancy/treatment='yes'" />
+		</model>
+</h:head>
+<h:body>
+	
+		<select1 ref="/safe_pregnancy/visited_clinic">
+			<label ref="jr:itext('visited_clinic')"></label>
+			<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+			<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		</select1>
+		
+		<select1 ref="/safe_pregnancy/go_soon">
+			<label ref="jr:itext('go_soon')"></label>
+			<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+			<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		</select1>
+		
+		<select1 ref="/safe_pregnancy/why_not">
+			<label ref="jr:itext('why_not')"></label>
+			<item><label ref="jr:itext('feeling_better')"></label><value>feeling_better</value></item>
+			<item><label ref="jr:itext('skeptical_clinic')"></label><value>skeptical_clinic</value></item>
+			<item><label ref="jr:itext('busy')"></label><value>busy</value></item>
+			<item><label ref="jr:itext('transport')"></label><value>transport</value></item>
+			<item><label ref="jr:itext('other_why_not')"></label><value>other</value></item>
+		</select1>
+		
+		<input bind="other_why_not"><label ref="jr:itext('other_why_not')"></label></input>	
+		
+		<select1 bind="feeling_better_prompt">
+		<label ref="jr:itext('feeling_better_prompt')"></label>
+			<item><label>ok</label><value>1</value></item>
+		</select1>
+		
+		<select1 bind="skeptical_clinic_prompt">
+		<label ref="jr:itext('skeptical_clinic_prompt')"></label>
+			<item><label>ok</label><value>1</value></item>
+		</select1>
+		
+		<select1 bind="busy_prompt">
+		<label ref="jr:itext('busy_prompt')"></label>
+			<item><label>ok</label><value>1</value></item>
+		</select1>
+		
+		<select1 bind="transport_prompt">
+		<label ref="jr:itext('transport_prompt')"></label>
+			<item><label>ok</label><value>1</value></item>
+		</select1>
+		
+		<select1 ref="/safe_pregnancy/when">
+			<label ref="jr:itext('when')"></label>
+			<item><label ref="jr:itext('today')"></label><value>today</value></item>
+			<item><label ref="jr:itext('tomorrow')"></label><value>tomorrow</value></item>
+			<item><label ref="jr:itext('this_week')"></label><value>this_week</value></item>
+			<item><label ref="jr:itext('other_when')"></label><value>other</value></item>
+		</select1>
+
+		<input bind="other_when"><label ref="jr:itext('other_when')"></label></input>	
+		
+		<select1 bind="when_prompt">
+		<label ref="jr:itext('when_prompt')"></label>
+			<item><label>ok</label><value>1</value></item>	
+		</select1>
+
+		<select1 ref="/safe_pregnancy/attendant">
+			<label ref="jr:itext('attendant')"></label>
+			<item><label ref="jr:itext('doctor')"></label><value>doctor</value></item>
+			<item><label ref="jr:itext('nurse')"></label><value>nurse</value></item>
+			<item><label ref="jr:itext('chw')"></label><value>chw</value></item>
+			<item><label ref="jr:itext('no_one')"></label><value>no_one</value></item>
+			<item><label ref="jr:itext('other_attendant')"></label><value>other</value></item>
+			<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+		</select1>		
+		
+		<input bind="other_attendant"><label ref="jr:itext('other_attendant')"></label></input>	
+		
+		<select1 ref="/safe_pregnancy/treatment">
+			<label ref="jr:itext('treatment')"></label>
+			<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+			<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		</select1>
+
+		<input bind="treatment_type"><label ref="jr:itext('treatment_type')"></label></input>	
+		
+	
+</h:body>
+</h:html>
+
+			

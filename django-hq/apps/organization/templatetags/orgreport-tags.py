@@ -16,7 +16,14 @@ import organization.utils as utils
 
 register = template.Library()
 
+import time
 
+xmldate_format= '%Y-%m-%dT%H:%M:%S.000'
+output_format = '%Y-%m-%d %H:%M'
+
+pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
+                      'x_http__www_commcare_org_mvp_safe_motherhood_followup_v0_1': 'Safe Motherhood Followup',
+                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration"}
 
 
 @register.simple_tag
@@ -25,7 +32,7 @@ def get_aggregate_formcounts_for_obj(content_obj):
     # % (username,table,username,table,username)
     report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
     
-    all_user_query = "select distinct username from %s"
+    
     
     #if an organization, just query all its forms    
     # if it's a group, make a cluster of all the users he/she supervises    
@@ -47,10 +54,10 @@ def get_aggregate_formcounts_for_obj(content_obj):
     
     if content_obj is None:
         ret += "<h2>All Data</h2>"
-        allusers = qtools.raw_query(all_user_query)
-        for row in allusers:
-            for field in row:
-                usernames_to_filter.append(field)
+        #allusers = qtools.raw_query(all_user_query)
+        users_rawlist = ExtUser.objects.all().values_list('username')
+        for usertuple in users_rawlist:
+            usernames_to_filter.append(usertuple[0])
                 
     elif isinstance(content_obj, Organization):
         ret += "<h2>Data for %s</h2>" % (content_obj.name)
@@ -81,12 +88,11 @@ def get_aggregate_formcounts_for_obj(content_obj):
     defs = FormDefData.objects.all()
     ret += '<ul>'
     for fdef in defs:                
-        ret += "<li>%s</li>" % (fdef.element.table_name)
-        ret += "<ul><li>"
+        ret += "<li><h2>%s</h2>" % (pretty_table_names[fdef.element.table_name])
+        ret += ""
         
-        table = fdef.element.table_name
-        ret += "<h3>Table: %s</h3>" % (table)
-        ret += "<table><tr><td>Username</td><td>Last Submit</td><td>Total Count</td></tr>"
+        table = fdef.element.table_name        
+        ret += '<table class="sofT"><tr><td class="helpHed">Username</td><td class="helpHed">Last Submit</td><td class="helpHed">Total Count</td></tr>'
         #print usernames_to_filter
         for user in usernames_to_filter:
             ret += "<tr>"
@@ -95,9 +101,15 @@ def get_aggregate_formcounts_for_obj(content_obj):
             
             userdata = qtools.raw_query(query)
             for dat in userdata[0]:
+                i = 0
                 for f in dat:
-                    ret += "<td>%s</td>" % str(f)
+                    if i == 1 and f != None:
+                        ret += "<td>%s</td>" % time.strftime(output_format, time.strptime(str(f),xmldate_format))
+                        #ret += "<td>%s</td>" % str(f)
+                    else:
+                        ret += "<td>%s</td>" % str(f)
+                    i=i+1
             ret += "</tr>"  
-        ret += "</table></ul></li>"
+        ret += "</table></li>"
     ret += "</ul>"  
     return ret

@@ -9,6 +9,9 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
+from xformmanager.models import *
+from djflot import dbhelper
+from django.utils.encoding import *
 
 from datetime import timedelta
 from django.db import transaction
@@ -24,7 +27,7 @@ import sys
 import os
 import string
 
-def summary_trend(request, template_name="djflot/summary_trend.html"):    
+def flot_example(request, template_name="djflot/flot_example.html"):    
     context = {}        
     context['chart_title'] = 'Sample Chart'
     context['usa_datapoint'] = 'usa'
@@ -33,4 +36,33 @@ def summary_trend(request, template_name="djflot/summary_trend.html"):
     context['usa_data'] = str(arr)
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+
+
+def summary_trend(request, template_name="djflot/summary_trend.html"):    
+    context = {}        
+    
+    formname = ''
+    for item in request.GET.items():
+        if item[0] == 'formname':
+            formname=item[1]        
+    
+    if formname == '':
+        context['chart_title'] = 'All Data'
+        context['dataset'] = {}
+        defs = FormDefData.objects.all()
+    
+        for fdef in defs:                
+            tbl = fdef.element.table_name
+            d = dbhelper.DbHelper(tbl)
+            
+            context['dataset'][tbl.__str__()] = d.get_counts_dataset(None,None)                    
+    
+    else:
+        context['chart_title'] = formname
+        d = dbhelper.DbHelper(formname)        
+        context['dataset'] = d.get_integer_series_dataset()
+    
+    context ['maxdate'] = 0;
+    context ['mindate'] = 0;
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
 

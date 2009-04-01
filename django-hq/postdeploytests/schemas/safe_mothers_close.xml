@@ -1,0 +1,275 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" 
+       xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head> 
+    <h:title>safe pregnancy close</h:title>
+    <meta jr:name="safe_pregnancy_close_0.0.1"/>
+    <model>
+		<itext>
+			<translation lang="English">
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+				<text id="no">
+					<value>No</value>
+				</text>
+				<text id="other">
+					<value>Other</value>
+				</text>
+				<text id="ok">
+					<value>Ok</value>
+				</text>
+				
+				<text id="what_happened">
+					<value>What happened?</value>
+				</text>
+				
+				<text id="birth">
+					<value>Birth</value>
+				</text>
+				
+				<text id="preg_terminated">
+					<value>Pregnancy Terminated</value>
+				</text>
+				
+				<text id="woman_moved">
+					<value>Woman Moved</value>
+				</text>
+				
+				<text id="not_pregnant">
+					<value>Woman was never pregnant</value>
+				</text>
+				
+				<text id="other_what_happened">
+					<value>Other</value>
+				</text>
+				
+				<text id="mother_survived">
+					<value form="long">Did the mother survive the pregnancy?</value>
+					<value form="short">Survived</value>
+				</text>
+				
+				<text id="infants_delivered">
+					<value form="long">How many infants were delivered?</value>
+					<value form="short">Infants delivered</value>
+				</text>
+				
+				<text id="infants_survived">
+					<value form="long">How many infants survived the first 2 days?</value>
+					<value form="short">Infants survived</value>
+				</text>
+					
+				<text id="birth_location">
+					<value form="long">Where did the birth take place?</value>
+					<value form="short">Birth location</value>
+				</text>
+				<text id="termination_location">
+					<value form="long">Where did the termination take place?</value>
+					<value form="short">Termination location</value>
+				</text>					
+					<text id="hospital">
+						<value>Hospital</value>
+					</text>
+					<text id="other_facility">
+						<value>Other health facility</value>
+					</text>
+					<text id="travel_facility">
+						<value>While traveling to facility</value>
+					</text>
+					<text id="home">
+						<value>Home</value>
+					</text>
+					<text id="other_location">
+						<value>Other</value>
+					</text>
+					<text id="other_termination_location">
+						<value>Other</value>
+					</text>
+					<text id="dont_know">
+						<value>Don't know/Not sure</value>
+					</text>
+				
+				<text id="birth_attendant">
+					<value form="long">Who attended the birth?</value>
+					<value form="short">Birth attendant</value>
+				</text>
+				<text id="termination_attendant">
+					<value form="long">Who attended the termination?</value>
+					<value form="short">Termination attendant</value>
+				</text>				
+					<text id="doctor">
+						<value>Doctor/Clinical Officer</value>
+					</text>
+					<text id="nurse">
+						<value>Nurse/Midwife</value>
+					</text>
+					<text id="chw">
+						<value>Community Health Worker</value>
+					</text>
+					<text id="no_one">
+						<value>No one</value>
+					</text>
+					<text id="other_attendant">
+						<value>Other</value>
+					</text>
+					<text id="other_termination_attendant">
+						<value>Other</value>
+					</text>
+					
+				<text id="death_case_mother">
+					<value>Please start a death case for the deceased mother.</value>
+				</text>				
+				<text id="death_case_infant">
+					<value>Please start a death case for the diseased infant(s).</value>
+				</text>
+				<text id="newborn_case">
+					<value>Please start a newborn case(s).</value>
+				</text>
+		</translation>
+		
+		</itext>
+
+		<instance>
+			<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1">
+				<Meta>
+					<formName>Safe Pregnancy Close Visit</formName>
+					<formVersion>0.0.1</formVersion>
+          <DeviceID />
+          <TimeStart />
+          <TimeEnd />
+          <username />
+          <userid />
+        </Meta>
+
+        <what_happened />
+				<other_what_happened />
+				<mother_survived />
+				<infants_delivered />
+				<infants_survived />
+				<birth_location />
+				<other_location />
+				<birth_attendant />
+				<other_attendant />
+				<termination_location />
+				<other_termination_location />
+				<termination_attendant />
+				<other_termination_attendant />
+				<death_case_mother />
+				<death_case_infant />
+				<newborn_case />
+			</safe_pregnancy>
+		</instance>
+
+      <bind nodeset="Meta/DeviceID" jr:preload="property" jr:preloadParams="DeviceID" />
+      <bind nodeset="Meta/username" jr:preload="context" jr:preloadParams="UserName" />
+      <bind nodeset="Meta/userid" jr:preload="context" jr:preloadParams="UserID" />
+      <bind nodeset="Meta/TimeStart" type="dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+      <bind nodeset="Meta/TimeEnd" type="dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+      <bind id="what_happened" nodeset="/safe_pregnancy/what_happened" type="xsd:string" required="true()" />
+			<bind id="other_what_happened" nodeset="/safe_pregnancy/other_what_happened" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='other'" />
+			<bind id="mother_survived" nodeset="/safe_pregnancy/mother_survived" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='birth' or /safe_pregnancy/what_happened='preg_terminated'" />
+			<bind id="infants_delivered" nodeset="/safe_pregnancy/infants_delivered" type="xsd:int" required="true()" relevant="/safe_pregnancy/what_happened='birth'"
+            constraint=". &lt;= 8" jr:constraintMsg="Answer too high" />
+      <bind id="infants_survived" nodeset="/safe_pregnancy/infants_survived" type="xsd:int" required="true()" relevant="/safe_pregnancy/what_happened='birth' and /safe_pregnancy/infants_delivered &gt;= 0"
+            constraint=". &lt;= ../infants_delivered" jr:constraintMsg="Can't be more than # delivered" />
+			<bind id="birth_location" nodeset="/safe_pregnancy/birth_location" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='birth'" />
+			<bind id="other_location" nodeset="/safe_pregnancy/other_location" type="xsd:string" required="true()" relevant="/safe_pregnancy/birth_location='other'" />
+			<bind id="birth_attendant" nodeset="/safe_pregnancy/birth_attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='birth'" />
+			<bind id="other_attendant" nodeset="/safe_pregnancy/other_attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/birth_attendant='other'" />
+			<bind id="termination_location" nodeset="/safe_pregnancy/termination_location" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='preg_terminated'" />
+			<bind id="other_termination_location" nodeset="/safe_pregnancy/other_termination_location" type="xsd:string" required="true()" relevant="/safe_pregnancy/termination_location='other'" />
+			<bind id="termination_attendant" nodeset="/safe_pregnancy/termination_attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/what_happened='preg_terminated'" />			
+			<bind id="other_termination_attendant" nodeset="/safe_pregnancy/other_termination_attendant" type="xsd:string" required="true()" relevant="/safe_pregnancy/termination_attendant='other'" />
+			<bind id="death_case_mother" nodeset="/safe_pregnancy/death_case_mother" type="xsd:string" relevant="/safe_pregnancy/mother_survived='no'" />
+			<bind id="death_case_infant" nodeset="/safe_pregnancy/death_case_infant" type="xsd:string" relevant ="/safe_pregnancy/infants_delivered - /safe_pregnancy/infants_survived &gt;0" />
+			<bind id="newborn_case" nodeset="/safe_pregnancy/newborn_case" type="xsd:string" relevant="/safe_pregnancy/infants_survived &gt;= 0" />
+	</model>
+</h:head>			
+<h:body>
+
+	<select1 ref="/safe_pregnancy/what_happened">
+		<label ref="jr:itext('what_happened')"></label>
+		<item><label ref="jr:itext('birth')"></label><value>birth</value></item>
+		<item><label ref="jr:itext('preg_terminated')"></label><value>preg_terminated</value></item>
+		<item><label ref="jr:itext('woman_moved')"></label><value>moved</value></item>
+		<item><label ref="jr:itext('not_pregnant')"></label><value>not_pregnant</value></item>
+		<item><label ref="jr:itext('other_what_happened')"></label><value>other</value></item>
+	</select1>
+
+	<input bind="other_what_happened"><label ref="jr:itext('other_what_happened')"></label></input>	
+		
+	<select1 bind="mother_survived">
+		<label ref="jr:itext('mother_survived')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<input bind="infants_delivered"><label ref="jr:itext('infants_delivered')"></label></input>		
+
+	<input bind="infants_survived"><label ref="jr:itext('infants_survived')"></label></input>		
+
+	<select1 ref="/safe_pregnancy/birth_location">
+		<label ref="jr:itext('birth_location')"></label>
+		<item><label ref="jr:itext('hospital')"></label><value>hospital</value></item>
+		<item><label ref="jr:itext('other_facility')"></label><value>other_facility</value></item>
+		<item><label ref="jr:itext('travel_facility')"></label><value>en_route</value></item>
+		<item><label ref="jr:itext('home')"></label><value>home</value></item>
+		<item><label ref="jr:itext('other_location')"></label><value>other</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+	</select1>
+	
+	<input bind="other_location"><label ref="jr:itext('other_location')"></label></input>	
+
+	<select1 ref="/safe_pregnancy/termination_location">
+		<label ref="jr:itext('termination_location')"></label>
+		<item><label ref="jr:itext('hospital')"></label><value>hospital</value></item>
+		<item><label ref="jr:itext('other_facility')"></label><value>other_facility</value></item>
+		<item><label ref="jr:itext('travel_facility')"></label><value>en_route</value></item>
+		<item><label ref="jr:itext('home')"></label><value>home</value></item>
+		<item><label ref="jr:itext('other_termination_location')"></label><value>other</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+	</select1>
+	
+	<input bind="other_termination_location"><label ref="jr:itext('other_termination_location')"></label></input>	
+
+	<select1 ref="/safe_pregnancy/birth_attendant">
+		<label ref="jr:itext('birth_attendant')"></label>
+		<item><label ref="jr:itext('doctor')"></label><value>doctor</value></item>
+		<item><label ref="jr:itext('nurse')"></label><value>nurse</value></item>
+		<item><label ref="jr:itext('chw')"></label><value>chw</value></item>
+		<item><label ref="jr:itext('no_one')"></label><value>no_one</value></item>
+		<item><label ref="jr:itext('other_attendant')"></label><value>other</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+	</select1>
+
+	<input bind="other_attendant"><label ref="jr:itext('other_attendant')"></label></input>	
+	
+	<select1 bind="termination_attendant">
+		<label ref="jr:itext('termination_attendant')"></label>
+		<item><label ref="jr:itext('doctor')"></label><value>doctor</value></item>
+		<item><label ref="jr:itext('nurse')"></label><value>nurse</value></item>
+		<item><label ref="jr:itext('chw')"></label><value>chw</value></item>
+		<item><label ref="jr:itext('no_one')"></label><value>no_one</value></item>
+		<item><label ref="jr:itext('other_termination_attendant')"></label><value>other</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+	</select1>
+
+	<input bind="other_termination_attendant"><label ref="jr:itext('other_termination_attendant')"></label></input>	
+	
+		<trigger bind="death_case_mother">
+			<label ref="jr:itext('death_case_mother')"></label>
+		</trigger>
+		
+		<trigger bind="death_case_infant">
+			<label ref="jr:itext('death_case_infant')"></label>
+		</trigger>
+
+		<trigger bind="newborn_case">
+			<label ref="jr:itext('newborn_case')"></label>
+		</trigger>
+
+</h:body>
+</h:html>
