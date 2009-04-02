@@ -20,6 +20,7 @@ DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -48,10 +49,10 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__),'media')
 MEDIA_URL = 'http://test.commcarehq.org/media/'
 
 #for local testing with localmediaserver.py
-#import socket
-#MEDIA_HOSTADDR = socket.gethostbyname(socket.gethostname())
-#MEDIA_HOST= MEDIA_HOSTADDR + ":" + str(8090)
-#MEDIA_URL = 'http://' + MEDIA_HOST + '/media/'
+import socket
+MEDIA_HOSTADDR = socket.gethostbyname(socket.gethostname())
+MEDIA_HOST= MEDIA_HOSTADDR + ":" + str(8090)
+MEDIA_URL = 'http://' + MEDIA_HOST + '/media/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -85,7 +86,7 @@ TEMPLATE_DIRS = (
     
 #    os.path.join('../../apps','modelrelationship','templates'),
     os.path.join('../../apps','xformmanager','templates'),
-    os.path.join('../../apps','submitlogger','templates'),
+    os.path.join('../../apps','receiver','templates'),
     os.path.join('../../apps','monitorregistry','templates'),
     os.path.join('../../apps','organization','templates'),
     os.path.join('../../apps','djflot','templates'),
@@ -120,7 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'django_extensions',
     
-    'submitlogger',
+    'receiver',
     'modelrelationship',
     'xformmanager',
     'monitorregistry',
