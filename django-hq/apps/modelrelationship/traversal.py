@@ -27,8 +27,7 @@ def getAncestorEdgesForObject(content_obj):
         ret = []        
         for edge in parent_edges:
             ret.append(edge)            
-            parents = getAncestorEdgesForObject(edge.parent_object) 
-                                 
+            parents = getAncestorEdgesForObject(edge.parent_object)                                 
             if len(parents) > 0:
                 ret.append(parents)        
         return ret

@@ -5,6 +5,8 @@ from modelrelationship.models import *
 from organization.models import *
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+import settings
+from django.core import management
 
 import modelrelationship.traversal as traversal
 
@@ -64,14 +66,7 @@ class BasicTestCase(unittest.TestCase):
         EdgeType.objects.all().delete()
         
         
-        f = open( os.path.join(os.path.dirname(__file__),'organization.json'),"r" )
-        orgfile = f.read()        
-        f.close()
-        organizations = serializers.deserialize("json", orgfile)
-        
-        for obj in organizations:
-            obj.save()
-            
+        management.call_command('loaddata', 'demo.json', verbosity=0)
         
         for org in Organization.objects.all():
             ancestry = traversal.getFamilyTreeForObject(org)
@@ -90,13 +85,7 @@ class BasicTestCase(unittest.TestCase):
         Edge.objects.all().delete()
         EdgeType.objects.all().delete()
         
-        f = open( os.path.join(os.path.dirname(__file__),'organization.json'),"r" )
-        orgfile = f.read()        
-        f.close()
-        organizations = serializers.deserialize("json", orgfile)
-        
-        for obj in organizations:
-            obj.save()
+        management.call_command('loaddata', 'demo.json', verbosity=0)
             
         for org in Organization.objects.all():
             ancestry = traversal.getFullDescendantsForObject(org)
@@ -117,13 +106,7 @@ class BasicTestCase(unittest.TestCase):
         EdgeType.objects.all().delete()
         
         
-        f = open( os.path.join(os.path.dirname(__file__),'organization.json'),"r" )
-        orgfile = f.read()        
-        f.close()
-        organizations = serializers.deserialize("json", orgfile)
-        
-        for obj in organizations:
-            obj.save()
+        management.call_command('loaddata', 'demo.json', verbosity=0)
             
         
         for org in Organization.objects.all():
@@ -143,13 +126,7 @@ class BasicTestCase(unittest.TestCase):
         Edge.objects.all().delete()
         EdgeType.objects.all().delete()
         
-        f = open( os.path.join(os.path.dirname(__file__),'organization.json'),"r" )
-        orgfile = f.read()        
-        f.close()
-        organizations = serializers.deserialize("json", orgfile)
-        
-        for obj in organizations:
-            obj.save()
+        management.call_command('loaddata', 'demo.json', verbosity=0)        
             
         for org in Organization.objects.all():
             ancestry = traversal.getDescendentEdgesForObject(org)
