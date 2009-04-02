@@ -72,7 +72,7 @@ def raw_submit(request, template_name="receiver/submit.html"):
 def backup(request, template_name="receiver/backup.html"):
 #return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
     context = {}            
-    logging.debug("begin raw_submit()")
+    logging.debug("begin backup()")
     if request.method == 'POST':
         new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
         if new_submission == '[error]':
@@ -84,3 +84,35 @@ def backup(request, template_name="receiver/backup.html"):
             context['backup_id'] = new_backup.backup_code                        
             template_name="receiver/backup_complete.html"                                         
     return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+
+
+def restore(request, code_id, template_name="receiver/restore.html"):
+    context = {}            
+    logging.debug("begin restore()")
+    #need to somehow validate password, presmuably via the header objects.
+    restore = Backup.objects.all().filter(backup_code=code_id)
+    if len(restore) != 1:
+        template_name="receiver/nobackup.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+    original_submission = restore[0].submission
+    attaches = Attachment.objects.all().filter(submission=original_submission)
+    for attach in attaches:
+        if attach.attachment_content_type == "text/xml":
+            response = HttpResponse(mimetype='text/xml')
+            fin = open(attach.filepath,'r')
+            txt = fin.read()
+            fin.close()
+            response.write(txt)
+            
+            verify_checksum = hashlib.md5(txt).hexdigest()
+            if verify_checksum == attach.checksum:                
+                return response
+            else:               
+                continue
+    
+    template_name="receiver/nobackup.html"
+    return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+        
+                           
+                      
+    

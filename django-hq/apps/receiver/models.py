@@ -76,7 +76,7 @@ class Submission(models.Model):
                        new_attach.attachment_uri = part['Content-ID']
                        filename='-%s' % os.path.basename(new_attach.attachment_uri)
                        
-                   payload = part.get_payload()
+                   payload = part.get_payload().strip()
                    new_attach.filesize = len(payload)
                    new_attach.checksum = hashlib.md5(payload).hexdigest()
                    fout = open(os.path.join(settings.ATTACHMENTS_PATH,self.transaction_uuid + filename),'wb')
