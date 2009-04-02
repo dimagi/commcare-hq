@@ -460,16 +460,58 @@ div.parents ul {
 	list-style-image: url(/media/parentarrow.png);
 }
 
+div.reportitem {
+	width:100%;
+	background-color: #fafafa;
+}
+
+div.reportheading {
+	width:100%;
+	background-color: #fafafa;
+	font-weight: bold;
+}
+div.reportheading table {
+	float:right;	
+	width:600px;
+	align:right;
+	font-weight:bold;
+}
+div.reportheading td {	
+	width:33%;
+}
+
+div.reportitem a {
+		
+}
+div.reportitem table {
+	float:right;	
+	width:600px;
+	align:right;
+	
+}
+
+div.reportitem td {	
+	width:33%;
+}
 div.reports {	
 	padding: 10px;
+	width:100%;
 	margin: 5px;
-	border: 1px solid black;	
+	border: 1px solid black;
+		
 }
+
+div.reports li {
+	
+}
+
 
 div.reports ul {
 	list-style-type:None;
+	line-height: 24px;
+	font-size: 14px;	
+	
 }
-
 
 div.descendants {
 	width: 400px;

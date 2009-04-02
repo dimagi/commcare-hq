@@ -78,6 +78,9 @@ class Edge(models.Model):
     @property
     def cid(self):
         return self.child_id
+    @property
+    def triple(self):
+        return self.parent_object, self.relationship, self.child_object
     
     @property
     def ptype(self):

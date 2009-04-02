@@ -78,11 +78,20 @@ def backup(request, template_name="receiver/backup.html"):
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"            
         else:
-            #todo: get password presumably fromthe HTTP header
+            #todo: get password presumably from the HTTP header            
             new_backup = Backup(submission=new_submission, password='password')
-            new_backup.save()            
+            new_backup.save()
+            response = HttpResponse(mimetype='text/plain')          
+                                      
             context['backup_id'] = new_backup.backup_code                        
-            template_name="receiver/backup_complete.html"                                         
+            template_name="receiver/backup_complete.html"            
+            from django.template.loader import render_to_string
+            rendering = render_to_string('receiver/backup_complete.html', { 'backup_id': new_backup.backup_code })
+            
+            response.write(rendering)
+            response['Content-length'] = len(rendering)
+            return response                                         
+            
     return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
 
 
