@@ -1,4 +1,4 @@
-{% extends "submitlogger/base.html" %}
+{% extends "receiver/base.html" %}
 {% load i18n %}
 {% block head_title %}{% trans "Single Submission" %}{% endblock %}
 {% block content %}
@@ -7,31 +7,31 @@
     
     
 	   	<li>
-	   		{% trans "Submission ID:" %} {{submitlog_item.id}}   		
+	   		{% trans "Submission ID:" %} {{submission_item.id}}   		
 	   	</li>
 	   	
 	   	<li>
-	   		{% trans "IP Address:" %} {{submitlog_item.submit_ip}}   		
+	   		{% trans "IP Address:" %} {{submission_item.submit_ip}}   		
 	   	</li>
 	   	
 	   	<li>
-	   		{% trans "Checksum:" %} {{submitlog_item.checksum}}   		
+	   		{% trans "Checksum:" %} {{submission_item.checksum}}   		
 	   	</li>
 	   	
 	   	
 	   	<li>
-	   		{% trans "Transaction ID:" %} {{submitlog_item.submit_id}}   		
+	   		{% trans "Transaction ID:" %} {{submission_item.transaction_uuid}}   		
 	   	</li>
 	   	
 	   	<li>
-	   		{% trans "Bytes Received:" %} {{submitlog_item.bytes_received}}   		
+	   		{% trans "Bytes Received:" %} {{submission_item.bytes_received}}   		
 	   	</li>
 	   	<li>
-	   		{% trans "Raw File Location:" %} {{submitlog_item.raw_post}}   		
+	   		{% trans "Raw File Location:" %} {{submission_item.raw_post}}   		
 	   	</li>
 	   	
 	   	<li>
-	   		{% trans "Raw Request:" %} {{submitlog_item.raw_header }} 
+	   		{% trans "Raw Request:" %} {{submission_item.raw_header }} 
 	   			   		
 	   	</li>
    	</ul>   	

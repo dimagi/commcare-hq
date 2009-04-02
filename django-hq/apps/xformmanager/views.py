@@ -20,7 +20,7 @@ from lxml import etree
 
 from StringIO import StringIO
 
-from submitlogger.models import Attachment
+from receiver.models import Attachment
 from django.db.models.signals import post_save
 from django.db.models import signals
 
@@ -31,7 +31,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     table_name = su.save_form_data(xml_file_name)
     generate_CSV(table_name)
     
-# Register to receive signals from submitlogger
+# Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
     
 def register_xform(request, template='register_and_list_xforms.html'):

@@ -13,7 +13,7 @@ urlpatterns = patterns('',
     
     (r'^i18n/$', include('django.conf.urls.i18n')),
     #(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {}),
-    (r'^formreceiver/', include('submitlogger.urls')),
+    (r'^receiver/', include('receiver.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
     (r'^charts/', include('djflot.urls')),

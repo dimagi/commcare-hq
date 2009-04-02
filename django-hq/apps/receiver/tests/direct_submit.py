@@ -1,11 +1,11 @@
-from submitlogger.models import *
-from submitlogger import submitprocessor
+from receiver.models import *
+from receiver import submitprocessor
 
 bodyfile = 'multipart-body.txt'
 headerfile = 'multipart-meta.txt'
 
 print 'submitting'
-newsubmit = SubmitLog()
+newsubmit = Submission()
 fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
 meta= fin.read()
 fin.close()

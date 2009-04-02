@@ -1,0 +1,15 @@
+{% extends "receiver/base.html" %}
+{% load i18n %}
+{% block head_title %}{% trans "All Submissions" %}{% endblock %}
+{% block content %}
+<h2>{% trans "All Submissions" %}</h2>
+   {% for submission in submission_items %}      
+   	<li>
+   		<a href="{% url receiver.views.single_submission submission.id %}">
+   			{% blocktrans with submission.submit_time|date as date_t and submission.submit_time|time as time_t %}
+   				Submit date: {{date_t}} - {{time_t}}
+   			{% endblocktrans %}</a>   			    
+   			{% trans "From: " %} : {{submission.submit_ip}}        
+   	</li>   	
+   {% endfor %}
+{% endblock %}

@@ -28,18 +28,18 @@ import submitprocessor
 
 
 #@login_required()
-def show_submits(request, template_name="submitlogger/show_submits.html"):    
+def show_submits(request, template_name="receiver/show_submits.html"):    
     context = {}
-    slogs = SubmitLog.objects.all()
+    slogs = Submission.objects.all()
     context['submissionlog_items'] = slogs    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
 #@login_required()    
-def single_submission(request, submit_id, template_name="submitlogger/single_submission.html"):
+def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
-    slog = SubmitLog.objects.all().filter(id=submit_id)
-    context['submitlog_item'] = slog[0]    
+    slog = Submission.objects.all().filter(id=submission_id)
+    context['submission_item'] = slog[0]    
     rawstring = str(slog[0].raw_header)
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
@@ -50,21 +50,37 @@ def single_submission(request, submit_id, template_name="submitlogger/single_sub
     context['attachments'] = attachments
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def raw_submit(request, template_name="submitlogger/submit.html"):
+def raw_submit(request, template_name="receiver/submit.html"):
     context = {}            
     logging.debug("begin raw_submit()")
     if request.method == 'POST':
         new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
         if new_submission == '[error]':
-            template_name="submitlogger/submit_failed.html"            
+            template_name="receiver/submit_failed.html"            
         else:
             context['transaction_id'] = new_submission.transaction_uuid
             context['submission'] = new_submission
             attachments = Attachment.objects.all().filter(submission=new_submission)            
             context['attachments'] = attachments            
-            template_name="submitlogger/submit_complete.html"
+            template_name="receiver/submit_complete.html"
             
     #for real submissions from phone, the content-type should be:
     #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+
+def backup(request, template_name="receiver/backup.html"):
+#return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
+    context = {}            
+    logging.debug("begin raw_submit()")
+    if request.method == 'POST':
+        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+        if new_submission == '[error]':
+            template_name="receiver/submit_failed.html"            
+        else:
+            #todo: get password presumably fromthe HTTP header
+            new_backup = Backup(submission=new_submission, password='password')
+            new_backup.save()            
+            context['backup_id'] = new_backup.backup_code                        
+            template_name="receiver/backup_complete.html"                                         
+    return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')

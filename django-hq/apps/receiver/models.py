@@ -2,6 +2,7 @@ from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
+from random import choice
 
 import uuid
 import settings
@@ -14,7 +15,7 @@ import os
 import traceback
 
 
-class SubmitLog(models.Model):   
+class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
     #transaction_num = models.IntegerField(_('Submission Integer ID for Phone'),unique=True,null=False)
@@ -33,7 +34,7 @@ class SubmitLog(models.Model):
     def __unicode__(self):
         return "Submission " + unicode(self.submit_time)
     def save(self, **kwargs):        
-        super(SubmitLog, self).save()
+        super(Submission, self).save()
         self.process_attachments()
     
     def delete(self, **kwargs):        
@@ -42,15 +43,14 @@ class SubmitLog(models.Model):
         attaches = Attachment.objects.all().filter(submission = self)
         if len(attaches) > 0:
             for attach in attaches:
-                attach.delete()
-                        
-        super(SubmitLog, self).delete()
+                attach.delete()                        
+        super(Submission, self).delete()
         
     
     def process_attachments(self):
         """Process attachments for a given submission blob.
         Will try to use the email parsing library to get all the MIME content from a given submission
-        And write to file and make new Attachment entries linked back to this SubmitLog"""
+        And write to file and make new Attachment entries linked back to this Submission"""
         fin = open(self.raw_post,'rb')
         body = fin.read()        
         fin.close()        
@@ -91,14 +91,31 @@ class SubmitLog(models.Model):
             logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
             type, value, tb = sys.exc_info()
             logging.error(type.__name__, ":", value)
-            logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb))
-)
+            logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
             
-
+class Backup(models.Model):
+    #backup_code = models.CharField(unique=True,max_length=6)
+    backup_code = models.IntegerField(unique=True)
+    password = models.CharField(_('backup password'), max_length=128)
+    submission = models.ForeignKey(Submission)    
+    #other fields?
     
+    def __new_code(self):
+        """Generate and verify that the backup code is unique"""
+        nums = '0123456789'
+        new_code = int(''.join([choice(nums) for i in range(6)]))
+        while Backup.objects.all().filter(backup_code=new_code).count() != 0:
+            new_code = int(''.join([choice(nums) for i in range(6)]))
+        return new_code        
+    
+    def save(self, **kwargs): 
+        self.backup_code = self.__new_code()       
+        #todo:  process password using similar method from the User model for password salt and hashing
+        super(Backup, self).save()
+            
     
 class Attachment(models.Model):
-    submission = models.ForeignKey(SubmitLog)
+    submission = models.ForeignKey(Submission)
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
     attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
     filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.XFORM_SUBMISSION_PATH,max_length=255)

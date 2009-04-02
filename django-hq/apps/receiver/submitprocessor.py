@@ -13,7 +13,7 @@ from django.db import transaction
 def do_raw_submission(metadata, payload):
     logging.debug("Begin do_raw_submission()")
     transaction = str(uuid.uuid1())
-    new_submit = SubmitLog()
+    new_submit = Submission()
     new_submit.transaction_uuid = transaction
     logging.debug("Get remote addr")    
     if metadata.has_key('HTTP_X_FORWARDED_FOR'):

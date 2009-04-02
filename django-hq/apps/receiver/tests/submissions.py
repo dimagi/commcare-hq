@@ -1,6 +1,6 @@
 import unittest
-from submitlogger.models import *
-from submitlogger import submitprocessor 
+from receiver.models import *
+from receiver import submitprocessor 
 
 class ProcessingTestCase(unittest.TestCase):
     def setup(self):
@@ -10,7 +10,7 @@ class ProcessingTestCase(unittest.TestCase):
 #        for attach in attaches:
 #            attach.delete()
 #        
-        allsubmits = SubmitLog.objects.all()
+        allsubmits = Submission.objects.all()
         for submit in allsubmits:
             submit.delete()
         
@@ -22,7 +22,7 @@ class ProcessingTestCase(unittest.TestCase):
 #        self.assertEquals(0,len(attaches))
     
     def _makeNewEntry(self,headerfile, bodyfile):
-        newsubmit = SubmitLog()
+        newsubmit = Submission()
         fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
         meta= fin.read()
         fin.close()
@@ -35,47 +35,47 @@ class ProcessingTestCase(unittest.TestCase):
         submitprocessor.do_raw_submission(metahash, body)
 
     def testSubmitSimple(self):        
-        SubmitLog.objects.all().delete()
+        Submission.objects.all().delete()
         Attachment.objects.all().delete()
         
-        num = len(SubmitLog.objects.all())
+        num = len(Submission.objects.all())
         self._makeNewEntry('simple-meta.txt','simple-body.txt')
-        num2 = len(SubmitLog.objects.all())        
+        num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
     def testCheckSimpleAttachments(self):
-        SubmitLog.objects.all().delete()
+        Submission.objects.all().delete()
         Attachment.objects.all().delete()
                 
-        num = len(SubmitLog.objects.all())
+        num = len(Submission.objects.all())
         self._makeNewEntry('simple-meta.txt','simple-body.txt')
-        num2 = len(SubmitLog.objects.all())        
+        num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
-        mysub = SubmitLog.objects.all()[0]
+        mysub = Submission.objects.all()[0]
         
         attaches = Attachment.objects.all().filter(submission=mysub)        
         self.assertEquals(1,len(attaches))        
     
     
     def testSubmitMultipart(self):     
-        SubmitLog.objects.all().delete()
+        Submission.objects.all().delete()
         Attachment.objects.all().delete()
            
-        num = len(SubmitLog.objects.all())
+        num = len(Submission.objects.all())
         self._makeNewEntry('multipart-meta.txt','multipart-body.txt')
-        num2 = len(SubmitLog.objects.all())        
+        num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
     def testCheckMultipartAttachments(self):       
-        SubmitLog.objects.all().delete()
+        Submission.objects.all().delete()
         Attachment.objects.all().delete()
          
         print '############################### testCheckMultipartAttachments'
-        num = len(SubmitLog.objects.all())
+        num = len(Submission.objects.all())
         self._makeNewEntry('multipart-meta.txt','multipart-body.txt')
-        num2 = len(SubmitLog.objects.all())        
+        num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
-        mysub = SubmitLog.objects.all()[0]        
+        mysub = Submission.objects.all()[0]        
         attaches = Attachment.objects.all().filter(submission=mysub)     
         self.assertEquals(3,len(attaches))        
         
@@ -85,7 +85,7 @@ class ProcessingTestCase(unittest.TestCase):
 #        for attach in attaches:
 #            attach.delete()
         
-#        allsubmits = SubmitLog.objects.all()
+#        allsubmits = Submission.objects.all()
 #        for submit in allsubmits:
 #            submit.delete()
 #        
