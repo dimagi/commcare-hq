@@ -1,11 +1,11 @@
 {% extends "xformmanager_base.html" %}
 {% load i18n %}
 {% block head_title %}{% trans "Data for Schema: {{form_name}} " %}{% endblock %}
-{% block content %}
+{%block mgr_content%}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 
-<a href="{% url xformmanager.views.single_xform form_name %}">
+<a href="{% url xformmanager.views.single_xform xform.id %}">
 more information about this schema<br/>
 </a>
 

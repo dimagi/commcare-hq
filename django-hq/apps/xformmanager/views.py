@@ -4,7 +4,7 @@ from django.template import RequestContext
 from django.db import transaction
 import uuid
 import hashlib
-
+from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefData
 from xformmanager.xformdef import FormDef
@@ -14,6 +14,8 @@ import settings, os, sys
 import logging
 import traceback
 import subprocess
+
+from organization.models import *
 
 #temporary
 from lxml import etree
@@ -33,24 +35,30 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
-    
+
+@login_required()
+@transaction.commit_manually
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
+    
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    
+    
     if request.method == 'POST':
         form = RegisterXForm(request.POST, request.FILES)
         if form.is_valid():
-            transaction = str(uuid.uuid1())
+            transaction_str = str(uuid.uuid1())
             try:
-                logging.debug("temporary file name is " + transaction)                
+                logging.debug("temporary file name is " + transaction_str)                
 
-                new_file_name = __xsd_file_name(transaction)
+                new_file_name = __xsd_file_name(transaction_str)
                 if request.FILES['file'].name.endswith("xsd"):
                     fout = open(new_file_name, 'w')
                     fout.write( request.FILES['file'].read() )
                     fout.close()
                 else: 
                     #user has uploaded an xhtml/xform file
-                    xform_file_name = __xform_file_name(transaction)
+                    xform_file_name = __xform_file_name(transaction_str)
                     fout = open(xform_file_name, 'w')
                     fout.write( request.FILES['file'].read() )
                     fout.close()
@@ -74,13 +82,16 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fdd.submit_ip = request.META['REMOTE_ADDR']
                 fdd.bytes_received =  request.FILES['file'].size
                 
+                fdd.form_display_name = form.cleaned_data['form_display_name']                
+                fdd.uploaded_by = extuser
+                
                 fdd.form_name = get_table_name(formdef.target_namespace)
                 fdd.target_namespace = formdef.target_namespace
                 fdd.element_id = element_id
                 fdd.xsd_file_location = new_file_name
-                fdd.save() 
-                
+                fdd.save()                
                 logging.debug("xform registered")
+                transaction.commit()
             except Exception, e:
                 logging.error(e)
                 logging.error("Unable to write raw post data<br/>")
@@ -89,20 +100,42 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 type, value, tb = sys.exc_info()
                 logging.error(type.__name__, ":", value)
                 logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
+                logging.error("Transaction rolled back")
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
+                transaction.rollback()
+            
+                
+    
     context['upload_form'] = RegisterXForm()
-    context['registered_forms'] = FormDefData.objects.all()
+    context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
 
-def single_xform(request, formdef_name, template_name="single_xform.html"):
-    context = {}        
-    xform = FormDefData.objects.all().filter(form_name=formdef_name)
-    context['xform_item'] = xform[0]
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
-    #return HttpResponse("YES")
-
-def data(request, formdef_name, template_name="data.html"):
+@login_required()
+def single_xform(request, formdef_id, template_name="single_xform.html"):
+    context = {}    
+    show_schema = False
+    for item in request.GET.items():
+        if item[0] == 'show_schema':
+            show_schema = True           
+    xform = FormDefData.objects.all().filter(id=formdef_id)
+    
+    if show_schema:
+        response = HttpResponse(mimetype='text/plain')
+        fin = open(xform[0].xsd_file_location ,'r')
+        txt = fin.read()
+        fin.close()
+        response.write(txt) 
+        return response
+    else:    
+        context['xform_item'] = xform[0]
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        
+@login_required()
+def data(request, formdef_id, template_name="data.html"):
     context = {}
+    xform = FormDefData.objects.all().filter(id=formdef_id)
+    formdef_name = xform[0].form_name
+    
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM " + formdef_name)
     rows = cursor.fetchall()
@@ -113,6 +146,7 @@ def data(request, formdef_name, template_name="data.html"):
         context['columns'].append(col[0])    
     context['form_name'] = formdef_name
     context['data'] = []
+    context['xform'] = xform[0]
     for row in rows:
         record = []
         for field in row:

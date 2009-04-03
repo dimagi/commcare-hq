@@ -1,7 +1,7 @@
 {% extends "xformmanager_base.html" %}
 {% load i18n %}
 {% block title %}Upload your xforms here{% endblock %}
-{% block content %}
+{% block mgr_content %}
 
 <div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
     {% if form.message.errors %}
@@ -24,7 +24,7 @@
 <h1>Register a New XForm</h1>
 <form action="" method="POST" enctype="multipart/form-data">
 <table>
-{{ upload_form.as_table }}
+{{ upload_form.as_ul}}
 </table>
 <input type="submit" value="Submit" />
 </form>
@@ -34,16 +34,28 @@
 
 <strong>
 <ol>
-   {% for form in registered_forms %}   
-   <li>   
-   		<a href="{% url xformmanager.views.data form.form_name %}">
+      
+   <table class="sofT">
+   		<tr>
+   			<td class="helpHed">{% trans "Added Date" %}</td>
+   			<td class="helpHed">{% trans "Display Name" %}</td>
+   			<td class="helpHed">{% trans "Schema Definition" %}</td>   			
+   		</tr>
+   		{% for form in registered_forms %}   
+   		<tr>
+   			<td><a href="{% url xformmanager.views.data form.id %}">
    			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
-   				Submit date: {{date_t}} - {{time_t}}
-   			{% endblocktrans %}</a>
-   			{% trans "From: " %} : {{form.submit_ip}}
-   			{% trans "Name: " %} : {{form.form_name}}
-   </li>
-   {% endfor %}
+   				{{date_t}}, {{time_t}}
+   			{% endblocktrans %}</a></td>   			
+   			<td>{{form.form_display_name}}</td>
+   			
+   			<td>
+   			{{form.form_name}}
+   			</td>
+   		</tr>
+   		{% endfor %}   		
+   </table>
+   
 
 </ol>
 </strong>

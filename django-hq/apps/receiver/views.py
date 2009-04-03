@@ -31,7 +31,7 @@ import submitprocessor
 def show_submits(request, template_name="receiver/show_submits.html"):    
     context = {}
     slogs = Submission.objects.all()
-    context['submissionlog_items'] = slogs    
+    context['submission_items'] = slogs    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
@@ -44,6 +44,19 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
     processed_header = eval(rawstring)
+    
+    get_original = False
+    for item in request.GET.items():
+        if item[0] == 'get_original':
+            get_original = True           
+    
+    if get_original:
+        response = HttpResponse(mimetype='text/plain')
+        fin = open(slog[0].raw_post ,'r')
+        txt = fin.read()
+        fin.close()
+        response.write(txt) 
+        return response
     
     attachments = Attachment.objects.all().filter(submission=slog[0])
     context ['processed_header'] = processed_header

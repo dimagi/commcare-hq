@@ -21,11 +21,6 @@ import time
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
 
-pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
-                      'x_http__www_commcare_org_mvp_safe_motherhood_followup_v0_1': 'Safe Motherhood Followup',
-                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration",
-                      'x_http__www_commcare_org_mvp_safe_motherhood_referral_v0_1': "Safe Motherhood Referral"}
-
 
 @register.simple_tag
 def get_aggregate_formcounts_for_obj(content_obj):
@@ -79,7 +74,7 @@ def get_aggregate_formcounts_for_obj(content_obj):
     defs = FormDefData.objects.all()
     ret += '<ul>'
     for fdef in defs:                
-        ret += "<li><h2>%s</h2>" % (pretty_table_names[fdef.element.table_name])
+        ret += "<li><h2>%s</h2>" % (fdef.form_display_name)
         ret += ""
         
         table = fdef.element.table_name        

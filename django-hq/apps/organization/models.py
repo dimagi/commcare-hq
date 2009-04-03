@@ -3,6 +3,7 @@ from monitorregistry.models import *
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from modelrelationship.models import *
+from xformmanager.models import *
 
 
 class Domain(models.Model):
@@ -67,3 +68,8 @@ class Organization(models.Model):
     
     def __unicode__(self):
         return self.name
+
+
+    
+    
+

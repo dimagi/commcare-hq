@@ -81,6 +81,10 @@
 			<arg value="syncdb" />
 			<arg value="--noinput" />
 			</py-run>
+		<py-run script="manage.py" pythonpath="${project.dir}">
+			<arg value="runscript" />
+			<arg value="demo_bootstrap.py" />
+		</py-run>
 	</target>
 		
 	<target name="pydoc" depends="init,compile">

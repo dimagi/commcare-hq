@@ -66,7 +66,7 @@ class BasicTestCase(unittest.TestCase):
         EdgeType.objects.all().delete()
         
         
-        management.call_command('loaddata', 'demo.json', verbosity=0)
+        management.call_command('runscript', 'demo_bootstrap.py', verbosity=0)
         
         for org in Organization.objects.all():
             ancestry = traversal.getFamilyTreeForObject(org)
@@ -85,7 +85,7 @@ class BasicTestCase(unittest.TestCase):
         Edge.objects.all().delete()
         EdgeType.objects.all().delete()
         
-        management.call_command('loaddata', 'demo.json', verbosity=0)
+        management.call_command('runscript', 'demo_bootstrap.py', verbosity=0)
             
         for org in Organization.objects.all():
             ancestry = traversal.getFullDescendantsForObject(org)
@@ -106,7 +106,7 @@ class BasicTestCase(unittest.TestCase):
         EdgeType.objects.all().delete()
         
         
-        management.call_command('loaddata', 'demo.json', verbosity=0)
+        management.call_command('runscript', 'demo_bootstrap.py', verbosity=0)
             
         
         for org in Organization.objects.all():
@@ -126,7 +126,7 @@ class BasicTestCase(unittest.TestCase):
         Edge.objects.all().delete()
         EdgeType.objects.all().delete()
         
-        management.call_command('loaddata', 'demo.json', verbosity=0)        
+        management.call_command('runscript', 'demo_bootstrap.py', verbosity=0)        
             
         for org in Organization.objects.all():
             ancestry = traversal.getDescendentEdgesForObject(org)

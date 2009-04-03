@@ -26,6 +26,10 @@ class Submission(models.Model):
     raw_header = models.TextField(_('Raw Header'))    
     raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH, max_length=255)    
         
+    @property
+    def num_attachments(self):
+        return Attachment.objects.all().filter(submission=self).count()
+        
     class Meta:
         ordering = ('-submit_time',)
         verbose_name = _("Submission Log")        

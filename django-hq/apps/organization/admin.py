@@ -24,6 +24,7 @@ class ExtRoleAdmin(admin.ModelAdmin):
     list_display = ('id','name','description','domain')
     list_filter = []      
     
+    
 #
 #class OrgRelationshipTypeAdmin(admin.ModelAdmin):
 #    list_display = ('name','description','directional')
@@ -42,4 +43,3 @@ admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)
 admin.site.register(Domain,DomainAdmin)
-

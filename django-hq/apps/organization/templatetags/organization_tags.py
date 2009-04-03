@@ -141,6 +141,7 @@ def get_aggregated_reports(domain):
     return ''
     ctype = ContentType.objects.get_for_model(domain)
     root_orgs = Edge.objects.all().filter(parent_type=ctype,parent_id=domain.id,relationship__name='is domain root')
+    
     if len(root_orgs) == 0:
         return '<h1>Error</h1>'
     root_org = root_orgs[0]    

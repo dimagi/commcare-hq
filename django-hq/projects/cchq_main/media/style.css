@@ -188,13 +188,11 @@ a:hover {
 }
 
 #xform-register-block {
-	float: right;
-	width: 300px;		
+	text-align:left;			
 	color: #787878;
 	border: 1px solid black;
 	padding:12px;
 }
-
 /* Page */
 
 #page {
@@ -447,6 +445,12 @@ border-spacing: 0px;
                                    width: 100%;
 }
 
+div.attachmentsblock {				
+	color: #787878;
+	border: 1px solid black;
+	padding:12px;
+	float:right;
+}
 
 div.parents {
 	width: 350px;

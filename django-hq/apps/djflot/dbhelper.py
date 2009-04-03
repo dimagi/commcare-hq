@@ -13,20 +13,15 @@ xmldate_format= '%Y-%m-%dT%H:%M:%S'
 
 output_format = '%Y-%m-%d %H:%M'
 
-hack_pretty_table_names = {'x_http__www_commcare_org_mvp_safe_motherhood_close_v0_1' : "Safe Motherhood Closure", 
-                      'x_http__www_commcare_org_mvp_safe_motherhood_followup_v0_1': 'Safe Motherhood Followup',
-                      'x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1' : "Safe Motherhood Registration",
-                      'x_http__www_commcare_org_mvp_safe_motherhood_referral_v0_1': "Safe Motherhood Referral"}
-
-
 
 class DbHelper(object):    
-    def __init__(self, tblname):        
+    def __init__(self, tblname, dispname):        
         self.int_columns = []
         self.bool_columns = []
         self.str_columns = []       
         self.date_columns = []
         self.tablename = tblname
+        self.displayname = dispname
         
         
         cursor = connection.cursor()
@@ -61,7 +56,11 @@ class DbHelper(object):
         #query = 'select timeend, id from ' + self.tablename
         #print query
         rows = self.__doquery(query)
-        ret = []
+        ret = []        
+        
+        if len(rows ) == 0:
+            ret.append([0,0])
+        
         for row in rows:
             datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
             val = int(row[1])
@@ -73,7 +72,7 @@ class DbHelper(object):
 #        },
         
         dset = {}
-        dset["label"] = hack_pretty_table_names[self.tablename.__str__()]
+        dset["label"] = self.displayname.__str__()
         dset["data"] = ret
         return dset
     
@@ -84,6 +83,9 @@ class DbHelper(object):
            query = 'select timeend, ' + seriesname + ' from ' + self.tablename + ' order by timeend ASC'
            rows = self.__doquery(query)
            vals = []
+           if len(rows) == 0:
+               vals.append([0,0])
+               
            for row in rows:
                datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
                if row[1] != None:

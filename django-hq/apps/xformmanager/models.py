@@ -4,6 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 import uuid
 import settings
 from django.contrib.auth.models import Group, User
+from organization.models import *
+
 #import Group
 
 class ElementDefData(models.Model):
@@ -50,7 +52,8 @@ class ElementDefData(models.Model):
 
 class FormDefData(models.Model):
     id = models.AutoField(primary_key=True)
-    
+    uploaded_by = models.ForeignKey(ExtUser)
+        
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     submit_ip = models.IPAddressField(_('Submitting IP Address'))
     bytes_received = models.IntegerField(_('Bytes Received'))
@@ -59,7 +62,9 @@ class FormDefData(models.Model):
     
     xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XSD_REPOSITORY_PATH, max_length=255)
     #form_name is used as the table name
-    form_name = models.CharField(max_length=255, unique=True)
+    form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
+    form_display_name = models.CharField(_('Readable Name'),max_length=128)
+    
     target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
     element = models.OneToOneField(ElementDefData)    
@@ -68,5 +73,9 @@ class FormDefData(models.Model):
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)
+    
+    @property
+    def get_domain(self):
+        return self.uploaded_by.domain
 
 

@@ -52,7 +52,6 @@ class RegisterAndSubmit(unittest.TestCase):
 #            self.assertEquals(datafiles[i].split('.')[0],schemafiles[i].split('.')[0])
     
     def testPostAndVerifySchema(self):
-        
         curdir = os.path.dirname(__file__)        
         schemadir = os.path.join(curdir,'schemas')        
         schemafiles = os.listdir(schemadir)
@@ -76,8 +75,13 @@ class RegisterAndSubmit(unittest.TestCase):
             
             
             fullpath = os.path.join(schemadir,schemafile)
+            
+            p = subprocess.Popen([curl_command,'-c logincookie.txt', '-F username=brian', '-F password=test','--request', 'POST', 'http://%s/accounts/login/' % serverhost],stdout=PIPE,shell=False)
+            results = p.stdout.read()
+            
             print "posting %s" % fullpath            
-            p = subprocess.Popen([curl_command,'-F file=@%s' % fullpath, '--request', 'POST', 'http://%s/xformmanager/' % serverhost],stdout=PIPE,shell=False)
+            print ' '.join([curl_command,'-b logincookie.txt', '-F file=@%s' % fullpath, '-F form_display_name=%s' % schemafile[0:-4], '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost])
+            p = subprocess.Popen([curl_command,'-b logincookie.txt', '-F file=@%s' % fullpath, '-F form_display_name=%s' % schemafile, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
             
             #ok, verify that it's there.
@@ -86,6 +90,7 @@ class RegisterAndSubmit(unittest.TestCase):
             #next, verify that there's an attachment there too            
                         
     def testPostAndVerifySimpleData(self):
+        
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'data')        
         datafiles = os.listdir(datadir)
@@ -109,7 +114,6 @@ class RegisterAndSubmit(unittest.TestCase):
 #            self.assertEqual(1,attachment_count)
             
     def testPostAndVerifyMultipart(self):
-        return
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'multipart')        
         datafiles = os.listdir(datadir)

@@ -2,6 +2,22 @@
 {% load i18n %}
 {% block head_title %}{% trans "Single Submission" %}{% endblock %}
 {% block content %}
+<div class="attachmentsblock">
+   	<h3>Attachments</h3>
+   	
+   	{%if attachments %}
+	   	<ul>
+	   	{% for attach in attachments %}
+	   		<li>
+	   		<a href="{{attach.get_media_url}}"> Attachment {{attach.id}}</a>
+	   		</li>
+	   	{% endfor %}
+	   	</ul>
+   	{%else%}
+   		No Attachments
+   	{% endif %}
+   	</div>
+
 <h2>{% trans "Submission Information" %}</h2>
     <ul>  
     
@@ -27,26 +43,18 @@
 	   		{% trans "Bytes Received:" %} {{submission_item.bytes_received}}   		
 	   	</li>
 	   	<li>
-	   		{% trans "Raw File Location:" %} {{submission_item.raw_post}}   		
-	   	</li>
+	   		<a href="{%url receiver.views.single_submission submission_item.id %}?get_original">{% trans "Raw File Submission" %}</a>   		
+	   	</li>	   	
+	   	<li>{% trans "Raw Header: " %}
+	   	<ul>
+	   		{% for head, val in processed_header.items %}
+	   		<li><strong>{{head}}:</strong> {{val}}</li>
+	   		
+	   		{% endfor %}
+	   	</ul>
 	   	
-	   	<li>
-	   		{% trans "Raw Request:" %} {{submission_item.raw_header }} 
-	   			   		
 	   	</li>
    	</ul>   	
-   	<hr>
-   	<h3>Attachments</h3>
+
    	
-   	{%if attachments %}
-	   	<ul>
-	   	{% for attach in attachments %}
-	   		<li>
-	   		<a href="{{attach.get_media_url}}"> Attachment {{attach.id}}</a>
-	   		</li>
-	   	{% endfor %}
-	   	</ul>
-   	{%else%}
-   		No Attachments
-   	{% endif %}
 {% endblock %}

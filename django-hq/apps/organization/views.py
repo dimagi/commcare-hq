@@ -56,3 +56,13 @@ def manager(request, template_name="organization/manager.html"):
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+@login_required()
+def register_xform(request, template_name="organization/register_xform.html"):
+    return ''
+
+
+@login_required()
+def manage_xforms(request, template_name="oranization/manage_xforms.html"):
+    return''
+
