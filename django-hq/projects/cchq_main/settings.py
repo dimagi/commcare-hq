@@ -47,7 +47,10 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__),'media')
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'http://test.commcarehq.org/media/'
+if DEBUG == True:
+    MEDIA_URL = 'http://127.0.0.1:8000/'
+else:
+    MEDIA_URL = 'http://test.commcarehq.org/media/'
 
 #for local testing with localmediaserver.py
 #import socket
