@@ -93,43 +93,50 @@ def render_aggregate_countrow(content_obj):
             usernames_to_filter.append(supervisor.username)
     elif isinstance(content_obj, ExtUser):        
         supervising_orgs = utils.get_supervisor_roles(content_obj)
-        if len(supervising_orgs) > 0:
-            is_supervisor = True
-            for org in supervising_orgs:
-                (mem,sup) = utils.get_members_and_supervisors(org)
-                for m in mem:
-                    if usernames_to_filter.count(m.username) == 0:
-                       usernames_to_filter.append(m.username)
-        else:
-            is_member = True
-            usernames_to_filter.append(content_obj.username)
+        usernames_to_filter.append(content_obj.username)
+        is_member = True
+    
+#dmyung, we're deprecating because we want the output to have supervisors and users just get data on themselves.
+#        if len(supervising_orgs) > 0:
+#            is_supervisor = True
+#            for org in supervising_orgs:
+#                (mem,sup) = utils.get_members_and_supervisors(org)
+#                for m in mem:
+#                    if usernames_to_filter.count(m.username) == 0:
+#                       usernames_to_filter.append(m.username)
+#        else:
+#            is_member = True
+#            usernames_to_filter.append(content_obj.username)
  
     defs = FormDefData.objects.all()
     description = ''
-    last_submit = datetime.min
+    last_submit = datetime.min    
     count = 0    
     for fdef in defs:    
         table = fdef.element.table_name        
         for user in usernames_to_filter:            
-            query = report_query % (user,table,user,table,user)
-            userdata = qtools.raw_query(query)
+            query = report_query % (user,table,user,table,user)            
+            userdata = qtools.raw_query(query)            
             for dat in userdata[0]:                
                 if dat[1] != None:
-                    reptime = time.strptime(str(dat[1])[0:-4],xmldate_format)
+                    reptime = time.strptime(str(dat[1])[0:-4],xmldate_format)                    
                     if datetime(reptime[0],reptime[1],reptime[2],reptime[3],reptime[4],reptime[5],reptime[6]) > last_submit:
                         last_submit = datetime(reptime[0],reptime[1],reptime[2],reptime[3],reptime[4],reptime[5],reptime[6])  
                 count += dat[-1]
     
     ret += '<tr>'
     if is_supervisor:
-        ret += '<td>%s</td>' % ("Group Aggregate")
+        ret += '<td>%s</td>' % ("Current Counts")
     elif is_member:
-        ret += '<td>%s</td>' % ("Current Report:")
+        ret += '<td>%s</td>' % ("Current Counts")
     elif is_org:
-        ret += '<td>%s</td>' % ("Org. Aggregate")
+        ret += '<td>%s</td>' % ("Group Counts")
 #    ret += '<td>%s</td>' % (content_obj)
     
-    ret += '<td>%s</td>' % (time.strftime(output_format,last_submit.timetuple()))
+    if last_submit == datetime.min:
+        ret += '<td>None</td>'
+    else:
+        ret += '<td>%s</td>' % (time.strftime(output_format,last_submit.timetuple()))
     ret += '<td>%s</td>' % (count)   
     ret += '</tr>'    
     

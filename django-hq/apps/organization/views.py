@@ -12,8 +12,9 @@ from django.core.urlresolvers import reverse
 
 from datetime import timedelta
 from django.db import transaction
+from djflot import dbhelper
 
-
+from xformmanager.models import *
 from modelrelationship.models import *
 from organization.models import *
 
@@ -30,7 +31,32 @@ import os
 import string
 
 @login_required()
-def manager(request, template_name="organization/manager.html"):
+def dashboard(request, template_name="organization/dashboard.html"):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        
+    default_delta = timedelta(days=1)
+    enddate = datetime.now()
+    startdate = datetime.now() - default_delta    
+    
+    for item in request.GET.items():
+        if item[0] == 'startdate':
+            startdate_str=item[1]
+            startdate = datetime.strptime(startdate_str,'%m/%d/%Y')            
+        if item[0] == 'enddate':
+            enddate_str=item[1]
+            enddate = datetime.strptime(enddate_str,'%m/%d/%Y')
+            
+    context['startdate'] = startdate
+    context['enddate'] = enddate
+    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+
+@login_required()
+def reports(request, template_name="organization/manager.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
@@ -65,4 +91,34 @@ def register_xform(request, template_name="organization/register_xform.html"):
 @login_required()
 def manage_xforms(request, template_name="oranization/manage_xforms.html"):
     return''
+
+
+@login_required()
+def summary_trend(request, template_name="djflot/summary_trend.html"):    
+    context = {}        
+    
+    formname = ''
+    formdef_id = -1
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    for item in request.GET.items():
+        if item[0] == 'formdef_id':
+            formdef_id=item[1]    
+    if formdef_id == -1:
+        context['chart_title'] = 'All Data'
+        context['dataset'] = {}        
+        defs = FormDefData.objects.all().filter(uploaded_by__domain=extuser.domain)
+    
+        for fdef in defs:            
+            d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
+            context['dataset'][fdef.form_display_name.__str__()] = d.get_counts_dataset(None,None)                    
+    
+    else:
+        fdef = FormDefData.objects.all().filter(id=formdef_id)
+        context['chart_title'] = fdef[0].form_display_name
+        d = dbhelper.DbHelper(fdef[0].element.table_name,fdef[0].form_display_name)        
+        context['dataset'] = d.get_integer_series_dataset()
+    
+    context ['maxdate'] = 0;
+    context ['mindate'] = 0;
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
 

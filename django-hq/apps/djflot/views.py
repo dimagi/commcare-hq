@@ -38,32 +38,5 @@ def flot_example(request, template_name="djflot/flot_example.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
-@login_required()
-def summary_trend(request, template_name="djflot/summary_trend.html"):    
-    context = {}        
-    
-    formname = ''
-    formdef_id = -1
-    extuser = ExtUser.objects.all().get(id=request.user.id)
-    for item in request.GET.items():
-        if item[0] == 'formdef_id':
-            formdef_id=item[1]    
-    if formdef_id == -1:
-        context['chart_title'] = 'All Data'
-        context['dataset'] = {}        
-        defs = FormDefData.objects.all().filter(uploaded_by__domain=extuser.domain)
-    
-        for fdef in defs:            
-            d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
-            context['dataset'][fdef.form_display_name.__str__()] = d.get_counts_dataset(None,None)                    
-    
-    else:
-        fdef = FormDefData.objects.all().filter(id=formdef_id)
-        context['chart_title'] = fdef[0].form_display_name
-        d = dbhelper.DbHelper(fdef[0].element.table_name,fdef[0].form_display_name)        
-        context['dataset'] = d.get_integer_series_dataset()
-    
-    context ['maxdate'] = 0;
-    context ['mindate'] = 0;
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
 

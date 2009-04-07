@@ -3,6 +3,7 @@ import logging
 import os
 import string
 import time,datetime
+import settings
 
 string_type_codes = [253,252]
 int_type_codes = [3]
@@ -21,8 +22,7 @@ class DbHelper(object):
         self.str_columns = []       
         self.date_columns = []
         self.tablename = tblname
-        self.displayname = dispname
-        
+        self.displayname = dispname        
         
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM " + self.tablename + " limit 1")        
@@ -48,11 +48,67 @@ class DbHelper(object):
         cursor = connection.cursor()
         cursor.execute(query)
         return cursor.fetchall()        
+    
+   
+    def __get_date_expr(self, startdate, enddate):
+        delta = enddate-startdate
+                
+        format_string = "'%%Y-%%m-%%d'"
+        if delta.days < 30:
+            format_string = "'%%Y-%%m-%%d'"            
+        elif delta.days > 30:
+            format_string = "'%%Y-%%m'"
+        elif delta.days > 360:
+            format_string = "'%%Y'"
             
+        date_func = ''
+        retclause = '%s(%s,%s)'
+        
+        if settings.DATABASE_ENGINE == 'mysql':
+            #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
+            date_func = "DATE_FORMAT"
+            retclause = retclause % (date_func,self.date_columns[0],format_string)
+        elif settings.DATABASE_ENGINE == 'sqlite3':
+            #strftime('%Y-%m-%d', timecol)
+            date_func = "strftime"
+            retclause = retclause % (date_func,format_string,self.date_columns[0])
+            
+        return retclause    
+    
+    def __get_date_whereclause(self, startdate, enddate):
+        #this is to change the date format function to use on the actual queries
+        #sqlite and mysql use different methodnames to do their date arithmetic        
+        ret = " %s > '%s' AND %s < '%s' " % (self.date_columns[0],startdate.strftime('%Y-%m-%d'), self.date_columns[0], startdate.strftime('%Y-%m-%d'))
+        return ret
+        
+    def get_uniques_for_column(self, columname, startdate=None, enddate=None):
+        """return an array of all the unique values in a given column"""
+        query = "select distinct(" + columname + ") from """ + self.tablename
+        if startdate != None and enddate != None:
+            query += " WHERE " + self.__get_date_whereclause(startdate, enddate)
+        rows = self.__doquery(query)
+        ret = []        
+        
+        if len(rows ) == 0:
+            return ret
+        for row in rows:
+            ret.append(row[0])
+        return ret              
+    
+    
+    
+    def get_filtered_daily_count(self, startdate, enddate, filter_col, filter_val):
+        """Special report query to give you for a given filtered count over a certain column value
+        For example, if i know a username column, I want to get a daily count"""
+        
+        query = "select count(*), " + self.__get_date_expr(startdate,enddate) + " from " + self.tablename + " where " + self.__get_date_whereclause(startdate, enddate) + " group by " + self.date_columns[0] + " order by " + self.date_columns[0]         
+        return self.__doquery(query)        
+    
     #time.mktime(datetime.datetime.now().timetuple())
     def get_counts_dataset(self,startdate,enddate):
         #select date_format(timestart,'%d'), count(*) from formname group by DATE_FORMAT(timestart,'%d') order by date_format(timestart,'%d');
-        query = "select timeend, count(*) from """ + self.tablename + " group by DATE_FORMAT(timeend,'%%m') order by timeend"
+        #query = "select timeend, count(*) from " + self.tablename + " group by DATE_FORMAT(timeend,'%%m') order by timeend"
+        query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " +self.date_columns[0] + " order by " + self.date_columns[0]
         #query = 'select timeend, id from ' + self.tablename
         #print query
         rows = self.__doquery(query)
@@ -80,7 +136,7 @@ class DbHelper(object):
         dset = {}
         for seriesname in self.int_columns:
            subset = {}
-           query = 'select timeend, ' + seriesname + ' from ' + self.tablename + ' order by timeend ASC'
+           query = 'select ' + self.date_columns[0] + ', ' + seriesname + ' from ' + self.tablename + ' order by ' + self.date_columns[0] + ' ASC'
            rows = self.__doquery(query)
            vals = []
            if len(rows) == 0:
