@@ -8,7 +8,8 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Example:
-    (r'^$', 'views.homepage'),
+    #(r'^$', 'views.homepage'),
+    (r'^$', 'organization.views.dashboard'),
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout_then_login'),
     
@@ -17,7 +18,7 @@ urlpatterns = patterns('',
     (r'^receiver/', include('receiver.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
-    (r'^charts/', include('djflot.urls')),
+    #(r'^charts/', include('djflot.urls')),
     (r'^organization/', include('organization.urls')),    
     
 
