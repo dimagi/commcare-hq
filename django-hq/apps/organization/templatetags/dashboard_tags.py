@@ -101,7 +101,7 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
     
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
-        target_date = enddate - delta
+        target_date = startdate + delta
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
     
     
