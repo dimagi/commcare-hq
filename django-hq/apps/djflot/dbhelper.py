@@ -50,16 +50,35 @@ class DbHelper(object):
         return cursor.fetchall()        
     
    
-    def __get_date_expr(self, startdate, enddate):
+    def __get_dategroup_expr(self, startdate, enddate):
         delta = enddate-startdate
                 
         format_string = "'%%Y-%%m-%%d'"
-        if delta.days < 30:
-            format_string = "'%%Y-%%m-%%d'"            
-        elif delta.days > 30:
-            format_string = "'%%Y-%%m'"
-        elif delta.days > 360:
-            format_string = "'%%Y'"
+#        if delta.days < 30:
+#            format_string = "'%%Y-%%m-%%d'"            
+#        elif delta.days > 30:
+#            format_string = "'%%Y-%%m'"
+#        elif delta.days > 360:
+#            format_string = "'%%Y'"
+            
+        date_func = ''
+        retclause = '%s(%s,%s)'
+        
+        if settings.DATABASE_ENGINE == 'mysql':
+            #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
+            date_func = "DATE_FORMAT"
+            retclause = retclause % (date_func,self.date_columns[0],format_string)
+        elif settings.DATABASE_ENGINE == 'sqlite3':
+            #strftime('%Y-%m-%d', timecol)
+            date_func = "strftime"
+            retclause = retclause % (date_func,format_string,self.date_columns[0])
+            
+        return retclause    
+    
+    def __get_date_expr(self, startdate, enddate):
+        delta = enddate-startdate
+                
+        format_string = "'%%m/%%d/%%Y'"
             
         date_func = ''
         retclause = '%s(%s,%s)'
@@ -78,7 +97,7 @@ class DbHelper(object):
     def __get_date_whereclause(self, startdate, enddate):
         #this is to change the date format function to use on the actual queries
         #sqlite and mysql use different methodnames to do their date arithmetic        
-        ret = " %s > '%s' AND %s < '%s' " % (self.date_columns[0],startdate.strftime('%Y-%m-%d'), self.date_columns[0], startdate.strftime('%Y-%m-%d'))
+        ret = " %s > '%s' AND %s < '%s' " % (self.date_columns[0],startdate.strftime('%Y-%m-%d'), self.date_columns[0], enddate.strftime('%Y-%m-%d'))
         return ret
         
     def get_uniques_for_column(self, columname, startdate=None, enddate=None):
@@ -101,14 +120,20 @@ class DbHelper(object):
         """Special report query to give you for a given filtered count over a certain column value
         For example, if i know a username column, I want to get a daily count"""
         
-        query = "select count(*), " + self.__get_date_expr(startdate,enddate) + " from " + self.tablename + " where " + self.__get_date_whereclause(startdate, enddate) + " group by " + self.date_columns[0] + " order by " + self.date_columns[0]         
+        query = "select count(*), " + self.__get_date_expr(startdate,enddate) + " from " + self.tablename + " where " + self.__get_date_whereclause(startdate, enddate) + " group by " + self.__get_dategroup_expr(startdate,enddate) + " order by " + self.date_columns[0]         
         return self.__doquery(query)        
     
     #time.mktime(datetime.datetime.now().timetuple())
     def get_counts_dataset(self,startdate,enddate):
+        
+        if startdate == None:
+            startdate = datetime.datetime.min
+        if enddate == None:
+            enddate = datetime.datetime.now()
+        
         #select date_format(timestart,'%d'), count(*) from formname group by DATE_FORMAT(timestart,'%d') order by date_format(timestart,'%d');
         #query = "select timeend, count(*) from " + self.tablename + " group by DATE_FORMAT(timeend,'%%m') order by timeend"
-        query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " +self.date_columns[0] + " order by " + self.date_columns[0]
+        query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " + self.__get_dategroup_expr(startdate,enddate) + " order by " + self.date_columns[0]
         #query = 'select timeend, id from ' + self.tablename
         #print query
         rows = self.__doquery(query)

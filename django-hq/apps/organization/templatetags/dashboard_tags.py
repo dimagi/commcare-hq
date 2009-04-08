@@ -96,16 +96,11 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
     #and/or query the ExtUser table to get all the registered users.
     totalspan = enddate-startdate    
     report_hash = {}
-    
-       
-    
+        
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
-    
-    
-    
     
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefData.objects.all()
@@ -123,7 +118,8 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
             
             userdailies = helper.get_filtered_daily_count(startdate, enddate,'username', user)
                         
-            for dat in userdailies:                                
+            for dat in userdailies:     
+                                           
                 username_to_count_hash[user][dat[1]] = int(dat[0])
 
     
