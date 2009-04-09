@@ -5,7 +5,7 @@
 {% block head_title %}{% trans "My Dashboard" %}{% endblock %}
 {% block org_content %}
 <h2>{%trans "Activity Dashboard"%} :: {{startdate|date}} - {{enddate|date}}</h2>
-	{%get_daterange_links%}
+	{% get_daterange_links %}
 	
 	<!-- <h3>{%trans "All form activity" %} </h3>
 	{% get_dashboard_activity startdate enddate%}--> 

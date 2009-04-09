@@ -64,12 +64,21 @@ def reports(request, template_name="organization/manager.html"):
     
     contenttype_id = None
     content_id = None
+    default_delta = timedelta(days=1)
+    enddate = datetime.now()
+    startdate = datetime.now() - default_delta    
     
     for item in request.GET.items():
         if item[0] == 'content_type':
             contenttype_id=item[1]
         if item[0] == 'content_id':
             content_id=item[1]
+        if item[0] == 'startdate':
+            startdate_str=item[1]
+            startdate = datetime.strptime(startdate_str,'%m/%d/%Y')            
+        if item[0] == 'enddate':
+            enddate_str=item[1]
+            enddate = datetime.strptime(enddate_str,'%m/%d/%Y')                
     
     if contenttype_id != None and content_id != None:
         ctype = ContentType.objects.all().get(id=contenttype_id)
@@ -78,6 +87,9 @@ def reports(request, template_name="organization/manager.html"):
         context['selected_object'] =  content_instance
     else:
         context['selected_object'] = None
+    
+    context['startdate'] = startdate
+    context['enddate'] = enddate    
     
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser    

@@ -502,55 +502,83 @@ div.parents ul {
 }
 
 div.reportitem {
-	width:100%;
-	background-color: #fafafa;
+	
+	background-color: #fafafa;	
+	float:right;
 }
 
-div.reportheading {
-	width:100%;
+div.reportheading {	
+	float:right;	
 	background-color: #fafafa;
 	font-weight: bold;
 }
-div.reportheading table {
-	float:right;	
-	width:600px;
-	align:right;
-	font-weight:bold;
-}
-div.reportheading td {	
-	width:33%;
+div.reportheading table {	
+	font-weight:bold;	
 }
 
 div.reportitem a {
 		
 }
+
 div.reportitem table {
-	float:right;	
-	width:600px;
-	align:right;
-	
+
 }
 
 div.reportitem td {	
-	width:33%;
-}
-div.reports {	
-	padding: 10px;
-	width:100%;
-	margin: 5px;
-	border: 1px solid black;
-		
+	
 }
 
-div.reports li {
+
+table.reporttable {
 	
+
+	font-size: 12px;		
+}
+
+
+div.reports {
+	padding: 10px;
+	margin: 8px;
+	border: 1px solid black;
+	overflow:auto;	
+}
+
+
+table.reporttable td {
+	text-align:right;
+	margin:8px;	
+	padding-right:12px;	
+}
+
+td.headercol {
+	text-align:right;
+	margin:8px;	
+	padding-right:12px;
+	font-weight:bold;
+}
+
+table.reporttable tr {
+	border-bottom:1px gray solid;
+}
+
+
+table.reporttable td.rel_row {
+	width:180px;
+	text-align:left;
+	
+	font-weight:bold;
+}
+
+table.reporttable td.item_row {
+	width:200px;
+	text-align:right;	
 }
 
 
 div.reports ul {
 	list-style-type:None;
-	line-height: 24px;
-	font-size: 14px;	
+	font-size: 14px;
+	width:auto;	
 	
 }
 

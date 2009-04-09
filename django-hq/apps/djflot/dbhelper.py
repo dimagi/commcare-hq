@@ -118,7 +118,7 @@ class DbHelper(object):
     
     def get_filtered_daily_count(self, startdate, enddate, filter_col, filter_val):
         """Special report query to give you for a given filtered count over a certain column value
-        For example, if i know a username column, I want to get a daily count"""
+        For example, if i know a username column, I want to get a daily count returns count, date"""
         
         query = "select count(*), " + self.__get_date_expr(startdate,enddate) + " from " + self.tablename + " where " + self.__get_date_whereclause(startdate, enddate) + " group by " + self.__get_dategroup_expr(startdate,enddate) + " order by " + self.date_columns[0]         
         return self.__doquery(query)        
