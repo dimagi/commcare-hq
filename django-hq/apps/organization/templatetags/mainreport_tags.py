@@ -28,7 +28,7 @@ register = template.Library()
 
 @register.simple_tag
 def get_daterange_links():
-    base_link = reverse('organization.views.reports',kwargs={})
+    base_link = reverse('organization.views.org_report',kwargs={})
 
     delta_week = timedelta(days=7)
     delta_day= timedelta(days=1)
@@ -51,9 +51,9 @@ def get_daterange_links():
 
 @register.simple_tag
 def get_organization_report(extuser, startdate, enddate):
-    username_datecount_cache = {}    
-    print username_datecount_cache
     """Main tag to get an organization report on counts and such"""    
+    
+    username_datecount_cache = {}        
     domain = extuser.domain    
     
     ctype = ContentType.objects.get_for_model(domain)
@@ -119,10 +119,10 @@ def render_edgetree_as_ul(arr, direction, startdate, enddate):
             subitems += '\t<li><div class="reportitem">'
             item_to_render = None
             if direction == 'children':
-                subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_manager', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
+                subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_report', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
                 item_to_render = edge.child_object                         
             else:
-                subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_manager', kwargs= {}),edge.parent_type.id,edge.parent_object.id,edge.parent_object)
+                subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_report', kwargs= {}),edge.parent_type.id,edge.parent_object.id,edge.parent_object)
                 item_to_render = edge.parent_object
                 
             subitems += '<table>\n\t\t'
@@ -172,11 +172,11 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
             subitems += '\t<td class="item_row">'
             item_to_render = None
             if direction == 'children':
-                #subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_manager', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
+                #subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_report', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
                 subitems += edge.child_object.__str__()
                 item_to_render = edge.child_object                         
             else:
-                #subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_manager', kwargs= {}),edge.parent_type.id,edge.parent_object.id,edge.parent_object)
+                #subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_report', kwargs= {}),edge.parent_type.id,edge.parent_object.id,edge.parent_object)
                 subitems += edge.child_object.__str__()
                 item_to_render = edge.parent_object
                 
@@ -190,6 +190,7 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
             fullret += subitems + sublist 
         else:
             fullret += subitems + sublist
+    username_datecount_cache.clear()
     return fullret
 
 
@@ -198,11 +199,11 @@ def get_user_allforms_count(username, startdate=None, enddate=None):
     ret  = ''
     totalspan = enddate-startdate    
     day_count_hash = {}
-    print 'get_user_allforms_count'
+    #print 'get_user_allforms_count'
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
-        print "get_user_allforms_count: %s" % (str(target_date))
+        #print "get_user_allforms_count: %s" % (str(target_date))
         day_count_hash[target_date.strftime('%m/%d/%Y')] = 0
     
     defs = FormDefData.objects.all()
@@ -210,16 +211,19 @@ def get_user_allforms_count(username, startdate=None, enddate=None):
     for fdef in defs:        
         table = fdef.element.table_name        
         helper = dbhelper.DbHelper(table, fdef.form_display_name)
-        userdailies = helper.get_filtered_daily_count(startdate, enddate,'username', username)                        
-        for dat in userdailies:                                           
-            day_count_hash[dat[1]] += int(dat[0])    
+        userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'username': username})                        
+        for dat in userdailies:         
+            #dt = time.strptime(str(dat[1][0:-4]),xmldate_format)
+            #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
+            #day_count_hash[datum.strftime('%m/%d/%Y')] += int(dat[0])    
+            day_count_hash[dat[1]] += int(dat[0])
     
-    print day_count_hash
+    #print day_count_hash
     return day_count_hash
 
 
 def render_aggregate_countrow(content_obj, startdate, enddate):
-    report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
+    #report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
     usernames_to_filter = []    
     ret  = ''
 
@@ -247,22 +251,28 @@ def render_aggregate_countrow(content_obj, startdate, enddate):
         usernames_to_filter.append(content_obj.username)
         is_member = True    
         
-        
+    
     for user in usernames_to_filter:
         if not username_datecount_cache.has_key(user):
             username_datecount_cache[user] = get_user_allforms_count(user, startdate, enddate)
             
-        for date in username_datecount_cache[user].keys():
-            master_date_hash[date]+= username_datecount_cache[user][date]
+        for target_date in username_datecount_cache[user].keys():
+            master_date_hash[target_date] += username_datecount_cache[user][target_date]
         
-    
-    ret += '<tr>'
+    #ret = '<tr>'    
     row = ''
-    for date, val in master_date_hash.items():
-        #ret += '<td>%s</td>' % (date)
+    #for date, val in master_date_hash.items():
+    for day in range(0,totalspan.days+1):        
+        delta = timedelta(days=day)        
+        target_date = startdate + delta
+        val = master_date_hash[target_date.strftime('%m/%d/%Y')]
+        
+        #ret += '<td>%s</td>' % (target_date.strftime('%m/%d/%Y'))
         row += '<td>%d</td>' % (val)
-    ret += '</tr>'
-    ret += "<tr>"
+        
+        
+    #ret += '</tr>'
+    #ret += "<tr>"
     #ret += row
     #ret += '</tr>'
     

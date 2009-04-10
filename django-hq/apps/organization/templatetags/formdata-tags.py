@@ -25,7 +25,6 @@ import time
 
 @register.simple_tag
 def get_form_links(extuser):
-    #(reverse('org_manager', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
     base_link = reverse('organization.views.summary_trend',kwargs={})
     #<a href="%s?content_type=%s&content_id=%s">%s</a>
     

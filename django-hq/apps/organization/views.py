@@ -56,7 +56,7 @@ def dashboard(request, template_name="organization/dashboard.html"):
 
 
 @login_required()
-def reports(request, template_name="organization/manager.html"):
+def org_report(request, template_name="organization/org_report.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
@@ -103,7 +103,6 @@ def register_xform(request, template_name="organization/register_xform.html"):
 @login_required()
 def manage_xforms(request, template_name="oranization/manage_xforms.html"):
     return''
-
 
 @login_required()
 def summary_trend(request, template_name="djflot/summary_trend.html"):    

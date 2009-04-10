@@ -100,6 +100,7 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
+        #print target_date.strftime('%m/%d/%Y')
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
     
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
@@ -116,19 +117,20 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
             if not username_to_count_hash.has_key(user):
                 username_to_count_hash[user] = {}                        
             
-            userdailies = helper.get_filtered_daily_count(startdate, enddate,'username', user)
-                        
-            for dat in userdailies:     
-                                           
+            userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'username': user})                        
+            for dat in userdailies:                
                 username_to_count_hash[user][dat[1]] = int(dat[0])
 
     
     ret += '<table class="sofT"><tr><td class="helpHed">Date</td>'
     for user in username_to_count_hash.keys():
         ret += '<td  class="helpHed">%s</td>' % (user)
-        for date in username_to_count_hash[user].keys():
-            if not report_hash[date].has_key(user):
-                report_hash[date][user]=username_to_count_hash[user][date]
+        for datestr in username_to_count_hash[user].keys():
+            #dt = time.strptime(str(datestr[0:-4]),xmldate_format)
+            #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
+            #date = datum.strftime('%m/%d/%Y')              
+            if not report_hash[datestr].has_key(user):
+                report_hash[datestr][user]=username_to_count_hash[user][datestr]
         
     ret += "</tr>\n"
     
@@ -147,4 +149,5 @@ def get_dashboard_user_counts(startdate=None, enddate=None):
             ret += "<td>%d</td>" % (val)
         ret += "</tr>\n\n"
     ret += "</table>"
+    username_to_count_hash.clear()
     return ret

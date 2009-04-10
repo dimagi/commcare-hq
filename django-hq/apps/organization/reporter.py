@@ -23,8 +23,8 @@ class Reporter(object):
     default_delta = timedelta(days=1)
     enddate = datetime.datetime.now()
     startdate = datetime.datetime.now() - default_delta    
-    
-    rendered = render_to_string('organization/dashboard.html', {'startdate': startdate, 'enddate':enddate})
+        
+    rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})
     
     conn = SMTPConnection(port=587,
                           host='smtp.gmail.com',
