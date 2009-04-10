@@ -1,71 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 # This file has been automatically generated, changes may be lost if you
 # go and generate it again. It was generated with the following command:
 # manage.py dumpscript organization modelrelationship
-
 import datetime
 from decimal import Decimal
 from django.contrib.contenttypes.models import ContentType
-
 def run():
     from organization.models import Domain
-
     organization_domain_1 = Domain()
     organization_domain_1.name = u'HelperOrganization'
     organization_domain_1.description = u''
     organization_domain_1.save()
-
     organization_domain_2 = Domain()
     organization_domain_2.name = u'Intel-Grameen'
     organization_domain_2.description = u''
     organization_domain_2.save()
-
     organization_domain_3 = Domain()
     organization_domain_3.name = u'Pathfinder'
     organization_domain_3.description = u''
     organization_domain_3.save()
-
     from organization.models import OrganizationType
-
     organization_organizationtype_1 = OrganizationType()
     organization_organizationtype_1.name = u'NGO'
     organization_organizationtype_1.domain = organization_domain_1
     organization_organizationtype_1.description = u''
     organization_organizationtype_1.save()
-
     from organization.models import ExtRole
-
-
     from organization.models import Organization
-
     organization_organization_1 = Organization()
     organization_organization_1.name = u'HelperOrganization'
     organization_organization_1.domain = organization_domain_1
     organization_organization_1.description = u''
     organization_organization_1.save()
-
     organization_organization_1.organization_type.add(organization_organizationtype_1)
-
     organization_organization_2 = Organization()
     organization_organization_2.name = u'HelpOrg - CHP'
     organization_organization_2.domain = organization_domain_1
     organization_organization_2.description = u''
     organization_organization_2.save()
-
     organization_organization_2.organization_type.add(organization_organizationtype_1)
-
     organization_organization_3 = Organization()
     organization_organization_3.name = u'HelpOrg - CHW'
     organization_organization_3.domain = organization_domain_1
     organization_organization_3.description = u''
     organization_organization_3.save()
-
     organization_organization_3.organization_type.add(organization_organizationtype_1)
-
     from modelrelationship.models import EdgeType
-
     modelrelationship_edgetype_1 = EdgeType()
     modelrelationship_edgetype_1.directional = True
     modelrelationship_edgetype_1.name = u'is parent organization'
@@ -73,7 +54,6 @@ def run():
     modelrelationship_edgetype_1.child_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_1.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_1.save()
-
     modelrelationship_edgetype_2 = EdgeType()
     modelrelationship_edgetype_2.directional = True
     modelrelationship_edgetype_2.name = u'has supervisors'
@@ -81,7 +61,6 @@ def run():
     modelrelationship_edgetype_2.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edgetype_2.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_2.save()
-
     modelrelationship_edgetype_3 = EdgeType()
     modelrelationship_edgetype_3.directional = True
     modelrelationship_edgetype_3.name = u'has members'
@@ -89,7 +68,6 @@ def run():
     modelrelationship_edgetype_3.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edgetype_3.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_3.save()
-
     modelrelationship_edgetype_4 = EdgeType()
     modelrelationship_edgetype_4.directional = True
     modelrelationship_edgetype_4.name = u'is domain root'
@@ -97,9 +75,7 @@ def run():
     modelrelationship_edgetype_4.child_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_4.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edgetype_4.save()
-
     from modelrelationship.models import Edge
-
     modelrelationship_edge_1 = Edge()
     modelrelationship_edge_1.child_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_1.child_id = 2L
@@ -107,7 +83,6 @@ def run():
     modelrelationship_edge_1.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_1.parent_id = 1L
     modelrelationship_edge_1.save()
-
     modelrelationship_edge_2 = Edge()
     modelrelationship_edge_2.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_2.child_id = 3L
@@ -115,7 +90,6 @@ def run():
     modelrelationship_edge_2.parent_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_2.parent_id = 1L
     modelrelationship_edge_2.save()
-
     modelrelationship_edge_3 = Edge()
     modelrelationship_edge_3.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_3.child_id = 2L
@@ -123,7 +97,6 @@ def run():
     modelrelationship_edge_3.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_3.parent_id = 2L
     modelrelationship_edge_3.save()
-
     modelrelationship_edge_4 = Edge()
     modelrelationship_edge_4.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_4.child_id = 3L
@@ -131,7 +104,6 @@ def run():
     modelrelationship_edge_4.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_4.parent_id = 2L
     modelrelationship_edge_4.save()
-
     modelrelationship_edge_5 = Edge()
     modelrelationship_edge_5.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_5.child_id = 4L
@@ -139,7 +111,6 @@ def run():
     modelrelationship_edge_5.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_5.parent_id = 2L
     modelrelationship_edge_5.save()
-
     modelrelationship_edge_6 = Edge()
     modelrelationship_edge_6.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_6.child_id = 5L
@@ -147,7 +118,6 @@ def run():
     modelrelationship_edge_6.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_6.parent_id = 2L
     modelrelationship_edge_6.save()
-
     modelrelationship_edge_7 = Edge()
     modelrelationship_edge_7.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_7.child_id = 2L
@@ -155,7 +125,6 @@ def run():
     modelrelationship_edge_7.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_7.parent_id = 3L
     modelrelationship_edge_7.save()
-
     modelrelationship_edge_8 = Edge()
     modelrelationship_edge_8.child_type = ContentType.objects.get(app_label="organization", model="extuser")
     modelrelationship_edge_8.child_id = 6L
@@ -163,7 +132,6 @@ def run():
     modelrelationship_edge_8.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_8.parent_id = 3L
     modelrelationship_edge_8.save()
-
     modelrelationship_edge_9 = Edge()
     modelrelationship_edge_9.child_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edge_9.child_id = 1L
@@ -171,9 +139,7 @@ def run():
     modelrelationship_edge_9.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edge_9.parent_id = 1L
     modelrelationship_edge_9.save()
-
     from organization.models import ExtUser
-
     organization_extuser_1 = ExtUser()
     organization_extuser_1.username = u'brian'
     organization_extuser_1.first_name = u''
@@ -189,7 +155,6 @@ def run():
     organization_extuser_1.domain = organization_domain_1
     organization_extuser_1.identity = None
     organization_extuser_1.save()
-
     organization_extuser_2 = ExtUser()
     organization_extuser_2.username = u'gayo'
     organization_extuser_2.first_name = u''
@@ -205,7 +170,6 @@ def run():
     organization_extuser_2.domain = organization_domain_1
     organization_extuser_2.identity = None
     organization_extuser_2.save()
-
     organization_extuser_3 = ExtUser()
     organization_extuser_3.username = u'mobile1'
     organization_extuser_3.first_name = u''
@@ -221,7 +185,6 @@ def run():
     organization_extuser_3.domain = organization_domain_1
     organization_extuser_3.identity = None
     organization_extuser_3.save()
-
     organization_extuser_4 = ExtUser()
     organization_extuser_4.username = u'mobile2'
     organization_extuser_4.first_name = u''
@@ -237,7 +200,6 @@ def run():
     organization_extuser_4.domain = organization_domain_1
     organization_extuser_4.identity = None
     organization_extuser_4.save()
-
     organization_extuser_5 = ExtUser()
     organization_extuser_5.username = u'mobile3'
     organization_extuser_5.first_name = u''
@@ -253,7 +215,6 @@ def run():
     organization_extuser_5.domain = organization_domain_1
     organization_extuser_5.identity = None
     organization_extuser_5.save()
-
     organization_extuser_6 = ExtUser()
     organization_extuser_6.username = u'testadmin'
     organization_extuser_6.first_name = u''
@@ -269,22 +230,16 @@ def run():
     organization_extuser_6.domain = organization_domain_1
     organization_extuser_6.identity = None
     organization_extuser_6.save()
-
     organization_extuser_1.user_ptr = User.objects.get(id=2)
     organization_extuser_1.save()
-
     organization_extuser_2.user_ptr = User.objects.get(id=3)
     organization_extuser_2.save()
-
     organization_extuser_3.user_ptr = User.objects.get(id=4)
     organization_extuser_3.save()
-
     organization_extuser_4.user_ptr = User.objects.get(id=5)
     organization_extuser_4.save()
-
     organization_extuser_5.user_ptr = User.objects.get(id=6)
     organization_extuser_5.save()
-
     organization_extuser_6.user_ptr = User.objects.get(id=7)
     organization_extuser_6.save()
 
