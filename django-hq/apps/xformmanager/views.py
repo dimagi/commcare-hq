@@ -74,20 +74,16 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fout.close()
                 
                 #create dynamic tables
-                # must add_formdef to storage provide first since forms are linked to elements 
+                # must add_schema to storage provide first since forms are linked to elements 
                 storage_provider = StorageUtility()
-                element_id = storage_provider.add_formdef(formdef)
+                fdd = storage_provider.add_schema(formdef)
                 
-                fdd = FormDefData()
                 fdd.submit_ip = request.META['REMOTE_ADDR']
                 fdd.bytes_received =  request.FILES['file'].size
                 
                 fdd.form_display_name = form.cleaned_data['form_display_name']                
                 fdd.uploaded_by = extuser
                 
-                fdd.form_name = get_table_name(formdef.target_namespace)
-                fdd.target_namespace = formdef.target_namespace
-                fdd.element_id = element_id
                 fdd.xsd_file_location = new_file_name
                 fdd.save()                
                 logging.debug("xform registered")

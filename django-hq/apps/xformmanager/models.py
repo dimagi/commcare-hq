@@ -9,6 +9,7 @@ from organization.models import *
 #import Group
 
 class ElementDefData(models.Model):
+    """ At such time as we start to store an edd for every node, we can use the following supporting xform types list
     TYPE_CHOICES = (
         ('string', 'string'),
         ('integer', 'integer'),
@@ -34,42 +35,52 @@ class ElementDefData(models.Model):
         ('select', 'select'),
         ('geopoint', 'geopoint')
     )
+    """
 
-    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     table_name = models.CharField(max_length=255, unique=True)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    parent = models.ForeignKey("self", null=True)
     # For now, store all allowable values/enum definitions in one table per form
     allowable_values_table = models.CharField(max_length=255, null=True)
     is_attribute = models.BooleanField(default=False)
     is_repeatable = models.BooleanField(default=False)
     #I don't think we fully support this yet
     #restriction = models.CharField(max_length=255)
-       
+    parent = models.ForeignKey("self", null=True)
+    # Note that the following only works for models in the same models.py file
+    form = models.ForeignKey('FormDefData')
+    
     def __unicode__(self):
         return self.table_name
 
 class FormDefData(models.Model):
-    id = models.AutoField(primary_key=True)
-    uploaded_by = models.ForeignKey(ExtUser)
-        
-    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
-    submit_ip = models.IPAddressField(_('Submitting IP Address'))
-    bytes_received = models.IntegerField(_('Bytes Received'))
-
-    # META fields to be placed here eventually
+    # a bunch of these fields have null=True to make unit testing easier
+    # also, because creating a form defintion shouldn't be dependent on receing form through server
+    uploaded_by = models.ForeignKey(ExtUser, null=True)
     
-    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XSD_REPOSITORY_PATH, max_length=255)
+    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
+    submit_ip = models.IPAddressField(_('Submitting IP Address'), null=True)
+    bytes_received = models.IntegerField(_('Bytes Received'), null=True)
+    
+    # META fields to be placed here eventually
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XSD_REPOSITORY_PATH, max_length=255, null=True)
+    
     #form_name is used as the table name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
-    form_display_name = models.CharField(_('Readable Name'),max_length=128)
+    form_display_name = models.CharField(_('Readable Name'),max_length=128, null=True)
     
     target_namespace = models.CharField(max_length=255, unique=True)
     date_created = models.DateField(auto_now=True)
-    element = models.OneToOneField(ElementDefData)    
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
+    
+    element = models.OneToOneField(ElementDefData, null=True)
+    # formdefs have a one-to-one relationship with elementdefs
+    # yet elementdefs have a form_id which points to formdef
+    # without this fix, delete is deadlocked
+    def delete(self): 
+        self.element = None 
+        self.save()
+        super(FormDefData, self).delete()
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)

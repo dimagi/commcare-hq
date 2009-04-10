@@ -9,6 +9,9 @@ import logging
 import re
 import os
 
+from stat import S_ISREG, ST_MODE
+import sys
+
 # TODO: sanitize all inputs to avoid database keywords
 # e.g. no 'where' columns, etc.
 
@@ -56,16 +59,12 @@ class StorageUtility(object):
         'hexbinary',
     )
 
-    def add_formdef(self, formdef):
-        id = self.update_elementdefdef_meta(formdef)
-        queries = self.queries_to_create_instance_tables(formdef, id, formdef.name, formdef.name)
+    def add_schema(self, formdef):
+        fdd = self.update_meta(formdef)
+        self.form = fdd
+        queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
         self.__execute_queries(queries)
-        return id
-    
-    def remove_formdef(self, name):
-        # update formdef meta tables
-        # drop formdef data tables
-        pass
+        return fdd
     
     def save_form_data_matching_formdef(self, data_stream_pointer, formdef):
         logging.debug("StorageProvider: saving form data")
@@ -81,7 +80,7 @@ class StorageUtility(object):
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
-        xsd_form_name = self.__get_xmlns(f)
+        xsd_form_name = get_xmlns(f)
         if xsd_form_name is None: return
         logging.debug("Form name is " + xsd_form_name)
         xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
@@ -101,12 +100,29 @@ class StorageUtility(object):
         logging.debug("Form data successfully saved")
         return xsd_form_name
 
-    def update_elementdefdef_meta(self, formdef):
+    def update_meta(self, formdef):
         """ save element metadata """
-        ed = ElementDefData(name=str(formdef.name), type=str(formdef.type), 
-                            table_name=get_table_name(formdef.target_namespace))
+        fdd = FormDefData()
+        fdd.name = str(formdef.name)
+        fdd.form_name = get_table_name(formdef.target_namespace)
+        fdd.target_namespace = formdef.target_namespace
+        fdd.save()
+
+        ed = ElementDefData()
+        ed.name=str(fdd.name)
+        ed.table_name=get_table_name(formdef.target_namespace)
+        #ed.form_id = fdd.id
+        ed.form = fdd
         ed.save()
-        return ed.id
+        ed.parent = ed
+        ed.save()
+        
+        fdd.element = ed
+        fdd.save()
+        
+        # kind of odd that this is created but not saved here... 
+        # not sure how to work around that, given required fields?
+        return fdd
 
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
         table_name = get_table_name( self.__name(parent_name, elementdef.name) )
@@ -136,6 +152,8 @@ class StorageUtility(object):
                 queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
             else:
                 queries = queries + " parent_id REFERENCES " + get_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
+        else:
+            queries = self.__trim2chars(queries)
         queries = queries + " );"
         queries = queries + next_query;
         return queries
@@ -156,10 +174,16 @@ class StorageUtility(object):
           next_parent_name = self.__name(parent_name, elementdef.name)
           if child.is_repeatable :
               # repeatable elements must generate a new table
-              ed = ElementDefData(name=str(child.name), type=str(child.type), parent_id=parent_id, 
+              if parent_id == '':
+                  ed = ElementDefData(name=str(child.name), form_id=self.form.id,
+                                  table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
+                  ed.save()
+                  ed.parent = ed
+              else:
+                  ed = ElementDefData(name=str(child.name), parent_id=parent_id, form=self.form,
                                   table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
               ed.save()
-              next_query = self.queries_to_create_instance_tables(child,  ed.id , parent_name, parent_table_name )
+              next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
           else: 
             if len(child.child_elements) > 0 :
                 (q, f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
@@ -279,27 +303,6 @@ class StorageUtility(object):
     def __db_field_name(self, elementdef):
         return self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type ) + ", "
     
-    #temporary measure to get target form
-    # todo - fix this to be more efficient, so we don't parse the file twice
-    def __get_xmlns(self, stream):
-        logging.debug("Trying to parse xml_file")
-        skip_junk(stream)
-        try: 
-            tree = etree.parse(stream)
-        except:
-            logging.debug("ERROR PARSING XML INSTANCE DATA")  
-        root = tree.getroot()
-        logging.debug("Parsing xml file successful")
-        logging.debug("Find xmlns from " + root.tag)
-        #todo - add checks in case we don't have a well-formatted xmlns
-        r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
-        if r is None:
-            logging.error( "NO NAMESPACE FOUND" )
-            return None
-        xmlns = get_table_name( r.group(0).strip('{').strip('}') )
-        logging.debug( "Xmlns is " + xmlns )
-        return xmlns
-    
     def __execute_queries(self, queries):
         # todo - rollback on fail
         logging.debug(queries)
@@ -310,5 +313,62 @@ class StorageUtility(object):
             simple_queries = queries.split(';')
             for query in simple_queries: 
                 cursor.execute(query)
-        
+
+    def remove_schema(self, name):
+        fdds = FormDefData.objects.all().filter(target_namespace=name) 
+        if fdds is None or len(fdds) == 0:
+            logging.error("  Schema " + name + " could not be found. Not deleted.")
+            return    
+        # must remove tables first since removing form_meta automatically deletes some tables
+        self.__remove_form_tables(fdds[0])
+        self.__remove_form_meta(fdds[0])
+        # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
+    # make sure when calling this function always to confirm with the user
+    def clear(self):
+        """ removes all schemas found in XSD_REPOSITORY_PATH
+            and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.        
+        """
+        self.__remove_form_tables()
+        self.__remove_form_meta()
+        # when we delete formdefdata, django automatically deletes all associated elementdefdata
+            
+        # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
+        for file in os.listdir(settings.XFORM_SUBMISSION_PATH):
+            file = os.path.join(settings.XFORM_SUBMISSION_PATH, file)
+            logging.debug(  "Deleting " + file )
+            stat = os.stat(file)
+            if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):
+                os.remove( file )
+            else:
+                logging.debug(  "  WARNING: Permission denied to access " + file )
+                continue
+        
+    def __remove_form_meta(self,form=''):
+        # drop all schemas, associated tables, and files
+        if form == '':
+            fdds = FormDefData.objects.all().filter()
+        else:
+            fdds = FormDefData.objects.all().filter(target_namespace=form.target_namespace)            
+        for fdd in fdds:
+            file = fdd.xsd_file_location
+            if file is not None:
+                logging.debug(  "  removing file " + file )
+                os.remove(file)
+            logging.debug(  "  deleting form definition for " + fdd.target_namespace )
+            fdd.delete()
+                        
+    # in theory, there should be away to *not* remove elemenetdefdata when deleting formdef
+    # until we figure out how to do that, this'll work fine
+    def __remove_form_tables(self,form=''):
+        # drop all element definitions and associated tables
+        # the reverse ordering is a horrible hack (but efficient) 
+        # to make sure we delete children before parents
+        if form == '':
+            edds = ElementDefData.objects.all().filter().order_by("-table_name")
+        else:
+            edds = ElementDefData.objects.all().filter(form=form).order_by("-table_name")
+        for edd in edds:
+            logging.debug(  "  deleting data table:" + edd.table_name )
+            cursor = connection.cursor()
+            cursor.execute("drop table " + edd.table_name)
