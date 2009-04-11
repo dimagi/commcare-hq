@@ -10,7 +10,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_1(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("1_xsd_basic.in", "1_xml_basic.in")
+        create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM x_xml_basic")
         row = cursor.fetchone()
@@ -25,7 +25,7 @@ class BasicTestCase(unittest.TestCase):
             Currently only supported in MYSQL.
         """ 
         if settings.DATABASE_ENGINE=='mysql' :
-            create_xsd_and_populate("2_xsd_types.in", "2_xml_types.in")
+            create_xsd_and_populate("2_types.xsd", "2_types.xml")
             cursor = connection.cursor()
             cursor.execute("DESCRIBE x_xml_types")
             row = cursor.fetchall()
@@ -42,7 +42,7 @@ class BasicTestCase(unittest.TestCase):
     
     def testSaveFormData_3(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("3_xsd_deep.in", "3_xml_deep.in")
+        create_xsd_and_populate("3_deep.xsd", "3_deep.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM x_xml_deep")
         row = cursor.fetchone()
@@ -54,7 +54,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_4(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("4_xsd_verydeep.in", "4_xml_verydeep.in")
+        create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM x_xml_verydeep")
         row = cursor.fetchone()
@@ -66,7 +66,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_5(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("5_xsd_singlerepeat.in", "5_xml_singlerepeat.in")
+        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM x_xml_singlerepeat")
         row = cursor.fetchone()
@@ -84,7 +84,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_6(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("6_xsd_nestedrepeats.in", "6_xml_nestedrepeats.in")
+        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM x_xml_nestedrepeats")
         row = cursor.fetchone()

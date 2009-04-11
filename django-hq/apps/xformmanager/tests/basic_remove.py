@@ -12,12 +12,12 @@ class RemoveTestCase(unittest.TestCase):
         """ Tests clear out all forms. Only useful if run after all the other test cases """
         su = StorageUtility()
         su.clear()
-        create_xsd_and_populate("1_xsd_basic.in", "1_xml_basic.in")
-        create_xsd_and_populate("2_xsd_types.in", "2_xml_types.in")
-        create_xsd_and_populate("3_xsd_deep.in", "3_xml_deep.in")
-        create_xsd_and_populate("4_xsd_verydeep.in", "4_xml_verydeep.in")
-        create_xsd_and_populate("5_xsd_singlerepeat.in", "5_xml_singlerepeat.in")
-        create_xsd_and_populate("6_xsd_nestedrepeats.in", "6_xml_nestedrepeats.in")
+        create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
+        create_xsd_and_populate("2_types.xsd", "2_types.xml")
+        create_xsd_and_populate("3_deep.xsd", "3_deep.xml")
+        create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
+        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
+        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su.clear()
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_formdefdata")
@@ -33,7 +33,7 @@ class RemoveTestCase(unittest.TestCase):
 
     def test2RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("1_xsd_basic.in", "1_xml_basic.in")
+        schema_model = create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         su = StorageUtility()
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
@@ -50,7 +50,7 @@ class RemoveTestCase(unittest.TestCase):
     
     def test3RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("6_xsd_nestedrepeats.in", "6_xml_nestedrepeats.in")
+        schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su = StorageUtility()
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
