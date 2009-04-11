@@ -48,7 +48,7 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__),'media')
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 if DEBUG == True:
-    MEDIA_URL = 'http://127.0.0.1:8000/'
+    MEDIA_URL = 'http://127.0.0.1:8000/media/'
 else:
     MEDIA_URL = 'http://test.commcarehq.org/media/'
 

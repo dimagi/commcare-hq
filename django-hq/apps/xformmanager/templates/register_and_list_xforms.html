@@ -40,6 +40,7 @@
    			<td class="helpHed">{% trans "Added Date" %}</td>
    			<td class="helpHed">{% trans "Display Name" %}</td>
    			<td class="helpHed">{% trans "Schema Definition" %}</td>   			
+   			<td class="helpHed"></td>   			
    		</tr>
    		{% for form in registered_forms %}   
    		<tr>
@@ -51,6 +52,11 @@
    			
    			<td>
    			{{form.form_name}}
+   			</td>
+   			<td>
+	   			<a href="{% url xformmanager.views.remove_xform form.id %}">
+	   			{% trans "Drop This Form" %}
+	   			</a>
    			</td>
    		</tr>
    		{% endfor %}   		

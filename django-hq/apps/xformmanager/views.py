@@ -1,5 +1,6 @@
+from django.http import Http404
 from django.shortcuts import render_to_response, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction
 import uuid
@@ -14,6 +15,7 @@ import settings, os, sys
 import logging
 import traceback
 import subprocess
+
 
 from organization.models import *
 
@@ -35,6 +37,24 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
+
+@login_required()
+@transaction.commit_manually
+def remove_xform(request, form_id=None, template='confirm_delete.html'):
+    context = {}
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    
+    form = get_object_or_404(FormDefData, pk=form_id)
+    
+    if request.method == "POST":
+        if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
+            su = StorageUtility()
+            su.remove_schema(form_id)        
+            logging.debug("Schema %s deleted ", form_id)
+            #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
+            return HttpResponseRedirect("../register_xform")
+    context['form_name'] = form.form_display_name
+    return render_to_response(template, context, context_instance=RequestContext(request))
 
 @login_required()
 @transaction.commit_manually

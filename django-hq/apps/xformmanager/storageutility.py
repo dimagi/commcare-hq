@@ -314,8 +314,8 @@ class StorageUtility(object):
             for query in simple_queries: 
                 cursor.execute(query)
 
-    def remove_schema(self, name):
-        fdds = FormDefData.objects.all().filter(target_namespace=name) 
+    def remove_schema(self, id):
+        fdds = FormDefData.objects.all().filter(id=id) 
         if fdds is None or len(fdds) == 0:
             logging.error("  Schema " + name + " could not be found. Not deleted.")
             return    
@@ -323,6 +323,7 @@ class StorageUtility(object):
         self.__remove_form_tables(fdds[0])
         self.__remove_form_meta(fdds[0])
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
+        transaction.commit()
     
     # make sure when calling this function always to confirm with the user
     def clear(self):
