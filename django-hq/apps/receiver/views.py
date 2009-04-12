@@ -30,7 +30,7 @@ import submitprocessor
 #@login_required()
 def show_submits(request, template_name="receiver/show_submits.html"):    
     context = {}
-    slogs = Submission.objects.all()
+    slogs = Submission.objects.order_by('-id')
     context['submission_items'] = slogs    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
