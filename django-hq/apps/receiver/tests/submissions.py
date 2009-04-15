@@ -1,6 +1,7 @@
 import unittest
 from receiver.models import *
 from receiver import submitprocessor 
+from organization.models import Domain
 
 class ProcessingTestCase(unittest.TestCase):
     def setup(self):
@@ -32,7 +33,12 @@ class ProcessingTestCase(unittest.TestCase):
         fin.close()
         
         metahash = eval(meta)
-        submitprocessor.do_raw_submission(metahash, body)
+        if Domain.objects.all().count() == 0:
+            mockdomain = Domain(name='mockdomain')
+            mockdomain.save()
+        else:
+            mockdomain = Domain.objects.all()[0]
+        submitprocessor.do_raw_submission(metahash, body, domain=mockdomain)
 
     def testSubmitSimple(self):        
         Submission.objects.all().delete()
@@ -69,6 +75,7 @@ class ProcessingTestCase(unittest.TestCase):
     def testCheckMultipartAttachments(self):       
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
+        
          
         print '############################### testCheckMultipartAttachments'
         num = len(Submission.objects.all())
