@@ -13,7 +13,7 @@ COMMCARE_THEME = 'default'
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
 #DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
 #DATABASE_USER = 'root'             # Not used with sqlite3.
