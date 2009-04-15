@@ -1,10 +1,14 @@
 from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth.models import Group, User
 import uuid
 import settings
-from django.contrib.auth.models import Group, User
 from organization.models import *
+
+
+
+
 
 #import Group
 
