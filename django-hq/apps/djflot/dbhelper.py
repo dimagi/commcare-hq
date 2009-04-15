@@ -4,6 +4,7 @@ import os
 import string
 import time,datetime
 import settings
+from django.conf import *
 
 string_type_codes = [253,252]
 int_type_codes = [3]
@@ -22,7 +23,7 @@ class DbHelper(object):
         self.date_columns = []
         self.tablename = tblname
         self.displayname = dispname
-        self.default_date_column_id = 0        
+        self.default_date_column_id = 0
         
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM " + self.tablename + " limit 1")        

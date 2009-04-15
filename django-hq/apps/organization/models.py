@@ -1,9 +1,14 @@
 from django.db import models
-from monitorregistry.models import *
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
+from django.utils.translation import ugettext_lazy as _
+
 from modelrelationship.models import *
-from xformmanager.models import *
+from monitorregistry.models import *
+
+
+
+
+
 
 
 class Domain(models.Model):

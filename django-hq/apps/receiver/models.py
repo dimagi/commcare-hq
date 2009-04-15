@@ -1,8 +1,11 @@
 from django.db import models
 from datetime import datetime
+from organization.models import *
+
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
 from random import choice
+
 
 import uuid
 import settings
@@ -19,6 +22,8 @@ class Submission(models.Model):
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
     #transaction_num = models.IntegerField(_('Submission Integer ID for Phone'),unique=True,null=False)
+    
+    domain = models.ForeignKey(Domain)
     
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
@@ -91,11 +96,12 @@ class Submission(models.Model):
                    logging.debug("Attachment Save complete")                    
         except:
             logging.error("error parsing attachments") 
-            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
-            logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
+          #  logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
+           # logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
             type, value, tb = sys.exc_info()
-            logging.error(type.__name__, ":", value)
-            logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
+            logging.error(type.__name__ +  ":" + value)
+            logging.error("error parsing attachments: Traceback: ")
+            logging.error(string.join(traceback.format_tb(tb),' '))
             
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)

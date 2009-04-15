@@ -3,6 +3,8 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',                       
     url(r'^submit/$', 'receiver.views.raw_submit', name='raw_submit'),
+    url(r'^submit/(?P<domain_name>.*)/$', 'receiver.views.domain_submit', name='domain_submit'),
+    
     url(r'^backup/$', 'receiver.views.backup', name='backup'),
     url(r'^restore/(?P<code_id>\d+)$', 'receiver.views.restore', name='restore'),
     url(r'^review/$', 'receiver.views.show_submits', name='show_submits'),

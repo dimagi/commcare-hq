@@ -27,15 +27,16 @@ import string
 import submitprocessor
 
 
-#@login_required()
+@login_required()
 def show_submits(request, template_name="receiver/show_submits.html"):    
     context = {}
-    slogs = Submission.objects.order_by('-id')
+    extuser = ExtUser.objects.get(id=request.user.id)
+    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-id')
     context['submission_items'] = slogs    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
-#@login_required()    
+@login_required()    
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
@@ -65,9 +66,29 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
 
 def raw_submit(request, template_name="receiver/submit.html"):
     context = {}            
-    logging.debug("begin raw_submit()")
-    if request.method == 'POST':
-        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+#    if request.method == 'POST':
+#        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+#        if new_submission == '[error]':
+#            template_name="receiver/submit_failed.html"            
+#        else:
+#            context['transaction_id'] = new_submission.transaction_uuid
+#            context['submission'] = new_submission
+#            attachments = Attachment.objects.all().filter(submission=new_submission)            
+#            context['attachments'] = attachments            
+#            template_name="receiver/submit_complete.html"
+            
+    #for real submissions from phone, the content-type should be:
+    #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+def domain_submit(request, domain_name, template_name="receiver/submit.html"):
+    context = {}            
+    logging.debug("begin domained raw_submit()")        
+    currdomain = Domain.objects.filter(name=domain_name)
+    if len(currdomain) != 1:
+        template_name="receiver/submit_failed.html"
+    if request.method == 'POST':                    
+        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])        
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"            
         else:

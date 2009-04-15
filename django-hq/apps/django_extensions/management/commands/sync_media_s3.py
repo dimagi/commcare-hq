@@ -25,9 +25,11 @@ Command options are:
   --expires             Enables setting a far future expires header.
   --force               Skip the file mtime check to force upload of all
                         files.
+  --filter-list         Override default directory and file exclusion
+                        filters. (enter as comma seperated line)
 
 TODO:
-* Make FILTER_LIST an optional argument
+ * Use fnmatch (or regex) to allow more complex FILTER_LIST rules.
 
 """
 import datetime
@@ -38,6 +40,7 @@ import os
 import sys
 import time
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 # Make sure boto is available
@@ -54,7 +57,7 @@ class Command(BaseCommand):
     AWS_SECRET_ACCESS_KEY = ''
     AWS_BUCKET_NAME = ''
     DIRECTORY = ''
-    FILTER_LIST = ['.DS_Store',]
+    FILTER_LIST = ['.DS_Store', '.svn', '.hg', '.git', 'Thumbs.db']
     GZIP_CONTENT_TYPES = (
         'text/css',
         'application/javascript',
@@ -68,6 +71,9 @@ class Command(BaseCommand):
         optparse.make_option('-p', '--prefix',
             dest='prefix', default='',
             help="The prefix to prepend to the path on S3."),
+        optparse.make_option('-d', '--dir',
+            dest='dir', default=settings.MEDIA_ROOT,
+            help="The root directory to use instead of your MEDIA_ROOT"),
         optparse.make_option('--gzip',
             action='store_true', dest='gzip', default=False,
             help="Enables gzipping CSS and Javascript files."),
@@ -76,7 +82,10 @@ class Command(BaseCommand):
             help="Enables setting a far future expires header."),
         optparse.make_option('--force',
             action='store_true', dest='force', default=False,
-            help="Skip the file mtime check to force upload of all files.")
+            help="Skip the file mtime check to force upload of all files."),
+        optparse.make_option('--filter-list', dest='filter_list',
+            action='store', default='',
+            help="Override default directory and file exclusion filters. (enter as comma seperated line)"),
     )
 
     help = 'Syncs the complete MEDIA_ROOT structure and files to S3 into the given bucket name.'
@@ -85,7 +94,6 @@ class Command(BaseCommand):
     can_import_settings = True
 
     def handle(self, *args, **options):
-        from django.conf import settings
 
         # Check for AWS keys in settings
         if not hasattr(settings, 'AWS_ACCESS_KEY_ID') or \
@@ -109,13 +117,19 @@ class Command(BaseCommand):
         else:
             if not settings.MEDIA_ROOT:
                 raise CommandError('MEDIA_ROOT must be set in your settings.')
-        self.DIRECTORY = settings.MEDIA_ROOT
 
         self.verbosity = int(options.get('verbosity'))
         self.prefix = options.get('prefix')
         self.do_gzip = options.get('gzip')
         self.do_expires = options.get('expires')
         self.do_force = options.get('force')
+        self.DIRECTORY = options.get('dir')
+        self.FILTER_LIST = getattr(settings, 'FILTER_LIST', self.FILTER_LIST)
+        filter_list = options.get('filter_list').split(',')
+        if filter_list:
+            # command line option overrides default filter_list and
+            # settings.filter_list
+            self.FILTER_LIST = filter_list
 
         # Now call the syncing method to walk the MEDIA_ROOT directory and
         # upload all files found.
@@ -159,13 +173,15 @@ class Command(BaseCommand):
         """
         bucket, key, bucket_name, root_dir = arg # expand arg tuple
 
-        if root_dir == dirname:
-            return # We're in the root media folder
+        # Skip directories we don't want to sync
+        if os.path.basename(dirname) in self.FILTER_LIST:
+            # prevent walk from processing subfiles/subdirs below the ignored one
+            del names[:]
+            return 
 
         # Later we assume the MEDIA_ROOT ends with a trailing slash
-        # TODO: Check if we should check os.path.sep for Windows
-        if not root_dir.endswith('/'):
-            root_dir = root_dir + '/'
+        if not root_dir.endswith(os.path.sep):
+            root_dir = root_dir + os.path.sep
 
         for file in names:
             headers = {}
@@ -229,7 +245,7 @@ class Command(BaseCommand):
             try:
                 key.name = file_key
                 key.set_contents_from_string(filedata, headers, replace=True)
-                key.make_public()
+                key.set_acl('public-read')
             except boto.s3.connection.S3CreateError, e:
                 print "Failed: %s" % e
             except Exception, e:

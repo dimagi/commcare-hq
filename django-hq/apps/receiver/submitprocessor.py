@@ -10,7 +10,7 @@ import uuid
 from django.db import transaction
 
 @transaction.commit_on_success
-def do_raw_submission(metadata, payload):
+def do_raw_submission(metadata, payload, domain=None):
     logging.debug("Begin do_raw_submission()")
     transaction = str(uuid.uuid1())
     new_submit = Submission()
@@ -54,7 +54,8 @@ def do_raw_submission(metadata, payload):
         return '[error]'
         #return render_to_response(template_name, context, context_instance=RequestContext(request))        
         
-    logging.debug("try to write model")        
+    logging.debug("try to write model")   
+    new_submit.domain = domain     
     new_submit.save()
     logging.debug("save to db successful")
     return new_submit
