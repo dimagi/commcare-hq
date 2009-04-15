@@ -15,7 +15,7 @@ from organization.models import *
 import organization.utils as utils
 from datetime import timedelta
 import djflot.dbhelper as dbhelper
-
+from organization.models import *
 register = template.Library()
 
 import time
@@ -97,6 +97,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     #and/or query the ExtUser table to get all the registered users.
     totalspan = enddate-startdate    
     report_hash = {}
+    extuser = ExtUser.objects.get(id=user.id)
         
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
@@ -105,7 +106,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
     
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
-    defs = FormDefData.objects.all()
+    defs = FormDefData.objects.all().filter(uploaded_by__domain=extuser.domain)
     
     for fdef in defs:        
         table = fdef.element.table_name
