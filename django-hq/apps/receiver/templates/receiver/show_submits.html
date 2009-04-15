@@ -1,5 +1,6 @@
 {% extends "receiver/base.html" %}
 {% load i18n %}
+{% load submission_tags %}
 {% block head_title %}{% trans "All Submissions" %}{% endblock %}
 {% block content %}
 <h2>{% trans "All Submissions" %}</h2>
@@ -7,11 +8,11 @@
    <tr><td class="helpHed">ID</td><td class="helpHed">Date</td><td class="helpHed">From</td><td class="helpHed">Size (bytes)</td><td class="helpHed">Attachments</td></tr>
    {% for submission in submission_items %}      
    	<tr>
-   		<td>{{submission.id}}</td>
-   		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.submit_time|date}} - {{submission.submit_time|time}}</a></td>
+   		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.id}}</a></td>
+   		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
    		<td>{{submission.bytes_received}}</td>
-   		<td>{{submission.num_attachments}}</td>
+   		<td>{% get_attachements_links submission %}</td>
    	</tr>   	
    {% endfor %}
    </table>

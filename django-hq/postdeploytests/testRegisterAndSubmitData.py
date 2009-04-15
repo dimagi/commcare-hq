@@ -50,10 +50,11 @@ class TestRegisterSchemas(unittest.TestCase):
             
             p = subprocess.Popen([curl_command,'-c logincookie.txt', '-F username=%s' % submit_user, '-F password=%s' % submit_pw,'--request', 'POST', 'http://%s/accounts/login/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
+            shortname = os.path.basename(schemafile)
             
             print "Posting Schema: %s" % fin   
-            print ' '.join([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % schemafile[0:-4], '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost])
-            p = subprocess.Popen([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % schemafile, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,shell=False)
+            print ' '.join([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost])
+            p = subprocess.Popen([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
             
     def testPostAndVerifyBracSchemas(self):

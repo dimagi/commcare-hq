@@ -45,9 +45,10 @@ def get_daterange_links():
     return ret
 
 @register.simple_tag
-def get_dashboard_activity(startdate=None, enddate=None):    
+def get_dashboard_activity(user, startdate=None, enddate=None):    
     report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
     ret  = ''   
+    extuser = User.objects.get(id=user.id)
     
     defs = FormDefData.objects.all()
     ret += '<ul class="nobullets">'
@@ -87,7 +88,7 @@ def get_dashboard_activity(startdate=None, enddate=None):
 
 
 @register.simple_tag
-def get_dashboard_user_counts(startdate=None, enddate=None):
+def get_dashboard_user_counts(user, startdate=None, enddate=None):
     ret  = ''
     
     username_to_count_hash = {}
