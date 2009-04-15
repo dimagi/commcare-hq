@@ -196,7 +196,7 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
 
 
 
-def get_user_allforms_count(username, startdate=None, enddate=None):
+def get_user_allforms_count(domain, username, startdate=None, enddate=None):
     ret  = ''
     totalspan = enddate-startdate    
     day_count_hash = {}
@@ -207,7 +207,7 @@ def get_user_allforms_count(username, startdate=None, enddate=None):
         #print "get_user_allforms_count: %s" % (str(target_date))
         day_count_hash[target_date.strftime('%m/%d/%Y')] = 0
     
-    defs = FormDefData.objects.all()
+    defs = FormDefData.objects.all().filter(uploaded_by__domain=domain)
     
     for fdef in defs:        
         table = fdef.element.table_name        
@@ -239,15 +239,17 @@ def render_aggregate_countrow(content_obj, startdate, enddate):
     is_supervisor = False
     is_org = False
     is_member = False
-                
+    domain = None
     if isinstance(content_obj, Organization):
         is_org = True        
+        domain  = content_obj.domain
         (members, supervisors) = utils.get_members_and_supervisors(content_obj)        
         for member in members:
             usernames_to_filter.append(member.username)
         for supervisor in supervisors:
             usernames_to_filter.append(supervisor.username)
     elif isinstance(content_obj, ExtUser):        
+        domain  = content_obj.domain
         supervising_orgs = utils.get_supervisor_roles(content_obj)
         usernames_to_filter.append(content_obj.username)
         is_member = True    
@@ -255,7 +257,7 @@ def render_aggregate_countrow(content_obj, startdate, enddate):
     
     for user in usernames_to_filter:
         if not username_datecount_cache.has_key(user):
-            username_datecount_cache[user] = get_user_allforms_count(user, startdate, enddate)
+            username_datecount_cache[user] = get_user_allforms_count(domain, user, startdate, enddate)
             
         for target_date in username_datecount_cache[user].keys():
             master_date_hash[target_date] += username_datecount_cache[user][target_date]

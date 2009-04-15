@@ -13,7 +13,7 @@ COMMCARE_THEME = 'default'
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_ENGINE = 'sqlite'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
 #DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
 #DATABASE_USER = 'root'             # Not used with sqlite3.
@@ -100,8 +100,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.debug",    
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
-    "django.core.context_processors.request",
-    
+    "django.core.context_processors.request",    
     )
 
 
@@ -169,11 +168,13 @@ if not os.path.exists(CSV_PATH):
 
 import logging
 logging.basicConfig(
-    level = 0,
+    level = logging.DEBUG,
     format = '%(asctime)s %(levelname)s %(message)s',
-    filename = os.path.join(os.path.dirname(__file__),'cchq.log'),
+    filename = os.path.join(os.path.dirname(__file__),'commcarehq.log'),
     filemode = 'w+'
 )
+
+
 
 #COMMCARE VARS EXAMPLE, will be appended at the end.
 #CCHQ_BUILD_NUMBER=-1

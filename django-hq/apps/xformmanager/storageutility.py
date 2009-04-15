@@ -58,6 +58,11 @@ class StorageUtility(object):
         'base64binary',
         'hexbinary',
     )
+    
+    DB_NUMERIC_TYPES = {
+        'integer': int, 'int': int, 'decimal': float, 'double' : float, 'float':float,'gyear':int        
+    }
+    
 
     def add_schema(self, formdef):
         fdd = self.update_meta(formdef)
@@ -285,12 +290,24 @@ class StorageUtility(object):
             return self.XSD_TO_DB_TYPES['default']
         
     def __db_format(self, type, text):
+        print "db_format " + type + "::" + text + "::"
         if text == '':
             logging.error("Poorly formatted xml input!")
             return ''
         if type in self.DB_NON_STRING_TYPES:
-            return text.strip()
+            #dmyung :: some additional input validation
+            if self.DB_NUMERIC_TYPES.has_key(type):
+                typefunc = self.DB_NUMERIC_TYPES[type]
+                try:
+                    val = typefunc(text.strip())
+                    return str(val)
+                except:
+                    logging.error("Error validating type %s with value %s, object is not a %s" % (type,text,str(typefunc)))
+                    return '0'
+            #return text.strip()        
         else: 
+            print "not in the types list, just quoting"
+            print "'" + text.strip() + "'"
             return "'" + text.strip() + "'"
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here

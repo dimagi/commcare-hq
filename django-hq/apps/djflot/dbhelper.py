@@ -214,6 +214,7 @@ class DbHelper(object):
         dset = {}
         dset["label"] = self.displayname.__str__()
         dset["data"] = ret
+        dset['bars'] = {'show' :'true' }
         return dset
     
     def get_integer_series_dataset(self):

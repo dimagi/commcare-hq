@@ -67,7 +67,7 @@ class Submission(models.Model):
             parsed_message = email.message_from_string(body)   
             
             for part in parsed_message.walk():
-               print "CONTENT-TYPE: " + str(part.get_content_type())     
+               #print "CONTENT-TYPE: " + str(part.get_content_type())     
                if part.get_content_type() == 'multipart/mixed':
                    #it's a multipart message, oh yeah
                    logging.debug("Multipart part")
@@ -96,11 +96,11 @@ class Submission(models.Model):
                    logging.debug("Attachment Save complete")                    
         except:
             logging.error("error parsing attachments") 
-          #  logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
-           # logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
+            #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
+            #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
             type, value, tb = sys.exc_info()
-            logging.error(type.__name__ +  ":" + value)
-            logging.error("error parsing attachments: Traceback: ")
+            logging.error("Attachment Parse Error Traceback:")
+            logging.error(type.__name__ +  ":" + str(value))            
             logging.error(string.join(traceback.format_tb(tb),' '))
             
 class Backup(models.Model):
@@ -151,14 +151,9 @@ class Attachment(models.Model):
     
 
 
-#signals baby!
-
-from django.db.models.signals import post_save
-def attachment_postsave_handler(sender, **kwargs):
-    print "saved attachment!!!"
-#    print sender #bad bad bad!
-#    print sender.submission
-#    print sender.attachment_uri
-    
-    
-post_save.connect(attachment_postsave_handler, sender=Attachment)
+#signals example
+#from django.db.models.signals import post_save
+#def attachment_postsave_handler(sender, **kwargs):
+#    print "saved attachment!!!"
+#    
+#post_save.connect(attachment_postsave_handler, sender=Attachment)

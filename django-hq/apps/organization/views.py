@@ -92,13 +92,13 @@ def org_report(request, template_name="organization/org_report.html"):
     context['enddate'] = enddate    
     
     extuser = ExtUser.objects.all().get(id=request.user.id)        
-    context['extuser'] = extuser    
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain        
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
 def register_xform(request, template_name="organization/register_xform.html"):
     return ''
-
 
 @login_required()
 def manage_xforms(request, template_name="oranization/manage_xforms.html"):
@@ -111,6 +111,7 @@ def summary_trend(request, template_name="djflot/summary_trend.html"):
     formname = ''
     formdef_id = -1
     extuser = ExtUser.objects.all().get(id=request.user.id)
+    
     for item in request.GET.items():
         if item[0] == 'formdef_id':
             formdef_id=item[1]    
