@@ -290,7 +290,6 @@ class StorageUtility(object):
             return self.XSD_TO_DB_TYPES['default']
         
     def __db_format(self, type, text):
-        print "db_format " + type + "::" + text + "::"
         if text == '':
             logging.error("Poorly formatted xml input!")
             return ''
@@ -304,10 +303,9 @@ class StorageUtility(object):
                 except:
                     logging.error("Error validating type %s with value %s, object is not a %s" % (type,text,str(typefunc)))
                     return '0'
-            #return text.strip()        
-        else: 
-            print "not in the types list, just quoting"
-            print "'" + text.strip() + "'"
+            else:
+                return "'" + text.strip() + "'"        
+        else:            
             return "'" + text.strip() + "'"
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here
