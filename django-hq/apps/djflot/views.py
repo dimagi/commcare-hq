@@ -38,5 +38,36 @@ def flot_example(request, template_name="djflot/flot_example.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
+def inspector(request, table_name, template_name="djflot/table_inspector.html"):
+    context = {}
+    context['table_name'] = table_name
+    
+    str_column = None
+    str_column_value = None
+    datetime_column = None
+    data_column = None
+    display_mode = None    
+    
+    for item in request.GET.items():
+        if item[0] == 'str_column':
+            str_column = item[1]                    
+        if item[0] == 'str_column_value':
+            str_column_value = item[1] 
+        if item[0] == 'datetime_column':
+            datetime_column = item[1]   
+        if item[0] == 'data_column':
+            data_column = item[1]        
+        if item[0] == 'display_mode':
+            display_mode = item[1]    
+            
+    context['str_column'] = str_column
+    context['str_column_value'] = str_column_value
+    context['datetime_column'] = datetime_column
+    context['data_column'] = data_column
+    context['display_mode'] = display_mode    
+    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
+
 
 

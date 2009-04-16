@@ -142,6 +142,16 @@ class DbHelper(object):
             ret.append(row[0])
         return ret              
     
+    def get_column_filter_hash(self, startdate, enddate):
+        #todo:
+        #for all string columns:
+        #do a select distinct 
+        #return hash for all those values
+        ret = {}
+        for col in self.str_columns:
+            ret[col] = self.get_uniques_for_column(col, startdate, enddate)        
+        return ret
+    
     
     
     def get_filtered_date_count(self, startdate, enddate, filters = {}):
