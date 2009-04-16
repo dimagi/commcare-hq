@@ -516,22 +516,8 @@ div.reportheading table {
 	font-weight:bold;	
 }
 
-div.reportitem a {
-		
-}
-
-div.reportitem table {
-
-}
-
-div.reportitem td {	
-	
-}
-
 
 table.reporttable {
-	
-
 	font-size: 12px;		
 }
 
@@ -563,15 +549,13 @@ table.reporttable tr {
 
 
 table.reporttable td.rel_row {
-	width:180px;
 	text-align:left;
-	
 	font-weight:bold;
 }
 
 table.reporttable td.item_row {
 	width:200px;
-	text-align:right;	
+	text-align:left;	
 }
 
 
@@ -580,6 +564,14 @@ div.reports ul {
 	font-size: 14px;
 	width:auto;	
 	
+}
+
+ul.spacer {
+	display:inline;
+}
+li.spacer {
+	display:inline;
+	width:20px;
 }
 
 div.descendants {

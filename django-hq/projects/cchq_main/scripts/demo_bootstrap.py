@@ -164,6 +164,14 @@ def run():
     modelrelationship_edge_11.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edge_11.parent_id = 2L
     modelrelationship_edge_11.save()
+    
+    modelrelationship_edge_12 = Edge()
+    modelrelationship_edge_12.child_type = ContentType.objects.get(app_label="organization", model="extuser")
+    modelrelationship_edge_12.child_id = 5L
+    modelrelationship_edge_12.relationship = modelrelationship_edgetype_2
+    modelrelationship_edge_12.parent_type = ContentType.objects.get(app_label="organization", model="organization")
+    modelrelationship_edge_12.parent_id = 3L
+    modelrelationship_edge_12.save()
 
 
 

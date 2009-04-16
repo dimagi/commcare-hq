@@ -63,13 +63,13 @@ def get_organization_report(extuser, startdate, enddate):
         return '<h1>Error</h1>'
     root_org = root_orgs[0]
     
-    descendents = traversal.getDescendentEdgesForObject(root_org.child_object)  #if we do domain, we go too high
+    descendents = traversal.getDescendentEdgesForObject(root_org.parent_object)  #if we do domain, we go too high
     
     day_count_hash = {}
     
     totalspan = enddate-startdate    
     
-    header_row = '<tr><td class="rowheading">Organization</td>'
+    header_row = '<tr><td class="rowheading"></td>'
     for day in range(0,totalspan.days+1):   
         delta = timedelta(days=day)
         target_date = startdate + delta  
@@ -78,8 +78,8 @@ def get_organization_report(extuser, startdate, enddate):
 
     
     if len(descendents) > 0:
-        ret = '<h4>Domain: ' + str(root_org.child_object) + '</h4>'
-        ret += '<div class="reports"><table class="reporttable">' + header_row + render_edgetree_as_table(descendents,'children', startdate, enddate).__str__() + '</table></div>'
+        ret = '<h4>Domain: ' + str(root_org.parent_object) + '</h4>'
+        ret += '<div class="reports"><table class="reporttable">' + header_row + render_edgetree_as_table(descendents,'children', startdate, enddate,0).__str__() + '</table></div>'
         
         username_datecount_cache.clear()
         return ret
@@ -140,7 +140,7 @@ def render_edgetree_as_ul(arr, direction, startdate, enddate):
 
 
 
-def render_edgetree_as_table(arr, direction, startdate, enddate):   
+def render_edgetree_as_table(arr, direction, startdate, enddate, depth):   
     fullret = ''
     
     prior_edgetype = None
@@ -153,7 +153,7 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
         
         if isinstance(edges,ListType):            
             sublist += '\n<tr>'    
-            sublist += render_edgetree_as_table(edges,direction,startdate, enddate)
+            sublist += render_edgetree_as_table(edges,direction,startdate, enddate, depth + 1)
             sublist += '</tr>\n'
             
                                         
@@ -165,12 +165,12 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
                     group_edge = False
                     #subitems +=  '</tr>'              
                 prior_edgetype = edge.relationship
-                subitems += '\n<tr><td class="rel_row">'
+                subitems += '\n<tr><td class="rel_row" style="padding-left:%dpx;">' % (depth * 25)
                 subitems += edge.relationship.description
                 subitems +=  '</td></tr>\n'
                 group_edge = True            
                             
-            subitems += '\t<td class="item_row">'
+            subitems += '\t<td class="item_row" style="padding-left:%dpx;">' % (depth * 40)
             item_to_render = None
             if direction == 'children':
                 #subitems += '<a href="%s?content_type=%s&content_id=%s">%s</a>' % (reverse('org_report', kwargs= {}),edge.child_type.id,edge.child_object.id,edge.child_object)
@@ -182,9 +182,7 @@ def render_edgetree_as_table(arr, direction, startdate, enddate):
                 item_to_render = edge.parent_object
                 
             subitems += '\t</td>'           
-            subitems += render_aggregate_countrow(item_to_render, startdate, enddate)
-
-                         
+            subitems += render_aggregate_countrow(item_to_render, startdate, enddate)                         
             subitems += '</tr>'    
         
         if direction == 'children':

@@ -37,23 +37,30 @@
       
    <table class="sofT">
    		<tr>
-   			<td class="helpHed">{% trans "Added Date" %}</td>
    			<td class="helpHed">{% trans "Display Name" %}</td>
-   			<td class="helpHed">{% trans "Schema Definition" %}</td>   			
+   			<td class="helpHed">{% trans "Schema Definition" %}</td>
+   			<td class="helpHed">{% trans "Added Date" %}</td>
+   			
+   			   			
    			<td class="helpHed"></td>   			
    		</tr>
    		{% for form in registered_forms %}   
    		<tr>
    			<td><a href="{% url xformmanager.views.data form.id %}">
-   			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
-   				{{date_t}}, {{time_t}}
-   			{% endblocktrans %}</a></td>   			
-   			<td>{{form.form_display_name}}</td>
    			
+   			{{form.form_display_name}}
+   			</a></td>
    			<td>
    			{{form.form_name}}
    			</td>
+   			   			
    			<td>
+	   			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
+	   				{{date_t}}, {{time_t}}
+	   			{% endblocktrans %}
+   			</td>
+   			
+   			   			<td>
 	   			<a href="{% url xformmanager.views.remove_xform form.id %}">
 	   			{% trans "Drop This Form" %}
 	   			</a>
