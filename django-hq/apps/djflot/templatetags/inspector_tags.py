@@ -20,7 +20,9 @@ class StringColumnsNode(Node):
         
         nm = self.table_name.resolve(context)
         helper = dbhelper.DbHelper(nm, nm)        
-        context[self.var_name] = helper.str_columns 
+        context[self.var_name] = helper.str_columns
+        
+        context[self.var_name].insert(0,'count(*)') 
         return ''
 
 @register.tag_function
@@ -93,6 +95,7 @@ class StringColumnValuesNode(Node):
         
         helper = dbhelper.DbHelper(tbl, tbl)        
         context[self.var_name] = helper.get_uniques_for_column(col, None, None)
+        context[self.var_name].insert(0,'count(*)')
         return ''
 
 @register.tag_function

@@ -15,6 +15,71 @@ xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
 
 
+def get_readable_date(sqldatestring):
+    return ''
+
+def get_dategroup_expr(date_colname, startdate, enddate):
+        """Get the expression for a date you want to group by"""
+        delta = enddate-startdate
+                
+        format_string = "'%%Y-%%m-%%d'"
+#        if delta.days < 30:
+#            format_string = "'%%Y-%%m-%%d'"            
+#        elif delta.days > 30:
+#            format_string = "'%%Y-%%m'"
+#        elif delta.days > 360:
+#            format_string = "'%%Y'"
+            
+        date_func = ''
+        retclause = '%s(%s,%s)'
+        
+        if settings.DATABASE_ENGINE == 'mysql':
+            #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
+            date_func = "DATE_FORMAT"
+            #date_colname
+            #self.date_columns[self.default_date_column_id]
+            retclause = retclause % (date_func,date_colname,format_string)
+        elif settings.DATABASE_ENGINE == 'sqlite3':
+            #strftime('%Y-%m-%d', timecol)
+            date_func = "strftime"
+            retclause = retclause % (date_func,format_string,date_colname)
+            
+        return retclause
+        #return self.date_columns[0]    
+    
+def get_date_expr(date_colname,startdate, enddate):        
+    """Get the date string expression you want for a select"""
+    
+    if len(self.date_columns) == 0:
+        raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
+    
+    delta = enddate-startdate            
+    format_string = "'%%m/%%d/%%Y'"        
+    date_func = ''
+    retclause = '%s(%s,%s)'
+    
+    if settings.DATABASE_ENGINE == 'mysql':
+        #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
+        date_func = "DATE_FORMAT"
+        #self.date_columns[self.default_date_column_id]
+        retclause = retclause % (date_func,date_colname,format_string)
+    elif settings.DATABASE_ENGINE == 'sqlite3':
+        #strftime('%Y-%m-%d', timecol)
+        date_func = "strftime"
+        #self.date_columns[self.default_date_column_id]
+        retclause = retclause % (date_func,format_string,date_colname)
+        
+    return retclause
+        
+
+def get_date_whereclause(date_colname, startdate, enddate):
+    """this is to change the date format function to use on the actual queries
+    sqlite and mysql use different methodnames to do their date arithmetic"""    
+    ret = " %s > '%s' AND %s < '%s' " % (date_colname,startdate.strftime('%Y-%m-%d'), date_colname, enddate.strftime('%Y-%m-%d'))
+    return ret
+
+
+
 class DbHelper(object):    
     def __init__(self, tblname, dispname, default_date=None):        
         self.int_columns = []
@@ -63,66 +128,7 @@ class DbHelper(object):
         return cursor.fetchall()        
     
    
-    def __get_dategroup_expr(self, startdate, enddate):
-        """Get the expression for a date you want to group by"""
-        delta = enddate-startdate
-                
-        format_string = "'%%Y-%%m-%%d'"
-#        if delta.days < 30:
-#            format_string = "'%%Y-%%m-%%d'"            
-#        elif delta.days > 30:
-#            format_string = "'%%Y-%%m'"
-#        elif delta.days > 360:
-#            format_string = "'%%Y'"
-            
-        date_func = ''
-        retclause = '%s(%s,%s)'
-        
-        if settings.DATABASE_ENGINE == 'mysql':
-            #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
-            date_func = "DATE_FORMAT"
-            retclause = retclause % (date_func,self.date_columns[self.default_date_column_id],format_string)
-        elif settings.DATABASE_ENGINE == 'sqlite3':
-            #strftime('%Y-%m-%d', timecol)
-            date_func = "strftime"
-            retclause = retclause % (date_func,format_string,self.date_columns[0])
-            
-        return retclause
-        #return self.date_columns[0]    
     
-    def __get_date_expr(self, startdate, enddate):        
-        """Get the date string expression you want for a select"""
-        
-        if len(self.date_columns) == 0:
-            raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
-        
-        
-        delta = enddate-startdate
-                
-        format_string = "'%%m/%%d/%%Y'"
-            
-        date_func = ''
-        retclause = '%s(%s,%s)'
-        
-        if settings.DATABASE_ENGINE == 'mysql':
-            #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
-            date_func = "DATE_FORMAT"
-            retclause = retclause % (date_func,self.date_columns[self.default_date_column_id],format_string)
-        elif settings.DATABASE_ENGINE == 'sqlite3':
-            #strftime('%Y-%m-%d', timecol)
-            date_func = "strftime"
-            retclause = retclause % (date_func,format_string,self.date_columns[self.default_date_column_id])
-            
-        return retclause
-            
-    
-    def __get_date_whereclause(self, startdate, enddate):
-        """this is to change the date format function to use on the actual queries
-        sqlite and mysql use different methodnames to do their date arithmetic"""        
-        
-        
-        ret = " %s > '%s' AND %s < '%s' " % (self.date_columns[0],startdate.strftime('%Y-%m-%d'), self.date_columns[self.default_date_column_id], enddate.strftime('%Y-%m-%d'))
-        return ret
         
     def get_uniques_for_column(self, columname, startdate=None, enddate=None):
         if len(self.date_columns) == 0:
