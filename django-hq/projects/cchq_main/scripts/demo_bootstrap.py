@@ -318,7 +318,7 @@ def run():
 
     modelrelationship_edge_15 = Edge()
     modelrelationship_edge_15.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
-    modelrelationship_edge_15.child_id = 7L
+    modelrelationship_edge_15.child_id = 1L
     modelrelationship_edge_15.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_15.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edge_15.parent_id = 2L
@@ -326,7 +326,7 @@ def run():
 
     modelrelationship_edge_16 = Edge()
     modelrelationship_edge_16.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
-    modelrelationship_edge_16.child_id = 9L
+    modelrelationship_edge_16.child_id = 2L
     modelrelationship_edge_16.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_16.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edge_16.parent_id = 2L
@@ -334,7 +334,7 @@ def run():
 
     modelrelationship_edge_17 = Edge()
     modelrelationship_edge_17.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
-    modelrelationship_edge_17.child_id = 8L
+    modelrelationship_edge_17.child_id = 3L
     modelrelationship_edge_17.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_17.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edge_17.parent_id = 2L
