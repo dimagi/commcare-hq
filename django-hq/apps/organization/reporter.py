@@ -6,9 +6,11 @@ from django.template import Template, Context
 import datetime
 from datetime import timedelta
 from organization.models import *
+import logging
 
 
-class Reporter(object):
+
+class EmailReporter(object):
     def __init___(self, host=None,username=None,password=None, use_tls=True,port=587):
         """The init uses gmail settings for outbound by default"""
         self.conn = SMTPConnection(port=port,

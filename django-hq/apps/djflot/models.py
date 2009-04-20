@@ -95,11 +95,13 @@ class RawGraph(models.Model):
             return len(cols)-1        
         
     def __clean_xcol(self, xval):
-        #ugly hack
+        #ugly hack to just clean the columns.
+        #right now the dates are being stored as strings in the db, hence the necessity to do this type of conversinos
+        #also, for the ticks in python we need to convert the ticks by 1000 for javascript to understand them (no milliseconds)
         if self.x_type == 'date':
-            return  time.mktime(time.strptime(str(xval[0:-4]),dbhelper.XMLDATE_FORMAT))
-        elif self.x_type == 'MM/DD/YYYY':
-            return time.mktime(time.strptime(str(xval),dbhelper.MMDDYYYY_FORMAT))
+            return  1000* time.mktime(time.strptime(str(xval[0:-4]),dbhelper.XMLDATE_FORMAT))
+        elif self.x_type == 'MM/DD/YYYY':   
+            return 1000*time.mktime(time.strptime(str(xval),dbhelper.MMDDYYYY_FORMAT))
         else:
             return xval.__str__()
   
@@ -114,6 +116,7 @@ class RawGraph(models.Model):
         
         if self.x_type == 'date' or self.x_type == 'MM/DD/YYYY':
             ret['mode'] = 'time'
+            ret['timeformat'] = "%m/%d/%y"
         elif self.x_type == 'string':
             ticks = self.helper_cache['ticks']
             
