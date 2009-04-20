@@ -8,6 +8,9 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+
+
 
 from datetime import timedelta
 from django.db import transaction
@@ -32,7 +35,20 @@ def show_submits(request, template_name="receiver/show_submits.html"):
     context = {}
     extuser = ExtUser.objects.get(id=request.user.id)
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-id')
-    context['submission_items'] = slogs    
+    
+    paginator = Paginator(slogs, 25) # Show 25 items per page
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    
+    try:
+        submits_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        submits_pages = paginator.page(paginator.num_pages)
+
+    
+    context['submissions'] = submits_pages    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 

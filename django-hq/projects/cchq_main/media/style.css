@@ -102,6 +102,7 @@ a:hover {
     margin: 8px 0;
     font-weight: normal;
     color: white;
+    float:left;
 }
 
 #currentlogin-block {
@@ -587,6 +588,9 @@ div.descendants ul {
 	list-style-type:None;
 }
 
+div.pagination {
+	float:right;
+	}
 
 div.container
 {

@@ -6,7 +6,7 @@
 <h2>{% trans "All Submissions" %}</h2>
    <table class="sofT">
    <tr><td class="helpHed">ID</td><td class="helpHed">Date</td><td class="helpHed">From</td><td class="helpHed">Size (bytes)</td><td class="helpHed">Attachments</td></tr>
-   {% for submission in submission_items %}      
+   {% for submission in submissions.object_list %}      
    	<tr>
    		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.id}}</a></td>
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
@@ -16,4 +16,20 @@
    	</tr>   	
    {% endfor %}
    </table>
+   
+   <div class="pagination">
+    <span class="step-links">
+        {% if submissions.has_previous %}
+            <a href="?page={{ submissions.previous_page_number }}"><< Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ submissions.number }} of {{ submissions.paginator.num_pages }}.
+        </span>
+
+        {% if submissions.has_next %}
+            <a href="?page={{ submissions.next_page_number }}">Next >></a>
+        {% endif %}
+    </span>
+</div>
 {% endblock %}
