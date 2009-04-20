@@ -26,7 +26,7 @@
 			<li><a href="/">Dashboard</a></li>			
             {% if user.is_superuser %}
             <li><a href="{% url organization.views.org_report %}">Reports</a></li>				
-            <li><a href="{% url organization.views.summary_trend %}">Charts</a></li>
+            <li><a href="{% url organization.views.domain_charts %}">Charts</a></li>
             <li><a href="{% url receiver.views.show_submits %}">Submissions</a></li>
             <li><a href="{% url xformmanager.views.register_xform %}">Schemas</a></li>
 

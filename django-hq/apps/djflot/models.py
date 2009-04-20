@@ -40,11 +40,11 @@ class RawGraph(models.Model):
     data_source = models.CharField(_('Database source'),max_length=128, null=True, blank=True, help_text=_("Placeholder for alternate database"))
     db_query = models.TextField(_('Database Query'), help_text=_("Database query that has at least 2 columns returned, the first one being the X axis, and the subsequent ones being the Y axis series"))
         
-    x_axis_label = models.CharField(_('X axis label'),max_length=34, help_text=_("Column 0 of the query will use this label")) 
-    x_type = models.CharField(max_length=24,choices=XAXIS_DISPLAY_TYPES)
+    x_axis_label = models.CharField(_('X axis label'),max_length=128, help_text=_("Column 0 of the query will use this label"), blank=True, null=True) 
+    x_type = models.CharField(max_length=32,choices=XAXIS_DISPLAY_TYPES)
     
     series_labels = models.CharField(_('Series labels'),max_length=255, help_text=_("Each subsequent column in the query will be its own series.  Enter their names separated by the | symbol."))
-    display_type = models.CharField(max_length=24,choices=CHART_DISPLAY_TYPES)
+    display_type = models.CharField(max_length=32,choices=CHART_DISPLAY_TYPES)
     
     series_options = models.CharField(_('Series display options'),max_length=255, blank=True, null=True)
     
@@ -214,9 +214,16 @@ class RawGraph(models.Model):
                 ret[indicator] = {}
                 ret[indicator]['label'] = indicator
                 ret[indicator]['data'] = []
-                ret[indicator]['lines'] = {'show':'true'}
+                
                 if is_cumulative:
                     total_hash[indicator] = 0
+                    ret[indicator]['lines'] = {'show':'true'}
+                    ret[indicator]['points'] = {'show':'false'}
+                else:
+                    ret[indicator]['lines'] = {'show':'false'}
+                    ret[indicator]['points'] = {'show':'true'}
+                
+                    
             
             if is_cumulative:
                 total_hash[indicator] = total_hash[indicator] + count

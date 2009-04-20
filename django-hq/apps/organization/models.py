@@ -6,11 +6,6 @@ from modelrelationship.models import *
 from monitorregistry.models import *
 
 
-
-
-
-
-
 class Domain(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=255, null=True, blank=True)

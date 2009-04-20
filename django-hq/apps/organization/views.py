@@ -20,6 +20,8 @@ from organization.models import *
 
 from django.contrib.auth.models import User 
 from django.contrib.contenttypes.models import ContentType
+import organization.utils as utils
+
 
 #from forms import *
 import logging
@@ -103,6 +105,22 @@ def register_xform(request, template_name="organization/register_xform.html"):
 @login_required()
 def manage_xforms(request, template_name="oranization/manage_xforms.html"):
     return''
+
+
+
+@login_required()
+def domain_charts(request, template_name="djflot/multi_graph.html"):
+    context = {}
+    extuser = ExtUser.objects.all().get(id=request.user.id)    
+    mycharts = utils.get_charts(extuser.domain)
+    print mycharts
+    if len(mycharts) == 0:
+        return summary_trend(request)
+    else:  
+        context['charts_to_show'] = mycharts
+        context['width'] = 900
+        context['height'] = 350
+        return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
 @login_required()
 def summary_trend(request, template_name="djflot/summary_trend.html"):    

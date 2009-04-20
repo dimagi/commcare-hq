@@ -2,7 +2,8 @@
 <div class="chartblock">
 <h1>{{chart.title}}</h1>
 <div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
-<p id="{{chart.id}}-choices">Show:</p>	
+<h4>Show Series</h4>
+<ul id="{{chart.id}}-choices"></ul>	
 </div>
 <script id="{{chart.id}}-source" language="javascript" type="text/javascript">
 $(function () {
@@ -40,8 +41,8 @@ $(function () {
     // insert checkboxes 
     var choiceContainer = $("#{{chart.id}}-choices");
     $.each(datasets, function(key, val) {
-        choiceContainer.append('<br/><input type="checkbox" name="' + key +
-                               '" checked="checked" >' + val.label + '</input>');
+        choiceContainer.append(' <li> <input type="checkbox" name="' + key +
+                               '" checked="checked" >' + val.label + '</input></li>');
     });
     choiceContainer.find("input").click(plotAccordingToChoices);
 
