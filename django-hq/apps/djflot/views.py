@@ -71,11 +71,22 @@ def inspector(request, table_name, template_name="djflot/table_inspector.html"):
 
 def view_rawgraph(request, graph_id, template_name="djflot/view_rawgraph.html"):
     context = {}    
-    context['dataset'] = [[0,0]]
+    context['rawgraph'] = RawGraph.objects.all().get(id=graph_id)
+    context['chart_title'] = context['rawgraph'].title
+    context['chart_data'] = context['rawgraph'].get_flot_data()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def show_rawgraphs(request, template_name="djflot/show_rawgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+def show_multi(request, template_name="djflot/multi_graph.html"):
+    context = {}    
+    context['width'] = 900
+    context['height'] = 350
+    context['charts_to_show'] = RawGraph.objects.all()
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+
 

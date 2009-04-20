@@ -1,21 +1,12 @@
-{% extends "djflot/flot_base.html" %}
 {% load i18n %}
-{% block chart_extras %}
-	
-	
-	<p id="choices">Show:</p>	
-	<!-- Zoom criteria selection not quite there yet
-	<p>Zoom to: <button id="whole">Whole period</button>
-	<button id="nineties">1990-2000</button>
-	<button id="ninetynine">1999</button></p>-->
-{%endblock%}
-		
-		
-{% block chart_script %}
-
-<script id="source" language="javascript" type="text/javascript">
+<div class="chartblock">
+<h1>{{chart.title}}</h1>
+<div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
+<p id="{{chart.id}}-choices">Show:</p>	
+</div>
+<script id="{{chart.id}}-source" language="javascript" type="text/javascript">
 $(function () {
-    var datasets = {{chart_data|safe}};
+    var datasets = {{chart.get_flot_data|safe}};
 
 //    var mindate = {{mindate}};
 //    var maxdate = {{maxdate}};
@@ -47,7 +38,7 @@ $(function () {
     //});
     
     // insert checkboxes 
-    var choiceContainer = $("#choices");
+    var choiceContainer = $("#{{chart.id}}-choices");
     $.each(datasets, function(key, val) {
         choiceContainer.append('<br/><input type="checkbox" name="' + key +
                                '" checked="checked" >' + val.label + '</input>');
@@ -65,11 +56,11 @@ $(function () {
         });
 
         if (data.length > 0)
-            $.plot($("#placeholder"), data, {{rawgraph.graph_options|safe}});
+            $.plot($("#{{chart.id}}-placeholder"), data, {{chart.graph_options|safe}});
     }
 
     plotAccordingToChoices();
 });
 </script>
-{%endblock%}
+
     

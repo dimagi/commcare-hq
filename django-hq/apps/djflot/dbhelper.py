@@ -11,8 +11,9 @@ int_type_codes = [3]
 date_type_codes = [12]
 bool_type_codes = [1]
 
-xmldate_format= '%Y-%m-%dT%H:%M:%S'
-output_format = '%Y-%m-%d %H:%M'
+MMDDYYYY_FORMAT= '%m/%d/%Y'
+XMLDATE_FORMAT= '%Y-%m-%dT%H:%M:%S'
+OUTPUT_DATE_FORMAT = '%Y-%m-%d %H:%M'
 
 
 def get_readable_date(sqldatestring):
@@ -49,10 +50,7 @@ def get_dategroup_expr(date_colname, startdate, enddate):
     
 def get_date_expr(date_colname,startdate, enddate):        
     """Get the date string expression you want for a select"""
-    
-    if len(self.date_columns) == 0:
-        raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
-    
+        
     delta = enddate-startdate            
     format_string = "'%%m/%%d/%%Y'"        
     date_func = ''
@@ -121,6 +119,11 @@ class DbHelper(object):
                 if self.date_columns.count(default_date) == 1:
                     self.default_date_column_id = date_columns.index(default_date)
     
+    @property
+    def default_date_column(self):
+        return self.date_columns[self.default_date_column_id]
+        
+    
     def __doquery(self,query):
         """Run the sql query and return the cursor"""
         cursor = connection.cursor()
@@ -138,7 +141,7 @@ class DbHelper(object):
         """return an array of all the unique values in a given column"""
         query = "select distinct(" + columname + ") from """ + self.tablename
         if startdate != None and enddate != None:
-            query += " WHERE " + self.__get_date_whereclause(startdate, enddate)
+            query += " WHERE " + get_date_whereclause(columname, startdate, enddate)
         rows = self.__doquery(query)
         ret = []        
         
@@ -193,7 +196,7 @@ class DbHelper(object):
             else:
                 wherestring += " %s=%s AND " % (key, valstring)            
         
-        query = "select count(*), " + self.__get_date_expr(startdate,enddate) + " from " + self.tablename + wherestring + self.__get_date_whereclause(startdate, enddate) + " group by " + self.__get_dategroup_expr(startdate,enddate) + " order by " + self.date_columns[self.default_date_column_id]
+        query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) + " from " + self.tablename + wherestring + get_date_whereclause(self.default_date_column, startdate, enddate) + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column 
         return self.__doquery(query)        
     
     #time.mktime(datetime.datetime.now().timetuple())
@@ -208,7 +211,7 @@ class DbHelper(object):
         
         #select date_format(timestart,'%d'), count(*) from formname group by DATE_FORMAT(timestart,'%d') order by date_format(timestart,'%d');
         #query = "select timeend, count(*) from " + self.tablename + " group by DATE_FORMAT(timeend,'%%m') order by timeend"
-        query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " + self.__get_dategroup_expr(startdate,enddate) + " order by " + self.date_columns[self.default_date_column_id]
+        query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column
         #query = 'select timeend, id from ' + self.tablename
         #print query
         rows = self.__doquery(query)
@@ -218,7 +221,7 @@ class DbHelper(object):
             ret.append([0,0])
         
         for row in rows:
-            datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
+            datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
             val = int(row[1])
             ret.append([datelong,val])
         
@@ -240,14 +243,14 @@ class DbHelper(object):
         dset = {}
         for seriesname in self.int_columns:
            subset = {}
-           query = 'select ' + self.date_columns[self.default_date_column_id] + ', ' + seriesname + ' from ' + self.tablename + ' order by ' + self.date_columns[self.default_date_column_id] + ' ASC'
+           query = 'select ' + self.default_date_column + ', ' + seriesname + ' from ' + self.tablename + ' order by ' + self.default_date_column + ' ASC'
            rows = self.__doquery(query)
            vals = []
            if len(rows) == 0:
                vals.append([0,0])
                
            for row in rows:
-               datelong= time.mktime(time.strptime(str(row[0][0:-4]),xmldate_format))
+               datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
                if row[1] != None:
                    val = int(row[1])
                else:
