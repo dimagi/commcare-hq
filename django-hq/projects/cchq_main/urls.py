@@ -18,7 +18,7 @@ urlpatterns = patterns('',
     (r'^receiver/', include('receiver.urls')),
     (r'^modelrelationship/', include('modelrelationship.urls')),
     (r'^xformmanager/', include('xformmanager.urls')),
-    (r'^charts/', include('djflot.urls')),
+    (r'^charts/', include('dbanalyzer.urls')),
     (r'^organization/', include('organization.urls')),    
     
 

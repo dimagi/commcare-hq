@@ -14,7 +14,7 @@ import xformmanager.adapter.querytools as qtools
 from organization.models import *
 import organization.utils as utils
 from datetime import timedelta
-import djflot.dbhelper as dbhelper
+import dbanalyzer.dbhelper as dbhelper
 
 register = template.Library()
 

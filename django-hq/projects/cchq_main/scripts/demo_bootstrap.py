@@ -45,124 +45,124 @@ def run():
     django_site_1.name = u'example.com'
     django_site_1.save()
     
-    from djflot.models import RawGraph
+    from dbanalyzer.models import RawGraph
 
-    djflot_rawgraph_1 = RawGraph()
-    djflot_rawgraph_1.shortname = u'User Daily Submissions'
-    djflot_rawgraph_1.title = u'Submissions by User (daily count)'
-    djflot_rawgraph_1.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_1.data_source = u''
-    djflot_rawgraph_1.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
-    djflot_rawgraph_1.x_axis_label = u'Date'
-    djflot_rawgraph_1.x_type = u'MM/DD/YYYY'
-    djflot_rawgraph_1.series_labels = u'Username'
-    djflot_rawgraph_1.display_type = u'compare-trend'
-    djflot_rawgraph_1.series_options = u''
-    djflot_rawgraph_1.save()
+    dbanalyzer_rawgraph_1 = RawGraph()
+    dbanalyzer_rawgraph_1.shortname = u'User Daily Submissions'
+    dbanalyzer_rawgraph_1.title = u'Submissions by User (daily count)'
+    dbanalyzer_rawgraph_1.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_1.data_source = u''
+    dbanalyzer_rawgraph_1.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    dbanalyzer_rawgraph_1.x_axis_label = u'Date'
+    dbanalyzer_rawgraph_1.x_type = u'MM/DD/YYYY'
+    dbanalyzer_rawgraph_1.series_labels = u'Username'
+    dbanalyzer_rawgraph_1.display_type = u'compare-trend'
+    dbanalyzer_rawgraph_1.series_options = u''
+    dbanalyzer_rawgraph_1.save()
 
-    djflot_rawgraph_2 = RawGraph()
-    djflot_rawgraph_2.shortname = u'Total User Submissions'
-    djflot_rawgraph_2.title = u'All Submissions by User'
-    djflot_rawgraph_2.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_2.data_source = u''
-    djflot_rawgraph_2.db_query = u'select distinct(username), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by username'
-    djflot_rawgraph_2.x_axis_label = u'Username'
-    djflot_rawgraph_2.x_type = u'string'
-    djflot_rawgraph_2.series_labels = u'count'
-    djflot_rawgraph_2.display_type = u'histogram-overall'
-    djflot_rawgraph_2.series_options = u''
-    djflot_rawgraph_2.save()
+    dbanalyzer_rawgraph_2 = RawGraph()
+    dbanalyzer_rawgraph_2.shortname = u'Total User Submissions'
+    dbanalyzer_rawgraph_2.title = u'All Submissions by User'
+    dbanalyzer_rawgraph_2.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_2.data_source = u''
+    dbanalyzer_rawgraph_2.db_query = u'select distinct(username), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by username'
+    dbanalyzer_rawgraph_2.x_axis_label = u'Username'
+    dbanalyzer_rawgraph_2.x_type = u'string'
+    dbanalyzer_rawgraph_2.series_labels = u'count'
+    dbanalyzer_rawgraph_2.display_type = u'histogram-overall'
+    dbanalyzer_rawgraph_2.series_options = u''
+    dbanalyzer_rawgraph_2.save()
 
-    djflot_rawgraph_3 = RawGraph()
-    djflot_rawgraph_3.shortname = u'Overall Submissions by User'
-    djflot_rawgraph_3.title = u'Overall Submissions by all users (cumulative)'
-    djflot_rawgraph_3.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_3.data_source = u''
-    djflot_rawgraph_3.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
-    djflot_rawgraph_3.x_axis_label = u'Date'
-    djflot_rawgraph_3.x_type = u'MM/DD/YYYY'
-    djflot_rawgraph_3.series_labels = u'0'
-    djflot_rawgraph_3.display_type = u'compare-cumulative'
-    djflot_rawgraph_3.series_options = u''
-    djflot_rawgraph_3.save()
+    dbanalyzer_rawgraph_3 = RawGraph()
+    dbanalyzer_rawgraph_3.shortname = u'Overall Submissions by User'
+    dbanalyzer_rawgraph_3.title = u'Overall Submissions by all users (cumulative)'
+    dbanalyzer_rawgraph_3.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_3.data_source = u''
+    dbanalyzer_rawgraph_3.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    dbanalyzer_rawgraph_3.x_axis_label = u'Date'
+    dbanalyzer_rawgraph_3.x_type = u'MM/DD/YYYY'
+    dbanalyzer_rawgraph_3.series_labels = u'0'
+    dbanalyzer_rawgraph_3.display_type = u'compare-cumulative'
+    dbanalyzer_rawgraph_3.series_options = u''
+    dbanalyzer_rawgraph_3.save()
 
-    djflot_rawgraph_4 = RawGraph()
-    djflot_rawgraph_4.shortname = u'Histogram of all referrals'
-    djflot_rawgraph_4.title = u'Overall Given Referrals'
-    djflot_rawgraph_4.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_4.data_source = u'commcarehq'
-    djflot_rawgraph_4.db_query = u'select distinct(referral_given), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by referral_given'
-    djflot_rawgraph_4.x_axis_label = u'val'
-    djflot_rawgraph_4.x_type = u'string'
-    djflot_rawgraph_4.series_labels = u'0'
-    djflot_rawgraph_4.display_type = u'histogram-overall'
-    djflot_rawgraph_4.series_options = u''
-    djflot_rawgraph_4.save()
+    dbanalyzer_rawgraph_4 = RawGraph()
+    dbanalyzer_rawgraph_4.shortname = u'Histogram of all referrals'
+    dbanalyzer_rawgraph_4.title = u'Overall Given Referrals'
+    dbanalyzer_rawgraph_4.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_4.data_source = u'commcarehq'
+    dbanalyzer_rawgraph_4.db_query = u'select distinct(referral_given), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by referral_given'
+    dbanalyzer_rawgraph_4.x_axis_label = u'val'
+    dbanalyzer_rawgraph_4.x_type = u'string'
+    dbanalyzer_rawgraph_4.series_labels = u'0'
+    dbanalyzer_rawgraph_4.display_type = u'histogram-overall'
+    dbanalyzer_rawgraph_4.series_options = u''
+    dbanalyzer_rawgraph_4.save()
 
-    djflot_rawgraph_5 = RawGraph()
-    djflot_rawgraph_5.shortname = u'Global Referral Trends'
-    djflot_rawgraph_5.title = u'Global Referral Trends (cumulative)'
-    djflot_rawgraph_5.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_5.data_source = u''
-    djflot_rawgraph_5.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
-    djflot_rawgraph_5.x_axis_label = u''
-    djflot_rawgraph_5.x_type = u'MM/DD/YYYY'
-    djflot_rawgraph_5.series_labels = u'asdf'
-    djflot_rawgraph_5.display_type = u'compare-cumulative'
-    djflot_rawgraph_5.series_options = u''
-    djflot_rawgraph_5.save()
+    dbanalyzer_rawgraph_5 = RawGraph()
+    dbanalyzer_rawgraph_5.shortname = u'Global Referral Trends'
+    dbanalyzer_rawgraph_5.title = u'Global Referral Trends (cumulative)'
+    dbanalyzer_rawgraph_5.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_5.data_source = u''
+    dbanalyzer_rawgraph_5.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+    dbanalyzer_rawgraph_5.x_axis_label = u''
+    dbanalyzer_rawgraph_5.x_type = u'MM/DD/YYYY'
+    dbanalyzer_rawgraph_5.series_labels = u'asdf'
+    dbanalyzer_rawgraph_5.display_type = u'compare-cumulative'
+    dbanalyzer_rawgraph_5.series_options = u''
+    dbanalyzer_rawgraph_5.save()
 
-    djflot_rawgraph_6 = RawGraph()
-    djflot_rawgraph_6.shortname = u'Global Daily Referral Count'
-    djflot_rawgraph_6.title = u'Global Report of Inbound Referrals (daily count)'
-    djflot_rawgraph_6.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_6.data_source = u''
-    djflot_rawgraph_6.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
-    djflot_rawgraph_6.x_axis_label = u''
-    djflot_rawgraph_6.x_type = u'MM/DD/YYYY'
-    djflot_rawgraph_6.series_labels = u'referral'
-    djflot_rawgraph_6.display_type = u'compare-trend'
-    djflot_rawgraph_6.series_options = u''
-    djflot_rawgraph_6.save()
+    dbanalyzer_rawgraph_6 = RawGraph()
+    dbanalyzer_rawgraph_6.shortname = u'Global Daily Referral Count'
+    dbanalyzer_rawgraph_6.title = u'Global Report of Inbound Referrals (daily count)'
+    dbanalyzer_rawgraph_6.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_6.data_source = u''
+    dbanalyzer_rawgraph_6.db_query = u"select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+    dbanalyzer_rawgraph_6.x_axis_label = u''
+    dbanalyzer_rawgraph_6.x_type = u'MM/DD/YYYY'
+    dbanalyzer_rawgraph_6.series_labels = u'referral'
+    dbanalyzer_rawgraph_6.display_type = u'compare-trend'
+    dbanalyzer_rawgraph_6.series_options = u''
+    dbanalyzer_rawgraph_6.save()
 
-    djflot_rawgraph_7 = RawGraph()
-    djflot_rawgraph_7.shortname = u'cumulative line'
-    djflot_rawgraph_7.title = u'cumulative line'
-    djflot_rawgraph_7.table_name = u'fasdfwdrf'
-    djflot_rawgraph_7.data_source = u''
-    djflot_rawgraph_7.db_query = u'select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
-    djflot_rawgraph_7.x_axis_label = u'time'
-    djflot_rawgraph_7.x_type = u'date'
-    djflot_rawgraph_7.series_labels = u'0|1'
-    djflot_rawgraph_7.display_type = u'cumulative-line'
-    djflot_rawgraph_7.series_options = u''
-    djflot_rawgraph_7.save()
+    dbanalyzer_rawgraph_7 = RawGraph()
+    dbanalyzer_rawgraph_7.shortname = u'cumulative line'
+    dbanalyzer_rawgraph_7.title = u'cumulative line'
+    dbanalyzer_rawgraph_7.table_name = u'fasdfwdrf'
+    dbanalyzer_rawgraph_7.data_source = u''
+    dbanalyzer_rawgraph_7.db_query = u'select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
+    dbanalyzer_rawgraph_7.x_axis_label = u'time'
+    dbanalyzer_rawgraph_7.x_type = u'date'
+    dbanalyzer_rawgraph_7.series_labels = u'0|1'
+    dbanalyzer_rawgraph_7.display_type = u'cumulative-line'
+    dbanalyzer_rawgraph_7.series_options = u''
+    dbanalyzer_rawgraph_7.save()
 
-    djflot_rawgraph_8 = RawGraph()
-    djflot_rawgraph_8.shortname = u'absolute line'
-    djflot_rawgraph_8.title = u'absolute line'
-    djflot_rawgraph_8.table_name = u'sadf'
-    djflot_rawgraph_8.data_source = u'asdf'
-    djflot_rawgraph_8.db_query = u'select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
-    djflot_rawgraph_8.x_axis_label = u'Time'
-    djflot_rawgraph_8.x_type = u'date'
-    djflot_rawgraph_8.series_labels = u'1|2'
-    djflot_rawgraph_8.display_type = u'absolute-line'
-    djflot_rawgraph_8.series_options = u''
-    djflot_rawgraph_8.save()
+    dbanalyzer_rawgraph_8 = RawGraph()
+    dbanalyzer_rawgraph_8.shortname = u'absolute line'
+    dbanalyzer_rawgraph_8.title = u'absolute line'
+    dbanalyzer_rawgraph_8.table_name = u'sadf'
+    dbanalyzer_rawgraph_8.data_source = u'asdf'
+    dbanalyzer_rawgraph_8.db_query = u'select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
+    dbanalyzer_rawgraph_8.x_axis_label = u'Time'
+    dbanalyzer_rawgraph_8.x_type = u'date'
+    dbanalyzer_rawgraph_8.series_labels = u'1|2'
+    dbanalyzer_rawgraph_8.display_type = u'absolute-line'
+    dbanalyzer_rawgraph_8.series_options = u''
+    dbanalyzer_rawgraph_8.save()
 
-    djflot_rawgraph_9 = RawGraph()
-    djflot_rawgraph_9.shortname = u'absolute bar'
-    djflot_rawgraph_9.title = u'absolute bar'
-    djflot_rawgraph_9.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
-    djflot_rawgraph_9.data_source = u'commcarehq'
-    djflot_rawgraph_9.db_query = u'select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
-    djflot_rawgraph_9.x_axis_label = u'Time'
-    djflot_rawgraph_9.x_type = u'date'
-    djflot_rawgraph_9.series_labels = u'Children|Babies'
-    djflot_rawgraph_9.display_type = u'absolute-bar'
-    djflot_rawgraph_9.series_options = u''
-    djflot_rawgraph_9.save()
+    dbanalyzer_rawgraph_9 = RawGraph()
+    dbanalyzer_rawgraph_9.shortname = u'absolute bar'
+    dbanalyzer_rawgraph_9.title = u'absolute bar'
+    dbanalyzer_rawgraph_9.table_name = u'x_http__www_commcare_org_brac_chp_homevisit_v0_0_1'
+    dbanalyzer_rawgraph_9.data_source = u'commcarehq'
+    dbanalyzer_rawgraph_9.db_query = u'select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;'
+    dbanalyzer_rawgraph_9.x_axis_label = u'Time'
+    dbanalyzer_rawgraph_9.x_type = u'date'
+    dbanalyzer_rawgraph_9.series_labels = u'Children|Babies'
+    dbanalyzer_rawgraph_9.display_type = u'absolute-bar'
+    dbanalyzer_rawgraph_9.series_options = u''
+    dbanalyzer_rawgraph_9.save()
 
     
     from modelrelationship.models import EdgeType
@@ -198,7 +198,7 @@ def run():
     modelrelationship_edgetype_5.directional = True
     modelrelationship_edgetype_5.name = u'Domain Chart'
     modelrelationship_edgetype_5.description = u'Domain Chart'
-    modelrelationship_edgetype_5.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edgetype_5.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edgetype_5.parent_type = ContentType.objects.get(app_label="organization", model="domain")
     modelrelationship_edgetype_5.save()
 
@@ -301,7 +301,7 @@ def run():
     modelrelationship_edge_12.save()
     
     modelrelationship_edge_13 = Edge()
-    modelrelationship_edge_13.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_13.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_13.child_id = 5L
     modelrelationship_edge_13.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_13.parent_type = ContentType.objects.get(app_label="organization", model="domain")
@@ -309,7 +309,7 @@ def run():
     modelrelationship_edge_13.save()
 
     modelrelationship_edge_14 = Edge()
-    modelrelationship_edge_14.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_14.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_14.child_id = 4L
     modelrelationship_edge_14.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_14.parent_type = ContentType.objects.get(app_label="organization", model="domain")
@@ -317,7 +317,7 @@ def run():
     modelrelationship_edge_14.save()
 
     modelrelationship_edge_15 = Edge()
-    modelrelationship_edge_15.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_15.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_15.child_id = 1L
     modelrelationship_edge_15.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_15.parent_type = ContentType.objects.get(app_label="organization", model="domain")
@@ -325,7 +325,7 @@ def run():
     modelrelationship_edge_15.save()
 
     modelrelationship_edge_16 = Edge()
-    modelrelationship_edge_16.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_16.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_16.child_id = 2L
     modelrelationship_edge_16.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_16.parent_type = ContentType.objects.get(app_label="organization", model="domain")
@@ -333,7 +333,7 @@ def run():
     modelrelationship_edge_16.save()
 
     modelrelationship_edge_17 = Edge()
-    modelrelationship_edge_17.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_17.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_17.child_id = 3L
     modelrelationship_edge_17.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_17.parent_type = ContentType.objects.get(app_label="organization", model="domain")
@@ -341,7 +341,7 @@ def run():
     modelrelationship_edge_17.save()
 
     modelrelationship_edge_18 = Edge()
-    modelrelationship_edge_18.child_type = ContentType.objects.get(app_label="djflot", model="rawgraph")
+    modelrelationship_edge_18.child_type = ContentType.objects.get(app_label="dbanalyzer", model="rawgraph")
     modelrelationship_edge_18.child_id = 6L
     modelrelationship_edge_18.relationship = modelrelationship_edgetype_5
     modelrelationship_edge_18.parent_type = ContentType.objects.get(app_label="organization", model="domain")

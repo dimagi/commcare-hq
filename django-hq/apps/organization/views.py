@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 
 from datetime import timedelta
 from django.db import transaction
-from djflot import dbhelper
+from dbanalyzer import dbhelper
 
 from xformmanager.models import *
 from modelrelationship.models import *
@@ -109,7 +109,7 @@ def manage_xforms(request, template_name="oranization/manage_xforms.html"):
 
 
 @login_required()
-def domain_charts(request, template_name="djflot/multi_graph.html"):
+def domain_charts(request, template_name="dbanalyzer/multi_graph.html"):
     context = {}
     extuser = ExtUser.objects.all().get(id=request.user.id)    
     mycharts = utils.get_charts(extuser.domain)
@@ -122,7 +122,7 @@ def domain_charts(request, template_name="djflot/multi_graph.html"):
         return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
 @login_required()
-def summary_trend(request, template_name="djflot/summary_trend.html"):    
+def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):    
     context = {}        
     
     formname = ''

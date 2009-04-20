@@ -16,7 +16,7 @@ import organization.utils as utils
 from xformmanager.models import *
 import time
 from datetime import timedelta
-import djflot.dbhelper as dbhelper
+import dbanalyzer.dbhelper as dbhelper
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
@@ -160,6 +160,8 @@ def render_edgetree_as_table(arr, direction, startdate, enddate, depth):
         else:            
             if edge == None:            
                 edge = edges
+            if edge.relationship.name == "Domain Chart":    #ugly hack.  we need to constrain by the relationship types we want to do
+                return fullret
             if edge.relationship != prior_edgetype:      
                 if group_edge:
                     group_edge = False

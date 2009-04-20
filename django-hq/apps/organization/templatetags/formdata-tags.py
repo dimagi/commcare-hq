@@ -11,7 +11,7 @@ import modelrelationship.traversal as traversal
 from modelrelationship.models import *
 
 from organization.models import *
-import djflot.dbhelper as dbhelper  
+import dbanalyzer.dbhelper as dbhelper  
 
 import xformmanager.adapter.querytools as qtools
 

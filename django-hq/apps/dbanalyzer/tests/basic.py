@@ -7,8 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 
 
-from djflot.models import *
-import djflot.dbhelper as dbhelper
+from dbanalyzer.models import *
+import dbanalyzer.dbhelper as dbhelper
 
 class BasicTestCase(unittest.TestCase):
     def setup(self):

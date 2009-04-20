@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
 from xformmanager.models import *
-from djflot import dbhelper
+from dbanalyzer import dbhelper
 from django.utils.encoding import *
 from organization.models import *
 
@@ -28,7 +28,7 @@ import sys
 import os
 import string
 
-def flot_example(request, template_name="djflot/flot_example.html"):    
+def flot_example(request, template_name="dbanalyzer/flot_example.html"):    
     context = {}        
     context['chart_title'] = 'Sample Chart'
     context['usa_datapoint'] = 'usa'
@@ -38,7 +38,7 @@ def flot_example(request, template_name="djflot/flot_example.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
-def inspector(request, table_name, template_name="djflot/table_inspector.html"):
+def inspector(request, table_name, template_name="dbanalyzer/table_inspector.html"):
     context = {}
     context['table_name'] = table_name
     
@@ -69,19 +69,19 @@ def inspector(request, table_name, template_name="djflot/table_inspector.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
     
 
-def view_rawgraph(request, graph_id, template_name="djflot/view_rawgraph.html"):
+def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.html"):
     context = {}    
     context['rawgraph'] = RawGraph.objects.all().get(id=graph_id)
     context['chart_title'] = context['rawgraph'].title
     context['chart_data'] = context['rawgraph'].get_flot_data()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def show_rawgraphs(request, template_name="djflot/show_rawgraphs.html"):
+def show_rawgraphs(request, template_name="dbanalyzer/show_rawgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def show_multi(request, template_name="djflot/multi_graph.html"):
+def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
     context = {}    
     context['width'] = 900
     context['height'] = 350

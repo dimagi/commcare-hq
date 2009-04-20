@@ -7,7 +7,7 @@
    <tr><td class="helpHed">ID</td><td class="helpHed">Shortname</td><td class="helpHed">Full Description</td></tr>
    {% for graph in allgraphs %}      
    	<tr>
-   		<td><a href="{%url djflot.views.view_rawgraph graph.id %}">{{graph.id}}</a></td>
+   		<td><a href="{%url dbanalyzer.views.view_rawgraph graph.id %}">{{graph.id}}</a></td>
    		<td>{{graph.shortname}}</td>
    		<td>{{graph.title}}</td>   		
    	</tr>   	

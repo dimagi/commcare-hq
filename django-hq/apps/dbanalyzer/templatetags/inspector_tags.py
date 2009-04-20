@@ -4,7 +4,7 @@ import modelrelationship.traversal as traversal
 from django.template import Library, Node
 
 
-from djflot import dbhelper
+from dbanalyzer import dbhelper
 register = template.Library()
 
 import time
@@ -117,7 +117,7 @@ def get_distinct_values_for_column(parser, token):
 @register.simple_tag
 def build_next_url(table_name, str_column = None, str_column_value = None, datetime_column = None, data_column = None, display_mode = None):
     #reverse('view_content_item', kwargs= {}),ctype.id,edge[0].id,edge[0])
-    baseurl = reverse('djflot.views.inspector',kwargs={'table_name':table_name}) + "?"
+    baseurl = reverse('dbanalyzer.views.inspector',kwargs={'table_name':table_name}) + "?"
     if str_column:
         baseurl += "str_column=%s" % (str_column)    
     if str_column_value:
