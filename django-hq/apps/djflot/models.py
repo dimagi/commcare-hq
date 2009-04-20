@@ -262,7 +262,6 @@ class RawGraph(models.Model):
 #        return ret
     
     def get_flot_data(self):        
-        print self.display_type
         if self.display_type == 'histogram-overall':
             return self.__overall_histogram()
         elif self.display_type.startswith('compare'):

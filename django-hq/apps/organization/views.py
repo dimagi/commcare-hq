@@ -113,7 +113,6 @@ def domain_charts(request, template_name="djflot/multi_graph.html"):
     context = {}
     extuser = ExtUser.objects.all().get(id=request.user.id)    
     mycharts = utils.get_charts(extuser.domain)
-    print mycharts
     if len(mycharts) == 0:
         return summary_trend(request)
     else:  
