@@ -32,6 +32,9 @@ import sys
 import os
 import string
 
+import modelrelationship.traversal as traversal
+import organization.reporter.inspector as repinspector
+
 @login_required()
 def dashboard(request, template_name="organization/dashboard.html"):
     context = {}
@@ -53,6 +56,7 @@ def dashboard(request, template_name="organization/dashboard.html"):
             
     context['startdate'] = startdate
     context['enddate'] = enddate
+    context['view_name'] = 'organization.views.dashboard'
     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
@@ -95,7 +99,19 @@ def org_report(request, template_name="organization/org_report.html"):
     
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
-    context['domain'] = extuser.domain        
+    context['domain'] = extuser.domain
+    
+    ctype = ContentType.objects.get_for_model(extuser.domain)
+    root_orgs = Edge.objects.all().filter(parent_type=ctype,parent_id=extuser.domain.id,relationship__name='is domain root')
+    root_org = root_orgs[0]    
+    hierarchy = traversal.getDescendentEdgesForObject(root_org.parent_object)  #if we do domain, we go too high
+    
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+    context['results'] = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)
+    context['view_name'] = 'organization.views.org_report'
+    day_count_hash = {}
+    
+            
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()

@@ -26,15 +26,20 @@ CHART_DISPLAY_TYPES = (
     ('histogram-overall', 'Overall Histogram'),
     
     ('compare-trend', 'Field Compare'),
-    ('compare-cumulative', 'Field Compare Cumulative'),
-    
+    ('compare-cumulative', 'Field Compare Cumulative'),    
 )
 
 
-
-class RawGraph(models.Model):    
+class BaseGraph(models.Model):
     shortname = models.CharField(max_length=32)
     title = models.CharField(max_length=128)
+    
+    def __unicode__(self):
+        return "Graph: " + unicode(self.shortname)
+
+class RawGraph(BaseGraph):    
+#    shortname = models.CharField(max_length=32)
+#    title = models.CharField(max_length=128)
     table_name = models.CharField(max_length=255)
     
     data_source = models.CharField(_('Database source'),max_length=128, null=True, blank=True, help_text=_("Placeholder for alternate database"))
@@ -287,6 +292,26 @@ class RawGraph(models.Model):
         
     
     
+class GraphGroup(models.Model):
+    name = models.CharField(max_length=128)    
+    description = models.CharField(max_length=255)    
+    graphs = models.ManyToManyField(BaseGraph, blank=True, null=True)
+    parent_group = models.ForeignKey('self',null=True,blank=True)
     
+    def __unicode__(self):
+        return unicode(self.name)
+    
+    def num_graphs(self):
+        return self.graphs.count()
+    
+class GraphPref(models.Model):
+    user = models.ForeignKey(User)
+    root_graphs = models.ManyToManyField(GraphGroup,limit_choices_to ={'parent_group':None})
+    
+    def num_groups(self):
+        return self.root_graphs.count()
+
+    def __unicode__(self):
+        return u"GraphPref: " + unicode(user.name)
     
     

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block script_includes %}
+    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.flot.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}flot/excanvas.min.js"></script><![endif]--> 
+    {{ form.media }}
+{% endblock %} 
+
+{% block content %}
+<h2> Subgroups</h2>
+<ul>
+{% for group in child_groups %}
+<li>
+   	<a href="{%url dbanalyzer.views.view_group group.id %}">{{group.id}}</a>
+   	<br>{{grp.name}}
+   	<br>{{grp.description}}   		
+   	<br>{{grp.num_graphs}}   	
+</li>   	
+
+{% endfor %}
+</ul>
+<h2>Charts</h2>
+	{% for chart in group_charts %}
+		{% include "dbanalyzer/inline_rawgraph.html" %}
+	{%endfor %}
+{%endblock%}

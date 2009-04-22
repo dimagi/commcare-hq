@@ -66,8 +66,7 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
     context['data_column'] = data_column
     context['display_mode'] = display_mode    
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
-    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
 def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.html"):
     context = {}    
@@ -88,5 +87,16 @@ def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
     context['charts_to_show'] = RawGraph.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+def view_groups(request, template_name="dbanalyzer/view_groups.html"):
+    context = {}    
+    context['groups'] = GraphGroup.objects.all()
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
+    context = {}    
+    group = GraphGroup.objects.all().get(id=group_id)
+    context['group'] = group    
+    context['group_charts'] = group.graphs.all()    
+    context['child_groups'] = GraphGroup.objects.all().filter(parent_group=group)
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
 

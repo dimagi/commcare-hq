@@ -8,16 +8,16 @@ from datetime import timedelta
 from organization.models import *
 import logging
 import urllib2
+import settings
 
-class ClickatellReporter(object):
+class ClickatellAgent(object):
     def __init__(self):
-        self.clickatell_url = "http://api.clickatell.com/http/sendmsg?user=%s&password=%s&api_id=%s&to=%s&text=%s&mo=%s&from=%s"
-        self.clickatell_user = "dimagi"
-        self.clickatell_password = "alpha123"
-        self.clickatell_api_id = "3157202"
-        self.clickatell_mo = "1"
-        self.clickatell_number = "45609910343"
-        self.clickatell = "clickatell"
+        self.clickatell_url = settings.CLICKATELL_URL 
+        self.clickatell_user = settings.CLICKATELL_USER
+        self.clickatell_password = settings.CLICKATELL_PASSWORD
+        self.clickatell_api_id = settings.CLICKATELL_API_ID
+        self.clickatell_mo = settings.CLICKATELL_MO 
+        self.clickatell_number = settings.CLICKATELL_NUMBER
     
     #MessageForm = phone_number, body, outgoing (bool), 
     def send (self,phone_number, body, is_outgoing=True):
@@ -41,38 +41,31 @@ class ClickatellReporter(object):
         #return render_to_response('shared/spitback.html', {'value' : url } )
 
 
-class EmailReporter(object):
-    def __init___(self, host=None,username=None,password=None, use_tls=True,port=587):
+class EmailAgent(object):
+    def __init___(self):
         """The init uses gmail settings for outbound by default"""
-        self.conn = SMTPConnection(port=port,
-                                   host=host,
-                                   password=password,
-                                   use_tls=use_tls,
+        self.conn = SMTPConnection(username=settings.EMAIL_LOGIN,
+                                   port=settings.EMAIL_SMTP_PORT,
+                                   host=settings.EMAIL_SMTP_HOST,
+                                   password=settings.EMAIL_PASSWORD,
+                                   use_tls=True,
                                    fail_silently=False)
         
-    def send_supervisor_dailyreport(self, supervisor_user):
+    def send_email(self, recipients, msg_payload):
         default_delta = timedelta(days=1)
         enddate = datetime.now()
         startdate = datetime.now() - default_delta    
             
-        rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})
-        
-        conn = SMTPConnection(port=587,
-                              host='smtp.gmail.com',
-                              username='dmyung@dimagi.com',
-                              password='',
-                              use_tls=True,
-                              fail_silently=False)                  
-        
-        
+        #rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})
+                
         msg = EmailMessage('test from djanago', #subj 
-                           "Test Daily Report", #body
-                           'dmyung@dimagi.com', #from
-                           ['dmyung@dimagi.com'],#to
-                           connection=conn
+                           msg_payload, #body
+                           settings.EMAIL_LOGIN, #from
+                           recipients,#to
+                           connection=self.conn
                            )
         
                            
-        attachname = 'report%s.html' % enddate.strftime('%Y-%m-%d')
-        msg.attach(attachname,rendered,"text/html")
+        #attachname = 'report%s.html' % enddate.strftime('%Y-%m-%d')
+        #msg.attach(attachname,rendered,"text/html")
         msg.send(fail_silently=False)

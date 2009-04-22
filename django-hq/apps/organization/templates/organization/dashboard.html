@@ -1,14 +1,13 @@
 {% extends "organization/base.html" %}
 {% load i18n %}
-{% load organization_tags %}
 {% load dashboard_tags %}
+{% load mainreport_tags %}
+
 {% block head_title %}{% trans "My Dashboard" %}{% endblock %}
 {% block org_content %}
+
 <h2>{%trans "Activity Dashboard"%} :: {{startdate|date}} - {{enddate|date}}</h2>
-	{% get_daterange_links %}	
-	
-	<h3>{%trans "Forms Submitted" %}</h3>
-	
-	
-	{% get_dashboard_user_counts user startdate enddate %}
+	{% get_daterange_links view_name %}		
+	<h3>{%trans "Forms Submitted" %}</h3>	
+	{% get_dashboard_user_counts user startdate enddate %}	
 {% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block head_title %}{% trans "All Graph Groups" %}{% endblock %}
+{% block content %}
+<h2>{% trans "All Graph Groups" %}</h2>
+   <table class="sofT">
+   <tr><td class="helpHed">ID</td><td class="helpHed">Shortname</td><td class="helpHed">Full Description</td><td class="helpHed">Subgroups</td><td class="helpHed">Parent</td></tr>
+   {% for grp in groups %}      
+   	<tr>
+   		<td><a href="{%url dbanalyzer.views.view_group grp.id %}">{{grp.id}}</a></td>
+   		<td>{{grp.name}}</td>
+   		<td>{{grp.description}}</td>   		
+   		<td>{{grp.num_graphs}}</td>
+   		{% if grp.parent_group %}
+   		<td><a href="{%url dbanalyzer.views.view_group grp.parent_group.id %}"> {{grp.parent_group}}</a> </td>
+   		{% else %}
+   		<td>None</td>
+   		{% endif %}
+   	</tr>   	
+   {% endfor %}
+   </table>
+{% endblock %}
