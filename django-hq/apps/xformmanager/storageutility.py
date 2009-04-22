@@ -8,6 +8,7 @@ import settings
 import logging
 import re
 import os
+import string
 
 from stat import S_ISREG, ST_MODE
 import sys
@@ -310,6 +311,7 @@ class StorageUtility(object):
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here
     def __sanitize(self, name):
+        name = string.replace(name,'-','_')
         if name.lower() == "where" or name.lower() == "when":
             return "_" + name
         else:
