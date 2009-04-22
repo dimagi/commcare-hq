@@ -29,8 +29,7 @@ def get_membership(extuser):
         if parent_edge.relationship.id == MEMBER_EDGE_TYPE: 
             membership.append(parent_edge.parent_object)                    
     return membership
-    
-    
+
 def get_members(organization):
     """return an array of members in an organization"""
     (parents, children) = traversal.getImmediateRelationsForObject(organization)
@@ -50,8 +49,7 @@ def get_charts(domain):
         if child_edge.relationship.name == "Domain Chart":
             charts.append(child_edge.child)
     return charts
-
-
+    
 
 def get_members_and_supervisors(organization):
     """Return a tuple (members[], supervisors[]) for a given organization"""

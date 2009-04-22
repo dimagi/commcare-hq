@@ -13,5 +13,5 @@ class Job(WeeklyJob):
 
 
     def execute(self):
-        reporter.run_supervisor_reports('weekly')
+        reporter.run_all_reports('weekly')
         pass
