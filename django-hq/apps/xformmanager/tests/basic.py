@@ -48,7 +48,7 @@ class BasicTestCase(unittest.TestCase):
         if settings.DATABASE_ENGINE=='mysql' :
             self.assertEquals(row[4],Decimal("3.20"))
         else:
-            self.assertAlmostEquals(row[4],float("3.20"))
+            self.assertEquals(row[4],float("3.20"))
         self.assertEquals(row[5],2002.09)
         if settings.DATABASE_ENGINE=='mysql' :
             self.assertEquals(row[6],date(2002,9,24) )
