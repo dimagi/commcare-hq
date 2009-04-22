@@ -3,9 +3,11 @@
 	<UserID>userid0</UserID>
 	<DeviceID>111</DeviceID>
 	<TimeStartRecorded>222</TimeStartRecorded>
-	<TimeEndRecorded>3.2</TimeEndRecorded>
+	<TimeEndRecorded>3.20</TimeEndRecorded>
 	<Date>2002-09-24</Date>
 	<Prov>2002.09</Prov>
-	<Whereother>2007-12-31 23:59:59.999999</Whereother>
+	<Date>2002-09-24</Date>
+	<Time>12:24:48</Time>
+	<DateTime>2007-12-31T23:59:59.11199</DateTime>
 </root>
 

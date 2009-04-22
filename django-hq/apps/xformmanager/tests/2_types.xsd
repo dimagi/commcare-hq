@@ -7,9 +7,10 @@
 	                    <element name="DeviceID" type="integer"/>
 	                    <element name="TimeStartRecorded" type="int"/>
 			 		    <element name="TimeEndRecorded" type="decimal"/>
-			 		    <element name="Date" minOccurs="0" type="date" />
 	                    <element name="Prov" minOccurs="0" type="double" />
-	                    <element name="Whereother" minOccurs="0" type="dateTime" />
+			 		    <element name="Date" minOccurs="0" type="date" />
+			 		    <element name="Time" minOccurs="0" type="time" />
+	                    <element name="DateTime" minOccurs="0" type="dateTime" />
 					    <!--<element name="LocWCHC" minOccurs="0" type="listItem" />-->
 					    <!--<element name="LocWCHCother" minOccurs="0" type="listItems" />-->
                   </sequence>

@@ -21,17 +21,39 @@ class StorageUtility(object):
     # should pull this out into a rsc file...
     
     # Data types taken from mysql. 
-    # This should really draw from django biult-in utilities which are database independent. 
-    XSD_TO_DB_TYPES = {
+    # This should really draw from django built-in utilities which are database independent. 
+    XSD_TO_MYSQL_TYPES = {
         'string':'VARCHAR(255)',
         'integer':'INT(11)',
         'int':'INT(11)',
         'decimal':'DECIMAL(5,2)',
         'double':'DOUBLE',
         'float':'DOUBLE',
-        'dateTime':'DATETIME', # string
-        'date':'INT(11)', # string
+        'datetime':'DATETIME', # string
+        'date':'DATE', # string
         'time':'TIME', # string
+        'gyear':'INT(11)',
+        'gmonth':'INT(11)',
+        'gday':'INT(11)',
+        'gyearmonth':'INT(11)',
+        'gmonthday':'INT(11)',
+        'boolean':'TINYINT(1)',
+        'base64binary':'DOUBLE', #i don't know...
+        'hexbinary':'DOUBLE', #..meh.
+        'anyuri':'VARCHAR(200)', # string
+        'default':'VARCHAR(255)',
+    } 
+
+    XSD_TO_DEFAULT_TYPES = { #sqlite3 compliant
+        'string':'VARCHAR(255)',
+        'integer':'INT(11)',
+        'int':'INT(11)',
+        'decimal':'DECIMAL(5,2)',
+        'double':'DOUBLE',
+        'float':'DOUBLE',
+        'datetime':'DateField', # string
+        'date':'DateField', # string
+        'time':'DateField', # string
         'gyear':'INT(11)',
         'gmonth':'INT(11)',
         'gday':'INT(11)',
@@ -49,13 +71,13 @@ class StorageUtility(object):
         'int',
         'decimal',
         'double',
-        'float'
-        'dateTime',
+        'float',
+        'datetime',
         'date',
-        'time'
+        'time',
         'gyear',
         'gmonthday',
-        'boolean'
+        'boolean',
         'base64binary',
         'hexbinary',
     )
@@ -285,10 +307,16 @@ class StorageUtility(object):
         return str(child_name)
         
     def __get_db_type(self, type):
-        if type.lower() in self.XSD_TO_DB_TYPES: 
-            return self.XSD_TO_DB_TYPES[type]
-        else: 
-            return self.XSD_TO_DB_TYPES['default']
+        if settings.DATABASE_ENGINE=='mysql' :
+            if type in self.XSD_TO_MYSQL_TYPES: 
+                return self.XSD_TO_MYSQL_TYPES[type]
+            return self.XSD_TO_MYSQL_TYPES['default']
+        else:
+            if type in self.XSD_TO_DEFAULT_TYPES: 
+                return self.XSD_TO_DEFAULT_TYPES[type]
+            return self.XSD_TO_DEFAULT_TYPES['default']
+
+        
         
     def __db_format(self, type, text):
         if text == '':
@@ -304,9 +332,17 @@ class StorageUtility(object):
                 except:
                     logging.error("Error validating type %s with value %s, object is not a %s" % (type,text,str(typefunc)))
                     return '0'
+            elif type == "datetime" :
+                text = string.replace(text,'T',' ')
+                if settings.DATABASE_ENGINE!='mysql' :
+                    # truncate microseconds
+                    index = text.rfind('.')
+                    if index != -1:
+                        text = text[0:index]
+                return "'" + text.strip() + "'"
             else:
                 return "'" + text.strip() + "'"        
-        else:            
+        else:
             return "'" + text.strip() + "'"
 
     # todo: put all sorts of useful db fieldname sanitizing stuff in here

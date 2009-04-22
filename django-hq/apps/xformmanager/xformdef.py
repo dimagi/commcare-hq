@@ -70,6 +70,7 @@ class FormDef(ElementDef):
     def __populateElementFields(self, element, input_node, xpath):
         if not element.name: element.name = input_node.get('name')
         element.type = input_node.get('type')
+        if element.type is not None: element.type = element.type.lower()
         element.min_occurs = input_node.get('minOccurs')
         element.tag = input_node.tag
         if xpath: element.xpath = xpath + "/x:" + element.name
