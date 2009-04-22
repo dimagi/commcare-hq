@@ -13,12 +13,11 @@ COMMCARE_THEME = 'default'
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-#DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
-#DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
-#DATABASE_USER = 'root'             # Not used with sqlite3.
-#DATABASE_PASSWORD = 'password'         # Not used with sqlite3.
+DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+#DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
+DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
+DATABASE_USER = 'root'             # Not used with sqlite3.
+DATABASE_PASSWORD = 'password'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
@@ -175,11 +174,27 @@ logging.basicConfig(
     filemode = 'w+'
 )
 
+#Special variables to be programmatically replaced on deployment, DO NOT TOUCH! 
+#or...only remove when we incorporate the rapidsms.ini file system!
+CCHQ_BUILD_NUMBER=0
+CCHQ_REVISION_NUMBER=0
+CCHQ_BUILD_DATE=''
+
+CLICKATELL_URL=None
+CLICKATELL_USER=None
+CLICKATELL_PASSWORD=None
+CLICKATELL_API_ID=None
+CLICKATELL_MO=None
+CLICKATELL_NUMBER=None
+CLICKATELL=None
+
+EMAIL_LOGIN=None
+EMAIL_PASSWORD=None
+EMAIL_SMTP_HOST=None
+EMAIL_SMTP_PORT=None
 
 
-#COMMCARE VARS EXAMPLE, will be appended at the end.
-#CCHQ_BUILD_NUMBER=-1
-#CCHQ_REVISION_NUMBER=-1
-#CCHQ_BUILD_DATE=''
+
+
 
 

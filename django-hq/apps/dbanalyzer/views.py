@@ -68,6 +68,8 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
     
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
+
+@login_required()
 def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.html"):
     context = {}    
     context['rawgraph'] = RawGraph.objects.all().get(id=graph_id)
@@ -75,11 +77,13 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     context['chart_data'] = context['rawgraph'].get_flot_data()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+@login_required()
 def show_rawgraphs(request, template_name="dbanalyzer/show_rawgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+@login_required()
 def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
     context = {}    
     context['width'] = 900
@@ -87,16 +91,36 @@ def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
     context['charts_to_show'] = RawGraph.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+
+@login_required()
 def view_groups(request, template_name="dbanalyzer/view_groups.html"):
     context = {}    
     context['groups'] = GraphGroup.objects.all()
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+    context = {}
+    
+    
+@login_required()
 def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
-    context = {}    
+    context = {}
     group = GraphGroup.objects.all().get(id=group_id)
-    context['group'] = group    
-    context['group_charts'] = group.graphs.all()    
+    context['group'] = group  
+    context['group_charts'] = []
+    context['width'] = 900
+    context['height'] = 350
+    for thegraph in group.graphs.all():
+        if hasattr(thegraph,'rawgraph'):
+            context['group_charts'].append(thegraph.rawgraph)
+        else:
+            context['group_charts'].append(thegraph)    
+    
     context['child_groups'] = GraphGroup.objects.all().filter(parent_group=group)
+    context['group_breadcrumbs'] = []
+    curr_group = group
+    while curr_group != None:
+        context['group_breadcrumbs'].insert(0,curr_group)
+        curr_group = curr_group.parent_group
+    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 

@@ -174,8 +174,6 @@ class DbHelper(object):
         or colname in (value1, value2)
         
         It will build a where clause  with the datetime values as criteria as well as the column filters.
-        
-        
         """
         
         if len(self.date_columns) == 0:
@@ -221,7 +219,11 @@ class DbHelper(object):
             ret.append([0,0])
         
         for row in rows:
-            datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
+            if isinstance(row[0],datetime.datetime):
+                datelong = time.mktime(row[0].timetuple()) * 1000
+                pass
+            else:
+                datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
             val = int(row[1])
             ret.append([datelong,val])
         
@@ -250,7 +252,11 @@ class DbHelper(object):
                vals.append([0,0])
                
            for row in rows:
-               datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
+               if isinstance(row[0],datetime.datetime):
+                   datelong = time.mktime(row[0].timetuple()) * 1000           
+               else:
+                   datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
+               
                if row[1] != None:
                    val = int(row[1])
                else:

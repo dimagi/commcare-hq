@@ -17,6 +17,8 @@ from dbanalyzer import dbhelper
 from xformmanager.models import *
 from modelrelationship.models import *
 from organization.models import *
+from dbanalyzer.models import *
+import dbanalyzer.views as chartviews
 
 from django.contrib.auth.models import User 
 from django.contrib.contenttypes.models import ContentType
@@ -43,16 +45,16 @@ def dashboard(request, template_name="organization/dashboard.html"):
         return render_to_response(template_name, context, context_instance=RequestContext(request))
         
     default_delta = timedelta(days=1)
-    enddate = datetime.now()
-    startdate = datetime.now() - default_delta    
+    enddate = datetime.datetime.now()
+    startdate = datetime.datetime.now() - default_delta    
     
     for item in request.GET.items():
         if item[0] == 'startdate':
             startdate_str=item[1]
-            startdate = datetime.strptime(startdate_str,'%m/%d/%Y')            
+            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
         if item[0] == 'enddate':
             enddate_str=item[1]
-            enddate = datetime.strptime(enddate_str,'%m/%d/%Y')
+            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
             
     context['startdate'] = startdate
     context['enddate'] = enddate
@@ -71,8 +73,8 @@ def org_report(request, template_name="organization/org_report.html"):
     contenttype_id = None
     content_id = None
     default_delta = timedelta(days=1)
-    enddate = datetime.now()
-    startdate = datetime.now() - default_delta    
+    enddate = datetime.datetime.now()
+    startdate = datetime.datetime.now() - default_delta    
     
     for item in request.GET.items():
         if item[0] == 'content_type':
@@ -125,17 +127,17 @@ def manage_xforms(request, template_name="oranization/manage_xforms.html"):
 
 
 @login_required()
-def domain_charts(request, template_name="dbanalyzer/multi_graph.html"):
+def domain_charts(request, template_name="dbanalyzer/view_graph.html"):
     context = {}
     extuser = ExtUser.objects.all().get(id=request.user.id)    
-    mycharts = utils.get_charts(extuser.domain)
-    if len(mycharts) == 0:
+    mychartgroup = utils.get_chart_group(extuser)
+    if mychartgroup == None:
         return summary_trend(request)
     else:  
-        context['charts_to_show'] = mycharts
-        context['width'] = 900
-        context['height'] = 350
-        return render_to_response(template_name, context, context_instance=RequestContext(request))    
+        return chartviews.view_group(request, mychartgroup.id)
+#        context['width'] = 900
+#        context['height'] = 350
+#        return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
 @login_required()
 def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):    

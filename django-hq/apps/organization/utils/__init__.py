@@ -41,14 +41,13 @@ def get_members(organization):
             members.append(child_edge.child_object)                    
     return members 
 
-def get_charts(domain):
-    (parents, children) = traversal.getImmediateRelationsForObject(domain)
+def get_chart_group(extuser):
+    (parents, children) = traversal.getImmediateRelationsForObject(extuser)
     
-    charts=[]
     for child_edge in children:
-        if child_edge.relationship.name == "Domain Chart":
-            charts.append(child_edge.child)
-    return charts
+        if child_edge.relationship.name == "User Chart Group":
+            return child_edge.child
+    return None
     
 
 def get_members_and_supervisors(organization):

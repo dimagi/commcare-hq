@@ -43,7 +43,7 @@ class TestRegisterSchemas(unittest.TestCase):
     def _postSchemas(self, submit_user, submit_pw, schema_prefix):
         schemafiles = getFiles('schemas','.xsd', prefix=schema_prefix)        
         for schemafile in schemafiles:            
-            #time.sleep(.0)            
+            time.sleep(.1)            
             fin = open(schemafile,'r')
             schema = fin.read()
             fin.close()
@@ -51,17 +51,24 @@ class TestRegisterSchemas(unittest.TestCase):
             p = subprocess.Popen([curl_command,'-c logincookie.txt', '-F username=%s' % submit_user, '-F password=%s' % submit_pw,'--request', 'POST', 'http://%s/accounts/login/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
             shortname = os.path.basename(schemafile)
+            shortname = shortname.replace('.xsd','')
             
-            print "Posting Schema: %s" % fin   
+            print "Posting Schema: %s" % shortname   
             print ' '.join([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost])
             p = subprocess.Popen([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
             
     def testPostAndVerifyBracSchemas(self):
+        
         self._postSchemas('brian','test','brac-')                
         
     def testPostAndVerifyPFSchemas(self):
+        
         self._postSchemas('pfadmin','commcare123','pf-')
+        
+    def testPostAndVerifyGrameenSchemas(self):
+        
+        self._postSchemas('gradmin','commcare123','grameen_')
 
 
 class TestSubmitData(unittest.TestCase):
@@ -82,7 +89,8 @@ class TestSubmitData(unittest.TestCase):
         except:
             return -1    
                         
-    def _postSimpleData(self, datafiles, domain_name):      
+    def _postSimpleData(self, datafiles, domain_name):    
+        
         for file in datafiles:
             #time.sleep(.1)
             if file == ".svn":
@@ -93,7 +101,7 @@ class TestSubmitData(unittest.TestCase):
             p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/submit/%s/' % (serverhost, domain_name)],stdout=PIPE,shell=False)
             results = p.stdout.read()
 
-    def testPostAndVerifyMultipart(self):        
+    def testPostAndVerifyMultipart(self):       
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'multipart')        
         datafiles = os.listdir(datadir)
@@ -123,6 +131,10 @@ class TestSubmitData(unittest.TestCase):
     def testPostPF(self):
         files = getFiles('pf', '.xml')
         self._postSimpleData(files, 'Pathfinder')       
+    
+    def testPostOther(self):
+        files = getFiles('data', '.xml')
+        self._postSimpleData(files, 'grameen')       
         
             
 if __name__ == "__main__":

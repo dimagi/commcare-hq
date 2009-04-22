@@ -8,19 +8,25 @@
 {% endblock %} 
 
 {% block content %}
-<h2> Subgroups</h2>
+
+<div class="breadcrumbs">
+<ul>
+{% for crumb in group_breadcrumbs %}
+<li> >> <a href="{%url dbanalyzer.views.view_group crumb.id %}">{{crumb.name}}</a></li>
+{% endfor %}
+</ul>
+</div>
+
+<h2>Charts for {{group.name}}</h2>
+<div class="submenu">
 <ul>
 {% for group in child_groups %}
 <li>
-   	<a href="{%url dbanalyzer.views.view_group group.id %}">{{group.id}}</a>
-   	<br>{{grp.name}}
-   	<br>{{grp.description}}   		
-   	<br>{{grp.num_graphs}}   	
-</li>   	
-
+   	<a href="{%url dbanalyzer.views.view_group group.id %}">{{group.name}}</a>
+</li>
 {% endfor %}
 </ul>
-<h2>Charts</h2>
+</div>
 	{% for chart in group_charts %}
 		{% include "dbanalyzer/inline_rawgraph.html" %}
 	{%endfor %}

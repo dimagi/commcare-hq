@@ -5,6 +5,7 @@ from django.db import connection, transaction, DatabaseError
 import dbanalyzer.dbhelper as dbhelper
 import time
 import logging
+import datetime
 
 # Create your models here.
 
@@ -36,6 +37,9 @@ class BaseGraph(models.Model):
     
     def __unicode__(self):
         return "Graph: " + unicode(self.shortname)
+    class Meta:
+        ordering = ('-id',)
+    
 
 class RawGraph(BaseGraph):    
 #    shortname = models.CharField(max_length=32)
@@ -59,7 +63,7 @@ class RawGraph(BaseGraph):
     helper_cache = {}
             
     class Meta:
-        ordering = ('-shortname',)
+        ordering = ('-id',)
         verbose_name = _("Raw Graphing Requestor")        
     
     def __unicode__(self):
@@ -104,8 +108,11 @@ class RawGraph(BaseGraph):
         #right now the dates are being stored as strings in the db, hence the necessity to do this type of conversinos
         #also, for the ticks in python we need to convert the ticks by 1000 for javascript to understand them (no milliseconds)
         if self.x_type == 'date':
-            return  1000* time.mktime(time.strptime(str(xval[0:-4]),dbhelper.XMLDATE_FORMAT))
-        elif self.x_type == 'MM/DD/YYYY':   
+            if isinstance(xval, datetime.datetime):
+                return 1000 * time.mktime(xval.timetuple())                
+            else:
+                return  1000* time.mktime(time.strptime(str(xval[0:-4]),dbhelper.XMLDATE_FORMAT))
+        elif self.x_type == 'MM/DD/YYYY':            
             return 1000*time.mktime(time.strptime(str(xval),dbhelper.MMDDYYYY_FORMAT))
         else:
             return xval.__str__()
