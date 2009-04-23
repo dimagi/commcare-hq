@@ -160,7 +160,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select\r\n distinct(numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\nwhere given_birth='yes'\r\ngroup by numb_birth"
+      "db_query": "select\r\n distinct(numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\n\r\ngroup by numb_birth"
     }
   }, 
   {
@@ -174,7 +174,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 ", 
       "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select \r\n DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n avg(numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\nwhere given_birth='yes'\r\n\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\n;"
+      "db_query": "select \r\n DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n avg(numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\n\r\n\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\n;"
     }
   }, 
   {
