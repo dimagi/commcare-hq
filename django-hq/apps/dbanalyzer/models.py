@@ -309,8 +309,8 @@ class RawGraph(BaseGraph):
                 
                 #return '{"demo":{"label":"test", "data": [[0,1],[1,2],[2,1],[3,10],[4,5]]}}'
                 return flot_dict
-        except:
-            logging.error("Error rendering flot data")
+        except Exception, e:
+            logging.error("Error rendering flot data: " + str(e))
             return '[]'
             
         
