@@ -1,0 +1,465 @@
+[
+  {
+    "pk": 17, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Avg time with patient", 
+      "title": "Average Time Spent with Patient at Registration"
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Prior Birth distributions", 
+      "title": "Distribution of Prior Births at Registration"
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Average number of Prior births", 
+      "title": "Average number of Prior Births"
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "User Registrations to Date", 
+      "title": "Total Registrations by User"
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Registration Trends by User", 
+      "title": "Pregnancy Registration Trends by User"
+    }
+  }, 
+  {
+    "pk": 12, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Grameen User Daily Registrations", 
+      "title": "Daily Pregnancy Registrations by user"
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Registrations per day", 
+      "title": "Pregnancy Registration Activity"
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "All Registrations", 
+      "title": "All Pregnancy Registrations"
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "absolute bar", 
+      "title": "absolute bar"
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "absolute line", 
+      "title": "absolute line"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "cumulative line", 
+      "title": "cumulative line"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Global Daily Referral Count", 
+      "title": "Global Report of Inbound Referrals (daily count)"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Global Referral Trends", 
+      "title": "Global Referral Trends (cumulative)"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Histogram of all referrals", 
+      "title": "Overall Given Referrals"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Overall Submissions by User", 
+      "title": "Overall Submissions by all users (cumulative)"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Total User Submissions", 
+      "title": "All Submissions by User"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "User Daily Submissions", 
+      "title": "Submissions by User (daily count)"
+    }
+  }, 
+  {
+    "pk": 17, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Time", 
+      "data_source": "", 
+      "x_type": "string", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "histogram-overall", 
+      "series_options": "", 
+      "db_query": "select \r\ndistinct(username), \r\navg(UNIX_TIMESTAMP(timeend) - UNIX_TIMESTAMP(timestart)) as avg \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by username\r\n\r\n\r\n"
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Counts", 
+      "data_source": "", 
+      "x_type": "numeric", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "histogram-overall", 
+      "series_options": "", 
+      "db_query": "select\r\n distinct(numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\nwhere given_birth='yes'\r\ngroup by numb_birth"
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 ", 
+      "display_type": "absolute-line", 
+      "series_options": "", 
+      "db_query": "select \r\n DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n avg(numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\nwhere given_birth='yes'\r\n\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\n;"
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "string", 
+      "x_axis_label": "Username", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "histogram-overall", 
+      "series_options": "", 
+      "db_query": "select\r\n distinct(username), \r\ncount(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by username"
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "compare-cumulative", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 12, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "username", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "Date", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "compare-trend", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "absolute-line", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "date", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "display_type": "cumulative-line", 
+      "series_options": "", 
+      "db_query": "select\r\n  timeend, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Children|Babies", 
+      "data_source": "commcarehq", 
+      "x_type": "date", 
+      "x_axis_label": "Time", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "absolute-bar", 
+      "series_options": "", 
+      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "1|2", 
+      "data_source": "asdf", 
+      "x_type": "date", 
+      "x_axis_label": "Time", 
+      "table_name": "sadf", 
+      "display_type": "absolute-line", 
+      "series_options": "", 
+      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "0|1", 
+      "data_source": "", 
+      "x_type": "date", 
+      "x_axis_label": "time", 
+      "table_name": "fasdfwdrf", 
+      "display_type": "cumulative-line", 
+      "series_options": "", 
+      "db_query": "select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "referral", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "compare-trend", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "asdf", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "compare-cumulative", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "0", 
+      "data_source": "commcarehq", 
+      "x_type": "string", 
+      "x_axis_label": "val", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "histogram-overall", 
+      "series_options": "", 
+      "db_query": "select distinct(referral_given), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by referral_given"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "0", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "Date", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "compare-cumulative", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "count", 
+      "data_source": "", 
+      "x_type": "string", 
+      "x_axis_label": "Username", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "histogram-overall", 
+      "series_options": "", 
+      "db_query": "select distinct(username), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by username"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Username", 
+      "data_source": "", 
+      "x_type": "MM/DD/YYYY", 
+      "x_axis_label": "Date", 
+      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "display_type": "compare-trend", 
+      "series_options": "", 
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": null, 
+      "graphs": [], 
+      "name": "Grameen Root Chart Group", 
+      "description": "Grameen Root Chart Group"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": 1, 
+      "graphs": [
+        11, 
+        10
+      ], 
+      "name": "Registration", 
+      "description": "Registration Graphs"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": 2, 
+      "graphs": [
+        17, 
+        14, 
+        13, 
+        12
+      ], 
+      "name": "Registration User Charts", 
+      "description": "Registration stats by user"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": 2, 
+      "graphs": [
+        16, 
+        15
+      ], 
+      "name": "Registration Pregnancy Stats", 
+      "description": "Stats on Pregnancy related data"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": null, 
+      "graphs": [], 
+      "name": "BRAC root graphs", 
+      "description": "BRAC Graph Root"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": 5, 
+      "graphs": [
+        3, 
+        2, 
+        1
+      ], 
+      "name": "Brac User Charts", 
+      "description": "Brac user charts"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "dbanalyzer.graphgroup", 
+    "fields": {
+      "parent_group": 5, 
+      "graphs": [
+        6, 
+        5, 
+        4
+      ], 
+      "name": "Brac Data Charts", 
+      "description": "Data data"
+    }
+  }
+]
