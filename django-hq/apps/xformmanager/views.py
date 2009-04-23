@@ -60,7 +60,9 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
 @transaction.commit_manually
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
-    
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
     extuser = ExtUser.objects.all().get(id=request.user.id)
     
     

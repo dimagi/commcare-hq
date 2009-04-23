@@ -1,10 +1,13 @@
 {% load i18n %}
 <div class="chartblock">
 <h1>{{chart.title}}</h1>
+
+{% if chart.has_errors %}
+<h4 style="color:red;">Chart query error</h4>
+{% else %}
 <div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
 <h4>Show Series</h4>
 <ul id="{{chart.id}}-choices"></ul>	
-</div>
 <script id="{{chart.id}}-source" language="javascript" type="text/javascript">
 $(function () {
     var datasets = {{chart.get_flot_data|safe}};
@@ -63,5 +66,9 @@ $(function () {
     plotAccordingToChoices();
 });
 </script>
+
+{%endif%}
+</div>
+
 
     

@@ -109,6 +109,7 @@ def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
     context['group_charts'] = []
     context['width'] = 900
     context['height'] = 350
+    
     for thegraph in group.graphs.all():
         if hasattr(thegraph,'rawgraph'):
             context['group_charts'].append(thegraph.rawgraph)

@@ -33,6 +33,10 @@ import submitprocessor
 @login_required()
 def show_submits(request, template_name="receiver/show_submits.html"):    
     context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
     extuser = ExtUser.objects.get(id=request.user.id)
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-id')
     

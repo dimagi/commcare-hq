@@ -61,6 +61,7 @@ class RawGraph(BaseGraph):
     #Non Django
     _cursor = None
     helper_cache = {}
+    
             
     class Meta:
         ordering = ('-id',)
@@ -73,20 +74,32 @@ class RawGraph(BaseGraph):
     def cursor(self):        
         if self._cursor == None:
             self._cursor = connection.cursor()
-            self._cursor.execute(self.db_query.__str__())
+            self._cursor.execute(self.db_query.__str__())        
         return self._cursor    
     
     def reset(self):
         self._cursor = None    
     
+    @property
+    def has_errors(self):
+        try:
+            self.reset()
+            cursor = self.cursor                                    
+            self.reset()
+            return False
+        except Exception, e:
+            logging.error("Error, rawgraph " + str(self) + " has a query error: " + str(e))
+            return True
+    
     def get_dataset(self):
         """Execute the query and get the fracking dataset in flot format"""        
         try:
-            rows = self.cursor.fetchall()
+            rows = self.cursor.fetchall()            
             return rows
         except Exception, e:
-            logging.error("Error in doing sql query %s: %s" % (self.db_query, str(e)))            
-            raise
+            logging.error("Error in doing sql query %s: %s" % (self.db_query, str(e)))       
+            raise                 
+                      
     
     @property
     def labels(self):
@@ -276,25 +289,30 @@ class RawGraph(BaseGraph):
 #            
 #        return ret
     
-    def get_flot_data(self):        
-        if self.display_type == 'histogram-overall':
-            return self.__overall_histogram()
-        elif self.display_type.startswith('compare'):
-            return self.__compare_trends()
-        else:
-            flot_dict = {}
-            labels = self.labels
-            data = self.get_dataseries()        
-            for label in labels:            
-                currseries = {}            
-                currseries["label"] = label.__str__()
-                currseries["data"] = data[labels.index(label)]
-                currseries[self.__get_display_type()] = {'show': 'true'}                           
-                flot_dict[label.__str__()] = currseries
+    def get_flot_data(self):      
+        try:  
+            if self.display_type == 'histogram-overall':
+                return self.__overall_histogram()
+            elif self.display_type.startswith('compare'):
+                return self.__compare_trends()
+            else:
+                flot_dict = {}
+                labels = self.labels
+                data = self.get_dataseries()        
+                for label in labels:            
+                    currseries = {}            
+                    currseries["label"] = label.__str__()
+                    currseries["data"] = data[labels.index(label)]
+                    currseries[self.__get_display_type()] = {'show': 'true'}                           
+                    flot_dict[label.__str__()] = currseries
+                
+                
+                #return '{"demo":{"label":"test", "data": [[0,1],[1,2],[2,1],[3,10],[4,5]]}}'
+                return flot_dict
+        except:
+            logging.error("Error rendering flot data")
+            return '[]'
             
-            
-            #return '{"demo":{"label":"test", "data": [[0,1],[1,2],[2,1],[3,10],[4,5]]}}'
-            return flot_dict
         
         
     

@@ -129,7 +129,11 @@ def manage_xforms(request, template_name="oranization/manage_xforms.html"):
 @login_required()
 def domain_charts(request, template_name="dbanalyzer/view_graph.html"):
     context = {}
-    extuser = ExtUser.objects.all().get(id=request.user.id)    
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))    
+
+    extuser = ExtUser.objects.all().get(id=request.user.id)
     mychartgroup = utils.get_chart_group(extuser)
     if mychartgroup == None:
         return summary_trend(request)
