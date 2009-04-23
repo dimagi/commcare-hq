@@ -83,10 +83,10 @@ def org_report(request, template_name="organization/org_report.html"):
             content_id=item[1]
         if item[0] == 'startdate':
             startdate_str=item[1]
-            startdate = datetime.strptime(startdate_str,'%m/%d/%Y')            
+            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
         if item[0] == 'enddate':
             enddate_str=item[1]
-            enddate = datetime.strptime(enddate_str,'%m/%d/%Y')                
+            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')                
     
     if contenttype_id != None and content_id != None:
         ctype = ContentType.objects.all().get(id=contenttype_id)
