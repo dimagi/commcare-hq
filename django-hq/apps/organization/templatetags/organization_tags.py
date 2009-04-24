@@ -24,7 +24,7 @@ output_format = '%Y-%m-%d %H:%M'
 
 register = template.Library()
 
-
+#deprecated
 
 @register.simple_tag
 def get_aggregated_reports(domain):

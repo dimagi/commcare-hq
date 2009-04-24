@@ -286,14 +286,14 @@ def run():
     organization_extuser_1.username = u'bracadmin'
     organization_extuser_1.first_name = u''
     organization_extuser_1.last_name = u''
-    organization_extuser_1.email = u''
+    organization_extuser_1.email = u'dmyung+bracadmin@dimagi.com'
     organization_extuser_1.password = u'sha1$25e8d$45cfe119a9429d066168a20255f737dbffef6488'
     organization_extuser_1.is_staff = False
     organization_extuser_1.is_active = True
     organization_extuser_1.is_superuser = True
     organization_extuser_1.last_login = datetime.datetime(2009, 4, 15, 10, 33, 29)
     organization_extuser_1.date_joined = datetime.datetime(2009, 4, 15, 10, 33, 29)
-    organization_extuser_1.primary_phone = u'+1112223333'
+    organization_extuser_1.primary_phone = u'+16176453236'
     organization_extuser_1.domain = organization_domain_2
     organization_extuser_1.identity = None
     organization_extuser_1.save()
@@ -307,9 +307,9 @@ def run():
     organization_extuser_2.is_staff = False
     organization_extuser_2.is_active = True
     organization_extuser_2.is_superuser = True
-    organization_extuser_2.last_login = datetime.datetime(2009, 4, 22, 18, 32, 45)
+    organization_extuser_2.last_login = datetime.datetime(2009, 4, 24, 16, 53, 39)
     organization_extuser_2.date_joined = datetime.datetime(2009, 4, 15, 10, 34, 6)
-    organization_extuser_2.primary_phone = u'+2223334444'
+    organization_extuser_2.primary_phone = u''
     organization_extuser_2.domain = organization_domain_1
     organization_extuser_2.identity = None
     organization_extuser_2.save()
@@ -323,9 +323,9 @@ def run():
     organization_extuser_3.is_staff = False
     organization_extuser_3.is_active = True
     organization_extuser_3.is_superuser = True
-    organization_extuser_3.last_login = datetime.datetime(2009, 4, 22, 15, 37, 40)
+    organization_extuser_3.last_login = datetime.datetime(2009, 4, 24, 16, 55, 24)
     organization_extuser_3.date_joined = datetime.datetime(2009, 4, 15, 10, 34, 38)
-    organization_extuser_3.primary_phone = u'+4445556666'
+    organization_extuser_3.primary_phone = u''
     organization_extuser_3.domain = organization_domain_3
     organization_extuser_3.identity = None
     organization_extuser_3.save()
@@ -334,14 +334,14 @@ def run():
     organization_extuser_4.username = u'brian'
     organization_extuser_4.first_name = u''
     organization_extuser_4.last_name = u''
-    organization_extuser_4.email = u''
+    organization_extuser_4.email = u'dmyung+brian@dimagi.com'
     organization_extuser_4.password = u'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
     organization_extuser_4.is_staff = False
     organization_extuser_4.is_active = True
     organization_extuser_4.is_superuser = True
-    organization_extuser_4.last_login = datetime.datetime(2009, 4, 22, 18, 32, 10)
+    organization_extuser_4.last_login = datetime.datetime(2009, 4, 24, 17, 1, 40)
     organization_extuser_4.date_joined = datetime.datetime(2009, 4, 15, 10, 35, 1)
-    organization_extuser_4.primary_phone = u'+1234567898'
+    organization_extuser_4.primary_phone = u'+16174016544'
     organization_extuser_4.domain = organization_domain_2
     organization_extuser_4.identity = None
     organization_extuser_4.save()
@@ -350,14 +350,14 @@ def run():
     organization_extuser_5.username = u'gayo'
     organization_extuser_5.first_name = u''
     organization_extuser_5.last_name = u''
-    organization_extuser_5.email = u''
+    organization_extuser_5.email = u'dmyung+gayo@dimagi.com'
     organization_extuser_5.password = u'sha1$2aa9b$f8ce3e507b719c97d8442e518f8632c4454e686f'
     organization_extuser_5.is_staff = False
     organization_extuser_5.is_active = True
     organization_extuser_5.is_superuser = False
     organization_extuser_5.last_login = datetime.datetime(2009, 4, 15, 10, 35, 25)
     organization_extuser_5.date_joined = datetime.datetime(2009, 4, 15, 10, 35, 25)
-    organization_extuser_5.primary_phone = u'+5554443333'
+    organization_extuser_5.primary_phone = u'+16174016544'
     organization_extuser_5.domain = organization_domain_2
     organization_extuser_5.identity = None
     organization_extuser_5.save()
@@ -373,7 +373,7 @@ def run():
     organization_extuser_6.is_superuser = False
     organization_extuser_6.last_login = datetime.datetime(2009, 4, 15, 10, 57, 13)
     organization_extuser_6.date_joined = datetime.datetime(2009, 4, 15, 10, 57, 13)
-    organization_extuser_6.primary_phone = u'+1155312452'
+    organization_extuser_6.primary_phone = u''
     organization_extuser_6.domain = organization_domain_1
     organization_extuser_6.identity = None
     organization_extuser_6.save()
@@ -389,7 +389,7 @@ def run():
     organization_extuser_7.is_superuser = False
     organization_extuser_7.last_login = datetime.datetime(2009, 4, 15, 10, 57, 31)
     organization_extuser_7.date_joined = datetime.datetime(2009, 4, 15, 10, 57, 31)
-    organization_extuser_7.primary_phone = u'+1412135452'
+    organization_extuser_7.primary_phone = u''
     organization_extuser_7.domain = organization_domain_1
     organization_extuser_7.identity = None
     organization_extuser_7.save()
@@ -405,7 +405,7 @@ def run():
     organization_extuser_8.is_superuser = False
     organization_extuser_8.last_login = datetime.datetime(2009, 4, 15, 10, 57, 52)
     organization_extuser_8.date_joined = datetime.datetime(2009, 4, 15, 10, 57, 52)
-    organization_extuser_8.primary_phone = u'+1231214532'
+    organization_extuser_8.primary_phone = u'+16176453236'
     organization_extuser_8.domain = organization_domain_2
     organization_extuser_8.identity = None
     organization_extuser_8.save()
@@ -421,7 +421,7 @@ def run():
     organization_extuser_9.is_superuser = False
     organization_extuser_9.last_login = datetime.datetime(2009, 4, 15, 10, 58, 7)
     organization_extuser_9.date_joined = datetime.datetime(2009, 4, 15, 10, 58, 7)
-    organization_extuser_9.primary_phone = u'+12134897213'
+    organization_extuser_9.primary_phone = u'+16174016544'
     organization_extuser_9.domain = organization_domain_2
     organization_extuser_9.identity = None
     organization_extuser_9.save()
@@ -437,7 +437,7 @@ def run():
     organization_extuser_10.is_superuser = False
     organization_extuser_10.last_login = datetime.datetime(2009, 4, 22, 14, 45, 11)
     organization_extuser_10.date_joined = datetime.datetime(2009, 4, 22, 14, 45, 11)
-    organization_extuser_10.primary_phone = u'+1234567897'
+    organization_extuser_10.primary_phone = u''
     organization_extuser_10.domain = organization_domain_3
     organization_extuser_10.identity = None
     organization_extuser_10.save()
@@ -446,14 +446,14 @@ def run():
     organization_extuser_11.username = u'grsupervisor'
     organization_extuser_11.first_name = u''
     organization_extuser_11.last_name = u''
-    organization_extuser_11.email = u''
+    organization_extuser_11.email = u'dmyung+grsupervisor@dimagi.com'
     organization_extuser_11.password = u'sha1$4c2a2$cec32be6824786e76488aea338f350c6bbceb8eb'
     organization_extuser_11.is_staff = False
     organization_extuser_11.is_active = True
     organization_extuser_11.is_superuser = False
     organization_extuser_11.last_login = datetime.datetime(2009, 4, 22, 14, 45, 36)
     organization_extuser_11.date_joined = datetime.datetime(2009, 4, 22, 14, 45, 36)
-    organization_extuser_11.primary_phone = u'+7778884444'
+    organization_extuser_11.primary_phone = u'+16174016544'
     organization_extuser_11.domain = organization_domain_3
     organization_extuser_11.identity = None
     organization_extuser_11.save()
@@ -469,7 +469,7 @@ def run():
     organization_extuser_12.is_superuser = False
     organization_extuser_12.last_login = datetime.datetime(2009, 4, 22, 14, 45, 55)
     organization_extuser_12.date_joined = datetime.datetime(2009, 4, 22, 14, 45, 55)
-    organization_extuser_12.primary_phone = u'+45647891216'
+    organization_extuser_12.primary_phone = u''
     organization_extuser_12.domain = organization_domain_3
     organization_extuser_12.identity = None
     organization_extuser_12.save()
@@ -485,7 +485,7 @@ def run():
     organization_extuser_13.is_superuser = False
     organization_extuser_13.last_login = datetime.datetime(2009, 4, 22, 14, 46, 11)
     organization_extuser_13.date_joined = datetime.datetime(2009, 4, 22, 14, 46, 11)
-    organization_extuser_13.primary_phone = u'+141512342134'
+    organization_extuser_13.primary_phone = u''
     organization_extuser_13.domain = organization_domain_3
     organization_extuser_13.identity = None
     organization_extuser_13.save()
@@ -533,6 +533,62 @@ def run():
     organization_organization_5.organization_type.add(organization_organizationtype_3)
 
     from organization.models import ReportSchedule
+
+    organization_reportschedule_1 = ReportSchedule()
+    organization_reportschedule_1.name = u'Direct to bracadmin'
+    organization_reportschedule_1.description = u'Direct email to bracadmin'
+    organization_reportschedule_1.report_class = u'siteadmin'
+    organization_reportschedule_1.report_frequency = u'daily'
+    organization_reportschedule_1.report_delivery = u'email'
+    organization_reportschedule_1.recipient_user = organization_extuser_1
+    organization_reportschedule_1.organization = organization_organization_2
+    organization_reportschedule_1.report_function = u''
+    organization_reportschedule_1.save()
+
+    organization_reportschedule_2 = ReportSchedule()
+    organization_reportschedule_2.name = u'Brian Weekly Email'
+    organization_reportschedule_2.description = u"Brian's Weekly Email"
+    organization_reportschedule_2.report_class = u'supervisor'
+    organization_reportschedule_2.report_frequency = u'weekly'
+    organization_reportschedule_2.report_delivery = u'email'
+    organization_reportschedule_2.recipient_user = None
+    organization_reportschedule_2.organization = organization_organization_3
+    organization_reportschedule_2.report_function = u''
+    organization_reportschedule_2.save()
+
+    organization_reportschedule_3 = ReportSchedule()
+    organization_reportschedule_3.name = u'Brian Daily SMS'
+    organization_reportschedule_3.description = u"Brian's Daily SMS as CHP Supervisor"
+    organization_reportschedule_3.report_class = u'supervisor'
+    organization_reportschedule_3.report_frequency = u'daily'
+    organization_reportschedule_3.report_delivery = u'sms'
+    organization_reportschedule_3.recipient_user = None
+    organization_reportschedule_3.organization = organization_organization_3
+    organization_reportschedule_3.report_function = u''
+    organization_reportschedule_3.save()
+
+    organization_reportschedule_4 = ReportSchedule()
+    organization_reportschedule_4.name = u'Daily report to BRAC-CHW'
+    organization_reportschedule_4.description = u'Daily SMS as CHW Member'
+    organization_reportschedule_4.report_class = u'member'
+    organization_reportschedule_4.report_frequency = u'daily'
+    organization_reportschedule_4.report_delivery = u'sms'
+    organization_reportschedule_4.recipient_user = None
+    organization_reportschedule_4.organization = organization_organization_4
+    organization_reportschedule_4.report_function = u''
+    organization_reportschedule_4.save()
+
+    organization_reportschedule_5 = ReportSchedule()
+    organization_reportschedule_5.name = u'Supervisor weekly SMS CHP'
+    organization_reportschedule_5.description = u'Supervisor weekly SMS CHP'
+    organization_reportschedule_5.report_class = u'supervisor'
+    organization_reportschedule_5.report_frequency = u'weekly'
+    organization_reportschedule_5.report_delivery = u'sms'
+    organization_reportschedule_5.recipient_user = None
+    organization_reportschedule_5.organization = organization_organization_3
+    organization_reportschedule_5.report_function = u''
+    organization_reportschedule_5.save()
+
 
     from dbanalyzer.models import GraphPref
 

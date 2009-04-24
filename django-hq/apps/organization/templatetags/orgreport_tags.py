@@ -21,6 +21,7 @@ import time
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
 
+#deprecated
 
 @register.simple_tag
 def get_aggregate_formcounts_for_obj(content_obj):

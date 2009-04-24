@@ -23,6 +23,7 @@ import dbanalyzer.views as chartviews
 from django.contrib.auth.models import User 
 from django.contrib.contenttypes.models import ContentType
 import organization.utils as utils
+import organization.reporter as reporter
 
 
 #from forms import *
@@ -106,7 +107,7 @@ def org_report(request, template_name="organization/org_report.html"):
     ctype = ContentType.objects.get_for_model(extuser.domain)
     root_orgs = Edge.objects.all().filter(parent_type=ctype,parent_id=extuser.domain.id,relationship__name='is domain root')
     root_org = root_orgs[0]    
-    hierarchy = traversal.getDescendentEdgesForObject(root_org.parent_object)  #if we do domain, we go too high
+    hierarchy = reporter.get_organizational_hierarchy(root_org.parent_object)
     
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['results'] = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)

@@ -1,5 +1,0 @@
-Report for {{content_item}}
-	{% for item in daterange_header %} {{item}} {% endfor %}
-{% for depth, descriptor, item, rowdata in results %}
-{% if descriptor %} {{descriptor}} {% endif %}
-{{item}}	{% for data in rowdata %} {{data}} 	{% endfor %}{% endfor %}

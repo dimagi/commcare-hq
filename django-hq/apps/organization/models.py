@@ -45,7 +45,7 @@ class ExtRole(models.Model):
 #        verbose_name = _("Organization Relationship")
 
 class ExtUser(User):    
-    primary_phone = models.CharField(max_length=30, unique=True, null=True,blank=True, help_text="e.g., +251912555555")
+    primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
     domain = models.ForeignKey(Domain)
     identity = models.OneToOneField(MonitorIdentity,blank=True,null=True)    
       

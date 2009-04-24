@@ -12,6 +12,8 @@ import settings
 
 class ClickatellAgent(object):
     def __init__(self):
+        print 'clickatell init'
+        logging.debug("clickatell initialized")
         self.clickatell_url = settings.CLICKATELL_URL 
         self.clickatell_user = settings.CLICKATELL_USER
         self.clickatell_password = settings.CLICKATELL_PASSWORD
@@ -21,7 +23,11 @@ class ClickatellAgent(object):
     
     #MessageForm = phone_number, body, outgoing (bool), 
     def send (self,phone_number, body, is_outgoing=True):
+        print "got request for outgoing clickatell " + phone_number
         logging.info("got request for outgoing clickatell")
+        logging.info("phone number: " + phone_number)
+        if phone_number == '':
+            return
         url = self.clickatell_url % (self.clickatell_user, self.clickatell_password, self.clickatell_api_id, phone_number, urllib2.quote(body), self.clickatell_mo, self.clickatell_number)
         logging.info("url is " + url)
         for line in urllib2.urlopen(url):
@@ -42,7 +48,7 @@ class ClickatellAgent(object):
 
 
 class EmailAgent(object):
-    def __init___(self):
+    def __init__(self):
         """The init uses gmail settings for outbound by default"""
         self.conn = SMTPConnection(username=settings.EMAIL_LOGIN,
                                    port=settings.EMAIL_SMTP_PORT,
@@ -51,21 +57,17 @@ class EmailAgent(object):
                                    use_tls=True,
                                    fail_silently=False)
         
-    def send_email(self, recipients, msg_payload):
-        default_delta = timedelta(days=1)
-        enddate = datetime.now()
-        startdate = datetime.now() - default_delta    
-            
-        #rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})
-                
-        msg = EmailMessage('test from djanago', #subj 
-                           msg_payload, #body
-                           settings.EMAIL_LOGIN, #from
-                           recipients,#to
+    def send_email(self, subject, recipients, msg_payload):
+        #rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})        
+        msg = EmailMessage(subject=subject, #subj 
+                           body=msg_payload, #body
+                           from_email=settings.EMAIL_LOGIN, #from
+                           to=recipients,#to
                            connection=self.conn
                            )
         
                            
         #attachname = 'report%s.html' % enddate.strftime('%Y-%m-%d')
         #msg.attach(attachname,rendered,"text/html")
+        #msg.content_subtype = "html"
         msg.send(fail_silently=False)

@@ -11,7 +11,6 @@ class Job(WeeklyJob):
     def _doSMSReports(self):
         pass
 
-
     def execute(self):
-        reporter.run_all_reports('weekly')
-        pass
+        reporter.run_reports('weekly')
+

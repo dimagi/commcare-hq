@@ -26,27 +26,43 @@ def getAncestorEdgesForObject(content_obj):
     else:
         ret = []        
         for edge in parent_edges:
-            ret.append(edge)            
+            ret.append(edge)                
             parents = getAncestorEdgesForObject(edge.parent_object)                                 
             if len(parents) > 0:
                 ret.append(parents)        
         return ret
 
-def getDescendentEdgesForObject(content_obj):    
+def getDescendentEdgesForObject(content_obj, edgetype_include=[], edgetype_exclude=[]):    
     ctype = ContentType.objects.get_for_model(content_obj)
     cid = content_obj.id
+    ret = []
     child_edges = Edge.objects.all().filter(parent_type=ctype,parent_id=cid)
     
-    if len(child_edges) == 0:
-        return []
+        
+    #first let's do the exclusions
+    for etype in edgetype_exclude:
+        child_edges = child_edges.exclude(relationship=etype)            
+    
+    #next, let's refine the results to make sure that only the includes are there. 
+    if len(edgetype_include) > 0:
+        for etype in edgetype_include:
+            for item in child_edges.filter(relationship=etype):
+                if ret.count(item) == 0:    
+                    ret.append(item)
     else:
-        ret = []
         for edge in child_edges:
-            children = getDescendentEdgesForObject(edge.child_object)
-            ret.append(edge)
-            if len(children) > 0:
-                ret.append(children)
+            ret.append(edge)    
+    
+    if len(ret) == 0:        
         return ret
+    else:        
+        reret = []
+        for edge in ret:            
+            children = getDescendentEdgesForObject(edge.child_object, edgetype_include=edgetype_include)            
+            reret.append(edge)
+            if len(children) > 0:            
+                reret.append(children)
+        return reret
 
 
 
