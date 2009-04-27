@@ -3,31 +3,56 @@
 {% block script_includes %}
     <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.js"></script> 
     <script type="text/javascript" src="{{MEDIA_URL}}flot/jquery.flot.js"></script>
-    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}flot/excanvas.min.js"></script><![endif]--> 
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}flot/excanvas.min.js"></script><![endif]-->
+    
+    
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}superfish/superfish.css" media="screen">    
+    <script type="text/javascript" src="{{MEDIA_URL}}superfish/hoverIntent.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}superfish/superfish.js"></script>
+    <script type="text/javascript">
+		// initialise plugins
+		jQuery(function(){
+			jQuery('ul.sf-menu').superfish();
+		});
+	</script>
+    
     {{ form.media }}
 {% endblock %} 
 
 {% block content %}
 
-<div class="breadcrumbs">
-<ul>
-{% for crumb in group_breadcrumbs %}
-<li> >> <a href="{%url dbanalyzer.views.view_group crumb.id %}">{{crumb.name}}</a></li>
-{% endfor %}
+<ul class="sf-menu">
+	{% include "dbanalyzer/inline_graphgroup.html" %}	
 </ul>
-</div>
-
+ 
+{%comment %}
 <h2>Charts for {{group.name}}</h2>
-<div class="submenu">
-<ul>
+<div style="float:top;">
+<ul class="sf-menu">
 {% for group in child_groups %}
 <li>
    	<a href="{%url dbanalyzer.views.view_group group.id %}">{{group.name}}</a>
+   	<ul>
+   		<li><a>wassup1</a>
+   			<ul>
+   				<li><a>wassup3</a>
+   					<ul>
+   						<li><a>wassup5</a></li>
+   						<li><a>wassu6</a></li>
+   					</ul>
+   				</li>
+   				<li><a>wassup4</a></li>
+   			</ul>
+   		</li>
+   		<li><a>wassup2</a></li>
+   	</ul>
 </li>
 {% endfor %}
 </ul>
+{%endcomment%}
 </div>
 	{% for chart in group_charts %}
 		{% include "dbanalyzer/inline_rawgraph.html" %}
 	{%endfor %}
+	
 {%endblock%}

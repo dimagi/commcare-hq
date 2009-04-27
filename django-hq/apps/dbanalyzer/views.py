@@ -14,6 +14,8 @@ from dbanalyzer import dbhelper
 from django.utils.encoding import *
 from organization.models import *
 
+import organization.utils as utils
+
 from datetime import timedelta
 from django.db import transaction
 import uuid
@@ -75,12 +77,21 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     context['rawgraph'] = RawGraph.objects.all().get(id=graph_id)
     context['chart_title'] = context['rawgraph'].title
     context['chart_data'] = context['rawgraph'].get_flot_data()
+    
+    #get the root group
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    rootgroup = utils.get_chart_group(extuser)    
+    graphtree = get_graphgroup_children(rootgroup)    
+    context['graphtree'] = graphtree
+    context['width'] = 900
+    context['height'] = 500
+    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
 def show_rawgraphs(request, template_name="dbanalyzer/show_rawgraphs.html"):
     context = {}    
-    context['allgraphs'] = RawGraph.objects.all()
+    context['allgraphs'] = RawGraph.objects.all()    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
@@ -99,7 +110,14 @@ def view_groups(request, template_name="dbanalyzer/view_groups.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
     context = {}
-    
+
+
+def get_graphgroup_children(graph_group):
+    ret = {}
+    children = GraphGroup.objects.all().filter(parent_group=graph_group)
+    for child in children:
+        ret[child] = get_graphgroup_children(child)
+    return ret
     
 @login_required()
 def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
@@ -116,12 +134,16 @@ def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
         else:
             context['group_charts'].append(thegraph)    
     
+    
     context['child_groups'] = GraphGroup.objects.all().filter(parent_group=group)
-    context['group_breadcrumbs'] = []
-    curr_group = group
-    while curr_group != None:
-        context['group_breadcrumbs'].insert(0,curr_group)
-        curr_group = curr_group.parent_group
+    
+    #get the root group
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    rootgroup = utils.get_chart_group(extuser)    
+    graphtree = get_graphgroup_children(rootgroup)
+    
+    context['graphtree'] = graphtree
+    
     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 

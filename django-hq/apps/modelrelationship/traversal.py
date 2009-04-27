@@ -117,4 +117,4 @@ def getLinearAncestryForEdge(edge):
         #yes it has a higher ancestor.  We will return the current child (that's what we're querying), and get the prior generation
         return [edge.child_object] + getLinearAncestryForEdge(grandparents[0])  
     #check edge table, if has no parent, return
-    #return as list    
+    return []    
