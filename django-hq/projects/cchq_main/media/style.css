@@ -214,55 +214,10 @@ div.daterange_tabs ul {
 }
 
 div.submenu {
-	margin-left: 40px;
-	height: 25px;	
+	margin-left: 0px;
+	height: 25px;
 }
 
-div.submenu ul {
-	margin: 0;
-	
-	margin-right: 30px;
-	padding: 0;
-	list-style: none;
-	line-height: normal;	
-	width:auto;	 
-}
-div.submenu  li {
-	float: left;
-}
-
-div.submenu  a {
-	float:left;	
-	text-decoration:none;
-	color:white;
-	background-color:navy;
-	padding:0.4em 0.8em;
-    border-right:1px solid white;
-}
-
-div.breadcrumbs {	
-	margin-left: 20px;
-	height: 25px;		
-}
-
-div.breadcrumbs ul {
-	margin: 0;
-	margin-right: 30px;
-	padding: 0;
-	list-style: none;
-	line-height: normal;	
-	width:auto;	 
-}
-
-div.breadcrumbs  li {
-	float: left;
-	padding-left:8px;
-	padding-left:8px;
-	padding-top: 4px;
-	padding-bottom: 4px;
-	margin-left: 4px;	
-	margin-right: 4px;
-}
 
 
 
