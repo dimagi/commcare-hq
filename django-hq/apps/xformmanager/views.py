@@ -16,7 +16,7 @@ import logging
 import traceback
 import subprocess
 
-
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from organization.models import *
 
 #temporary
@@ -165,14 +165,38 @@ def data(request, formdef_id, template_name="data.html"):
     context['form_name'] = formdef_name
     context['data'] = []
     context['xform'] = xform[0]
-    for row in rows:
-        record = []
-        for field in row:
-            record.append(field)
-        context['data'].append(record)
+        
+#    fulldata = []
+#    for row in rows:
+#        rowrecord = []
+#        for field in row:
+#            rowrecord.append(field)
+#        fulldata.append(rowrecord)
+#    
+    paginator = Paginator(rows, 25) 
+    #get the current page number
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    
+    try:
+        data_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        data_pages = paginator.page(paginator.num_pages)
+
+    
+    context['data'] = data_pages    
+    
+    
     file_name = formdef_name+".csv"
     if os.path.exists( os.path.join(settings.CSV_PATH,file_name ) ):
          context['csv_file'] = file_name
+         
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
+
+    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def __xsd_file_name(name):

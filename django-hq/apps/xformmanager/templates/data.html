@@ -18,8 +18,22 @@ download csv file<br/>
 {% endif %}
 
 
-<br/>
+<br>
+<div class="pagination">
+    <span class="step-links">
+        {% if data.has_previous %}
+            <a href="?page={{ data.previous_page_number }}"><< Previous</a>
+        {% endif %}
 
+        <span class="current">
+            Page {{ data.number }} of {{ data.paginator.num_pages }}.
+        </span>
+
+        {% if data.has_next %}
+            <a href="?page={{ data.next_page_number }}">Next >></a>
+        {% endif %}
+    </span>
+</div>
 
 <table class="sofT">
 	
@@ -28,7 +42,7 @@ download csv file<br/>
 		<td class="helpHed">{{col}}</td>	
 	{% endfor%}
 	</tr>
-   {% for record in data %}   	
+   {% for record in data.object_list %}   	
    	<tr class="dbodyrow{% cycle 'odd' 'even' %}">  
 	   {% for field in record %}   
 	   		 <td>{{field}}</td> 

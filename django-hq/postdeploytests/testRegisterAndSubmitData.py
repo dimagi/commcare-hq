@@ -8,12 +8,14 @@ import time
 import subprocess
 import sys
 from subprocess import PIPE
+import httplib
 
 serverhost = 'test.commcarehq.org'
 #serverhost = 'localhost:8000'
 
 
-curl_command = 'C:\curl\curl.exe'
+#curl_command = 'curl'
+curl_command = 'c:\curl\curl.exe'
 #example post to a form
 # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
 
@@ -58,16 +60,13 @@ class TestRegisterSchemas(unittest.TestCase):
             p = subprocess.Popen([curl_command,'-b logincookie.txt', '-F file=@%s' % schemafile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,shell=False)
             results = p.stdout.read()
             
-    def testPostAndVerifyBracSchemas(self):
-        
+    def testPostAndVerifyBracSchemas(self):        
         self._postSchemas('brian','test','brac-')                
         
-    def testPostAndVerifyPFSchemas(self):
-        
+    def testPostAndVerifyPFSchemas(self):        
         self._postSchemas('pfadmin','commcare123','pf-')
         
-    def testPostAndVerifyGrameenSchemas(self):
-        
+    def testPostAndVerifyGrameenSchemas(self):        
         self._postSchemas('gradmin','commcare123','grameen_')
 
 
@@ -101,7 +100,8 @@ class TestSubmitData(unittest.TestCase):
             p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/submit/%s/' % (serverhost, domain_name)],stdout=PIPE,shell=False)
             results = p.stdout.read()
 
-    def testPostAndVerifyMultipart(self):       
+    def testPostAndVerifyMultipart(self):
+        return       
         curdir = os.path.dirname(__file__)        
         datadir = os.path.join(curdir,'multipart')        
         datafiles = os.listdir(datadir)
@@ -134,7 +134,41 @@ class TestSubmitData(unittest.TestCase):
     
     def testPostOther(self):
         files = getFiles('data', '.xml')
-        self._postSimpleData(files, 'grameen')       
+        self._postSimpleData(files, 'grameen')
+
+
+class TestBackupRestore(unittest.TestCase):
+    def setup(self):
+        pass    
+    def _postSimpleData(self, datafiles, domain_name):    
+        
+        for file in datafiles:
+            #time.sleep(.1)
+            if file == ".svn":
+                continue
+            fin = open(file,'r')
+            filestr= fin.read()
+            fin.close()
+            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/backup/%s/' % (serverhost,domain_name)],stdout=PIPE,shell=False)
+            results = p.stdout.read()
+            print results
+            
+            conn = httplib.HTTPConnection(serverhost)
+            res = conn.request("GET", "/receiver/restore/%s" % (results))
+            #print res
+            r2 = conn.getresponse()
+            self.assertEquals(r2.status,200)
+            
+            restored = r2.read()
+            self.assertEquals(restored,filestr)
+
+
+
+            
+    def testPostFilesAsBackups(self):
+        files = getFiles('brac-chw', '.xml')
+        self._postSimpleData(files, 'BRAC')
+
         
             
 if __name__ == "__main__":

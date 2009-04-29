@@ -123,12 +123,17 @@ def domain_submit(request, domain_name, template_name="receiver/submit.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
-def backup(request, template_name="receiver/backup.html"):
+def backup(request, domain_name, template_name="receiver/backup.html"):
 #return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
     context = {}            
     logging.debug("begin backup()")
     if request.method == 'POST':
-        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
+        currdomain = Domain.objects.filter(name=domain_name)
+        if len(currdomain) != 1:
+            new_submission = '[error]'
+        else:
+            new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])
+                    
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"            
         else:
