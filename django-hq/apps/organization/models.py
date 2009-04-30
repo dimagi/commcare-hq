@@ -44,11 +44,12 @@ class ExtRole(models.Model):
 #    class Meta:
 #        verbose_name = _("Organization Relationship")
 
-class ExtUser(User):    
+class ExtUser(User):
+    chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
     domain = models.ForeignKey(Domain)
-    identity = models.OneToOneField(MonitorIdentity,blank=True,null=True)    
-      
+    identity = models.OneToOneField(MonitorIdentity, blank=True, null=True)
+    
     def __unicode__(self):
         return self.username
     
@@ -59,7 +60,7 @@ class Organization(models.Model):
     name = models.CharField(max_length=32, unique=True) #something's messed up with this
     domain = models.ForeignKey(Domain)
     description = models.CharField(max_length=255, null=True, blank=True)
-    organization_type = models.ManyToManyField(OrganizationType)    
+    organization_type = models.ManyToManyField(OrganizationType)
     
     #member_of = models.ForeignKey('self',null=True,blank=True)  #recursive access baby! - this is negated with the edge modeling
 

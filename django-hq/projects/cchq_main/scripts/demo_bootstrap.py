@@ -256,6 +256,11 @@ def run():
     organization_domain_3.name = u'Grameen'
     organization_domain_3.description = u''
     organization_domain_3.save()
+    
+    organization_domain_4 = Domain()
+    organization_domain_4.name = u'MVP'
+    organization_domain_4.description = u''
+    organization_domain_4.save()
 
     from organization.models import OrganizationType
 
@@ -276,6 +281,13 @@ def run():
     organization_organizationtype_3.domain = organization_domain_3
     organization_organizationtype_3.description = u''
     organization_organizationtype_3.save()
+    
+    organization_organizationtype_4 = OrganizationType()
+    organization_organizationtype_4.name = u'MVP-Org'
+    organization_organizationtype_4.domain = organization_domain_4
+    organization_organizationtype_4.description = u''
+    organization_organizationtype_4.save()
+
 
     from organization.models import ExtRole
 
@@ -490,6 +502,40 @@ def run():
     organization_extuser_13.identity = None
     organization_extuser_13.save()
 
+    organization_extuser_14 = ExtUser()
+    organization_extuser_14.username = u'mvpadmin'
+    organization_extuser_14.first_name = u''
+    organization_extuser_14.last_name = u''
+    organization_extuser_14.email = u''
+    organization_extuser_14.password = u'sha1$65d24$447a3770156eb7d91381819b14fb9c7a07ce15eb'
+    organization_extuser_14.is_staff = False
+    organization_extuser_14.is_active = True
+    organization_extuser_14.is_superuser = True
+    organization_extuser_14.last_login = datetime.datetime(2009, 4, 30, 13, 49, 20)
+    organization_extuser_14.date_joined = datetime.datetime(2009, 4, 30, 13, 20, 36)
+    organization_extuser_14.chw_id = u'000'
+    organization_extuser_14.primary_phone = u''
+    organization_extuser_14.domain = organization_domain_4
+    organization_extuser_14.identity = None
+    organization_extuser_14.save()
+
+    organization_extuser_15 = ExtUser()
+    organization_extuser_15.username = u'mvpuser1'
+    organization_extuser_15.first_name = u''
+    organization_extuser_15.last_name = u''
+    organization_extuser_15.email = u''
+    organization_extuser_15.password = u'resetme'
+    organization_extuser_15.is_staff = False
+    organization_extuser_15.is_active = True
+    organization_extuser_15.is_superuser = False
+    organization_extuser_15.last_login = datetime.datetime(2009, 4, 30, 13, 21, 57)
+    organization_extuser_15.date_joined = datetime.datetime(2009, 4, 30, 13, 21, 57)
+    organization_extuser_15.chw_id = u'001'
+    organization_extuser_15.primary_phone = u''
+    organization_extuser_15.domain = organization_domain_4
+    organization_extuser_15.identity = None
+    organization_extuser_15.save()
+
     from organization.models import Organization
 
     organization_organization_1 = Organization()
@@ -531,6 +577,15 @@ def run():
     organization_organization_5.save()
 
     organization_organization_5.organization_type.add(organization_organizationtype_3)
+    
+    organization_organization_6 = Organization()
+    organization_organization_6.name = u'MVP'
+    organization_organization_6.domain = organization_domain_4
+    organization_organization_6.description = u'MVP root organization'
+    organization_organization_6.save()
+
+    organization_organization_6.organization_type.add(organization_organizationtype_4)
+
 
     from organization.models import ReportSchedule
 

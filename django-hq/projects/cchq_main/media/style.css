@@ -115,6 +115,8 @@ a:hover {
     text-align:center;
 }
 
+
+
 #loginblock table{
         
     margin:auto;
@@ -131,6 +133,20 @@ a:hover {
     text-align: right;
     color: white;    
 }
+
+div.buildinfoblock {
+    position: absolute;
+    top: 38px;
+    right: 0;
+    padding: 0px 8px;
+    font-size: 11px;
+    text-align: right;
+    font-family: monospace;
+    background: darkgreen;
+    color:cornsilk;
+    
+}
+
 
 /* Search */
 
@@ -164,6 +180,8 @@ a:hover {
 #search-submit {
 	display: none;
 }
+
+
 
 /* Menu */
 
@@ -262,6 +280,7 @@ div.daterange_tabs  a {
 	margin: 0 auto;
 	padding-top: 15px;
 }
+
 
 
 /* Sidebar */

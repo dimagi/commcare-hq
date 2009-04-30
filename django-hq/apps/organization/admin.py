@@ -13,7 +13,7 @@ class OrganizationTypeAdmin(admin.ModelAdmin):
 
 class ExtUserAdmin(admin.ModelAdmin):
     list_display = ('id','username','primary_phone','email','domain')
-    list_filter = []
+    list_filter = ['domain']
     
 class OrganizationAdmin(admin.ModelAdmin):
     fields = ('name','description','organization_type','domain')
