@@ -123,7 +123,7 @@ class TestSubmitData(unittest.TestCase):
             filestr= fin.read()
             fin.close()
             print "Simple Submission: " + file
-            command_arr = [curl_command,'--header','"Content-type: text/xml"', '--header', '"Content-length: %s"' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/submit/%s' % (serverhost, domain_name)]
+            command_arr = [curl_command,'--header','Content-type: text/xml', '--header', 'Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/submit/%s' % (serverhost, domain_name)]
             print ' '.join(command_arr) 
             p = subprocess.Popen(command_arr,stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()
@@ -184,7 +184,7 @@ class TestBackupRestore(unittest.TestCase):
             filestr= fin.read()
             fin.close()
             print "Backup/Restore Test: " + file
-            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', '"Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/backup/%s/' % (serverhost,domain_name)],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', 'Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/backup/%s/' % (serverhost,domain_name)],stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()
             #print "BackupRestore: " + results
             
