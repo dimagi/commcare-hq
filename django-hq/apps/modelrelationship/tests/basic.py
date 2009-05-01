@@ -24,7 +24,8 @@ class BasicTestCase(unittest.TestCase):
         recursiveEdgeType.save()
         self.assertEquals(EdgeType.objects.all().count(),1)
 
-    def testCreateDeepAncestry(self):          
+    def testCreateDeepAncestry(self):      
+        """Creates an ancestry where id X is child of X+1"""    
         self.testCreateRecursiveEdgeType()    
         User.objects.all().delete()
         Edge.objects.all().delete()  
@@ -57,7 +58,7 @@ class BasicTestCase(unittest.TestCase):
                 if item.id > cur_id:
                     cur_id = item.id                    
 
-            self.assertEquals(ancestry[-1],User.objects.all()[0])        
+            self.assertEquals(ancestry[-1],User.objects.all().order_by('-id')[0])        
     
     def testVerifyFamilyTree(self):
         print "\n\n\n############## testVerifyFamilyTree"
