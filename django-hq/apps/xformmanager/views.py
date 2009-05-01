@@ -15,6 +15,7 @@ import settings, os, sys
 import logging
 import traceback
 import subprocess
+from subprocess import PIPE
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from organization.models import *
@@ -82,13 +83,29 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     #user has uploaded an xhtml/xform file
                     xform_file_name = __xform_file_name(transaction_str)
                     fout = open(xform_file_name, 'w')
-                    fout.write( request.FILES['file'].read() )
+                    xformstring = request.FILES['file'].read()
+                    fout.write( xformstring )
                     fout.close()
                     logging.debug ("java -jar form_translate.jar schema < " + xform_file_name + ">" + new_file_name)
-                    retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
-                    if retcode == 1:
-                        context['errors'] = request.FILES['file'].name+" could not be processed"
-                        raise Exception(request.FILES['file'].name+" could not be processed")
+                    p = subprocess.Popen(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),'schema'],shell=False, stdout=PIPE,stdin=PIPE, stderr=PIPE)                    
+                    
+                    p.stdin.write(xformstring)
+                    p.stdin.flush()
+                    p.stdin.close()
+                    
+                    logging.debug("Convert xform: " + p.stderr.read())
+                    
+                    results = p.stdout.read()
+                    fout = open(new_file_name, 'w')
+                    fout.write(results)
+                    fout.close()
+                    logging.debug("Convert xform completed")
+                                        
+#                    #retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
+#                    if retcode == 1:
+#                        context['errors'] = request.FILES['file'].name+" could not be processed"
+#                        raise Exception(request.FILES['file'].name+" could not be processed")
+
                         
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
@@ -116,7 +133,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]) + "<br/>")
                 logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
                 type, value, tb = sys.exc_info()
-                logging.error(type.__name__, ":", value)
+                logging.error(str(type.__name__), ":", str(value))
                 logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
                 logging.error("Transaction rolled back")
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
@@ -138,7 +155,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
     xform = FormDefData.objects.all().filter(id=formdef_id)
     
     if show_schema:
-        response = HttpResponse(mimetype='text/plain')
+        response = HttpResponse(mimetype='text/xml')
         fin = open(xform[0].xsd_file_location ,'r')
         txt = fin.read()
         fin.close()

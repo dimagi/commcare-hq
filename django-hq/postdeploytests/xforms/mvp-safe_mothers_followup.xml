@@ -1,0 +1,349 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>safe pregnancy followup</h:title>
+    <meta jr:name="safe_preg_followup_0.0.1"/>
+    <model>
+		<itext>
+			<translation lang="English">
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+				<text id="no">
+					<value>No</value>
+				</text>
+				<text id="other">
+					<value>Other</value>
+				</text>
+				<text id="ok">
+					<value>Ok</value>
+				</text>
+				
+				<text id="HIV">
+					<value>HIV</value>
+				</text>
+				
+				<text id="pain_from_vagina">
+					<value form="long">Do you have pains, sores, bleeding or unusual discharge from your vagina?</value>
+					<value form="short">Do you have pains</value>
+				</text>
+		<text id="headache_or_b_vision">
+					<value form="long">Do you have severe headaches or blurred vision?</value>
+					<value form="short">Headaches or blurred vision</value>
+				</text>
+				
+				<text id="poor_night_vision">
+					<value form="long">Do you have poor night vision?</value>
+					<value form="short">Poor night vision</value>
+				</text>
+				
+				<text id="unusual_Pain">
+					<value form="long">Do you have pain in your stomach or unusual pain?</value>
+					<value form="short">unusual Pain</value>
+				</text>
+				
+				<text id="burn_urinate">
+					<value form="long">Does it burn when you urinate?</value>
+					<value form="short">Burn when urinate</value>
+				</text>
+				
+				<text id="sores_itching">
+					<value form="long">Do you have sores, itching, or pus on any part of body?</value>
+					<value form="short">Have sores, itching or pus</value>
+				</text>
+				
+				<text id="baby_movement">
+					<value form="long">Have you felt your baby move during this pregnancy?</value>
+					<value form="short">Felt your baby move</value>
+				</text>
+				
+				<text id="baby_not_moving">
+					<value form="long"> Has the baby stopped moving?</value>
+					<value form="short">Baby stopped moving</value>
+				</text>
+				
+				<text id="fever">
+					<value form="long">Have you had fever since you last went to the clinic?</value>
+					<value form="short">Fever since you last went to clinic</value>
+				</text>
+				
+				<text id="other_illness">
+					<value form="long">Have you had other illness since you last went to the clinic?</value>
+					<value form="short">Other illness</value>
+				</text>
+				
+				<text id="which_illness">
+					<value form="long">Which illness?</value>
+					<value formm="short">Which illness</value>
+				</text>
+				
+				<text id="referral">
+					<value>Refer patient to clinic and tell her you will visit again next week to make sure she went</value>
+				</text>
+				
+				<text id="umbilical_cord">
+					<value>Does she know what to do with the umbilical cord after birth</value>
+				</text>
+				
+				<text id="answer">
+					<value>Keep stump clean and dry because dirt in the umbilical cord can cause infection in the baby</value>
+				</text>
+				
+				<text id="newborns">
+					<value>Does she know what to do with newborns eyes after birth</value>
+				</text>
+				
+				<text id="answer_newborns">
+					<value>Clean out the eyes with clean cloth and breast milk or cool boiled water</value>
+				</text>
+				
+				<text id="explanations">
+					<value>The newborns eyes may swell or become irritated if they are not properly cleaned</value>
+				</text>
+				
+				<text id="breast_feed">
+					<value>Does mother known when to start breastfeeding?</value>
+				</text>
+				
+				<text id="answer_breast_feed">
+					<value>Within an hour of birth</value>
+				</text>
+				
+				<text id="infant_knowledge">
+					<value>Exclusive breastfeeding for the infant is a critical form of newborn care</value>
+				</text>
+
+		<text id="preg_actions">
+					<value>Health Pregnancy Actions:</value>
+				</text>
+				<text id="act1">
+					<value>Started Vitamin A, Iron and Folic Acid supplements</value>
+				</text>
+				<text id="act2">
+					<value>Immunized with tetanus toxoid</value>
+				</text>
+				<text id="act3">
+					<value>Intermittent Preventative Treatment for Malaria</value>
+				</text>
+				<text id="act4">
+					<value>Deworming tablet</value>
+				</text>
+				<text id="act5">
+					<value>Has birth plan</value>
+				</text>
+				<text id="act6">
+					<value>Tested for HIV in last 12 months</value>
+				</text>
+				<text id="act7">
+					<value>Sleeps under bednet</value>
+				</text>
+				
+		</translation>
+		
+		</itext>
+
+		<instance>
+			<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/followup_v0.1">
+				<Meta>
+					<formName>safepregnancyFollowUpVisit</formName>
+					<formVersion>0.0.1</formVersion>
+          <DeviceID />
+          <TimeStart />
+          <TimeEnd />
+          <username />
+          <userid />
+        </Meta>
+
+        <pain_from_vagina />
+				<headache_or_b_vision />
+				<poor_night_vision />
+				<unusual_Pain />
+				<burn_urinate />
+				<sores_itching />
+				<baby_movement />
+				<baby_not_moving />
+				<fever />
+				<other_illness />
+				<which_illness />
+				<referral />
+				<umbilical_cord />
+				<newborns />
+				<infant_knowledge />
+				<preg_actions />
+				<answer />
+				<explanations />
+				<answer_newborns />
+				<breast_feed />
+				<answer_breast_feed />
+				
+			</safe_pregnancy>
+		</instance>
+
+      <bind nodeset="Meta/DeviceID" jr:preload="property" jr:preloadParams="DeviceID" />
+      <bind nodeset="Meta/username" jr:preload="context" jr:preloadParams="UserName" />
+      <bind nodeset="Meta/userid" jr:preload="context" jr:preloadParams="UserID" />
+      <bind nodeset="Meta/TimeStart" type="dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+      <bind nodeset="Meta/TimeEnd" type="dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+      <bind id="pain_from_vagina" nodeset="/safe_pregnancy/pain_from_vagina"  type="xsd:string" required="true()" />
+			<bind id="headache_or_b_vision" nodeset="/safe_pregnancy/headache_or_b_vision"  type="xsd:string" required="true()" />
+			<bind id="poor_night_vision" nodeset="/safe_pregnancy/poor_night_vision"  type="xsd:string" required="true()" />
+			<bind id="unusual_Pain" nodeset="/safe_pregnancy/unusual_Pain"  type="xsd:string" required="true()" />
+			<bind id="burn_urinate" nodeset="/safe_pregnancy/burn_urinate"  type="xsd:string" required="true()" />
+			<bind id="sores_itching" nodeset="/safe_pregnancy/sores_itching"  type="xsd:string" required="true()" />
+			<bind id="baby_movement" nodeset="/safe_pregnancy/baby_movement"  type="xsd:string" required="true()" />
+			<bind id="baby_not_moving" nodeset="/safe_pregnancy/baby_not_moving"  type="xsd:string" relevant="/safe_pregnancy/baby_movement='yes'" />
+			<bind id="fever" nodeset="/safe_pregnancy/fever" type="xsd:string" required="true()" />
+			<bind id="other_illness" nodeset="/safe_pregnancy/other_illness" type="xsd:string" required="true()" />
+			<bind id="which_illness" nodeset="/safe_pregnancy/which_illness" type="xsd:string" required="true()" relevant="/safe_pregnancy/other_illness='yes'" />			
+
+			<bind id="referral" nodeset="/safe_pregnancy/referral"  type="xsd:string" relevant="/safe_pregnancy/pain_from_vagina='yes' or /safe_pregnancy/headache_or_b_vision='yes' or /safe_pregnancy/poor_night_vision='yes' or /safe_pregnancy/unusual_Pain='yes' or /safe_pregnancy/burn_urinate='yes' or /safe_pregnancy/sores_itching='yes' or /safe_pregnancy/baby_movement='no' or /safe_pregnancy/baby_not_moving='yes'" />
+			
+			<bind id="preg_actions" nodeset="/safe_pregnancy/preg_actions" type="xsd:string" jr:preload="case" jr:preloadParams="pregnancy_actions"/>
+		
+			<bind id="umbilical_cord" nodeset="/safe_pregnancy/umbilical_cord"  type="xsd:string" required="true()" />
+			<bind id="cord_explain" nodeset="/safe_pregnancy/answer"  type="xsd:string" relevant="/safe_pregnancy/umbilical_cord='no'" />
+			
+			<bind id="newborns" nodeset="/safe_pregnancy/newborns"  type="xsd:string" type="xsd:string" required="true()" />
+			<bind id="answer_newborns" nodeset="/safe_pregnancy/answer_newborns"  type="xsd:string" relevant="/safe_pregnancy/newborns='no'" />
+			<bind id="explanations" nodeset="/safe_pregnancy/explanations"  type="xsd:string" relevant="/safe_pregnancy/newborns='no'" />
+			
+			<bind id="breast_feed" nodeset="/safe_pregnancy/breast_feed" type="xsd:string" required="true()" />
+			<bind id="answer_breast_feed" nodeset="/safe_pregnancy/answer_breast_feed" type="xsd:string" relevant="/safe_pregnancy/breast_feed='no'"/>
+			
+			<bind id="infant_knowledge" nodeset="/safe_pregnancy/infant_knowledge" type="xsd:string" relevant="/safe_pregnancy/breast_feed='no'"/>
+			
+	</model>
+</h:head>			
+<h:body>
+
+	<select1 bind="pain_from_vagina">
+		<label ref="jr:itext('pain_from_vagina')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="headache_or_b_vision">
+		<label ref="jr:itext('headache_or_b_vision')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="poor_night_vision">
+		<label ref="jr:itext('poor_night_vision')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="unusual_Pain">
+		<label ref="jr:itext('unusual_Pain')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+				
+	<select1 bind="burn_urinate">
+		<label ref="jr:itext('burn_urinate')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="sores_itching">
+		<label ref="jr:itext('sores_itching')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="baby_movement">
+		<label ref="jr:itext('baby_movement')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<select1 bind="baby_not_moving">
+		<label ref="jr:itext('baby_not_moving')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+
+		<select1 ref="/safe_pregnancy/fever">
+           <label  ref="jr:itext('fever')"></label>
+            <item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+            <item><label ref="jr:itext('no')"></label><value>no</value></item>
+		</select1>
+		
+		<select1 ref="/safe_pregnancy/other_illness">
+           <label  ref="jr:itext('other_illness')"></label>
+            <item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+            <item><label ref="jr:itext('no')"></label><value>no</value></item>
+		</select1>
+		
+		<input bind="which_illness"><label ref="jr:itext('which_illness')"></label></input>	
+
+		<trigger bind="referral">
+		<label ref="jr:itext('referral')"></label>
+
+		</trigger>
+
+	<select bind="preg_actions">
+		<label ref="jr:itext('preg_actions')"></label>
+		<item><label ref="jr:itext('act1')"></label><value>vitamin_A_Iron_and_Folic_Acid_supplements</value></item>
+		<item><label ref="jr:itext('act2')"></label><value>Immunized_with_tetanus_toxoid</value></item>
+		<item><label ref="jr:itext('act3')"></label><value>Intermittent_Preventative_Treatment_for_Malaria</value></item>
+		<item><label ref="jr:itext('act4')"></label><value>Deworming_tablet</value></item>
+		<item><label ref="jr:itext('act5')"></label><value>Has_birth_plan</value></item>
+		<item><label ref="jr:itext('act6')"></label><value>Tested_for_HIV_in_last_12_months</value></item>
+		<item><label ref="jr:itext('act7')"></label><value>Sleeps_under_bednet</value></item>
+	</select>
+		
+	<select1 bind="umbilical_cord">
+		<label ref="jr:itext('umbilical_cord')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+		
+	<trigger bind="cord_explain">
+
+            <label ref="jr:itext('answer')"></label>
+
+		</trigger>
+		
+	<select1 bind="newborns">
+		<label ref="jr:itext('newborns')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<trigger bind="answer_newborns">
+
+            <label ref="jr:itext('answer_newborns')"></label>
+
+
+		</trigger>
+		
+		<trigger bind="explanations">
+
+            <label ref="jr:itext('explanations')"></label>
+
+		</trigger>
+		
+	<select1 bind="breast_feed">
+		<label ref="jr:itext('breast_feed')"></label>
+		<item><label ref="jr:itext('no')"></label><value>no</value></item>
+		<item><label ref="jr:itext('yes')"></label><value>yes</value></item>
+	</select1>
+	
+	<trigger bind="answer_breast_feed">
+
+            <label ref="jr:itext('answer_breast_feed')"></label>
+		</trigger>
+		
+			<trigger bind="infant_knowledge">
+
+            <label ref="jr:itext('infant_knowledge')"></label>
+		</trigger>
+			
+</h:body>
+</h:html>

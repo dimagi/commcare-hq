@@ -16,7 +16,7 @@
 
 <div class="fieldWrapper{% if errors %} errors{% endif %}">
     {% if errors %}
-            <li><strong>{{ errors|escape }}</strong></li>
+            <li><strong>{%trans "Submit Error: "%}{{ errors|escape }}</strong></li>
     {% endif %}
 </div>
 

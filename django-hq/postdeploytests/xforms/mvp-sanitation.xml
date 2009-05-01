@@ -1,0 +1,253 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>Sanitation Form</h:title>
+		<meta jr:name="san1.0"/>
+		<model>
+			<instance>
+				<Sanitation xmlns="">
+					<Meta>
+						<formName>Sanitation</formName>
+						<formVersion>0.1</formVersion>
+						<DeviceID />
+						<TimeStart />
+						<TimeEnd />
+					</Meta>
+					<people/>
+					<house/>
+					<own_house/>
+					<swept/>
+					<plastered/>
+					<ventilated/>
+					<feaces/>
+					<refuse/>
+					<source_of_water/>
+					<water_container/>
+					<container_type/>
+					<clean_container/>
+					<container_covered/>
+					<safe_water/>
+					<kitchen/>
+					<kitchen_condition/>
+					<cooking_stove/>
+					<energy_source/>
+					<drying_rack/>
+					<animal_house/>
+					<composit_pit/>
+					<latrine/>
+					<sharelatrine/>
+					<latrine_floor/>
+					<latrine_condition/>
+					<latrine_covered/>
+					<washing_facility/>
+					<bathing/>
+					<food_store/>
+					<drying_line/>
+					<sleeping_sites/>
+					<bednets/>
+					<FinalQuestion/>
+		        </Sanitation>
+			</instance>
+
+			<bind id="hidden1" nodeset="/Sanitation/Meta/DeviceID" type="xsd:string" jr:preload="property" jr:preloadParams="DeviceID" />
+			<bind id="hidden2" nodeset="/Sanitation/Meta/TimeStart" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+			<bind id="hidden3" nodeset="/Sanitation/Meta/TimeEnd" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+			<bind id="num_people" nodeset="/Sanitation/people" type="xsd:int" required="true()"/>
+			
+			<bind id="container_type" nodeset="/Sanitation/container_type" relevant="/Sanitation/water_container='1'"/>
+			<bind id="clean_container" nodeset="/Sanitation/clean_container" relevant="/Sanitation/water_container='1'"/>
+			<bind id="container_covered" nodeset="/Sanitation/container_covered" relevant="/Sanitation/water_container='1'"/>
+			<bind id="safe_water" nodeset="/Sanitation/safe_water" relevant="/Sanitation/water_container='1'"/>
+			
+			<bind id="latrine_floor" nodeset="/Sanitation/latrine_floor" relevant="/Sanitation/latrine='1'"/>
+			<bind id="latrine_condition" nodeset="/Sanitation/latrine_condition" relevant="/Sanitation/latrine='1'"/>
+			<bind id="latrine_covered" nodeset="/Sanitation/latrine_covered" relevant="/Sanitation/latrine='1'"/>
+			<bind id="washing_facility" nodeset="/Sanitation/washing_facility" relevant="/Sanitation/latrine='1'"/>
+			
+			<bind id="num_sleeping_sites" nodeset="/Sanitation/sleeping_sites" type="xsd:int" required="true()"/>
+			<bind id="num_bednets" nodeset="/Sanitation/bednets" type="xsd:int" required="true()"/>
+		</model>
+	</h:head>
+	<h:body>
+		<input bind="num_people">
+			<label>No of people</label>
+        </input>
+		<select1 ref="/Sanitation/house">
+			<label>Type of house</label>
+            <item><label>Permanent</label><value>1</value></item>
+            <item><label>Semipermanent</label><value>2</value></item>
+			<item><label>Temporary</label><value>3</value></item>
+		</select1>
+		<select1 ref="/Sanitation/own_house">
+           <label>Do you own the house that you live in?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/swept">
+           <label>Is household swept?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+        <select1 ref="/Sanitation/plastered">
+           <label>What is the appearance of the walls?</label>
+            <item><label>Plastered</label><value>1</value></item>
+            <item><label>Smeared</label><value>2</value></item>
+            <item><label>None</label><value>3</value></item>
+        </select1>
+	    <select1 ref="/Sanitation/ventilated">
+            <label>Is household ventilated?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/feaces">
+            <label>Are there feaces around the house?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/refuse">
+            <label>Is there refuse around the house?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/source_of_water">
+            <label>Which type of source of water do you draw your water from?</label>
+            <item><label>Protected spring</label><value>1</value></item>
+            <item><label>Unprotected spring</label><value>2</value></item>
+			<item><label>Rain water at home</label><value>3</value></item>
+            <item><label>Rain water away from home </label><value>4</value></item>
+			<item><label>Rock output</label><value>5</value></item>
+			<item><label>Burrow murram pit</label><value>6</value></item>
+		</select1>
+		<select1 ref="/Sanitation/water_container">
+            <label>Do you have drinking water container?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 bind="container_type">
+            <label>what is the type of drinking water container?</label>
+            <item><label>Pot</label><value>1</value></item>
+            <item><label>Jerrican</label><value>2</value></item>
+			<item><label>Saucepan</label><value>3</value></item>
+           	<item><label>Calabash</label><value>4</value></item>
+			<item><label>Bucket</label><value>5</value></item>
+			<item><label>Bottle</label><value>6</value></item>
+        </select1>
+		<select1 bind="clean_container">
+            <label>Is the drinking water container clean?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+    	</select1>
+		<select1 bind="container_covered">
+            <label>Is the drinking water container covered?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+		</select1>
+		<select1 bind="safe_water">
+            <label>Which method do you use to render your water safe for drinking?</label>
+            <item><label>Boiling</label><value>1</value></item>
+            <item><label>Filtering</label><value>2</value></item>
+			<item><label>Chemical treatment</label><value>3</value></item>
+            <item><label>UV/Sunlight </label><value>4</value></item>
+			<item><label>sedimentation </label><value>5</value></item>
+		</select1>
+		<select1 ref="/Sanitation/kitchen">
+            <label>Do you have a kitchen?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/kitchen_condition">
+            <label>How is the kitchen condition?</label>
+            <item><label>Clean</label><value>1</value></item>
+            <item><label>Dirty</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/cooking_stove">
+            <label>which type of cooking stove do you have?</label>
+            <item><label>Three stone stove</label><value>1</value></item>
+            <item><label>Clay charcoal stove</label><value>2</value></item>
+			 <item><label>Metalic charcoal stove</label><value>3</value></item>
+			  <item><label>Improved built stove</label><value>4</value></item>
+        </select1>
+		<select1 ref="/Sanitation/energy_source">
+            <label>which type energy source do you use?</label>
+            <item><label>Fuel wood</label><value>1</value></item>
+            <item><label>Charcoal</label><value>2</value></item>
+			 <item><label>Farm residue</label><value>3</value></item>
+			  <item><label>Dung</label><value>4</value></item>
+        </select1>
+		<select1 ref="/Sanitation/drying_rack">
+            <label>Do you have a drying rack?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/animal_house">
+            <label>Do you have an animal house?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/composit_pit">
+            <label>Do you have a compost pit?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/latrine">
+            <label>Do you have a latrine?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/sharelatrine">
+           <label>Do you share a latrine with another household?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 bind="latrine_floor">
+            <label>How is the latrine floor?</label>
+            <item><label>Earthen</label><value>1</value></item>
+            <item><label>Concrete</label><value>2</value></item>
+        </select1>
+		<select1 bind="latrine_condition">
+            <label>How is the latrine condition?</label>
+            <item><label>Clean</label><value>1</value></item>
+            <item><label>Dirty</label><value>2</value></item>
+        </select1>
+		<select1 bind="latrine_covered">
+            <label>Is the the latrine covered?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 bind="washing_facility">
+           <label>Does your latrine have a washing facility?</label>
+            <item><label>Yes with water and soap</label><value>1</value></item>
+			<item><label>Yes with water only</label><value>2</value></item>
+            <item><label>No</label><value>3</value></item>
+        </select1>
+		<select1 ref="/Sanitation/bathing">
+            <label>Is there a place for bathing?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+		</select1>
+		<select1 ref="/Sanitation/food_store">
+           <label>Do you have a food store?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<select1 ref="/Sanitation/drying_line">
+           <label>Do you have a drying line?</label>
+            <item><label>Yes</label><value>1</value></item>
+            <item><label>No</label><value>2</value></item>
+        </select1>
+		<input bind="num_sleeping_sites">
+			<label>Number of sleeping sites in a household</label>
+        </input>
+		<input bind="num_bednets">
+			<label>Number of bednets owned</label>
+        </input>
+		<select1 ref="/Sanitation/FinalQuestion">
+            <label>Thanks for collecting data</label>
+            <item><label>Continue</label><value>1</value></item>
+		</select1>
+	</h:body>
+</h:html>

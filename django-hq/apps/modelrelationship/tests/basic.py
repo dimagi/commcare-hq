@@ -56,7 +56,8 @@ class BasicTestCase(unittest.TestCase):
                 #self.assertTrue(cur_id >= item.id)                
                 if item.id > cur_id:
                     cur_id = item.id                    
-            self.assertEquals(ancestry[-1],User.objects.all()[User.objects.count() -1])        
+
+            self.assertEquals(ancestry[-1],User.objects.all()[0])        
     
     def testVerifyFamilyTree(self):
         print "\n\n\n############## testVerifyFamilyTree"
