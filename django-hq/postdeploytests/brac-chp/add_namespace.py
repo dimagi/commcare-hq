@@ -18,9 +18,9 @@ for fname in files:
 
     fout = open(fname,'w')
     for line in lines:
-        if line.count('<brac>') > 0:
-            line = line.replace('<brac>',
-                                '<brac xmlns="http://www.commcare.org/BRAC/CHP/HomeVisit_v0.0.1">')
+        #if line.count('<brac>') > 0:
+        line = line.replace('<brac xmlns="http://www.commcare.org/BRAC/CHP/HomeVisit_v0.0.1">',
+                                '<brac xmlns="http://dev.commcarehq.org/BRAC/CHP/HomeVisit_v0.0.1">')
         
         fout.write(line)
         

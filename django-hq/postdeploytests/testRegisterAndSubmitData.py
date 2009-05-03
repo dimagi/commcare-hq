@@ -83,7 +83,7 @@ class TestRegisterXforms(unittest.TestCase):
         self._postSchemas('pfadmin','commcare123','pf-')
         
     def testPostAndVerifyGrameenSchemas(self):        
-        self._postSchemas('gradmin','commcare123','grameen_')
+        self._postSchemas('gradmin','commcare123','mvp-')
 
 
 class TestSubmitData(unittest.TestCase):
@@ -106,22 +106,23 @@ class TestSubmitData(unittest.TestCase):
         
     def _verifySubmission(self, resultstring, num_attachments):
         rescount = resultstring.count("Submission received, thank you")
-        
+        attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
         if rescount != 1:
-            print "Data submission failed, not successful"
+            print "Data submission failed, not successful: " + str(rescount)
             print resultstring
         else:
             idx = resultstring.index("<p>Attachments:")
-            attachment_count = resultstring[idx+8:].replace('</p>','')
+            attachment_count = resultstring[idx+15:].replace('</p>','')
             try:
                 anum = int(attachment_count)
                 #self.assertEqual(anum, num_attachments)
                 
             except:
                 #self.assertFalse(True)
-                print "Data submission error:  attachment not found"
+                print "Data submission error:  attachment not found: " + attachment_count 
                 print resultstring
+                
             
         
         
@@ -198,7 +199,7 @@ class TestBackupRestore(unittest.TestCase):
             filestr= fin.read()
             fin.close()
             print "Backup/Restore Test: " + file
-            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', 'Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/backup/%s/' % (serverhost,domain_name)],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type: text/xml', '--header', 'Content-length: %s' % len(filestr), '--data-binary', '@%s' % file, '--request', 'POST', 'http://%s/receiver/backup/%s' % (serverhost,domain_name)],stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()
             #print "BackupRestore: " + results
             
@@ -211,12 +212,14 @@ class TestBackupRestore(unittest.TestCase):
             restored = r2.read()
             #self.assertEquals(restored,filestr)
             if restored != filestr:
-                print "BackupRestore error failed"
+                print "BackupRestore error failed for id: " + results
+                print restored
 
 
 
             
     def testPostFilesAsBackups(self):
+        return
         files = getFiles('brac-chw', '.xml')
         self._postSimpleData(files, 'BRAC')
 

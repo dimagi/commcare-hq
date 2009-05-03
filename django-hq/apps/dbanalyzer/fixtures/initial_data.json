@@ -255,10 +255,10 @@
       "data_source": "commcarehq", 
       "x_type": "date", 
       "x_axis_label": "Time", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-bar", 
       "series_options": "", 
-      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
   {
@@ -272,7 +272,7 @@
       "table_name": "sadf", 
       "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+      "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
   {
@@ -286,7 +286,7 @@
       "table_name": "fasdfwdrf", 
       "display_type": "cumulative-line", 
       "series_options": "", 
-      "db_query": "select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1;"
+      "db_query": "select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
   {
@@ -297,10 +297,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-trend", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
     }
   }, 
   {
@@ -311,10 +311,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-cumulative", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
     }
   }, 
   {
@@ -328,7 +328,7 @@
       "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select distinct(referral_given), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by referral_given"
+      "db_query": "select distinct(referral_given), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by referral_given"
     }
   }, 
   {
@@ -339,10 +339,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "Date", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-cumulative", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
     }
   }, 
   {
@@ -353,10 +353,10 @@
       "data_source": "", 
       "x_type": "string", 
       "x_axis_label": "Username", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select distinct(username), count(*) from x_http__www_commcare_org_brac_chp_homevisit_v0_0_1 group by username"
+      "db_query": "select distinct(username), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by username"
     }
   }, 
   {
@@ -367,10 +367,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "Date", 
-      "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
+      "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-trend", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
     }
   }, 
   {
