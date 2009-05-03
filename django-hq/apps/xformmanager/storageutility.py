@@ -89,7 +89,8 @@ class StorageUtility(object):
 
     def add_schema(self, formdef):
         fdd = self.update_meta(formdef)
-        self.form = fdd
+        self.formdata = fdd
+        self.formdef = formdef
         queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
         self.__execute_queries(queries)
         return fdd
@@ -99,7 +100,7 @@ class StorageUtility(object):
         skip_junk(data_stream_pointer)
         tree = etree.parse(data_stream_pointer)
         root = tree.getroot()
-        self.namespace = formdef.target_namespace
+        self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         self.__execute_queries(queries)
         #I don't know why we need this.... but if we don't, unit tests break
@@ -153,7 +154,7 @@ class StorageUtility(object):
         return fdd
 
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
-        table_name = get_table_name( self.__name(parent_name, elementdef.name) )
+        table_name = get_table_name( formatted_join(parent_name, elementdef.name) )
         
         (next_query, fields) = self.__create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
         # add this later - should never be called during unit tests
@@ -199,22 +200,22 @@ class StorageUtility(object):
           return (next_query, self.__db_field_name(elementdef) )
       for child in elementdef.child_elements:
           # put in a check for root.isRepeatable
-          next_parent_name = self.__name(parent_name, elementdef.name)
+          next_parent_name = formatted_join(parent_name, elementdef.name)
           if child.is_repeatable :
               # repeatable elements must generate a new table
               if parent_id == '':
-                  ed = ElementDefData(name=str(child.name), form_id=self.form.id,
-                                  table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
+                  ed = ElementDefData(name=str(child.name), form_id=self.formdata.id,
+                                  table_name = get_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
                   ed.save()
                   ed.parent = ed
               else:
-                  ed = ElementDefData(name=str(child.name), parent_id=parent_id, form=self.form,
-                                  table_name = get_table_name( self.__name(next_parent_name, child.name) ) ) #next_parent_name
+                  ed = ElementDefData(name=str(child.name), parent_id=parent_id, form=self.formdata,
+                                  table_name = get_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
           else: 
             if len(child.child_elements) > 0 :
-                (q, f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=self.__name( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
+                (q, f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
             else:
                 local_fields.append( self.__db_field_name(child) )
                 (q,f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
@@ -226,7 +227,7 @@ class StorageUtility(object):
       if data_tree is None : return
       if not elementdef: return
       
-      table_name = get_table_name( self.__name(parent_name, elementdef.name) )      
+      table_name = get_table_name( formatted_join(parent_name, elementdef.name) )      
       if len( parent_table_name ) > 0:          
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
@@ -262,8 +263,7 @@ class StorageUtility(object):
       next_query = ''
       if len(elementdef.child_elements)== 0:
           if elementdef.is_repeatable :
-              local_fields = self.__sanitize(elementdef.name) + ", "
-              values = self.__db_format(elementdef.type, data_tree.text) + ", "      
+              (local_fields, values) = self.__get_formatted_fields_and_values(elementdef,data_tree.text)
           return (next_query, local_fields, values)
       for def_child in elementdef.child_elements:        
         data_node = None
@@ -271,15 +271,18 @@ class StorageUtility(object):
         # todo - make sure this works in a case-insensitive way
         # find the data matching the current elementdef
         # todo - put in a check for root.isRepeatable
-        next_parent_name = self.__name(parent_name, elementdef.name)
+        next_parent_name = formatted_join(parent_name, elementdef.name)
         if def_child.is_repeatable :
-            for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
+            for data_child in self.__case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self.__data_name( elementdef.name, def_child.name) ):
                 next_query = next_query + self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
         else:
             # if there are children (which are not repeatable) then flatten the table
-            for data_child in data_tree.iter('{'+self.namespace+'}'+def_child.name):
+            for data_child in self.__case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self.__data_name( elementdef.name, def_child.name) ):
                 data_node = data_child
                 break;
+            if data_node is None:
+                logging.debug("xformmanager: storageutility - no values parsed for " + '{'+self.formdef.target_namespace+'}' + def_child.name)
+                continue
             if( len(def_child.child_elements)>0 ):
                 if data_node is not None:
                     (q,f,v) = self.__populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
@@ -288,10 +291,11 @@ class StorageUtility(object):
                     values  = values + v
             else:
                 # if there are no children, then add values to the table
-                if data_child.text is not None :
-                    local_fields = local_fields + self.__sanitize(def_child.name) + ", "
-                    values = values + self.__db_format(def_child.type, data_child.text) + ", "
-                (q, f, v) = self.__populate_instance_tables_inner_loop(data_child, def_child, next_parent_name, parent_table_name)
+                if data_node.text is not None :
+                    (l, v) = self.__get_formatted_fields_and_values(def_child, data_node.text)
+                    local_fields = local_fields + l
+                    values = values + v
+                (q, f, v) = self.__populate_instance_tables_inner_loop(data_node, def_child, next_parent_name, parent_table_name)
                 next_query = next_query + q
                 local_fields = local_fields + f
                 values  = values + v
@@ -300,13 +304,8 @@ class StorageUtility(object):
     def __trim2chars(self, string):
         return string[0:len(string)-2]
         
-    def __name(self, parent_name, child_name):
-        if parent_name: 
-            if parent_name.lower() != child_name.lower():
-                return str(parent_name) + "_" + str(child_name)
-        return str(child_name)
-        
     def __get_db_type(self, type):
+        type = type.lower()
         if settings.DATABASE_ENGINE=='mysql' :
             if type in self.XSD_TO_MYSQL_TYPES: 
                 return self.XSD_TO_MYSQL_TYPES[type]
@@ -319,6 +318,7 @@ class StorageUtility(object):
         
         
     def __db_format(self, type, text):
+        type = type.lower()
         if text == '':
             logging.error("Poorly formatted xml input!")
             return ''
@@ -354,10 +354,39 @@ class StorageUtility(object):
             return name
 
     def __db_field_name(self, elementdef):
-        return self.__sanitize( elementdef.name ) + " " + self.__get_db_type( elementdef.type ) + ", "
-    
+        label = self.__sanitize( elementdef.name )
+        if elementdef.type[0:5] == 'list.':
+            field = ''
+            simple_type = self.formdef.types[elementdef.type]
+            if simple_type is not None:
+                for values in simple_type.multiselect_values:
+                    field = field + label + "_" + values + " " + self.__get_db_type( 'boolean' ) + ", " 
+            return field
+        return  label + " " + self.__get_db_type( elementdef.type ) + ", "
+
+
+    def __get_formatted_fields_and_values(self, elementdef, raw_value):
+        label = self.__sanitize(elementdef.name)
+        if elementdef.type[0:5] == 'list.':
+            field = ''
+            value = ''
+            values = raw_value.split()
+            simple_type = self.formdef.types[elementdef.type]
+            if simple_type is not None and simple_type.multiselect_values is not None:
+                for v in values:
+                    if v in simple_type.multiselect_values:
+                        field = field + label + "_" + v + ", " 
+                        value = value + '1' + ", "
+                return (field, value)
+        field = label + ", "
+        value = self.__db_format(elementdef.type, raw_value) + ", "
+        return (field, value)
+
     def __execute_queries(self, queries):
         # todo - rollback on fail
+        if queries is None or len(queries) == 0:
+            logging.error("xformmanager: storageutility - xform " + self.formdef.target_namespace + " could not be parsed")
+            return
         logging.debug(queries)
         cursor = connection.cursor()
         if settings.DATABASE_ENGINE=='mysql' :
@@ -426,3 +455,18 @@ class StorageUtility(object):
             logging.debug(  "  deleting data table:" + edd.table_name )
             cursor = connection.cursor()
             cursor.execute("drop table " + edd.table_name)
+
+
+    def __case_insensitive_iter(self, data_tree, tag):
+        if tag == "*":
+            tag = None
+        if tag is None or data_tree.tag.lower() == tag.lower():
+            yield data_tree
+        for e in data_tree: 
+            for e in self.__case_insensitive_iter(e,tag):
+                yield e 
+
+    def __data_name(self, parent_name, child_name):
+        if child_name[0:len(parent_name)].lower() == parent_name.lower():
+            child_name = child_name[len(parent_name)+1:len(child_name)]
+        return child_name
