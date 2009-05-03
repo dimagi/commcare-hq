@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
-<root xmlns="xml_basic">
+<root xmlns="http://www.commcarehq.org/xml_basic">
 	<UserID>userid0</UserID>
 	<DeviceID>deviceid0</DeviceID>
 	<TimeStartRecorded>starttime</TimeStartRecorded>

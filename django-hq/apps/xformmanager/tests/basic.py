@@ -13,7 +13,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_xml_basic")
+        cursor.execute("SELECT * FROM x_http__www_commcarehq_org_xml_basic")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         self.assertEquals(row[1],"userid0")
@@ -38,6 +38,8 @@ class BasicTestCase(unittest.TestCase):
             self.assertEquals(row[6][1],"date")
             self.assertEquals(row[7][1],"time")
             self.assertEquals(row[8][1],"datetime")
+            self.assertEquals(row[9][1],"tinyint(1)")
+            self.assertEquals(row[10][1],"tinyint(1)")
         else:
             pass
         cursor.execute("SELECT * FROM x_xml_types")
@@ -58,6 +60,21 @@ class BasicTestCase(unittest.TestCase):
             self.assertEquals(row[6],"2002-09-24" )
             self.assertEquals(row[7],"12:24:48")
             self.assertEquals(row[8],"2007-12-31 23:59:59" )
+        self.assertEquals(row[9],None )
+        self.assertEquals(row[10],None )
+        self.assertEquals(row[11],1 )
+        self.assertEquals(row[12],None )
+        
+        self.assertEquals(row[13],1 )
+        self.assertEquals(row[14],None )
+        self.assertEquals(row[15],1 )
+        self.assertEquals(row[16],1 )
+        
+        self.assertEquals(row[17],None )
+        self.assertEquals(row[18],None )
+        self.assertEquals(row[19],None )
+        self.assertEquals(row[20],None )
+        
               
     
     def testSaveFormData_3(self):
