@@ -343,18 +343,10 @@ class StorageUtility(object):
             else:
                 return "'" + text.strip() + "'"        
         else:
-            return "'" + text.strip() + "'"
-
-    # todo: put all sorts of useful db fieldname sanitizing stuff in here
-    def __sanitize(self, name):
-        name = string.replace(name,'-','_')
-        if name.lower() == "where" or name.lower() == "when":
-            return "_" + name
-        else:
-            return name
+            return "'" + sanitize(text.strip()) + "'"
 
     def __db_field_name(self, elementdef):
-        label = self.__sanitize( elementdef.name )
+        label = sanitize( elementdef.name )
         if elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]
@@ -366,7 +358,7 @@ class StorageUtility(object):
 
 
     def __get_formatted_fields_and_values(self, elementdef, raw_value):
-        label = self.__sanitize(elementdef.name)
+        label = sanitize(elementdef.name)
         if elementdef.type[0:5] == 'list.':
             field = ''
             value = ''

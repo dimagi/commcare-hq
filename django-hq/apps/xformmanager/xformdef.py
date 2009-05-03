@@ -89,7 +89,7 @@ class FormDef(ElementDef):
                 if (str(child.tag)).find("restriction") > -1:
                     for enum in child:
                         if (str(enum.tag)).find("enumeration") > -1:
-                            simpleType.allowable_values.append(enum.get("value"))
+                            simpleType.allowable_values.append( sanitize(enum.get("value")) )
                 elif (str(child.tag)).find("list") > -1:
                     multiselect_name = child.get("itemType")
                     if self.types[multiselect_name] is not None:
