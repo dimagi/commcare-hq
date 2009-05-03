@@ -359,6 +359,7 @@ class StorageUtility(object):
 
     def __get_formatted_fields_and_values(self, elementdef, raw_value):
         label = sanitize(elementdef.name)
+        #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
         if elementdef.type[0:5] == 'list.':
             field = ''
             value = ''
@@ -366,6 +367,7 @@ class StorageUtility(object):
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None and simple_type.multiselect_values is not None:
                 for v in values:
+                    v = sanitize(v)
                     if v in simple_type.multiselect_values:
                         field = field + label + "_" + v + ", " 
                         value = value + '1' + ", "
