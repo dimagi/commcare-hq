@@ -117,6 +117,10 @@ class StorageUtility(object):
         if xsd is None or len(xsd) == 0:
             logging.error("NO XMLNS FOUND IN SUBMITTED FORM")
             return
+        # the above check is not sufficient
+        if xsd[0].xsd_file_location is None:
+            logging.error("THIS INSTANCE DATA DOES NOT MATCH ANY REGISTERED SCHEMAS")
+            return
         logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         g = open( xsd[0].xsd_file_location ,"r")
         formdef = FormDef(g)
