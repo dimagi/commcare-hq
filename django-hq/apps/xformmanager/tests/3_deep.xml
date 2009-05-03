@@ -2,7 +2,7 @@
 <root xmlns="xml_deep">
 	<UserID>userid0</UserID>
 	<DeviceID>
-		<grandchild>abc</grandchild>
+		<Grandchild>abc</Grandchild>
 		<grandchild2>xyz</grandchild2>
 	</DeviceID>
 	<TimeStartRecorded>222</TimeStartRecorded>

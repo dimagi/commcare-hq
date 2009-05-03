@@ -7,7 +7,7 @@
                     <element name="DeviceID" minOccurs="0">
                           <complexType>
                                 <sequence>
-                                      <element name="grandchild" minOccurs="0" type="string"/>
+                                      <element name="Grandchild" minOccurs="0" type="string"/>
                                       <element name="grandchild2" minOccurs="0" type="string"/>
                                 </sequence>
                           </complexType>
