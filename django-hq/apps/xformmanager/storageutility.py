@@ -349,8 +349,14 @@ class StorageUtility(object):
         else:
             return "'" + sanitize(text.strip()) + "'"
 
+    def __hack_to_get_cchq_working(self, name):
+        prefix = sanitize (self.formdef.name) + "_"
+        if name[0:len(prefix)] == prefix:
+            name = name[len(prefix)+1:len(name)]
+        return name
+
     def __db_field_name(self, elementdef):
-        label = sanitize( elementdef.name )
+        label = self.__hack_to_get_cchq_working( sanitize( elementdef.name ) )
         if elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]
@@ -362,7 +368,7 @@ class StorageUtility(object):
 
 
     def __get_formatted_fields_and_values(self, elementdef, raw_value):
-        label = sanitize(elementdef.name)
+        label = self.__hack_to_get_cchq_working( sanitize(elementdef.name) )
         #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
         if elementdef.type[0:5] == 'list.':
             field = ''
