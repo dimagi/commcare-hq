@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="WINDOWS-1252"?>
+<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1">
+<Meta>
+<formName>DWTKMNNARWUIMUXYVJHBZALEN</formName>
+<formVersion>UCBBOLD</formVersion>
+<DeviceID>TMQNQSBDRGJS</DeviceID>
+<TimeStart>2009-12-23T12:00:00.000</TimeStart>
+<TimeEnd>2009-11-22T12:00:00.000</TimeEnd>
+<username>mobile1</username>
+<userid>brian</userid>
+</Meta>
+<what_happened>ESJBQQFPSNXCHST</what_happened>
+<other_what_happened>ESQJXQITVSL</other_what_happened>
+<mother_survived>BQSPNLKOCFUPOJSSXEB</mother_survived>
+<infants_delivered>6</infants_delivered>
+<infants_survived>8</infants_survived>
+<birth_location>QRSROZBHJ</birth_location>
+<other_location>MKXUUQJYJKXSVDAGM</other_location>
+<birth_attendant>LL</birth_attendant>
+<other_attendant>CFFOBYOJJLTRSSDSAHZBPFBESLUGVL</other_attendant>
+<termination_location>ORUAEKM</termination_location>
+<other_termination_location>JXJBFUTJZBBEOC</other_termination_location>
+<termination_attendant>ZWNGDDXFETAPHKYCJJZVQKICN</termination_attendant>
+<other_termination_attendant>OXJMLLGUZTBBUANHBCBAPH</other_termination_attendant>
+<death_case_mother>YJHJPBMMQ</death_case_mother>
+<death_case_infant>IXQFBHYQIHMIEP</death_case_infant>
+<newborn_case>TGXOOHSGWXGZOILACIEPBDYIBZDTH</newborn_case>
+</safe_pregnancy>
