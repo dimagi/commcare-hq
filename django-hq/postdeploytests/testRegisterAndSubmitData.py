@@ -83,7 +83,7 @@ class DomainTestCase(unittest.TestCase):
         
     
     def _establishSession(self):
-        self.session_cookie = str(uuid.uuid1()) + "_cookie.txt"
+        self.session_cookie = os.path.join(os.path.dirname(__file__),str(uuid.uuid1()) + "_cookie.txt")
         p = subprocess.Popen([curl_command,'-c',self.session_cookie, '-F username=%s' % self.username, '-F password=%s' % self.password,'--request', 'POST', 'http://%s/accounts/login/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
         results = p.stdout.read()
         
@@ -249,7 +249,7 @@ class DomainTestCase(unittest.TestCase):
         """Pure python method to submit direct POSTs"""
         if datafile == ".svn" or datafile.endswith('.py'):
             return
-        fin = open(datafile,'r')
+        fin = open(os.path.join(os.path.dirname(__file__),datafile),'r')
         filestr= fin.read()
         fin.close()
         
