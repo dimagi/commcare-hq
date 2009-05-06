@@ -67,9 +67,10 @@ def register_xform(request, template='register_and_list_xforms.html'):
     extuser = ExtUser.objects.all().get(id=request.user.id)
     
     
-    if request.method == 'POST':
-        form = RegisterXForm(request.POST, request.FILES)
+    if request.method == 'POST':        
+        form = RegisterXForm(request.POST, request.FILES)        
         if form.is_valid():
+            
             transaction_str = str(uuid.uuid1())
             try:
                 logging.debug("temporary file name is " + transaction_str)                
@@ -99,7 +100,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout = open(new_file_name, 'w')
                     fout.write(results)
                     fout.close()
-                    logging.debug("Convert xform completed")
+                    logging.debug("Convert xform completed")                    
                                         
 #                    #retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
 #                    if retcode == 1:
@@ -126,7 +127,9 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 fdd.xsd_file_location = new_file_name
                 fdd.save()                
                 logging.debug("xform registered")
-                transaction.commit()
+                transaction.commit()                
+                context['register_success'] = True
+                context['newsubmit'] = fdd
             except Exception, e:
                 logging.error(e)
                 logging.error("Unable to write raw post data<br/>")
@@ -137,10 +140,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
                 logging.error("Transaction rolled back")
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
-                transaction.rollback()
-            
-                
-    
+                transaction.rollback()    
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
@@ -172,7 +172,7 @@ def data(request, formdef_id, template_name="data.html"):
     formdef_name = xform[0].form_name
     
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM " + formdef_name)
+    cursor.execute("SELECT * FROM " + formdef_name + ' order by id DESC')
     rows = cursor.fetchall()
     
     rawcolumns = cursor.description # in ((name,,,,,),(name,,,,,)...)
@@ -182,6 +182,7 @@ def data(request, formdef_id, template_name="data.html"):
     context['form_name'] = formdef_name
     context['data'] = []
     context['xform'] = xform[0]
+    
         
 #    fulldata = []
 #    for row in rows:
@@ -189,7 +190,8 @@ def data(request, formdef_id, template_name="data.html"):
 #        for field in row:
 #            rowrecord.append(field)
 #        fulldata.append(rowrecord)
-#    
+
+
     paginator = Paginator(rows, 25) 
     #get the current page number
     try:
@@ -201,20 +203,15 @@ def data(request, formdef_id, template_name="data.html"):
         data_pages = paginator.page(page)
     except (EmptyPage, InvalidPage):
         data_pages = paginator.page(paginator.num_pages)
-
     
     context['data'] = data_pages    
-    
     
     file_name = formdef_name+".csv"
     if os.path.exists( os.path.join(settings.CSV_PATH,file_name ) ):
          context['csv_file'] = file_name
          
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(template_name, context, context_instance=RequestContext(request))    
     
-
-    
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 def __xsd_file_name(name):
     return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')

@@ -28,6 +28,9 @@
 </table>
 <input type="submit" value="Submit" />
 </form>
+{% if register_success %}
+	<p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
+{% endif %}
 </div>
 
 <h2>{% trans "Registered XForms" %}</h2>

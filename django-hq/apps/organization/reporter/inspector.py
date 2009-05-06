@@ -44,7 +44,7 @@ def get_user_allforms_count(domain, username, startdate=None, enddate=None):
     for fdef in defs:        
         table = fdef.element.table_name        
         helper = dbhelper.DbHelper(table, fdef.form_display_name)
-        userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'username': username})                        
+        userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'chw_username': username})                        
         for dat in userdailies:         
             #dt = time.strptime(str(dat[1][0:-4]),xmldate_format)
             #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
@@ -72,6 +72,7 @@ def get_aggregate_count(content_obj, startdate, enddate):
     is_org = False
     is_member = False
     domain = None
+    
     if isinstance(content_obj, Organization):
         is_org = True        
         domain  = content_obj.domain

@@ -46,6 +46,8 @@ class ExtRole(models.Model):
 
 class ExtUser(User):
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
+    chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
+    
     primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
     domain = models.ForeignKey(Domain)
     identity = models.OneToOneField(MonitorIdentity, blank=True, null=True)
@@ -104,12 +106,3 @@ class ReportSchedule(models.Model):
     def __unicode__(self):
         return unicode(self.name + " - " + self.report_frequency)
         
-    
-    
-    
-
-
-
-    
-    
-

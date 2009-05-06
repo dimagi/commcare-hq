@@ -64,6 +64,7 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     rawstring = str(slog[0].raw_header)
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
+    rawstring = rawstring.replace('>}','>"}')
     processed_header = eval(rawstring)
     
     get_original = False
@@ -103,15 +104,18 @@ def raw_submit(request, template_name="receiver/submit.html"):
 
 def domain_submit(request, domain_name, template_name="receiver/submit.html"):
     context = {}            
-    logging.debug("begin domained raw_submit()")        
+    logging.debug("begin domained raw_submit()")
+    #print "begin domained raw_submit()"                
     currdomain = Domain.objects.filter(name=domain_name)
     if len(currdomain) != 1:
         template_name="receiver/submit_failed.html"
     if request.method == 'POST':                    
         new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])        
         if new_submission == '[error]':
+            #print "raw_submit() :: error!"
+            logging.error("Domain Submit(): Submission error")
             template_name="receiver/submit_failed.html"            
-        else:
+        else:            
             context['transaction_id'] = new_submission.transaction_uuid
             context['submission'] = new_submission
             attachments = Attachment.objects.all().filter(submission=new_submission)            
@@ -119,7 +123,9 @@ def domain_submit(request, domain_name, template_name="receiver/submit.html"):
             template_name="receiver/submit_complete.html"
             
     #for real submissions from phone, the content-type should be:
-    #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
+    #mimetype='text/plain' # add that to the end fo the render_to_response()             
+    #resp = render_to_response(template_name, context, context_instance=RequestContext(request))                         
+    #print resp
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 

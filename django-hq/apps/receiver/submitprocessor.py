@@ -26,7 +26,7 @@ def do_raw_submission(metadata, payload, domain=None):
     if metadata.has_key('HTTP_CONTENT_TYPE'):
         content_type = metadata['HTTP_CONTENT_TYPE']
     else:
-        content_type = metadata['CONTENT_TYPE']    
+        content_type = metadata['CONTENT_TYPE']#"text/xml"    
     
     new_submit.raw_header = repr(metadata)
     logging.debug("compute checksum")
@@ -47,6 +47,7 @@ def do_raw_submission(metadata, payload, domain=None):
         fout.close()
         logging.debug("write successful")
         new_submit.raw_post = newfilename
+ 
     except:
         logging.error("Unable to write raw post data")
         logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))

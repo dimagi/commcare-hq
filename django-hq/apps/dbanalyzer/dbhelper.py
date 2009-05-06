@@ -137,11 +137,21 @@ class DbHelper(object):
         if len(self.date_columns) == 0:
             raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
         
+        col_to_use = None
+        if columname == 'username':
+            for col in self.str_columns:
+                if col.count('meta_username') > 0:
+                    col_to_use = col
+        
+        if col_to_use == None:
+            return []
+        
+            
         
         """return an array of all the unique values in a given column"""
-        query = "select distinct(" + columname + ") from """ + self.tablename
+        query = "select distinct(" + col_to_use + ") from """ + self.tablename
         if startdate != None and enddate != None:
-            query += " WHERE " + get_date_whereclause(columname, startdate, enddate)
+            query += " WHERE " + get_date_whereclause(col_to_use, startdate, enddate)
         rows = self.__doquery(query)
         ret = []        
         
@@ -193,9 +203,13 @@ class DbHelper(object):
                 wherestring += "%s in %s AND " % (key,valstring)
             else:
                 wherestring += " %s=%s AND " % (key, valstring)            
+        try:
+            query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) + " from " + self.tablename + wherestring + get_date_whereclause(self.default_date_column, startdate, enddate) + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column
+            return self.__doquery(query)
+        except:
+            return [] 
         
-        query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) + " from " + self.tablename + wherestring + get_date_whereclause(self.default_date_column, startdate, enddate) + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column 
-        return self.__doquery(query)        
+                
     
     #time.mktime(datetime.datetime.now().timetuple())
     def get_counts_dataset(self,startdate,enddate):
@@ -266,11 +280,3 @@ class DbHelper(object):
            subset['data'] = vals           
            dset[seriesname] = subset
         return dset
-           
-    
-    
-    
-    
-    
-            
-        
