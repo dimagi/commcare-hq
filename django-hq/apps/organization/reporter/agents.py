@@ -13,7 +13,6 @@ import string
 
 class ClickatellAgent(object):
     def __init__(self):
-        print 'clickatell init'
         logging.debug("clickatell initialized")
         self.clickatell_url = settings.CLICKATELL_URL 
         self.clickatell_user = settings.CLICKATELL_USER
@@ -25,15 +24,26 @@ class ClickatellAgent(object):
     #MessageForm = phone_number, body, outgoing (bool), 
     def send (self,phone_number, body, is_outgoing=True):        
         logging.info("got request for outgoing clickatell")
-        logging.info("phone number: " + phone_number)
+        logging.info("phone number: " + phone_number)        
         if phone_number == '':
             return
+        
+        #cleanup whitespaces
+        lines = body.split('\n')
+        trimbody = ''
+        for line in lines:
+            line = string.strip(line)
+            if len(line) > 0:
+                trimbody += line + "\n"
+        body = trimbody       
+        
         if len(body) > 135:
             parts = (len(body) / 135) + 1
             lines = body.split('\r')
             counter = 1
             currbody = ''
             for line in lines:
+                line = string.strip(line)
                 if len(currbody) + len(line) > 135:
                     totalcount = '%d/%d\n' % (counter,parts) 
                     self._do_send(phone_number, totalcount + currbody, is_outgoing)
@@ -50,7 +60,7 @@ class ClickatellAgent(object):
         
     
         
-    def _do_send(self, phone_number, chunk, is_outgoing=True):
+    def _do_send(self, phone_number, chunk, is_outgoing=True):        
         url = self.clickatell_url % (self.clickatell_user, self.clickatell_password, self.clickatell_api_id, phone_number, urllib2.quote(chunk), self.clickatell_mo, self.clickatell_number)
         logging.info("url is " + url)
         

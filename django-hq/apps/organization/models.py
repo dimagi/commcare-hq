@@ -60,7 +60,12 @@ class ExtUser(User):
             return self.chw_username
     
     def __unicode__(self):
-        return self.username
+        if self.chw_username != None:
+            return self.chw_username
+        elif self.last_name != '':
+            return self.last_name
+        else:
+            return self.username
     
     class Meta:
         verbose_name = _("Extended User")

@@ -110,7 +110,8 @@ def deprecated_run_all_reports(run_frequency):
 def deliver_report(usr_recipient, rendered_report, transport, params = {}):
     if transport == 'email':        
         eml = agents.EmailAgent()
-        eml.send_email("[CommCare HQ] " + params['frequency'] + " report", [usr_recipient.email], rendered_report)        
+        daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')        
+        eml.send_email("[CommCare HQ] " + params['frequency'] + " report " + daterangestr, [usr_recipient.email], rendered_report)        
     elif transport == 'sms':
         logging.debug("transporting via clickatell")        
         ctell = agents.ClickatellAgent()
