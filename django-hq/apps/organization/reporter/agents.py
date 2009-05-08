@@ -35,15 +35,15 @@ class ClickatellAgent(object):
             currbody = ''
             for line in lines:
                 if len(currbody) + len(line) > 135:
-                    totalcount = '\n%d/%d' % (counter,parts) 
-                    self._do_send(phone_number, currbody + totalcount, is_outgoing)
+                    totalcount = '%d/%d\n' % (counter,parts) 
+                    self._do_send(phone_number, totalcount + currbody, is_outgoing)
                     currbody = line
                     counter = counter + 1
                 else:
                     currbody = currbody + line
             if len(currbody.strip()) > 0:
-                totalcount = '\n%d/%d' % (counter,parts) 
-                self._do_send(phone_number, currbody + totalcount, is_outgoing)            
+                totalcount = '%d/%d\n' % (counter,parts) 
+                self._do_send(phone_number, totalcount + currbody, is_outgoing)            
             pass
         else:
             self._do_send(phone_number,body,is_outgoing=True)
