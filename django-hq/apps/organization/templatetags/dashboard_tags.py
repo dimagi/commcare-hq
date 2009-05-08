@@ -93,13 +93,13 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         
         helper = dbhelper.DbHelper(table, fdef.form_display_name) 
         #let's get the usernames
-        usernames_to_filter = helper.get_uniques_for_column('username', None, None)           
+        usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)           
                 
         for user in usernames_to_filter:            
             if not username_to_count_hash.has_key(user):
                 username_to_count_hash[user] = {}                        
             
-            userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'username': user})                        
+            userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})                        
             for dat in userdailies:                
                 username_to_count_hash[user][dat[1]] = int(dat[0])
 

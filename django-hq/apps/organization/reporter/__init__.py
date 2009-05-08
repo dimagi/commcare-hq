@@ -46,7 +46,7 @@ def get_daterange(run_frequency):
 def run_reports(run_frequency):
     (startdate, enddate) = get_daterange(run_frequency)
 
-    for report in ReportSchedule.objects.all():
+    for report in ReportSchedule.objects.all().filter(active=True):
         if report.report_class == 'siteadmin':
             #get the user id, then, get the report function.
             usr = report.recipient_user

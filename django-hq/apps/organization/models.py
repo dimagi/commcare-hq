@@ -52,6 +52,14 @@ class ExtUser(User):
     domain = models.ForeignKey(Domain)
     identity = models.OneToOneField(MonitorIdentity, blank=True, null=True)
     
+    @property
+    def report_identity(self):   
+        print str(self)       
+        if self.chw_username == None:
+            return self.__str__()
+        else:
+            return self.chw_username
+    
     def __unicode__(self):
         return self.username
     
@@ -102,6 +110,7 @@ class ReportSchedule(models.Model):
     organization =      models.ForeignKey(Organization, null=True, blank=True, help_text=_("If this is an Organizational supervisor or member report, indicate the exact organization you want to report on."))
     
     report_function = models.CharField(max_length=255, null=True, blank=True, help_text=_("The view or other python function  you want run for this report.  This is necessary only for General Site admin and Other report types."))
+    active = models.BooleanField(default=True)
     
     def __unicode__(self):
         return unicode(self.name + " - " + self.report_frequency)

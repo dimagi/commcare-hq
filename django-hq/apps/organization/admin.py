@@ -25,8 +25,8 @@ class ExtRoleAdmin(admin.ModelAdmin):
     list_filter = []      
     
 class ReportScheduleAdmin(admin.ModelAdmin):
-    list_display = ('id','name','description','report_class', 'report_frequency','report_delivery', 'recipient_user', 'organization', 'report_function')
-    list_filter = ['report_class','report_frequency', 'report_delivery', 'recipient_user']
+    list_display = ('id','active','name','description','report_class', 'report_frequency','report_delivery', 'recipient_user', 'organization', 'report_function')
+    list_filter = ['active','report_class','report_frequency', 'report_delivery', 'recipient_user']
     
     
 #

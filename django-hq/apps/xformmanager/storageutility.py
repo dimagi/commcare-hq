@@ -9,6 +9,7 @@ import logging
 import re
 import os
 import string
+import string
 
 from stat import S_ISREG, ST_MODE
 import sys
@@ -85,6 +86,8 @@ class StorageUtility(object):
     DB_NUMERIC_TYPES = {
         'integer': int, 'int': int, 'decimal': float, 'double' : float, 'float':float,'gyear':int        
     }
+    
+    META_FIELDS = ['meta_formname','meta_commcareversion','meta_formversion','meta_deviceid','meta_timestart','meta_timeend','meta_username','meta_chw_id','meta_uid']
     
 
     def add_schema(self, formdef):
@@ -349,10 +352,18 @@ class StorageUtility(object):
         else:
             return "'" + sanitize(text.strip()) + "'"
 
+
+
     def __hack_to_get_cchq_working(self, name):
+                
         prefix = sanitize (self.formdef.name) + "_"
+        
         if name[0:len(prefix)] == prefix:
             name = name[len(prefix)+1:len(name)]
+        splits = name.split('_')
+        endsplit = splits[-2:]
+        if self.META_FIELDS.count('_'.join(endsplit)) == 1:
+            return '_'.join(endsplit)
         return name
 
     def __db_field_name(self, elementdef):

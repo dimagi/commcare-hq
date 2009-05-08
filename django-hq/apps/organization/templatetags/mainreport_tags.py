@@ -46,6 +46,51 @@ def get_daterange_links(view_name):
     return ret
 
 
+@register.simple_tag
+def aggregate_section_totals(section_name, results_arr, daily):
+    """Hackish function to do a summation of a section in the org_report"""    
+    #go through the array and go to the index that my section name is
+    startindex = -1
+    endindex = -1
+    for itemarr in results_arr:
+        if itemarr[1] == section_name:
+            startindex = results_arr.index(itemarr)
+            continue
+        
+        if startindex >= 0:
+            if itemarr[1] != None:
+                endindex = results_arr.index(itemarr)
+                break
+    
+    
+    summation = []
+    for itemarr in results_arr[startindex:endindex]:
+        if summation == []:
+            summation = summation + itemarr[-1]
+        else:
+            for i in range(0,len(itemarr[-1])):
+                summation[i] += itemarr[-1][i]
+                
+    ret = ''
+    if daily:        
+        for item in summation:
+            ret += '<td style="background:#99FFFF"><strong>%d</strong></td>' % item
+    else:
+        sum = 0
+        for item in summation:
+            sum += item
+        ret = "<td>%d</td>" % sum
+    return ret
+                           
+                
+                    
+        
+    
+                
+        
+        
+        
+
 #===============================================================================
 # @register.simple_tag
 # def get_domain_report(domain, startdate, enddate, render_html=True):

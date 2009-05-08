@@ -137,15 +137,7 @@ class DbHelper(object):
         if len(self.date_columns) == 0:
             raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
         
-        col_to_use = None
-        if columname == 'username':
-            for col in self.str_columns:
-                if col.count('meta_username') > 0:
-                    col_to_use = col
-        
-        if col_to_use == None:
-            return []
-        
+        col_to_use = columname        
             
         
         """return an array of all the unique values in a given column"""
@@ -185,12 +177,14 @@ class DbHelper(object):
         
         It will build a where clause  with the datetime values as criteria as well as the column filters.
         """
+                      
         
         if len(self.date_columns) == 0:
             raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
         
         wherestring = " WHERE "
         for key, value in filters.items():
+            
             valstring = ""            
             if isinstance(value,int):
                 valstring = "%d" % (value)

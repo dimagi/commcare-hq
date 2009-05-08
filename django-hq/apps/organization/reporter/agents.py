@@ -9,6 +9,7 @@ from organization.models import *
 import logging
 import urllib2
 import settings
+import string
 
 class ClickatellAgent(object):
     def __init__(self):
@@ -24,12 +25,39 @@ class ClickatellAgent(object):
     #MessageForm = phone_number, body, outgoing (bool), 
     def send (self,phone_number, body, is_outgoing=True):
         print "got request for outgoing clickatell " + phone_number
+        
         logging.info("got request for outgoing clickatell")
         logging.info("phone number: " + phone_number)
         if phone_number == '':
             return
-        url = self.clickatell_url % (self.clickatell_user, self.clickatell_password, self.clickatell_api_id, phone_number, urllib2.quote(body), self.clickatell_mo, self.clickatell_number)
+        if len(body) > 135:
+            parts = (len(body) / 135) + 1
+            lines = body.split('\r')
+            print lines
+            counter = 1
+            currbody = ''
+            for line in lines:
+                if len(currbody) + len(line) > 135:
+                    totalcount = '\n%d/%d' % (counter,parts) 
+                    self._do_send(phone_number, currbody + totalcount, is_outgoing)
+                    currbody = line
+                    counter = counter + 1
+                else:
+                    currbody = currbody + line
+            if len(currbody.strip()) > 0:
+                totalcount = '\n%d/%d' % (counter,parts) 
+                self._do_send(phone_number, currbody + totalcount, is_outgoing)
+            
+            pass
+        else:
+            self._do_send(phone_number,body,is_outgoing=True)
+        
+    
+        
+    def _do_send(self, phone_number, chunk, is_outgoing=True):
+        url = self.clickatell_url % (self.clickatell_user, self.clickatell_password, self.clickatell_api_id, phone_number, urllib2.quote(chunk), self.clickatell_mo, self.clickatell_number)
         logging.info("url is " + url)
+        return
         for line in urllib2.urlopen(url):
             # czue - pretty hacky but this works - the response is soimething like 19:20804
             # where the first number is number of remaining credits, and the second is the

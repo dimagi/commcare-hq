@@ -43,6 +43,8 @@ def create_extuser(userhash, domain, email=''):
     organization_extuser_1.domain = domain
     organization_extuser_1.identity = None
     organization_extuser_1.chw_id = userhash['chw_id']
+    organization_extuser_1.chw_username = userhash['chw_username']
+    
     organization_extuser_1.save()
     return organization_extuser_1
 

@@ -48,7 +48,7 @@ def get_aggregate_formcounts_for_obj(content_obj):
     if content_obj is None:
         ret += "<h2>All Data</h2>"
         #allusers = qtools.raw_query(all_user_query)
-        users_rawlist = ExtUser.objects.all().values_list('username')
+        users_rawlist = ExtUser.objects.all().values_list('meta_username')
         for usertuple in users_rawlist:
             usernames_to_filter.append(usertuple[0])
                 

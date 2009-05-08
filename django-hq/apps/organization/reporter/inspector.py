@@ -44,7 +44,7 @@ def get_user_allforms_count(domain, username, startdate=None, enddate=None):
     for fdef in defs:        
         table = fdef.element.table_name        
         helper = dbhelper.DbHelper(table, fdef.form_display_name)
-        userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'chw_username': username})                        
+        userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': username})                        
         for dat in userdailies:         
             #dt = time.strptime(str(dat[1][0:-4]),xmldate_format)
             #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
@@ -78,13 +78,13 @@ def get_aggregate_count(content_obj, startdate, enddate):
         domain  = content_obj.domain
         (members, supervisors) = utils.get_members_and_supervisors(content_obj)        
         for member in members:
-            usernames_to_filter.append(member.username)
+            usernames_to_filter.append(member.report_identity)
         for supervisor in supervisors:
-            usernames_to_filter.append(supervisor.username)
+            usernames_to_filter.append(supervisor.report_identity)
     elif isinstance(content_obj, ExtUser):        
         domain  = content_obj.domain
         supervising_orgs = utils.get_supervisor_roles(content_obj)
-        usernames_to_filter.append(content_obj.username)
+        usernames_to_filter.append(content_obj.report_identity)
         is_member = True
         
     

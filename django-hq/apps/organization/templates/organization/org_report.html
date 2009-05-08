@@ -19,15 +19,20 @@
 		{% for depth, descriptor, item, rowdata in results %}
 			{% if descriptor %}
 			<tr>
-				<td class="rel_row" style="padding-left:{{depth}}0px;">
-				{{descriptor}}
-				</td>
+				<td class="rel_row" style="padding-left:{{depth}}0px;">	{{descriptor}}	</td>
+				{% aggregate_section_totals descriptor results 1 %}
 			</tr>
 			{% endif %}
 			<tr>
 				<td class="item_row" style="padding-left:{{depth}}9;">{{item}}</td> 
 				{% for data in rowdata %}
-					<td>{{data}}</td>		
+					{% ifequal data 0 %}
+						<td style="color:gray">{{data}}</td>
+					{% else %}
+						<td><strong>{{data}}</strong></td>					
+					{% endifequal %}
+					 
+							
 				{% endfor %}		
 			</tr>			
 				
