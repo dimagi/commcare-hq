@@ -25,6 +25,7 @@ CHART_DISPLAY_TYPES = (
     ('cumulative-bar', 'Cumulative Bar'),
         
     ('histogram-overall', 'Overall Histogram'),
+    ('histogram-multifield', 'Multifield Histogram'),
     
     ('compare-trend', 'Field Compare'),
     ('compare-cumulative', 'Field Compare Cumulative'),    
@@ -203,6 +204,26 @@ class RawGraph(BaseGraph):
                 series_count= series_count+1 
         
         return ret
+    
+    def __multifield_histogram(self):
+        rows = self.get_dataset()
+        ret = {}        
+        num = 0
+        self.helper_cache['ticks'] = []
+        num_series = self.check_series()
+        for i in range(0,num_series):            
+            # (count, count,count, count)            
+            item = self.__clean_xcol(row[0][i])
+            self.helper_cache['ticks'].append(item)            
+            count = int(row[0][i])
+            
+            ret[item] = {}
+            ret[item]['label'] = item
+            ret[item]['data'] = [[num,count]]
+            ret[item]['bars'] = {'show':'true'}
+            num = num + 1         
+        return ret
+
     
     def __overall_histogram(self):
         rows = self.get_dataset()

@@ -146,7 +146,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select \r\ndistinct(username), \r\navg(UNIX_TIMESTAMP(timeend) - UNIX_TIMESTAMP(timestart)) as avg \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by username\r\n\r\n\r\n"
+      "db_query": "select \r\ndistinct(meta_username), \r\navg(UNIX_TIMESTAMP(meta_timeend) - UNIX_TIMESTAMP(meta_timestart)) as avg \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by meta_username\r\n\r\n\r\n"
     }
   }, 
   {
@@ -160,7 +160,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select\r\n distinct(numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\n\r\ngroup by numb_birth"
+      "db_query": "select\r\n distinct(sampledata_numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\n\r\n\r\ngroup by sampledata_numb_birth"
     }
   }, 
   {
@@ -174,7 +174,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 ", 
       "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select \r\n DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n avg(numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\n\r\n\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\n;"
+      "db_query": "select \r\n DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n avg(sampledata_numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\n\r\n\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\n;"
     }
   }, 
   {
@@ -188,7 +188,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select\r\n distinct(username), \r\ncount(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by username"
+      "db_query": "select\r\n distinct(meta_username), \r\ncount(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by meta_username"
     }
   }, 
   {
@@ -202,7 +202,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "compare-cumulative", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -216,7 +216,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "compare-trend", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -230,7 +230,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -244,7 +244,7 @@
       "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
       "display_type": "cumulative-line", 
       "series_options": "", 
-      "db_query": "select\r\n  timeend, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y')\r\norder by timeend asc;"
+      "db_query": "select\r\n  meta_timeend, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -293,42 +293,42 @@
     "pk": 6, 
     "model": "dbanalyzer.rawgraph", 
     "fields": {
-      "series_labels": "referral", 
+      "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
-      "display_type": "compare-trend", 
+      "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), \r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
     "pk": 5, 
     "model": "dbanalyzer.rawgraph", 
     "fields": {
-      "series_labels": "asdf", 
+      "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
-      "x_axis_label": "", 
+      "x_axis_label": "asdf", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
-      "display_type": "compare-cumulative", 
+      "display_type": "cumulative-line", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), referral_given\r\norder by timeend asc;"
+      "db_query": "/*select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), brac_referral, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), brac_referral\r\norder by meta_timeend asc;*/\r\nselect\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), \r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
     "pk": 4, 
     "model": "dbanalyzer.rawgraph", 
     "fields": {
-      "series_labels": "0", 
+      "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "commcarehq", 
       "x_type": "string", 
       "x_axis_label": "val", 
       "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
-      "display_type": "histogram-overall", 
+      "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select distinct(referral_given), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by referral_given"
+      "db_query": "/*select distinct(brac_referral_given), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by referral_given*/\r\nselect\r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\n\r\n"
     }
   }, 
   {
@@ -342,7 +342,7 @@
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-cumulative", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -356,7 +356,7 @@
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select distinct(username), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by username"
+      "db_query": "select distinct(meta_username), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by meta_username"
     }
   }, 
   {
@@ -370,7 +370,7 @@
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-trend", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
