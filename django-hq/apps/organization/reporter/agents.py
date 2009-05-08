@@ -23,8 +23,7 @@ class ClickatellAgent(object):
         self.clickatell_number = settings.CLICKATELL_NUMBER
     
     #MessageForm = phone_number, body, outgoing (bool), 
-    def send (self,phone_number, body, is_outgoing=True):
-        print "got request for outgoing clickatell " + phone_number
+    def send (self,phone_number, body, is_outgoing=True):     
         
         logging.info("got request for outgoing clickatell")
         logging.info("phone number: " + phone_number)
@@ -33,7 +32,6 @@ class ClickatellAgent(object):
         if len(body) > 135:
             parts = (len(body) / 135) + 1
             lines = body.split('\r')
-            print lines
             counter = 1
             currbody = ''
             for line in lines:
@@ -52,12 +50,11 @@ class ClickatellAgent(object):
         else:
             self._do_send(phone_number,body,is_outgoing=True)
         
-    
+    return
         
     def _do_send(self, phone_number, chunk, is_outgoing=True):
         url = self.clickatell_url % (self.clickatell_user, self.clickatell_password, self.clickatell_api_id, phone_number, urllib2.quote(chunk), self.clickatell_mo, self.clickatell_number)
         logging.info("url is " + url)
-        return
         for line in urllib2.urlopen(url):
             # czue - pretty hacky but this works - the response is soimething like 19:20804
             # where the first number is number of remaining credits, and the second is the
