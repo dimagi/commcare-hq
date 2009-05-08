@@ -53,8 +53,7 @@ class ExtUser(User):
     identity = models.OneToOneField(MonitorIdentity, blank=True, null=True)
     
     @property
-    def report_identity(self):   
-        print str(self)       
+    def report_identity(self):         
         if self.chw_username == None:
             return self.__str__()
         else:
