@@ -1,4 +1,4 @@
-{% spaceless %}{{content_item}} Report 
+{% spaceless %}{{report_heading}} 
 Period {{startdate|date:"m/d"}}-{{enddate|date:"m/d"}}/{{enddate|date:"Y"}}
 {% for item, count in results %}{%ifnotequal count 0 %}{{item}} {{count}}{%endifnotequal%}
 {% endfor %}{%endspaceless%}

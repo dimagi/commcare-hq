@@ -126,7 +126,6 @@ def manage_xforms(request, template_name="oranization/manage_xforms.html"):
     return''
 
 
-
 @login_required()
 def domain_charts(request, template_name="dbanalyzer/view_graph.html"):
     context = {}

@@ -1,6 +1,30 @@
-Report for: {{content_item}}
-{% for item in daterange_header %}	{{item}}{% endfor %}
+{% load i18n %}
+{%spaceless%}	
+<html>
+<body>
+<h2>{{report_heading}}</h2>
+<table>
+<tr>
+<td>&nbsp;</td>{% for item in daterange_header %}<td><strong>{{item}}</strong></td>{% endfor %}
+</tr>
 {% for depth, descriptor, item, rowdata in results %}
-{% if descriptor %}{{descriptor}}{% endif %}
-{{item}}	{% for data in rowdata %}{{data}}	{% endfor %}		
+	{% if descriptor %}
+		<tr>
+		<td>{{descriptor}}</td>
+		</tr>
+	{% endif %}
+	<tr>
+	<td>{{item}}</td>
+	{% for data in rowdata %}
+		{% ifequal data 0 %}
+			<td>{{data}}</td>			
+		{%else%}
+			<td><strong>{{data}}</strong></td>
+		{%endifequal%}		
+	{% endfor %}
+	</tr>	
 {% endfor %}
+</table>
+</body>
+</html>
+{%endspaceless%}

@@ -103,5 +103,5 @@ class EmailAgent(object):
                            
         #attachname = 'report%s.html' % enddate.strftime('%Y-%m-%d')
         #msg.attach(attachname,rendered,"text/html")
-        #msg.content_subtype = "html"
+        msg.content_subtype = "html"
         msg.send(fail_silently=False)
