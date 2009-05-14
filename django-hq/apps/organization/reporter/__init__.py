@@ -52,8 +52,6 @@ def run_reports(run_frequency):
             organization = report.organization
             if organization != None:
                 data = prepare_domain_or_organization(run_frequency, report.report_delivery,organization)
-#                print "got data: " 
-#                print data               
                 params = {}
                 heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
                 params['heading'] = heading 
@@ -62,10 +60,10 @@ def run_reports(run_frequency):
                     subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  " + str(organization)
                     
                     rendered_text = render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
-                    transport_email(rendered_text, [usr.email], params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
+                    transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
                 else:
-                    rendered_text = render_direct_sms(data, run_frequency, "organization/reports/sms_organization.txt")
-                    transport_sms(rendered_text, [usr.primary_phone],params)
+                    rendered_text = render_direct_sms(data, run_frequency, "organization/reports/sms_organization.txt", params)
+                    transport_sms(rendered_text, usr, params)
                 
                 
                 #report_txt = tree_report(organization, run_frequency, recipient=usr, transport=report.report_delivery)
@@ -153,42 +151,42 @@ def run_reports(run_frequency):
 #        user_report(usr, run_frequency, transport='sms')
 
 
-def deliver_report(usr_recipient, rendered_report, transport, params = {}):
-    if transport == 'email':        
-        eml = agents.EmailAgent()
-        daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')        
-        if params.has_key('email_subject'):
-            subject_line = params['email_subject']        
-        else:
-            subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
-        eml.send_email(subject_line, [usr_recipient.email], rendered_report)        
-    elif transport == 'sms':
-        logging.debug("transporting via clickatell")        
-        ctell = agents.ClickatellAgent()
-        ctell.send(usr_recipient.primary_phone, rendered_report)
-
-def render_reportstring(content_item, report_payload, run_frequency, template_name="organization/reports/email_hierarchy_report.txt",  transport='email'):
-    (startdate, enddate) = get_daterange(run_frequency)
-    context = {}
-    context['content_item'] = content_item
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['startdate'] = startdate
-    context['enddate'] = enddate
-    
-    if transport == 'email':
-        context['results'] = report_payload
-        #leave the template name unchanged
-    elif transport == 'sms':
-        context['results'] = []
-        for item in report_payload:
-            sum = 0
-            for num in item[-1]:sum+=num # single line, let's sum up the values
-            
-            context['results'].append([item[2], sum])
-#        template_name = "organization/reports/sms_organization.txt"
-    
-    rendered = render_to_string(template_name, context)        
-    return rendered
+#def deliver_report(usr_recipient, rendered_report, transport, params = {}):
+#    if transport == 'email':        
+#        eml = agents.EmailAgent()
+#        daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')        
+#        if params.has_key('email_subject'):
+#            subject_line = params['email_subject']        
+#        else:
+#            subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
+#        eml.send_email(subject_line, [usr_recipient.email], rendered_report)        
+#    elif transport == 'sms':
+#        logging.debug("transporting via clickatell")        
+#        ctell = agents.ClickatellAgent()
+#        ctell.send(usr_recipient.primary_phone, rendered_report)
+#
+#def render_reportstring(content_item, report_payload, run_frequency, template_name="organization/reports/email_hierarchy_report.txt",  transport='email'):
+#    (startdate, enddate) = get_daterange(run_frequency)
+#    context = {}
+#    context['content_item'] = content_item
+#    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+#    context['startdate'] = startdate
+#    context['enddate'] = enddate
+#    
+#    if transport == 'email':
+#        context['results'] = report_payload
+#        #leave the template name unchanged
+#    elif transport == 'sms':
+#        context['results'] = []
+#        for item in report_payload:
+#            sum = 0
+#            for num in item[-1]:sum+=num # single line, let's sum up the values
+#            
+#            context['results'].append([item[2], sum])
+##        template_name = "organization/reports/sms_organization.txt"
+#    
+#    rendered = render_to_string(template_name, context)        
+#    return rendered
 #
 #
 #def tree_report(org_domain, run_frequency, recipient=None, transport='email'):
@@ -253,16 +251,18 @@ def render_direct_sms(prepared_data, run_frequency, template_name, params={}):
     
     #collpase the data
     context['results'] = []
-    for item in report_payload:
+    for item in prepared_data:
         sum = 0
         for num in item[-1]:sum+=num # single line, let's sum up the values            
-        context['results'].append([item[2], sum])        
+        context['results'].append([item[2], sum])
+    
+    rendered = render_to_string(template_name, context)        
     return rendered
 
 
 
 
-def transport_email(rendered_text, recipients, params={}):
+def transport_email(rendered_text, recipient_usr, params={}):
     logging.debug("Email Report transport")
     eml = agents.EmailAgent()
     daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')        
@@ -270,10 +270,10 @@ def transport_email(rendered_text, recipients, params={}):
         subject_line = params['email_subject']        
     else:
         subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
-    eml.send_email(subject_line, recipients, rendered_text)     
+    eml.send_email(subject_line, recipient_usr.email, rendered_text)     
     
-def transport_sms(rendered_text, recipients, params={}):
+def transport_sms(rendered_text, recipient_usr, params={}):
     logging.debug("SMS Report transport via clickatell")        
     ctell = agents.ClickatellAgent()
-    ctell.send(usr_recipient.primary_phone, rendered_text)
+    ctell.send(recipient_usr.primary_phone, rendered_text)
 

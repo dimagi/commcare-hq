@@ -91,12 +91,12 @@ class EmailAgent(object):
                                    use_tls=True,
                                    fail_silently=False)
         
-    def send_email(self, subject, recipients, msg_payload):
+    def send_email(self, subject, recipient_addr, msg_payload):
         #rendered = render_to_string("cvxpatient/synchronize.html", {'startdate': startdate, 'enddate':enddate})        
         msg = EmailMessage(subject=subject, #subj 
                            body=msg_payload, #body
                            from_email=settings.EMAIL_LOGIN, #from
-                           to=recipients,#to
+                           to=[recipient_addr],#to
                            connection=self.conn
                            )
         
