@@ -62,7 +62,7 @@ def run_reports(run_frequency):
                     subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  " + str(organization)
                     
                     rendered_text = render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
-                    transport_email(usr,rendered_text, report.report_delivery, {"startdate":startdate,"enddate":enddate,"email_subject":subject})
+                    transport_email(rendered_text, [usr.email],report.report_delivery, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
                 else:
                     rendered_text = render_direct_sms(data, run_frequency, "organization/reports/sms_organization.txt")
                     transport_sms(usr,rendered_text, report.report_delivery)
