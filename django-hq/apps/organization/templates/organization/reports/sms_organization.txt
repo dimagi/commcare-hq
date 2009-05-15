@@ -1,5 +1,4 @@
-{% spaceless %}{{report_heading}} 
-{%if results %}
+{% spaceless %}{{report_heading}}
 {% for item, count in results %}{%ifnotequal count 0 %}{{item}} {{count}}{%endifnotequal%}
-{% endfor %}{%endspaceless%}
-{% else %}No data{%endif%}
+{% endfor %}
+{%endspaceless%}

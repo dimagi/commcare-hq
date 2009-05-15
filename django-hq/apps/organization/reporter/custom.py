@@ -20,10 +20,11 @@ def admin_catch_all(report_schedule, run_frequency):
     #todo:  get all of the domains
     domains = Domain.objects.all()
     rendered_text = ''
-    
+    from organization import reporter
+    (startdate, enddate) = reporter.get_daterange(run_frequency)
     for dom in domains:
         #get the root organization
-        from organization import reporter
+        
         data = reporter.prepare_domain_or_organization(run_frequency, report_schedule.report_delivery,dom)
         params = {}
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')

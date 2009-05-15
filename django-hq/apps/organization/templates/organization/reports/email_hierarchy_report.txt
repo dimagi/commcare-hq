@@ -10,11 +10,11 @@
 {% for depth, descriptor, item, rowdata in results %}
 	{% if descriptor %}
 		<tr>
-		<td>{{descriptor}}</td>
+		<td class="rel_row" style="padding-left:{{depth}}0px;">{{descriptor}}</td>
 		</tr>
 	{% endif %}
 	<tr>
-	<td>{{item}}</td>
+	<td class="item_row" style="padding-left:{{depth}}9;">{{item}}</td>
 	{% for data in rowdata %}
 		{% ifequal data 0 %}
 			<td>{{data}}</td>			
