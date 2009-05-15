@@ -16,6 +16,27 @@ from xformmanager.models import *
 import inspector as repinspector
 
 
+def admin_catch_all(report_schedule, run_frequency):
+    #todo:  get all of the domains
+    domains = Domain.objects.all()
+    rendered_text = ''
+    
+    for dom in domains:
+        #get the root organization
+        from organization import reporter
+        data = reporter.prepare_domain_or_organization(run_frequency, report.report_delivery,organization)
+        params = {}
+        heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+        params['heading'] = heading 
+        
+        rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
+        
+    if report.report_delivery == 'email':
+        subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Global Admin"
+        reporter.transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
+
+
+
 def pf_swahili_sms(report_schedule, run_frequency):
     usr = report_schedule.recipient_user
     organization = report_schedule.organization
