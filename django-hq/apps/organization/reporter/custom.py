@@ -24,7 +24,7 @@ def admin_catch_all(report_schedule, run_frequency):
     for dom in domains:
         #get the root organization
         from organization import reporter
-        data = reporter.prepare_domain_or_organization(run_frequency, report.report_delivery,organization)
+        data = reporter.prepare_domain_or_organization(run_frequency, report_schedule.report_delivery,dom)
         params = {}
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
         params['heading'] = heading 
@@ -32,6 +32,7 @@ def admin_catch_all(report_schedule, run_frequency):
         rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
         
     if report.report_delivery == 'email':
+        usr = report_schedule.recipient_user
         subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Global Admin"
         reporter.transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
 
