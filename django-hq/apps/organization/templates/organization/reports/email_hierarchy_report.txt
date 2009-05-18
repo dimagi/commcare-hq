@@ -14,7 +14,7 @@
 		</tr>
 	{% endif %}
 	<tr>
-	<td class="item_row" style="padding-left:{{depth}}9;">{{item}}</td>
+	<td class="item_row" style="padding-left:{{depth}}0px;margin-left:{{depth}}0px;">{{item}}</td>
 	{% for data in rowdata %}
 		{% ifequal data 0 %}
 			<td>{{data}}</td>			

@@ -9,7 +9,7 @@ import logging
 import settings
 import organization.utils as utils
 from organization.reporter import agents        
-
+import dbanalyzer.dbhelper as dbhelper
 import modelrelationship.traversal as traversal
 from xformmanager.models import *
 
@@ -21,6 +21,8 @@ def admin_catch_all(report_schedule, run_frequency):
     domains = Domain.objects.all()
     rendered_text = ''
     from organization import reporter
+    if run_frequency == 'daily':
+        run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
     for dom in domains:
         #get the root organization
@@ -30,7 +32,59 @@ def admin_catch_all(report_schedule, run_frequency):
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
         params['heading'] = heading 
         
+        
+        
+        #next, let's get all the unclaimed
+        #first, let's iterate through all the data and get the usernames
+        #get all the usernames in question
+        configured_users = []
+        for datum in data:
+            if isinstance(datum[2], ExtUser):
+                configured_users.append(datum[2].report_identity)
+        
+        
+        #next, do a query of all the forms in this domain to get an idea of all the usernames
+        defs = FormDefData.objects.all().filter(uploaded_by__domain=dom)
+        for fdef in defs:        
+            table = fdef.element.table_name
+            
+            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            #let's get the usernames
+            all_usernames = helper.get_uniques_for_column('meta_username', None, None)
+            #ok, so we got ALL usernames.  let's filter out the ones we've already seen
+            unclaimed_users = []
+            for cfu in configured_users:
+                if all_usernames.count(cfu) == 0:
+                    unclaimed_users.append(cfu)
+            
+                        
+            unclaimed_tuples = []
+            
+            for user in unclaimed_users:
+                usertuple = []
+                usertuple.append(1)
+                if len(unclaimed_tuples) == 0:
+                    usertuple.append('Unassigned Users')
+                else:
+                    usertuple.append(None)
+                usertuple.append(user)
+                udata = []
+                userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})                        
+                for dat in userdailies:                
+                    #user_date_hash[user][dat[1]] = int(dat[0])
+                    udata.append(int(dat[0]))
+                usertuple.append(udata)
+                    
+        #ok, so we just did all this data, let's append the data to the already existing data
+        
+        data = data + unclaimed_tuples
+                
+        
         rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
+
+        
+        
+        
         
     if report.report_delivery == 'email':
         usr = report_schedule.recipient_user
