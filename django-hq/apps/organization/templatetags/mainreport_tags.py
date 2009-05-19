@@ -64,7 +64,13 @@ def aggregate_section_totals(section_name, results_arr, daily):
     
     
     summation = []
-    for itemarr in results_arr[startindex:endindex]:
+    section_arr = []
+    if endindex == -1:
+        section_arr = results_arr[startindex:]
+    else:
+        section_arr = results_arr[startindex:endindex+1]
+        
+    for itemarr in section_arr:
         if summation == []:
             summation = summation + itemarr[-1]
         else:
