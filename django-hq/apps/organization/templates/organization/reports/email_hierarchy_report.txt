@@ -17,15 +17,10 @@
 	<tr>
 	<td class="item_row" style="padding-left:{{depth}}0px;margin-left:{{depth}}0px;">{{item}}</td>
 	{% for data in rowdata %}
-		{% ifequal data 0 %}
-			<td>{{data}}</td>			
-		{%else%}
-			<td><strong>{{data}}</strong></td>
+		{% ifequal data 0 %}<td>{{data}}</td>{%else%}
+		<td><strong>{{data}}</strong></td>
 		{%endifequal%}		
 	{% endfor %}
 	</tr>	
-{% endfor %}
-</table>
-</body>
-</html>
+{% endfor %}</table><small>* denotes unregistered user</small></body></html>
 {%endspaceless%}

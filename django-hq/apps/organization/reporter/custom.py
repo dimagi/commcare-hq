@@ -29,7 +29,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
             configured_users.append(datum[2].report_identity.lower())        
     
     #next, do a query of all the forms in this domain to get an idea of all the usernames
-    defs = FormDefData.objects.all().filter(uploaded_by__domain=dom)
+    defs = FormDefData.objects.all().filter(uploaded_by__domain=domain)
     user_date_hash = {}
     
     for fdef in defs:        
@@ -54,7 +54,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
                     user_date_hash[user] = {}
                 
                 if not user_date_hash[user].has_key(dat[1]):
-                    user_date_hash[user][date[1]] = 0                   
+                    user_date_hash[user][dat[1]] = 0                   
                 
                 user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
     #end for loop through all the fdefs
@@ -190,7 +190,7 @@ def admin_catch_all(report_schedule, run_frequency):
                         user_date_hash[user] = {}
                     
                     if not user_date_hash[user].has_key(dat[1]):
-                        user_date_hash[user][date[1]] = 0                   
+                        user_date_hash[user][dat[1]] = 0                   
                     
                     user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
         #end for loop through all the fdefs
