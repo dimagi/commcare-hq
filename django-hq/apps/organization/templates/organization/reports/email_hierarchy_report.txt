@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load mainreport_tags %}
 {%spaceless%}	
 <html>
 <body>
@@ -10,7 +11,7 @@
 {% for depth, descriptor, item, rowdata in results %}
 	{% if descriptor %}
 		<tr>
-		<td class="rel_row" style="padding-left:{{depth}}0px;"><strong>{{descriptor}}</strong></td>
+		<td class="rel_row" style="padding-left:{{depth}}0px;"><strong>{{descriptor}}</strong></td>{% aggregate_section_totals descriptor results 1 %}
 		</tr>
 	{% endif %}
 	<tr>
