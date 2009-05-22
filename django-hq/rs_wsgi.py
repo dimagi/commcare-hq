@@ -9,13 +9,13 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__),'apps'))
-sys.path.append(os.path.join(os.path.dirname(__file__),'rapidsms'))
-sys.path.append(os.path.join(os.path.dirname(__file__),'rapidsms','apps'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','rapidsms'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','rapidsms','apps'))
 
 #rapidsms lib stuff
-sys.path.append(os.path.join(os.path.dirname(__file__),'rapidsms','lib'))
-sys.path.append(os.path.join(os.path.dirname(__file__),'rapidsms','lib','rapidsms'))
-sys.path.append(os.path.join(os.path.dirname(__file__),'rapidsms','lib','rapidsms','webui'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','rapidsms','lib'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','rapidsms','lib','rapidsms'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','rapidsms','lib','rapidsms','webui'))
 
 
 
