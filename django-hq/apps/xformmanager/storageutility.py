@@ -105,9 +105,7 @@ class StorageUtility(object):
         root = tree.getroot()
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
-        self.__execute_queries(queries)
-        #I don't know why we need this.... but if we don't, unit tests break
-        transaction.commit_unless_managed()
+        queries.execute_insert()
 
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
@@ -248,30 +246,21 @@ class StorageUtility(object):
           else:
               parent_id = 1
       
-      (next_query, fields, values) = self.__populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=table_name, parent_id=parent_id )
-      if not values: return next_query
-
-      queries = "INSERT INTO " + table_name + " (";
-      queries = queries + self.__trim2chars(fields)
-      if parent_id > 0: queries = queries + ", parent_id"
-      queries = queries + ") VALUES( "
-      queries = queries + self.__trim2chars(values)
-      if parent_id > 0: queries = queries + ", " + str(parent_id)
-      queries = queries +  ");"
-      queries = queries + next_query
-      return queries
+      query = self.__populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=table_name, parent_id=parent_id )
+      query.parent_id = parent_id
+      return query
 
     def __populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
       if data_tree is None: return
       if not elementdef : return
-      local_fields = '';
-      values = '';
+      local_field_value_dict = {};
       
-      next_query = ''
+      next_query = Query(parent_table_name)
       if len(elementdef.child_elements)== 0:
+          field_value_dict = {}
           if elementdef.is_repeatable :
-              (local_fields, values) = self.__get_formatted_fields_and_values(elementdef,data_tree.text)
-          return (next_query, local_fields, values)
+              field_value_dict = self.__get_formatted_fields_and_values(elementdef,data_tree.text)
+          return Query( parent_table_name, field_value_dict )
       for def_child in elementdef.child_elements:        
         data_node = None
         
@@ -281,7 +270,11 @@ class StorageUtility(object):
         next_parent_name = formatted_join(parent_name, elementdef.name)
         if def_child.is_repeatable :
             for data_child in self.__case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self.__data_name( elementdef.name, def_child.name) ):
-                next_query = next_query + self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
+                query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
+                if next_query is not None:
+                    next_query.child_queries = next_query.child_queries + [ query ]
+                else:
+                    next_query = query
         else:
             # if there are children (which are not repeatable) then flatten the table
             for data_child in self.__case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self.__data_name( elementdef.name, def_child.name) ):
@@ -292,21 +285,21 @@ class StorageUtility(object):
                 continue
             if( len(def_child.child_elements)>0 ):
                 if data_node is not None:
-                    (q,f,v) = self.__populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
-                    next_query = next_query + q
-                    local_fields = local_fields + f
-                    values  = values + v
+                    # here we are propagating, not onlyt the list of fields and values, but aso the child queries
+                    query = self.__populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
+                    next_query.child_queries = next_query.child_queries + query.child_queries
+                    local_field_value_dict.update( query.field_value_dict )
             else:
                 # if there are no children, then add values to the table
                 if data_node.text is not None :
-                    (l, v) = self.__get_formatted_fields_and_values(def_child, data_node.text)
-                    local_fields = local_fields + l
-                    values = values + v
-                (q, f, v) = self.__populate_instance_tables_inner_loop(data_node, def_child, next_parent_name, parent_table_name)
-                next_query = next_query + q
-                local_fields = local_fields + f
-                values  = values + v
-      return (next_query, local_fields, values)
+                    field_value_dict = self.__get_formatted_fields_and_values(def_child, data_node.text)
+                    local_field_value_dict.update( field_value_dict )
+                query = self.__populate_instance_tables_inner_loop(data_node, def_child, next_parent_name, parent_table_name)
+                next_query.child_queries = next_query.child_queries + query.child_queries 
+                local_field_value_dict.update( query.field_value_dict )
+      query = Query(parent_table_name, local_field_value_dict )
+      query.child_queries = query.child_queries + [ next_query ]
+      return query
 
     def __trim2chars(self, string):
         return string[0:len(string)-2]
@@ -346,11 +339,11 @@ class StorageUtility(object):
                     index = text.rfind('.')
                     if index != -1:
                         text = text[0:index]
-                return "'" + text.strip() + "'"
+                return text.strip()
             else:
-                return "'" + text.strip() + "'"        
+                return text.strip()
         else:
-            return "'" + sanitize(text.strip()) + "'"
+            return text.strip()
 
 
 
@@ -377,8 +370,8 @@ class StorageUtility(object):
             return field
         return  label + " " + self.__get_db_type( elementdef.type ) + ", "
 
-
     def __get_formatted_fields_and_values(self, elementdef, raw_value):
+        """ returns a dictionary of key-value pairs """
         label = self.__hack_to_get_cchq_working( sanitize(elementdef.name) )
         #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
         if elementdef.type[0:5] == 'list.':
@@ -387,15 +380,13 @@ class StorageUtility(object):
             values = raw_value.split()
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None and simple_type.multiselect_values is not None:
+                field_value = {}
                 for v in values:
                     v = sanitize(v)
                     if v in simple_type.multiselect_values:
-                        field = field + label + "_" + v + ", " 
-                        value = value + '1' + ", "
-                return (field, value)
-        field = label + ", "
-        value = self.__db_format(elementdef.type, raw_value) + ", "
-        return (field, value)
+                        field_value.update( { label + "_" + v : '1' } )
+                return field_value
+        return { label : self.__db_format(elementdef.type, raw_value) }
 
     def __execute_queries(self, queries):
         # todo - rollback on fail
@@ -485,3 +476,61 @@ class StorageUtility(object):
         if child_name[0:len(parent_name)].lower() == parent_name.lower():
             child_name = child_name[len(parent_name)+1:len(child_name)]
         return child_name
+
+class Query(object):
+    """ stores all the information needed to run a query """
+    
+    def __init__(self, table_name='', field_value_dict={}, child_queries=[]): 
+        self.table_name = table_name # string
+        self.field_value_dict = field_value_dict # list of strings
+        self.child_queries = child_queries # list of Queries
+        self.parent_id = 0
+        
+    def execute_insert(self):
+        if len( self.field_value_dict ) > 0:
+            query_string = "INSERT INTO " + self.table_name + " (";
+    
+            for field in self.field_value_dict:
+                query_string = query_string + field + ", "
+            query_string = self.__trim2chars( query_string )
+            if self.parent_id > 0: query_string = query_string + ", parent_id"
+    
+            query_string = query_string + ") VALUES( "
+
+	    # we use c-style substitution to enable django-built in sql-injection protection
+            for value in self.field_value_dict:
+                query_string = query_string + "%s, "
+            query_string = self.__trim2chars( query_string )
+            if self.parent_id > 0: query_string = query_string + ", " + str(self.parent_id)
+            query_string = query_string +  ");"
+
+            values = []
+            for value in self.field_value_dict:
+                values = values + [ self.field_value_dict[ value ] ]
+                
+            self.__execute(query_string, values)
+        
+        for child_query in self.child_queries:
+            child_query.execute_insert()
+        
+        #I don't know why we need this.... but if we don't, unit tests break
+        transaction.commit_unless_managed()
+        
+    def __execute(self, queries, values):
+        # todo - rollback on fail
+        if queries is None or len(queries) == 0:
+            logging.error("xformmanager: storageutility - xform " + self.formdef.target_namespace + " could not be parsed")
+            return
+        cursor = connection.cursor()
+        cursor.execute(queries, values)
+        """ if settings.DATABASE_ENGINE=='mysql' 
+            cursor.execute(queries)            
+        else:
+            simple_queries = queries.split(';')
+            for query in simple_queries: 
+                cursor.execute(query)
+        """
+        
+    def __trim2chars(self, string):
+        return string[0:len(string)-2]
+        
