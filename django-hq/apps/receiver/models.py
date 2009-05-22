@@ -18,6 +18,15 @@ import os
 import traceback
 
 
+logging.error(settings.rapidsms_apps_conf['receiver']['xform_submission_path'])
+if not os.path.exists(settings.rapidsms_apps_conf['receiver']['xform_submission_path']):
+    os.mkdir(settings.rapidsms_apps_conf['receiver']['xform_submission_path'])    
+    
+if not os.path.exists(settings.rapidsms_apps_conf['receiver']['attachments_path']):
+    os.mkdir(settings.rapidsms_apps_conf['receiver']['attachments_path'])
+
+
+
 class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
@@ -28,8 +37,10 @@ class Submission(models.Model):
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
-    raw_header = models.TextField(_('Raw Header'))    
-    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.XFORM_SUBMISSION_PATH, max_length=255)    
+    raw_header = models.TextField(_('Raw Header'))
+    
+    #print settings.rapidsms_apps_conf
+    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'], max_length=255)    
         
     @property
     def num_attachments(self):
@@ -88,10 +99,10 @@ class Submission(models.Model):
                    payload = part.get_payload().strip()
                    new_attach.filesize = len(payload)
                    new_attach.checksum = hashlib.md5(payload).hexdigest()
-                   fout = open(os.path.join(settings.ATTACHMENTS_PATH,self.transaction_uuid + filename),'wb')
+                   fout = open(os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
                    fout.write(payload)
                    fout.close() 
-                   new_attach.filepath = os.path.join(settings.ATTACHMENTS_PATH,self.transaction_uuid + filename)
+                   new_attach.filepath = os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename)
                    new_attach.save()                
                    logging.debug("Attachment Save complete")                    
         except:
@@ -128,7 +139,7 @@ class Attachment(models.Model):
     submission = models.ForeignKey(Submission)
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
     attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
-    filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.XFORM_SUBMISSION_PATH,max_length=255)
+    filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'],max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     checksum = models.CharField(_('Attachment MD5 Checksum'),max_length=32)
     

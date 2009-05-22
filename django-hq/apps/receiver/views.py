@@ -10,19 +10,18 @@ from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
-
-
 from datetime import timedelta
 from django.db import transaction
 import uuid
+import mimetypes
 
-from models import *
+from receiver.models import *
 from django.contrib.auth.models import User 
 
 #from forms import *
 import logging
 import hashlib
-import settings
+#import settings
 import traceback
 import sys
 import os
@@ -38,7 +37,7 @@ def show_submits(request, template_name="receiver/show_submits.html"):
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
     extuser = ExtUser.objects.get(id=request.user.id)
-    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-id')
+    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     
     paginator = Paginator(slogs, 25) # Show 25 items per page
     try:
@@ -53,6 +52,29 @@ def show_submits(request, template_name="receiver/show_submits.html"):
 
     
     context['submissions'] = submits_pages    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+@login_required()    
+def single_attachment(request, attachment_id):
+    try:
+        attachment = Attachment.objects.get(id=attachment_id)
+        mtype = mimetypes.guess_type(attachment.filepath)[0]
+        if mtype == None:
+            response = HttpResponse(mimetype='text/plain')
+        else:
+            response = HttpResponse(mimetype=mtype)
+        fin = open(attachment.filepath ,'r')
+        txt = fin.read()
+        fin.close()
+        response.write(txt) 
+        return response
+    except:
+        return ""
+    
+    
+
+    context ['processed_header'] = processed_header
+    context['attachments'] = attachments
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
@@ -104,7 +126,10 @@ def raw_submit(request, template_name="receiver/submit.html"):
 
 def domain_submit(request, domain_name, template_name="receiver/submit.html"):
     context = {}            
-    logging.debug("begin domained raw_submit()")
+    if domain_name[-1] == '/':
+        domain_name = domain_name[0:-1] #get rid of the trailing slash if it's there
+        
+    logging.error("begin domained raw_submit(): " + domain_name)
     #print "begin domained raw_submit()"                
     currdomain = Domain.objects.filter(name=domain_name)
     if len(currdomain) != 1:

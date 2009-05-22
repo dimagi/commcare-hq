@@ -17,7 +17,7 @@ def generate_CSV(form_name):
     if rows is None:
         logging.error("CSV: Form_name not recognized!")
         return
-    f = open(  os.path.join(settings.CSV_PATH,form_name+".csv") , "w" )
+    f = open(  os.path.join(settings.rapidsms_apps_conf['xformmanager']['csv_path'],form_name+".csv") , "w" )
 
     rawcolumns = cursor.description # in ((name,,,,,),(name,,,,,)...)
     for col in rawcolumns:

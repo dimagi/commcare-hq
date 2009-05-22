@@ -22,10 +22,11 @@ xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
 
 @register.simple_tag
-def get_info_block():
-    ret = '<div class="buildinfoblock">'
-    ret += '<p>Build: %s | ' % (settings.CCHQ_BUILD_INFO)
-    ret += 'Date: %s | ' % settings.CCHQ_BUILD_DATE
-    ret += 'Name: %s' % settings.DATABASE_NAME
-    ret += "</div>"
-    return ret
+def get_info_block():    
+#    ret = '<div class="buildinfoblock">'
+#    ret += '<p>Build: %s | ' % (settings.CCHQ_BUILD_INFO)
+#    ret += 'Date: %s | ' % settings.CCHQ_BUILD_DATE
+#    ret += 'Name: %s' % settings.DATABASE_NAME
+#    ret += "</div>"
+    #return ret
+    return ''

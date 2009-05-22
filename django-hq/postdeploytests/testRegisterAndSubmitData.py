@@ -17,17 +17,17 @@ from cookielib import *
 from urlparse import urlparse
 
 
-serverhost = 'test.commcarehq.org'
-curl_command = 'c:\curl\curl.exe'
+#serverhost = 'test.commcarehq.org'
+#curl_command = 'c:\curl\curl.exe'
 
-#serverhost = 'localhost'
-#curl_command = 'curl'
+serverhost = 'localhost'
+curl_command = 'curl'
 
 #serverhost = 'localhost:8000'
 #curl_command = 'curl'
 
 #example post to a form
-# -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
+# -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xforms/
 
 def getFiles(dirname, extension, prefix=None):
     curdir = os.path.dirname(__file__)        
@@ -88,7 +88,7 @@ class DomainTestCase(unittest.TestCase):
         results = p.stdout.read()
         
     
-    def _loadData(self, xform_filepath):
+    def _loadDataFilesList(self, xform_filepath):
                 
         domain_dir = os.path.dirname(xform_filepath)     
         fname, ext = os.path.splitext(os.path.basename(xform_filepath))
@@ -154,7 +154,7 @@ class DomainTestCase(unittest.TestCase):
 
 
     def _getMaxSchemaSubmitId(self, xform_id):        
-        p = subprocess.Popen([curl_command,'-b', self.session_cookie, 'http://%s/xformmanager/data/%d' % (serverhost, xform_id)],stdout=PIPE,stderr=PIPE,shell=False)
+        p = subprocess.Popen([curl_command,'-b', self.session_cookie, 'http://%s/xforms/data/%d' % (serverhost, xform_id)],stdout=PIPE,stderr=PIPE,shell=False)
         data = p.stdout.read()
         
 #        fout = open('xf-data-' + str(uuid.uuid1()) + ".html",'w')
@@ -187,21 +187,20 @@ class DomainTestCase(unittest.TestCase):
                 
         param_dict = {'file': schema, 'form_display_name': shortname}
         p2 = urllib.urlencode(param_dict)        
-        up = urlparse('http://%s/xformmanager/register_xform/' % (serverhost))
+        up = urlparse('http://%s/xforms/register/' % (serverhost))
         try:
             conn = httplib.HTTPConnection(up.netloc)
             conn.request('POST', up.path, p2, {'Content-Type': 'multipart/form-data', 'User-Agent': 'CCHQ-testRegisterAndSubmit-python-v0.1', 'Cookie':self.cookie_header})
             resp = conn.getresponse()
             
             data = resp.read()
-            print data
             #return resp if resp.status == httplib.OK else None
         except:
             return None
 
         
-#        f = o.open( 'http://%s/xformmanager/register_xform/' % (serverhost), p2 )
-#        #f = urllib2.urlopen( 'http://%s/xformmanager/register_xform/' % (serverhost), p2 )
+#        f = o.open( 'http://%s/xforms/register/' % (serverhost), p2 )
+#        #f = urllib2.urlopen( 'http://%s/xforms/register/' % (serverhost), p2 )
 #        data = f.read()
 #        f.close()
         
@@ -221,13 +220,15 @@ class DomainTestCase(unittest.TestCase):
         shortname = shortname + "-" + str(uuid.uuid1())
         
         print "Posting Xform: %s" % shortname   
-        #print ' '.join([curl_command,'-N', '-b',self.session_cookie, '-F file=@%s' % xformfile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost])
-        p = subprocess.Popen([curl_command,'-b', self.session_cookie, '-F file=@%s' % xformfile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xformmanager/register_xform/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+        #print ' '.join([curl_command,'-N', '-b',self.session_cookie, '-F file=@%s' % xformfile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xforms/register/' % serverhost])
+        p = subprocess.Popen([curl_command,'-b', self.session_cookie, '-F file=@%s' % xformfile, '-F form_display_name=%s' % shortname, '--request', 'POST', 'http://%s/xforms/register/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
         results = p.stdout.read()
         return self._verifySchema(results, shortname)
     
     def _verifySubmission(self, resultstring, num_attachments):
         """Verify that a raw xform submission is submitted and the correct reply comes back in.  This also checks to make sure that the attachments are parsed out correctly"""
+        
+        #print "Domain submission results: " + resultstring
         rescount = resultstring.count("Submission received, thank you")
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
@@ -241,8 +242,8 @@ class DomainTestCase(unittest.TestCase):
                 anum = int(attachment_count)
                 self.assertEqual(anum, num_attachments)
                 
-            except:
-                print "Data submission error:  attachment not found: " + attachment_count
+            except Exception, ex:
+                print "Data submission error:  attachment not found: " + attachment_count + " Exception: " + str(ex)
                 self.assertFalse(True)                        
         
     def _postSimpleData2(self, datafile,domain_name):
@@ -289,7 +290,7 @@ class DomainTestCase(unittest.TestCase):
         
         print '\n\n****************\nverifySchemaSubmits for ' + formname
                 
-        datafiles = self._loadData(formname)
+        datafiles = self._loadDataFilesList(formname)
         
         if len(datafiles) == 0:
             print "No instance data for " + formname
@@ -460,15 +461,13 @@ class TestSimpleSubmits(unittest.TestCase):
             fin = open(fullpath,'rb')
             filestr= fin.read()
             fin.close()
-            # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xformmanager/
+            # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xforms/
             p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
-            results = p.stdout.read()  
-            print results              
+            results = p.stdout.read()                
             #self._verifySubmission(results,3)
                         
             p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()
-            print results
             #self._verifySubmission(results,3)
             
 #    def testPostBracCHW(self):        

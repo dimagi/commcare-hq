@@ -88,7 +88,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout.write( xformstring )
                     fout.close()
                     logging.debug ("java -jar form_translate.jar schema < " + xform_file_name + ">" + new_file_name)
-                    p = subprocess.Popen(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),'schema'],shell=False, stdout=PIPE,stdin=PIPE, stderr=PIPE)                    
+                    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'],shell=False, stdout=PIPE,stdin=PIPE, stderr=PIPE)                    
                     
                     p.stdin.write(xformstring)
                     p.stdin.flush()
@@ -207,14 +207,14 @@ def data(request, formdef_id, template_name="data.html"):
     context['data'] = data_pages    
     
     file_name = formdef_name+".csv"
-    if os.path.exists( os.path.join(settings.CSV_PATH,file_name ) ):
+    if os.path.exists( os.path.join(settings.rapidsms_apps_conf['xformmanager']['csv_path'],file_name ) ):
          context['csv_file'] = file_name
          
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
     
 
 def __xsd_file_name(name):
-    return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xsd.xml')
+    return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
 
 def __xform_file_name(name):
-    return os.path.join(settings.XSD_REPOSITORY_PATH, str(name) + '-xform.xml')
+    return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xform.xml')

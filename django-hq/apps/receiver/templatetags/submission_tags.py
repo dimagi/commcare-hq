@@ -24,7 +24,9 @@ import time
 def get_attachements_links(submission):
     ret = ''
     attachments = Attachment.objects.all().filter(submission=submission)
-    for attach in attachments:
-        #<a href="{{attach.get_media_url}}"> Attachment {{attach.id}}</a>
-        ret += ' <a href="%s">%d</a> |' % (attach.get_media_url(), attach.id)
+    for attach in attachments:        
+        ##retstring += '&gt;&gt;&gt; <a href="%s">' % (reverse('view_current_patient', kwargs= {'patient_id': patient.id}))
+        
+        ret += ' <a href="%s">%d</a> |' % (reverse('receiver.views.single_attachment', kwargs={'attachment_id':attach.id}),attach.id)
+        #ret += ' <a href="%s">%d</a> |' % (attach.get_media_url(), attach.id)
     return ret[0:-1]

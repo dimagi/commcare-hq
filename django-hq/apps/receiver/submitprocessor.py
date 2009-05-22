@@ -38,7 +38,7 @@ def do_raw_submission(metadata, payload, domain=None):
     else:        
         new_submit.bytes_received = int(metadata['CONTENT_LENGTH'])
     try:            
-        newfilename = os.path.join(settings.XFORM_SUBMISSION_PATH,transaction + '.postdata')
+        newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],transaction + '.postdata')
         logging.debug("try to write file")
         fout = open(newfilename, 'w')
         fout.write('Content-type: %s\n' % content_type.replace("'newdivider'","newdivider"))

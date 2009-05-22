@@ -17,7 +17,7 @@ from django.contrib.auth.models import User
 
 import logging
 
-def homepage(request,template_name='cchq_main_homepage.html'):
+def homepage(request,template_name='hqproject_homepage.html'):
     return_dict = {}    
     current_user = request.user    
     return render_to_response(template_name, return_dict, context_instance=RequestContext(request))

@@ -9,7 +9,7 @@
 	   	<ul>
 	   	{% for attach in attachments %}
 	   		<li>
-	   		<a href="{{attach.get_media_url}}"> Attachment {{attach.id}}</a>
+	   		<a href="{% url receiver.views.single_attachment attach.id%}"> Attachment {{attach.id}}</a>
 	   		</li>
 	   	{% endfor %}
 	   	</ul>

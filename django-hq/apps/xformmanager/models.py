@@ -5,9 +5,16 @@ from django.contrib.auth.models import Group, User
 import uuid
 import settings
 from organization.models import *
+import os
 
+if not os.path.exists(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path']):
+    os.mkdir(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'])    
+    
+if not os.path.exists(settings.rapidsms_apps_conf['xformmanager']['csv_path']):
+    os.mkdir(settings.rapidsms_apps_conf['xformmanager']['csv_path'])
 
-
+if not os.path.exists(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path']):
+    os.mkdir(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'])
 
 
 #import Group
@@ -66,7 +73,8 @@ class FormDefData(models.Model):
     bytes_received = models.IntegerField(_('Bytes Received'), null=True)
     
     # META fields to be placed here eventually
-    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XSD_REPOSITORY_PATH, max_length=255, null=True)
+    #settings.XSD_REPOSITORY_PATH
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], max_length=255, null=True)
     
     #form_name is used as the table name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)

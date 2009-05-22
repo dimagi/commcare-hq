@@ -13,10 +13,10 @@ COMMCARE_THEME = 'default'
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
-#DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
-#DATABASE_USER = 'root'             # Not used with sqlite3.
+DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+#DATABASE_NAME = os.path.join(os.path.dirname(__file__),'cchq.db')           # Or path to database file if using sqlite3.
+DATABASE_NAME = 'commcarehq'    # Or path to database file if using sqlite3.
+DATABASE_USER = 'root'             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
@@ -48,7 +48,7 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__),'media')
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 if DEBUG == True:
-    MEDIA_URL = 'http://127.0.0.1:8000/media/'
+    MEDIA_URL = 'http://127.0.0.1/media/'
 else:
     MEDIA_URL = 'http://test.commcarehq.org/media/'
 
@@ -80,7 +80,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
 )
 
-ROOT_URLCONF = 'cchq_main.urls'
+ROOT_URLCONF = 'hqproject.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -89,11 +89,11 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__),'templates'),
     
 #    os.path.join('../../apps','modelrelationship','templates'),
-    os.path.join('../../apps','xformmanager','templates'),
-    os.path.join('../../apps','receiver','templates'),
-    os.path.join('../../apps','monitorregistry','templates'),
-    os.path.join('../../apps','organization','templates'),
-    os.path.join('../../apps','dbanalyzer','templates'),
+    os.path.join('../apps','xformmanager','templates'),
+    os.path.join('../apps','receiver','templates'),
+    os.path.join('../apps','monitorregistry','templates'),
+    os.path.join('../apps','organization','templates'),
+    os.path.join('../apps','dbanalyzer','templates'),
 )
 TEMPLATE_CONTEXT_PROCESSORS = ( 
     "django.core.context_processors.auth",
@@ -109,9 +109,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 import sys
 current_path = os.path.dirname(__file__)
-sys.path.append(os.path.join(current_path,"../../apps"))
-sys.path.append(os.path.join(current_path,"../../libs"))
-sys.path.append(os.path.join(current_path,"../../scripts"))
+sys.path.append(os.path.join(current_path,"../apps"))
+sys.path.append(os.path.join(current_path,"../libs"))
+sys.path.append(os.path.join(current_path,"../scripts"))
 
 
 
@@ -146,7 +146,7 @@ LANGUAGES = (
 #  ('it', u'Italiano'),
 )
 
-SCRIPT_PATH = os.path.join(current_path,"../../util")
+SCRIPT_PATH = os.path.join(current_path,"../util")
 CSV_PATH = os.path.join(MEDIA_ROOT,'csv')
 XFORM_SUBMISSION_PATH = os.path.join(os.path.dirname(__file__),'xform-data')
 XSD_REPOSITORY_PATH = os.path.join(os.path.dirname(__file__),'schemas')
@@ -181,18 +181,19 @@ CCHQ_REVISION_NUMBER=0
 CCHQ_BUILD_DATE=''
 CCHQ_BUILD_INFO=''
 
-CLICKATELL_URL=None
-CLICKATELL_USER=None
-CLICKATELL_PASSWORD=None
-CLICKATELL_API_ID=None
-CLICKATELL_MO=None
-CLICKATELL_NUMBER=None
-CLICKATELL=None
+CLICKATELL_URL="http://api.clickatell.com/http/sendmsg?user=%s&password=%s&api_id=%s&to=%s&text=%s&mo=%s&from=%s"
+CLICKATELL_USER="dimagi"
+CLICKATELL_PASSWORD="alpha123"
+CLICKATELL_API_ID="3157202"
+CLICKATELL_MO="1"
+CLICKATELL_NUMBER="45609910343"
+CLICKATELL="clickatell"
 
-EMAIL_LOGIN=None
-EMAIL_PASSWORD=None
-EMAIL_SMTP_HOST=None
-EMAIL_SMTP_PORT=None
+EMAIL_LOGIN="notifications@dimagi.com"
+EMAIL_PASSWORD="alpha321"
+EMAIL_SMTP_HOST="smtp.gmail.com"
+EMAIL_SMTP_PORT=587
+
 
 
 
