@@ -1,6 +1,7 @@
 import re, os
 import logging
 from lxml import etree
+#from django.db import backend
 
 TABLE_PREFIX = "x_"
 MAX_LENGTH = 64 - len(TABLE_PREFIX)
@@ -23,6 +24,9 @@ def get_table_name(name):
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
 def sanitize(name):
+    # Accordin to the django documentation, this function should provide all the sanitation we need
+    # In practice, all this function does is add quotes =b
+    # return backend.DatabaseOperations().quote_name(name)
     start = 0
     if len(name) >= MAX_LENGTH:
         start = len(name)-MAX_LENGTH
