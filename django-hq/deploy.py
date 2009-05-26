@@ -73,14 +73,14 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     #CCHQ_REVISION_NUMBER=-1
     #CCHQ_BUILD_DATE=''
     
-    
     #make the archive    
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
-    archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
+    archive_to_deploy = os.path.join('../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
     
-    basedir = os.path.basename(os.path.abspath('../../'))    
+    basedir = os.path.basename(os.path.abspath('../'))    
     curdir = os.getcwd()
-    os.chdir('../../../')
+    os.chdir('../../')
+    print os.getcwd()
     make_archive(basedir,os.path.basename(archive_to_deploy))
     os.chdir(curdir)
     

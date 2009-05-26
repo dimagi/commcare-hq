@@ -1,0 +1,28 @@
+{% load i18n %}
+<html>
+<head>
+<title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{{MEDIA_URL}}style.css" />
+	{% block script_includes %}
+	{% endblock %}
+</head>
+<body>
+
+
+
+<div id="loginblock">
+<h2>RapidSMS</h2>
+<h4>Please sign in</h4>
+<form method="post" action=".">
+<table>
+<tr><td>{{ form.username.label_tag }}</td><td>{{ form.username }}</td></tr>
+<tr><td>{{ form.password.label_tag }}</td><td>{{ form.password }}</td></tr>
+</table>
+{% if form.errors %}
+<p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+<input type="submit" value="Login" />
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+</div>
+
