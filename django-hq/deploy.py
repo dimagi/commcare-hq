@@ -75,12 +75,15 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     #make the archive    
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
+    #create the archive in the root directory where both rapidsms and commcarehq reside
     archive_to_deploy = os.path.join('../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
     
-    basedir = os.path.basename(os.path.abspath('../'))    
+    #get the basedir that these reside in.  this could be arbitrary
+    basedir = os.path.basename(os.path.abspath('../')) #49120312421 or commcarehq   
     curdir = os.getcwd()
-    os.chdir('../../')
-    print os.getcwd()
+    
+    #go down to that level to actuall make archive
+    os.chdir('../../')    
     make_archive(basedir,os.path.basename(archive_to_deploy))
     os.chdir(curdir)
     
@@ -97,13 +100,13 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     print "starting sftp session"
     sftp = paramiko.SFTPClient.from_transport(transport)
-    basename = os.path.basename(archive_to_deploy)
-    sftp.put(archive_to_deploy,target_abs_path + "/builds/" + basename)
+    archive_filename = os.path.basename(archive_to_deploy)
+    sftp.put(archive_to_deploy,target_abs_path + archive_filename)
     sftp.close()
     
     print "sftp file transferred, remoting in to deploy archive"    
     
-    print run(transport,'/var/django-sites/builds/deploy.sh  deploy-b%s-rev%s %s commcarehq-test' % (build_number, revision_number,basedir))
+    print run(transport,'/var/django-sites/builds/rsdeploy.sh  deploy-b%s-rev%s %s %s' % (build_number, revision_number,basedir, target_deploy_path))
     
 #    #print run(transport, 'cd %s' %(target_abs_path))
 #    print run(transport,'sudo /etc/init.d/apache2 stop')
