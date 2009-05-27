@@ -2,16 +2,17 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 import sys, os
+filedir = os.path.dirname(__file__)
 sys.path.append('..')
-sys.path.append(os.path.join(os.getcwd()))
-sys.path.append(os.path.join(os.getcwd(),'apps'))
-sys.path.append(os.path.join(os.getcwd(),'..','rapidsms'))
-sys.path.append(os.path.join(os.getcwd(),'..','rapidsms','apps'))
+sys.path.append(os.path.join(filedir))
+sys.path.append(os.path.join(filedir,'apps'))
+sys.path.append(os.path.join(filedir,'..','rapidsms'))
+sys.path.append(os.path.join(filedir,'..','rapidsms','apps'))
 
 #rapidsms lib stuff
-sys.path.append(os.path.join(os.getcwd(),'..','rapidsms','lib'))
-sys.path.append(os.path.join(os.getcwd(),'..','rapidsms','lib','rapidsms'))
-sys.path.append(os.path.join(os.getcwd(),'..','rapidsms','lib','rapidsms','webui'))
+sys.path.append(os.path.join(filedir,'..','rapidsms','lib'))
+sys.path.append(os.path.join(filedir,'..','rapidsms','lib','rapidsms'))
+sys.path.append(os.path.join(filedir,'..','rapidsms','lib','rapidsms','webui'))
 
    
 
