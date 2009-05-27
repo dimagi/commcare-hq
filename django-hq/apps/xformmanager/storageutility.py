@@ -106,7 +106,9 @@ class StorageUtility(object):
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         queries.execute_insert()
-
+        #I don't know why we need this.... but if we don't, unit tests break
+        transaction.commit_unless_managed()
+        
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
@@ -512,9 +514,6 @@ class Query(object):
         
         for child_query in self.child_queries:
             child_query.execute_insert()
-        
-        #I don't know why we need this.... but if we don't, unit tests break
-        transaction.commit_unless_managed()
         
     def __execute(self, queries, values):
         # todo - rollback on fail
