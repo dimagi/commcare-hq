@@ -90,6 +90,7 @@ class StorageUtility(object):
     META_FIELDS = ['meta_formname','meta_commcareversion','meta_formversion','meta_deviceid','meta_timestart','meta_timeend','meta_username','meta_chw_id','meta_uid']
     
 
+    @transaction.commit_on_success
     def add_schema(self, formdef):
         fdd = self.update_meta(formdef)
         self.formdata = fdd
@@ -97,7 +98,8 @@ class StorageUtility(object):
         queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
         self.__execute_queries(queries)
         return fdd
-    
+   	
+    @transaction.commit_on_success
     def save_form_data_matching_formdef(self, data_stream_pointer, formdef):
         logging.debug("StorageProvider: saving form data")
         skip_junk(data_stream_pointer)
@@ -106,8 +108,6 @@ class StorageUtility(object):
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         queries.execute_insert()
-        #I don't know why we need this.... but if we don't, unit tests break
-        transaction.commit_unless_managed()
         
     def save_form_data(self, xml_file_name):
         logging.debug("Getting data from xml file at " + xml_file_name)
@@ -404,6 +404,7 @@ class StorageUtility(object):
             for query in simple_queries: 
                 cursor.execute(query)
 
+    @transaction.commit_on_success
     def remove_schema(self, id):
         fdds = FormDefData.objects.all().filter(id=id) 
         if fdds is None or len(fdds) == 0:
@@ -413,7 +414,6 @@ class StorageUtility(object):
         self.__remove_form_tables(fdds[0])
         self.__remove_form_meta(fdds[0])
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
-        transaction.commit()
     
     # make sure when calling this function always to confirm with the user
     def clear(self):
