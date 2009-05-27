@@ -74,6 +74,11 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     #CCHQ_BUILD_DATE=''
     
     #make the archive    
+    #git revision numbers are nasty looking: b9cfdebe87d6-05/27/2009 16:03:43, so let's escape them    
+    revision_number = revision_number.replace(' ', '_')
+    revision_number = revision_number.replace(':', '')
+    revision_number = revision_number.replace('/', '-')
+    
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     #create the archive in the root directory where both rapidsms and commcarehq reside
     archive_to_deploy = os.path.join('../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
@@ -83,9 +88,13 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     curdir = os.getcwd()
     
     #go down to that level to actuall make archive
-    os.chdir('../../')    
+    print "cwd: " + os.getcwd()
+    os.chdir('../../')
+    print "archive to deploy: " + archive_to_deploy    
+    print "cwd: " + os.getcwd()    
     make_archive(basedir,os.path.basename(archive_to_deploy))
     os.chdir(curdir)
+    print "cwd: " + os.getcwd()
     
     
     sys.stdout = os.fdopen(1, 'w', 0)    
