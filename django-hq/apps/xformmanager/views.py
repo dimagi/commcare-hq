@@ -82,7 +82,14 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout.close()
                 else: 
                     #user has uploaded an xhtml/xform file
-                    schema = form_translate( request.FILES['file'].name, request.FILES['file'].read() )[0]
+                    schema,err = form_translate( request.FILES['file'].name, request.FILES['file'].read() )
+                    if err is not None:
+                        if err.lower().find("exception") != -1:
+                            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(err) )
+                            context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
+                            context['upload_form'] = RegisterXForm()
+                            context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
+                            return render_to_response(template, context, context_instance=RequestContext(request))
                     fout = open(new_file_name, 'w')
                     fout.write( schema )
                     fout.close()
@@ -197,11 +204,9 @@ def form_translate(name, input_stream):
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
     output,error = p.communicate( input_stream )
     logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
-    if error is not None:
-        if len(error) > 0:
-            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + name + "\nerror: " + str(error) )
     return (output,error)
     
+
 def __xsd_file_name(name):
     return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
 
