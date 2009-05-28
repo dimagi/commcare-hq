@@ -53,7 +53,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
             su.remove_schema(form_id)        
             logging.debug("Schema %s deleted ", form_id)
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
-            return HttpResponseRedirect("../register_xform")
+            return HttpResponseRedirect("../register")
     context['form_name'] = form.form_display_name
     return render_to_response(template, context, context_instance=RequestContext(request))
 
@@ -82,17 +82,9 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout.close()
                 else: 
                     #user has uploaded an xhtml/xform file
-                    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + request.FILES['file'].name + " > " + new_file_name)
-                    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE)
-                    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
-                    (output,error) = p.communicate( request.FILES['file'].read() )
-                    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
-                    
-                    if error is not None:
-                        if len(error) > 0:
-                            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(error) )
+                    schema = form_translate( request.FILES['file'].name, request.FILES['file'].read() )[0]
                     fout = open(new_file_name, 'w')
-                    fout.write( output )
+                    fout.write( schema )
                     fout.close()
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
@@ -197,8 +189,19 @@ def data(request, formdef_id, template_name="data.html"):
          context['csv_file'] = file_name
          
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
-    
 
+
+def form_translate(name, input_stream):
+    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
+    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
+    output,error = p.communicate( input_stream )
+    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
+    if error is not None:
+        if len(error) > 0:
+            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + name + "\nerror: " + str(error) )
+    return (output,error)
+    
 def __xsd_file_name(name):
     return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
 
