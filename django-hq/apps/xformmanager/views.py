@@ -82,32 +82,18 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout.close()
                 else: 
                     #user has uploaded an xhtml/xform file
-                    xform_file_name = __xform_file_name(transaction_str)
-                    fout = open(xform_file_name, 'w')
-                    xformstring = request.FILES['file'].read()
-                    fout.write( xformstring )
-                    fout.close()
-                    logging.debug ("java -jar form_translate.jar schema < " + xform_file_name + ">" + new_file_name)
-                    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'],shell=False, stdout=PIPE,stdin=PIPE, stderr=PIPE)                    
+                    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + request.FILES['file'].name + " > " + new_file_name)
+                    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE)
+                    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
+                    (output,error) = p.communicate( request.FILES['file'].read() )
+                    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
                     
-                    p.stdin.write(xformstring)
-                    p.stdin.flush()
-                    p.stdin.close()
-                    
-                    logging.debug("Convert xform: " + p.stderr.read())
-                    
-                    results = p.stdout.read()
+                    if error is not None:
+                        if len(error) > 0:
+                            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(error) )
                     fout = open(new_file_name, 'w')
-                    fout.write(results)
+                    fout.write( output )
                     fout.close()
-                    logging.debug("Convert xform completed")                    
-                                        
-#                    #retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
-#                    if retcode == 1:
-#                        context['errors'] = request.FILES['file'].name+" could not be processed"
-#                        raise Exception(request.FILES['file'].name+" could not be processed")
-
-                        
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
                 formdef = FormDef(fout)
