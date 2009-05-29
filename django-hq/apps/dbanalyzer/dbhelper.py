@@ -95,7 +95,7 @@ class DbHelper(object):
         #parse the columns out:
         #type_code
         
-        rawcolumns = cursor.description # in ((name,datatype,,,,),(name,datatype,,,,)...)
+        rawcolumns = cursor.description # in ((name,datatype,,,,),(name,datatype,,,,)...) THIS DOES NOT WORK IN SQLITE.  Must use MySQL
         for col in rawcolumns:
             name = col[0]
             code = col[1]
