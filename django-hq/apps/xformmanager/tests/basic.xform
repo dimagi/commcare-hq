@@ -1,0 +1,65 @@
+<h:html xmlns="http://www.w3.org/2002/xforms"
+        xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns:ev="http://www.w3.org/2001/xml-events"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>Demo Form</h:title>
+
+		<model>
+			<instance>
+				<!-- the XML inside here is what gets filled out and submitted when you complete the form -->
+				<student>
+					<name />
+					<sex />
+					<interests />
+				</student>
+			</instance>
+
+			<!-- binds allow us to add properties to the questions, like data types, skip logic, etc.
+			<bind ... />
+			-->
+		</model>
+	</h:head>
+
+	<h:body>
+		<!-- This is where we define the questions that the user will fill out -->
+		<input ref="name">
+			<label>What is your name?</label>
+		</input>
+
+		<select1 ref="sex">
+			<label>Are you male or female?</label>
+			<item>
+				<label>Male</label>
+				<value>m</value>
+			</item>
+			<item>
+				<label>Female</label>
+				<value>f</value>
+			</item>
+		</select1>
+
+		<select ref="interests">
+			<label>What are your interests?</label>
+
+			<item>
+				<label>Eating Ugali</label>
+				<value>ugali</value>
+			</item>
+			<item>
+				<label>Watching TV</label>
+				<value>tv</value>
+			</item>
+			<item>
+				<label>Music</label>
+				<value>music</value>
+			</item>
+			<item>
+				<label>Making XForms</label>
+				<value>xforms</value>
+			</item>
+		</select>
+
+	</h:body>
+</h:html>

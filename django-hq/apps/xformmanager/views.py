@@ -53,7 +53,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
             su.remove_schema(form_id)        
             logging.debug("Schema %s deleted ", form_id)
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
-            return HttpResponseRedirect("../register_xform")
+            return HttpResponseRedirect("../register")
     context['form_name'] = form.form_display_name
     return render_to_response(template, context, context_instance=RequestContext(request))
 
@@ -82,32 +82,17 @@ def register_xform(request, template='register_and_list_xforms.html'):
                     fout.close()
                 else: 
                     #user has uploaded an xhtml/xform file
-                    xform_file_name = __xform_file_name(transaction_str)
-                    fout = open(xform_file_name, 'w')
-                    xformstring = request.FILES['file'].read()
-                    fout.write( xformstring )
-                    fout.close()
-                    logging.debug ("java -jar form_translate.jar schema < " + xform_file_name + ">" + new_file_name)
-                    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'],shell=False, stdout=PIPE,stdin=PIPE, stderr=PIPE)                    
-                    
-                    p.stdin.write(xformstring)
-                    p.stdin.flush()
-                    p.stdin.close()
-                    
-                    logging.debug("Convert xform: " + p.stderr.read())
-                    
-                    results = p.stdout.read()
+                    schema,err = form_translate( request.FILES['file'].name, request.FILES['file'].read() )
+                    if err is not None:
+                        if err.lower().find("exception") != -1:
+                            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(err) )
+                            context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
+                            context['upload_form'] = RegisterXForm()
+                            context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
+                            return render_to_response(template, context, context_instance=RequestContext(request))
                     fout = open(new_file_name, 'w')
-                    fout.write(results)
+                    fout.write( schema )
                     fout.close()
-                    logging.debug("Convert xform completed")                    
-                                        
-#                    #retcode = subprocess.call(["java","-jar",os.path.join(settings.SCRIPT_PATH,"form_translate.jar"),"schema","<",xform_file_name,">",new_file_name],shell=True)  
-#                    if retcode == 1:
-#                        context['errors'] = request.FILES['file'].name+" could not be processed"
-#                        raise Exception(request.FILES['file'].name+" could not be processed")
-
-                        
                 #process xsd file to FormDef object
                 fout = open(new_file_name, 'r')
                 formdef = FormDef(fout)
@@ -211,6 +196,15 @@ def data(request, formdef_id, template_name="data.html"):
          context['csv_file'] = file_name
          
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
+
+
+def form_translate(name, input_stream):
+    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
+    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
+    output,error = p.communicate( input_stream )
+    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
+    return (output,error)
     
 
 def __xsd_file_name(name):
