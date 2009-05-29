@@ -7,16 +7,6 @@ import settings
 from organization.models import *
 import os
 
-if not os.path.exists(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'])):
-    os.mkdir(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path']))    
-    
-if not os.path.exists(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['csv_path'])):
-    os.mkdir(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['csv_path']))
-
-if not os.path.exists(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'])):
-    os.mkdir(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path']))
-
-
 #import Group
 
 class ElementDefData(models.Model):

@@ -31,7 +31,8 @@
             <li><a href="{% url organization.views.domain_charts %}">Charts</a></li>
             {% if user.is_superuser %}            
             <li><a href="{% url receiver.views.show_submits %}">Submissions</a></li>
-            <li><a href="{% url xformmanager.views.register_xform %}">Schemas</a></li>						
+            <li><a href="{% url xformmanager.views.register_xform %}">Schemas</a></li>	
+            	
 			{%endif%}			
 		</ul>
 	</div>
