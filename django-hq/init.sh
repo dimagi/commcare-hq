@@ -1,3 +1,3 @@
-./hqstart reset_db --noinput
-./hqstart syncdb --noinput
-./hqstart runscript scripts.hqbootstrap
+./hqstart.py reset_db --noinput
+./hqstart.py syncdb --noinput
+./hqstart.py runscript scripts.hqbootstrap
