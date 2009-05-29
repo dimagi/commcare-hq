@@ -18,12 +18,11 @@ import os
 import traceback
 
 
-logging.error(settings.rapidsms_apps_conf['receiver']['xform_submission_path'])
-if not os.path.exists(settings.rapidsms_apps_conf['receiver']['xform_submission_path']):
-    os.mkdir(settings.rapidsms_apps_conf['receiver']['xform_submission_path'])    
+if not os.path.exists(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['receiver']['xform_submission_path'])):
+    os.mkdir(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['receiver']['xform_submission_path']))    
     
-if not os.path.exists(settings.rapidsms_apps_conf['receiver']['attachments_path']):
-    os.mkdir(settings.rapidsms_apps_conf['receiver']['attachments_path'])
+if not os.path.exists(os.path.join(os.environ['RAPIDSMS_HOME'], settings.rapidsms_apps_conf['receiver']['attachments_path'])):
+    os.mkdir(os.path.join(os.environ['RAPIDSMS_HOME'],settings.rapidsms_apps_conf['receiver']['attachments_path']))
 
 
 

@@ -17,11 +17,11 @@ from cookielib import *
 from urlparse import urlparse
 
 
-#serverhost = 'test.commcarehq.org'
-#curl_command = 'c:\curl\curl.exe'
+serverhost = 'test.commcarehq.org'
+curl_command = 'c:\curl\curl.exe'
 
-serverhost = 'localhost'
-curl_command = 'curl'
+#serverhost = 'localhost'
+#curl_command = 'curl'
 
 #serverhost = 'localhost:8000'
 #curl_command = 'curl'
