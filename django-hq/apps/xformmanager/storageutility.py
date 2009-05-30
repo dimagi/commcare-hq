@@ -92,7 +92,7 @@ class StorageUtility(object):
 
     @transaction.commit_on_success
     def add_schema(self, formdef):
-        fdd = self.update_meta(formdef)
+        fdd = self.update_models(formdef)
         self.formdata = fdd
         self.formdef = self.__strip_meta_def( formdef )
         queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
@@ -137,7 +137,7 @@ class StorageUtility(object):
         logging.debug("Form data successfully saved")
         return xsd_form_name
 
-    def update_meta(self, formdef):
+    def update_models(self, formdef):
         """ save element metadata """
         fdd = FormDefModel()
         fdd.name = str(formdef.name)
