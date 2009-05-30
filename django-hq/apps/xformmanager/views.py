@@ -200,9 +200,17 @@ def data(request, formdef_id, template_name="data.html"):
 
 def form_translate(name, input_stream):
     logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
-    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
-    output,error = p.communicate( input_stream )
+    
+    #output,error = p.communicate( input_stream )    
+    p.stdin.write(input_stream)
+    p.stdin.flush()
+    p.stdin.close()
+    
+    output = p.stdout.read()    
+    error = p.stderr.read()
+    
     logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
     return (output,error)
     

@@ -84,18 +84,18 @@
 
 	
 	<target name="django-tests-all" depends="compile">	
-		<py-run script="hqstart" pythonpath="${project.dir}" optimize="0">
+		<py-run script="hqstart.py" pythonpath="${project.dir}" optimize="0">
 			<arg value="test" />
 		</py-run>
 		
 	</target> 
 	
 	<target name="syncdb" depends="compile,django-tests-all">
-		<py-run script="hqstart" pythonpath="${project.dir}">
+		<py-run script="hqstart.py" pythonpath="${project.dir}">
 			<arg value="syncdb" />
 			<arg value="--noinput" />
 			</py-run>
-		<py-run script="hqstart" pythonpath="${project.dir}">
+		<py-run script="hqstart.py" pythonpath="${project.dir}">
 			<arg value="runscript" />
 			<arg value="scripts.hqbootstrap" />
 		</py-run>

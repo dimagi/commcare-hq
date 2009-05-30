@@ -108,8 +108,12 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     transport.connect(username=username, password=password)
     
     print "starting sftp session"
+    
     sftp = paramiko.SFTPClient.from_transport(transport)
     archive_filename = os.path.basename(archive_to_deploy)
+    print "transporting file: " + archive_filename + " to: " + target_abs_path 
+    
+    
     sftp.put(archive_to_deploy,target_abs_path + archive_filename)
     sftp.close()
     
@@ -180,8 +184,8 @@ if __name__ == "__main__":
                      <remote host> 
                      <remote username> 
                      <remote password> 
-                     <remote deploy dir> - '/var/django-sites
-                     <remote deploypath> - 'commcarehq-test'
+                     <remote deploy dir> - '/var/django-sites/builds/ #trailing slash is necessary!
+                     <remote deploypath> - 'commcarehq_test' #underscores only.  The database name and directory name and stuff will be based upon this
                      <build number> 
                      <revision number>
                     """                    
