@@ -7,7 +7,7 @@ import uuid
 import hashlib
 from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm
-from xformmanager.models import FormDefData
+from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.storageutility import * 
 from xformmanager.csv import generate_CSV
@@ -45,7 +45,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
     context = {}
     extuser = ExtUser.objects.all().get(id=request.user.id)
     
-    form = get_object_or_404(FormDefData, pk=form_id)
+    form = get_object_or_404(FormDefModel, pk=form_id)
     
     if request.method == "POST":
         if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
@@ -88,7 +88,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                             logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(err) )
                             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
                             context['upload_form'] = RegisterXForm()
-                            context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
+                            context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
                             return render_to_response(template, context, context_instance=RequestContext(request))
                     fout = open(new_file_name, 'w')
                     fout.write( schema )
@@ -127,7 +127,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
                 transaction.rollback()    
     context['upload_form'] = RegisterXForm()
-    context['registered_forms'] = FormDefData.objects.all().filter(uploaded_by__domain= extuser.domain)
+    context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
 
 @login_required()
@@ -137,7 +137,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
     for item in request.GET.items():
         if item[0] == 'show_schema':
             show_schema = True           
-    xform = FormDefData.objects.all().filter(id=formdef_id)
+    xform = FormDefModel.objects.all().filter(id=formdef_id)
     
     if show_schema:
         response = HttpResponse(mimetype='text/xml')
@@ -153,7 +153,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
 @login_required()
 def data(request, formdef_id, template_name="data.html"):
     context = {}
-    xform = FormDefData.objects.all().filter(id=formdef_id)
+    xform = FormDefModel.objects.all().filter(id=formdef_id)
     formdef_name = xform[0].form_name
     
     cursor = connection.cursor()

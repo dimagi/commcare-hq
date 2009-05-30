@@ -1,5 +1,5 @@
 from django.db import connection, transaction, DatabaseError
-from xformmanager.models import ElementDefData, FormDefData, Metadata
+from xformmanager.models import ElementDefModel, FormDefModel, Metadata
 from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
@@ -116,7 +116,7 @@ class StorageUtility(object):
         xsd_form_name = get_xmlns(f)
         if xsd_form_name is None: return
         logging.debug("Form name is " + xsd_form_name)
-        xsd = FormDefData.objects.all().filter(form_name=xsd_form_name)
+        xsd = FormDefModel.objects.all().filter(form_name=xsd_form_name)
         
         if xsd is None or len(xsd) == 0:
             logging.error("NO XMLNS FOUND IN SUBMITTED FORM")
@@ -139,14 +139,14 @@ class StorageUtility(object):
 
     def update_meta(self, formdef):
         """ save element metadata """
-        fdd = FormDefData()
+        fdd = FormDefModel()
         fdd.name = str(formdef.name)
         #todo: fix this so we don't have to parse table twice
         fdd.form_name = get_table_name(formdef.target_namespace)
         fdd.target_namespace = formdef.target_namespace
         fdd.save()
 
-        ed = ElementDefData()
+        ed = ElementDefModel()
         ed.name=str(fdd.name)
         ed.table_name=get_table_name(formdef.target_namespace)
         #ed.form_id = fdd.id
@@ -215,12 +215,12 @@ class StorageUtility(object):
           if child.is_repeatable :
               # repeatable elements must generate a new table
               if parent_id == '':
-                  ed = ElementDefData(name=str(child.name), form_id=self.formdata.id,
+                  ed = ElementDefModel(name=str(child.name), form_id=self.formdata.id,
                                   table_name = get_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
                   ed.save()
                   ed.parent = ed
               else:
-                  ed = ElementDefData(name=str(child.name), parent_id=parent_id, form=self.formdata,
+                  ed = ElementDefModel(name=str(child.name), parent_id=parent_id, form=self.formdata,
                                   table_name = get_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
@@ -410,7 +410,7 @@ class StorageUtility(object):
 
     @transaction.commit_on_success
     def remove_schema(self, id):
-        fdds = FormDefData.objects.all().filter(id=id) 
+        fdds = FormDefModel.objects.all().filter(id=id) 
         if fdds is None or len(fdds) == 0:
             logging.error("  Schema " + name + " could not be found. Not deleted.")
             return    
@@ -500,9 +500,9 @@ class StorageUtility(object):
     def __remove_form_meta(self,form=''):
         # drop all schemas, associated tables, and files
         if form == '':
-            fdds = FormDefData.objects.all().filter()
+            fdds = FormDefModel.objects.all().filter()
         else:
-            fdds = FormDefData.objects.all().filter(target_namespace=form.target_namespace)            
+            fdds = FormDefModel.objects.all().filter(target_namespace=form.target_namespace)            
         for fdd in fdds:
             file = fdd.xsd_file_location
             if file is not None:
@@ -518,9 +518,9 @@ class StorageUtility(object):
         # the reverse ordering is a horrible hack (but efficient) 
         # to make sure we delete children before parents
         if form == '':
-            edds = ElementDefData.objects.all().filter().order_by("-table_name")
+            edds = ElementDefModel.objects.all().filter().order_by("-table_name")
         else:
-            edds = ElementDefData.objects.all().filter(form=form).order_by("-table_name")
+            edds = ElementDefModel.objects.all().filter(form=form).order_by("-table_name")
         for edd in edds:
             logging.debug(  "  deleting data table:" + edd.table_name )
             cursor = connection.cursor()

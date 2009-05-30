@@ -9,7 +9,7 @@ import os
 
 #import Group
 
-class ElementDefData(models.Model):
+class ElementDefModel(models.Model):
     """ At such time as we start to store an edd for every node, we can use the following supporting xform types list
     TYPE_CHOICES = (
         ('string', 'string'),
@@ -48,12 +48,12 @@ class ElementDefData(models.Model):
     #restriction = models.CharField(max_length=255)
     parent = models.ForeignKey("self", null=True)
     # Note that the following only works for models in the same models.py file
-    form = models.ForeignKey('FormDefData')
+    form = models.ForeignKey('FormDefModel')
     
     def __unicode__(self):
         return self.table_name
 
-class FormDefData(models.Model):
+class FormDefModel(models.Model):
     # a bunch of these fields have null=True to make unit testing easier
     # also, because creating a form defintion shouldn't be dependent on receing form through server
     uploaded_by = models.ForeignKey(ExtUser, null=True)
@@ -75,14 +75,14 @@ class FormDefData(models.Model):
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     
-    element = models.OneToOneField(ElementDefData, null=True)
+    element = models.OneToOneField(ElementDefModel, null=True)
     # formdefs have a one-to-one relationship with elementdefs
     # yet elementdefs have a form_id which points to formdef
     # without this fix, delete is deadlocked
     def delete(self): 
         self.element = None 
         self.save()
-        super(FormDefData, self).delete()
+        super(FormDefModel, self).delete()
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)
