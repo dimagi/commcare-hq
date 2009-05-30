@@ -1,8 +1,9 @@
 from django.db import connection, transaction, DatabaseError
-from xformmanager.models import ElementDefData, FormDefData
+from xformmanager.models import ElementDefData, FormDefData, Metadata
 from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
+from datetime import datetime
 from lxml import etree
 import settings
 import logging
@@ -93,7 +94,7 @@ class StorageUtility(object):
     def add_schema(self, formdef):
         fdd = self.update_meta(formdef)
         self.formdata = fdd
-        self.formdef = formdef
+        self.formdef = self.__strip_meta_def( formdef )
         queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
         self.__execute_queries(queries)
         return fdd
@@ -105,6 +106,7 @@ class StorageUtility(object):
         tree = etree.parse(data_stream_pointer)
         root = tree.getroot()
         self.formdef = formdef
+        self.__parse_meta_data( root )
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         queries.execute_insert()
         
@@ -125,7 +127,7 @@ class StorageUtility(object):
             return
         logging.debug("Schema is located at " + xsd[0].xsd_file_location)
         g = open( xsd[0].xsd_file_location ,"r")
-        formdef = FormDef(g)
+        formdef = self.__strip_meta_def( FormDef(g) )
         g.close()
         
         logging.debug("Saving form data with known xsd")
@@ -139,6 +141,7 @@ class StorageUtility(object):
         """ save element metadata """
         fdd = FormDefData()
         fdd.name = str(formdef.name)
+        #todo: fix this so we don't have to parse table twice
         fdd.form_name = get_table_name(formdef.target_namespace)
         fdd.target_namespace = formdef.target_namespace
         fdd.save()
@@ -158,7 +161,9 @@ class StorageUtility(object):
         # kind of odd that this is created but not saved here... 
         # not sure how to work around that, given required fields?
         return fdd
-
+    
+    # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
+    # (rather than just passing around tuples of strings)
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
         table_name = get_table_name( formatted_join(parent_name, elementdef.name) )
         
@@ -433,7 +438,65 @@ class StorageUtility(object):
             else:
                 logging.debug(  "  WARNING: Permission denied to access " + file )
                 continue
+    
+    #TODO: commcare-specific functionality - should pull out into separate file
+    def __strip_meta_def(self, formdef):
+        """ TODO: currently, we do not strip the duplicate meta information in the xformdata
+            so as not to break dan's code (reporting/graphing). Should fix dan's code t use metadata tables now.
+            
+            root_node = formdef.child_elements[0]
+            # this requires that 'meta' be the first child element within root node
+            if len( root_node.child_elements ) > 0:
+                meta_node = root_node.child_elements[0]
+                new_meta_children = []
+                if meta_node.name.lower().endswith('meta'):
+                    # this rather tedious construction is so that we can support metadata with missing fields but not lose metadata with wrong fields
+                    for element in meta_node.child_elements:
+                        field = self.__data_name(meta_node.name,element.name)
+                        if field.lower() not in Metadata.fields:
+                            new_meta_children = new_meta_children + [ element ]
+                    if len(new_meta_children) > 0:
+                        meta_node.child_elements = new_meta_children
+        """
+        return formdef
         
+    def __parse_meta_data(self, data_tree):
+        if data_tree is None: return
+        meta_tree = None
+        # find meta node
+        for data_child in self.__case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
+            meta_tree = data_child
+            break;
+        if meta_tree is None:
+            logging.debug("xformmanager: storageutility - no metadata found for " + self.formdef.target_namespace)
+            return
+        
+        m = Metadata()
+        # parse the meta data (children of meta node)
+        for element in meta_tree:
+            # element.tag is for example <FormName>
+            # todo: this comparison should be made much less brittle - replace with a comparator object?
+            tag = self.__strip_namespace( element.tag ).lower()
+            if tag in Metadata.fields:
+                # must find out the type of an element field
+                value = self.__format_field(m,tag,element.text)
+                # the following line means "model.tag = value"
+                setattr( m,tag,value )
+        m.save()
+        
+    # can flesh this out or integrate with other functions later
+    def __format_field(self, model, name, value):
+        """ should handle any sort of conversion for 'meta' field values """
+        t = type( getattr(model,name) )
+        if t == datetime:
+            return value.replace('T',' ')
+        return value
+        
+    def __strip_namespace(self, tag):
+        i = tag.find('}')
+        tag = tag[i+1:len(tag)]
+        return tag
+
     def __remove_form_meta(self,form=''):
         # drop all schemas, associated tables, and files
         if form == '':

@@ -1,7 +1,8 @@
 from xformmanager.storageutility import *
 from xformmanager.xformdef import *
+import logging
 
-def create_xsd_and_populate(xsd_file_name, xml_file_name):
+def create_xsd_and_populate(xsd_file_name, xml_file_name=''):
     # Create a new form definition
     su = StorageUtility()
     
@@ -11,10 +12,14 @@ def create_xsd_and_populate(xsd_file_name, xml_file_name):
     f.close()
     print formDef
     
-    # and input one xml instance
-    f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
-    su.save_form_data_matching_formdef(f, formDef)
-    # make sure tables are created the way you'd like
-    f.close()
+    logging.debug("1")
+    if xml_file_name is not None:
+        logging.debug("2")
+        # and input one xml instance
+        f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
+        su.save_form_data_matching_formdef(f, formDef)
+        # make sure tables are created the way you'd like
+        f.close()
+    logging.debug("3")
     
     return fdd

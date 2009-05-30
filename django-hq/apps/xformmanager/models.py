@@ -101,4 +101,26 @@ class FormDefData(models.Model):
     def get_domain(self):
         return self.uploaded_by.domain
 
+class Metadata(models.Model):
+    # DO NOT change the name of these fields or attributes - they map to each other
+    # in fact, you probably shouldn't even change the order
+    # (TODO - replace with an appropriate comparator object, so that the code is less brittle )
+    fields = [ 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid' ]
+    formname = models.CharField(max_length=255)
+    formversion = models.CharField(max_length=255)
+    deviceid = models.CharField(max_length=255)
+    # do not remove default values, as these are currently used to discover field type
+    timestart = models.DateTimeField(_('Time start form'), default = datetime.now())
+    timeend= models.DateTimeField(_('Time end form'), default = datetime.now())
+    username = models.CharField(max_length=255)
+    chw_id = models.CharField(max_length=255)
+    #unique id
+    uid = models.CharField(max_length=32)
+    # foreign key to the row in the generated data table
+    # foreign key to the associated submission
+    
+    def __unicode__(self):
+        return "Metadata " + unicode(self.name)
+    
+
 
