@@ -3,19 +3,16 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction
-import uuid
 import hashlib
 from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
-from xformmanager.storageutility import * 
+from xformmanager.manager import *
 from xformmanager.csv import generate_CSV
 import settings, os, sys
 import logging
 import traceback
-import subprocess
-from subprocess import PIPE
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from organization.models import *
@@ -32,8 +29,8 @@ from django.db.models import signals
 def process(sender, instance, **kwargs): #get sender, instance, created
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
-    su = StorageUtility()
-    table_name = su.save_form_data(xml_file_name)
+    manager = XFormManager()
+    table_name = manager.save_form_data(xml_file_name, sender)
     generate_CSV(table_name)
     
 # Register to receive signals from receiver
@@ -49,8 +46,8 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
     
     if request.method == "POST":
         if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
-            su = StorageUtility()
-            su.remove_schema(form_id)        
+            xformmanager = XFormManager()
+            xformmanager.remove_schema(form_id)
             logging.debug("Schema %s deleted ", form_id)
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
             return HttpResponseRedirect("../register")
@@ -70,51 +67,16 @@ def register_xform(request, template='register_and_list_xforms.html'):
     if request.method == 'POST':        
         form = RegisterXForm(request.POST, request.FILES)        
         if form.is_valid():
-            
-            transaction_str = str(uuid.uuid1())
+            # must add_schema to storage provide first since forms are dependent upon elements 
             try:
-                logging.debug("temporary file name is " + transaction_str)                
-
-                new_file_name = __xsd_file_name(transaction_str)
-                if request.FILES['file'].name.endswith("xsd"):
-                    fout = open(new_file_name, 'w')
-                    fout.write( request.FILES['file'].read() )
-                    fout.close()
-                else: 
-                    #user has uploaded an xhtml/xform file
-                    schema,err = form_translate( request.FILES['file'].name, request.FILES['file'].read() )
-                    if err is not None:
-                        if err.lower().find("exception") != -1:
-                            logging.error ("XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + request.FILES['file'].name + "\nerror: " + str(err) )
-                            context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
-                            context['upload_form'] = RegisterXForm()
-                            context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
-                            return render_to_response(template, context, context_instance=RequestContext(request))
-                    fout = open(new_file_name, 'w')
-                    fout.write( schema )
-                    fout.close()
-                #process xsd file to FormDef object
-                fout = open(new_file_name, 'r')
-                formdef = FormDef(fout)
-                fout.close()
-                
-                #create dynamic tables
-                # must add_schema to storage provide first since forms are linked to elements 
-                storage_provider = StorageUtility()
-                fdd = storage_provider.add_schema(formdef)
-                
-                fdd.submit_ip = request.META['REMOTE_ADDR']
-                fdd.bytes_received =  request.FILES['file'].size
-                
-                fdd.form_display_name = form.cleaned_data['form_display_name']                
-                fdd.uploaded_by = extuser
-                
-                fdd.xsd_file_location = new_file_name
-                fdd.save()                
-                logging.debug("xform registered")
-                transaction.commit()                
-                context['register_success'] = True
-                context['newsubmit'] = fdd
+                xformmanager = XFormManager()
+                formdefmodel = xformmanager.add_schema(request.FILES['file'].name, request.FILES['file'])
+            except IOError, e:
+                logging.error("xformmanager.manager: " + str(e) )
+                context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
+                context['upload_form'] = RegisterXForm()
+                context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
+                return render_to_response(template, context, context_instance=RequestContext(request))
             except Exception, e:
                 logging.error(e)
                 logging.error("Unable to write raw post data<br/>")
@@ -125,7 +87,19 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
                 logging.error("Transaction rolled back")
                 context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
-                transaction.rollback()    
+                transaction.rollback()                            
+            else:
+                formdefmodel.submit_ip = request.META['REMOTE_ADDR']
+                formdefmodel.bytes_received =  request.FILES['file'].size
+                
+                formdefmodel.form_display_name = form.cleaned_data['form_display_name']                
+                formdefmodel.uploaded_by = extuser
+                
+                formdefmodel.save()                
+                logging.debug("xform registered")
+                transaction.commit()                
+                context['register_success'] = True
+                context['newsubmit'] = formdefmodel
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
@@ -197,26 +171,6 @@ def data(request, formdef_id, template_name="data.html"):
          
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
-
-def form_translate(name, input_stream):
-    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
-    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
-    
-    #output,error = p.communicate( input_stream )    
-    p.stdin.write(input_stream)
-    p.stdin.flush()
-    p.stdin.close()
-    
-    output = p.stdout.read()    
-    error = p.stderr.read()
-    
-    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
-    return (output,error)
-    
-
-def __xsd_file_name(name):
-    return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
 
 def __xform_file_name(name):
     return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xform.xml')

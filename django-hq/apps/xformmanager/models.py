@@ -2,9 +2,10 @@ from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
+from receiver.models import Attachment
+from organization.models import *
 import uuid
 import settings
-from organization.models import *
 import os
 
 #import Group
@@ -106,8 +107,12 @@ class Metadata(models.Model):
     chw_id = models.CharField(max_length=255)
     #unique id
     uid = models.CharField(max_length=32)
-    # foreign key to the row in the generated data table
-    # foreign key to the associated submission
+    # foreign key to the associated submission (from receiver app)
+    submission = models.ForeignKey(Attachment, null=True)
+    # foreign key to the row in the manually generated data table
+    raw_data = models.IntegerField(_('Raw Data Id'), null=True)
+    # foreign key to the schema definition (so can identify table and domain)
+    formdefmodel = models.ForeignKey(FormDefModel, null=True)
     
     def __unicode__(self):
         return "Metadata " + unicode(self.name)

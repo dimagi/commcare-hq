@@ -100,17 +100,22 @@ class StorageUtility(object):
         return fdd
    	
     @transaction.commit_on_success
-    def save_form_data_matching_formdef(self, data_stream_pointer, formdef):
+    def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, submission):
         logging.debug("StorageProvider: saving form data")
         skip_junk(data_stream_pointer)
         tree = etree.parse(data_stream_pointer)
         root = tree.getroot()
         self.formdef = formdef
-        self.__parse_meta_data( root )
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
-        queries.execute_insert()
+        new_rawdata_id = queries.execute_insert()
+        metadata_model = self.__parse_meta_data( root )
+        if metadata_model is not None:
+            metadata_model.formdefmodel = formdefmodel
+            metadata_model.submission = submission
+            metadata_model.raw_data = new_rawdata_id
+            metadata_model.save()
         
-    def save_form_data(self, xml_file_name):
+    def save_form_data(self, xml_file_name, submission):
         logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
         xsd_form_name = get_xmlns(f)
@@ -132,7 +137,7 @@ class StorageUtility(object):
         
         logging.debug("Saving form data with known xsd")
         f.seek(0,0)
-        self.save_form_data_matching_formdef(f, formdef)
+        self.save_form_data_matching_formdef(f, formdef, xsd[0], submission)
         f.close()
         logging.debug("Form data successfully saved")
         return xsd_form_name
@@ -416,7 +421,7 @@ class StorageUtility(object):
             return    
         # must remove tables first since removing form_meta automatically deletes some tables
         self.__remove_form_tables(fdds[0])
-        self.__remove_form_meta(fdds[0])
+        self.__remove_form_models(fdds[0])
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
@@ -425,7 +430,7 @@ class StorageUtility(object):
             and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.        
         """
         self.__remove_form_tables()
-        self.__remove_form_meta()
+        self.__remove_form_models()
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
             
         # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
@@ -482,7 +487,8 @@ class StorageUtility(object):
                 value = self.__format_field(m,tag,element.text)
                 # the following line means "model.tag = value"
                 setattr( m,tag,value )
-        m.save()
+        #m.save()
+        return m
         
     # can flesh this out or integrate with other functions later
     def __format_field(self, model, name, value):
@@ -497,7 +503,7 @@ class StorageUtility(object):
         tag = tag[i+1:len(tag)]
         return tag
 
-    def __remove_form_meta(self,form=''):
+    def __remove_form_models(self,form=''):
         # drop all schemas, associated tables, and files
         if form == '':
             fdds = FormDefModel.objects.all().filter()
@@ -551,6 +557,7 @@ class Query(object):
         self.parent_id = 0
         
     def execute_insert(self):
+        new_id = -1
         if len( self.field_value_dict ) > 0:
             query_string = "INSERT INTO " + self.table_name + " (";
     
@@ -572,25 +579,30 @@ class Query(object):
             for value in self.field_value_dict:
                 values = values + [ self.field_value_dict[ value ] ]
                 
-            self.__execute(query_string, values)
-        
+            new_id = self.__execute(query_string, values)
         for child_query in self.child_queries:
             child_query.execute_insert()
+        return new_id
         
     def __execute(self, queries, values):
         # todo - rollback on fail
         if queries is None or len(queries) == 0:
             logging.error("xformmanager: storageutility - xform " + self.formdef.target_namespace + " could not be parsed")
             return
+        
         cursor = connection.cursor()
-        cursor.execute(queries, values)
-        """ if settings.DATABASE_ENGINE=='mysql' 
-            cursor.execute(queries)            
+        if settings.DATABASE_ENGINE=='mysql':
+            cursor.execute(queries, values)
+            query = "SELECT LAST_INSERT_ID();"
+            cursor.execute(query)
         else:
-            simple_queries = queries.split(';')
-            for query in simple_queries: 
-                cursor.execute(query)
-        """
+            cursor.execute(queries, values)
+            query = "SELECT LAST_INSERT_ROWID()"
+            cursor.execute(query)
+        row = cursor.fetchone()
+        if row is not None:
+            return row[0]
+        return -1
         
     def __trim2chars(self, string):
         return string[0:len(string)-2]

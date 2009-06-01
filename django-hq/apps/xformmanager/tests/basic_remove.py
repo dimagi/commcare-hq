@@ -33,8 +33,9 @@ class RemoveTestCase(unittest.TestCase):
 
     def test2RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         su = StorageUtility()
+        su.clear()
+        schema_model = create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_formdefmodel")
@@ -50,8 +51,9 @@ class RemoveTestCase(unittest.TestCase):
     
     def test3RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su = StorageUtility()
+        su.clear()
+        schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_formdefmodel")
