@@ -1,0 +1,15 @@
+<brac xmlns="http://dev.commcarehq.org/BRAC/CHW/CHWVisit_v0.0.1">
+  <Meta>
+    <formName>BRAC CHW visiting CHP</formName>
+    <formVersion>0.0.1</formVersion>
+    <CommCareVersion>0.0.5</CommCareVersion>
+    <DeviceID>P6PH9SR0TKCO6RVDL4YML1D2Y</DeviceID>
+    <TimeStart>2008-01-08T11:55:49.977</TimeStart>
+    <TimeEnd>2008-01-08T12:08:39.258</TimeEnd>
+    <username>cary</username>
+    <chw_id>99</chw_id>
+    <uid>Z6WRHCRXYQO1C1V6B2SB3RBG8</uid>
+  </Meta>
+  <ChpName>worker</ChpName>
+  <ChpId>3</ChpId>
+</brac>

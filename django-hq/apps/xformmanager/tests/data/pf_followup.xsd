@@ -1,0 +1,111 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2" elementFormDefault="qualified">
+  <simpleType name="_pathfinder_followup_type_of_client">
+    <restriction base="string">
+      <enumeration value="HIV"/>
+      <enumeration value="Kusendeka"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_client_available">
+    <restriction base="string">
+      <enumeration value="1"/>
+      <enumeration value="0"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_why_missing">
+    <restriction base="string">
+      <enumeration value="dead"/>
+      <enumeration value="moved"/>
+      <enumeration value="not_home"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_type_med">
+    <restriction base="string">
+      <enumeration value="Septrini"/>
+      <enumeration value="ARV"/>
+      <enumeration value="Anti_TB"/>
+      <enumeration value="Kinga_ya_TB"/>
+      <enumeration value="Local_medicine"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="list._pathfinder_followup_type_med">
+    <list itemType="_pathfinder_followup_type_med"/>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_mosquito_net">
+    <restriction base="string">
+      <enumeration value="0"/>
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_water_guard">
+    <restriction base="string">
+      <enumeration value="0"/>
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_service_stopped">
+    <restriction base="string">
+      <enumeration value="0"/>
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_reason_stopped">
+    <restriction base="string">
+      <enumeration value="moved"/>
+      <enumeration value="refused"/>
+      <enumeration value="cured"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_followup_referral">
+    <restriction base="string">
+      <enumeration value="hiv_test"/>
+      <enumeration value="HIV_other_illness"/>
+      <enumeration value="Health_facility"/>
+      <enumeration value="Prevention_from_mother_to_child"/>
+      <enumeration value="Aid_from_other_groups"/>
+      <enumeration value="Family_planning"/>
+      <enumeration value="TB"/>
+      <enumeration value="Ophans"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="list._pathfinder_followup_referral">
+    <list itemType="_pathfinder_followup_referral"/>
+  </simpleType>
+  <element name="pathfinder_followup" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="CommCareVersion" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="client_name" minOccurs="0" type="string"/>
+        <element name="client_number" minOccurs="0" type="string"/>
+        <element name="type_of_client" minOccurs="0" type="_pathfinder_followup_type_of_client"/>
+        <element name="client_available" minOccurs="0" type="_pathfinder_followup_client_available"/>
+        <element name="why_missing" minOccurs="0" type="_pathfinder_followup_why_missing"/>
+        <element name="referral" minOccurs="0" type="list._pathfinder_followup_referral"/>
+        <element name="new_male_pcg" minOccurs="0" type="integer"/>
+        <element name="existing_male_pcg" minOccurs="0" type="integer"/>
+        <element name="new_female_pcg" minOccurs="0" type="integer"/>
+        <element name="existing_female_pcg" minOccurs="0" type="integer"/>
+        <element name="type_med" minOccurs="0" type="list._pathfinder_followup_type_med"/>
+        <element name="mosquito_net" minOccurs="0" type="_pathfinder_followup_mosquito_net"/>
+        <element name="water_guard" minOccurs="0" type="_pathfinder_followup_water_guard"/>
+        <element name="service_stopped" minOccurs="0" type="_pathfinder_followup_service_stopped"/>
+        <element name="date_stopped" minOccurs="0" type="date"/>
+        <element name="reason_stopped" minOccurs="0" type="_pathfinder_followup_reason_stopped"/>
+      </sequence>
+    </complexType>
+  </element>
+</schema>

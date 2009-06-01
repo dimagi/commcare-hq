@@ -1,0 +1,70 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2" elementFormDefault="qualified">
+  <simpleType name="_pathfinder_referral_referral">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_referral_why">
+    <restriction base="string">
+      <enumeration value="no_Time"/>
+      <enumeration value="didnt_come_back"/>
+      <enumeration value="Unsure"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_referral_how">
+    <restriction base="string">
+      <enumeration value="went_to_client"/>
+      <enumeration value="came_to_me"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_referral_method">
+    <restriction base="string">
+      <enumeration value="Verbal"/>
+      <enumeration value="doctors_Note"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_referral_test_Results">
+    <restriction base="string">
+      <enumeration value="Positive"/>
+      <enumeration value="Negative"/>
+      <enumeration value="received_care"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_referral_check_Card">
+    <restriction base="string">
+      <enumeration value="Yes"/>
+      <enumeration value="No"/>
+    </restriction>
+  </simpleType>
+  <element name="pathfinder_referral" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+              <element name="referral_id" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="referral" minOccurs="0" type="_pathfinder_referral_referral"/>
+        <element name="referral_id" minOccurs="0" type="string"/>
+        <element name="why" minOccurs="0" type="_pathfinder_referral_why"/>
+        <element name="when" minOccurs="0" type="date"/>
+        <element name="how" minOccurs="0" type="_pathfinder_referral_how"/>
+        <element name="method" minOccurs="0" type="_pathfinder_referral_method"/>
+        <element name="test_Results" minOccurs="0" type="_pathfinder_referral_test_Results"/>
+        <element name="check_Card" minOccurs="0" type="_pathfinder_referral_check_Card"/>
+        <element name="remarks" minOccurs="0" type="string"/>
+      </sequence>
+    </complexType>
+  </element>
+</schema>

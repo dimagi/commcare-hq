@@ -1,0 +1,13 @@
+<pathfinder_referral xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2">
+  <Meta>
+    <formName>PathfinderReferralVisit</formName>
+    <formVersion>0.01</formVersion>
+    <DeviceID>6T9MQH37OXQINA7CMZLY0P2J7</DeviceID>
+    <TimeStart>2009-04-01T12:36:24.229</TimeStart>
+    <TimeEnd>2009-04-01T12:52:06.332</TimeEnd>
+    <username>demo_user</username>
+    <chw_id>0</chw_id>
+    <uid>7WM8SPBUWGXTDRO4TAJVR6MA0</uid>
+    <referral_id/>
+  </Meta>
+</pathfinder_referral>

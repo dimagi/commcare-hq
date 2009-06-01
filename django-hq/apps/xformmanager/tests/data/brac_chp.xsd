@@ -1,0 +1,581 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/BRAC/CHP/HomeVisit_v0.0.1" elementFormDefault="qualified">
+  <simpleType name="_brac_client_available">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_marital_status">
+    <restriction base="string">
+      <enumeration value="married"/>
+      <enumeration value="single"/>
+      <enumeration value="divorced"/>
+      <enumeration value="widow"/>
+      <enumeration value="cohabiting"/>
+      <enumeration value="Under_7_yrs"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_whether_in_microcredit">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_family_planning">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_fp_method">
+    <restriction base="string">
+      <enumeration value="condom"/>
+      <enumeration value="pill"/>
+      <enumeration value="injection"/>
+      <enumeration value="other_method"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_want_to_know_family_planning">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sick">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_illness">
+    <restriction base="string">
+      <enumeration value="diarrhea"/>
+      <enumeration value="cough"/>
+      <enumeration value="fever"/>
+      <enumeration value="malaria"/>
+      <enumeration value="BP"/>
+      <enumeration value="dont_know"/>
+      <enumeration value="other"/>
+      <enumeration value="skin"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_meds">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_finish">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+      <enumeration value="continue"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_goagain">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_finish_dose">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sicka_go_hc">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_illness">
+    <restriction base="string">
+      <enumeration value="diarrhea"/>
+      <enumeration value="cough"/>
+      <enumeration value="fever"/>
+      <enumeration value="malaria"/>
+      <enumeration value="BP"/>
+      <enumeration value="dont_know"/>
+      <enumeration value="other"/>
+      <enumeration value="skin"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_meds">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_finish">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+      <enumeration value="continue"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_goagain">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_finish_dose">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickb_go_hc">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_illness">
+    <restriction base="string">
+      <enumeration value="diarrhea"/>
+      <enumeration value="cough"/>
+      <enumeration value="fever"/>
+      <enumeration value="malaria"/>
+      <enumeration value="BP"/>
+      <enumeration value="dont_know"/>
+      <enumeration value="other"/>
+      <enumeration value="skin"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_meds">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_finish">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+      <enumeration value="continue"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_goagain">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_finish_dose">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickc_go_hc">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_illness">
+    <restriction base="string">
+      <enumeration value="diarrhea"/>
+      <enumeration value="cough"/>
+      <enumeration value="fever"/>
+      <enumeration value="malaria"/>
+      <enumeration value="BP"/>
+      <enumeration value="dont_know"/>
+      <enumeration value="other"/>
+      <enumeration value="skin"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_meds">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_finish">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+      <enumeration value="continue"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_goagain">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_finish_dose">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_sickd_go_hc">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_pregnant">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_preg_clinic">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_preg_continue_clinic">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_preg_go_clinic">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_under2">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_under2_review_all">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_under2_finished_vac">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_under2_encourage_clinic">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_referral">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_referral_given">
+    <restriction base="string">
+      <enumeration value="TB_test"/>
+      <enumeration value="malaria"/>
+      <enumeration value="preg_mother-TT"/>
+      <enumeration value="preg_mother-ante_natal"/>
+      <enumeration value="hiv_test"/>
+      <enumeration value="birth_registration"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="list._brac_referral_given">
+    <list itemType="_brac_referral_given"/>
+  </simpleType>
+  <simpleType name="_brac_toilet">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_toilet_inspect">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_toilet_clean">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_toilet_encourage">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_advice_for_mosquito_nets">
+    <restriction base="string">
+      <enumeration value="1"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_place_get_water">
+    <restriction base="string">
+      <enumeration value="well"/>
+      <enumeration value="community_tap"/>
+      <enumeration value="delivery_boy"/>
+      <enumeration value="river"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_new_born">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_new_borna_birth_place">
+    <restriction base="string">
+      <enumeration value="health_facility"/>
+      <enumeration value="home"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_new_borna_who_was_present">
+    <restriction base="string">
+      <enumeration value="doctor"/>
+      <enumeration value="nurse"/>
+      <enumeration value="clinician"/>
+      <enumeration value="midwife"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_new_bornb_birth_place">
+    <restriction base="string">
+      <enumeration value="health_facility"/>
+      <enumeration value="home"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_new_bornb_who_was_present">
+    <restriction base="string">
+      <enumeration value="doctor"/>
+      <enumeration value="nurse"/>
+      <enumeration value="clinician"/>
+      <enumeration value="midwife"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_death">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_gender">
+    <restriction base="string">
+      <enumeration value="f"/>
+      <enumeration value="m"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_under_2_years">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_TB">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_CTC">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_high_fever">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_go_h_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deatha_preg_complications">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_gender">
+    <restriction base="string">
+      <enumeration value="f"/>
+      <enumeration value="m"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_under_2_years">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_TB">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_CTC">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_high_fever">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_go_h_facility">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_brac_deathb_preg_complications">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <element name="brac" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="CommCareVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="house_id" minOccurs="0" type="integer"/>
+        <element name="client_name" minOccurs="0" type="string"/>
+        <element name="village" minOccurs="0" type="string"/>
+        <element name="client_age" minOccurs="0" type="integer"/>
+        <element name="client_available" minOccurs="0" type="_brac_client_available"/>
+        <element name="marital_status" minOccurs="0" type="_brac_marital_status"/>
+        <element name="name_of_partner" minOccurs="0" type="string"/>
+        <element name="name_of_husband" minOccurs="0" type="string"/>
+        <element name="whether_in_microcredit" minOccurs="0" type="_brac_whether_in_microcredit"/>
+        <element name="number_of_children" minOccurs="0" type="integer"/>
+        <element name="want_to_know_family_planning" minOccurs="0" type="_brac_want_to_know_family_planning"/>
+        <element name="referral" minOccurs="0" type="_brac_referral"/>
+        <element name="referral_given" minOccurs="0" type="list._brac_referral_given"/>
+        <element name="num_ppl" minOccurs="0" type="integer"/>
+        <element name="family_planning" minOccurs="0" type="_brac_family_planning"/>
+        <element name="fp_method" minOccurs="0" type="_brac_fp_method"/>
+        <element name="sick" minOccurs="0" type="_brac_sick"/>
+        <element name="sick_count" minOccurs="0" type="integer"/>
+        <element name="sicka_illness" minOccurs="0" type="_brac_sicka_illness"/>
+        <element name="sicka_facility" minOccurs="0" type="_brac_sicka_facility"/>
+        <element name="sicka_when" minOccurs="0" type="date"/>
+        <element name="sicka_meds" minOccurs="0" type="_brac_sicka_meds"/>
+        <element name="sicka_finish" minOccurs="0" type="_brac_sicka_finish"/>
+        <element name="sicka_goagain" minOccurs="0" type="_brac_sicka_goagain"/>
+        <element name="sicka_finish_dose" minOccurs="0" type="_brac_sicka_finish_dose"/>
+        <element name="sicka_go_hc" minOccurs="0" type="_brac_sicka_go_hc"/>
+        <element name="sickb_illness" minOccurs="0" type="_brac_sickb_illness"/>
+        <element name="sickb_facility" minOccurs="0" type="_brac_sickb_facility"/>
+        <element name="sickb_when" minOccurs="0" type="date"/>
+        <element name="sickb_meds" minOccurs="0" type="_brac_sickb_meds"/>
+        <element name="sickb_finish" minOccurs="0" type="_brac_sickb_finish"/>
+        <element name="sickb_goagain" minOccurs="0" type="_brac_sickb_goagain"/>
+        <element name="sickb_finish_dose" minOccurs="0" type="_brac_sickb_finish_dose"/>
+        <element name="sickb_go_hc" minOccurs="0" type="_brac_sickb_go_hc"/>
+        <element name="sickc_illness" minOccurs="0" type="_brac_sickc_illness"/>
+        <element name="sickc_facility" minOccurs="0" type="_brac_sickc_facility"/>
+        <element name="sickc_when" minOccurs="0" type="date"/>
+        <element name="sickc_meds" minOccurs="0" type="_brac_sickc_meds"/>
+        <element name="sickc_finish" minOccurs="0" type="_brac_sickc_finish"/>
+        <element name="sickc_goagain" minOccurs="0" type="_brac_sickc_goagain"/>
+        <element name="sickc_finish_dose" minOccurs="0" type="_brac_sickc_finish_dose"/>
+        <element name="sickc_go_hc" minOccurs="0" type="_brac_sickc_go_hc"/>
+        <element name="sickd_illness" minOccurs="0" type="_brac_sickd_illness"/>
+        <element name="sickd_facility" minOccurs="0" type="_brac_sickd_facility"/>
+        <element name="sickd_when" minOccurs="0" type="date"/>
+        <element name="sickd_meds" minOccurs="0" type="_brac_sickd_meds"/>
+        <element name="sickd_finish" minOccurs="0" type="_brac_sickd_finish"/>
+        <element name="sickd_goagain" minOccurs="0" type="_brac_sickd_goagain"/>
+        <element name="sickd_finish_dose" minOccurs="0" type="_brac_sickd_finish_dose"/>
+        <element name="sickd_go_hc" minOccurs="0" type="_brac_sickd_go_hc"/>
+        <element name="toilet" minOccurs="0" type="_brac_toilet"/>
+        <element name="toilet_inspect" minOccurs="0" type="_brac_toilet_inspect"/>
+        <element name="toilet_clean" minOccurs="0" type="_brac_toilet_clean"/>
+        <element name="toilet_distance" minOccurs="0" type="integer"/>
+        <element name="toilet_encourage" minOccurs="0" type="_brac_toilet_encourage"/>
+        <element name="sleeping_sites" minOccurs="0" type="integer"/>
+        <element name="mosquito_nets" minOccurs="0" type="integer"/>
+        <element name="advice_for_mosquito_nets" minOccurs="0" type="_brac_advice_for_mosquito_nets"/>
+        <element name="place_get_water" minOccurs="0" type="_brac_place_get_water"/>
+        <element name="pregnant" minOccurs="0" type="_brac_pregnant"/>
+        <element name="preg_how_long" minOccurs="0" type="integer"/>
+        <element name="preg_clinic" minOccurs="0" type="_brac_preg_clinic"/>
+        <element name="preg_continue_clinic" minOccurs="0" type="_brac_preg_continue_clinic"/>
+        <element name="preg_go_clinic" minOccurs="0" type="_brac_preg_go_clinic"/>
+        <element name="under2" minOccurs="0" type="_brac_under2"/>
+        <element name="under2_count" minOccurs="0" type="integer"/>
+        <element name="under2_review_all" minOccurs="0" type="_brac_under2_review_all"/>
+        <element name="under2_finished_vac" minOccurs="0" type="_brac_under2_finished_vac"/>
+        <element name="under2_encourage_clinic" minOccurs="0" type="_brac_under2_encourage_clinic"/>
+        <element name="new_born" minOccurs="0" type="_brac_new_born"/>
+        <element name="num_of_baby" minOccurs="0" type="integer"/>
+        <element name="new_borna_birth_place" minOccurs="0" type="_brac_new_borna_birth_place"/>
+        <element name="new_borna_who_was_present" minOccurs="0" type="_brac_new_borna_who_was_present"/>
+        <element name="age_mother_of_new_borna" minOccurs="0" type="integer"/>
+        <element name="new_bornb_birth_place" minOccurs="0" type="_brac_new_bornb_birth_place"/>
+        <element name="new_bornb_who_was_present" minOccurs="0" type="_brac_new_bornb_who_was_present"/>
+        <element name="age_mother_of_new_bornb" minOccurs="0" type="integer"/>
+        <element name="death" minOccurs="0" type="_brac_death"/>
+        <element name="num_of_death" minOccurs="0" type="integer"/>
+        <element name="deatha_name" minOccurs="0" type="string"/>
+        <element name="deatha_gender" minOccurs="0" type="_brac_deatha_gender"/>
+        <element name="deatha_under_2_years" minOccurs="0" type="_brac_deatha_under_2_years"/>
+        <element name="deatha_nu_months" minOccurs="0" type="integer"/>
+        <element name="deatha_nu_years" minOccurs="0" type="integer"/>
+        <element name="deatha_TB" minOccurs="0" type="_brac_deatha_TB"/>
+        <element name="deatha_CTC" minOccurs="0" type="_brac_deatha_CTC"/>
+        <element name="deatha_high_fever" minOccurs="0" type="_brac_deatha_high_fever"/>
+        <element name="deatha_go_h_facility" minOccurs="0" type="_brac_deatha_go_h_facility"/>
+        <element name="deatha_preg_complications" minOccurs="0" type="_brac_deatha_preg_complications"/>
+        <element name="deathb_name" minOccurs="0" type="string"/>
+        <element name="deathb_gender" minOccurs="0" type="_brac_deathb_gender"/>
+        <element name="deathb_under_2_years" minOccurs="0" type="_brac_deathb_under_2_years"/>
+        <element name="deathb_nu_months" minOccurs="0" type="integer"/>
+        <element name="deathb_nu_years" minOccurs="0" type="integer"/>
+        <element name="deathb_TB" minOccurs="0" type="_brac_deathb_TB"/>
+        <element name="deathb_CTC" minOccurs="0" type="_brac_deathb_CTC"/>
+        <element name="deathb_high_fever" minOccurs="0" type="_brac_deathb_high_fever"/>
+        <element name="deathb_go_h_facility" minOccurs="0" type="_brac_deathb_go_h_facility"/>
+        <element name="deathb_preg_complications" minOccurs="0" type="_brac_deathb_preg_complications"/>
+      </sequence>
+    </complexType>
+  </element>
+</schema>

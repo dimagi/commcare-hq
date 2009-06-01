@@ -1,0 +1,149 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2" elementFormDefault="qualified">
+  <simpleType name="_pathfinder_registration_patient_region">
+    <restriction base="string">
+      <enumeration value="Dar-es-Salaam"/>
+      <enumeration value="Arusha"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_district">
+    <restriction base="string">
+      <enumeration value="Temeke"/>
+      <enumeration value="Kinondoni"/>
+      <enumeration value="Ilala"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_sex">
+    <restriction base="string">
+      <enumeration value="F"/>
+      <enumeration value="M"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_marital_status">
+    <restriction base="string">
+      <enumeration value="married"/>
+      <enumeration value="single"/>
+      <enumeration value="divorced"/>
+      <enumeration value="widow"/>
+      <enumeration value="Cohabiting"/>
+      <enumeration value="Under_7_yrs"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_education">
+    <restriction base="string">
+      <enumeration value="No_Education"/>
+      <enumeration value="Primary"/>
+      <enumeration value="Secondary"/>
+      <enumeration value="Post_Secondary"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_religion">
+    <restriction base="string">
+      <enumeration value="Christian"/>
+      <enumeration value="Mulism"/>
+      <enumeration value="Others"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_occupation">
+    <restriction base="string">
+      <enumeration value="Employed"/>
+      <enumeration value="Self_Employed"/>
+      <enumeration value="Student"/>
+      <enumeration value="Under_7_yrs"/>
+      <enumeration value="Jobless"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_status">
+    <restriction base="string">
+      <enumeration value="Chronic_Ill"/>
+      <enumeration value="People_living_with_HIV_(PLHA)"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_hiv_tested">
+    <restriction base="string">
+      <enumeration value="Yes"/>
+      <enumeration value="No"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_test_Results">
+    <restriction base="string">
+      <enumeration value="HIV_Positive"/>
+      <enumeration value="HIV_Negative"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_type_med">
+    <restriction base="string">
+      <enumeration value="Septrini"/>
+      <enumeration value="ARV"/>
+      <enumeration value="Anti_TB"/>
+      <enumeration value="Kinga_ya_TB"/>
+      <enumeration value="Local_medicine"/>
+      <enumeration value="other"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="list._pathfinder_registration_patient_type_med">
+    <list itemType="_pathfinder_registration_patient_type_med"/>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_mosquito_net">
+    <restriction base="string">
+      <enumeration value="No"/>
+      <enumeration value="Yes"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_pathfinder_registration_patient_water_guard">
+    <restriction base="string">
+      <enumeration value="No"/>
+      <enumeration value="Yes"/>
+    </restriction>
+  </simpleType>
+  <element name="pathfinder_registration" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="patient" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="region" minOccurs="0" type="_pathfinder_registration_patient_region"/>
+              <element name="district" minOccurs="0" type="_pathfinder_registration_patient_district"/>
+              <element name="ward" minOccurs="0" type="string"/>
+              <element name="village" minOccurs="0" type="string"/>
+              <element name="family_name" minOccurs="0" type="string"/>
+              <element name="given_name" minOccurs="0" type="string"/>
+              <element name="middle_name" minOccurs="0" type="string"/>
+              <element name="date_of_birth" minOccurs="0" type="date"/>
+              <element name="client_number" minOccurs="0" type="integer"/>
+              <element name="sex" minOccurs="0" type="_pathfinder_registration_patient_sex"/>
+              <element name="marital_status" minOccurs="0" type="_pathfinder_registration_patient_marital_status"/>
+              <element name="children_under_18" minOccurs="0" type="integer"/>
+              <element name="education" minOccurs="0" type="_pathfinder_registration_patient_education"/>
+              <element name="religion" minOccurs="0" type="_pathfinder_registration_patient_religion"/>
+              <element name="occupation" minOccurs="0" type="_pathfinder_registration_patient_occupation"/>
+              <element name="status" minOccurs="0" type="_pathfinder_registration_patient_status"/>
+              <element name="type_of_client" minOccurs="0" type="string"/>
+              <element name="hiv_tested" minOccurs="0" type="_pathfinder_registration_patient_hiv_tested"/>
+              <element name="test_Results" minOccurs="0" type="_pathfinder_registration_patient_test_Results"/>
+              <element name="type_med" minOccurs="0" type="list._pathfinder_registration_patient_type_med"/>
+              <element name="existing_female_pcg" minOccurs="0" type="integer"/>
+              <element name="existing_male_pcg" minOccurs="0" type="integer"/>
+              <element name="mosquito_net" minOccurs="0" type="_pathfinder_registration_patient_mosquito_net"/>
+              <element name="water_guard" minOccurs="0" type="_pathfinder_registration_patient_water_guard"/>
+              <element name="remarks" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+      </sequence>
+    </complexType>
+  </element>
+</schema>
