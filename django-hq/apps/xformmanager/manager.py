@@ -12,7 +12,7 @@ class XFormManager(object):
         self.su  = StorageUtility()
 
     def remove_schema(self, id):
-        self.su.remove_schema(form_id)    
+        self.su.remove_schema(id)    
 
     def save_form_data(self, xml_file_name, submission):
         self.su.save_form_data(xml_file_name, submission)
