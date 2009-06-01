@@ -422,6 +422,7 @@ class StorageUtility(object):
         # must remove tables first since removing form_meta automatically deletes some tables
         self.__remove_form_tables(fdds[0])
         self.__remove_form_models(fdds[0])
+        meta = Metadata.objects.all().filter(formdefmodel=fdds[0]).delete()
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
@@ -516,6 +517,8 @@ class StorageUtility(object):
                 os.remove(file)
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
             fdd.delete()
+            Metadata.objects.filter(formdefmodel=fdd).delete()
+            
                         
     # in theory, there should be away to *not* remove elemenetdefdata when deleting formdef
     # until we figure out how to do that, this'll work fine
