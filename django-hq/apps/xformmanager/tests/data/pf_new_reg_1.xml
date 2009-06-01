@@ -1,0 +1,16 @@
+<pathfinder_registration xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2">
+  <Meta>
+    <formName>PathfinderRegistratonVisit</formName>
+    <formVersion>0.01</formVersion>
+    <DeviceID>6T9MQH37OXQINA7CMZLY0P2J7</DeviceID>
+    <TimeStart>2009-03-23T23:03:29.275</TimeStart>
+    <TimeEnd>2009-03-23T23:25:33.090</TimeEnd>
+    <username>mary</username>
+    <chw_id>89</chw_id>
+    <uid>NFLFYINTDW16XPMOY0QXVXSH1</uid>
+  </Meta>
+  <patient>
+  	<ward>ward_name
+  	</ward>
+  </patient>
+</pathfinder_registration>

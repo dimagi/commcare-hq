@@ -7,14 +7,17 @@ TABLE_PREFIX = "x_"
 MAX_LENGTH = 64 - len(TABLE_PREFIX)
 
 def skip_junk(stream_pointer):
-    """ This promises to be a useful file """
+    pass
+    """ TODO: fix this function
     c = ''
+    c = stream_pointer.read(1)
     while c != '<' and c != '':
         c = stream_pointer.read(1)
     if c == '':
         logging.error("Poorly formatted schema")
         return
     stream_pointer.seek(-1,os.SEEK_CUR)
+    """
 
 def get_table_name(name):
     # check for uniqueness!

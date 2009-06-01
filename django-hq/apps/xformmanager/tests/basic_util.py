@@ -1,6 +1,6 @@
-from xformmanager.views import *
 import unittest
-import traceback, sys
+import traceback, sys, os
+from xformmanager.tests.util import *
 
 class BasicTestCase(unittest.TestCase):
     def setup(selfs):

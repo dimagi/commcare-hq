@@ -1,20 +1,29 @@
-from xformmanager.storageutility import *
+from xformmanager.manager import *
 from xformmanager.xformdef import *
+import logging
 
-def create_xsd_and_populate(xsd_file_name, xml_file_name):
+def create_xsd_and_populate(xsd_file_name, xml_file_name=''):
     # Create a new form definition
-    su = StorageUtility()
+    manager = XFormManager()
     
     f = open(os.path.join(os.path.dirname(__file__),xsd_file_name),"r")
-    formDef = FormDef(f)
-    fdd = su.add_schema(formDef)
-    f.close()
-    print formDef
-    
-    # and input one xml instance
-    f = open(os.path.join(os.path.dirname(__file__),xml_file_name),"r")
-    su.save_form_data_matching_formdef(f, formDef)
-    # make sure tables are created the way you'd like
+    formdefmodel = manager.add_schema(xsd_file_name, f)
     f.close()
     
-    return fdd
+    populate(xml_file_name, manager)
+    return formdefmodel
+
+def populate(xml_file_name, manager=None):
+    if xml_file_name is not None:
+        # and input one xml instance
+        #arguments: data_stream_pointer, formdef, formdefmodel_id, submission_id
+        submission = create_fake_submission()
+        if manager is None: manager = XFormManager()
+        manager.save_form_data( os.path.join(os.path.dirname(__file__), xml_file_name) , submission )
+
+from receiver.tests.submissions import *
+def create_fake_submission():
+    makeNewEntry('simple-meta.txt','simple-body.txt')
+    attachment = Attachment.objects.latest('id')
+    return attachment
+    

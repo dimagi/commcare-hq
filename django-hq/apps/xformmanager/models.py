@@ -2,14 +2,15 @@ from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
+from receiver.models import Attachment
+from organization.models import *
 import uuid
 import settings
-from organization.models import *
 import os
 
 #import Group
 
-class ElementDefData(models.Model):
+class ElementDefModel(models.Model):
     """ At such time as we start to store an edd for every node, we can use the following supporting xform types list
     TYPE_CHOICES = (
         ('string', 'string'),
@@ -48,12 +49,12 @@ class ElementDefData(models.Model):
     #restriction = models.CharField(max_length=255)
     parent = models.ForeignKey("self", null=True)
     # Note that the following only works for models in the same models.py file
-    form = models.ForeignKey('FormDefData')
+    form = models.ForeignKey('FormDefModel')
     
     def __unicode__(self):
         return self.table_name
 
-class FormDefData(models.Model):
+class FormDefModel(models.Model):
     # a bunch of these fields have null=True to make unit testing easier
     # also, because creating a form defintion shouldn't be dependent on receing form through server
     uploaded_by = models.ForeignKey(ExtUser, null=True)
@@ -75,14 +76,14 @@ class FormDefData(models.Model):
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     
-    element = models.OneToOneField(ElementDefData, null=True)
+    element = models.OneToOneField(ElementDefModel, null=True)
     # formdefs have a one-to-one relationship with elementdefs
     # yet elementdefs have a form_id which points to formdef
     # without this fix, delete is deadlocked
     def delete(self): 
         self.element = None 
         self.save()
-        super(FormDefData, self).delete()
+        super(FormDefModel, self).delete()
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)
@@ -90,5 +91,31 @@ class FormDefData(models.Model):
     @property
     def get_domain(self):
         return self.uploaded_by.domain
+
+class Metadata(models.Model):
+    # DO NOT change the name of these fields or attributes - they map to each other
+    # in fact, you probably shouldn't even change the order
+    # (TODO - replace with an appropriate comparator object, so that the code is less brittle )
+    fields = [ 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid' ]
+    formname = models.CharField(max_length=255)
+    formversion = models.CharField(max_length=255)
+    deviceid = models.CharField(max_length=255)
+    # do not remove default values, as these are currently used to discover field type
+    timestart = models.DateTimeField(_('Time start form'), default = datetime.now())
+    timeend= models.DateTimeField(_('Time end form'), default = datetime.now())
+    username = models.CharField(max_length=255)
+    chw_id = models.CharField(max_length=255)
+    #unique id
+    uid = models.CharField(max_length=32)
+    # foreign key to the associated submission (from receiver app)
+    submission = models.ForeignKey(Attachment, null=True)
+    # foreign key to the row in the manually generated data table
+    raw_data = models.IntegerField(_('Raw Data Id'), null=True)
+    # foreign key to the schema definition (so can identify table and domain)
+    formdefmodel = models.ForeignKey(FormDefModel, null=True)
+    
+    def __unicode__(self):
+        return "Metadata " + unicode(self.name)
+    
 
 

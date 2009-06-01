@@ -129,7 +129,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[2],"bar")
         self.assertEquals(row[3],"yes")
         self.assertEquals(row[4],"no")
-        cursor.execute("SELECT * FROM x_xml_nestedrepeats_meta")
+        cursor.execute("SELECT * FROM x_xml_nestedrepeats_nested")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")

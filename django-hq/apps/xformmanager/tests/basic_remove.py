@@ -18,12 +18,16 @@ class RemoveTestCase(unittest.TestCase):
         create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
         create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
         create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
+        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
         su.clear()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xformmanager_formdefdata")
+        cursor.execute("SELECT * FROM xformmanager_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xformmanager_elementdefdata")
+        cursor.execute("SELECT * FROM xformmanager_elementdefmodel")
+        row = cursor.fetchone()
+        self.assertEquals(row,None)
+        cursor.execute("SELECT * FROM xformmanager_metadata")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
@@ -33,14 +37,15 @@ class RemoveTestCase(unittest.TestCase):
 
     def test2RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         su = StorageUtility()
+        su.clear()
+        schema_model = create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xformmanager_formdefdata")
+        cursor.execute("SELECT * FROM xformmanager_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xformmanager_elementdefdata")
+        cursor.execute("SELECT * FROM xformmanager_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
@@ -50,14 +55,15 @@ class RemoveTestCase(unittest.TestCase):
     
     def test3RemoveSchema(self):
         """ Test removing one schema """
-        schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su = StorageUtility()
+        su.clear()
+        schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su.remove_schema(schema_model.id)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xformmanager_formdefdata")
+        cursor.execute("SELECT * FROM xformmanager_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xformmanager_elementdefdata")
+        cursor.execute("SELECT * FROM xformmanager_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
