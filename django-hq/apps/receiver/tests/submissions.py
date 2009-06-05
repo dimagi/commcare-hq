@@ -22,30 +22,13 @@ class ProcessingTestCase(unittest.TestCase):
 #        attaches = os.listdir(settings.ATTACHMENTS_PATH)
 #        self.assertEquals(0,len(attaches))
     
-    def _makeNewEntry(self,headerfile, bodyfile):
-        newsubmit = Submission()
-        fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
-        meta= fin.read()
-        fin.close()
-        
-        fin = open(os.path.join(os.path.dirname(__file__),bodyfile),"rb")
-        body = fin.read()
-        fin.close()
-        
-        metahash = eval(meta)
-        if Domain.objects.all().count() == 0:
-            mockdomain = Domain(name='mockdomain')
-            mockdomain.save()
-        else:
-            mockdomain = Domain.objects.all()[0]
-        submitprocessor.do_raw_submission(metahash, body, domain=mockdomain)
 
     def testSubmitSimple(self):        
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
         
         num = len(Submission.objects.all())
-        self._makeNewEntry('simple-meta.txt','simple-body.txt')
+        makeNewEntry('simple-meta.txt','simple-body.txt')
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
@@ -54,7 +37,7 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
                 
         num = len(Submission.objects.all())
-        self._makeNewEntry('simple-meta.txt','simple-body.txt')
+        makeNewEntry('simple-meta.txt','simple-body.txt')
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
         mysub = Submission.objects.all()[0]
@@ -68,7 +51,7 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
            
         num = len(Submission.objects.all())
-        self._makeNewEntry('multipart-meta.txt','multipart-body.txt')
+        makeNewEntry('multipart-meta.txt','multipart-body.txt')
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
@@ -79,7 +62,7 @@ class ProcessingTestCase(unittest.TestCase):
          
         print '############################### testCheckMultipartAttachments'
         num = len(Submission.objects.all())
-        self._makeNewEntry('multipart-meta.txt','multipart-body.txt')
+        makeNewEntry('multipart-meta.txt','multipart-body.txt')
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
         mysub = Submission.objects.all()[0]        
@@ -103,3 +86,20 @@ class ProcessingTestCase(unittest.TestCase):
 #        self.assertEquals(0,len(attaches))
         
        
+def makeNewEntry(headerfile, bodyfile):
+    newsubmit = Submission()
+    fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
+    meta= fin.read()
+    fin.close()
+    
+    fin = open(os.path.join(os.path.dirname(__file__),bodyfile),"rb")
+    body = fin.read()
+    fin.close()
+    
+    metahash = eval(meta)
+    if Domain.objects.all().count() == 0:
+        mockdomain = Domain(name='mockdomain')
+        mockdomain.save()
+    else:
+        mockdomain = Domain.objects.all()[0]
+    submitprocessor.do_raw_submission(metahash, body, domain=mockdomain)
