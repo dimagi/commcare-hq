@@ -29,7 +29,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
             configured_users.append(datum[2].report_identity.lower())        
     
     #next, do a query of all the forms in this domain to get an idea of all the usernames
-    defs = FormDefData.objects.all().filter(uploaded_by__domain=domain)
+    defs = FormDefModel.objects.all().filter(uploaded_by__domain=domain)
     user_date_hash = {}
     
     for fdef in defs:        
@@ -165,7 +165,7 @@ def admin_catch_all(report_schedule, run_frequency):
         
         
         #next, do a query of all the forms in this domain to get an idea of all the usernames
-        defs = FormDefData.objects.all().filter(uploaded_by__domain=dom)
+        defs = FormDefModel.objects.all().filter(uploaded_by__domain=dom)
         user_date_hash = {}
         
         for fdef in defs:        
@@ -274,7 +274,7 @@ def admin_per_form_report(report_schedule, run_frequency):
     
     hierarchy = reporter.get_organizational_hierarchy(org.domain)
     
-    defs = FormDefData.objects.all().filter(uploaded_by__domain=org.domain)
+    defs = FormDefModel.objects.all().filter(uploaded_by__domain=org.domain)
     
     fulltext = ''
     for fdef in defs:

@@ -157,14 +157,14 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     if formdef_id == -1:
         context['chart_title'] = 'All Data'
         context['dataset'] = {}        
-        defs = FormDefData.objects.all().filter(uploaded_by__domain=extuser.domain)
+        defs = FormDefModel.objects.all().filter(uploaded_by__domain=extuser.domain)
     
         for fdef in defs:            
             d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
             context['dataset'][fdef.form_display_name.__str__()] = d.get_counts_dataset(None,None)                    
     
     else:
-        fdef = FormDefData.objects.all().filter(id=formdef_id)
+        fdef = FormDefModel.objects.all().filter(id=formdef_id)
         context['chart_title'] = fdef[0].form_display_name
         d = dbhelper.DbHelper(fdef[0].element.table_name,fdef[0].form_display_name)        
         context['dataset'] = d.get_integer_series_dataset()

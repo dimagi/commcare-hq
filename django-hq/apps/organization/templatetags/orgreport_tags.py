@@ -72,7 +72,7 @@ def get_aggregate_formcounts_for_obj(content_obj):
         else:
             usernames_to_filter.append(content_obj.username)
  
-    defs = FormDefData.objects.all()
+    defs = FormDefModel.objects.all()
     ret += '<ul>'
     for fdef in defs:                
         ret += "<li><h2>%s</h2>" % (fdef.form_display_name)
@@ -133,7 +133,7 @@ def render_aggregate_countrow(content_obj):
 #            is_member = True
 #            usernames_to_filter.append(content_obj.username)
  
-    defs = FormDefData.objects.all()
+    defs = FormDefModel.objects.all()
     description = ''
     last_submit = datetime.min
     count = 0    

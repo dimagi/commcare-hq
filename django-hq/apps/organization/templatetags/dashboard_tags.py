@@ -31,7 +31,7 @@ output_format = '%Y-%m-%d %H:%M'
 #    ret  = ''   
 #    extuser = User.objects.get(id=user.id)
 #    
-#    defs = FormDefData.objects.all()
+#    defs = FormDefModel.objects.all()
 #    ret += '<ul class="nobullets">'
 #    for fdef in defs:                
 #        ret += "<li><h2>%s</h2>" % (fdef.form_display_name)

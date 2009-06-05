@@ -40,7 +40,7 @@ def get_user_forms_count(domain, username, startdate=None, enddate=None, forms_t
         day_count_hash[target_date.strftime('%m/%d/%Y')] = 0
     
     if forms_to_filter == None:    
-        defs = FormDefData.objects.all().filter(uploaded_by__domain=domain)
+        defs = FormDefModel.objects.all().filter(uploaded_by__domain=domain)
     else:
         defs = forms_to_filter
     
