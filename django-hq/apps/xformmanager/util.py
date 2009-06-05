@@ -10,12 +10,14 @@ def skip_junk(stream_pointer):
     pass
     c = ''
     c = stream_pointer.read(1)
+    count = 0
     while c != '<' and c != '':
         c = stream_pointer.read(1)
+        count = count + 1
     if c == '':
         logging.error("Poorly formatted schema")
         return
-    stream_pointer.seek(-1,os.SEEK_CUR)
+    stream_pointer.seek(count)
 
 def get_table_name(name):
     # check for uniqueness!
