@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding='utf-8'?>
+<xforms href="https://dev.commcarehq.org/api/xforms">
+      <!-- show all allowable schemas -->
+      {% for id in available_form_ids %}
+      <xform id="{{id}}" href="http://dev.commcarehq.org/api/xforms/{{id}}">
+      	<metadata href="http://dev.commcarehq.org/api/xforms/{{id}}"/>
+      </xform>
+      {% endfor %}   		
+</xforms>
