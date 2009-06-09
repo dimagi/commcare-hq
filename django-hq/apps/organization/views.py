@@ -98,13 +98,14 @@ def org_report(request, template_name="organization/org_report.html"):
     root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
     
     root_org = root_orgs[0]
-    hierarchy = reporter.get_organizational_hierarchy(root_org)
     
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['results'] = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)
+    
+    # new way of doing things.
+    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    
     context['view_name'] = 'organization.views.org_report'
-    day_count_hash = {}
-
+    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()

@@ -59,7 +59,9 @@ def get_user_forms_count(domain, username, startdate=None, enddate=None, forms_t
 
 
 def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
-    """For a given content object, presumably it's a organization or a user, it'll query all the xforms in its domain and see what the aggregate counts of all submissions it has under itself"""
+    """For a given content object, presumably it's a organization or a user, 
+       it'll query all the xforms in its domain and see what the aggregate 
+       counts of all submissions it has under itself"""
     #report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
     usernames_to_filter = []    
 
@@ -107,6 +109,50 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
     
     return row
 
+
+def get_data_below(organization, startdate, enddate, depth):
+    """Do a lookukp of the organizations children and flattens
+       the recursive return into 
+       a simple array of items in the format:
+       [recursiondepth, descriptor, item, report_rowdata] """
+    
+    fullret = []
+        
+    for child_org in organization.children.all():
+        # add the child organization itself
+        fullret.append(get_single_item(None, child_org, startdate, enddate, depth))
+        
+        # add supervisor/member counts
+        is_first = True
+        for supervisor in child_org.supervisors.all():
+            # leaving the hack in that everything after the first is expected
+            # to have a "None" description.  This should be revisited
+            if is_first: 
+                fullret.append(get_single_item("Supervisors", supervisor, startdate, enddate, depth + 1))
+                is_first = False
+            else: 
+                fullret.append(get_single_item(None, supervisor, startdate, enddate, depth + 1))
+        is_first = True
+        for member in child_org.members.all():
+            if is_first:
+                fullret.append(get_single_item("Members", member, startdate, enddate, depth + 1))
+                is_first = False
+            else: 
+                fullret.append(get_single_item(None, member, startdate, enddate, depth + 1))
+        
+        # and don't forget to recurse through this child's children, if they 
+        # exist
+        fullret += get_data_below(child_org, startdate, enddate, depth + 1)
+    
+    # CZUE: 6/9/2009 this was in the previous implementation.  I don't exactly
+    # know how the cache works, but I'm leaving it in.
+    if depth == 0:
+        username_datecount_cache.clear()    
+    return fullret
+
+def get_single_item(type, item, startdate, enddate, depth):
+    return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
+    
 def get_report_as_tuples(hierarchy_arr, startdate, enddate, depth):
     """Do a hierarchical query and flattens the recursive return into 
        a simple array of items in the format:
