@@ -224,15 +224,16 @@ def save_post(request):
         try:
             newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],filename)
             logging.debug("writing to %s" % newfilename)
-            print("writing to %s" % newfilename)
+            #print("writing to %s" % newfilename)
             fout = open(newfilename, 'w')
             fout.write(request.raw_post_data)
             fout.close()
             logging.debug("write successful")
-            print("write successful")
+            #print("write successful")
             return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
         except Exception, e:
-            print str(e)
+            logging.error(e)
+            #print str(e)
     return HttpResponse("Sorry, we didn't get anything there.")
     
     
