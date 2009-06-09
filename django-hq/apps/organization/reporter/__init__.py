@@ -16,7 +16,9 @@ import inspector as repinspector
 import custom
 
 def get_organizational_hierarchy(org_or_user):
-    filter_for = [EdgeType.objects.get(name='is parent organization'), EdgeType.objects.get(name='has supervisors'),EdgeType.objects.get(name='has members'), EdgeType.objects.get(name='is domain root')]
+    filter_for = [EdgeType.objects.get(name='is parent organization'), 
+                  EdgeType.objects.get(name='has supervisors'),
+                  EdgeType.objects.get(name='has members')] 
     hierarchy = traversal.getDescendentEdgesForObject(org_or_user, edgetype_include=filter_for)
     return hierarchy
  

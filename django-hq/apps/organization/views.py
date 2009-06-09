@@ -94,12 +94,11 @@ def org_report(request, template_name="organization/org_report.html"):
     
     # get the domain from the user, the root organization from the domain,
     # and then the hierarchy from the root organization
-    domain_type = ContentType.objects.get_for_model(extuser.domain)
-    root_orgs = Edge.objects.all().filter(parent_type=domain_type,
-                                          parent_id=extuser.domain.id,
-                                          relationship__name='is domain root')
+    
+    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    
     root_org = root_orgs[0]
-    hierarchy = reporter.get_organizational_hierarchy(root_org.parent_object)
+    hierarchy = reporter.get_organizational_hierarchy(root_org)
     
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['results'] = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)

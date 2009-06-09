@@ -58,14 +58,6 @@ def run():
     modelrelationship_edgetype_3.parent_type = ContentType.objects.get(app_label="organization", model="organization")
     modelrelationship_edgetype_3.save()
 
-    modelrelationship_edgetype_4 = EdgeType()
-    modelrelationship_edgetype_4.directional = True
-    modelrelationship_edgetype_4.name = u'is domain root'
-    modelrelationship_edgetype_4.description = u'Domain Root'
-    modelrelationship_edgetype_4.child_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edgetype_4.parent_type = ContentType.objects.get(app_label="organization", model="domain")
-    modelrelationship_edgetype_4.save()
-
     modelrelationship_edgetype_5 = EdgeType()
     modelrelationship_edgetype_5.directional = True
     modelrelationship_edgetype_5.name = u'User Chart Group'
