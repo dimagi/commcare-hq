@@ -35,22 +35,6 @@ def run():
     from modelrelationship.models import EdgeType
 
     
-    modelrelationship_edgetype_2 = EdgeType()
-    modelrelationship_edgetype_2.directional = True
-    modelrelationship_edgetype_2.name = u'has supervisors'
-    modelrelationship_edgetype_2.description = u'Organization Supervisor'
-    modelrelationship_edgetype_2.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edgetype_2.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edgetype_2.save()
-
-    modelrelationship_edgetype_3 = EdgeType()
-    modelrelationship_edgetype_3.directional = True
-    modelrelationship_edgetype_3.name = u'has members'
-    modelrelationship_edgetype_3.description = u'Organization Group Members'
-    modelrelationship_edgetype_3.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edgetype_3.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edgetype_3.save()
-
     modelrelationship_edgetype_5 = EdgeType()
     modelrelationship_edgetype_5.directional = True
     modelrelationship_edgetype_5.name = u'User Chart Group'
@@ -60,103 +44,6 @@ def run():
     modelrelationship_edgetype_5.save()
 
     from modelrelationship.models import Edge
-
-
-    modelrelationship_edge_3 = Edge()
-    modelrelationship_edge_3.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_3.child_id = 9L
-    modelrelationship_edge_3.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_3.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_3.parent_id = 3L
-    modelrelationship_edge_3.save()
-
-    modelrelationship_edge_4 = Edge()
-    modelrelationship_edge_4.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_4.child_id = 7L
-    modelrelationship_edge_4.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_4.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_4.parent_id = 1L
-    modelrelationship_edge_4.save()
-
-    modelrelationship_edge_5 = Edge()
-    modelrelationship_edge_5.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_5.child_id = 8L
-    modelrelationship_edge_5.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_5.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_5.parent_id = 1L
-    modelrelationship_edge_5.save()
-
-    modelrelationship_edge_6 = Edge()
-    modelrelationship_edge_6.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_6.child_id = 3L
-    modelrelationship_edge_6.relationship = modelrelationship_edgetype_2
-    modelrelationship_edge_6.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_6.parent_id = 1L
-    modelrelationship_edge_6.save()
-
-    modelrelationship_edge_7 = Edge()
-    modelrelationship_edge_7.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_7.child_id = 10L
-    modelrelationship_edge_7.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_7.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_7.parent_id = 3L
-    modelrelationship_edge_7.save()
-
-    modelrelationship_edge_8 = Edge()
-    modelrelationship_edge_8.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_8.child_id = 5L
-    modelrelationship_edge_8.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_8.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_8.parent_id = 4L
-    modelrelationship_edge_8.save()
-
-    modelrelationship_edge_9 = Edge()
-    modelrelationship_edge_9.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_9.child_id = 6L
-    modelrelationship_edge_9.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_9.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_9.parent_id = 4L
-    modelrelationship_edge_9.save()
-
-    modelrelationship_edge_12 = Edge()
-    modelrelationship_edge_12.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_12.child_id = 5L
-    modelrelationship_edge_12.relationship = modelrelationship_edgetype_2
-    modelrelationship_edge_12.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_12.parent_id = 3L
-    modelrelationship_edge_12.save()
-
-    modelrelationship_edge_14 = Edge()
-    modelrelationship_edge_14.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_14.child_id = 12L
-    modelrelationship_edge_14.relationship = modelrelationship_edgetype_2
-    modelrelationship_edge_14.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_14.parent_id = 5L
-    modelrelationship_edge_14.save()
-
-    modelrelationship_edge_15 = Edge()
-    modelrelationship_edge_15.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_15.child_id = 11L
-    modelrelationship_edge_15.relationship = modelrelationship_edgetype_2
-    modelrelationship_edge_15.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_15.parent_id = 5L
-    modelrelationship_edge_15.save()
-
-    modelrelationship_edge_16 = Edge()
-    modelrelationship_edge_16.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_16.child_id = 13L
-    modelrelationship_edge_16.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_16.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_16.parent_id = 5L
-    modelrelationship_edge_16.save()
-
-    modelrelationship_edge_17 = Edge()
-    modelrelationship_edge_17.child_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_17.child_id = 14L
-    modelrelationship_edge_17.relationship = modelrelationship_edgetype_3
-    modelrelationship_edge_17.parent_type = ContentType.objects.get(app_label="organization", model="organization")
-    modelrelationship_edge_17.parent_id = 5L
-    modelrelationship_edge_17.save()
 
     modelrelationship_edge_18 = Edge()
     modelrelationship_edge_18.child_type = ContentType.objects.get(app_label="dbanalyzer", model="graphgroup")
@@ -489,7 +376,10 @@ def run():
     organization_organization_1.domain = organization_domain_1
     organization_organization_1.description = u'TZ'
     organization_organization_1.save()
-
+    organization_organization_1.supervisors = [organization_extuser_2]
+    organization_organization_1.members = [organization_extuser_6, organization_extuser_7]
+    organization_organization_1.save()
+    
     organization_organization_1.organization_type.add(organization_organizationtype_1)
 
     organization_organization_2 = Organization()
@@ -506,6 +396,10 @@ def run():
     organization_organization_3.description = u''
     organization_organization_3.parent = organization_organization_2 
     organization_organization_3.save()
+    organization_organization_3.supervisors = [organization_extuser_4]
+    organization_organization_3.members = [organization_extuser_8, organization_extuser_9]
+    organization_organization_3.save()
+    
     
 
     organization_organization_3.organization_type.add(organization_organizationtype_2)
@@ -516,7 +410,9 @@ def run():
     organization_organization_4.description = u''
     organization_organization_4.parent = organization_organization_2 
     organization_organization_4.save()
-
+    organization_organization_4.members = [organization_extuser_4, organization_extuser_5]
+    organization_organization_4.save()
+    
     organization_organization_4.organization_type.add(organization_organizationtype_2)
 
     organization_organization_5 = Organization()
@@ -524,6 +420,10 @@ def run():
     organization_organization_5.domain = organization_domain_3
     organization_organization_5.description = u''
     organization_organization_5.save()
+    organization_organization_5.supervisors = [organization_extuser_10, organization_extuser_11]
+    organization_organization_5.members = [organization_extuser_12, organization_extuser_13]
+    organization_organization_5.save()
+    
 
     organization_organization_5.organization_type.add(organization_organizationtype_3)
     
