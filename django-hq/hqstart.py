@@ -23,4 +23,3 @@ if __name__ == "__main__":
     #os.environ["RAPIDSMS_INI"] = 'hqsetup.ini'
     os.environ["RAPIDSMS_HOME"] = os.path.abspath(os.path.dirname(__file__))
     rapidsms.manager.start(sys.argv)
-#some test comment

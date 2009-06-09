@@ -36,13 +36,6 @@ class ExtRole(models.Model):
     class Meta:
         verbose_name = _("Extended User Role")
 
-#class OrgRelationshipType(EdgeType):     
-#    class Meta:
-#        verbose_name = _("Organization Relationship Type")
-#
-#class OrgRelationship(Edge):
-#    class Meta:
-#        verbose_name = _("Organization Relationship")
 
 class ExtUser(User):
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
@@ -76,8 +69,7 @@ class Organization(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
     organization_type = models.ManyToManyField(OrganizationType)
     
-    #member_of = models.ForeignKey('self',null=True,blank=True)  #recursive access baby! - this is negated with the edge modeling
-
+    
     class Meta:
         verbose_name = _("Organization")
     
