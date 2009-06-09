@@ -108,7 +108,9 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
     return row
 
 def get_report_as_tuples(hierarchy_arr, startdate, enddate, depth):
-    """Do a hierarchical query and flattens the recursive return into a simple array of items in the format [recursiondepth, descriptor, item, report_rowdata]"""
+    """Do a hierarchical query and flattens the recursive return into 
+       a simple array of items in the format:
+       [recursiondepth, descriptor, item, report_rowdata] """
     fullret = []
         
     prior_edgetype = None
