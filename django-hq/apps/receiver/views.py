@@ -10,7 +10,7 @@ from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.db import transaction
 import uuid
 import mimetypes
@@ -214,4 +214,28 @@ def restore(request, code_id, template_name="receiver/restore.html"):
         
                            
                       
+def save_post(request):
+    '''Saves the body of a post in a file.  Doesn't do any processing
+       of any kind.'''
+    guid = str(uuid.uuid1())
+    timestamp = str(datetime.now())
+    filename = "%s - %s.rawpost" % (guid, timestamp)
+    if request.raw_post_data:
+        try:
+            newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],filename)
+            logging.debug("writing to %s" % newfilename)
+            print("writing to %s" % newfilename)
+            fout = open(newfilename, 'w')
+            fout.write(request.raw_post_data)
+            fout.close()
+            logging.debug("write successful")
+            print("write successful")
+            return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
+        except Exception, e:
+            print str(e)
+    return HttpResponse("Sorry, we didn't get anything there.")
+    
+    
+    
+    
     
