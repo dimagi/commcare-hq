@@ -87,7 +87,6 @@ def new_edge(request, edgetype_id, form_class=EdgeForm, template_name="modelrela
     
     parent_item_id=None
     child_item_id=None
-    print request.GET.items()
     for item in request.GET.items():
         if item[0] == 'parent_id':
             parent_item_id=item[1]                    
