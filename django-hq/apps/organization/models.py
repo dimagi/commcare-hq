@@ -66,13 +66,16 @@ class ExtUser(User):
 class Organization(models.Model):
     '''An Organization.  Organizations are associated with domains.  They also 
        have parent/child hierarchies.  Currently an organization can have at 
-       most 1 parent.  Top-level organizations don't have a parent.'''
+       most 1 parent.  Top-level organizations don't have a parent.  
+       Organizations also have members and supervisors.'''
        
     name = models.CharField(max_length=32, unique=True) #something's messed up with this (CZUE 6/9/2009: I didn't write this comment - what's messed up??) 
     domain = models.ForeignKey(Domain)
     description = models.CharField(max_length=255, null=True, blank=True)
     organization_type = models.ManyToManyField(OrganizationType)
-    parent = models.ForeignKey("Organization", null=True, blank=True)
+    parent = models.ForeignKey("Organization", null=True, blank=True, related_name="children")
+    members = models.ManyToManyField(ExtUser, null=True, blank=True, related_name="members")
+    supervisors = models.ManyToManyField(ExtUser, null=True, blank=True, related_name="supervisors")
     
     class Meta:
         verbose_name = _("Organization")
