@@ -233,6 +233,7 @@ def save_post(request):
             return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
         except Exception, e:
             logging.error(e)
+            return HttpResponse("Oh no something bad happened!  %s" % e)
             #print str(e)
     return HttpResponse("Sorry, we didn't get anything there.")
     
