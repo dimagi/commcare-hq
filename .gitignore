@@ -3,4 +3,5 @@ local.ini
 .project
 .pydevproject
 django-hq/data/attachments/*
+django-hq/data/submissions/*
 django-hq/data/schemas/*
