@@ -71,10 +71,12 @@ def org_report(request, template_name="organization/org_report.html"):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
+    # set some default parameters for start and end if they aren't passed in
+    # the request
     default_delta = timedelta(days=1)
     enddate = datetime.datetime.now()
-    startdate = datetime.datetime.now() - default_delta    
-    
+    startdate = datetime.datetime.now() - default_delta
+        
     for item in request.GET.items():
         if item[0] == 'startdate':
             startdate_str=item[1]
@@ -90,17 +92,20 @@ def org_report(request, template_name="organization/org_report.html"):
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     
-    ctype = ContentType.objects.get_for_model(extuser.domain)
-    root_orgs = Edge.objects.all().filter(parent_type=ctype,parent_id=extuser.domain.id,relationship__name='is domain root')
-    root_org = root_orgs[0]    
+    # get the domain from the user, the root organization from the domain,
+    # and then the hierarchy from the root organization
+    domain_type = ContentType.objects.get_for_model(extuser.domain)
+    root_orgs = Edge.objects.all().filter(parent_type=domain_type,
+                                          parent_id=extuser.domain.id,
+                                          relationship__name='is domain root')
+    root_org = root_orgs[0]
     hierarchy = reporter.get_organizational_hierarchy(root_org.parent_object)
     
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['results'] = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)
     context['view_name'] = 'organization.views.org_report'
     day_count_hash = {}
-    
-            
+
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
