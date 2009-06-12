@@ -109,10 +109,13 @@ class ReportSchedule(models.Model):
     report_frequency =  models.CharField(_('Delivery Frequency'), max_length=32, choices=REPORT_FREQUENCY)
     report_delivery =   models.CharField(_('Delivery Transport/Method'), max_length=32, choices=REPORT_DELIVERY)
     
-    recipient_user =    models.ForeignKey(ExtUser, null=True, blank=True, help_text=_("If this is a General Site Admin report, enter the user you want to receive this report."))    
-    organization =      models.ForeignKey(Organization, null=True, blank=True, help_text=_("If this is an Organizational supervisor or member report, indicate the exact organization you want to report on."))
+    recipient_user =    models.ForeignKey(ExtUser, null=True, blank=True, 
+                                          help_text=_("If this is a General Site Admin report, enter the user you want to receive this report."))    
+    organization =      models.ForeignKey(Organization, null=True, blank=True, 
+                                          help_text=_("If this is an Organizational supervisor or member report, indicate the exact organization you want to report on."))
     
-    report_function = models.CharField(max_length=255, null=True, blank=True, help_text=_("The view or other python function  you want run for this report.  This is necessary only for General Site admin and Other report types."))
+    report_function = models.CharField(max_length=255, null=True, blank=True, 
+                                       help_text=_("The view or other python function  you want run for this report.  This is necessary only for General Site admin and Other report types."))
     active = models.BooleanField(default=True)
     
     def __unicode__(self):
