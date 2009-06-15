@@ -16,7 +16,7 @@ class ExtUserAdmin(admin.ModelAdmin):
     list_filter = ['domain']
     
 class OrganizationAdmin(admin.ModelAdmin):
-    fields = ('name','description','organization_type','domain')
+    fields = ('name','description','organization_type','domain','members','supervisors')
     list_display = ('id','name','description',)
     list_filter = []  
     
