@@ -11,7 +11,8 @@ import os
 #import Group
 
 class ElementDefModel(models.Model):
-    """ At such time as we start to store an edd for every node, we can use the following supporting xform types list
+    """ At such time as we start to store an edd for every node, 
+        we can use the following supporting xform types list
     TYPE_CHOICES = (
         ('string', 'string'),
         ('integer', 'integer'),
