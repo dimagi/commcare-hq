@@ -120,7 +120,6 @@ def org_email_report(request, id, template_name="organization/org_single_report.
     # this call makes the meat of the report.
     #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
     data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate)
-    print data
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_email(data, startdate, enddate, 
                                           "organization/reports/email_hierarchy_report.txt", 
@@ -199,7 +198,8 @@ def org_sms_report(request, id, template_name="organization/org_single_report.ht
     root_org = root_orgs[0]
     
     # this call makes the meat of the report.
-    data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate)
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_sms(data, startdate, enddate, 
                                           "organization/reports/sms_organization.txt", 
