@@ -82,7 +82,7 @@ def single_attachment(request, attachment_id):
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
-    context['submission_item'] = slog[0]    
+    context['submission_item'] = slog[0]
     rawstring = str(slog[0].raw_header)
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')

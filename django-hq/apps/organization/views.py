@@ -26,6 +26,7 @@ import organization.utils as utils
 import organization.reporter as reporter
 
 
+
 #from forms import *
 import logging
 import hashlib
@@ -45,18 +46,8 @@ def dashboard(request, template_name="organization/dashboard.html"):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
         
-    default_delta = timedelta(days=1)
-    enddate = datetime.datetime.now()
-    startdate = datetime.datetime.now() - default_delta    
+    startdate, enddate = _get_dates(request)
     
-    for item in request.GET.items():
-        if item[0] == 'startdate':
-            startdate_str=item[1]
-            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
-        if item[0] == 'enddate':
-            enddate_str=item[1]
-            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
-            
     context['startdate'] = startdate
     context['enddate'] = enddate
     context['view_name'] = 'organization.views.dashboard'
@@ -73,17 +64,7 @@ def org_report(request, template_name="organization/org_report.html"):
     
     # set some default parameters for start and end if they aren't passed in
     # the request
-    default_delta = timedelta(days=1)
-    enddate = datetime.datetime.now()
-    startdate = datetime.datetime.now() - default_delta
-        
-    for item in request.GET.items():
-        if item[0] == 'startdate':
-            startdate_str=item[1]
-            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
-        if item[0] == 'enddate':
-            enddate_str=item[1]
-            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')                
+    startdate, enddate = _get_dates(request)
     
     context['startdate'] = startdate
     context['enddate'] = enddate    
@@ -91,21 +72,134 @@ def org_report(request, template_name="organization/org_report.html"):
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
-    
-    # get the domain from the user, the root organization from the domain,
-    # and then the hierarchy from the root organization
-    
-    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
-    
-    root_org = root_orgs[0]
-    
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    
-    # new way of doing things.
-    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    
     context['view_name'] = 'organization.views.org_report'
     
+    # get the domain from the user, the root organization from the domain,
+    # and then the report from the root organization
+    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    # note: this pretty sneakily decides for you that you only care
+    # about one root organization per domain.  should we lift this 
+    # restriction?  otherwise this may hide data from you 
+    root_org = root_orgs[0]
+    # this call makes the meat of the report.
+    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+@login_required()
+def org_email_report(request, id, template_name="organization/org_single_report.html"):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
+    startdate, enddate = _get_dates(request)
+    context['startdate'] = startdate
+    context['enddate'] = enddate    
+    
+    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+    context['view_name'] = 'organization.views.org_sms_report_list'
+    
+    report = ReportSchedule.objects.get(id=id)
+    context["report"] = report
+    # get the domain from the user, the root organization from the domain,
+    # and then the report from the root organization
+    #reporter.
+    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    # note: this pretty sneakily decides for you that you only care
+    # about one root organization per domain.  should we lift this 
+    # restriction?  otherwise this may hide data from you 
+    root_org = root_orgs[0]
+    
+    # this call makes the meat of the report.
+    data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+    rendered = reporter.render_direct_email(data, startdate, enddate, 
+                                          "organization/reports/sms_organization.txt", 
+                                          {"heading" : heading })
+    context['report_display'] = rendered
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+@login_required
+def org_email_report_list(request, template_name="organization/org_email_report_list.html"):
+    return org_report_list(request, 'organization.views.org_sms_report', template_name)
+
+@login_required
+def org_sms_report_list(request, template_name="organization/org_sms_report_list.html"):
+    return org_report_list(request, 'organization.views.org_sms_report', template_name)
+
+@login_required
+def org_report_list(request, single_report_url, template_name):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
+    startdate, enddate = _get_dates(request)
+    context['startdate'] = startdate
+    context['enddate'] = enddate    
+    
+    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+    context['view_name'] = 'organization.views.org_sms_report_list'
+    context['single_report_view'] = 'organization.views.org_sms_report'
+    
+    # get the domain from the user, the root organization from the domain,
+    # and then the report from the root organization
+    available_reports = ReportSchedule.objects.all()
+    context['available_reports'] = available_reports
+    
+    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    # note: this pretty sneakily decides for you that you only care
+    # about one root organization per domain.  should we lift this 
+    # restriction?  otherwise this may hide data from you 
+    root_org = root_orgs[0]
+    # this call makes the meat of the report.
+    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    
+    return render_to_response(template_name, context, context_instance=RequestContext(request))
+
+@login_required
+def org_sms_report(request, id, template_name="organization/org_single_report.html"):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+    
+    startdate, enddate = _get_dates(request)
+    context['startdate'] = startdate
+    context['enddate'] = enddate    
+    
+    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+    context['view_name'] = 'organization.views.org_sms_report_list'
+    
+    report = ReportSchedule.objects.get(id=id)
+    context["report"] = report
+    # get the domain from the user, the root organization from the domain,
+    # and then the report from the root organization
+    #reporter.
+    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    # note: this pretty sneakily decides for you that you only care
+    # about one root organization per domain.  should we lift this 
+    # restriction?  otherwise this may hide data from you 
+    root_org = root_orgs[0]
+    
+    # this call makes the meat of the report.
+    data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+    rendered = reporter.render_direct_sms(data, startdate, enddate, 
+                                          "organization/reports/sms_organization.txt", 
+                                          {"heading" : heading })
+    context['report_display'] = rendered
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
@@ -164,3 +258,23 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     context ['mindate'] = 0;
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+def _get_dates(request):
+    default_delta = timedelta(days=1)
+    
+    enddate = datetime.datetime.now()
+    startdate = datetime.datetime.now() - default_delta
+    
+    for item in request.GET.items():
+        if item[0] == 'startdate':
+            startdate_str=item[1]
+            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
+        if item[0] == 'enddate':
+            enddate_str=item[1]
+            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')                
+    return (startdate, enddate)
+
+def _get_report_id(request):
+    for item in request.GET.items():
+        if item[0] == 'report_id':
+            return int(item[1])
+    return None
