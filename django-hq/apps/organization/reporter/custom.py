@@ -106,7 +106,7 @@ def domain_flat(report_schedule, run_frequency):
     params = {}
     heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     params['heading'] = heading    
-    rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
+    rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
 
     if report_schedule.report_delivery == 'email':
         usr = report_schedule.recipient_user
@@ -128,7 +128,7 @@ def admin_catch_all_flat(report_schedule, run_frequency):
         params = {}
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
         params['heading'] = heading    
-        rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
+        rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
 
 
     if report_schedule.report_delivery == 'email':
@@ -225,7 +225,7 @@ def admin_catch_all(report_schedule, run_frequency):
         #ok, so we just did all this data, let's append the data to the already existing data
         
         data = data + unclaimed_tuples        
-        rendered_text += reporter.render_direct_email(data, run_frequency, "organization/reports/email_hierarchy_report.txt", params)
+        rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
 
         
         
@@ -285,7 +285,7 @@ def admin_per_form_report(report_schedule, run_frequency):
             params = {}
             heading = "Itemized report for " + fdef.form_display_name 
             params['heading'] = heading
-            rendered_text = reporter.render_direct_email(report_payload, run_frequency, "organization/reports/email_hierarchy_report.txt", params)     
+            rendered_text = reporter.render_direct_email(report_payload, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)     
         
         else:
             do_separate=False
