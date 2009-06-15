@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 import organization.utils as utils
 import organization.reporter as reporter
-
+import organization.reporter.custom as custom
 
 
 #from forms import *
@@ -102,7 +102,9 @@ def org_email_report(request, id, template_name="organization/org_single_report.
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_sms_report_list'
+    context['view_name'] = 'organization.views.org_email_report'
+    context['view_args'] = {"id" : id}
+    print context['view_args']
     
     report = ReportSchedule.objects.get(id=id)
     context["report"] = report
@@ -116,17 +118,19 @@ def org_email_report(request, id, template_name="organization/org_single_report.
     root_org = root_orgs[0]
     
     # this call makes the meat of the report.
-    data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate)
+    print data
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_email(data, startdate, enddate, 
-                                          "organization/reports/sms_organization.txt", 
+                                          "organization/reports/email_hierarchy_report.txt", 
                                           {"heading" : heading })
     context['report_display'] = rendered
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required
 def org_email_report_list(request, template_name="organization/org_email_report_list.html"):
-    return org_report_list(request, 'organization.views.org_sms_report', template_name)
+    return org_report_list(request, 'organization.views.org_email_report', template_name)
 
 @login_required
 def org_sms_report_list(request, template_name="organization/org_sms_report_list.html"):
@@ -180,7 +184,8 @@ def org_sms_report(request, id, template_name="organization/org_single_report.ht
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_sms_report_list'
+    context['view_name'] = 'organization.views.org_sms_report'
+    context['view_args'] = {"id" : id}
     
     report = ReportSchedule.objects.get(id=id)
     context["report"] = report

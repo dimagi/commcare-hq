@@ -25,8 +25,8 @@ username_datecount_cache = {}
 register = template.Library()
 
 @register.simple_tag
-def get_daterange_links(view_name):
-    base_link = reverse(view_name,kwargs={})
+def get_daterange_links(view_name, args={}):
+    base_link = reverse(view_name,kwargs=args)
 
     delta_week = timedelta(days=7)
     delta_day= timedelta(days=1)
