@@ -88,7 +88,7 @@ def org_report(request, template_name="organization/org_report.html"):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
-def org_email_report(request, id, template_name="organization/org_single_report.html"):
+def org_email_report(request, template_name="organization/org_single_report.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
@@ -106,8 +106,9 @@ def org_email_report(request, id, template_name="organization/org_single_report.
     context['view_args'] = {"id" : id}
     print context['view_args']
     
-    report = ReportSchedule.objects.get(id=id)
-    context["report"] = report
+    # commented out because these reports aren't actually different reports
+    #report = ReportSchedule.objects.get(=id)
+    #context["report"] = report
     # get the domain from the user, the root organization from the domain,
     # and then the report from the root organization
     #reporter.
@@ -169,7 +170,7 @@ def org_report_list(request, single_report_url, template_name):
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required
-def org_sms_report(request, id, template_name="organization/org_single_report.html"):
+def org_sms_report(request, template_name="organization/org_single_report.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
@@ -184,10 +185,10 @@ def org_sms_report(request, id, template_name="organization/org_single_report.ht
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['view_name'] = 'organization.views.org_sms_report'
-    context['view_args'] = {"id" : id}
     
-    report = ReportSchedule.objects.get(id=id)
-    context["report"] = report
+    # commented out because these reports aren't actually different reports
+    # report = ReportSchedule.objects.get(id=id)
+    # context["report"] = report
     # get the domain from the user, the root organization from the domain,
     # and then the report from the root organization
     #reporter.

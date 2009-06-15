@@ -5,7 +5,7 @@
 {% block org_report_content %}
 <h3>Domain: {{domain}}</h3>
 <h4>Time Range</h4>	
-{% get_daterange_links view_name view_args %}
+{% get_daterange_links view_name %}
 <h4>Displaying {{ report }}</h4> 
 <p>
 {{ report_display|safe }}
