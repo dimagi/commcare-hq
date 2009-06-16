@@ -49,7 +49,7 @@ def get_xmlns(stream):
     logging.debug("Parsing xml file successful")
     logging.debug("Find xmlns from " + root.tag)
     #todo - add checks in case we don't have a well-formatted xmlns
-    r = re.search('{[a-zA-Z0-9_\.\/\:]*}', root.tag)
+    r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
     if r is None:
         logging.error( "NO NAMESPACE FOUND" )
         return None
