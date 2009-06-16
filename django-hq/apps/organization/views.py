@@ -104,7 +104,6 @@ def org_email_report(request, template_name="organization/org_single_report.html
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['view_name'] = 'organization.views.org_email_report'
     context['view_args'] = {"id" : id}
-    print context['view_args']
     
     # commented out because these reports aren't actually different reports
     #report = ReportSchedule.objects.get(=id)
