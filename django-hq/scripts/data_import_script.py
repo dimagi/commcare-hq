@@ -24,16 +24,58 @@ curl_command = 'c:\curl\curl.exe'
 
 
 def run(argv):
-    directory = r'C:\Source\hq\commcare-hq\django-hq\bad'
-    #directory = r'C:\Source\hq\commcare-hq\django-hq\export'
+    #directory = r'C:\Source\hq\commcare-hq\django-hq\bad'
+    directory = r'C:\Source\hq\commcare-hq\django-hq\export'
     if len(argv) > 1:
         directory = argv[1]
-    for file in os.listdir(directory):
+    # loop through once uploading all the schemas
+    files = os.listdir(directory)
+    for file in files:
+        if "xsdexport" in file:
+            _submit_schema(os.path.join(directory,file))
+    
+    # then a second time with all the instances
+    total = len(files)
+    count =0
+    for file in files:
         if "postexport" in file:
-            _submit(os.path.join(directory,file))
+            _submit_form(os.path.join(directory,file))
+            if count % 20 == 0:
+                print "uploaded %s of %s xforms" % (count, total)
+            count = count + 1
     print "done"
     
-def _submit(filename):
+def _submit_schema(filename):
+    file = open(filename, "rb")
+    # first line is the header dictionary
+    dict_string = file.readline()
+    dict = json.loads(dict_string)
+    # next line is empty
+    file.readline()
+    # after that is everything else
+    data = file.read()
+    file.close()
+    real_size = len(data)
+    domain_name = dict["domain"]
+    dict['content-length'] = real_size
+    up = urlparse('http://%s/xforms/reregister/%s' % (serverhost, domain_name))
+    dict["is_resubmission" ] =  "True" 
+    dict["schema-type" ] =  "xsd" 
+    dict['User-Agent'] = 'CCHQ-submitfromfile-python-v0.1'
+    try:
+        #print "submitting from %s to: %s" % (filename, up.path)
+        conn = httplib.HTTPConnection(up.netloc)
+        conn.request('POST', up.path, data, dict)
+        resp = conn.getresponse()
+        results = resp.read()
+        print results
+    except Exception, e:
+        print"problem submitting form: %s" % filename 
+        print e
+        return None
+    
+
+def _submit_form(filename):
     file = open(filename, "rb")
     # first line is the header dictionary
     dict_string = file.readline()
@@ -64,26 +106,6 @@ def _submit(filename):
         print e
         return None
     
-def _postData(filename,domain_name):
-    """Pure python method to submit direct POSTs"""
-    if filename == ".svn" or filename.endswith('.py'):
-        return
-    fin = open(filename,'r')
-    filestr= fin.read()
-    fin.close()
-    
-    up = urlparse('http://%s/receiver/submit/%s' % (serverhost, domain_name))
-    
-    try:
-        conn = httplib.HTTPConnection(up.netloc)
-        conn.request('POST', up.path, filestr, {'Content-Type': 'text/xml', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        resp = conn.getresponse()
-        results = resp.read()
-    except (httplib.HTTPException, socket.error):
-        return None
-                
-    
-
 if __name__ == "__main__":
     real_args = [sys.argv[0]]
     if len(sys.argv) > 1:
