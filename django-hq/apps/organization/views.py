@@ -103,11 +103,8 @@ def org_email_report(request, template_name="organization/org_single_report.html
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['view_name'] = 'organization.views.org_email_report'
-    context['view_args'] = {"id" : id}
+    #context['view_args'] = {"id" : id}
     
-    # commented out because these reports aren't actually different reports
-    #report = ReportSchedule.objects.get(=id)
-    #context["report"] = report
     # get the domain from the user, the root organization from the domain,
     # and then the report from the root organization
     #reporter.

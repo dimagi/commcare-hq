@@ -32,7 +32,7 @@ class Submission(models.Model):
     
     #print settings.rapidsms_apps_conf
     raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'], max_length=255)    
-        
+    
     @property
     def num_attachments(self):
         return Attachment.objects.all().filter(submission=self).count()
