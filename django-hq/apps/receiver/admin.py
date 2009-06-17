@@ -2,7 +2,7 @@ from django.contrib import admin
 from receiver.models import *
 
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ('id','submit_time','submit_ip','bytes_received',)
+    list_display = ('id','submit_time','submit_ip','bytes_received','domain')
     list_filter = ['submit_ip','domain']  
     
 class AttachmentAdmin(admin.ModelAdmin):
