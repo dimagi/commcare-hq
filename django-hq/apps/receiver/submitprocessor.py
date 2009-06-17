@@ -20,7 +20,7 @@ def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
     new_submit.transaction_uuid = transaction
     if is_resubmission:
         new_submit.submit_ip = metadata['HTTP_ORIGINAL_IP']
-        new_submit.submit_time = datetime.strptime(metadata['HTTP_TIME_RECEIEVED'], "%Y-%m-%d %H:%M:%S")
+        new_submit.submit_time = datetime.strptime(metadata['HTTP_TIME_RECEIVED'], "%Y-%m-%d %H:%M:%S")
     else:
         if metadata.has_key('HTTP_X_FORWARDED_FOR'):
             new_submit.submit_ip = metadata['HTTP_X_FORWARDED_FOR']
