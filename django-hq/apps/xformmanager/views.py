@@ -92,6 +92,8 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 
                 formdefmodel.form_display_name = form.cleaned_data['form_display_name']                
                 formdefmodel.uploaded_by = extuser
+                if extuser:
+                    formdefmodel.domain = extuser.domain
                 
                 formdefmodel.save()                
                 logging.debug("xform registered")
