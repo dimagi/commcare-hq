@@ -51,7 +51,7 @@ def create_extuser(userhash, domain, email=''):
 def get_organization(org_name):
     orgs = Organization.objects.all().filter(name=org_name)
     if len(orgs) == 0:
-        raise "That organization doesn't frakin' exist"
+        raise "That organization doesn't exist"
     else:
         return orgs[0]
 
@@ -59,7 +59,7 @@ def get_organization(org_name):
 def get_domain(domain_name):
     domains = Domain.objects.all().filter(name=domain_name)
     if len(domains) == 0:
-        raise "That domain doesn't frakin' exist"
+        raise "That domain doesn't exist"
     else:
         return domains[0]
     
