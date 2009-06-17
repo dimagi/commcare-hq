@@ -35,7 +35,7 @@ class XFormManager(object):
             fout = open(new_file_name, 'w')
             fout.write( schema )
             fout.close()
-        return _create_schema_from_temp_file(new_file_name)
+        return self._create_schema_from_temp_file(new_file_name)
 
     def add_schema_manual(self, schema, type):
         '''A fairly duplicated API of add_schema to support passing 
