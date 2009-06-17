@@ -62,8 +62,6 @@ def register_xform(request, template='register_and_list_xforms.html'):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     extuser = ExtUser.objects.all().get(id=request.user.id)
-    
-    
     if request.method == 'POST':        
         form = RegisterXForm(request.POST, request.FILES)        
         if form.is_valid():
