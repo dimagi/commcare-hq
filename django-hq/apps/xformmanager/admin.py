@@ -9,3 +9,4 @@ class FormDefModelAdmin(admin.ModelAdmin):
 
 admin.site.register(FormDefModel,FormDefModelAdmin)
 admin.site.register(ElementDefModel)
+admin.site.register(Metadata)
