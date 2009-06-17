@@ -29,7 +29,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
             configured_users.append(datum[2].report_identity.lower())        
     
     #next, do a query of all the forms in this domain to get an idea of all the usernames
-    defs = FormDefModel.objects.all().filter(uploaded_by__domain=domain)
+    defs = FormDefModel.objects.all().filter(domain=domain)
     user_date_hash = {}
     
     for fdef in defs:        
@@ -41,8 +41,9 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         #ok, so we got ALL usernames.  let's filter out the ones we've already seen
         unclaimed_users = []
         for existing in all_usernames:
-            if configured_users.count(existing.lower()) == 0:
-                unclaimed_users.append(existing.lower())
+            if existing:
+                if configured_users.count(existing.lower()) == 0:
+                    unclaimed_users.append(existing.lower())
         
         #now that we've got ALL users, we can now the count query of their occurences in the formdef tables
         #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
@@ -165,7 +166,7 @@ def admin_catch_all(report_schedule, run_frequency):
         
         
         #next, do a query of all the forms in this domain to get an idea of all the usernames
-        defs = FormDefModel.objects.all().filter(uploaded_by__domain=dom)
+        defs = FormDefModel.objects.all().filter(domain=dom)
         user_date_hash = {}
         
         for fdef in defs:        
@@ -274,7 +275,7 @@ def admin_per_form_report(report_schedule, run_frequency):
     
     hierarchy = reporter.get_organizational_hierarchy(org.domain)
     
-    defs = FormDefModel.objects.all().filter(uploaded_by__domain=org.domain)
+    defs = FormDefModel.objects.all().filter(domain=org.domain)
     
     fulltext = ''
     for fdef in defs:

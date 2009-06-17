@@ -40,7 +40,7 @@ class XFormSchemas(Resource):
         # put all the api calls in context, then select html, xml, csv, json as needed
         context = {}
         extuser = ExtUser.objects.all().get(id=request.user.id)
-        context['available_form_ids'] = FormDefModel.objects.filter(uploaded_by__domain= extuser.domain).values_list('id', flat=True).order_by('id')
+        context['available_form_ids'] = FormDefModel.objects.filter(domain= extuser.domain).values_list('id', flat=True).order_by('id')
         return render_to_response(template, context, context_instance=RequestContext(request) )
 
 # api/xforms/(?P<schema_id>\d+) - list all submitted instance data for a particular schema

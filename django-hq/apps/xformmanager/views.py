@@ -73,7 +73,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 logging.error("xformmanager.manager: " + str(e) )
                 context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
                 context['upload_form'] = RegisterXForm()
-                context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
+                context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
                 return render_to_response(template, context, context_instance=RequestContext(request))
             except Exception, e:
                 logging.error(e)
@@ -99,9 +99,10 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 context['register_success'] = True
                 context['newsubmit'] = formdefmodel
     context['upload_form'] = RegisterXForm()
-    context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
+    context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
 
+@transaction.commit_manually
 def reregister_xform(request, domain_name, template='register_and_list_xforms.html'):
     # registers an xform without having a user context, for 
     # server-generated submissions
@@ -126,7 +127,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             logging.error("xformmanager.manager: " + str(e) )
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
             context['upload_form'] = RegisterXForm()
-            context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
+            context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
             return render_to_response(template, context, context_instance=RequestContext(request))
         except Exception, e:
             logging.error(e)

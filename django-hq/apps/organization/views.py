@@ -244,7 +244,7 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     if formdef_id == -1:
         context['chart_title'] = 'All Data'
         context['dataset'] = {}        
-        defs = FormDefModel.objects.all().filter(uploaded_by__domain=extuser.domain)
+        defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     
         for fdef in defs:            
             d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            

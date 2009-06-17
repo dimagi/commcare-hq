@@ -43,7 +43,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
     
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
-    defs = FormDefModel.objects.all().filter(uploaded_by__domain=extuser.domain)
+    defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     
     for fdef in defs:        
         table = fdef.element.table_name
