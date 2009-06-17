@@ -9,20 +9,26 @@ import string
 import uuid
 from django.db import transaction
 
+def get_submission_path():
+    return settings.rapidsms_apps_conf['receiver']['xform_submission_path']                    
+
 @transaction.commit_on_success
-def do_raw_submission(metadata, payload, domain=None):
+def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
     logging.debug("Begin do_raw_submission()")
     transaction = str(uuid.uuid1())
     new_submit = Submission()
     new_submit.transaction_uuid = transaction
-    logging.debug("Get remote addr")    
-    if metadata.has_key('HTTP_X_FORWARDED_FOR'):
-        new_submit.submit_ip = metadata['HTTP_X_FORWARDED_FOR']
-    elif metadata.has_key('REMOTE_HOST'):
-        new_submit.submit_ip = metadata['REMOTE_HOST']
+    if is_resubmission:
+        new_submit.submit_ip = metadata['HTTP_ORIGINAL_IP']
+        new_submit.submit_time = datetime.strptime(metadata['HTTP_TIME_RECEIEVED'], "%Y-%m-%d %H:%M:%S")
     else:
-        new_submit.submit_ip = '127.0.0.1'
-        
+        if metadata.has_key('HTTP_X_FORWARDED_FOR'):
+            new_submit.submit_ip = metadata['HTTP_X_FORWARDED_FOR']
+        elif metadata.has_key('REMOTE_HOST'):
+            new_submit.submit_ip = metadata['REMOTE_HOST']
+        else:
+            new_submit.submit_ip = '127.0.0.1'
+            
     if metadata.has_key('HTTP_CONTENT_TYPE'):
         content_type = metadata['HTTP_CONTENT_TYPE']
     else:
@@ -38,7 +44,7 @@ def do_raw_submission(metadata, payload, domain=None):
     else:        
         new_submit.bytes_received = int(metadata['CONTENT_LENGTH'])
     try:            
-        newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],transaction + '.postdata')
+        newfilename = os.path.join(get_submission_path(),transaction + '.postdata')
         logging.debug("try to write file")
         fout = open(newfilename, 'w')
         fout.write('Content-type: %s\n' % content_type.replace("'newdivider'","newdivider"))

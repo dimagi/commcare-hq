@@ -124,35 +124,39 @@ def raw_submit(request, template_name="receiver/submit.html"):
     #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
+def domain_resubmit(request, domain_name, template_name="receiver/submit.html"):
+    return _do_domain_submission(request, domain_name, template_name, True)
+
 def domain_submit(request, domain_name, template_name="receiver/submit.html"):
-    context = {}            
+    return _do_domain_submission(request, domain_name, template_name, False)
+
+def _do_domain_submission(request, domain_name, template_name="receiver/submit.html", is_resubmission=False):
+    context = {}
     if domain_name[-1] == '/':
         domain_name = domain_name[0:-1] #get rid of the trailing slash if it's there
-        
+    
     logging.error("begin domained raw_submit(): " + domain_name)
-    #print "begin domained raw_submit()"                
     currdomain = Domain.objects.filter(name=domain_name)
     if len(currdomain) != 1:
         template_name="receiver/submit_failed.html"
     if request.method == 'POST':                    
-        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])        
+        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0], is_resubmission=is_resubmission)
         if new_submission == '[error]':
-            #print "raw_submit() :: error!"
             logging.error("Domain Submit(): Submission error")
             template_name="receiver/submit_failed.html"            
-        else:            
+        else:
             context['transaction_id'] = new_submission.transaction_uuid
             context['submission'] = new_submission
-            attachments = Attachment.objects.all().filter(submission=new_submission)            
-            context['attachments'] = attachments            
+            attachments = Attachment.objects.all().filter(submission=new_submission)
+            num_attachments = len(attachments)
+            context['num_attachments'] = num_attachments
             template_name="receiver/submit_complete.html"
             
     #for real submissions from phone, the content-type should be:
     #mimetype='text/plain' # add that to the end fo the render_to_response()             
-    #resp = render_to_response(template_name, context, context_instance=RequestContext(request))                         
-    #print resp
+    #resp = render_to_response(template_name, context, context_instance=RequestContext(request))
     return render_to_response(template_name, context, context_instance=RequestContext(request))
-
+    
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
 #return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
@@ -224,17 +228,14 @@ def save_post(request):
         try:
             newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],filename)
             logging.debug("writing to %s" % newfilename)
-            #print("writing to %s" % newfilename)
             fout = open(newfilename, 'w')
             fout.write(request.raw_post_data)
             fout.close()
             logging.debug("write successful")
-            #print("write successful")
             return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
         except Exception, e:
             logging.error(e)
             return HttpResponse("Oh no something bad happened!  %s" % e)
-            #print str(e)
     return HttpResponse("Sorry, we didn't get anything there.")
     
     
