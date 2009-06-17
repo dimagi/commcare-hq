@@ -102,6 +102,59 @@ def register_xform(request, template='register_and_list_xforms.html'):
     context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
     return render_to_response(template, context, context_instance=RequestContext(request))
 
+def reregister_xform(request, domain_name, template='register_and_list_xforms.html'):
+    # registers an xform without having a user context, for 
+    # server-generated submissions
+    context = {}
+    extuser = None
+    if request.user:
+        try:
+            extuser = ExtUser.objects.all().get(id=request.user.id)
+        except ExtUser.DoesNotExist:
+            # we don't really care about this.  
+            pass
+    if request.method == 'POST':        
+        # must add_schema to storage provide first since forms are dependent upon elements 
+        try:
+            metadata = request.META
+            domain = Domain.objects.get(name=domain_name)
+            type = metadata["HTTP_SCHEMA_TYPE"]
+            schema = request.raw_post_data
+            xformmanager = XFormManager()
+            formdefmodel = xformmanager.add_schema_manual(schema, type)
+        except IOError, e:
+            logging.error("xformmanager.manager: " + str(e) )
+            context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
+            context['upload_form'] = RegisterXForm()
+            context['registered_forms'] = FormDefModel.objects.all().filter(uploaded_by__domain= extuser.domain)
+            return render_to_response(template, context, context_instance=RequestContext(request))
+        except Exception, e:
+            logging.error(e)
+            logging.error("Unable to write raw post data<br/>")
+            logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]) + "<br/>")
+            logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
+            type, value, tb = sys.exc_info()
+            logging.error(str(type.__name__), ":", str(value))
+            logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
+            logging.error("Transaction rolled back")
+            context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
+            transaction.rollback()                            
+        else:
+            formdefmodel.submit_ip = metadata['HTTP_ORIGINAL_SUBMIT_IP']
+            formdefmodel.bytes_received =  metadata['CONTENT_LENGTH']
+            formdefmodel.form_display_name = metadata['HTTP_FORM_DISPLAY_NAME']                
+            formdefmodel.uploaded_by = extuser
+            formdefmodel.domain = domain
+            # we have the rest of the info in the metadata, but for now we
+            # won't use it
+            formdefmodel.save()                
+            logging.debug("xform registered")
+            transaction.commit()                
+            context['register_success'] = True
+            context['newsubmit'] = formdefmodel
+            return HttpResponse("Thanks for submitting!  That worked great.  Form: %s" % formdefmodel)
+    return HttpResponse("Not sure what happened but either you didn't give us a schema or something went wrong...")
+
 @login_required()
 def single_xform(request, formdef_id, template_name="single_xform.html"):
     context = {}    

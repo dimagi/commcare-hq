@@ -60,6 +60,9 @@ class FormDefModel(models.Model):
     # also, because creating a form defintion shouldn't be dependent on receing form through server
     uploaded_by = models.ForeignKey(ExtUser, null=True)
     
+    # the domain this form is associated with, if any
+    domain = models.ForeignKey(Domain, null=True, blank=True)
+    
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     submit_ip = models.IPAddressField(_('Submitting IP Address'), null=True)
     bytes_received = models.IntegerField(_('Bytes Received'), null=True)
@@ -91,7 +94,9 @@ class FormDefModel(models.Model):
     
     @property
     def get_domain(self):
-        return self.uploaded_by.domain
+        # this is left to make domains backwards compatible (?)
+        # we can probably get rid of it, actually
+        return self.domain
 
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other

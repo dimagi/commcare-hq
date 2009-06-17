@@ -5,7 +5,8 @@ import subprocess
 from subprocess import PIPE
 
 class XFormManager(object):
-    """ This class makes the process of handling formdefs (our representation of schemas) and formdefmodels (db interaction layer),
+    """ This class makes the process of handling formdefs (our 
+    representation of schemas) and formdefmodels (db interaction layer),
     completely transparent to the programmers
     """
     def __init__(self):
@@ -34,11 +35,34 @@ class XFormManager(object):
             fout = open(new_file_name, 'w')
             fout.write( schema )
             fout.close()
+        return _create_schema_from_temp_file(new_file_name)
+
+    def add_schema_manual(self, schema, type):
+        '''A fairly duplicated API of add_schema to support passing 
+           in the schema an in-memory string, and including some metadata
+           with it.  These two methods should be merged.'''
+        transaction_str = str(uuid.uuid1())
+        logging.debug("temporary file name is " + transaction_str)                
+        new_file_name = self.__xsd_file_name(transaction_str)
+        if type == "xsd":
+            fout = open(new_file_name, 'w')
+            fout.write( schema ) 
+            fout.close()
+        else: 
+            schema,err = form_translate( file_name, schema )
+            if err is not None:
+                if err.lower().find("exception") != -1:
+                    raise IOError, "XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + file_name + "\nerror: " + str(err)
+            fout = open(new_file_name, 'w')
+            fout.write( schema )
+            fout.close()
+        return self._create_schema_from_temp_file(new_file_name)
+        
+    def _create_schema_from_temp_file(self, new_file_name):
         #process xsd file to FormDef object
         fout = open(new_file_name, 'r')
         formdef = FormDef(fout)
         fout.close()
-        
         formdefmodel = self.su.add_schema (formdef)
         formdefmodel.xsd_file_location = new_file_name
         formdefmodel.save()

@@ -170,7 +170,7 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
             new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])
                     
         if new_submission == '[error]':
-            template_name="receiver/submit_failed.html"            
+            template_name="receiver/submit_failed.html"     
         else:
             #todo: get password presumably from the HTTP header            
             new_backup = Backup(submission=new_submission, password='password')
