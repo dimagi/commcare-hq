@@ -30,7 +30,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     manager = XFormManager()
-    table_name = manager.save_form_data(xml_file_name, sender)
+    table_name = manager.save_form_data(xml_file_name, instance)
     generate_CSV(table_name)
     
 # Register to receive signals from receiver
