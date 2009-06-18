@@ -121,7 +121,8 @@ class Metadata(models.Model):
     formdefmodel = models.ForeignKey(FormDefModel, null=True)
     
     def __unicode__(self):
-        return "Metadata " + unicode(self.name)
+        list = ["%s: %s" % (name, getattr(self, name)) for name in self.fields]
+        return "Metadata: " + ", ".join(list) 
     
 
 
