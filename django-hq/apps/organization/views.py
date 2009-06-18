@@ -41,6 +41,8 @@ import organization.reporter.inspector as repinspector
 
 @login_required()
 def dashboard(request, template_name="organization/dashboard.html"):
+    # this is uber hacky - set the log level to debug on the dashboard
+    logging.getLogger().setLevel(logging.DEBUG)
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
