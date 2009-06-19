@@ -49,7 +49,7 @@ def run_reports(run_frequency):
             usr = report.recipient_user
             organization = report.organization
             if organization != None:
-                data = prepare_domain_or_organization(run_frequency, report.report_delivery,organization)
+                data = get_data_for_organization(run_frequency, report.report_delivery,organization)
                 params = {}
                 heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
                 params['heading'] = heading 
@@ -67,7 +67,7 @@ def run_reports(run_frequency):
             org = report.organization
             (members, supervisors) = utils.get_members_and_supervisors(org)
       
-            data = prepare_domain_or_organization(run_frequency, report.report_delivery, report.organization)                
+            data = get_data_for_organization(run_frequency, report.report_delivery, report.organization)                
             print "got data: " 
             print data
             if report.report_delivery == 'email':
@@ -100,21 +100,10 @@ def run_reports(run_frequency):
                 func(report,run_frequency)
             
         
-def prepare_domain_or_organization(run_frequency, transport, org_domain):
+def get_data_for_organization(run_frequency, transport, org_domain):
     (startdate, enddate) = get_daterange(run_frequency)
-    hierarchy = get_organizational_hierarchy(org_domain)
-    prepared_data = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)    
-    return prepared_data
-
-
-def prepare_filtered_domain_or_organization(run_frequency, transport, org_domain, filtered_form):
-    (startdate, enddate) = get_daterange(run_frequency)
-    hierarchy = get_organizational_hierarchy(org_domain)
-    prepared_data = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)    
-    return prepared_data
-
-
-
+    return repinspector.get_data_below(org_domain, startdate, enddate, 0)
+    
 def render_direct_email(prepared_data, startdate, enddate, template_name, params={}):
     context = {}
         

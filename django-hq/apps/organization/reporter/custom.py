@@ -148,8 +148,14 @@ def admin_catch_all(report_schedule, run_frequency):
     (startdate, enddate) = reporter.get_daterange(run_frequency)
     for dom in domains:
         #get the root organization
-        
-        data = reporter.prepare_domain_or_organization(run_frequency, report_schedule.report_delivery,dom)
+        #TODO: clean this up
+        # note: this pretty sneakily decides for you that you only care
+        # about one root organization per domain.  should we lift this 
+        # restriction?  otherwise this may hide data from you 
+        root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+        root_org = root_orgs[0]
+    
+        data = reporter.get_data_for_organization(run_frequency, report_schedule.report_delivery,root_org)
         params = {}
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
         params['heading'] = heading 
