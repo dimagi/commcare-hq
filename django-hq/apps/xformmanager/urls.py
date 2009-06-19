@@ -7,4 +7,5 @@ urlpatterns = patterns('',
     (r'^xforms/remove/(?P<form_id>\d+)$', 'xformmanager.views.remove_xform'),
     (r'^xforms/show/(?P<formdef_id>\d+)$', 'xformmanager.views.single_xform'),
     (r'^xforms/data/(?P<formdef_id>\d+)$', 'xformmanager.views.data'),
+    (r'^xforms/data/(?P<formdef_id>\d+)/csv/?$', 'xformmanager.views.export_csv'),
 )

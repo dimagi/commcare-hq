@@ -9,16 +9,13 @@ from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
-from xformmanager.csv import generate_CSV
 import settings, os, sys
 import logging
 import traceback
+import csv
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from organization.models import *
-
-#temporary
-from lxml import etree
 
 from StringIO import StringIO
 
@@ -31,7 +28,6 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     manager = XFormManager()
     table_name = manager.save_form_data(xml_file_name, instance)
-    generate_CSV(table_name)
     
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
@@ -189,23 +185,14 @@ def data(request, formdef_id, template_name="data.html"):
     rows = cursor.fetchall()
     
     rawcolumns = cursor.description # in ((name,,,,,),(name,,,,,)...)
-    context['columns'] = []
-    for col in rawcolumns:
-        context['columns'].append(col[0])    
+    
+    context['columns'] = [col[0] for col in rawcolumns]
     context['form_name'] = formdef_name
     context['data'] = []
     context['xform'] = xform[0]
     
-        
-#    fulldata = []
-#    for row in rows:
-#        rowrecord = []
-#        for field in row:
-#            rowrecord.append(field)
-#        fulldata.append(rowrecord)
-
-
     paginator = Paginator(rows, 25) 
+
     #get the current page number
     try:
         page = int(request.GET.get('page', '1'))
@@ -219,12 +206,34 @@ def data(request, formdef_id, template_name="data.html"):
     
     context['data'] = data_pages    
     
-    file_name = formdef_name+".csv"
-    if os.path.exists( os.path.join(settings.rapidsms_apps_conf['xformmanager']['csv_path'],file_name ) ):
-         context['csv_file'] = file_name
-         
     return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
+
+@login_required()
+def export_csv(request, formdef_id):
+    context = {}
+    xform = FormDefModel.objects.get(id=formdef_id)
+
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM " + xform.form_name + ' order by id')
+    rows = cursor.fetchall()
+    
+    rawcolumns = cursor.description 
+    columns = [col[0] for col in rawcolumns]
+    
+    output = StringIO()
+    w = csv.writer(output)
+    w.writerow(columns)
+    for row in rows:
+        w.writerow(row)
+    # rewind the virtual file
+    output.seek(0)
+    response = HttpResponse(output.read(),
+                        mimetype='application/ms-excel')
+    response["content-disposition"] = "attachment; filename=%s-%s.csv" % (xform.form_name, str(datetime.now().date()))
+    print response["content-disposition"]
+    return response
+    
 
 def __xform_file_name(name):
     return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xform.xml')

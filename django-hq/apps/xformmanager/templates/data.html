@@ -4,19 +4,10 @@
 {%block mgr_content%}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
-
-<a href="{% url xformmanager.views.single_xform xform.id %}">
-more information about this schema<br/>
-</a>
-
-{% if csv_file %}
-
-<a href="{{MEDIA_URL}}csv/{{csv_file}}">
-download csv file<br/>
-</a>
-
-{% endif %}
-
+<a href="{% url xformmanager.views.single_xform xform.id %}">more information about this schema</a>
+<br>
+<a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
+<br>
 
 <br>
 <div class="pagination">
@@ -24,11 +15,9 @@ download csv file<br/>
         {% if data.has_previous %}
             <a href="?page={{ data.previous_page_number }}"><< Previous</a>
         {% endif %}
-
         <span class="current">
             Page {{ data.number }} of {{ data.paginator.num_pages }}.
         </span>
-
         {% if data.has_next %}
             <a href="?page={{ data.next_page_number }}">Next >></a>
         {% endif %}
