@@ -14,4 +14,3 @@ class Job(DailyJob):
     def execute(self):
         reporter.run_reports('daily')
 
-z
