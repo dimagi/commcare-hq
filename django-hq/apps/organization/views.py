@@ -42,11 +42,16 @@ import rapidsms.log as rapid_log
 from rapidsms.config import Config
 conf = Config(os.environ["RAPIDSMS_INI"])
 
+logger_set = False
+
 @login_required()
 def dashboard(request, template_name="organization/dashboard.html"):
     # this is uber hacky - set the log level to debug on the dashboard
-    rapid_log.init_logger(conf["django-log"]["level"],log_file = conf["django-log"]["file"])
-    logging.debug("Initialized the log to %s!" % conf["log"]["file"])
+    global logger_set
+    if not logger_set:
+        rapid_log.init_logger(conf["django-log"]["level"],log_file = conf["django-log"]["file"])
+        logging.debug("Initialized the log to %s!" % conf["log"]["file"])
+        logger_set = True
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
