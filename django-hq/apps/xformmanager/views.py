@@ -231,7 +231,6 @@ def export_csv(request, formdef_id):
     response = HttpResponse(output.read(),
                         mimetype='application/ms-excel')
     response["content-disposition"] = "attachment; filename=%s-%s.csv" % (xform.form_name, str(datetime.now().date()))
-    print response["content-disposition"]
     return response
     
 
