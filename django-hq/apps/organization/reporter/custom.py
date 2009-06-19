@@ -99,6 +99,8 @@ def domain_flat(report_schedule, run_frequency):
     dom = report_schedule.organization.domain
     rendered_text = ''
     from organization import reporter
+    # DAN HACK: everyone wants the daily reports to show the last week's worth of data
+    # so change this 
     if run_frequency == 'daily':
         run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
@@ -120,6 +122,8 @@ def admin_catch_all_flat(report_schedule, run_frequency):
     domains = Domain.objects.all()
     rendered_text = ''
     from organization import reporter
+    # DAN HACK: everyone wants the daily reports to show the last week's worth of data
+    # so change this 
     if run_frequency == 'daily':
         run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
@@ -143,6 +147,8 @@ def admin_catch_all(report_schedule, run_frequency):
     domains = Domain.objects.all()
     rendered_text = ''
     from organization import reporter
+    # DAN HACK: everyone wants the daily reports to show the last week's worth of data
+    # so change this 
     if run_frequency == 'daily':
         run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
