@@ -32,35 +32,6 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from modelrelationship.models import EdgeType
-
-    
-    modelrelationship_edgetype_5 = EdgeType()
-    modelrelationship_edgetype_5.directional = True
-    modelrelationship_edgetype_5.name = u'User Chart Group'
-    modelrelationship_edgetype_5.description = u'A User can have a root chart group linked to their login'
-    modelrelationship_edgetype_5.child_type = ContentType.objects.get(app_label="dbanalyzer", model="graphgroup")
-    modelrelationship_edgetype_5.parent_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edgetype_5.save()
-
-    from modelrelationship.models import Edge
-
-    modelrelationship_edge_18 = Edge()
-    modelrelationship_edge_18.child_type = ContentType.objects.get(app_label="dbanalyzer", model="graphgroup")
-    modelrelationship_edge_18.child_id = 5L
-    modelrelationship_edge_18.relationship = modelrelationship_edgetype_5
-    modelrelationship_edge_18.parent_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_18.parent_id = 5L
-    modelrelationship_edge_18.save()
-
-    modelrelationship_edge_19 = Edge()
-    modelrelationship_edge_19.child_type = ContentType.objects.get(app_label="dbanalyzer", model="graphgroup")
-    modelrelationship_edge_19.child_id = 1L
-    modelrelationship_edge_19.relationship = modelrelationship_edgetype_5
-    modelrelationship_edge_19.parent_type = ContentType.objects.get(app_label="organization", model="extuser")
-    modelrelationship_edge_19.parent_id = 4L
-    modelrelationship_edge_19.save()
-
     from monitorregistry.models import MonitorIdentity
 
 
@@ -174,7 +145,9 @@ def run():
     organization_extuser_3.domain = organization_domain_3
     organization_extuser_3.identity = None
     organization_extuser_3.save()
-
+    
+    
+    
     organization_extuser_4 = ExtUser()
     organization_extuser_4.username = u'brian'
     organization_extuser_4.first_name = u''
@@ -496,7 +469,16 @@ def run():
 
     from dbanalyzer.models import GraphPref
 
-
+    dbanalyzer_graphpref_1 = GraphPref()
+    dbanalyzer_graphpref_1.user = organization_extuser_3
+    dbanalyzer_graphpref_1.root_graphs = [GraphGroup.objects.get(id=5)]
+    dbanalyzer_graphpref_1.save()
+    
+    dbanalyzer_graphpref_2 = GraphPref()
+    dbanalyzer_graphpref_2.user = organization_extuser_4
+    dbanalyzer_graphpref_2.root_graphs = [GraphGroup.objects.get(id=1)]
+    dbanalyzer_graphpref_2.save()
+    
     from receiver.models import Submission
 
 

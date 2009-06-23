@@ -1,6 +1,7 @@
 
 from modelrelationship.models import *
 from organization.models import *
+from dbanalyzer.models import *
 import modelrelationship.traversal as traversal
 
 PARENT_ORG_EDGE_TYPE=1
@@ -42,13 +43,11 @@ def get_members(organization):
     return members 
 
 def get_chart_group(extuser):
-    (parents, children) = traversal.getImmediateRelationsForObject(extuser)
-    
-    for child_edge in children:
-        if child_edge.relationship.name == "User Chart Group":
-            return child_edge.child
-    return None
-    
+    try:
+        return GraphPref.objects.get(user=extuser)
+    except GraphPref.DoesNotExist:
+        return None
+
 
 def get_members_and_supervisors(organization):
     """Return a tuple (members[], supervisors[]) for a given organization"""
