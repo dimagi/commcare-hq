@@ -2,8 +2,6 @@ from django import template
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
-import modelrelationship.traversal as traversal
-from modelrelationship.models import *
 from xformmanager.models import *
 from organization.models import *
 import xformmanager.adapter.querytools as qtools
@@ -153,100 +151,3 @@ def get_data_below(organization, startdate, enddate, depth):
 def get_single_item(type, item, startdate, enddate, depth):
     return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
     
-def get_report_as_tuples(hierarchy_arr, startdate, enddate, depth):
-    """Do a hierarchical query and flattens the recursive return into 
-       a simple array of items in the format:
-       [recursiondepth, descriptor, item, report_rowdata] """
-    fullret = []
-        
-    prior_edgetype = None
-    group_edge = False
-    
-    for edges in hierarchy_arr:
-        subitems = []
-        sublist = []
-        edge = None            
-        
-        if isinstance(edges,ListType):
-            sublist = sublist + get_report_as_tuples(edges, startdate, enddate, depth + 1)
-        else:            
-            single_item = []
-            single_item.append(depth)
-            
-            if edge == None:            
-                edge = edges #it's just a single edge
-            if edge.relationship.name == "Domain Chart":    #ugly hack.  we need to constrain by the relationship types we want to do
-                return fullret
-            
-            #check to see if we're entering a new section/block of the relationships.
-            if edge.relationship != prior_edgetype:      
-                if group_edge:
-                    group_edge = False              
-                prior_edgetype = edge.relationship                
-                #subitems += edge.relationship.description                
-                group_edge = True            
-                #we flipped the edgetype, so we're in a new group, put a descriptor!
-                single_item.append(edge.relationship.description)
-            else:
-                single_item.append(None)
-
-            single_item.append(edge.child_object)    
-            single_item.append(get_aggregate_count(edge.child_object, startdate, enddate))                                     
-            
-            subitems.append(single_item)
-        fullret += subitems
-        fullret += sublist
-    
-    if depth == 0:
-        username_datecount_cache.clear()    
-    return fullret
-
-
-def get_report_as_tuples_filtered(hierarchy_arr, form_filter, startdate, enddate, depth):
-    """Do a hierarchical query and flattens the recursive return into a simple array 
-       of items in the format [recursiondepth, descriptor, item, report_rowdata]"""
-    fullret = []
-        
-    prior_edgetype = None
-    group_edge = False
-    
-    for edges in hierarchy_arr:
-        subitems = []
-        sublist = []
-        edge = None            
-        
-        if isinstance(edges,ListType):
-            sublist = sublist + get_report_as_tuples_filtered(edges, form_filter, startdate, enddate, depth + 1)
-        else:            
-            single_item = []
-            single_item.append(depth)
-            
-            if edge == None:            
-                edge = edges #it's just a single edge
-            if edge.relationship.name == "Domain Chart":    #ugly hack.  we need to constrain by the relationship types we want to do
-                return fullret
-            
-            #check to see if we're entering a new section/block of the relationships.
-            if edge.relationship != prior_edgetype:      
-                if group_edge:
-                    group_edge = False              
-                prior_edgetype = edge.relationship                
-                #subitems += edge.relationship.description                
-                group_edge = True            
-                #we flipped the edgetype, so we're in a new group, put a descriptor!
-                single_item.append(edge.relationship.description)
-            else:
-                single_item.append(None)
-
-            single_item.append(edge.child_object)    
-            single_item.append(get_aggregate_count(edge.child_object, startdate, enddate,forms_to_filter=form_filter))
-            
-            
-            subitems.append(single_item)
-        fullret += subitems
-        fullret += sublist
-    
-    if depth == 0:
-        username_datecount_cache.clear()    
-    return fullret
-

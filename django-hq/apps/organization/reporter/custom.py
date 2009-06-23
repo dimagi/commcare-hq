@@ -10,7 +10,6 @@ import settings
 import organization.utils as utils
 from organization.reporter import agents        
 import dbanalyzer.dbhelper as dbhelper
-import modelrelationship.traversal as traversal
 from xformmanager.models import *
 from datetime import timedelta
 
@@ -259,8 +258,14 @@ def pf_swahili_sms(report_schedule, run_frequency):
     if organization != None:
         from organization import reporter
         (startdate, enddate) = reporter.get_daterange(run_frequency)
-        hierarchy = reporter.get_organizational_hierarchy(org_domain)
-        report_payload = repinspector.get_report_as_tuples(hierarchy, startdate, enddate, 0)
+        
+        root_orgs = Organization.objects.filter(parent=None, domain=org_domain)
+        # note: this pretty sneakily decides for you that you only care
+        # about one root organization per domain.  should we lift this 
+        # restriction?  otherwise this may hide data from you 
+        root_org = root_orgs[0]
+        # this call makes the meat of the report.
+        report_payload = repinspector.get_data_below(root_org, startdate, enddate, 0)
         
         if transport == 'email':
             do_separate = True
@@ -275,7 +280,8 @@ def pf_swahili_sms(report_schedule, run_frequency):
         reporter.deliver_report(usr, rendered_text, report_schedule.report_delivery,params={'startdate': startdate, 'enddate': enddate, 'frequency': run_frequency})                
 
 
-def admin_per_form_report(report_schedule, run_frequency):    
+def admin_per_form_report(report_schedule, run_frequency):
+    # nothing calls this... which is good because it doesn't work
     org = report_schedule.organization
     transport = report_schedule.report_delivery   
     usr = report_schedule.recipient_user
@@ -299,18 +305,9 @@ def admin_per_form_report(report_schedule, run_frequency):
             heading = "Itemized report for " + fdef.form_display_name 
             params['heading'] = heading
             rendered_text = reporter.render_direct_email(report_payload, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)     
-        
         else:
             do_separate=False
-        
-        
-        
-        
-        
-#        rendered_text = reporter.render_reportstring(fdef.form_display_name, 
-#                       report_payload, 
-#                       run_frequency,                                       
-#                       transport=transport)
+            
         fulltext += rendered_text
     newsubject = "[Commcare HQ] Itemized Report for: " + str(org)
     reporter.deliver_report(usr, fulltext, report_schedule.report_delivery,params={'startdate': startdate, 'enddate': enddate, 'frequency': run_frequency, 'email_subject': newsubject})
