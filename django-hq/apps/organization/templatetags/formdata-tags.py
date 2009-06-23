@@ -3,12 +3,8 @@ from django.core.urlresolvers import reverse
 from xformmanager.models import *
 
 
-from modelrelationship.models import *
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
-
-import modelrelationship.traversal as traversal
-from modelrelationship.models import *
 
 from organization.models import *
 import dbanalyzer.dbhelper as dbhelper  

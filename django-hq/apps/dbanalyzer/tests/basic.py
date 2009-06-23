@@ -1,7 +1,6 @@
 import unittest
 import os
 from django.contrib.auth.models import Group, User
-from modelrelationship.models import *
 from organization.models import *
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
@@ -14,7 +13,7 @@ class BasicTestCase(unittest.TestCase):
     def setup(self):
         RawGraph.objects.all().delete()
         
-#
+#czue - why are these commented out??
 #    def testMakeNewGraph(self):
 #        rawgraph  = RawGraph()
 #        rawgraph.shortname = "test cumulative"

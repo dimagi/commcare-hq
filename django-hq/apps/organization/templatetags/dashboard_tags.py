@@ -2,12 +2,8 @@ from django import template
 
 from django.core.urlresolvers import reverse
 
-from modelrelationship.models import *
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
-
-import modelrelationship.traversal as traversal
-from modelrelationship.models import *
 
 from xformmanager.models import *
 import xformmanager.adapter.querytools as qtools

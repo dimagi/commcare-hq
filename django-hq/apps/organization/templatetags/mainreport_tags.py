@@ -2,12 +2,8 @@ from django import template
 from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse
 
-from modelrelationship.models import *
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
-
-import modelrelationship.traversal as traversal
-from modelrelationship.models import *
 
 from organization.models import *
 

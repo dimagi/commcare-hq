@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 
-from modelrelationship.models import *
 from monitorregistry.models import *
 
 
@@ -38,6 +37,8 @@ class ExtRole(models.Model):
 
 
 class ExtUser(User):
+    '''Extended users, which have some additional metadata associated with them'''
+    
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
     

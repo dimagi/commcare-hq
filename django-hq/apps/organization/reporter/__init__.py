@@ -10,7 +10,6 @@ import settings
 import organization.utils as utils
 from organization.reporter import agents        
 
-import modelrelationship.traversal as traversal
 import inspector as repinspector
 
 import custom

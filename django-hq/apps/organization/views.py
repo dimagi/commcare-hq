@@ -15,7 +15,6 @@ from django.db import transaction
 from dbanalyzer import dbhelper
 
 from xformmanager.models import *
-from modelrelationship.models import *
 from organization.models import *
 from dbanalyzer.models import *
 import dbanalyzer.views as chartviews
@@ -36,7 +35,6 @@ import sys
 import os
 import string
 
-import modelrelationship.traversal as traversal
 import organization.reporter.inspector as repinspector
 import rapidsms.log as rapid_log
 from rapidsms.config import Config

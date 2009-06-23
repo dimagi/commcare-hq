@@ -1,6 +1,5 @@
 from django import template
 from django.core.urlresolvers import reverse
-import modelrelationship.traversal as traversal
 from django.template import Library, Node
 
 
