@@ -15,9 +15,9 @@ import urllib
 from cookielib import *
 from urlparse import urlparse
 
-#serverhost = 'test.commcarehq.org'
+serverhost = 'dev.commcarehq.org'
 #serverhost = 'localhost'
-serverhost = 'localhost:8000'
+#serverhost = 'localhost:8000'
 
 curl_command = 'c:\curl\curl.exe'
 #curl_command = 'curl'
@@ -25,7 +25,9 @@ curl_command = 'c:\curl\curl.exe'
 
 def run(argv):
     #directory = r'C:\Source\hq\commcare-hq\django-hq\bad'
-    directory = r'C:\Source\hq\commcare-hq\django-hq\export'
+    #directory = r'C:\Source\hq\commcare-hq\django-hq\export'
+    #directory = r'C:\Source\hq\commcare-hq\django-hq\pathfinder\out'
+    directory = r'C:\Source\hq\commcare-hq\django-hq\brac\out'
     if len(argv) > 1:
         directory = argv[1]
     # loop through once uploading all the schemas
@@ -40,8 +42,9 @@ def run(argv):
     for file in files:
         if "postexport" in file:
             _submit_form(os.path.join(directory,file))
-            if count % 20 == 0:
+            if count % 100 == 0:
                 print "uploaded %s of %s xforms" % (count, total)
+                time.sleep(10)
             count = count + 1
     print "done"
     
@@ -68,7 +71,7 @@ def _submit_schema(filename):
         conn.request('POST', up.path, data, dict)
         resp = conn.getresponse()
         results = resp.read()
-        print results
+        
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
@@ -100,7 +103,8 @@ def _submit_form(filename):
         conn.request('POST', up.path, data, dict)
         resp = conn.getresponse()
         results = resp.read()
-        #print results
+        if not "thank you" in results:
+            print "unexpected response for %sn%s" % (filename, results)
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
