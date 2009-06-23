@@ -467,7 +467,7 @@ def run():
     organization_reportschedule_5.save()
 
 
-    from dbanalyzer.models import GraphPref
+    from dbanalyzer.models import GraphPref, GraphGroup
 
     dbanalyzer_graphpref_1 = GraphPref()
     dbanalyzer_graphpref_1.user = organization_extuser_3
