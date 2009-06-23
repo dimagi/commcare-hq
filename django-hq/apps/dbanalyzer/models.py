@@ -292,23 +292,7 @@ class RawGraph(BaseGraph):
     def get_dataseries(self):
         rows = self.get_dataset()
         return self.__numeric_dataseries(rows)
-        
-        
-#        ret = {}        
-#        
-#        
-#        num_series = self.check_series()
-#        for i in range(0,num_series):
-#            ret[i] = []
-#        
-#        for row in rows:
-#            xcol = self.__clean_xcol(row[0])
-#            series_count = 0            
-#            for ycol in row[1:]:
-#                ret[series_count].append([xcol,self.__clean_ycol(ycol)])
-#                series_count= series_count+1 
-#            
-#        return ret
+
     
     def get_flot_data(self):      
         try:  
@@ -358,6 +342,6 @@ class GraphPref(models.Model):
         return self.root_graphs.count()
 
     def __unicode__(self):
-        return u"GraphPref: " + unicode(user.name)
+        return u"GraphPref: " + unicode(self.user.name)
     
     
