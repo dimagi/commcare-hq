@@ -342,6 +342,6 @@ class GraphPref(models.Model):
         return self.root_graphs.count()
 
     def __unicode__(self):
-        return u"GraphPref: " + unicode(self.user.name)
+        return u"GraphPref: " + unicode(self.user.username)
     
     
