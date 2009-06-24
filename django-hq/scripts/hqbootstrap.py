@@ -32,18 +32,6 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from monitorregistry.models import MonitorIdentity
-
-
-    from monitorregistry.models import Hardware
-
-
-    from monitorregistry.models import MonitorDevice
-
-
-    from monitorregistry.models import MonitorGroup
-
-
     from organization.models import Domain
 
     organization_domain_1 = Domain()
@@ -471,11 +459,13 @@ def run():
 
     dbanalyzer_graphpref_1 = GraphPref()
     dbanalyzer_graphpref_1.user = organization_extuser_3
+    dbanalyzer_graphpref_1.save()
     dbanalyzer_graphpref_1.root_graphs = [GraphGroup.objects.get(id=5)]
     dbanalyzer_graphpref_1.save()
     
     dbanalyzer_graphpref_2 = GraphPref()
     dbanalyzer_graphpref_2.user = organization_extuser_4
+    dbanalyzer_graphpref_2.save()
     dbanalyzer_graphpref_2.root_graphs = [GraphGroup.objects.get(id=1)]
     dbanalyzer_graphpref_2.save()
     
