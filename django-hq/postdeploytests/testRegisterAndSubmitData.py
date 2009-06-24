@@ -233,7 +233,9 @@ class DomainTestCase(unittest.TestCase):
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
         if rescount != 1:
-            print "Data submission failed, not successful: " + str(rescount)
+            msg = "Data submission failed, not successful: " + str(rescount)
+            print msg
+            self.fail(msg)
             #print resultstring
         else:
             idx = resultstring.index("<p>Attachments:")
@@ -320,7 +322,8 @@ class DomainTestCase(unittest.TestCase):
                 self.xform_hash[xf] = form_id
                 self._verifySchemaSubmits(form_id, xf)
             else:
-                print "xform registration failed for: " + xf
+                msg = "xform registration failed for: " + xf
+                self.fail(msg)
 
 
 class TestDeployPathFinder(DomainTestCase):    
@@ -435,7 +438,9 @@ class TestSimpleSubmits(unittest.TestCase):
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
         if rescount != 1:
-            print "Data submission failed, not successful: " + str(rescount)
+            msg = "Data submission failed, not successful: " + str(rescount)
+            print msg
+            self.fail(msg)
             #print resultstring
         else:
             idx = resultstring.index("<p>Attachments:")
@@ -525,7 +530,9 @@ class TestBackupRestore(unittest.TestCase):
             restored = r2.read()
             
             if restored != filestr:
-                print "BackupRestore error failed for id: " + results                
+                msg = "BackupRestore error failed for id: " + results                
+                print msg
+                self.fail(msg)
             self.assertEquals(restored,filestr)
 
             
