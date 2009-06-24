@@ -18,10 +18,10 @@ from urlparse import urlparse
 
 
 serverhost = 'test.commcarehq.org'
-curl_command = 'c:\curl\curl.exe'
+#curl_command = 'c:\curl\curl.exe'
 
 #serverhost = 'localhost'
-#curl_command = 'curl'
+curl_command = 'curl'
 
 #serverhost = 'localhost:8000'
 #curl_command = 'curl'
@@ -124,20 +124,19 @@ class DomainTestCase(unittest.TestCase):
     def _verifySchema(self, results, schema_name):        
         if results.count("Submit Error:") != 0:
             #self.fail( "Verify Schema, submission errors")
-            print "Verify Schema, submission errors"
+            print "Verify Schema, submission errors: \n%s" % results
             return -1
                         
 
         if results.count(schema_name) != 1:
-            print "Verify Schema, schema did not save"
+            print "Verify Schema, schema did not save: \n%s" % results
             return -1
             #self.assertEqual(1, results.count(schema_name))
                     
         #get the schema id just created
         if results.count("Registration successful for xform id:") != 1:
-            #self.fail("registration of xform id not successful")
+            print "registration of xform id not successful: \n%s" % results
             return -1
-            pass
         else:            
             idx = results.index("Registration successful for xform id:")
             substr = results[idx+37:]
@@ -149,7 +148,7 @@ class DomainTestCase(unittest.TestCase):
                 schema_id=int(schema_idstr)
                 return schema_id
             except:
-                #self.fail("Error, schema id could not be extracted")
+                "Error, schema id could not be extracted: \n%s" % results
                 return -1
 
 
@@ -157,10 +156,6 @@ class DomainTestCase(unittest.TestCase):
         p = subprocess.Popen([curl_command,'-b', self.session_cookie, 'http://%s/xforms/data/%d' % (serverhost, xform_id)],stdout=PIPE,stderr=PIPE,shell=False)
         data = p.stdout.read()
         
-#        fout = open('xf-data-' + str(uuid.uuid1()) + ".html",'w')
- #       fout.write(data)
-  #      fout.close()
-            
         
         if data.count ('<tr class="dbodyrow') == 0:
             return 0
@@ -323,6 +318,7 @@ class DomainTestCase(unittest.TestCase):
                 self._verifySchemaSubmits(form_id, xf)
             else:
                 msg = "xform registration failed for: " + xf
+                
                 self.fail(msg)
 
 
