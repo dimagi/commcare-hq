@@ -7,3 +7,4 @@ django-hq/data/submissions/*
 django-hq/data/schemas/*
 django-hq/export/*
 django-hq/bad/*
+django-hq/rapidsms-django.log*
