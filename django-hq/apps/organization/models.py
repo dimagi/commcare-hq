@@ -2,9 +2,6 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 
-from monitorregistry.models import *
-
-
 class Domain(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=255, null=True, blank=True)
@@ -44,7 +41,6 @@ class ExtUser(User):
     
     primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
     domain = models.ForeignKey(Domain)
-    identity = models.OneToOneField(MonitorIdentity, blank=True, null=True)
     
     @property
     def report_identity(self):         
