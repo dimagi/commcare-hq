@@ -71,21 +71,8 @@ class ProcessingTestCase(unittest.TestCase):
         
     def tearDown(self):
         print "ProcessingTestCase.tearDown()"
-#        attaches = Attachment.objects.all()
-#        for attach in attaches:
-#            attach.delete()
-        
-#        allsubmits = Submission.objects.all()
-#        for submit in allsubmits:
-#            submit.delete()
-#        
-        
-#        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
-#        self.assertEquals(0,len(submits))        
-#        attaches = os.listdir(settings.ATTACHMENTS_PATH)
-#        self.assertEquals(0,len(attaches))
-        
-       
+
+
 def makeNewEntry(headerfile, bodyfile):
     newsubmit = Submission()
     fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
