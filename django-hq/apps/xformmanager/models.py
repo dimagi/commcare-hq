@@ -2,8 +2,11 @@ from django.db import models
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
+from django.db.models.signals import post_save
+
 from receiver.models import Attachment
 from organization.models import *
+import logging
 import uuid
 import settings
 import os
@@ -125,4 +128,14 @@ class Metadata(models.Model):
         return "Metadata: " + ", ".join(list) 
     
 
+
+def process(sender, instance, **kwargs): #get sender, instance, created
+    from manager import XFormManager
+    xml_file_name = instance.filepath
+    logging.debug("PROCESS: Loading xml data from " + xml_file_name)
+    manager = XFormManager()
+    table_name = manager.save_form_data(xml_file_name, instance)
+    
+# Register to receive signals from receiver
+post_save.connect(process, sender=Attachment)
 

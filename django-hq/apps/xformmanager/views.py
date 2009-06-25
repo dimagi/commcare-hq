@@ -20,17 +20,7 @@ from organization.models import *
 from StringIO import StringIO
 
 from receiver.models import Attachment
-from django.db.models.signals import post_save
 from django.db.models import signals
-
-def process(sender, instance, **kwargs): #get sender, instance, created
-    xml_file_name = instance.filepath
-    logging.debug("PROCESS: Loading xml data from " + xml_file_name)
-    manager = XFormManager()
-    table_name = manager.save_form_data(xml_file_name, instance)
-    
-# Register to receive signals from receiver
-post_save.connect(process, sender=Attachment)
 
 @login_required()
 @transaction.commit_manually
