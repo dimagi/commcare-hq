@@ -203,9 +203,11 @@ class StorageUtility(object):
         queries = queries + next_query;
         return queries
     
-    def __create_instance_tables_query_inner_loop(self, elementdef, parent_id, parent_name='', parent_table_name=''):
-      """ This is 'handle' instead of 'create'(_children_tables) because not only are we 
-      creating children tables, we are also gathering/passing children/field information back to the parent.
+    def __create_instance_tables_query_inner_loop(self, elementdef, parent_id, 
+                                                  parent_name='', parent_table_name=''):
+      """ This is 'handle' instead of 'create'(_children_tables) because not only 
+          are we creating children tables, we are also gathering/passing 
+          children/field information back to the parent. 
       """
       
       if not elementdef: return
@@ -213,7 +215,7 @@ class StorageUtility(object):
       
       next_query = ''
       if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          return (next_query, self.__db_field_name(elementdef) )
+          return (next_query, self._db_field_definition_string(elementdef) )
       for child in elementdef.child_elements:
           # put in a check for root.isRepeatable
           next_parent_name = formatted_join(parent_name, elementdef.name)
@@ -233,7 +235,7 @@ class StorageUtility(object):
             if len(child.child_elements) > 0 :
                 (q, f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
             else:
-                local_fields.append( self.__db_field_name(child) )
+                local_fields.append( self._db_field_definition_string(child) )
                 (q,f) = self.__create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
             next_query = next_query + q
             local_fields = local_fields + f
@@ -368,18 +370,22 @@ class StorageUtility(object):
         endsplit = splits[-2:]
         if self.META_FIELDS.count('_'.join(endsplit)) == 1:
             return '_'.join(endsplit)
+        
         return name
 
-    def __db_field_name(self, elementdef):
+    def _db_field_definition_string(self, elementdef):
         label = self.__hack_to_get_cchq_working( sanitize( elementdef.name ) )
         if elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None:
-                for values in simple_type.multiselect_values:
-                    field = field + label + "_" + values + " " + self.__get_db_type( 'boolean' ) + ", " 
+                for value in simple_type.multiselect_values:
+                    column_name = self._truncate(label + "_" + value)
+                    column_type = self.__get_db_type( 'boolean' )
+                    field += "%s %s, " % (column_name, column_type)
             return field
-        return  label + " " + self.__get_db_type( elementdef.type ) + ", "
+        field = self._truncate(label) + " " + self.__get_db_type( elementdef.type ) + ", "
+        return field
 
     def __get_formatted_fields_and_values(self, elementdef, raw_value):
         """ returns a dictionary of key-value pairs """
@@ -412,7 +418,15 @@ class StorageUtility(object):
             simple_queries = queries.split(';')
             for query in simple_queries: 
                 cursor.execute(query)
-
+    
+    def _truncate(self, field_name):
+        '''Truncates a field name to 64 characters, which is the max length allowed
+           by mysql.  This is NOT smart enough to check for conflicts, so there could
+           be issues if an xform has two very similar, very long, fields'''
+        if len(field_name) > 64:
+            return field_name[:64]
+        return field_name
+    
     @transaction.commit_on_success
     def remove_schema(self, id):
         fdds = FormDefModel.objects.all().filter(id=id) 
