@@ -85,7 +85,7 @@ class RawGraph(BaseGraph):
     def has_errors(self):
         try:
             self.reset()
-            cursor = self.cursor                                    
+            cursor = self.cursor
             self.reset()
             return False
         except Exception, e:

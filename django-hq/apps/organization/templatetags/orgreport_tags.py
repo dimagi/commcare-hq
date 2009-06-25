@@ -121,16 +121,6 @@ def render_aggregate_countrow(content_obj):
         supervising_orgs = utils.get_supervisor_roles(content_obj)
         usernames_to_filter.append(content_obj.username)
         
-#        if len(supervising_orgs) > 0:
-#            is_supervisor = True
-#            for org in supervising_orgs:
-#                (mem,sup) = utils.get_members_and_supervisors(org)
-#                for m in mem:
-#                    if usernames_to_filter.count(m.username) == 0:
-#                       usernames_to_filter.append(m.username)
-#        else:
-#            is_member = True
-#            usernames_to_filter.append(content_obj.username)
  
     defs = FormDefModel.objects.all()
     description = ''

@@ -235,9 +235,6 @@ def domain_charts(request, template_name="dbanalyzer/view_graph.html"):
         return summary_trend(request)
     else:  
         return chartviews.view_group(request, mychartgroup.id)
-#        context['width'] = 900
-#        context['height'] = 350
-#        return render_to_response(template_name, context, context_instance=RequestContext(request))    
 
 @login_required()
 def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):    

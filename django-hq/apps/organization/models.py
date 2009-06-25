@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
+from reporters.models import Reporter, ReporterGroup
+
 
 class Domain(models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -32,15 +34,52 @@ class ExtRole(models.Model):
     class Meta:
         verbose_name = _("Extended User Role")
 
-
-class ExtUser(User):
-    '''Extended users, which have some additional metadata associated with them'''
-    
+class ReporterProfile(models.Model):
+    '''The profile for a reporter object.  For attaching some of our
+       own metadata-type information to RapidSMS reporters.  This is 
+       loosely modeled on how django user profiles work.'''
+    reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")
+    # these fields are duplicates from ExtUser, and will replace
+    # those when we sort out data migration
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
     
+    # todo: eventually make these non-null.  
+    guid = models.CharField(max_length=32, null=True, blank=True)
+
+    @property
+    def report_identity(self):         
+        if self.chw_username:
+            return self.chw_username
+        return str(self)
+    
+    def __unicode__(self):
+        if self.chw_username:
+            return "%s (%s)" % (self.chw_username, self.chw_id)
+        else:
+            return str(self.reporter)
+    
+    
+class ExtUser(User):
+    '''Extended users, which have some additional metadata associated with them'''
+    
+    # these have been moved to the ReporterProfile object and
+    # should be removed when data migration gets sorted out  
+    chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
+    chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
+
+    # this should be squashed by the reporter foreign key.  
+    # unfortunately a lot of things currently like pointing at this
+    # so it'll stick around temporarily
     primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
+    
     domain = models.ForeignKey(Domain)
+    
+    # also provide org-level granularity
+    organization = models.ForeignKey("Organization", null=True, blank=True)
+    
+    # link to the rapidsms reporter 
+    reporter = models.ForeignKey(Reporter, null=True, blank=True)
     
     @property
     def report_identity(self):         
@@ -71,8 +110,11 @@ class Organization(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
     organization_type = models.ManyToManyField(OrganizationType)
     parent = models.ForeignKey("Organization", null=True, blank=True, related_name="children")
-    members = models.ManyToManyField(ExtUser, null=True, blank=True, related_name="members")
-    supervisors = models.ManyToManyField(ExtUser, null=True, blank=True, related_name="supervisors")
+    
+    # membership and supervision is modeled by rapidsms reporters
+    # and groups
+    members = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="members")
+    supervisors = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="supervisors")
     
     class Meta:
         verbose_name = _("Organization")

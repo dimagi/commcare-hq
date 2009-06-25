@@ -60,7 +60,9 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
     """For a given content object, presumably it's a organization or a user, 
        it'll query all the xforms in its domain and see what the aggregate 
        counts of all submissions it has under itself"""
-    #report_query = "select '%s', (select TimeEnd from %s where username='%s' order by timeend desc limit 1), (select count(*) from %s where username='%s');"
+    
+    if not content_obj:
+        return 0 
     usernames_to_filter = []    
 
     totalspan = enddate-startdate    
@@ -81,9 +83,18 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
         domain  = content_obj.domain
         (members, supervisors) = utils.get_members_and_supervisors(content_obj)        
         for member in members:
-            usernames_to_filter.append(member.report_identity)
+            # only include these if we have a valid mapping to a chw_id
+            try:
+                usernames_to_filter.append(member.profile.get().report_identity)
+            except ReporterProfile.DoesNotExist:
+                # this is an okay error - just don't include them
+                pass
         for supervisor in supervisors:
-            usernames_to_filter.append(supervisor.report_identity)
+            try:
+                usernames_to_filter.append(supervisor.profile.get().report_identity)
+            except ReporterProfile.DoesNotExist:
+                # this is an okay error - just don't include them
+                pass
     elif isinstance(content_obj, ExtUser):        
         domain  = content_obj.domain
         supervising_orgs = utils.get_supervisor_roles(content_obj)
@@ -119,10 +130,10 @@ def get_data_below(organization, startdate, enddate, depth):
     for child_org in organization.children.all():
         # add the child organization itself
         fullret.append(get_single_item(None, child_org, startdate, enddate, depth))
-        
+        members, supervisors = utils.get_members_and_supervisors(child_org)
         # add supervisor/member counts
         is_first = True
-        for supervisor in child_org.supervisors.all():
+        for supervisor in supervisors:
             # leaving the hack in that everything after the first is expected
             # to have a "None" description.  This should be revisited
             if is_first: 
@@ -131,7 +142,7 @@ def get_data_below(organization, startdate, enddate, depth):
             else: 
                 fullret.append(get_single_item(None, supervisor, startdate, enddate, depth + 1))
         is_first = True
-        for member in child_org.members.all():
+        for member in members:
             if is_first:
                 fullret.append(get_single_item("Members", member, startdate, enddate, depth + 1))
                 is_first = False

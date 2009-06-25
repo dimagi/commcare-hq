@@ -1,6 +1,7 @@
 import re, os
 import logging
 from lxml import etree
+
 #from django.db import backend
 
 TABLE_PREFIX = "x_"
@@ -57,7 +58,7 @@ def get_xmlns(stream):
         xmlns = get_table_name( r.group(0).strip('{').strip('}') )
         logging.debug( "Xmlns is " + xmlns )
         return xmlns
-    except XMLSyntaxError:
+    except etree.XMLSyntaxError:
         # this is probably just some non-xml data.
         # not a big deal, just don't return an xmlns
         return None

@@ -50,19 +50,19 @@ def get_chart_group(extuser):
 
 
 def get_members_and_supervisors(organization):
-    """Return a tuple (members[], supervisors[]) for a given organization"""
-    (parents, children) = traversal.getImmediateRelationsForObject(organization)
-    
-    supervisors = []
+    """Return a tuple (members[], supervisors[]) for a given organization.
+       Deals with the empty lists and null objects for you so you don't have 
+       to."""
     members = []
-    for child_edge in children:
-        if child_edge.relationship.id == MEMBER_EDGE_TYPE:   
-            members.append(child_edge.child_object)
-        elif child_edge.relationship.id == SUPERVISOR_EDGE_TYPE:
-            supervisors.append(child_edge.child_object)            
-    return (members, supervisors) 
-
-
+    supervisors = []
+    if organization:
+        if organization.members:
+            members = organization.members.reporters.all()
+        if organization.supervisors:
+            supervisors = organization.supervisors.reporters.all()  
+    return (members, supervisors)
+            
+    
 def get_user_affiliation(extuser):
     (parents, children) = traversal.getImmediateRelationsForObject(extuser)
         

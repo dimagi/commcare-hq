@@ -330,6 +330,52 @@ def run():
     organization_extuser_15.identity = None
     organization_extuser_15.save()
 
+    # czue make this rapidsms reporters 
+    from reporters.models import ReporterGroup
+
+    reporters_reportergroup_1 = ReporterGroup()
+    reporters_reportergroup_1.title = u'brac-chw-supervisors'
+    reporters_reportergroup_1.parent = None
+    reporters_reportergroup_1.description = u'BRAC CHW supervisors'
+    reporters_reportergroup_1.save()
+
+    reporters_reportergroup_2 = ReporterGroup()
+    reporters_reportergroup_2.title = u'brac-chw-members'
+    reporters_reportergroup_2.parent = None
+    reporters_reportergroup_2.description = u'BRAC CHW members'
+    reporters_reportergroup_2.save()
+
+    from reporters.models import PersistantBackend
+
+    reporters_persistantbackend_1 = PersistantBackend()
+    reporters_persistantbackend_1.slug = u'http'
+    reporters_persistantbackend_1.title = u'http'
+    reporters_persistantbackend_1.save()
+
+    from reporters.models import Reporter
+
+    reporters_reporter_1 = Reporter()
+    reporters_reporter_1.alias = u'bderenzi'
+    reporters_reporter_1.first_name = u''
+    reporters_reporter_1.last_name = u''
+    reporters_reporter_1.location = None
+    reporters_reporter_1.role = None
+    reporters_reporter_1.language = u'en'
+    reporters_reporter_1.registered_self = False
+    reporters_reporter_1.save()
+
+    reporters_reporter_1.groups.add(reporters_reportergroup_1)
+
+    from reporters.models import PersistantConnection
+
+    reporters_persistantconnection_1 = PersistantConnection()
+    reporters_persistantconnection_1.backend = reporters_persistantbackend_1
+    reporters_persistantconnection_1.identity = u'13'
+    reporters_persistantconnection_1.reporter = reporters_reporter_1
+    reporters_persistantconnection_1.last_seen = None
+    reporters_persistantconnection_1.save()
+
+
     from organization.models import Organization
 
     organization_organization_1 = Organization()
@@ -337,8 +383,8 @@ def run():
     organization_organization_1.domain = organization_domain_1
     organization_organization_1.description = u'TZ'
     organization_organization_1.save()
-    organization_organization_1.supervisors = [organization_extuser_2]
-    organization_organization_1.members = [organization_extuser_6, organization_extuser_7]
+    #organization_organization_1.supervisors = [organization_extuser_2]
+    #organization_organization_1.members = [organization_extuser_6, organization_extuser_7]
     organization_organization_1.save()
     
     organization_organization_1.organization_type.add(organization_organizationtype_1)
@@ -356,9 +402,9 @@ def run():
     organization_organization_3.domain = organization_domain_2
     organization_organization_3.description = u''
     organization_organization_3.parent = organization_organization_2 
+    organization_organization_3.supervisors = reporters_reportergroup_1 
     organization_organization_3.save()
-    organization_organization_3.supervisors = [organization_extuser_4]
-    organization_organization_3.members = [organization_extuser_8, organization_extuser_9]
+    organization_organization_3.members = reporters_reportergroup_2
     organization_organization_3.save()
     
     
@@ -371,7 +417,7 @@ def run():
     organization_organization_4.description = u''
     organization_organization_4.parent = organization_organization_2 
     organization_organization_4.save()
-    organization_organization_4.members = [organization_extuser_4, organization_extuser_5]
+    #organization_organization_4.members = [organization_extuser_4, organization_extuser_5]
     organization_organization_4.save()
     
     organization_organization_4.organization_type.add(organization_organizationtype_2)
@@ -381,8 +427,8 @@ def run():
     organization_organization_5.domain = organization_domain_3
     organization_organization_5.description = u''
     organization_organization_5.save()
-    organization_organization_5.supervisors = [organization_extuser_10, organization_extuser_11]
-    organization_organization_5.members = [organization_extuser_12, organization_extuser_13]
+    #organization_organization_5.supervisors = [organization_extuser_10, organization_extuser_11]
+    #organization_organization_5.members = [organization_extuser_12, organization_extuser_13]
     organization_organization_5.save()
     
 

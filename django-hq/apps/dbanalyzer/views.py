@@ -134,16 +134,13 @@ def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
         else:
             context['group_charts'].append(thegraph)    
     
-    
     context['child_groups'] = GraphGroup.objects.all().filter(parent_group=group)
     
     #get the root group
     extuser = ExtUser.objects.all().get(id=request.user.id)
     rootgroup = utils.get_chart_group(extuser)    
     graphtree = get_graphgroup_children(rootgroup)
-    
     context['graphtree'] = graphtree
-    
     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
