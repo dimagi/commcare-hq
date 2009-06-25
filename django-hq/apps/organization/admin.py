@@ -26,15 +26,6 @@ class ReportScheduleAdmin(admin.ModelAdmin):
     list_filter = ['active','report_class','report_frequency', 'report_delivery', 'recipient_user']
     
     
-#
-#class OrgRelationshipTypeAdmin(admin.ModelAdmin):
-#    list_display = ('name','description','directional')
-#    list_filter = ['directional']      
-#    
-#class OrgRelationshipAdmin(admin.ModelAdmin):
-#    list_display = ('parent_type','parent_id','relationship','child_type','child_id')
-#    list_filter = ['relationship', 'parent_type','parent_id','child_type','child_id']      
-#    
 
 
 admin.site.register(OrganizationType,OrganizationTypeAdmin)
