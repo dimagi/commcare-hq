@@ -43,8 +43,11 @@ def get_members(organization):
     return members 
 
 def get_chart_group(extuser):
+    # todo this makes a mean assumption there's only one
+    # group 
     try:
-        return GraphPref.objects.get(user=extuser)
+        prefs = GraphPref.objects.get(user=extuser)
+        return  prefs.root_graphs.all()[0]
     except GraphPref.DoesNotExist:
         return None
 
