@@ -81,9 +81,7 @@ def run():
     organization_organizationtype_4.save()
 
 
-    from organization.models import ExtRole
-
-
+    
     from organization.models import ExtUser
 
     organization_extuser_1 = ExtUser()

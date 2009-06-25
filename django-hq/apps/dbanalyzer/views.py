@@ -21,7 +21,6 @@ from django.db import transaction
 import uuid
 
 from models import *
-#from forms import *
 import logging
 import hashlib
 import settings

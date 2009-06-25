@@ -20,10 +20,7 @@ class OrganizationAdmin(admin.ModelAdmin):
     list_display = ('id','name','domain', 'parent', 'description',)
     list_filter = []  
     
-class ExtRoleAdmin(admin.ModelAdmin):
-    list_display = ('id','name','description','domain')
-    list_filter = []      
-    
+
 class ReportScheduleAdmin(admin.ModelAdmin):
     list_display = ('id','active','name','description','report_class', 'report_frequency','report_delivery', 'recipient_user', 'organization', 'report_function')
     list_filter = ['active','report_class','report_frequency', 'report_delivery', 'recipient_user']
@@ -42,7 +39,6 @@ class ReportScheduleAdmin(admin.ModelAdmin):
 
 admin.site.register(OrganizationType,OrganizationTypeAdmin)
 admin.site.register(ReportSchedule, ReportScheduleAdmin)
-admin.site.register(ExtRole,ExtRoleAdmin)
 admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)

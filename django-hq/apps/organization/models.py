@@ -5,8 +5,13 @@ from reporters.models import Reporter, ReporterGroup
 
 
 class Domain(models.Model):
+    '''Domain is the highest level collection of people/stuff
+       in the system.  Pretty much everything happens at the 
+       domain-level, including permission to see data, reports,
+       charts, etc.'''
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=255, null=True, blank=True)
+        
     def __unicode__(self):
         return self.name
     class Meta:
@@ -22,17 +27,6 @@ class OrganizationType(models.Model):
     class Meta:
         verbose_name = _("Organization Type")
 
-
-class ExtRole(models.Model):
-    name = models.CharField(max_length=64, unique=True)
-    domain = models.ForeignKey(Domain)
-    description = models.CharField(max_length=255, null=True, blank=True)
-    level = models.IntegerField()    
-    
-    def __unicode__(self):
-        return self.name
-    class Meta:
-        verbose_name = _("Extended User Role")
 
 class ReporterProfile(models.Model):
     '''The profile for a reporter object.  For attaching some of our
@@ -100,11 +94,13 @@ class ExtUser(User):
         verbose_name = _("Extended User")
 
 class Organization(models.Model):
+    # this should be renamed to "Group" if that term wasn't highly
+    # overloaded already.  These really aren't organizations.
     '''An Organization.  Organizations are associated with domains.  They also 
        have parent/child hierarchies.  Currently an organization can have at 
        most 1 parent.  Top-level organizations don't have a parent.  
        Organizations also have members and supervisors.'''
-       
+    
     name = models.CharField(max_length=32, unique=True) #something's messed up with this (CZUE 6/9/2009: I didn't write this comment - what's messed up??) 
     domain = models.ForeignKey(Domain)
     description = models.CharField(max_length=255, null=True, blank=True)

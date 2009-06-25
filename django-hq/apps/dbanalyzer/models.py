@@ -43,8 +43,6 @@ class BaseGraph(models.Model):
     
 
 class RawGraph(BaseGraph):    
-#    shortname = models.CharField(max_length=32)
-#    title = models.CharField(max_length=128)
     table_name = models.CharField(max_length=255)
     
     data_source = models.CharField(_('Database source'),max_length=128, null=True, blank=True, help_text=_("Placeholder for alternate database"))
