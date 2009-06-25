@@ -65,46 +65,45 @@ class Submission(models.Model):
         fin = open(self.raw_post,'rb')
         body = fin.read()        
         fin.close()        
-        try:
-            parsed_message = email.message_from_string(body)   
-            
-            for part in parsed_message.walk():
-               #print "CONTENT-TYPE: " + str(part.get_content_type())     
-               if part.get_content_type() == 'multipart/mixed':
-                   #it's a multipart message, oh yeah
-                   logging.debug("Multipart part")
-                   #print part['Content-ID']
-                   #continue
-               else:                   
-                   new_attach= Attachment()
-                   new_attach.submission = self
-                   new_attach.attachment_content_type=part.get_content_type()
-                   if part.get_content_type().startswith('text/'):                       
-                       new_attach.attachment_uri = 'xform'
-                       filename='-xform.xml'
-                   else:
-                       logging.debug("non XML section: " + part['Content-ID'])
-                       new_attach.attachment_uri = part['Content-ID']
-                       filename='-%s' % os.path.basename(new_attach.attachment_uri)
-                       
-                   payload = part.get_payload().strip()
-                   new_attach.filesize = len(payload)
-                   new_attach.checksum = hashlib.md5(payload).hexdigest()
-                   fout = open(os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
-                   fout.write(payload)
-                   fout.close() 
-                   new_attach.filepath = os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename)
-                   new_attach.save()                
-                   logging.debug("Attachment Save complete")                    
-        except:
-            logging.error("error parsing attachments") 
-            #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
-            #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
-            type, value, tb = sys.exc_info()
-            logging.error("Attachment Parse Error Traceback:")
-            logging.error(type.__name__ +  ":" + str(value))            
-            logging.error(string.join(traceback.format_tb(tb),' '))
-            
+        parsed_message = email.message_from_string(body)   
+        for part in parsed_message.walk():
+            try:
+                #print "CONTENT-TYPE: " + str(part.get_content_type())     
+                if part.get_content_type() == 'multipart/mixed':
+                    #it's a multipart message, oh yeah
+                    logging.debug("Multipart part")
+                    #print part['Content-ID']
+                    #continue
+                else:                   
+                    new_attach= Attachment()
+                    new_attach.submission = self
+                    new_attach.attachment_content_type=part.get_content_type()
+                    if part.get_content_type().startswith('text/'):                       
+                        new_attach.attachment_uri = 'xform'
+                        filename='-xform.xml'
+                    else:
+                        logging.debug("non XML section: " + part['Content-ID'])
+                        new_attach.attachment_uri = part['Content-ID']
+                        filename='-%s' % os.path.basename(new_attach.attachment_uri)
+               
+                    payload = part.get_payload().strip()
+                    new_attach.filesize = len(payload)
+                    new_attach.checksum = hashlib.md5(payload).hexdigest()
+                    fout = open(os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
+                    fout.write(payload)
+                    fout.close() 
+                    new_attach.filepath = os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename)
+                    new_attach.save()                
+                    logging.debug("Attachment Save complete")                    
+            except:
+                logging.error("error parsing attachments") 
+                #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
+                #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
+                type, value, tb = sys.exc_info()
+                logging.error("Attachment Parse Error Traceback:")
+                logging.error(type.__name__ +  ":" + str(value))            
+                logging.error(string.join(traceback.format_tb(tb),' '))
+        
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)
     backup_code = models.IntegerField(unique=True)
