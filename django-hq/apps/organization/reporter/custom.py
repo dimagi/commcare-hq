@@ -37,6 +37,17 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         helper = dbhelper.DbHelper(table, fdef.form_display_name) 
         #let's get the usernames
         all_usernames = helper.get_uniques_for_column('meta_username', None, None)
+        # hack!  manually set this for grameen
+        if domain.name == "Grameen":
+            all_usernames = ["mustafizurrahmna",
+                             "mdyusufali",
+                             "afrozaakter  ",
+                             "renuaraakter",
+                             "mostshahrinaakter",
+                             "shahanaakter",
+                             "sajedaparvin",
+                             "nasimabegum"
+                             ]
         #ok, so we got ALL usernames.  let's filter out the ones we've already seen
         unclaimed_users = []
         for existing in all_usernames:
@@ -48,7 +59,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
         for user in all_usernames:                
             userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
-                 
+            user_date_hash[user] = {}
             for dat in userdailies:                
                 if not user_date_hash.has_key(user):
                     user_date_hash[user] = {}

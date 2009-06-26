@@ -45,7 +45,18 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         table = fdef.element.table_name
         helper = dbhelper.DbHelper(table, fdef.form_display_name) 
         #let's get the usernames
-        usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)           
+        # hack!  manually set this for grameen
+        usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)
+        if extuser.domain.name == "Grameen":
+            usernames_to_filter = ["mustafizurrahmna",
+                                   "mdyusufali",
+                                   "afrozaakter  ",
+                                   "renuaraakter",
+                                   "mostshahrinaakter",
+                                   "shahanaakter",
+                                   "sajedaparvin",
+                                   "nasimabegum"
+                                   ]
         for user in usernames_to_filter:            
             if not username_to_count_hash.has_key(user):
                 username_to_count_hash[user] = {}                        
