@@ -66,35 +66,37 @@ def dashboard(request, template_name="organization/dashboard.html"):
 
 @login_required()
 def org_report(request, template_name="organization/org_report.html"):
-    context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
-    
-    # set some default parameters for start and end if they aren't passed in
-    # the request
-    startdate, enddate = _get_dates(request)
-    
-    context['startdate'] = startdate
-    context['enddate'] = enddate    
-    
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_report'
-    
-    # get the domain from the user, the root organization from the domain,
-    # and then the report from the root organization
-    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
-    # note: this pretty sneakily decides for you that you only care
-    # about one root organization per domain.  should we lift this 
-    # restriction?  otherwise this may hide data from you 
-    root_org = root_orgs[0]
-    # this call makes the meat of the report.
-    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    #czue - temporarily making org_report forward to email
+    return org_email_report(request)
+#    context = {}
+#    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+#        template_name="organization/no_permission.html"
+#        return render_to_response(template_name, context, context_instance=RequestContext(request))
+#    
+#    # set some default parameters for start and end if they aren't passed in
+#    # the request
+#    startdate, enddate = _get_dates(request)
+#    
+#    context['startdate'] = startdate
+#    context['enddate'] = enddate    
+#    
+#    extuser = ExtUser.objects.all().get(id=request.user.id)        
+#    context['extuser'] = extuser
+#    context['domain'] = extuser.domain
+#    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+#    context['view_name'] = 'organization.views.org_report'
+#    
+#    # get the domain from the user, the root organization from the domain,
+#    # and then the report from the root organization
+#    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+#    # note: this pretty sneakily decides for you that you only care
+#    # about one root organization per domain.  should we lift this 
+#    # restriction?  otherwise this may hide data from you 
+#    root_org = root_orgs[0]
+#    # this call makes the meat of the report.
+#    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+#    
+#    return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required()
 def org_email_report(request, template_name="organization/org_single_report.html"):
@@ -131,6 +133,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
                                           "organization/reports/email_hierarchy_report.txt", 
                                           {"heading" : heading })
     context['report_display'] = rendered
+    context['report_title'] = "Submissions per day for all CHWs"
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 @login_required

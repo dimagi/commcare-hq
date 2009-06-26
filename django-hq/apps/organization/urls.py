@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 
 urlpatterns = patterns('',
+    #url(r'^report/?$', 'organization.views.org_report', name='org_report'),    
     url(r'^report/?$', 'organization.views.org_report', name='org_report'),    
     (r'^report/email/?$', 'organization.views.org_email_report'),
     #(r'^report/email/(?P<id>\d*)/?$', 'organization.views.org_email_report'),
