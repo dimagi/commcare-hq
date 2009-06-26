@@ -143,10 +143,10 @@
       "data_source": "", 
       "x_type": "string", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select \r\ndistinct(meta_username), \r\navg(UNIX_TIMESTAMP(meta_timeend) - UNIX_TIMESTAMP(meta_timestart)) as avg \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by meta_username\r\n\r\n\r\n"
+      "db_query": "select \r\ndistinct(meta_username), \r\navg(UNIX_TIMESTAMP(meta_timeend) - UNIX_TIMESTAMP(meta_timestart)) as avg \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by meta_username\r\n\r\n\r\n"
     }
   }, 
   {
@@ -156,11 +156,11 @@
       "series_labels": "Counts", 
       "data_source": "", 
       "x_type": "numeric", 
-      "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "x_axis_label": "Prior Births", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select\r\n distinct(sampledata_numb_birth), \r\n count(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\n\r\n\r\ngroup by sampledata_numb_birth"
+      "db_query": "select\r\n distinct(sampledata_previous_pregnancies), \r\n count(*) \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\n\r\nwhere sampledata_previous_pregnancies between '0' and '10'\r\n\r\ngroup by sampledata_previous_pregnancies \r\n\r\nORDER BY sampledata_previous_pregnancies ASC"
     }
   }, 
   {
@@ -171,10 +171,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 ", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "absolute-line", 
       "series_options": "", 
-      "db_query": "select \r\n DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n avg(sampledata_numb_birth) as avgbirth\r\n\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\n\r\n\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\n;"
+      "db_query": "select \r\n DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n avg(sampledata_previous_pregnancies) as avgbirth\r\n\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\n\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\n;"
     }
   }, 
   {
@@ -185,10 +185,10 @@
       "data_source": "", 
       "x_type": "string", 
       "x_axis_label": "Username", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "table_name": "x_dev_commcarehq_org_intel_grameen_safe_motherhood_followup_v0_1", 
       "display_type": "histogram-overall", 
       "series_options": "", 
-      "db_query": "select\r\n distinct(meta_username), \r\ncount(*) \r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by meta_username"
+      "db_query": "select\r\n distinct(meta_username), \r\ncount(*) \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\nwhere meta_username <> 'admin'\r\n\r\ngroup by meta_username"
     }
   }, 
   {
@@ -199,10 +199,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-cumulative", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -213,10 +213,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "Date", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-trend", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -227,10 +227,10 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
-      "display_type": "absolute-line", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
+      "display_type": "absolute-bar", 
       "series_options": "", 
-      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -241,10 +241,10 @@
       "data_source": "", 
       "x_type": "date", 
       "x_axis_label": "", 
-      "table_name": "x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1", 
+      "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
       "display_type": "cumulative-line", 
       "series_options": "", 
-      "db_query": "select\r\n  meta_timeend, count(*)\r\nfrom x_http__www_commcare_org_mvp_safe_motherhood_registration_v0_1 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  meta_timeend, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -392,8 +392,8 @@
         11, 
         10
       ], 
-      "name": "Registration", 
-      "description": "Registration Graphs"
+      "name": "Program Management", 
+      "description": "Program Management Graphs"
     }
   }, 
   {
@@ -415,12 +415,11 @@
     "pk": 4, 
     "model": "dbanalyzer.graphgroup", 
     "fields": {
-      "parent_group": 2, 
+      "parent_group": 1, 
       "graphs": [
-        16, 
-        15
+        16
       ], 
-      "name": "Registration Pregnancy Stats", 
+      "name": "Patient Management", 
       "description": "Stats on Pregnancy related data"
     }
   }, 
@@ -460,6 +459,26 @@
       ], 
       "name": "Brac Data Charts", 
       "description": "Data data"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "dbanalyzer.graphpref", 
+    "fields": {
+      "user": 4, 
+      "root_graphs": [
+        1
+      ]
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "dbanalyzer.graphpref", 
+    "fields": {
+      "user": 5, 
+      "root_graphs": [
+        5
+      ]
     }
   }
 ]
