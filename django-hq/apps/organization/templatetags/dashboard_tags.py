@@ -28,16 +28,15 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     
     #todo:  query the global meta tables to get all the users
     #and/or query the ExtUser table to get all the registered users.
-    totalspan = enddate-startdate    
+    totalspan = enddate-startdate   
     report_hash = {}
     extuser = ExtUser.objects.get(id=user.id)
-        
+    
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
         #print target_date.strftime('%m/%d/%Y')
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
-    
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     

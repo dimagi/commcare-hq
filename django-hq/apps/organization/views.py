@@ -108,7 +108,8 @@ def org_email_report(request, template_name="organization/org_single_report.html
     startdate, enddate = _get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
-    
+    print startdate
+    print enddate
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
@@ -272,8 +273,8 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
 def _get_dates(request):
     default_delta = timedelta(days=1)
     
-    enddate = datetime.datetime.now()
-    startdate = datetime.datetime.now() - default_delta
+    startdate = datetime.datetime.now().date()
+    enddate = startdate + default_delta
     
     for item in request.GET.items():
         if item[0] == 'startdate':
@@ -281,7 +282,9 @@ def _get_dates(request):
             startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
         if item[0] == 'enddate':
             enddate_str=item[1]
-            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')                
+            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
+            # actually set the enddate +1 day because it's not inclusive
+            enddate = enddate + timedelta(days=1)
     return (startdate, enddate)
 
 def _get_report_id(request):

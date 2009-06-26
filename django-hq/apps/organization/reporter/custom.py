@@ -41,7 +41,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         if domain.name == "Grameen":
             all_usernames = ["mustafizurrahmna",
                              "mdyusufali",
-                             "afrozaakter  ",
+                             "afrozaakter",
                              "renuaraakter",
                              "mostshahrinaakter",
                              "shahanaakter",
@@ -59,14 +59,11 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
         for user in all_usernames:                
             userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
-            user_date_hash[user] = {}
-            for dat in userdailies:                
-                if not user_date_hash.has_key(user):
-                    user_date_hash[user] = {}
-                
+            if not user_date_hash.has_key(user):
+                user_date_hash[user] = {}
+            for dat in userdailies:               
                 if not user_date_hash[user].has_key(dat[1]):
                     user_date_hash[user][dat[1]] = 0                   
-                
                 user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
     #end for loop through all the fdefs
     
@@ -207,10 +204,9 @@ def admin_catch_all(report_schedule, run_frequency):
             #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
             for user in unclaimed_users:                
                 userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
-                print userdailies                        
+                if not user_date_hash.has_key(user):
+                    user_date_hash[user] = {}
                 for dat in userdailies:                
-                    if not user_date_hash.has_key(user):
-                        user_date_hash[user] = {}
                     
                     if not user_date_hash[user].has_key(dat[1]):
                         user_date_hash[user][dat[1]] = 0                   
