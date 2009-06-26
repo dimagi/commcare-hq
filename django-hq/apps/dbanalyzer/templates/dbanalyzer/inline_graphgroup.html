@@ -1,10 +1,10 @@
 {% for group, subgroups in graphtree.items %}
-		<li><a>GraphGroup: {{ group.name }}</a>
+		<li><a>{{ group.name }}</a>
 			<ul>
 			{% if group.graphs %}				
 					{% for graph in group.graphs.all %}
 					<li>
-						<a href="{%url dbanalyzer.views.view_rawgraph graph.id %}">Graph: {{graph.shortname}}</a>
+						<a href="{%url dbanalyzer.views.view_rawgraph graph.id %}">{{graph.shortname}}</a>
 					</li>
 					{% endfor %}								
 			{% endif %}
