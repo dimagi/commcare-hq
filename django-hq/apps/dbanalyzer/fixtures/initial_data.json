@@ -203,7 +203,7 @@
       "series_labels": "Counts", 
       "data_source": "", 
       "x_type": "numeric", 
-      "additional_options": "{\"legend\": { \"show\": false }, \"xaxis\": { \"max\": 100}}", 
+      "additional_options": "{\"legend\": { \"show\": false }}"
       "time_bound": 0, 
       "x_axis_label": "Prior Births", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
