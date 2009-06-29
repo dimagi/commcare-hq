@@ -40,7 +40,7 @@ class BaseGraph(models.Model):
     title = models.CharField(max_length=128)
     
     def __unicode__(self):
-        return "Graph: " + unicode(self.shortname)
+        return unicode(self.shortname)
     class Meta:
         ordering = ('-id',)
     
@@ -72,7 +72,7 @@ class RawGraph(BaseGraph):
         verbose_name = _("Raw Graphing Requestor")        
     
     def __unicode__(self):
-        return "RawGraph: " + unicode(self.shortname)
+        return self.shortname
     
     
     @property 

@@ -51,8 +51,8 @@
     "pk": 13, 
     "model": "dbanalyzer.basegraph", 
     "fields": {
-      "shortname": "Registration Trends by User", 
-      "title": "Pregnancy Registration Trends by User"
+      "shortname": "CHW Submissions Over Time", 
+      "title": "CHW Submissions Over Time"
     }
   }, 
   {
@@ -203,7 +203,7 @@
       "series_labels": "Counts", 
       "data_source": "", 
       "x_type": "numeric", 
-      "additional_options": "{\"legend\": { \"show\": false }}"
+      "additional_options": "{\"legend\": { \"show\": false }, \"xaxis\": { \"max\": 100}}", 
       "time_bound": 0, 
       "x_axis_label": "Prior Births", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
@@ -249,11 +249,11 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
-      "time_bound": 0, 
-      "x_axis_label": "", 
+      "time_bound": 1, 
+      "x_axis_label": "Date Filled Out", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-cumulative", 
-      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\nwhere meta_timestart > '{{startdate}}'\r\nand meta_timestart < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -454,8 +454,7 @@
       "graphs": [
         19, 
         18, 
-        11, 
-        10
+        13
       ], 
       "name": "Program Management", 
       "description": "Program Management Graphs"
@@ -465,7 +464,7 @@
     "pk": 3, 
     "model": "dbanalyzer.graphgroup", 
     "fields": {
-      "parent_group": 2, 
+      "parent_group": null, 
       "graphs": [
         17, 
         14, 
@@ -524,26 +523,6 @@
       ], 
       "name": "Brac Data Charts", 
       "description": "Data data"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "dbanalyzer.graphpref", 
-    "fields": {
-      "user": 4, 
-      "root_graphs": [
-        1
-      ]
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "dbanalyzer.graphpref", 
-    "fields": {
-      "user": 5, 
-      "root_graphs": [
-        5
-      ]
     }
   }
 ]
