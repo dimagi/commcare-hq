@@ -66,8 +66,11 @@ def dashboard(request, template_name="organization/dashboard.html"):
 
 @login_required()
 def org_report(request, template_name="organization/org_report.html"):
-    #czue - temporarily making org_report forward to email
     return org_email_report(request)
+    # czue - temporarily making org_report forward to email
+    # leaving this comment block in because we will probably
+    # want the hierarchical reports to show up in some form 
+    # in the future
 #    context = {}
 #    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
 #        template_name="organization/no_permission.html"
@@ -108,8 +111,6 @@ def org_email_report(request, template_name="organization/org_single_report.html
     startdate, enddate = _get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
-    print startdate
-    print enddate
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
@@ -128,8 +129,13 @@ def org_email_report(request, template_name="organization/org_single_report.html
     
     # this call makes the meat of the report.
     #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate)
-    heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+    
+    # we add one to the enddate because the db query is not inclusive.
+    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
+    if startdate == enddate:
+        heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
+    else: 
+        heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_email(data, startdate, enddate, 
                                           "organization/reports/email_hierarchy_report.txt", 
                                           {"heading" : heading })
@@ -174,7 +180,8 @@ def org_report_list(request, single_report_url, template_name):
     # restriction?  otherwise this may hide data from you 
     root_org = root_orgs[0]
     # this call makes the meat of the report.
-    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    # we add one to the enddate because the db query is not inclusive.
+    context['results'] = repinspector.get_data_below(root_org, startdate, enddate + timedelta(days=1), 0)
     
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
@@ -209,7 +216,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
     
     # this call makes the meat of the report.
     #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate)
+    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_sms(data, startdate, enddate, 
                                           "organization/reports/sms_organization.txt", 
@@ -274,7 +281,7 @@ def _get_dates(request):
     default_delta = timedelta(days=1)
     
     startdate = datetime.datetime.now().date()
-    enddate = startdate + default_delta
+    enddate = startdate 
     
     for item in request.GET.items():
         if item[0] == 'startdate':
@@ -283,8 +290,6 @@ def _get_dates(request):
         if item[0] == 'enddate':
             enddate_str=item[1]
             enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
-            # actually set the enddate +1 day because it's not inclusive
-            enddate = enddate + timedelta(days=1)
     return (startdate, enddate)
 
 def _get_report_id(request):

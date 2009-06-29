@@ -28,13 +28,14 @@ def get_daterange_links(view_name, args={}):
     delta_day= timedelta(days=1)
     delta_month = timedelta(days=30)
     delta_3month = timedelta(days=90)
-        
-    enddate = datetime.now()    
     
+    enddate = datetime.now()    
+    yesterday = enddate - delta_day
     #datetime.strptime(startdate_str,'%m/%d/%Y')
     ret = ''
     ret += '<div class="daterange_tabs"><ul>'
-    ret += '<li><a href="%s">Last Day</a>' % (base_link)
+    ret += '<li><a href="%s">Today</a>' % (base_link)
+    ret += '<li><a href="%s?startdate=%s&enddate=%s">Yesterday</a>' % (base_link, yesterday.strftime('%m/%d/%Y'), yesterday.strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Last Week</a>' % (base_link, (enddate - delta_week).strftime('%m/%d/%Y'), (enddate).strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Last Month</a>' % (base_link, (enddate - delta_month).strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Last 3 Months</a>' % (base_link, (enddate - delta_3month).strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))

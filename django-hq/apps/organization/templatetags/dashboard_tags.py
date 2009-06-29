@@ -23,12 +23,11 @@ output_format = '%Y-%m-%d %H:%M'
 
 @register.simple_tag
 def get_dashboard_user_counts(user, startdate=None, enddate=None):
-    ret  = ''    
     username_to_count_hash = {}
     
     #todo:  query the global meta tables to get all the users
     #and/or query the ExtUser table to get all the registered users.
-    totalspan = enddate-startdate   
+    totalspan = enddate-startdate
     report_hash = {}
     extuser = ExtUser.objects.get(id=user.id)
     
@@ -59,26 +58,26 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         for user in usernames_to_filter:            
             if not username_to_count_hash.has_key(user):
                 username_to_count_hash[user] = {}                        
-            
-            userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})   
+            # we add one to the enddate because the db query is not inclusive.
+            userdailies = helper.get_filtered_date_count(startdate, enddate + timedelta(days=1),filters={'meta_username': user})   
             for dat in userdailies:                
                 username_to_count_hash[user][dat[1]] = int(dat[0])
 
     
-    ret += '<table class="sofT"><tr><td class="helpHed">Date</td>'
+    # this block generates the table definition, and headers (one for each
+    # user).  It also populates the hash of date-->count mappings per user
+    # to be displayed in the next loop.
+    ret = '<table class="sofT"><tr><td class="helpHed">Date</td>'
     for user in username_to_count_hash.keys():
-        ret += '<td  class="helpHed">%s</td>' % (user)
+        ret += '<td  class="helpHed">%s</td>\n' % (user)
         for datestr in username_to_count_hash[user].keys():
             #dt = time.strptime(str(datestr[0:-4]),xmldate_format)
             #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
             #date = datum.strftime('%m/%d/%Y')              
             if not report_hash[datestr].has_key(user):
                 report_hash[datestr][user]=username_to_count_hash[user][datestr]
-        
     ret += "</tr>\n"
     
-    
-    #for date in report_hash.keys():
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
