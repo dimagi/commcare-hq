@@ -23,7 +23,10 @@ register = template.Library()
 @register.simple_tag
 def get_daterange_links(view_name, args={}):
     base_link = reverse(view_name,kwargs=args)
+    return get_daterange_links_raw(base_link, args)
 
+@register.simple_tag
+def get_daterange_links_raw(base_link, args={}):
     delta_week = timedelta(days=7)
     delta_day= timedelta(days=1)
     delta_month = timedelta(days=30)

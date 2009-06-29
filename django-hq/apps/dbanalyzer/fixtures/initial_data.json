@@ -1,5 +1,13 @@
 [
   {
+    "pk": 19, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "Total CHW Submissions", 
+      "title": "Total CHW Submissions"
+    }
+  }, 
+  {
     "pk": 18, 
     "model": "dbanalyzer.basegraph", 
     "fields": {
@@ -144,6 +152,21 @@
     }
   }, 
   {
+    "pk": 19, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "string", 
+      "additional_options": "{\"legend\": { \"show\": false }}", 
+      "time_bound": 0, 
+      "x_axis_label": "CHW", 
+      "table_name": "xformmanager_metadata", 
+      "display_type": "histogram-overall", 
+      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\ngroup by username\r\n"
+    }
+  }, 
+  {
     "pk": 18, 
     "model": "dbanalyzer.rawgraph", 
     "fields": {
@@ -151,10 +174,11 @@
       "data_source": "", 
       "x_type": "string", 
       "additional_options": "{\"legend\": { \"show\": false}}", 
+      "time_bound": 1, 
       "x_axis_label": "", 
       "table_name": "xformmanager_metadata", 
       "display_type": "histogram-overall", 
-      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\ngroup by username\r\n"
+      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timestart > '{{startdate}}'\r\nand meta.timestart < '{{enddate}}'\r\ngroup by username\r\n"
     }
   }, 
   {
@@ -165,6 +189,7 @@
       "data_source": "", 
       "x_type": "string", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
@@ -179,6 +204,7 @@
       "data_source": "", 
       "x_type": "numeric", 
       "additional_options": "{\"legend\": { \"show\": false }, \"xaxis\": { \"max\": 100}}", 
+      "time_bound": 0, 
       "x_axis_label": "Prior Births", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
@@ -192,10 +218,11 @@
       "series_labels": "Count", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "absolute-line", 
-      "additional_options": "", 
       "db_query": "select \r\n DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n avg(sampledata_previous_pregnancies) as avgbirth\r\n\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\n\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\n;"
     }
   }, 
@@ -207,6 +234,7 @@
       "data_source": "", 
       "x_type": "string", 
       "additional_options": "{\"legend\": { \"show\": false}}", 
+      "time_bound": 0, 
       "x_axis_label": "Username", 
       "table_name": "x_dev_commcarehq_org_intel_grameen_safe_motherhood_followup_v0_1", 
       "display_type": "histogram-overall", 
@@ -221,6 +249,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-cumulative", 
@@ -235,6 +264,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Date", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-trend", 
@@ -249,6 +279,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
       "display_type": "absolute-bar", 
@@ -263,6 +294,7 @@
       "data_source": "", 
       "x_type": "date", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
       "display_type": "cumulative-line", 
@@ -277,6 +309,7 @@
       "data_source": "commcarehq", 
       "x_type": "date", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Time", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-bar", 
@@ -291,6 +324,7 @@
       "data_source": "asdf", 
       "x_type": "date", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Time", 
       "table_name": "sadf", 
       "display_type": "absolute-line", 
@@ -305,6 +339,7 @@
       "data_source": "", 
       "x_type": "date", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "time", 
       "table_name": "fasdfwdrf", 
       "display_type": "cumulative-line", 
@@ -319,6 +354,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-line", 
@@ -333,6 +369,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "asdf", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "cumulative-line", 
@@ -347,6 +384,7 @@
       "data_source": "commcarehq", 
       "x_type": "string", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "val", 
       "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-line", 
@@ -361,6 +399,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Date", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-cumulative", 
@@ -375,6 +414,7 @@
       "data_source": "", 
       "x_type": "string", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Username", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "histogram-overall", 
@@ -389,6 +429,7 @@
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
       "additional_options": "", 
+      "time_bound": 0, 
       "x_axis_label": "Date", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-trend", 
@@ -411,6 +452,7 @@
     "fields": {
       "parent_group": 1, 
       "graphs": [
+        19, 
         18, 
         11, 
         10

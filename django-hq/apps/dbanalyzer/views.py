@@ -82,8 +82,8 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     # some dates.  these can be templated down to the sql
     graph.domain = extuser.domain.name
     startdate, enddate = utils.get_dates(request)
-    graph.startdate = startdate
-    graph.enddate = enddate
+    graph.startdate = startdate.strftime("%Y-%m-%d")
+    graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
     context['chart_title'] = graph.title
     context['chart_data'] = graph.get_flot_data()
     context['rawgraph'] = graph
@@ -91,6 +91,7 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     rootgroup = utils.get_chart_group(extuser)    
     graphtree = get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
+    context['view_name'] = 'dbanalyzer.views.view_rawgraph'
     context['width'] = 900
     context['height'] = 500
     

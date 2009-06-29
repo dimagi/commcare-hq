@@ -57,7 +57,7 @@ class RawGraph(BaseGraph):
     series_labels = models.CharField(_('Series labels'),max_length=255, help_text=_("Each subsequent column in the query will be its own series.  Enter their names separated by the | symbol."))
     display_type = models.CharField(max_length=32,choices=CHART_DISPLAY_TYPES)
                                     
-
+    time_bound = models.BooleanField(null=True, blank=True, default=False)
     
     additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
                                       help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))

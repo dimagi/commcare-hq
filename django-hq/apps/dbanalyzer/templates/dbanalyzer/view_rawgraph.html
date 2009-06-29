@@ -1,6 +1,7 @@
 {# {% extends "dbanalyzer/flot_base.html" %} #}
 {% extends "base.html" %}
 {% load i18n %}
+{% load mainreport_tags %}
 {% block script_includes %}
     <script type="text/javascript" src="{{MEDIA_URL}}/dbanalyzer/flot/jquery.js"></script> 
     <script type="text/javascript" src="{{MEDIA_URL}}/dbanalyzer/flot/jquery.flot.js"></script>
@@ -21,14 +22,17 @@
 {% endblock %} 
 {% block content %}
 	
-	<div class="submenu">
+    <div class="submenu">
 	<ul class="sf-menu">
 		{% include "dbanalyzer/inline_graphgroup.html" %}	
 	</ul>
-	</div>
-	{% with rawgraph as chart %}
+    </div>
+	
+    {% with rawgraph as chart %}
 		{% include "dbanalyzer/inline_rawgraph.html" %}
 	{% endwith %}
-
+{% if rawgraph.time_bound  %}
+    <p>{% get_daterange_links_raw ""%}</p>
+{% endif %}    
 {%endblock%}
     
