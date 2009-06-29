@@ -156,7 +156,7 @@ class RawGraph(BaseGraph):
             myticks = []
             
             for i in range(0,len(ticks)):
-                myticks.append([i,ticks[i]])
+                myticks.append([i + .5,ticks[i]])
             ret["ticks"] =  myticks
             ret["tickFormatter"] = "string"
             ret['tickDecimals'] = 'null'
