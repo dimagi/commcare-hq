@@ -1,11 +1,11 @@
 {% load i18n %}
 <div class="chartblock">
 <h1>{{chart.title}}</h1>
-
 {% if chart.has_errors %}
 <h4 style="color:red;">Chart query error</h4>
 {% else %}
 <div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
+<p style="text-align: center; font-weight: bold">{{chart.x_axis_label}}
 <h4>Show Series</h4>
 <ul id="{{chart.id}}-choices"></ul>	
 <script id="{{chart.id}}-source" language="javascript" type="text/javascript">
@@ -45,7 +45,6 @@ $(function () {
     plotAccordingToChoices();
 });
 </script>
-
 {%endif%}
 </div>
 

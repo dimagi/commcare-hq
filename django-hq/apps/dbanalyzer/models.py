@@ -137,7 +137,6 @@ class RawGraph(BaseGraph):
 
     def get_xaxis_options(self):
         ret = {}
-        
         if self.x_type == 'date' or self.x_type == 'MM/DD/YYYY':
             ret['mode'] = 'time'
             ret['timeformat'] = "%m/%d/%y"

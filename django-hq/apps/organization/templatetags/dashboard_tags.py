@@ -94,13 +94,13 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     ret += "</table>"
     username_to_count_hash.clear()
     
-    # this was a proof of concept.  commenting out the line that actually
-    # adds it to the response since we aren't sure we want these displaying
-    # on the dashboard yet.
     
     # add the chart.  this might be a bit hacky, but we're going 
     # to try using render_to_string and inline_rawgraph to return 
     # this with the tag
+    # this was a proof of concept.  commenting out the line that actually
+    # adds it to the response since we aren't sure we want these displaying
+    # on the dashboard yet.
     chart = DummyChart()
     chart.title = "User Submissions"
     chart.has_errors = False
