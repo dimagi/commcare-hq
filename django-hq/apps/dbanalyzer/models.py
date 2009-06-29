@@ -6,6 +6,7 @@ import dbanalyzer.dbhelper as dbhelper
 import time
 import logging
 import datetime
+import simplejson
 
 # Create your models here.
 
@@ -53,8 +54,11 @@ class RawGraph(BaseGraph):
     
     series_labels = models.CharField(_('Series labels'),max_length=255, help_text=_("Each subsequent column in the query will be its own series.  Enter their names separated by the | symbol."))
     display_type = models.CharField(max_length=32,choices=CHART_DISPLAY_TYPES)
+                                    
+
     
-    series_options = models.CharField(_('Series display options'),max_length=255, blank=True, null=True)
+    additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
+                                      help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))
     
     #Non Django
     _cursor = None
@@ -138,9 +142,12 @@ class RawGraph(BaseGraph):
     def get_xaxis_options(self):
         ret = {}
         if self.x_type == 'date' or self.x_type == 'MM/DD/YYYY':
+            # format to display pretty dates
             ret['mode'] = 'time'
             ret['timeformat'] = "%m/%d/%y"
         elif self.x_type == 'string':
+            # this formats the bottom of the chart
+            # to have the appropriate names for histograms
             ticks = self.helper_cache['ticks']
             
             ret["min"] =  0;
@@ -280,7 +287,20 @@ class RawGraph(BaseGraph):
         ret = {}
         ret['yaxis'] = {'min':0}
         ret['xaxis'] = self.get_xaxis_options()
-        return ret
+        if self.additional_options:
+            options_dict = simplejson.loads(self.additional_options)
+            for key in options_dict:
+                to_use = {}
+                if key in ret:
+                    # if we already had some options, use those
+                    # as a starting point
+                    to_use = ret[key]
+                for inner_key, value in options_dict[key].items():
+                    to_use[str(inner_key)] = value
+                ret[str(key)] = to_use
+        # json serialize this so false and unicode values
+        # show up properly
+        return simplejson.dumps(ret)
     
     def get_dataseries(self):
         rows = self.get_dataset()
