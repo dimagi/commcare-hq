@@ -4,6 +4,8 @@ from organization.models import *
 from dbanalyzer.models import *
 import modelrelationship.traversal as traversal
 
+from datetime import timedelta
+
 PARENT_ORG_EDGE_TYPE=1
 SUPERVISOR_EDGE_TYPE=2
 MEMBER_EDGE_TYPE=3
@@ -74,3 +76,18 @@ def get_user_affiliation(extuser):
         if parent_edge.relationship.id == MEMBER_EDGE_TYPE or parent_edge.relationship.id == SUPERVISOR_EDGE_TYPE: 
             membership.append(parent_edge.parent_object)                    
     return membership
+
+def get_dates(request):
+    default_delta = timedelta(days=1)
+    
+    startdate = datetime.datetime.now().date()
+    enddate = startdate 
+    
+    for item in request.GET.items():
+        if item[0] == 'startdate':
+            startdate_str=item[1]
+            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
+        if item[0] == 'enddate':
+            enddate_str=item[1]
+            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
+    return (startdate, enddate)

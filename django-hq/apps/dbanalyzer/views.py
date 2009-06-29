@@ -73,12 +73,21 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
 @login_required()
 def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.html"):
     context = {}    
-    context['rawgraph'] = RawGraph.objects.all().get(id=graph_id)
-    context['chart_title'] = context['rawgraph'].title
-    context['chart_data'] = context['rawgraph'].get_flot_data()
+    graph = RawGraph.objects.all().get(id=graph_id)
     
     #get the root group
     extuser = ExtUser.objects.all().get(id=request.user.id)
+    # inject some stuff into the rawgraph.  we can also do more
+    # here but for now we'll just work with the domain and set 
+    # some dates.  these can be templated down to the sql
+    graph.domain = extuser.domain.name
+    startdate, enddate = utils.get_dates(request)
+    graph.startdate = startdate
+    graph.enddate = enddate
+    context['chart_title'] = graph.title
+    context['chart_data'] = graph.get_flot_data()
+    context['rawgraph'] = graph
+    
     rootgroup = utils.get_chart_group(extuser)    
     graphtree = get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree

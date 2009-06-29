@@ -1,5 +1,13 @@
 [
   {
+    "pk": 18, 
+    "model": "dbanalyzer.basegraph", 
+    "fields": {
+      "shortname": "CHW Submissions Today", 
+      "title": "CHW Submissions Today"
+    }
+  }, 
+  {
     "pk": 17, 
     "model": "dbanalyzer.basegraph", 
     "fields": {
@@ -136,16 +144,30 @@
     }
   }, 
   {
+    "pk": 18, 
+    "model": "dbanalyzer.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "x_type": "string", 
+      "additional_options": "{\"legend\": { \"show\": false}}", 
+      "x_axis_label": "", 
+      "table_name": "xformmanager_metadata", 
+      "display_type": "histogram-overall", 
+      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\ngroup by username\r\n"
+    }
+  }, 
+  {
     "pk": 17, 
     "model": "dbanalyzer.rawgraph", 
     "fields": {
       "series_labels": "Time", 
       "data_source": "", 
       "x_type": "string", 
+      "additional_options": "", 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
-      "additional_options": "", 
       "db_query": "select \r\ndistinct(meta_username), \r\navg(UNIX_TIMESTAMP(meta_timeend) - UNIX_TIMESTAMP(meta_timestart)) as avg \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by meta_username\r\n\r\n\r\n"
     }
   }, 
@@ -156,10 +178,10 @@
       "series_labels": "Counts", 
       "data_source": "", 
       "x_type": "numeric", 
+      "additional_options": "{\"legend\": { \"show\": false }, \"xaxis\": { \"max\": 100}}", 
       "x_axis_label": "Prior Births", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "histogram-overall", 
-      "additional_options": "", 
       "db_query": "select\r\n distinct(sampledata_previous_pregnancies), \r\n count(*) \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\n\r\nwhere sampledata_previous_pregnancies between '0' and '10'\r\n\r\ngroup by sampledata_previous_pregnancies \r\n\r\nORDER BY sampledata_previous_pregnancies ASC"
     }
   }, 
@@ -184,10 +206,10 @@
       "series_labels": "Count", 
       "data_source": "", 
       "x_type": "string", 
+      "additional_options": "{\"legend\": { \"show\": false}}", 
       "x_axis_label": "Username", 
       "table_name": "x_dev_commcarehq_org_intel_grameen_safe_motherhood_followup_v0_1", 
       "display_type": "histogram-overall", 
-      "additional_options": "", 
       "db_query": "select\r\n distinct(meta_username), \r\ncount(*) \r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\nwhere meta_username <> 'admin'\r\n\r\ngroup by meta_username"
     }
   }, 
@@ -198,10 +220,10 @@
       "series_labels": "Count", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-cumulative", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
@@ -212,10 +234,10 @@
       "series_labels": "username", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "Date", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-trend", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
@@ -226,10 +248,10 @@
       "series_labels": "Count", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
       "display_type": "absolute-bar", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n  count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 \r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
@@ -240,10 +262,10 @@
       "series_labels": "Count", 
       "data_source": "", 
       "x_type": "date", 
+      "additional_options": "", 
       "x_axis_label": "", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2 ", 
       "display_type": "cumulative-line", 
-      "additional_options": "", 
       "db_query": "select\r\n  meta_timeend, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
@@ -254,10 +276,10 @@
       "series_labels": "Children|Babies", 
       "data_source": "commcarehq", 
       "x_type": "date", 
+      "additional_options": "", 
       "x_axis_label": "Time", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-bar", 
-      "additional_options": "", 
       "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
@@ -268,10 +290,10 @@
       "series_labels": "1|2", 
       "data_source": "asdf", 
       "x_type": "date", 
+      "additional_options": "", 
       "x_axis_label": "Time", 
       "table_name": "sadf", 
       "display_type": "absolute-line", 
-      "additional_options": "", 
       "db_query": "select \r\n    timeend,\r\n    number_of_children,\r\n    num_of_baby \r\n\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
@@ -282,10 +304,10 @@
       "series_labels": "0|1", 
       "data_source": "", 
       "x_type": "date", 
+      "additional_options": "", 
       "x_axis_label": "time", 
       "table_name": "fasdfwdrf", 
       "display_type": "cumulative-line", 
-      "additional_options": "", 
       "db_query": "select      \r\n   timeend,     \r\n   number_of_children,     \r\n   num_of_baby   \r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1;"
     }
   }, 
@@ -296,10 +318,10 @@
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-line", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), \r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
@@ -310,10 +332,10 @@
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "asdf", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "cumulative-line", 
-      "additional_options": "", 
       "db_query": "/*select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), brac_referral, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), brac_referral\r\norder by meta_timeend asc;*/\r\nselect\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), \r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y')\r\norder by meta_timeend asc;"
     }
   }, 
@@ -324,10 +346,10 @@
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "commcarehq", 
       "x_type": "string", 
+      "additional_options": "", 
       "x_axis_label": "val", 
       "table_name": "x_http__www_commcare_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "absolute-line", 
-      "additional_options": "", 
       "db_query": "/*select distinct(brac_referral_given), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by referral_given*/\r\nselect\r\n  sum(brac_referral_given_tb_test),\r\n  sum(brac_referral_given_malaria),\r\n  sum(brac_referral_given_preg_mother_tt),\r\n  sum(brac_referral_given_preg_mother_ante_natal),\r\n  sum(brac_referral_given_hiv_test),\r\n  sum(brac_referral_given_birth_registration)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\nwhere \r\nbrac_referral = 'y'\r\n\r\n"
     }
   }, 
@@ -338,10 +360,10 @@
       "series_labels": "0", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "Date", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-cumulative", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
@@ -352,10 +374,10 @@
       "series_labels": "count", 
       "data_source": "", 
       "x_type": "string", 
+      "additional_options": "", 
       "x_axis_label": "Username", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "histogram-overall", 
-      "additional_options": "", 
       "db_query": "select distinct(meta_username), count(*) from x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1 group by meta_username"
     }
   }, 
@@ -366,10 +388,10 @@
       "series_labels": "Username", 
       "data_source": "", 
       "x_type": "MM/DD/YYYY", 
+      "additional_options": "", 
       "x_axis_label": "Date", 
       "table_name": "x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1", 
       "display_type": "compare-trend", 
-      "additional_options": "", 
       "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_http__dev_commcarehq_org_brac_chp_homevisit_v0_0_1\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
@@ -389,6 +411,7 @@
     "fields": {
       "parent_group": 1, 
       "graphs": [
+        18, 
         11, 
         10
       ], 

@@ -55,7 +55,7 @@ def dashboard(request, template_name="organization/dashboard.html"):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
         
-    startdate, enddate = _get_dates(request)
+    startdate, enddate = utils.get_dates(request)
     
     context['startdate'] = startdate
     context['enddate'] = enddate
@@ -78,7 +78,7 @@ def org_report(request, template_name="organization/org_report.html"):
 #    
 #    # set some default parameters for start and end if they aren't passed in
 #    # the request
-#    startdate, enddate = _get_dates(request)
+#    startdate, enddate = utils.get_dates(request)
 #    
 #    context['startdate'] = startdate
 #    context['enddate'] = enddate    
@@ -108,7 +108,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
-    startdate, enddate = _get_dates(request)
+    startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
     extuser = ExtUser.objects.all().get(id=request.user.id)        
@@ -158,7 +158,7 @@ def org_report_list(request, single_report_url, template_name):
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
-    startdate, enddate = _get_dates(request)
+    startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
     
@@ -192,7 +192,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
         template_name="organization/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
     
-    startdate, enddate = _get_dates(request)
+    startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
     
@@ -277,20 +277,6 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     context ['mindate'] = 0;
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-def _get_dates(request):
-    default_delta = timedelta(days=1)
-    
-    startdate = datetime.datetime.now().date()
-    enddate = startdate 
-    
-    for item in request.GET.items():
-        if item[0] == 'startdate':
-            startdate_str=item[1]
-            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y')            
-        if item[0] == 'enddate':
-            enddate_str=item[1]
-            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
-    return (startdate, enddate)
 
 def _get_report_id(request):
     for item in request.GET.items():

@@ -8,6 +8,8 @@ import logging
 import datetime
 import simplejson
 
+import re
+
 # Create your models here.
 
 
@@ -47,7 +49,7 @@ class RawGraph(BaseGraph):
     table_name = models.CharField(max_length=255)
     
     data_source = models.CharField(_('Database source'),max_length=128, null=True, blank=True, help_text=_("Placeholder for alternate database"))
-    db_query = models.TextField(_('Database Query'), help_text=_("Database query that has at least 2 columns returned, the first one being the X axis, and the subsequent ones being the Y axis series"))
+    db_query = models.TextField(_('Database Query'), help_text=_("Database query that has at least 2 columns returned, the first one being the X axis, and the subsequent ones being the Y axis series.  You can also use the special tags: {domain}}, {{startdate}}, and {{enddate}} to provide filtered queries"))
         
     x_axis_label = models.CharField(_('X axis label'),max_length=128, help_text=_("Column 0 of the query will use this label"), blank=True, null=True) 
     x_type = models.CharField(max_length=32,choices=XAXIS_DISPLAY_TYPES)
@@ -72,11 +74,30 @@ class RawGraph(BaseGraph):
     def __unicode__(self):
         return "RawGraph: " + unicode(self.shortname)
     
+    
+    @property 
+    def cleaned_query(self):
+        '''The same as db_query, but with any templated arguments
+           filled in.  This is what should be used whenever we actually
+           go to the database or try to display the query to the user'''
+        try:
+            reg = re.compile('(\{\{.*?\}\})')
+            query = self.db_query
+            matches = reg.findall(self.db_query)
+            if matches:
+                for match in matches:
+                    attr = match[2:len(match)-2]
+                    repl = getattr(self,attr)
+                    query = query.replace(match, repl) 
+        except Exception, e:
+            logging.error(e)
+        return query
+        
     @property
     def cursor(self):        
         if self._cursor == None:
             self._cursor = connection.cursor()
-            self._cursor.execute(self.db_query.__str__())        
+            self._cursor.execute(self.cleaned_query.__str__())        
         return self._cursor    
     
     def reset(self):
@@ -99,7 +120,7 @@ class RawGraph(BaseGraph):
             rows = self.cursor.fetchall()            
             return rows
         except Exception, e:
-            logging.error("Error in doing sql query %s: %s" % (self.db_query, str(e)))       
+            logging.error("Error in doing sql query %s: %s" % (self.cleaned_query, str(e)))       
             raise                 
                       
     
