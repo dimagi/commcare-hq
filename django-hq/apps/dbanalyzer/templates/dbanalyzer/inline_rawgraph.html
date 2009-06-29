@@ -12,9 +12,6 @@
 $(function () {
     var datasets = {{chart.get_flot_data|safe}};
 
-//    var mindate = {{mindate}};
-//    var maxdate = {{maxdate}};
-    
     // hard-code color indices to prevent them from shifting as
     // countries are turned on/off
     var i = 0;
@@ -23,24 +20,6 @@ $(function () {
         ++i;
     });
 
-    //$("#whole").click(function () {
-    //	mindate = 1980;
-	//	maxdate = 2010;       
-	//	plotAccordingToChoices(); 
-    //});
-
-    //$("#nineties").click(function () {
-	//	mindate = 1990;
-	//	maxdate = 2000;
-	//	plotAccordingToChoices();        
-    //});
-
-    //$("#ninetynine").click(function () {
-    //	mindate = 1999;
-	//	maxdate = 2000;
-	//	plotAccordingToChoices();        
-    //});
-    
     // insert checkboxes 
     var choiceContainer = $("#{{chart.id}}-choices");
     $.each(datasets, function(key, val) {

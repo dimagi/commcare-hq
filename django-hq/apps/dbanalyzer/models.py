@@ -56,7 +56,6 @@ class RawGraph(BaseGraph):
     
     series_options = models.CharField(_('Series display options'),max_length=255, blank=True, null=True)
     
-    
     #Non Django
     _cursor = None
     helper_cache = {}
@@ -109,7 +108,6 @@ class RawGraph(BaseGraph):
     
     def check_series(self):
         cols = self.cursor.description
-        
         if len(cols) < 2:
             raise Exception("Error, query did not return enough columns.  You need at least 2")
         else:
@@ -117,8 +115,10 @@ class RawGraph(BaseGraph):
         
     def __clean_xcol(self, xval):
         #ugly hack to just clean the columns.
-        #right now the dates are being stored as strings in the db, hence the necessity to do this type of conversinos
-        #also, for the ticks in python we need to convert the ticks by 1000 for javascript to understand them (no milliseconds)
+        #right now the dates are being stored as strings in the db, 
+        #hence the necessity to do this type of conversinos
+        #also, for the ticks in python we need to convert the ticks 
+        #by 1000 for javascript to understand them (no milliseconds)
         if self.x_type == 'date':
             if isinstance(xval, datetime.datetime):
                 return 1000 * time.mktime(xval.timetuple())                
@@ -146,14 +146,12 @@ class RawGraph(BaseGraph):
             
             ret["min"] =  0;
             ret['max'] = len(ticks)+2
-            #rootxaxis.put("max", tickvalues.length + tickvalues.length / 5 + 1);
             
             myticks = []
             
             for i in range(0,len(ticks)):
                 myticks.append([i,ticks[i]])
             ret["ticks"] =  myticks
-#            ret["ticksize"] =  len(ticks)
             ret["tickFormatter"] = "string"
             ret['tickDecimals'] = 'null'
         
@@ -210,7 +208,6 @@ class RawGraph(BaseGraph):
         self.helper_cache['ticks'] = []
         num_series = self.check_series()
         for i in range(0,num_series):            
-            # (count, count,count, count)            
             item = self.__clean_xcol(row[0][i])
             self.helper_cache['ticks'].append(item)            
             count = int(row[0][i])
@@ -224,12 +221,12 @@ class RawGraph(BaseGraph):
 
     
     def __overall_histogram(self):
+        
         rows = self.get_dataset()
         ret = {}        
         num = 0
         self.helper_cache['ticks'] = []
         for row in rows:
-            # (username, count)            
             item = self.__clean_xcol(row[0])
             self.helper_cache['ticks'].append(item)
             
@@ -281,7 +278,6 @@ class RawGraph(BaseGraph):
         return ret
         
     def graph_options(self):
-        #{ yaxis: {     min: 0 }, xaxis: { mode: {{rawgraph.get_xaxis_rendermode()}}}}
         ret = {}
         ret['yaxis'] = {'min':0}
         ret['xaxis'] = self.get_xaxis_options()
@@ -292,7 +288,10 @@ class RawGraph(BaseGraph):
         return self.__numeric_dataseries(rows)
 
     
-    def get_flot_data(self):      
+    def get_flot_data(self):
+        '''This is the main place where data is obtained for viewing.
+           From the information in this chart, get the javascript/JSON 
+           object that will allow the chart to be plotted by flot.'''
         try:  
             if self.display_type == 'histogram-overall':
                 return self.__overall_histogram()
