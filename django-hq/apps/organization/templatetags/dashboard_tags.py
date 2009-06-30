@@ -106,7 +106,8 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         chart.startdate = startdate.strftime("%Y-%m-%d")
         chart.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
         chart_display = render_to_string("dbanalyzer/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
-        ret += chart_display
+        # czue commenting this out until the chart is less ugly 
+        # ret += chart_display
     except RawGraph.DoesNotExist:
         # they don't have this chart.  Just let it slide
         pass
