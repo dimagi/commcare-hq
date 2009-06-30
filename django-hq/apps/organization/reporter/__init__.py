@@ -152,5 +152,10 @@ def transport_email(rendered_text, recipient_usr, params={}):
 def transport_sms(rendered_text, recipient_usr, params={}):
     logging.debug("SMS Report transport via clickatell")        
     ctell = agents.ClickatellAgent()
-    ctell.send(recipient_usr.primary_phone, rendered_text)
+    try:
+        ctell.send(recipient_usr.reporter.connection().identity, rendered_text)
+    except Exception, e:
+        logging.error("Error sending SMS report to %s" % recipient_user)
+        logging.error(e)
+    
 
