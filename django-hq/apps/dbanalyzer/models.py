@@ -88,10 +88,11 @@ class RawGraph(BaseGraph):
                 for match in matches:
                     attr = match[2:len(match)-2]
                     repl = getattr(self,attr)
-                    query = query.replace(match, repl) 
+                    query = query.replace(match, repl)
+            return query 
         except Exception, e:
             logging.error(e)
-        return query
+        return self.db_query
         
     @property
     def cursor(self):        

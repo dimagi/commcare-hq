@@ -15,6 +15,8 @@ import dbanalyzer.dbhelper as dbhelper
 from organization.models import *
 register = template.Library()
 
+from dbanalyzer.models import RawGraph
+
 import time
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
@@ -98,23 +100,17 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     # add the chart.  this might be a bit hacky, but we're going 
     # to try using render_to_string and inline_rawgraph to return 
     # this with the tag
-    # this was a proof of concept.  commenting out the line that actually
-    # adds it to the response since we aren't sure we want these displaying
-    # on the dashboard yet.
-    chart = DummyChart()
-    chart.title = "User Submissions"
-    chart.has_errors = False
-    chart.get_flot_data = "{'demo_user': {'bars': {'show': 'true'}, 'data': [[2, 12]], 'label': 'demo_user'}, 'gayo': {'bars': {'show': 'true'}, 'data': [[3, 15]], 'label': 'gayo'}, 'admin': {'bars': {'show': 'true'}, 'data': [[0, 12]], 'label': 'admin'}, 'brian': {'bars': {'show': 'true'}, 'data': [[1, 35]], 'label': 'brian'}, 'mobile1': {'bars': {'show': 'true'}, 'data': [[4, 12]], 'label': 'mobile1'}, 'mobile3': {'bars': {'show': 'true'}, 'data': [[6, 12]], 'label': 'mobile3'}, 'mobile2': {'bars': {'show': 'true'}, 'data': [[5, 12]], 'label': 'mobile2'}}"
-    chart.id = 1
-    chart.graph_options = "{'xaxis': {'max': 9, 'tickFormatter': 'string', 'ticks': [[0, 'admin'], [1, 'brian'], [2, 'demo_user'], [3, 'gayo'], [4, 'mobile1'], [5, 'mobile2'], [6, 'mobile3']], 'tickDecimals': 'null', 'min': 0}, 'yaxis': {'min': 0}}"
-    chart_display = render_to_string("dbanalyzer/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
-    #ret += chart_display
+    try:
+        chart = RawGraph.objects.get(title="CHW Submissions Over Time")
+        chart.domain = extuser.domain.name
+        chart.startdate = startdate.strftime("%Y-%m-%d")
+        chart.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+        chart_display = render_to_string("dbanalyzer/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
+        ret += chart_display
+    except RawGraph.DoesNotExist:
+        # they don't have this chart.  Just let it slide
+        pass
+    except Exception, e:
+        logging.error(e)
     return ret
 
-class DummyChart(object):
-    '''This isn't really an object, just having an arbitrary
-       class allows us to attach properties and send them in 
-       a template.  This is used to render charts, hence the
-       name.''' 
-    def __init__(self):
-        pass

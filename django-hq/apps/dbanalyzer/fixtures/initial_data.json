@@ -171,7 +171,7 @@
       "x_axis_label": "", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 
-      "db_query": "select\r\n  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom xformmanager_metadata\r\nwhere timeend > '{{startdate}}'\r\nand timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
     }
   }, 
   {
@@ -201,7 +201,7 @@
       "x_axis_label": "", 
       "table_name": "xformmanager_metadata", 
       "display_type": "histogram-overall", 
-      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timestart > '{{startdate}}'\r\nand meta.timestart < '{{enddate}}'\r\ngroup by username\r\n"
+      "db_query": "select meta.username, count(*) as cnt from xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, organization_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by username\r\n"
     }
   }, 
   {
@@ -276,7 +276,7 @@
       "x_axis_label": "Date Filled Out", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2", 
       "display_type": "compare-cumulative", 
-      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\nwhere meta_timestart > '{{startdate}}'\r\nand meta_timestart < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
+      "db_query": "select\r\n  DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username, count(*)\r\nfrom x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_2\r\nwhere meta_timeend > '{{startdate}}'\r\nand meta_timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'), meta_username\r\norder by meta_timeend asc;"
     }
   }, 
   {
@@ -548,5 +548,5 @@
       "name": "Brac Data Charts", 
       "description": "Data data"
     }
-  } 
+  }
 ]
