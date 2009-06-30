@@ -42,31 +42,34 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     
-    for fdef in defs:        
-        table = fdef.element.table_name
-        helper = dbhelper.DbHelper(table, fdef.form_display_name) 
-        #let's get the usernames
-        # hack!  manually set this for grameen
-        usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)
-        if extuser.domain.name == "Grameen":
-            usernames_to_filter = ["mustafizurrahmna",
-                                   "mdyusufali",
-                                   "afrozaakter  ",
-                                   "renuaraakter",
-                                   "mostshahrinaakter",
-                                   "shahanaakter",
-                                   "sajedaparvin",
-                                   "nasimabegum"
-                                   ]
-        for user in usernames_to_filter:            
-            if not username_to_count_hash.has_key(user):
-                username_to_count_hash[user] = {}                        
-            # we add one to the enddate because the db query is not inclusive.
-            userdailies = helper.get_filtered_date_count(startdate, enddate + timedelta(days=1),filters={'meta_username': user})   
-            for dat in userdailies:                
-                username_to_count_hash[user][dat[1]] = int(dat[0])
-
-    
+    for fdef in defs:
+        try: 
+            table = fdef.element.table_name
+            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            #let's get the usernames
+            # hack!  manually set this for grameen
+            usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)
+            if extuser.domain.name == "Grameen":
+                usernames_to_filter = ["mustafizurrahmna",
+                                       "mdyusufali",
+                                       "afrozaakter  ",
+                                       "renuaraakter",
+                                       "mostshahrinaakter",
+                                       "shahanaakter",
+                                       "sajedaparvin",
+                                       "nasimabegum"
+                                       ]
+            for user in usernames_to_filter:            
+                if not username_to_count_hash.has_key(user):
+                    username_to_count_hash[user] = {}                        
+                # we add one to the enddate because the db query is not inclusive.
+                userdailies = helper.get_filtered_date_count(startdate, enddate + timedelta(days=1),filters={'meta_username': user})   
+                for dat in userdailies:                
+                    username_to_count_hash[user][dat[1]] = int(dat[0])
+        except Exception, e:
+            # this shouldn't blow up the entire view
+            logging.error("problem in dashboard display: %s" % e)
+        
     # this block generates the table definition, and headers (one for each
     # user).  It also populates the hash of date-->count mappings per user
     # to be displayed in the next loop.
