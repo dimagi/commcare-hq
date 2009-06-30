@@ -31,43 +31,47 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
     defs = FormDefModel.objects.all().filter(domain=domain)
     user_date_hash = {}
     
-    for fdef in defs:        
-        table = fdef.element.table_name
+    for fdef in defs:
+        try:
+            table = fdef.element.table_name
+            
+            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            #let's get the usernames
+            all_usernames = helper.get_uniques_for_column('meta_username', None, None)
+            # hack!  manually set this for grameen
+            if domain.name == "Grameen":
+                all_usernames = ["mustafizurrahmna",
+                                 "mdyusufali",
+                                 "afrozaakter",
+                                 "renuaraakter",
+                                 "mostshahrinaakter",
+                                 "shahanaakter",
+                                 "sajedaparvin",
+                                 "nasimabegum"
+                                 ]
+            #ok, so we got ALL usernames.  let's filter out the ones we've already seen
+            unclaimed_users = []
+            for existing in all_usernames:
+                if existing:
+                    if configured_users.count(existing.lower()) == 0:
+                        unclaimed_users.append(existing.lower())
+            
+            #now that we've got ALL users, we can now the count query of their occurences in the formdef tables
+            #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
+            for user in all_usernames:                
+                userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
+                if not user_date_hash.has_key(user):
+                    user_date_hash[user] = {}
+                for dat in userdailies:               
+                    if not user_date_hash[user].has_key(dat[1]):
+                        user_date_hash[user][dat[1]] = 0                   
+                    user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
+        #end for loop through all the fdefs
+        except Exception, e:
+            # todo: this try/except is here for the weekly reports.  this is likely 
+            # a real error that should not be getting swallowed
+            logging.error(e)
         
-        helper = dbhelper.DbHelper(table, fdef.form_display_name) 
-        #let's get the usernames
-        all_usernames = helper.get_uniques_for_column('meta_username', None, None)
-        # hack!  manually set this for grameen
-        if domain.name == "Grameen":
-            all_usernames = ["mustafizurrahmna",
-                             "mdyusufali",
-                             "afrozaakter",
-                             "renuaraakter",
-                             "mostshahrinaakter",
-                             "shahanaakter",
-                             "sajedaparvin",
-                             "nasimabegum"
-                             ]
-        #ok, so we got ALL usernames.  let's filter out the ones we've already seen
-        unclaimed_users = []
-        for existing in all_usernames:
-            if existing:
-                if configured_users.count(existing.lower()) == 0:
-                    unclaimed_users.append(existing.lower())
-        
-        #now that we've got ALL users, we can now the count query of their occurences in the formdef tables
-        #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
-        for user in all_usernames:                
-            userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
-            if not user_date_hash.has_key(user):
-                user_date_hash[user] = {}
-            for dat in userdailies:               
-                if not user_date_hash[user].has_key(dat[1]):
-                    user_date_hash[user][dat[1]] = 0                   
-                user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
-    #end for loop through all the fdefs
-    
-    
     report_tuples = []
     #once all the formdefs have been calculated, we need to finally append the totals to the data array.  
     for usr, datehash in user_date_hash.items():
