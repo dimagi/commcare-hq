@@ -34,3 +34,4 @@ admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)
 admin.site.register(Domain,DomainAdmin)
+admin.site.register(ReporterProfile)
