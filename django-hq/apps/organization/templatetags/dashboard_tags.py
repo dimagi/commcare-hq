@@ -41,7 +41,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
     #for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
-    
+    ret = ""
     for fdef in defs:
         try: 
             table = fdef.element.table_name
@@ -69,11 +69,12 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         except Exception, e:
             # this shouldn't blow up the entire view
             logging.error("problem in dashboard display: %s" % e)
+            ret += "<p>problem in dashboard display: %s.  Not all data will be visible.</p>" % e
         
     # this block generates the table definition, and headers (one for each
     # user).  It also populates the hash of date-->count mappings per user
     # to be displayed in the next loop.
-    ret = '<table class="sofT"><tr><td class="helpHed">Date</td>'
+    ret += '<table class="sofT"><tr><td class="helpHed">Date</td>'
     for user in username_to_count_hash.keys():
         ret += '<td  class="helpHed">%s</td>\n' % (user)
         for datestr in username_to_count_hash[user].keys():
