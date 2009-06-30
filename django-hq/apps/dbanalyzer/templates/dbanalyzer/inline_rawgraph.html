@@ -1,6 +1,7 @@
 {% load i18n %}
 <div class="chartblock">
-<h1>{{chart.title}}</h1>
+<h1><center>{{chart.title}}</center></h1>
+<p style="font-weight: bold">{{chart.y_axis_label}}</p>
 {% if chart.has_errors %}
 <h4 style="color:red;">Chart query error</h4>
 {% else %}

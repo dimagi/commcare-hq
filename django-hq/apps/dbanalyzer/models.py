@@ -51,6 +51,7 @@ class RawGraph(BaseGraph):
     data_source = models.CharField(_('Database source'),max_length=128, null=True, blank=True, help_text=_("Placeholder for alternate database"))
     db_query = models.TextField(_('Database Query'), help_text=_("Database query that has at least 2 columns returned, the first one being the X axis, and the subsequent ones being the Y axis series.  You can also use the special tags: {domain}}, {{startdate}}, and {{enddate}} to provide filtered queries"))
         
+    y_axis_label = models.CharField(_('Y axis label'),max_length=128, help_text=_("Label to use for the Y axis"), blank=True, null=True) 
     x_axis_label = models.CharField(_('X axis label'),max_length=128, help_text=_("Column 0 of the query will use this label"), blank=True, null=True) 
     x_type = models.CharField(max_length=32,choices=XAXIS_DISPLAY_TYPES)
     
