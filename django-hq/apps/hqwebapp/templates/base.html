@@ -3,11 +3,12 @@
 <html>
 <head>
 <title>{% block title %}{% endblock %}</title>
-<link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/style.css" />
-	{% block script_includes %}
-	{% endblock %}
-<!-- javascripts (global, app, page) -->
-{% block javascripts %}{% endblock %}
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/style.css" />
+    {% block stylesheets %}{% endblock %}
+    <!-- javascripts (global, app, page) -->        
+    {% block javascripts %}{% endblock %}
 </head>
 <body>
 	<div id="header">
