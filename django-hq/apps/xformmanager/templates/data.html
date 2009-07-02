@@ -25,14 +25,15 @@
 </div>
 
 <table class="sofT">
-	
-	<tr>
-	{% for col in columns %}
-		<td class="helpHed">{{col}}</td>	
-	{% endfor%}
-	</tr>
-   {% for record in data.object_list %}   	
-   	<tr class="dbodyrow{% cycle 'odd' 'even' %}">  
+	<thead class="commcare-heading">
+	   <tr>
+	   {% for col in columns %}
+		  <th>{{col}}</th>	
+	   {% endfor%}
+	   </tr>
+	</thead>
+    {% for record in data.object_list %}   	
+   	<tr class="{% cycle 'odd' 'even' %}">  
 	   {% for field in record %}   
 	   		 <td>{{field}}</td> 
 	   {% endfor %}

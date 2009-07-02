@@ -5,9 +5,13 @@
 {% block content %}
 <h2>{% trans "All Submissions" %}</h2>
    <table class="sofT">
-   <tr><td class="helpHed">ID</td><td class="helpHed">Date</td><td class="helpHed">From</td><td class="helpHed">Size (bytes)</td><td class="helpHed">Attachments</td></tr>
+   <thead class="commcare-heading">
+    <tr>
+        <th>ID</th><th>Date</th><th>From</th><th>Size (bytes)</th><th>Attachments</th>
+    </tr>
+   </thead>
    {% for submission in submissions.object_list %}      
-   	<tr>
+   	<tr class="{% cycle 'odd' 'even' %}">
    		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.id}}</a></td>
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>

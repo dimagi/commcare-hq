@@ -74,29 +74,34 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     # this block generates the table definition, and headers (one for each
     # user).  It also populates the hash of date-->count mappings per user
     # to be displayed in the next loop.
-    ret += '<table class="sofT"><tr><td class="helpHed">Date</td>'
+    ret += '<table class="sofT">\n<thead class="commcare-heading"><tr><th>Date</th>'
     for user in username_to_count_hash.keys():
-        ret += '<td  class="helpHed">%s</td>\n' % (user)
+        ret += '<th>%s</th>' % (user)
         for datestr in username_to_count_hash[user].keys():
             #dt = time.strptime(str(datestr[0:-4]),xmldate_format)
             #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
             #date = datum.strftime('%m/%d/%Y')              
             if not report_hash[datestr].has_key(user):
                 report_hash[datestr][user]=username_to_count_hash[user][datestr]
-    ret += "</tr>\n"
-    
+    ret += "</tr></thead>\n"
+    count = 1
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
         date = target_date.strftime('%m/%d/%Y')
-        ret += "<tr>"
+        if count % 2 == 0:
+            row_class = "even"
+        else: 
+            row_class = "odd"
+        count += 1 
+        ret += '<tr class="%s">' % row_class
         ret += "<td>%s</td>" % (date)
         for user in username_to_count_hash.keys():
             val = 0
             if report_hash[date].has_key(user):
                 val = report_hash[date][user]
             ret += "<td>%d</td>" % (val)
-        ret += "</tr>\n\n"
+        ret += "</tr>\n"
     ret += "</table>"
     username_to_count_hash.clear()
     

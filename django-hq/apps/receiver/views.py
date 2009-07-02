@@ -50,7 +50,6 @@ def show_submits(request, template_name="receiver/show_submits.html"):
     except (EmptyPage, InvalidPage):
         submits_pages = paginator.page(paginator.num_pages)
 
-    
     context['submissions'] = submits_pages    
     return render_to_response(template_name, context, context_instance=RequestContext(request))
 

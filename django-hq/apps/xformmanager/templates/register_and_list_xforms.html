@@ -38,15 +38,15 @@
 <strong>
 <ol>
       
-   <table class="sofT">
-   		<tr>
-   			<td class="helpHed">{% trans "Display Name" %}</td>
-   			<td class="helpHed">{% trans "Schema Definition" %}</td>
-   			<td class="helpHed">{% trans "Added Date" %}</td>
-   			
-   			   			
-   			<td class="helpHed"></td>   			
-   		</tr>
+    <table class="sofT">
+        <thead class="commcare-heading">
+   		   <tr>
+                <th>{% trans "Display Name" %}</th>
+                <th>{% trans "Schema Definition" %}</th>
+                <th>{% trans "Added Date" %}</th>
+                <th></th>
+   		   </tr>
+   		</thead>
    		{% for form in registered_forms %}   
    		<tr>
    			<td><a href="{% url xformmanager.views.data form.id %}">

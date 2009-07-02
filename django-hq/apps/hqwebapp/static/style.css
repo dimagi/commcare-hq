@@ -419,7 +419,7 @@ td.subanswer {
     text-align:left;
 }
 
-td.helpHed
+thead.commcare-heading
 { 
 border-bottom: 2px solid #6699CC;
 border-left: 1px solid #6699CC;
@@ -500,19 +500,25 @@ padding:8px;
 
 }
 
+tr.even td {background:#e5ecf9;}
+
+/* add a little brightness while hovering */
+tr:hover td {
+    background: lightyellow !important;
+}
+
 table.sofT
-{ text-align: center;
-font-family: Verdana;
-font-weight: normal;
-font-size: 12px;
-color: #404040;
-width: 100%;
-background-color: #fafafa;
-border: 2px #6699CC solid;
-border-collapse: collapse;
-border-spacing: 0px;
-    
-    
+{ 
+    text-align: center;
+    font-family: Verdana;
+    font-weight: normal;
+    font-size: 12px;
+    color: #404040;
+    width: 100%;
+    background-color: #fafafa;
+    border: 2px #6699CC solid;
+    border-collapse: collapse;
+    border-spacing: 0px;
 }
 
 /*region comments */
