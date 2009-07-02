@@ -573,8 +573,7 @@
       "parent_group": 1, 
       "graphs": [
         23, 
-        22, 
-        16
+        22 
       ], 
       "name": "Patient Management", 
       "description": "Stats on Pregnancy related data"
