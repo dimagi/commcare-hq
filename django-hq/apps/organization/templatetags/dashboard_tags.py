@@ -69,8 +69,8 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         except Exception, e:
             # this shouldn't blow up the entire view
             logging.error("problem in dashboard display: %s" % e)
-            ret += "<p>problem in dashboard display: %s.  Not all data will be visible.</p>" % e
-        
+            ret += '<p style="font-weight:bold; color:red;">problem in dashboard display.  Not all data will be visible.  Your error message is: %s</p>' % e
+            
     # this block generates the table definition, and headers (one for each
     # user).  It also populates the hash of date-->count mappings per user
     # to be displayed in the next loop.
