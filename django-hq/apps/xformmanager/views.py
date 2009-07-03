@@ -1,5 +1,7 @@
 from django.http import Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from rapidsms.webui.utils import render_to_response
+#from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction
@@ -38,7 +40,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
             return HttpResponseRedirect("../register")
     context['form_name'] = form.form_display_name
-    return render_to_response(template, context, context_instance=RequestContext(request))
+    return render_to_response(request, template, context)
 
 @login_required()
 @transaction.commit_manually
@@ -88,7 +90,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 context['newsubmit'] = formdefmodel
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
-    return render_to_response(template, context, context_instance=RequestContext(request))
+    return render_to_response(request, template, context)
 
 @transaction.commit_manually
 def reregister_xform(request, domain_name, template='register_and_list_xforms.html'):
@@ -162,7 +164,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         return response
     else:    
         context['xform_item'] = xform[0]
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
         
 @login_required()
 def data(request, formdef_id, template_name="data.html"):
@@ -196,7 +198,7 @@ def data(request, formdef_id, template_name="data.html"):
     
     context['data'] = data_pages    
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))    
+    return render_to_response(request, template_name, context)    
 
 
 @login_required()

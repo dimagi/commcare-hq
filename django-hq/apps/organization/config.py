@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-title = "Organization Reports"
-tab_link = "/report"
+title = "Dashboard"
+tab_link = "/"
+
 

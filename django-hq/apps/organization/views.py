@@ -3,7 +3,11 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
-from django.shortcuts import render_to_response, get_object_or_404
+
+from rapidsms.webui.utils import render_to_response
+#from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
@@ -61,7 +65,7 @@ def dashboard(request, template_name="organization/dashboard.html"):
     context['enddate'] = enddate
     context['view_name'] = 'organization.views.dashboard'
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 
 @login_required()
@@ -141,7 +145,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
                                           {"heading" : heading })
     context['report_display'] = rendered
     context['report_title'] = "Submissions per day for all CHWs"
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required
 def org_email_report_list(request, template_name="organization/org_email_report_list.html"):
@@ -183,7 +187,7 @@ def org_report_list(request, single_report_url, template_name):
     # we add one to the enddate because the db query is not inclusive.
     context['results'] = repinspector.get_data_below(root_org, startdate, enddate + timedelta(days=1), 0)
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required
 def org_sms_report(request, template_name="organization/org_single_report.html"):
@@ -222,7 +226,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
                                           "organization/reports/sms_organization.txt", 
                                           {"heading" : heading })
     context['report_display'] = rendered
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required()
 def register_xform(request, template_name="organization/register_xform.html"):
@@ -234,11 +238,11 @@ def manage_xforms(request, template_name="oranization/manage_xforms.html"):
 
 
 @login_required()
-def domain_charts(request, template_name="dbanalyzer/view_graph.html"):
+def domain_charts(request):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))    
+        return render_to_response(request, template_name, context)    
 
     extuser = ExtUser.objects.all().get(id=request.user.id)
     mychartgroup = utils.get_chart_group(extuser)
@@ -275,7 +279,7 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     
     context ['maxdate'] = 0;
     context ['mindate'] = 0;
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 
 def _get_report_id(request):

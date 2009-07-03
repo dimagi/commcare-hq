@@ -3,7 +3,11 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
-from django.shortcuts import render_to_response, get_object_or_404
+
+from rapidsms.webui.utils import render_to_response
+#from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
@@ -28,15 +32,6 @@ import traceback
 import sys
 import os
 import string
-
-def flot_example(request, template_name="dbanalyzer/flot_example.html"):    
-    context = {}        
-    context['chart_title'] = 'Sample Chart'
-    context['usa_datapoint'] = 'usa'
-    context['usa_label'] = "USA"
-    arr = [[1988, 483994], [1989, 479060], [1990, 457648], [1991, 401949], [1992, 424705], [1993, 402375], [1994, 377867], [1995, 357382], [1996, 337946], [1997, 336185], [1998, 328611], [1999, 329421], [2000, 342172], [2001, 344932], [2002, 387303], [2003, 440813], [2004, 480451], [2005, 504638], [2006, 528692]]
-    context['usa_data'] = str(arr)
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
 
 
 def inspector(request, table_name, template_name="dbanalyzer/table_inspector.html"):
@@ -67,7 +62,7 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
     context['data_column'] = data_column
     context['display_mode'] = display_mode    
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))    
+    return render_to_response(request, template_name, context)
 
 
 @login_required()
@@ -95,13 +90,13 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     context['width'] = 900
     context['height'] = 500
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required()
 def show_rawgraphs(request, template_name="dbanalyzer/show_rawgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()    
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required()
 def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
@@ -109,14 +104,14 @@ def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
     context['width'] = 900
     context['height'] = 350
     context['charts_to_show'] = RawGraph.objects.all()
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 
 @login_required()
 def view_groups(request, template_name="dbanalyzer/view_groups.html"):
     context = {}    
     context['groups'] = GraphGroup.objects.all()
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
     context = {}
 
@@ -151,5 +146,5 @@ def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
     graphtree = get_graphgroup_children(rootgroup)
     context['graphtree'] = graphtree
     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 

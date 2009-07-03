@@ -2,7 +2,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
-from django.shortcuts import render_to_response, get_object_or_404
+from rapidsms.webui.utils import render_to_response
+#from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
@@ -51,7 +53,7 @@ def show_submits(request, template_name="receiver/show_submits.html"):
         submits_pages = paginator.page(paginator.num_pages)
 
     context['submissions'] = submits_pages    
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 @login_required()    
 def single_attachment(request, attachment_id):
@@ -70,11 +72,9 @@ def single_attachment(request, attachment_id):
     except:
         return ""
     
-    
-
     context ['processed_header'] = processed_header
     context['attachments'] = attachments
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 
 @login_required()    
@@ -104,7 +104,7 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     attachments = Attachment.objects.all().filter(submission=slog[0])
     context ['processed_header'] = processed_header
     context['attachments'] = attachments
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 def raw_submit(request, template_name="receiver/submit.html"):
     context = {}            
