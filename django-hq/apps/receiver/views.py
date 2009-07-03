@@ -36,7 +36,7 @@ def show_submits(request, template_name="receiver/show_submits.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
     
     extuser = ExtUser.objects.get(id=request.user.id)
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
@@ -121,7 +121,7 @@ def raw_submit(request, template_name="receiver/submit.html"):
             
     #for real submissions from phone, the content-type should be:
     #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
 
 def domain_resubmit(request, domain_name, template_name="receiver/submit.html"):
     return _do_domain_submission(request, domain_name, template_name, True)
@@ -154,7 +154,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     #for real submissions from phone, the content-type should be:
     #mimetype='text/plain' # add that to the end fo the render_to_response()             
     #resp = render_to_response(template_name, context, context_instance=RequestContext(request))
-    return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
     
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
@@ -185,7 +185,7 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
             response['Content-length'] = len(rendering)
             return response                                         
             
-    return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+    return render_to_response(request, template_name, context,mimetype='text/plain')
 
 
 def restore(request, code_id, template_name="receiver/restore.html"):
@@ -195,7 +195,7 @@ def restore(request, code_id, template_name="receiver/restore.html"):
     restore = Backup.objects.all().filter(backup_code=code_id)
     if len(restore) != 1:
         template_name="receiver/nobackup.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+        return render_to_response(request, template_name, context,mimetype='text/plain')
     original_submission = restore[0].submission
     attaches = Attachment.objects.all().filter(submission=original_submission)
     for attach in attaches:
@@ -213,7 +213,7 @@ def restore(request, code_id, template_name="receiver/restore.html"):
                 continue
     
     template_name="receiver/nobackup.html"
-    return render_to_response(template_name, context, context_instance=RequestContext(request),mimetype='text/plain')
+    return render_to_response(request, template_name, context,mimetype='text/plain')
         
                            
                       

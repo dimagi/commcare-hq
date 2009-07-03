@@ -57,7 +57,7 @@ def dashboard(request, template_name="organization/dashboard.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
         
     startdate, enddate = utils.get_dates(request)
     
@@ -110,7 +110,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
     
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
@@ -160,7 +160,7 @@ def org_report_list(request, single_report_url, template_name):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
     
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
@@ -194,7 +194,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
     
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate

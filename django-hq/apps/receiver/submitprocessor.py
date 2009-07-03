@@ -59,7 +59,6 @@ def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
         logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))
         logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))        
         return '[error]'
-        #return render_to_response(template_name, context, context_instance=RequestContext(request))        
         
     logging.debug("try to write model")   
     new_submit.domain = domain     

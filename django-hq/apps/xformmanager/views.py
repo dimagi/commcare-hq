@@ -48,7 +48,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        return render_to_response(request, template_name, context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     if request.method == 'POST':        
         form = RegisterXForm(request.POST, request.FILES)        
@@ -62,7 +62,7 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
                 context['upload_form'] = RegisterXForm()
                 context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
-                return render_to_response(template, context, context_instance=RequestContext(request))
+                return render_to_response(request, template, context)
             except Exception, e:
                 logging.error(e)
                 logging.error("Unable to write raw post data<br/>")
@@ -118,7 +118,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
             context['upload_form'] = RegisterXForm()
             context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
-            return render_to_response(template, context, context_instance=RequestContext(request))
+            return render_to_response(request, template, context)
         except Exception, e:
             logging.error(e)
             logging.error("Unable to write raw post data<br/>")
