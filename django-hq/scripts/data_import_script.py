@@ -15,7 +15,7 @@ import urllib
 from cookielib import *
 from urlparse import urlparse
 
-serverhost = 'dev.commcarehq.org'
+serverhost = 'test.commcarehq.org'
 #serverhost = 'localhost'
 #serverhost = 'localhost:8000'
 
@@ -27,7 +27,8 @@ def run(argv):
     #directory = r'C:\Source\hq\commcare-hq\django-hq\bad'
     #directory = r'C:\Source\hq\commcare-hq\django-hq\export'
     #directory = r'C:\Source\hq\commcare-hq\django-hq\pathfinder\out'
-    directory = r'C:\Source\hq\commcare-hq\django-hq\brac\out'
+    #directory = r'C:\Source\hq\commcare-hq\django-hq\brac\out'
+    directory = r'C:\Source\hq\data\grexport\grexport'
     if len(argv) > 1:
         directory = argv[1]
     # loop through once uploading all the schemas
@@ -104,7 +105,7 @@ def _submit_form(filename):
         resp = conn.getresponse()
         results = resp.read()
         if not "thank you" in results:
-            print "unexpected response for %sn%s" % (filename, results)
+            print "unexpected response for %s\n%s" % (filename, results)
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
