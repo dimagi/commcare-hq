@@ -48,7 +48,7 @@
    		   </tr>
    		</thead>
    		{% for form in registered_forms %}   
-   		<tr>
+   		<tr class="{% cycle "odd" "even" %}">
    			<td><a href="{% url xformmanager.views.data form.id %}">
    			
    			{{form.form_display_name}}
