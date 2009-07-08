@@ -5,8 +5,7 @@ from receiver.models import Submission
 import unittest
 
 class BasicTestCase(unittest.TestCase):
-    def setup(selfs):
-        pass
+    
     
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml")

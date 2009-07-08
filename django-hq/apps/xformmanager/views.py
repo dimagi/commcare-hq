@@ -1,10 +1,9 @@
 from django.http import Http404
 from rapidsms.webui.utils import render_to_response
-#from django.shortcuts import render_to_response, get_object_or_404
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
-from django.db import transaction
+from django.db import transaction, connection
 import hashlib
 from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm
@@ -169,19 +168,14 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
 @login_required()
 def data(request, formdef_id, template_name="data.html"):
     context = {}
-    xform = FormDefModel.objects.all().filter(id=formdef_id)
-    formdef_name = xform[0].form_name
     
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM " + formdef_name + ' order by id DESC')
-    rows = cursor.fetchall()
+    xform = FormDefModel.objects.get(id=formdef_id)
+    rows = xform.get_all_rows()
+    context['columns'] = xform.get_column_names()
     
-    rawcolumns = cursor.description # in ((name,,,,,),(name,,,,,)...)
-    
-    context['columns'] = [col[0] for col in rawcolumns]
-    context['form_name'] = formdef_name
+    context['form_name'] = xform.form_name
     context['data'] = []
-    context['xform'] = xform[0]
+    context['xform'] = xform
     
     paginator = Paginator(rows, 25) 
 

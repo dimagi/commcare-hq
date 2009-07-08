@@ -5,9 +5,7 @@ from datetime import datetime
 import unittest
 
 class RemoveTestCase(unittest.TestCase):
-    def setup(selfs):
-        pass
-
+    
     def test1ClearFormData(self):
         """ Tests clear out all forms. Only useful if run after all the other test cases """
         su = StorageUtility()

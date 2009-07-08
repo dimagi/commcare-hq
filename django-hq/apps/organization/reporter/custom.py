@@ -33,11 +33,9 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
     
     for fdef in defs:
         try:
-            table = fdef.element.table_name
-            
-            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            helper = fdef.db_helper
             #let's get the usernames
-            all_usernames = helper.get_uniques_for_column('meta_username', None, None)
+            all_usernames = helper.get_uniques_for_column('meta_username')
             # hack!  manually set this for grameen
             if domain.name == "Grameen":
                 all_usernames = ["mustafizurrahmna",
@@ -193,11 +191,9 @@ def admin_catch_all(report_schedule, run_frequency):
         user_date_hash = {}
         
         for fdef in defs:        
-            table = fdef.element.table_name
-            
-            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            helper = fdef.db_helper
             #let's get the usernames
-            all_usernames = helper.get_uniques_for_column('meta_username', None, None)
+            all_usernames = helper.get_uniques_for_column('meta_username')
             #ok, so we got ALL usernames.  let's filter out the ones we've already seen
             unclaimed_users = []
             for existing in all_usernames:

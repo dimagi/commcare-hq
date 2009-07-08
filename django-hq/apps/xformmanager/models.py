@@ -1,9 +1,10 @@
-from django.db import models
+from django.db import models, connection
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 
+from dbanalyzer import dbhelper
 from receiver.models import Attachment
 from organization.models import *
 import logging
@@ -11,9 +12,8 @@ import uuid
 import settings
 import os
 
-#import Group
-
 class ElementDefModel(models.Model):
+    # this class is really not used
     """ At such time as we start to store an edd for every node, 
         we can use the following supporting xform types list
     TYPE_CHOICES = (
@@ -84,6 +84,7 @@ class FormDefModel(models.Model):
     #blobs aren't supported in django, so we just store the filename
     
     element = models.OneToOneField(ElementDefModel, null=True)
+    
     # formdefs have a one-to-one relationship with elementdefs
     # yet elementdefs have a form_id which points to formdef
     # without this fix, delete is deadlocked
@@ -91,6 +92,42 @@ class FormDefModel(models.Model):
         self.element = None 
         self.save()
         super(FormDefModel, self).delete()
+    
+    
+    @property
+    def db_helper(self):
+        '''Get a DbHelper connected to this form'''
+        return dbhelper.DbHelper(self.table_name, self.form_display_name)
+    
+    @property
+    def table_name(self):
+        '''Get the table name used by this form'''
+        return self.element.table_name
+    
+    
+    def get_select_all_cursor(self):
+        '''Gets the cursor that selects all data from this form's schema'''
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM %s order by id DESC" % self.form_name)
+        return cursor
+    
+    @property
+    def column_count(self):
+        '''Get the number of columns in this form's schema 
+          (not including repeats)'''
+        return len(self.get_select_all_cursor().description)
+    
+    def get_all_rows(self):
+        '''Get all data rows associated with this form's schema
+           (not including repeats)'''
+        return self.get_select_all_cursor().fetchall()
+        
+    def get_column_names(self):
+        '''Get all data rows associated with this form's schema
+           (not including repeats)'''
+        return [col[0] for col in self.get_select_all_cursor().description]
+    
+        
     
     def __unicode__(self):
         return "XForm " + unicode(self.form_name)
@@ -128,6 +165,189 @@ class Metadata(models.Model):
         return "Metadata: " + ", ".join(list) 
     
 
+class FormIdentifier(models.Model):
+    '''An identifier for a form.  This is a way for a case to point at
+       a particular form, using a particular column in that form.  These
+       also have sequence ids so that you can define the ordering of a
+       full listing of the data for a case'''
+    
+    form = models.ForeignKey(FormDefModel)
+    identity_column = models.CharField(max_length=255)
+    # the column that defines how sorting works.  if no sorting is 
+    # defined the case will assume each member of identity_column
+    # appears exactly once, and this may behave unexpectedly if that
+    # is not true
+    sorting_column = models.CharField(max_length=255, null=True, blank=True)
+    # sort ascending or descending
+    sort_descending = models.BooleanField(default=True)
+    
+    
+    def get_uniques(self):
+        '''Return a list of unique values contained in this column'''
+        return self.form.db_helper.get_uniques_for_column(self.identity_column)
+    
+    def get_data_lists(self):
+        '''Gets one row per unique identifier, sorted by the default
+           sorting column.  What is returned is a dictionary of 
+           dictionaries of the form 
+           { id_column_value_1: [value_1, value_2, value_3...],
+             id_column_value_2: [value_1, value_2, value_3...],
+             ...
+           }
+           '''
+        if self.sorting_column:
+            if self.sort_descending:
+                minmax = "max"
+            else: 
+                minmax = "min"
+            # this query takes the topmost value (defined by the sorting column
+            # and sort order) and uses the data from that as the row returned.
+            # If more than one row matches the exact topmost value they will all
+            # be returned, and one will arbitrarily win.
+            query = '''
+              SELECT main_table.* FROM %(tablename)s main_table,
+              (
+                SELECT %(id_column)s, %(minmax)s(%(sort_column)s) as %(sort_column)s
+                FROM %(tablename)s 
+                GROUP BY %(id_column)s
+              ) identities_w_sort
+              WHERE main_table.%(id_column)s = identities_w_sort.%(id_column)s
+              AND main_table.%(sort_column)s = identities_w_sort.%(sort_column)s
+              ORDER BY main_table.%(id_column)s;
+            ''' % ({"tablename": self.form.table_name,
+                    "id_column": self.identity_column,
+                    "sort_column": self.sorting_column,
+                    "minmax": minmax})
+            
+            list = self.form.db_helper.get_query_data(query)
+            
+        else:
+            # no sorting column.  assume that there are no duplicates in
+            # the list.  
+            list = self.form.get_all_rows()
+        
+        id_index = self.form.get_column_names().index(self.identity_column)
+        to_return = {}
+        for row in list:
+            id_value = row[id_index]
+            to_return[id_value] = row
+        return to_return
+    
+    
+    def get_data_maps(self):
+        '''Gets one row per unique identifier, sorted by the default
+           sorting column.  What is returned is a dictionary of 
+           dictionaries of the form 
+           { id_column_value_1: {data_column_1: value_1,
+                                 data_column_2: value_2,
+                                 ...
+                                },
+             id_column_value_2: {data_column_1: value_1,
+                                 data_column_2: value_2,
+                                 ...
+                                }
+             ...
+           }
+           '''
+        data_lists = self.get_data_lists()
+        to_return = {}
+        columns = self.form.get_column_names()
+        for id, list in data_lists.items():
+            # magically zip these up in a dictionary
+            to_return[id] = dict(zip(columns, list))
+        return to_return
+    
+    
+    def __unicode__(self):
+        return "%s: %s" % (self.form, self.identity_column)
+
+class Case(models.Model):
+    '''A Case is a collection of data that represents a logically cohesive
+       unit.  A case could be a case of a disease (e.g. Malaria) or could
+       be an entire patient record.  In X-Form land, cases are collections
+       of X-Form schemas that are linked together by a common identifier.'''
+    
+    name = models.CharField(max_length=255)
+    
+    @property
+    def forms(self):
+        '''Get all the forms that make up this case'''
+        forms = self.form_data.all()
+        return [col.form_identifier.form for col in\
+                self.form_data.all().order_by("sequence_id")]
+    
+    @property
+    def form_identifiers(self):
+        '''Get all the form identifiers that make up this case'''
+        return [col.form_identifier for col in\
+                self.form_data.all().order_by("sequence_id")]
+    
+    def get_unique_ids(self):
+        '''Get the unique identifiers across the contained forms'''
+        to_return = []
+        for form_identifier in self.form_identifiers:
+            for value in form_identifier.get_uniques():
+                if value not in to_return:
+                    to_return.append(value)
+        return to_return        
+        
+    def get_column_names(self):
+        '''Get the full list of column names, for all the forms'''
+        to_return = []
+        for form in self.forms:
+            for col in form.get_column_names():
+                # todo: what should these really be to differentiate
+                # between the different forms?  the form name 
+                # is probably too long, and the display name
+                # can be null.  the id and sequence are both 
+                # alright.  going with id for now.
+                to_return.append("%s-%s" % (col, form.id))
+        return to_return        
+        
+    def get_all_data(self):
+        '''Get the full data set of data for all the forms.  This
+           Will be a dictionary of the id column to a single flat
+           row aggregating the data across the forms.  E.g.:
+
+           { id_column_value_1: [form1_value1, form1_value2, ...,
+                                 form2_value1, form2_value2, ...,
+                                 ...],
+             id_column_value_1: [form1_value1, form1_value2, ...,
+                                 form2_value1, form2_value2, ...,
+                                 ...],
+             
+             ...
+           }
+           
+           The number of items in each list will be equal to the 
+           sum of the number of columns of all forms that are a 
+           part of this case.
+           '''
+        to_return = {}
+        unique_ids = self.get_unique_ids()
+        for id in unique_ids:
+            to_return[id] = [] 
+        for form_id in self.form_identifiers:
+            data_list = form_id.get_data_lists()
+            for id in unique_ids:
+                if id in data_list:
+                    to_return[id].extend(data_list[id])
+                else:
+                    # there was no data for this id for this
+                    # form so extend the list with empty values
+                    to_return[id].extend([None]*form_id.form.column_count)
+        return to_return        
+    
+class CaseFormIdentifier(models.Model):
+    # yuck.  todo: come up with a better name.
+    '''A representation of a FormIdentifier as a part of a case.  This 
+       contains a link to the FormIdentifier, a sequence id, and a link
+       to the case.'''
+    form_identifier = models.ForeignKey(FormIdentifier)
+    case = models.ForeignKey(Case, related_name="form_data")
+    sequence_id = models.PositiveIntegerField()
+
+    
 
 def process(sender, instance, **kwargs): #get sender, instance, created
     from manager import XFormManager

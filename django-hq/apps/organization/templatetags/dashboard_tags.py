@@ -44,11 +44,10 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     ret = ""
     for fdef in defs:
         try: 
-            table = fdef.element.table_name
-            helper = dbhelper.DbHelper(table, fdef.form_display_name) 
+            helper = fdef.db_helper
             #let's get the usernames
             # hack!  manually set this for grameen
-            usernames_to_filter = helper.get_uniques_for_column('meta_username', None, None)
+            usernames_to_filter = helper.get_uniques_for_column('meta_username')
             if extuser.domain.name == "Grameen":
                 usernames_to_filter = ["mustafizurrahmna",
                                        "mdyusufali",

@@ -124,34 +124,40 @@ class DbHelper(object):
         return self.date_columns[self.default_date_column_id]
         
     
-    def __doquery(self,query):
+    def get_single_column_query_data(self, query):
+        '''Get the results of an arbitrary sql query'''
+        results = self.get_query_data(query)
+        return [row[0] for row in results]
+        
+    def get_query_data(self,query):
         """Run the sql query and return the cursor"""
         cursor = connection.cursor()
         cursor.execute(query)
         return cursor.fetchall()        
     
-   
-    
+    def get_uniques_for_column(self, columname):
+        """Get an array of all the unique values in a given column.
+           Results are returned sorted by the column."""
+        col_to_use = columname        
+
+        query = "select distinct(%s) from %s order by %s" % (columname, self.tablename, columname)
+        return self.get_single_column_query_data(query)
         
-    def get_uniques_for_column(self, columname, startdate=None, enddate=None):
+    
+    def get_uniques_for_column_date_bound(self, columname, startdate=None, enddate=None):
+        """return an array of all the unique values in a given column, allowing 
+           one to only include results between a pair of dates"""
         if len(self.date_columns) == 0:
             raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
         
         col_to_use = columname        
             
         
-        """return an array of all the unique values in a given column"""
         query = "select distinct(" + col_to_use + ") from """ + self.tablename
         if startdate != None and enddate != None:
             query += " WHERE " + get_date_whereclause(col_to_use, startdate, enddate)
-        rows = self.__doquery(query)
-        ret = []        
-        
-        if len(rows ) == 0:
-            return ret
-        for row in rows:
-            ret.append(row[0])
-        return ret              
+        return self.get_single_column_query_data(query)
+                      
     
     def get_column_filter_hash(self, startdate, enddate):
         #todo:
@@ -199,7 +205,7 @@ class DbHelper(object):
                 wherestring += " %s=%s AND " % (key, valstring)            
         try:
             query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) + " from " + self.tablename + wherestring + get_date_whereclause(self.default_date_column, startdate, enddate) + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column
-            return self.__doquery(query)
+            return self.get_query_data(query)
         except:
             return [] 
         
@@ -220,7 +226,7 @@ class DbHelper(object):
         query = "select " + self.date_columns[0] + ", count(*) from " + self.tablename + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column
         #query = 'select timeend, id from ' + self.tablename
         #print query
-        rows = self.__doquery(query)
+        rows = self.get_query_data(query)
         ret = []        
         
         if len(rows ) == 0:
@@ -254,7 +260,7 @@ class DbHelper(object):
         for seriesname in self.int_columns:
            subset = {}
            query = 'select ' + self.default_date_column + ', ' + seriesname + ' from ' + self.tablename + ' order by ' + self.default_date_column + ' ASC'
-           rows = self.__doquery(query)
+           rows = self.get_query_data(query)
            vals = []
            if len(rows) == 0:
                vals.append([0,0])
