@@ -62,6 +62,8 @@ class RawGraph(BaseGraph):
     
     additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
                                       help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))
+    width=models.IntegerField(_('Pixel width of the chart (default is 970)'),default=970)
+    height=models.IntegerField(_('Pixel height of the chart (default is 300 for small form factor screens)'), default=300)
     
     #Non Django
     _cursor = None
@@ -356,6 +358,67 @@ class RawGraph(BaseGraph):
         except Exception, e:
             logging.error("Error rendering flot data: " + str(e))
             return '[]'
+        
+        
+    def convert_data_to_table(self, flot_data):
+        '''An alteration of the data, we want to return all the datda in this chart as a pretty little table.'''
+        data_dict = flot_data
+        #we are gonna make a hash, keyed by the x values
+        #within each value of that it's a hash by series
+        if self.display_type == 'histogram-overall':
+            retarr = []
+            retarr.append(['Item','Count'])
+            series = data_dict.keys()
+            for item in series:
+                retarr.append([item,data_dict[item]['data'][0][1]])
+            return retarr
+        
+        
+        
+        series = data_dict.keys()        
+        xvalue_dict = {}        
+        xlabel_dict = {}
+        for ser in series:
+            thedata = data_dict[ser]["data"]        
+            for xyarr in thedata:
+                
+                xlabel = xyarr[0]
+                if self.x_type == 'date' or self.x_type == 'MM/DD/YYYY':
+                    xlabel = time.strftime(dbhelper.MMDDYYYY_FORMAT,time.localtime(xlabel/1000))               
+                
+                if not xvalue_dict.has_key(xyarr[0]):    
+                    xlabel_dict[xyarr[0]]= xlabel        
+                    xvalue_dict[xyarr[0]] = {}
+                    for subser in series:                    
+                        xvalue_dict[xyarr[0]][subser] = 0                                    
+                xvalue_dict[xyarr[0]][ser] = xyarr[1]
+    
+                    
+        xvals = xvalue_dict.keys()    
+        xvals.sort()
+        
+        retarr = []
+        retarr.append(['Values'] + series)        
+        for xval in xvals:
+            rowarr = [xlabel_dict[xval]]
+            for ser in series:            
+                rowarr.append(xvalue_dict[xval][ser])
+            retarr.append(rowarr)
+        return retarr
+                
+                
+            
+            
+        
+        
+        
+        #ok, 2 steps here.
+        #first, establish the "columns" or the series here
+        #second, establish buckets for what we're trying to display
+        #if it's dates, make a global list of all the buckets in use
+        #then populate them
+        
+        
             
         
         

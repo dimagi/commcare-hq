@@ -65,13 +65,15 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
     return render_to_response(request, template_name, context)
 
 
+
+
 @login_required()
-def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.html"):
+def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
     context = {}    
     graph = RawGraph.objects.all().get(id=graph_id)
     
     #get the root group
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = ExtUser.objects.all().get(id=request.user.id)    
     # inject some stuff into the rawgraph.  we can also do more
     # here but for now we'll just work with the domain and set 
     # some dates.  these can be templated down to the sql
@@ -81,19 +83,26 @@ def view_rawgraph(request, graph_id, template_name="dbanalyzer/view_rawgraph.htm
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
     context['chart_title'] = graph.title
     context['chart_data'] = graph.get_flot_data()
-    context['rawgraph'] = graph
+    context['thegraph'] = graph
     
     rootgroup = utils.get_chart_group(extuser)    
     graphtree = get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    context['view_name'] = 'dbanalyzer.views.view_rawgraph'
-    context['width'] = 900
-    context['height'] = 500
+    context['view_name'] = 'dbanalyzer.views.view_graph'
+    context['width'] = graph.width
+    context['height'] = graph.height
+    
+    for item in request.GET.items():
+        if item[0] == 'bare':
+            template_name = 'dbanalyzer/view_graph_bare.html'
+        elif item[0] == 'data':
+            context['datatable'] = graph.convert_data_to_table(context['chart_data'])
+            template_name='dbanalyzer/view_graph_data.html'            
     
     return render_to_response(request, template_name, context)
 
 @login_required()
-def show_rawgraphs(request, template_name="dbanalyzer/show_rawgraphs.html"):
+def show_allgraphs(request, template_name="dbanalyzer/show_allgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()    
     return render_to_response(request, template_name, context)

@@ -86,7 +86,7 @@ a:hover {
     background: #940025;
     color: #ffc;
     overflow: hidden;
-    padding-bottom: 33px;
+    padding-bottom: 20px;
     position: relative;    
 }
 
@@ -106,20 +106,17 @@ a:hover {
     font-weight: normal;
     color: white;
     float:left;
+    
 }
 
 #loginblock {   
-    border:4px solid lightgray;    
-    
+    border:4px solid lightgray;        
 	width:400px;
     margin-top:20%;    
     margin-left:auto;
     margin-right:auto;
     text-align:center;
 }
-
-
-
 #loginblock table{
         
     margin:auto;
@@ -702,16 +699,30 @@ div.replypost {
     width:100%;
 }
 div.chartblock {
-	border:4px solid gray;
-	padding:10px;
-	margin:10px;
+/*	border:4px solid gray;
+	padding:8px;
+	margin:8px;*/
 }
 
 div.chartblock ul {
-	padding-bottom:20px;
+	float:left;	
 	list-style:none;
 }
 
+div.chartblock h1 {
+	font-style:bold;
+	font-size:13px;
+}
+
+div.chartblock h3 {
+	font-style:bold;
+	font-size:11px;
+}
+
+
+div.chartblock h4{
+	float:left;
+}
 
 div.chartblock li {
 	float:left;
@@ -788,6 +799,7 @@ div.inlinecomments {
     #tabs,
     #page-tabs {
         position: absolute;
+        font-size: 13px;
         height: 28px;
         bottom: 0;
         padding: 0;

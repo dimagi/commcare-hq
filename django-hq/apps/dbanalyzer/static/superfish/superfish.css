@@ -6,15 +6,18 @@
 	list-style:		none;
 }
 .sf-menu {
-	line-height:	1.0;
+	line-height:	.45;
+	font-size: 12px;
 }
 .sf-menu ul {
 	position:		absolute;
 	top:			-999em;
 	width:			24em; /* left offset of submenus need to match (see below) */
+	
 }
 .sf-menu ul li {
 	width:			100%;
+	
 }
 .sf-menu li:hover {
 	visibility:		inherit; /* fixes IE7 'sticky bug' */

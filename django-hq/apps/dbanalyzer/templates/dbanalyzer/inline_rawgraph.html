@@ -1,14 +1,14 @@
 {% load i18n %}
 <div class="chartblock">
 <h1><center>{{chart.title}}</center></h1>
-<p style="font-weight: bold">{{chart.y_axis_label}}</p>
+<h3 style="text-align: left;">{{chart.y_axis_label}}</h3>
 {% if chart.has_errors %}
-<h4 style="color:red;">Chart query error</h4>
+<h3 style="color:red;">Chart query error</h4>
 {% else %}
 <div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
-<p style="text-align: center; font-weight: bold">{{chart.x_axis_label}}
-<h4>Show Series</h4>
-<ul id="{{chart.id}}-choices"></ul>	
+<h3 style="text-align: center;">{{chart.x_axis_label}}</h3>
+
+<ul id="{{chart.id}}-choices"><strong>Series</strong></ul>	
 <script id="{{chart.id}}-source" language="javascript" type="text/javascript">
 $(function () {
     var datasets = {{chart.get_flot_data|safe}};

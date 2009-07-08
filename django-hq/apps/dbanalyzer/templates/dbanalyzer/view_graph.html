@@ -16,8 +16,7 @@
 		jQuery(function(){
 			jQuery('ul.sf-menu').superfish();
 		});
-	</script>
-    
+	</script>    
     {{ form.media }}
 {% endblock %} 
 {% block content %}
@@ -27,11 +26,12 @@
 		{% include "dbanalyzer/inline_graphgroup.html" %}	
 	</ul>
     </div>
-	
-    {% with rawgraph as chart %}
+	<a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?bare">Printable View</a>
+	<a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?data">Data View</a>
+    {% with thegraph as chart %}
 		{% include "dbanalyzer/inline_rawgraph.html" %}
 	{% endwith %}
-{% if rawgraph.time_bound  %}
+{% if thegraph.time_bound  %}
     <p>{% get_daterange_links_raw ""%}</p>
 {% endif %}    
 {%endblock%}

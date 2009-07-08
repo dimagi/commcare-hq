@@ -4,7 +4,7 @@
 			{% if group.graphs %}				
 					{% for graph in group.graphs.all %}
 					<li>
-						<a href="{%url dbanalyzer.views.view_rawgraph graph.id %}">{{graph.shortname}}</a>
+						<a href="{%url dbanalyzer.views.view_graph graph.id %}">{{graph.shortname}}</a>
 					</li>
 					{% endfor %}								
 			{% endif %}

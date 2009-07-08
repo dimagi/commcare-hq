@@ -11,7 +11,7 @@
     </thead>
    {% for graph in allgraphs %}      
    	<tr class="{% cycle 'odd' 'even' %}">
-   		<td><a href="{%url dbanalyzer.views.view_rawgraph graph.id %}">{{graph.id}}</a></td>
+   		<td><a href="{%url dbanalyzer.views.view_graph graph.id %}">{{graph.id}}</a></td>
    		<td>{{graph.shortname}}</td>
    		<td>{{graph.title}}</td>   		
    	</tr>   	
