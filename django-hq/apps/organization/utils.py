@@ -77,11 +77,10 @@ def get_user_affiliation(extuser):
             membership.append(parent_edge.parent_object)                    
     return membership
 
-def get_dates(request):
-    default_delta = timedelta(days=1)
-    
-    startdate = datetime.datetime.now().date()
-    enddate = startdate 
+def get_dates(request, default_days=0):
+    default_delta = timedelta(days=default_days)
+    enddate = datetime.datetime.now().date()
+    startdate = enddate - default_delta
     
     for item in request.GET.items():
         if item[0] == 'startdate':

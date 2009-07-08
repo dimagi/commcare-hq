@@ -59,6 +59,14 @@ class RawGraph(BaseGraph):
     display_type = models.CharField(max_length=32,choices=CHART_DISPLAY_TYPES)
                                     
     time_bound = models.BooleanField(null=True, blank=True, default=False)
+    default_interval = models.IntegerField(_('Default Interval'),
+                                             default=0,
+                                             help_text=_("The date initial date range that will be selected in the UI, in days."))
+    interval_ranges = models.CharField(_('Interval Ranges'),
+                                   max_length=255, 
+                                   null=True, 
+                                   blank=True, 
+                                   help_text=_("The date interval choices to display in the UI.  Each range should be specified in days separated by the | symbol. For example, 7|30|365 will show options for 1 week, 1 month, and 1 year."))
     
     additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
                                       help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))
@@ -77,6 +85,13 @@ class RawGraph(BaseGraph):
     def __unicode__(self):
         return self.shortname
     
+    @property
+    def date_range_list(self):
+        if self.interval_ranges:
+            return [int(val) for val in self.interval_ranges.split("|")]
+        else:
+            # default to some reasonable values
+            return [0,7,30,90,365]
     
     @property 
     def cleaned_query(self):

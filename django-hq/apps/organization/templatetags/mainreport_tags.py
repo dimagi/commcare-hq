@@ -32,10 +32,10 @@ def get_daterange_links_raw(base_link, args={}):
     delta_month = timedelta(days=30)
     delta_3month = timedelta(days=90)
     
-    enddate = datetime.now()    
+    enddate = datetime.now()
     yesterday = enddate - delta_day
     #datetime.strptime(startdate_str,'%m/%d/%Y')
-    ret = ''
+    ret = '\n'
     ret += '<div class="daterange_tabs"><ul>'
     ret += '<li><a href="%s">Today</a>' % (base_link)
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Yesterday</a>' % (base_link, yesterday.strftime('%m/%d/%Y'), yesterday.strftime('%m/%d/%Y'))
@@ -45,6 +45,46 @@ def get_daterange_links_raw(base_link, args={}):
     ret += "</ul></div>"
     return ret
 
+@register.simple_tag
+def get_daterange_links_basic(base_link, days=[0,7,30,90], args={}):
+    '''Allows you to pass in a list of day counts representing how 
+       far to go back for each link. For known links it will generate
+       a pretty string to display the time, otherwise it will say
+       "last n days"''' 
+    #base_link = reverse(view_name,kwargs=args)
+    end_date = datetime.now()
+    ret = '\n'
+    ret += '<div class="daterange_tabs"><ul>\n'
+    for num_days in days:
+        ret += _get_formatted_date_link(base_link, end_date, num_days) + "\n"
+    ret += "</ul></div>"
+    return ret
+
+def _get_formatted_date_link(base_link, end_date, num_days):
+    return '<li><a href="%s?startdate=%s&enddate=%s">%s</a></li>' % (base_link, 
+                                                                (end_date - timedelta(days=num_days)).strftime('%m/%d/%Y'), 
+                                                                end_date.strftime('%m/%d/%Y'), 
+                                                                _get_time_interval_display(num_days))
+
+def _get_time_interval_display(num_days):
+    '''Gets a display string representing the interval.'''
+    if num_days == 0:
+        return "Today"
+    elif num_days == 7:
+        return "Last Week"
+    elif num_days == 30:
+        return "Last Month"
+    elif num_days == 365:
+        return "Last Year"
+    elif num_days % 365 == 0:
+        yrs = num_days / 365
+        return "Last %s Years" % yrs
+    elif num_days % 30 == 0:
+        months = num_days / 30
+        return "Last %s Months" % months
+    else:
+        return "Last %s Days" % num_days
+    
 
 @register.simple_tag
 def aggregate_section_totals(section_name, results_arr, daily):

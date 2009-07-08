@@ -182,7 +182,7 @@
       "series_labels": "High Risk|Regular", 
       "data_source": "", 
       "y_axis_label": "Number of Registrations", 
-      "x_type": "MM/DD/YYYY", {"yaxis": {"tickDecimals": 0}
+      "x_type": "MM/DD/YYYY", 
       "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}, \"xaxis\": {\"minTickSize\": [1, \"day\"]}}", 
       "time_bound": 0, 
       "x_axis_label": "Date of Registration", 
@@ -217,6 +217,8 @@
       "x_type": "MM/DD/YYYY", 
       "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}}", 
       "time_bound": 1, 
+      "default_interval": 30, 
+      "interval_ranges": "7|30|90|365", 
       "x_axis_label": "Date", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 

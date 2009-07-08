@@ -1,4 +1,3 @@
-{# {% extends "dbanalyzer/flot_base.html" %} #}
 {% extends base_template %}
 {% load i18n %}
 {% load mainreport_tags %}
@@ -32,7 +31,7 @@
 		{% include "dbanalyzer/inline_rawgraph.html" %}
 	{% endwith %}
 {% if thegraph.time_bound  %}
-    <p>{% get_daterange_links_raw ""%}</p>
+    <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
 {% endif %}    
 {%endblock%}
     

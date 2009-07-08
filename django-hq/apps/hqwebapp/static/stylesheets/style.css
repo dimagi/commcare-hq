@@ -218,6 +218,7 @@ div.buildinfoblock {
 /* Menu */
 
 div.daterange_tabs {
+	text-align: center;
 	margin-left: 30px;
 	height: 25px;		
 }
@@ -705,7 +706,6 @@ div.chartblock {
 }
 
 div.chartblock ul {
-	float:left;	
 	list-style:none;
 }
 

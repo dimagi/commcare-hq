@@ -78,9 +78,10 @@ def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
     # here but for now we'll just work with the domain and set 
     # some dates.  these can be templated down to the sql
     graph.domain = extuser.domain.name
-    startdate, enddate = utils.get_dates(request)
+    startdate, enddate = utils.get_dates(request, graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+    
     context['chart_title'] = graph.title
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
