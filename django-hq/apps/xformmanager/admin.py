@@ -14,3 +14,7 @@ class MetaDataModelAdmin(admin.ModelAdmin):
 admin.site.register(FormDefModel,FormDefModelAdmin)
 admin.site.register(ElementDefModel)
 admin.site.register(Metadata, MetaDataModelAdmin)
+
+admin.site.register(Case)
+admin.site.register(CaseFormIdentifier)
+admin.site.register(FormIdentifier)
