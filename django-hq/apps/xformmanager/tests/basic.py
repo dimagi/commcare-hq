@@ -6,9 +6,7 @@ from datetime import *
 import unittest
 
 class BasicTestCase(unittest.TestCase):
-    def setup(selfs):
-        pass
-
+    
     def testSaveFormData_1(self):
         """ Test basic form definition created and data saved """
         create_xsd_and_populate("1_basic.xsd", "1_basic.xml")

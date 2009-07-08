@@ -3,8 +3,6 @@ import traceback, sys, os
 from xformmanager.tests.util import *
 
 class BasicTestCase(unittest.TestCase):
-    def setup(selfs):
-        pass
 
     def testTranslateXFormToSchema(self):
         """ Test basic xform to schema translation"""
