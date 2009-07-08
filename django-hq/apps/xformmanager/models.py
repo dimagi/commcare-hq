@@ -268,6 +268,10 @@ class Case(models.Model):
        of X-Form schemas that are linked together by a common identifier.'''
     
     name = models.CharField(max_length=255)
+    domain = models.ForeignKey(Domain)
+    
+    def __unicode__(self):
+        return self.name
     
     @property
     def forms(self):
@@ -347,7 +351,8 @@ class CaseFormIdentifier(models.Model):
     case = models.ForeignKey(Case, related_name="form_data")
     sequence_id = models.PositiveIntegerField()
 
-    
+    def __unicode__(self):
+        return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
 
 def process(sender, instance, **kwargs): #get sender, instance, created
     from manager import XFormManager
