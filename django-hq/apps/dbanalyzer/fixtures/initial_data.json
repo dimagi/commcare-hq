@@ -3,8 +3,8 @@
     "pk": 23, 
     "model": "dbanalyzer.basegraph", 
     "fields": {
-      "shortname": "High Risk v. Regular Cummulative", 
-      "title": "High Risk v. Regular Over Time"
+      "shortname": "High Risk v. Regular Cumulative", 
+      "title": "High Risk v. Regular Cumulative"
     }
   }, 
   {
@@ -182,8 +182,8 @@
       "series_labels": "High Risk|Regular", 
       "data_source": "", 
       "y_axis_label": "Number of Registrations", 
-      "x_type": "MM/DD/YYYY", 
-      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}}", 
+      "x_type": "MM/DD/YYYY", {"yaxis": {"tickDecimals": 0}
+      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}, \"xaxis\": {\"minTickSize\": [1, \"day\"]}}", 
       "time_bound": 0, 
       "x_axis_label": "Date of Registration", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_3  ", 
@@ -199,7 +199,7 @@
       "data_source": "", 
       "y_axis_label": "Number of Registrations", 
       "x_type": "MM/DD/YYYY", 
-      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}}", 
+      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}, \"xaxis\": {\"minTickSize\": [1, \"day\"]}}", 
       "time_bound": 0, 
       "x_axis_label": "Date of Registration", 
       "table_name": "x_commcarehq_org_intel_grameen_safe_motherhood_registration_v0_3", 
