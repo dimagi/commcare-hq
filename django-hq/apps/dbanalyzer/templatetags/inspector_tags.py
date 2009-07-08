@@ -93,7 +93,7 @@ class StringColumnValuesNode(Node):
         col = self.col_name.resolve(context)
         
         helper = dbhelper.DbHelper(tbl, tbl)        
-        context[self.var_name] = helper.get_uniques_for_column(col, None, None)
+        context[self.var_name] = helper.get_uniques_for_column(col)
         context[self.var_name].insert(0,'count(*)')
         return ''
 

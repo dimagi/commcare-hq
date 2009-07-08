@@ -43,8 +43,7 @@ def get_user_forms_count(domain, username, startdate=None, enddate=None, forms_t
         defs = forms_to_filter
     
     for fdef in defs:        
-        table = fdef.element.table_name        
-        helper = dbhelper.DbHelper(table, fdef.form_display_name)
+        helper = fdef.db_helper
         userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': username})                        
         for dat in userdailies:         
             #dt = time.strptime(str(dat[1][0:-4]),xmldate_format)
