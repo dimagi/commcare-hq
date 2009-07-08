@@ -8,4 +8,9 @@ urlpatterns = patterns('',
     (r'^xforms/show/(?P<formdef_id>\d+)$', 'xformmanager.views.single_xform'),
     (r'^xforms/data/(?P<formdef_id>\d+)$', 'xformmanager.views.data'),
     (r'^xforms/data/(?P<formdef_id>\d+)/csv/?$', 'xformmanager.views.export_csv'),
+    (r'^xforms/reports/$', 'xformmanager.views.case_reports'),
+    (r'^xforms/reports/(?P<case_id>\d+)/?$', 'xformmanager.views.case_data'),
+    (r'^xforms/reports/(?P<case_id>\d+)/csv/?$', 'xformmanager.views.case_export_csv'),
+    
+    
 )

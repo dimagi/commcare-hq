@@ -1,0 +1,44 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Data for Report: {{case}}{% endblock %}
+{%block mgr_content%}
+
+<h2>{% trans "Data for Report: " %}{{case}}</h2>
+<a href="{% url xformmanager.views.case_export_csv case.id %}">download csv file</a>
+<br>
+<div class="pagination">
+    <span class="step-links">
+        {% if data.has_previous %}
+            <a href="?page={{ data.previous_page_number }}"><< Previous</a>
+        {% endif %}
+        <span class="current">
+            Page {{ data.number }} of {{ data.paginator.num_pages }}.
+        </span>
+        {% if data.has_next %}
+            <a href="?page={{ data.next_page_number }}">Next >></a>
+        {% endif %}
+    </span>
+</div>
+
+<table class="sofT">
+	<thead class="commcare-heading">
+	   <tr>
+	   {% for col in cols %}
+		  <th>{{col}}</th>	
+	   {% endfor%}
+	   </tr>
+	</thead>
+    {% for record in data.object_list %}   	
+   	<tr class="{% cycle 'odd' 'even' %}">  
+	   {% for field in record %}   
+	   		 <td>{{field}}</td> 
+	   {% endfor %}
+	</tr>
+   {% endfor %}
+
+
+   </table>
+
+
+{% endblock %}
+

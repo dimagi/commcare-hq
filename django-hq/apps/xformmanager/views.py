@@ -7,7 +7,7 @@ from django.db import transaction, connection
 import hashlib
 from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm
-from xformmanager.models import FormDefModel
+from xformmanager.models import FormDefModel, Case
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 import settings, os, sys
@@ -195,6 +195,7 @@ def data(request, formdef_id, template_name="data.html"):
     return render_to_response(request, template_name, context)    
 
 
+
 @login_required()
 def export_csv(request, formdef_id):
     context = {}
@@ -204,8 +205,7 @@ def export_csv(request, formdef_id):
     cursor.execute("SELECT * FROM " + xform.form_name + ' order by id')
     rows = cursor.fetchall()
     
-    rawcolumns = cursor.description 
-    columns = [col[0] for col in rawcolumns]
+    columns = xform.get_column_names()
     
     output = StringIO()
     w = csv.writer(output)
@@ -216,9 +216,67 @@ def export_csv(request, formdef_id):
     output.seek(0)
     response = HttpResponse(output.read(),
                         mimetype='application/ms-excel')
-    response["content-disposition"] = "attachment; filename=%s-%s.csv" % (xform.form_name, str(datetime.now().date()))
+    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % (xform.form_name, str(datetime.now().date()))
     return response
     
+@login_required()
+def case_reports(request, template_name="case_reports.html"):
+    # not sure where this view will live in the UI yet
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    
+    context['case_reports'] = Case.objects.filter(domain=extuser.domain)
+    context['domain'] = extuser.domain
+    return render_to_response(request, template_name, context)
 
-def __xform_file_name(name):
-    return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xform.xml')
+@login_required()
+def case_data(request, case_id, template_name="case_data.html"):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    case = Case.objects.get(id=case_id)
+    
+    context['cols'] = case.get_column_names()
+    
+    data = case.get_all_data()
+    keys = data.keys()
+    keys.sort()
+    flattened = []
+    for key in keys:
+        flattened.append(data[key])
+    
+    paginator = Paginator(flattened, 25) 
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        data_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        data_pages = paginator.page(paginator.num_pages)
+    
+    context['data'] = data_pages    
+    context['case'] = case
+    
+    return render_to_response(request, template_name, context)
+
+@login_required()
+def case_export_csv(request, case_id, template_name="case_data.html"):
+    case = Case.objects.get(id=case_id)
+    cols = case.get_column_names()
+    data = case.get_all_data().values()
+    output = StringIO()
+    w = csv.writer(output)
+    w.writerow(cols)
+    for row in data:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(),
+                        mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( case.name, str(datetime.now().date()))
+    return response
