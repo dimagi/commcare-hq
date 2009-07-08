@@ -2,6 +2,7 @@ import unittest
 from xformmanager.tests.util import *
 from xformmanager.models import *
 from xformmanager.storageutility import StorageUtility
+from organization.models import Domain
 #from django.test import TestCase
 
 class CaseTestCase(unittest.TestCase):
@@ -30,7 +31,8 @@ class CaseTestCase(unittest.TestCase):
                                                         sorting_column="meta_timeend", sort_descending=True)
         self.close_fid = FormIdentifier.objects.create(form=self.close_form, identity_column="meta_username")
         
-        self.pf_case = Case.objects.create(name="pathfinder cases")
+        pf_domain = Domain.objects.all()[0]
+        self.pf_case = Case.objects.create(name="pathfinder cases", domain=pf_domain)
         
         self.reg_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_fid, case=self.pf_case, sequence_id=1)
         self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2)
