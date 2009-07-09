@@ -130,7 +130,7 @@ class FormDefModel(models.Model):
         
     
     def __unicode__(self):
-        return "XForm " + unicode(self.form_name)
+        return self.form_name
     
     @property
     def get_domain(self):
