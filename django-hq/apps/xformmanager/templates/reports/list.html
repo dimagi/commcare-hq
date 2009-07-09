@@ -1,0 +1,18 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Reports for {{domain}}{% endblock %}
+{% block mgr_content %}
+{% if custom_reports %}
+    <h2>Custom Reports for {{domain}}</h2>
+    {% for report in custom_reports %}
+        <li><a href="{% url xformmanager.views.custom_report domain.id report.name %}">{{ report.display_name }}</a></li>
+    {% endfor %}
+{% endif %}
+{% if case_reports %}
+    <h2>Data Export Reports for {{domain}}</h2>
+    {% for report in case_reports %}
+        <li><a href="{% url xformmanager.views.case_data report.id %}">{{ report }}</a></li>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+

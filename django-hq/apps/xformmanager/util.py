@@ -1,5 +1,8 @@
 import re, os
 import logging
+import inspect
+import xformmanager.reports.custom as custom_reports
+
 from lxml import etree
 
 #from django.db import backend
@@ -81,3 +84,24 @@ def join_if_exists(parent_name, child_name):
         # remove this hack later
         return str(parent_name) + "_" + str(child_name)
     return str(child_name)
+
+def get_custom_report_class(domain):
+    '''Get the reports class for a domain, if it exists.  Otherwise
+       this returns nothing'''
+    if hasattr(custom_reports, domain.name):
+        return getattr(custom_reports, domain.name)()
+    return None
+
+def get_custom_reports(report_class):
+    '''Given a reports class, get the list of custom reports defined
+       in that class'''
+    to_return = []
+    for name in dir(report_class):
+        obj = getattr(report_class, name)
+        if inspect.ismethod(obj):
+            # sanitize the function to what we care about
+            obj_rep = {"name" : obj.im_func.func_name,
+                       "display_name" : obj.__doc__   
+                       } 
+            to_return.append(obj_rep)
+    return to_return
