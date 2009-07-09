@@ -1,0 +1,3 @@
+[submodule "rapidsms"]
+	path = rapidsms
+	url = git://github.com/dimagi/rapidsms.git
