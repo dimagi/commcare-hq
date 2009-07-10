@@ -60,6 +60,7 @@ def monitoring(request):
     context["open_referrals"] = moms_with_open_referrals
     context["very_pregnant"] = very_pregnant_moms
     context["need_followup"] = moms_needing_followup
+    context["empty_data_holder"] = "<b>???</b>"
     return render_to_string("reports/mvp/monitoring.html", context)
 
 

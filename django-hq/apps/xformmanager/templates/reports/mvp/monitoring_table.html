@@ -11,10 +11,10 @@
     </thead>
         {% for mother in data %}
             <tr class="{% cycle 'odd' 'even' %}">
-            <td>{{ mother.mother_name }}</td>
-            <td>{{ mother.chw }}</td>
-            <td>{{ mother.months_pregnant }}</td>
-            <td>{{ mother.days_since_followup }}</td>
+            <td>{% if mother.mother_name %}{{ mother.mother_name }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.chw %}{{ mother.chw }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.months_pregnant %}{{ mother.months_pregnant }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.days_since_followup %}{{ mother.days_since_followup }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{{ mother.high_risk_factors }}</td>
             <td>{{ mother.incomplete_checklist_items }}</td>
             </tr>
