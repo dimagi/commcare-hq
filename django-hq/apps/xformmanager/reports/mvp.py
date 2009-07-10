@@ -240,7 +240,6 @@ class Mother(object):
         incomplete_checklist_items = []
         for item in checklist_items:
             if data_map[item] != 1:
-                print "Adding: %s, %s" % (item, data_map[item]) 
                 incomplete_checklist_items.append(self._clean(item, "safe_pregnancy_preg_actions_", "_2"))
                 
         self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
