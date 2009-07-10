@@ -78,7 +78,15 @@ class Mother(object):
         # leaving that as an open-ended possibility.  a triple dictionary might
         # be a bit too much to deal with.
         self.mother_name = data_map["sampledata_mother_name_1"]
-        self.chw = data_map["meta_username_1"]
+        chw_cols = ["meta_username_1","meta_username_2","meta_username_3",
+                    "meta_username_4"]
+        
+        self.chw = None
+        for item in chw_cols:
+            self.chw = data_map[item]
+            if self.chw:
+                break
+            
         self.date_of_reg = data_map["meta_timestart_1"]
         self.months_preg_at_reg = data_map["sampledata_months_pregnant_1"]
         if self.date_of_reg and self.months_preg_at_reg:
