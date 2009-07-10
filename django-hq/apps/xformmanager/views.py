@@ -230,9 +230,9 @@ def reports(request, template_name="reports/list.html"):
     extuser = ExtUser.objects.all().get(id=request.user.id)
     context['domain'] = extuser.domain
     context['case_reports'] = Case.objects.filter(domain=extuser.domain)
-    reports_class = xutils.get_custom_report_class(extuser.domain)
-    if reports_class:
-        custom = xutils.get_custom_reports(reports_class)
+    report_module = xutils.get_custom_report_module(extuser.domain)
+    if report_module:
+        custom = xutils.get_custom_reports(report_module)
         context['custom_reports'] = custom 
     return render_to_response(request, template_name, context)
 
@@ -295,7 +295,7 @@ def custom_report(request, domain_id, report_name):
     extuser = ExtUser.objects.all().get(id=request.user.id)
     context["domain"] = extuser.domain
     context["report_name"] = report_name
-    report_module = xutils.get_custom_report_class(extuser.domain)
+    report_module = xutils.get_custom_report_module(extuser.domain)
     if not report_module:
         return render_to_response(request, 
                                   "reports/domain_not_found.html",
@@ -305,6 +305,7 @@ def custom_report(request, domain_id, report_name):
                                   "reports/report_not_found.html",
                                   context)
     report_method = getattr(report_module, report_name)
+    context["report_display"] = report_method.__doc__
     context["report_body"] = report_method(request)
     return render_to_response(request, "reports/base.html", context)
 
