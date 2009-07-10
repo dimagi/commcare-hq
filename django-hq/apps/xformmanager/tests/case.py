@@ -161,21 +161,21 @@ class CaseTestCase(unittest.TestCase):
         for id, col_map in data.items():
             if id == "demo_user":
                 self.assertEqual("device3", 
-                                 col_map["meta_deviceid-%s" % self.follow_form.id])
+                                 col_map["meta_deviceid_%s" % self.follow_cfi.sequence_id])
                 # demo_user has a close form but no reg
                 # the id below is copied from the xml form
                 self.assertEqual("7WM8SPBUWGXTDRO4TAJVR6MA0",
-                                 col_map["meta_uid-%s" % self.close_form.id])
+                                 col_map["meta_uid_%s" % self.close_cfi.sequence_id])
                 self.assertEqual(None,
-                                 col_map["meta_uid-%s" % self.reg_form.id])
+                                 col_map["meta_uid_%s" % self.reg_cfi.sequence_id])
             elif id == "mary":
                 self.assertEqual("device5", 
-                                 col_map["meta_deviceid-%s" % self.follow_form.id])
+                                 col_map["meta_deviceid_%s" % self.follow_cfi.sequence_id])
                 # mary has a reg, but no close form
                 # the id below is copied from the xml form
                 self.assertEqual("NFLFYINTDW16XPMOY0QXVXSH1",
-                                 col_map["meta_uid-%s" % self.reg_form.id])
+                                 col_map["meta_uid_%s" % self.reg_cfi.sequence_id])
                 self.assertEqual(None,
-                                 col_map["meta_uid-%s" % self.close_form.id])
+                                 col_map["meta_uid_%s" % self.close_cfi.sequence_id])
             else:
                 self.fail("unexpected identity: %s" % id)                

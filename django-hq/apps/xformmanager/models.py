@@ -298,14 +298,14 @@ class Case(models.Model):
     def get_column_names(self):
         '''Get the full list of column names, for all the forms'''
         to_return = []
-        for form in self.forms:
-            for col in form.get_column_names():
+        for form in self.form_data.order_by('sequence_id'):
+            for col in form.form_identifier.form.get_column_names():
                 # todo: what should these really be to differentiate
                 # between the different forms?  the form name 
                 # is probably too long, and the display name
                 # can be null.  the id and sequence are both 
                 # alright.  going with id for now.
-                to_return.append("%s-%s" % (col, form.id))
+                to_return.append("%s_%s" % (col, form.sequence_id))
         return to_return        
         
     def get_all_data(self):
