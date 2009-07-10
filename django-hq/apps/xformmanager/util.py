@@ -94,12 +94,17 @@ def get_custom_report_class(domain):
 
 def get_custom_reports(report_class):
     '''Given a reports class, get the list of custom reports defined
-       in that class'''
+       in that class.  These are returned as dictionaries of the 
+       following format:
+         { "name" : function_name, "display_name" : function_doc }
+       see reports/custom.py for more information 
+    '''
     to_return = []
     for name in dir(report_class):
         obj = getattr(report_class, name)
+        # using ismethod filters out the builtins and any 
+        # other fields defined in the custom class
         if inspect.ismethod(obj):
-            # sanitize the function to what we care about
             obj_rep = {"name" : obj.im_func.func_name,
                        "display_name" : obj.__doc__   
                        } 
