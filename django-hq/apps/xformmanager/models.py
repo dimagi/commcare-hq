@@ -340,7 +340,36 @@ class Case(models.Model):
                     # there was no data for this id for this
                     # form so extend the list with empty values
                     to_return[id].extend([None]*form_id.form.column_count)
-        return to_return        
+        return to_return
+    
+    def get_all_data_maps(self):
+        '''Get the full data set of data for all the forms in 
+           dictionary format.  This ill be a dictionary of 
+           dictionaries with the id column as keys and a 
+           dictionary aggregating the data across the forms.  E.g.:
+           { id_column_value_1: {form1_datacolumn1: form1_value1,
+                                 form1_datacolumn2: form1_value2,
+                                 ...,
+                                 form2_datacolumn1: form2_value1,
+                                 form2_datacolumn2: form2_value2,
+                                },
+             id_column_value_2: {form1_datacolumn1: form1_value1,
+                                 form1_datacolumn2: form1_value2,
+                                 ...
+                                }
+             ...
+           }
+           The number of items in each dict will be equal to the 
+           sum of the number of columns of all forms that are a 
+           part of this case.
+        '''
+        lists = self.get_all_data()
+        to_return = {}
+        columns = self.get_column_names()
+        for id, list in lists.items():
+            # magically zip these up in a dictionary
+            to_return[id] = dict(zip(columns, list))
+        return to_return
     
 class CaseFormIdentifier(models.Model):
     # yuck.  todo: come up with a better name.

@@ -156,12 +156,9 @@ class CaseTestCase(unittest.TestCase):
                 self.fail("unexpected identity: %s" % id)
                 
     def testGetData(self):
-        data = self.pf_case.get_all_data()
+        data = self.pf_case.get_all_data_maps()
         self.assertEqual(2, len(data))
-        cols = self.pf_case.get_column_names()
-        for id, list in data.items():
-            self.assertEqual(len(cols), len(list))
-            col_map = dict(zip(cols, list))
+        for id, col_map in data.items():
             if id == "demo_user":
                 self.assertEqual("device3", 
                                  col_map["meta_deviceid-%s" % self.follow_form.id])
