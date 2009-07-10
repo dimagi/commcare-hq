@@ -114,9 +114,13 @@ class RawGraph(BaseGraph):
         
     @property
     def cursor(self):        
-        if self._cursor == None:
-            self._cursor = connection.cursor()
-            self._cursor.execute(self.cleaned_query.__str__())        
+        # caching the cursor can have some unexpected results if 
+        # you fetch from it more than once, so removing this 
+        # behavior.  we may want to revisit this if performance
+        # becomes an issue
+        #if self._cursor == None:
+        self._cursor = connection.cursor()
+        self._cursor.execute(self.cleaned_query.__str__())        
         return self._cursor    
     
     def reset(self):
@@ -353,9 +357,9 @@ class RawGraph(BaseGraph):
            object that will allow the chart to be plotted by flot.'''
         try:  
             if self.display_type == 'histogram-overall':
-                return self.__overall_histogram()
+                to_return = self.__overall_histogram()
             elif self.display_type.startswith('compare'):
-                return self.__compare_trends()
+                to_return = self.__compare_trends()
             else:
                 flot_dict = {}
                 labels = self.labels
@@ -367,12 +371,12 @@ class RawGraph(BaseGraph):
                     currseries[self.__get_display_type()] = {'show': 'true'}                           
                     flot_dict[label.__str__()] = currseries
                 
-                
-                #return '{"demo":{"label":"test", "data": [[0,1],[1,2],[2,1],[3,10],[4,5]]}}'
-                return flot_dict
+                to_return = flot_dict
+            print to_return
+            return to_return
         except Exception, e:
             logging.error("Error rendering flot data: " + str(e))
-            return '[]'
+            return {}
         
         
     def convert_data_to_table(self, flot_data):

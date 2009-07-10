@@ -92,7 +92,7 @@ def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
     context['view_name'] = 'dbanalyzer.views.view_graph'
     context['width'] = graph.width
     context['height'] = graph.height
-    
+    context['empty_dict'] = {}
     for item in request.GET.items():
         if item[0] == 'bare':
             template_name = 'dbanalyzer/view_graph_bare.html'

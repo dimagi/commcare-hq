@@ -1,15 +1,19 @@
 {% load i18n %}
 <div class="chartblock">
-<h1><center>{{chart.title}}</center></h1>
-<h3 style="text-align: left;">{{chart.y_axis_label}}</h3>
 {% if chart.has_errors %}
-<h3 style="color:red;">Chart query error</h4>
+<h3 style="color:red; text-align: left;">Sorry, something went wrong displaying that chart.  Please tell your administrator about this!</h3>
 {% else %}
-<div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
-<h3 style="text-align: center;">{{chart.x_axis_label}}</h3>
 
-<ul id="{{chart.id}}-choices"><strong>Series</strong></ul>	
-<script id="{{chart.id}}-source" language="javascript" type="text/javascript">
+    {% ifequal chart.get_flot_data empty_dict %}
+        <h3 style="text-align: left;">Sorry, there's no data for chart {% if thegraph.time_bound %}and date range {% endif %}you selected.</h3>
+    {% else %} 
+        <h1><center>{{chart.title}}</center></h1>
+        <h3 style="text-align: left;">{{chart.y_axis_label}}</h3>
+        <div id="{{chart.id}}-placeholder" style="width:{{width}}px;height:{{height}}px;"></div>	
+        <h3 style="text-align: center;">{{chart.x_axis_label}}</h3>
+        <ul id="{{chart.id}}-choices"><strong>Series</strong></ul>	
+        <script id="{{chart.id}}-source" language="javascript" type="text/javascript">
+
 $(function () {
     var datasets = {{chart.get_flot_data|safe}};
 
@@ -46,8 +50,7 @@ $(function () {
     plotAccordingToChoices();
 });
 </script>
+
+    {% endifequal %}
 {%endif%}
 </div>
-
-
-    
