@@ -1,6 +1,5 @@
 from django import template
 from django.core.urlresolvers import reverse
-from django.core.urlresolvers import reverse
 
 from modelrelationship.models import *
 from django.contrib.contenttypes.models import ContentType
