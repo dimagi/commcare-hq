@@ -11,14 +11,14 @@
             <th>Last Referral Visit by CHW</th>
         </tr>
     </thead>
-        {% for referral in open_referrals %}
+        {% for mother in open_referrals %}
             <tr class="{% cycle 'odd' 'even' %}">
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>            
+            <td>{{ mother.mother_name }}</td>
+            <td>{{ mother.chw }}</td>
+            <td>{{ mother.months_pregnant }}</td>
+            <td>{{ mother.danger_signs}}</td>
+            <td>{{ mother.date_referred|date:"d-M-Y" }}</td>
+            <td>{{ mother.date_of_referral|date:"d-M-Y" }}</td>
             </tr>
         {% endfor %}
 </table>
@@ -26,7 +26,8 @@
 <h2>Women 7-10 Months Pregnant</h2>
 {% get_monitoring_table very_pregnant %} 
 <br>
-<h2>Women with Approaching ANC Visit</h2>
-{% get_monitoring_table approaching_visit %} 
 <h2>Women Needing Followup (>1 month since last Followup if 1-6 Months, >15 days since last Followup if 7-10 Months)</h2>
 {% get_monitoring_table need_followup %} 
+<br>
+<h2>Everyone Else (No Actions Required)</h2>
+{% get_monitoring_table healthy_moms %} 

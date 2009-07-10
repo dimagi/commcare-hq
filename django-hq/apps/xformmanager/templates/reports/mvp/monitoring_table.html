@@ -4,17 +4,19 @@
             <th>Mother Name</th>
             <th>Name of CHW</th>
             <th>Months Pregnant</th>
+            <th>Days Since Last Seen</th>
             <th>High Risk Factors</th>
             <th>Incomplete Checklist Items</th>
         </tr>
     </thead>
-        {% for case in data %}
+        {% for mother in data %}
             <tr class="{% cycle 'odd' 'even' %}">
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
-            <td>todo</td>
+            <td>{{ mother.mother_name }}</td>
+            <td>{{ mother.chw }}</td>
+            <td>{{ mother.months_pregnant }}</td>
+            <td>{{ mother.days_since_followup }}</td>
+            <td>{{ mother.high_risk_factors }}</td>
+            <td>{{ mother.incomplete_checklist_items }}</td>
             </tr>
         {% endfor %}
 </table>
