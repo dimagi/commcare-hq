@@ -98,9 +98,6 @@ def get_custom_report_module(domain):
         return rep_module
     except ImportError:
         return None
-#    if hasattr(custom_reports, domain.name):
-#        return getattr(custom_reports, domain.name)()
-#    return None
 
 def get_custom_reports(report_module):
     '''Given a reports module , get the list of custom reports defined
@@ -113,8 +110,11 @@ def get_custom_reports(report_module):
     for name in dir(report_module):
         obj = getattr(report_module, name)
         # using ismethod filters out the builtins and any 
-        # other fields defined in the custom class
-        if is_mod_function(report_module, obj):
+        # other fields defined in the custom class.  
+        # also use the python convention of keeping methods
+        # that start with an "_" private.
+        if is_mod_function(report_module, obj) and\
+          not obj.func_name.startswith("_"):
             obj_rep = {"name" : obj.func_name,
                        "display_name" : obj.__doc__   
                        } 
