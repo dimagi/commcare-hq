@@ -372,7 +372,6 @@ class RawGraph(BaseGraph):
                     flot_dict[label.__str__()] = currseries
                 
                 to_return = flot_dict
-            print to_return
             return to_return
         except Exception, e:
             logging.error("Error rendering flot data: " + str(e))
