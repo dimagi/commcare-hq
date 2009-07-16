@@ -28,12 +28,22 @@ def monitoring(request):
                   depends on have been uploaded.'''
     
     data_maps = case.get_all_data_maps()
+    
+    # allow a list of usernames whose submissions don't show up
+    # in the report. 
+    blacklist = ["teddy", "admin", "demo_user"]
+    blacklist_columns = ["meta_username_1","meta_username_2",
+                         "meta_username_3","meta_username_4"]
+        
     all_moms = []
     healthy_moms = []
     very_pregnant_moms = []
     moms_needing_followup = []
     moms_with_open_referrals = []
     for id, map in data_maps.items():
+        # check blacklist
+        if _is_blacklisted(map, blacklist, blacklist_columns):
+            continue
         mom = Mother(id, map)
         all_moms.append(mom)
         prev_list_size = len(moms_needing_followup) +\
@@ -63,6 +73,13 @@ def monitoring(request):
     context["empty_data_holder"] = "<b>???</b>"
     return render_to_string("reports/mvp/monitoring.html", context)
 
+def _is_blacklisted(data, blacklist, blacklist_columns):
+    '''Checks a set of columns and values, and if any of the
+       columns contains one of the values, returns true'''
+    for column in blacklist_columns:
+        if data[column] in blacklist:
+            return True
+    return False
 
 class Mother(object):
     
