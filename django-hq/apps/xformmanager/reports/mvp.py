@@ -33,7 +33,8 @@ def monitoring(request):
     # in the report. 
     blacklist = ["teddy", "admin", "demo_user"]
     blacklist_columns = ["meta_username_1","meta_username_2",
-                         "meta_username_3","meta_username_4"]
+                         "meta_username_3","meta_username_4",
+                         "meta_username_5"]
         
     all_moms = []
     healthy_moms = []
@@ -45,6 +46,9 @@ def monitoring(request):
         if _is_blacklisted(map, blacklist, blacklist_columns):
             continue
         mom = Mother(id, map)
+        if not mom.chw:
+            # don't include submissions from non-users
+            continue
         all_moms.append(mom)
         prev_list_size = len(moms_needing_followup) +\
                          len(very_pregnant_moms) +\
@@ -95,9 +99,16 @@ class Mother(object):
         # ids would just be way too long.  we could key these again by form, but
         # leaving that as an open-ended possibility.  a triple dictionary might
         # be a bit too much to deal with.
-        self.mother_name = data_map["sampledata_mother_name_1"]
+        
+        # check against the old registration form
+        reg_seq = "1"
+        if not data_map["meta_timestart_1"] and data_map["meta_timestart_5"]:
+            # we found an old reg and no new reg
+            reg_seq = "5"
+        
+        self.mother_name = data_map["sampledata_mother_name_%s" % reg_seq]
         chw_cols = ["meta_username_1","meta_username_2","meta_username_3",
-                    "meta_username_4"]
+                    "meta_username_4", "meta_username_5"]
         
         self.chw = None
         for item in chw_cols:
@@ -105,8 +116,8 @@ class Mother(object):
             if self.chw:
                 break
             
-        self.date_of_reg = data_map["meta_timestart_1"]
-        self.months_preg_at_reg = data_map["sampledata_months_pregnant_1"]
+        self.date_of_reg = data_map["meta_timestart_%s" % reg_seq]
+        self.months_preg_at_reg = data_map["sampledata_months_pregnant_%s" % reg_seq]
         if self.date_of_reg and self.months_preg_at_reg:
             days_pregnant_at_reg = self.months_preg_at_reg * 30
             self.months_pregnant = ((datetime.now() - self.date_of_reg) + 
@@ -120,7 +131,9 @@ class Mother(object):
         self.date_of_last_followup = data_map["meta_timestart_2"] 
         if self.date_of_last_followup:
             self.days_since_followup = (datetime.now() - self.date_of_last_followup).days
-        elif self.date_of_reg:
+        # this is yucky but we don't want to include folks with no followups
+        # and no new reg, since we're not checkign the old followups
+        elif self.date_of_reg and reg_seq == "1":
             self.days_since_followup = (datetime.now() - self.date_of_reg).days
         else:
             # no reg or follow-ups.  leave them out for now
@@ -136,20 +149,20 @@ class Mother(object):
                 self.needs_followup = False
         
         # high risk factors
-        hi_risk_cols = ["sampledata_hi_risk_info_old_1",
-                        "sampledata_hi_risk_info_young_1",
-                        "sampledata_hi_risk_info_education_1",
-                        "sampledata_hi_risk_info_small_1",
-                        "sampledata_hi_risk_info_10_years_1",
-                        "sampledata_hi_risk_info_complications_1",
-                        "sampledata_hi_risk_info_many_1",
-                        "sampledata_hi_risk_info_health_1",
-                        "sampledata_hi_risk_info_hiv_1",
-                        "sampledata_hi_risk_info_syphilis_1"]
+        hi_risk_cols = ["sampledata_hi_risk_info_old_%s" % reg_seq,
+                        "sampledata_hi_risk_info_young_%s" % reg_seq,
+                        "sampledata_hi_risk_info_education_%s" % reg_seq,
+                        "sampledata_hi_risk_info_small_%s" % reg_seq,
+                        "sampledata_hi_risk_info_10_years_%s" % reg_seq,
+                        "sampledata_hi_risk_info_complications_%s" % reg_seq,
+                        "sampledata_hi_risk_info_many_%s" % reg_seq,
+                        "sampledata_hi_risk_info_health_%s" % reg_seq,
+                        "sampledata_hi_risk_info_hiv_%s" % reg_seq,
+                        "sampledata_hi_risk_info_syphilis_%s" % reg_seq]
         hi_risk_values = []
         for col in hi_risk_cols:
             if data_map[col]:
-                risk_factor = self._clean(col, "sampledata_hi_risk_info_", "_1")
+                risk_factor = self._clean(col, "sampledata_hi_risk_info_", "_%s" % reg_seq)
                 hi_risk_values.append(risk_factor)
         self.high_risk_factors = ",".join(hi_risk_values)
         
