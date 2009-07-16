@@ -133,7 +133,7 @@ class Mother(object):
             self.days_since_followup = (datetime.now() - self.date_of_last_followup).days
         # this is yucky but we don't want to include folks with no followups
         # and no new reg, since we're not checkign the old followups
-        elif self.date_of_reg and reg_seq == "1":
+        elif self.date_of_reg and reg_seq == "1":   
             self.days_since_followup = (datetime.now() - self.date_of_reg).days
         else:
             # no reg or follow-ups.  leave them out for now
@@ -221,7 +221,6 @@ class Mother(object):
                              "safe_pregnancy_swelling_2": "yes",
                              "safe_pregnancy_unusual_pain_2": "yes",
                              "safe_pregnancy_burn_urinate_2": "yes",
-                             "safe_pregnancy_baby_movement_2": "yes",
                              "safe_pregnancy_baby_not_moving_2": "yes",
                              "safe_pregnancy_fever_2": "yes",
                              "safe_pregnancy_other_illness_2" : "yes"}
