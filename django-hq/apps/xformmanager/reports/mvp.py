@@ -32,10 +32,8 @@ def monitoring(request):
     # allow a list of usernames whose submissions don't show up
     # in the report. 
     blacklist = ["teddy", "admin", "demo_user"]
-    blacklist_columns = ["meta_username_1","meta_username_2",
-                         "meta_username_3","meta_username_4",
-                         "meta_username_5"]
-        
+    blacklist_columns = ["meta_username"]
+    
     all_moms = []
     healthy_moms = []
     very_pregnant_moms = []
@@ -45,7 +43,7 @@ def monitoring(request):
         # check blacklist
         if _is_blacklisted(map, blacklist, blacklist_columns):
             continue
-        mom = Mother(id, map)
+        mom = Mother(case, id, map)
         if not mom.chw:
             # don't include submissions from non-users
             continue
@@ -80,60 +78,113 @@ def monitoring(request):
 def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the
        columns contains one of the values, returns true'''
-    for column in blacklist_columns:
-        if data[column] in blacklist:
-            return True
+    
+    for list_of_data in data.values():
+        for map_of_cols in list_of_data:
+            for column in blacklist_columns:
+                if column in map_of_cols and\
+                   map_of_cols[column] in blacklist:
+                    return True
     return False
 
 class Mother(object):
     
-    def __init__(self, id, data_map):
+    def __init__(self, case, id, data_map):
+        self.case = case
         self.id = id
         self.data_map = data_map 
         # calculate some properties and set them for easy access
         # these are totally hard coded to the forms.  
         # most of these depend on registration and will not display
         # very well if there is no registration
+        forms = case.form_identifiers
+        [new_reg_forms, followup_forms, close_forms, referrals, old_reg_forms] =\
+            [data_map[form] for form in forms]
         
-        # czue - i don't like that the sequence ids are hard-coded, but using the form
-        # ids would just be way too long.  we could key these again by form, but
-        # leaving that as an open-ended possibility.  a triple dictionary might
-        # be a bit too much to deal with.
-        
-        # check against the old registration form
-        reg_seq = "1"
-        if not data_map["meta_timestart_1"] and data_map["meta_timestart_5"]:
-            # we found an old reg and no new reg
-            reg_seq = "5"
-        
-        self.mother_name = data_map["sampledata_mother_name_%s" % reg_seq]
-        chw_cols = ["meta_username_1","meta_username_2","meta_username_3",
-                    "meta_username_4", "meta_username_5"]
-        
-        self.chw = None
-        for item in chw_cols:
-            self.chw = data_map[item]
-            if self.chw:
-                break
+        # check against the new and old registration form, in that order
+        if new_reg_forms:
+            reg_form_data = new_reg_forms[0]
+        elif old_reg_forms:
+            reg_form_data = old_reg_forms[0]
+        else:
+            reg_form_data = None
             
-        self.date_of_reg = data_map["meta_timestart_%s" % reg_seq]
-        self.months_preg_at_reg = data_map["sampledata_months_pregnant_%s" % reg_seq]
-        if self.date_of_reg and self.months_preg_at_reg:
-            days_pregnant_at_reg = self.months_preg_at_reg * 30
-            self.months_pregnant = ((datetime.now() - self.date_of_reg) + 
-                                    timedelta(days=days_pregnant_at_reg)).days / 30
+        # set the registration data, if present
+        if reg_form_data: 
+            self.mother_name = reg_form_data["sampledata_mother_name"]
+            self.date_of_reg = reg_form_data["meta_timestart"]
+            self.months_preg_at_reg = reg_form_data["sampledata_months_pregnant"]
+            if self.date_of_reg and self.months_preg_at_reg:
+                days_pregnant_at_reg = self.months_preg_at_reg * 30
+                self.months_pregnant = ((datetime.now() - self.date_of_reg) + 
+                                        timedelta(days=days_pregnant_at_reg)).days / 30
+            else:
+                self.months_pregnant = None
+            # high risk factors
+            hi_risk_cols = ["sampledata_hi_risk_info_old",
+                            "sampledata_hi_risk_info_young",
+                            "sampledata_hi_risk_info_education",
+                            "sampledata_hi_risk_info_small",
+                            "sampledata_hi_risk_info_10_years",
+                            "sampledata_hi_risk_info_complications",
+                            "sampledata_hi_risk_info_many",
+                            "sampledata_hi_risk_info_health",
+                            "sampledata_hi_risk_info_hiv",
+                            "sampledata_hi_risk_info_syphilis"]
+            hi_risk_values = []
+            for col in hi_risk_cols:
+                if reg_form_data[col]:
+                    risk_factor = self._clean(col, "sampledata_hi_risk_info_", "")
+                    hi_risk_values.append(risk_factor)
+            self.high_risk_factors = ",".join(hi_risk_values)
         else:
             self.months_pregnant = None
+        chw_col = "meta_username"
+        # loop through all forms searching for this.
+        self.chw = None
+        for form in forms:
+            if data_map[form]:
+                for sub_map in data_map[form]:
+                    if sub_map[chw_col]:
+                        self.chw = sub_map[chw_col]
+                        break
+            if self.chw:
+                break
         
+        # set followup data
+        if followup_forms:
+            self.has_followup = True
+            self.date_of_last_followup = followup_forms[0]["meta_timestart"] 
+            
+            # checklist items come from the most recent followup
+            checklist_items = ["safe_pregnancy_preg_actions_iron_folic",
+                               "safe_pregnancy_preg_actions_start_tt",
+                               "safe_pregnancy_preg_actions_finish_tt",
+                               "safe_pregnancy_preg_actions_start_ipt",
+                               "safe_pregnancy_preg_actions_finish_ipt",
+                               "safe_pregnancy_preg_actions_deworm",
+                               "safe_pregnancy_preg_actions_birth_plan",
+                               "safe_pregnancy_preg_actions_test_hiv",
+                               "safe_pregnancy_preg_actions_test_syphilis",
+                               "safe_pregnancy_preg_actions_test_bp",
+                               "safe_pregnancy_preg_actions_test_hb"]
+            
+            incomplete_checklist_items = []
+            for item in checklist_items:
+                if followup_forms[0][item] != 1:
+                    incomplete_checklist_items.append(self._clean(item, "safe_pregnancy_preg_actions_", ""))
+                    
+            self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
+            
+            
         # Women Needing Followup 
         # > 1 month since last Followup if 1-6 Months, 
         # > 15 days since last Followup if 7-10 Months
-        self.date_of_last_followup = data_map["meta_timestart_2"] 
-        if self.date_of_last_followup:
+        if followup_forms and self.date_of_last_followup:
             self.days_since_followup = (datetime.now() - self.date_of_last_followup).days
         # this is yucky but we don't want to include folks with no followups
         # and no new reg, since we're not checkign the old followups
-        elif self.date_of_reg and reg_seq == "1":   
+        elif new_reg_forms:
             self.days_since_followup = (datetime.now() - self.date_of_reg).days
         else:
             # no reg or follow-ups.  leave them out for now
@@ -142,57 +193,109 @@ class Mother(object):
         if self.days_since_followup is not None:
             if self.days_since_followup > 30:
                 self.needs_followup = True
-            elif self.days_since_followup > 15 and\
-                 self.months_pregnant and self.months_pregnant >= 7:
+            elif self.days_since_followup > 15\
+                 and self.months_pregnant and self.months_pregnant >= 7:
                 self.needs_followup = True
             else:
                 self.needs_followup = False
         
-        # high risk factors
-        hi_risk_cols = ["sampledata_hi_risk_info_old_%s" % reg_seq,
-                        "sampledata_hi_risk_info_young_%s" % reg_seq,
-                        "sampledata_hi_risk_info_education_%s" % reg_seq,
-                        "sampledata_hi_risk_info_small_%s" % reg_seq,
-                        "sampledata_hi_risk_info_10_years_%s" % reg_seq,
-                        "sampledata_hi_risk_info_complications_%s" % reg_seq,
-                        "sampledata_hi_risk_info_many_%s" % reg_seq,
-                        "sampledata_hi_risk_info_health_%s" % reg_seq,
-                        "sampledata_hi_risk_info_hiv_%s" % reg_seq,
-                        "sampledata_hi_risk_info_syphilis_%s" % reg_seq]
-        hi_risk_values = []
-        for col in hi_risk_cols:
-            if data_map[col]:
-                risk_factor = self._clean(col, "sampledata_hi_risk_info_", "_%s" % reg_seq)
-                hi_risk_values.append(risk_factor)
-        self.high_risk_factors = ",".join(hi_risk_values)
+        # referrals
+        self.has_followup_referral = False
+        if followup_forms:
+            # referrals from followup
+            for followup in followup_forms:
+                if not self.has_followup_referral:
+                    if followup["safe_pregnancy_referred"] == "yes":
+                        self.has_followup_referral = True
+                        self.most_recent_followup_referral_id = followup["safe_pregnancy_referral_id"]
+                        self.followup_referred = followup
+                elif followup["safe_pregnancy_referral_id"] == self.most_recent_followup_referral_id:
+                    # older instance of the same referral.  Use this as the instance 
+                    # they were referred
+                    self.followup_referred = followup
+                    
+                    
+        self.has_close_referral = False
+        if close_forms:
+            # referrals from close forms
+            for close in close_forms:
+                if not self.has_close_referral:
+                    if close["safe_pregnancy_referred"] == "yes":
+                        self.has_close_referral = True
+                        self.most_recent_close_referral_id = close["safe_pregnancy_referral_id"]
+                        self.close_referred = close
+                elif close["safe_pregnancy_referral_id"] == self.most_recent_close_referral_id:
+                    # older instance of the same referral.  Use this as the instance 
+                    # they were referred
+                    self.close_referred = close
         
-        # referral
-        self.date_referred = datetime.min
-        self.most_recent_referral_id = None
-        self.has_referral = False
-        if data_map["safe_pregnancy_referred_2"] and\
-           data_map["safe_pregnancy_referred_2"] == "yes":
-            self.has_referral = True
-            self.date_referred = self.date_of_last_followup
-            self.most_recent_referral_id = data_map["safe_pregnancy_referral_id_2"]
-        if data_map["safe_pregnancy_referred_3"] and\
-           data_map["safe_pregnancy_referred_3"] == "yes":
-            self.has_referral = True
-            self.date_of_closure = data_map["meta_timestart_3"] 
-            self.date_referred = max([self.date_referred,
-                                      self.date_of_closure])
-            if self.date_of_closure == self.date_referred:
-                self.most_recent_referral_id = data_map["safe_pregnancy_referral_id_2"]
+        self.has_referral = self.has_followup_referral or self.has_close_referral 
+        if self.has_referral:
+            self.date_referred = datetime.min
+            if self.has_followup_referral:
+                self.date_referred = self.followup_referred["meta_timeend"]
+                self.most_recent_referral_id = self.most_recent_followup_referral_id 
+                followup_wins = True
+            if self.has_close_referral:
+                self.date_referred = max(self.date_referred, self.close_referred["meta_timeend"])
+                if self.date_referred == self.close_referred["meta_timeend"]:
+                    followup_wins = False
+                    self.most_recent_referral_id = self.most_recent_close_referral_id 
+            
+            # danger signs for the referral - pull from the visit that generated
+            # it
+            danger_signs = []
+            if followup_wins:
+                # These are the values that can be set in the followup form
+                # to generate a referral
+                followup_warnings = {"safe_pregnancy_feeling" : "not_well", 
+                                     "safe_pregnancy_pain_from_vagina": "yes",
+                                     "safe_pregnancy_headache_or_b_vision": "yes",
+                                     "safe_pregnancy_dark_urine": "yes",
+                                     "safe_pregnancy_swelling": "yes",
+                                     "safe_pregnancy_unusual_pain": "yes",
+                                     "safe_pregnancy_burn_urinate": "yes",
+                                     "safe_pregnancy_baby_not_moving": "yes",
+                                     "safe_pregnancy_fever": "yes",
+                                     "safe_pregnancy_other_illness" : "yes"}
+                
+                for key, value in followup_warnings.items():
+                     if self.followup_referred[key] == value:
+                         danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
+                                                         self._clean(value, "", "")))
+            else: 
+                # Close form is referred:
+                if self.close_referred["safe_pregnancy_mother_survived"] == "yes":
+                    closure_warnings = {
+                                        "safe_pregnancy_why_not" : 'skeptical_clinic',
+                                        "safe_pregnancy_why_not" : 'busy',
+                                        "safe_pregnancy_why_not" : 'transport',
+                                        "safe_pregnancy_why_not" : 'other',
+                                        "safe_pregnancy_treatment_why_not" : 'no_medicine',
+                                        "safe_pregnancy_treatment_why_not" : 'too_many_patients',
+                                        "safe_pregnancy_treatment_why_not" : 'no_doctor',
+                                        "safe_pregnancy_treatment_why_not" : 'no_health_workers',
+                                        "safe_pregnancy_treatment_why_not" : 'other'
+                                        }
+                    for key, value in closure_warnings.items():
+                         if self.close_referred[key] == value:
+                             danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
+                                                             self._clean(value, "", "")))
+            
+            self.danger_signs = ", ".join(danger_signs)
         
-        if data_map["meta_timestart_4"]:
+        else:
+            self.date_referred = None
+            
+        if referrals:
             # we found a referral
-            self.date_of_referral = data_map["meta_timestart_4"] 
-            if data_map["safe_pregnancy_why_not_4"] != "feeling_better" and\
-               data_map["safe_pregnancy_treatment_4"] != "yes":
+            self.date_of_last_referral = referrals[0]["meta_timestart"] 
+            if referrals[0]["safe_pregnancy_why_not"] != "feeling_better" and\
+               referrals[0]["safe_pregnancy_treatment"] != "yes":
                 # the referral is open no matter what if the referral 
-                # is present but not completed
+                # is present but not completed 
                 self.has_open_referral = True
-            elif self.date_of_referral > self.date_referred:
+            elif not self.date_referred or self.date_of_last_referral > self.date_referred:
                 # they completed it.  
                 self.has_open_referral = False
             else:
@@ -202,86 +305,10 @@ class Mother(object):
         else:
             # no information about a referral.  if there was one it's open
             self.has_open_referral = self.has_referral
-                    
-        # danger signs
-        # Followup form is referred:
-        # if(/safe_pregnancy/feeling='not_well'
-        # or /safe_pregnancy/pain_from_vagina='yes'
-        # or /safe_pregnancy/headache_or_b_vision='yes'
-        # or /safe_pregnancy/dark_urine='yes'
-        # or /safe_pregnancy/swelling='yes'
-        # or /safe_pregnancy/unusual_pain='yes'
-        # or /safe_pregnancy/burn_urinate='yes'
-        # or /safe_pregnancy/baby_not_moving='yes'
-        # or /safe_pregnancy/fever='yes'
-        # or /safe_pregnancy/other_illness='yes')
-        followup_warnings = {"safe_pregnancy_feeling_2" : "not_well", 
-                             "safe_pregnancy_pain_from_vagina_2": "yes",
-                             "safe_pregnancy_headache_or_b_vision_2": "yes",
-                             "safe_pregnancy_dark_urine_2": "yes",
-                             "safe_pregnancy_swelling_2": "yes",
-                             "safe_pregnancy_unusual_pain_2": "yes",
-                             "safe_pregnancy_burn_urinate_2": "yes",
-                             "safe_pregnancy_baby_not_moving_2": "yes",
-                             "safe_pregnancy_fever_2": "yes",
-                             "safe_pregnancy_other_illness_2" : "yes"}
+
         
-        danger_signs = []
-        for key, value in followup_warnings.items():
-             if data_map[key] == value:
-                 danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", "_2"),
-                                                 self._clean(value, "", "")))
         
-        # Close form is referred:
-        # if(/safe_pregnancy/mother_survived='yes' and 
-        # (( /safe_pregnancy/why_not='skeptical_clinic' 
-        #    or /safe_pregnancy/why_not='busy' 
-        #    or /safe_pregnancy/why_not='transport' 
-        #    or /safe_pregnancy/why_not='other') 
-        #    or (/safe_pregnancy/treatment_why_not='no_medicine' 
-        #    or /safe_pregnancy/treatment_why_not='too_many_patients' 
-        #    or /safe_pregnancy/treatment_why_not='no_doctor' 
-        #    or /safe_pregnancy/treatment_why_not='no_health_workers' 
-        #    or /safe_pregnancy/treatment_why_not='other')))
         
-        if data_map["safe_pregnancy_mother_survived_3"] == "yes":
-            closure_warnings = {
-                                "safe_pregnancy_why_not_3" : 'skeptical_clinic',
-                                "safe_pregnancy_why_not_3" : 'busy',
-                                "safe_pregnancy_why_not_3" : 'transport',
-                                "safe_pregnancy_why_not_3" : 'other',
-                                "safe_pregnancy_treatment_why_not_3" : 'no_medicine',
-                                "safe_pregnancy_treatment_why_not_3" : 'too_many_patients',
-                                "safe_pregnancy_treatment_why_not_3" : 'no_doctor',
-                                "safe_pregnancy_treatment_why_not_3" : 'no_health_workers',
-                                "safe_pregnancy_treatment_why_not_3" : 'other'
-                                }
-            for key, value in closure_warnings.items():
-                 if data_map[key] == value:
-                     danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", "_3"),
-                                                     self._clean(value, "", "")))
-            
-        self.danger_signs = ", ".join(danger_signs)
-        
-        # checklist
-        checklist_items = ["safe_pregnancy_preg_actions_iron_folic_2",
-                           "safe_pregnancy_preg_actions_start_tt_2",
-                           "safe_pregnancy_preg_actions_finish_tt_2",
-                           "safe_pregnancy_preg_actions_start_ipt_2",
-                           "safe_pregnancy_preg_actions_finish_ipt_2",
-                           "safe_pregnancy_preg_actions_deworm_2",
-                           "safe_pregnancy_preg_actions_birth_plan_2",
-                           "safe_pregnancy_preg_actions_test_hiv_2",
-                           "safe_pregnancy_preg_actions_test_syphilis_2",
-                           "safe_pregnancy_preg_actions_test_bp_2",
-                           "safe_pregnancy_preg_actions_test_hb_2"]
-        
-        incomplete_checklist_items = []
-        for item in checklist_items:
-            if data_map[item] != 1:
-                incomplete_checklist_items.append(self._clean(item, "safe_pregnancy_preg_actions_", "_2"))
-                
-        self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
                            
                                  
         

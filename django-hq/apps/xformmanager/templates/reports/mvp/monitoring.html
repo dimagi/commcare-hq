@@ -18,7 +18,7 @@
             <td>{% if mother.months_pregnant %}{{ mother.months_pregnant }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{{ mother.danger_signs}}</td>
             <td>{{ mother.date_referred|date:"d-M-Y" }}</td>
-            <td>{{ mother.date_of_referral|date:"d-M-Y" }}</td>
+            <td>{{ mother.date_of_last_referral|date:"d-M-Y" }}</td>
             </tr>
         {% endfor %}
 </table>
