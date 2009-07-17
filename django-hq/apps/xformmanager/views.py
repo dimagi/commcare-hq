@@ -171,7 +171,7 @@ def data(request, formdef_id, template_name="data.html"):
     context = {}
     
     xform = FormDefModel.objects.get(id=formdef_id)
-    rows = xform.get_all_rows()
+    rows = xform.get_rows()
     context['columns'] = xform.get_column_names()
     
     context['form_name'] = xform.form_name
@@ -247,7 +247,7 @@ def case_data(request, case_id, template_name="case_data.html"):
     
     context['cols'] = case.get_column_names()
     
-    data = case.get_all_data()
+    data = case.get_topmost_data()
     keys = data.keys()
     keys.sort()
     flattened = []

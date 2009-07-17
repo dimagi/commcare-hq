@@ -105,29 +105,55 @@ class FormDefModel(models.Model):
         return self.element.table_name
     
     
-    def get_select_all_cursor(self):
-        '''Gets the cursor that selects all data from this form's schema'''
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM %s order by id DESC" % self.form_name)
-        return cursor
     
     @property
     def column_count(self):
         '''Get the number of columns in this form's schema 
           (not including repeats)'''
-        return len(self.get_select_all_cursor().description)
+        return len(self._get_cursor().description)
     
-    def get_all_rows(self):
-        '''Get all data rows associated with this form's schema
-           (not including repeats)'''
-        return self.get_select_all_cursor().fetchall()
         
+    def get_rows(self, column_filters={}, sort_column="id", sort_descending=True):
+        '''Get rows associated with this form's schema.
+           The column_filters parameter should take in column_name, value
+           pairs to be used in a where clause.  The default parameters
+           return all the rows in the schema, sorted by id, descending.'''
+        
+        return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
+        
+    
+    def _get_cursor(self, column_filters={}, sort_column="id", sort_descending=True):
+        '''Gets a cursor associated with a query against this table.  See
+           get_rows for documentation of the parameters.'''
+        
+        sql = "SELECT * FROM %s " % self.table_name
+        # add filtering
+        if column_filters:
+            first = True
+            for col, value in column_filters.items():
+                if first:
+                    # this casts everything to a string.  verified
+                    # to work for strings and integers, but might 
+                    # not work for dates
+                    to_append = " WHERE %s = '%s' " % (col, value)
+                    first = False
+                else:
+                    to_append = " AND %s = %s " % (col, value)
+                sql = sql + to_append
+        
+        desc = ""
+        if sort_descending:
+            desc = "desc"
+        sql = sql + (" ORDER BY %s %s " % (sort_column, desc))
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        return cursor
+    
     def get_column_names(self):
         '''Get all data rows associated with this form's schema
            (not including repeats)'''
-        return [col[0] for col in self.get_select_all_cursor().description]
-    
-        
+        return [col[0] for col in self._get_cursor().description]
+
     
     def __unicode__(self):
         return self.form_name
@@ -187,61 +213,63 @@ class FormIdentifier(models.Model):
         return self.form.db_helper.get_uniques_for_column(self.identity_column)
     
     def get_data_lists(self):
-        '''Gets one row per unique identifier, sorted by the default
+        '''Gets all rows per unique identifier, sorted by the default
            sorting column.  What is returned is a dictionary of 
-           dictionaries of the form 
-           { id_column_value_1: [value_1, value_2, value_3...],
+           lists of lists of the form:
+           { id_column_value_1: [[value_1, value_2, value_3...],
+                                 [value_1, value_2, value_3...],
+                                 ...],
              id_column_value_2: [value_1, value_2, value_3...],
              ...
            }
+           Each inner list represents a row of the data in 
+           that form corresponding to the id column.  The lists
+           will be ordered by the sorting column. 
            '''
         if self.sorting_column:
-            if self.sort_descending:
-                minmax = "max"
-            else: 
-                minmax = "min"
-            # this query takes the topmost value (defined by the sorting column
-            # and sort order) and uses the data from that as the row returned.
-            # If more than one row matches the exact topmost value they will all
-            # be returned, and one will arbitrarily win.
-            query = '''
-              SELECT main_table.* FROM %(tablename)s main_table,
-              (
-                SELECT %(id_column)s, %(minmax)s(%(sort_column)s) as %(sort_column)s
-                FROM %(tablename)s 
-                GROUP BY %(id_column)s
-              ) identities_w_sort
-              WHERE main_table.%(id_column)s = identities_w_sort.%(id_column)s
-              AND main_table.%(sort_column)s = identities_w_sort.%(sort_column)s
-              ORDER BY main_table.%(id_column)s;
-            ''' % ({"tablename": self.form.table_name,
-                    "id_column": self.identity_column,
-                    "sort_column": self.sorting_column,
-                    "minmax": minmax})
-            
-            list = self.form.db_helper.get_query_data(query)
+            list = self.form.get_rows(sort_column=self.sorting_column, 
+                                      sort_descending=self.sort_descending)
             
         else:
-            # no sorting column.  assume that there are no duplicates in
-            # the list.  
-            list = self.form.get_all_rows()
+            # no sorting column, just get everything in an arbitrary order.  
+            list = self.form.get_rows()
         
         id_index = self.form.get_column_names().index(self.identity_column)
         to_return = {}
         for row in list:
             id_value = row[id_index]
-            to_return[id_value] = row
+            if not to_return.has_key(id_value):
+                to_return[id_value] = []
+            to_return[id_value].append(row)
         return to_return
+    
+    
+    def get_data_for_case(self, case_id):
+        '''Gets the list of entries for a single case.'''
+        
+        filter_cols = {self.identity_column : case_id}
+        if self.sorting_column:
+            return self.form.get_rows(column_filters=filter_cols,
+                                      sort_column=self.sorting_column, 
+                                      sort_descending=self.sort_descending)
+        else:
+            return self.form.get_rows(column_filters=filter_cols)
     
     
     def get_data_maps(self):
         '''Gets one row per unique identifier, sorted by the default
            sorting column.  What is returned is a dictionary of 
-           dictionaries of the form 
-           { id_column_value_1: {data_column_1: value_1,
-                                 data_column_2: value_2,
+           lists of dictionaries of the form 
+           { id_column_value_1: [{data_column_1: value_1,
+                                  data_column_2: value_2,
+                                  ...
+                                 },
+                                 {data_column_1: value_1,
+                                  data_column_2: value_2,
+                                  ...
+                                 },
                                  ...
-                                },
+                                ]
              id_column_value_2: {data_column_1: value_1,
                                  data_column_2: value_2,
                                  ...
@@ -254,7 +282,7 @@ class FormIdentifier(models.Model):
         columns = self.form.get_column_names()
         for id, list in data_lists.items():
             # magically zip these up in a dictionary
-            to_return[id] = dict(zip(columns, list))
+            to_return[id] = [dict(zip(columns, sub_list)) for sub_list in list]
         return to_return
     
     
@@ -308,8 +336,9 @@ class Case(models.Model):
                 to_return.append("%s_%s" % (col, form.sequence_id))
         return to_return        
         
-    def get_all_data(self):
-        '''Get the full data set of data for all the forms.  This
+    def get_topmost_data(self):
+        '''Get the full topmost (single most recent per form) 
+           data set of data for all the forms.  This
            Will be a dictionary of the id column to a single flat
            row aggregating the data across the forms.  E.g.:
 
@@ -335,15 +364,16 @@ class Case(models.Model):
             data_list = form_id.get_data_lists()
             for id in unique_ids:
                 if id in data_list:
-                    to_return[id].extend(data_list[id])
+                    to_return[id].extend(data_list[id][0])
                 else:
                     # there was no data for this id for this
                     # form so extend the list with empty values
                     to_return[id].extend([None]*form_id.form.column_count)
         return to_return
     
-    def get_all_data_maps(self):
-        '''Get the full data set of data for all the forms in 
+    def get_topmost_data_maps(self):
+        '''Get the full topmost (single most recent per form) 
+           data set of data for all the forms in 
            dictionary format.  This ill be a dictionary of 
            dictionaries with the id column as keys and a 
            dictionary aggregating the data across the forms.  E.g.:
@@ -363,7 +393,7 @@ class Case(models.Model):
            sum of the number of columns of all forms that are a 
            part of this case.
         '''
-        lists = self.get_all_data()
+        lists = self.get_topmost_data()
         to_return = {}
         columns = self.get_column_names()
         for id, list in lists.items():
@@ -371,6 +401,73 @@ class Case(models.Model):
             to_return[id] = dict(zip(columns, list))
         return to_return
     
+    def get_data_for_case(self, case_id):
+        '''Gets all data for a single case.  The return format is a 
+           dictionary form identifier objects to lists of rows for 
+           that form.  If there is no data for the form, the value
+           in the dictionary will be an empty list.  Example:
+           { form_id_1 : [], # no data for this form
+             form_id_2 : [[value1, value2, value3, ... ],
+                          [value1, value2, value3, ... ],
+                          ...
+                         ],
+             ...
+            }
+           '''
+        to_return = {}
+        for form_id in self.form_identifiers:
+            to_return[form_id] = form_id.get_data_for_case(case_id) 
+        return to_return
+    
+    
+    def get_all_data(self):
+        '''Get the full data set of data for all the forms.  This  
+           Will be a dictionary of the id column to a dictionary 
+           that has the same structure as what would be generated 
+           by get_data_for_case on that id.  Example:
+           { case_id_1 : { form_id_1 : [], # no data for this form
+                           form_id_2 : [[value1, value2, value3, ... ],
+                                        [value1, value2, value3, ... ],
+                                        ...
+                                       ],
+                           ...
+                          },
+             case_id_2 : ...
+             ... 
+            }
+           '''
+        to_return = {}
+        unique_ids = self.get_unique_ids()
+        for id in unique_ids:
+            to_return[id] = {}
+        for form_id in self.form_identifiers:
+            data_list = form_id.get_data_lists()
+            for id in unique_ids:
+                if id in data_list:
+                    to_return[id][form_id] = data_list[id]
+                else:
+                    to_return[id][form_id] = []
+        return to_return
+    
+    def get_all_data_maps(self):
+        '''Get the full data set of data for all the forms in  
+           dictionary format. This is analogous to the 
+           get_all_data method, and the corresponding _maps 
+           methods.  
+        '''
+        to_return = {}
+        unique_ids = self.get_unique_ids()
+        for id in unique_ids:
+            to_return[id] = {}
+        for form_id in self.form_identifiers:
+            data_maps = form_id.get_data_maps()
+            for id in unique_ids:
+                if id in data_maps:
+                    to_return[id][form_id] = data_maps[id]
+                else:
+                    to_return[id][form_id] = []
+        return to_return
+        
 class CaseFormIdentifier(models.Model):
     # yuck.  todo: come up with a better name.
     '''A representation of a FormIdentifier as a part of a case.  This 

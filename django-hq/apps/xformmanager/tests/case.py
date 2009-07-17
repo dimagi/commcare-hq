@@ -116,7 +116,10 @@ class CaseTestCase(unittest.TestCase):
     def testGetDataFromFormIdentifier(self):
         followup_data = self.follow_fid.get_data_maps()
         self.assertEqual(2, len(followup_data))
-        for id, dict in followup_data.items():
+        self.assertEqual(3, len(followup_data["demo_user"]))
+        self.assertEqual(2, len(followup_data["mary"]))
+        for id, list in followup_data.items():
+            dict = list[0]
             self.assertEqual(id, dict[self.follow_fid.identity_column])  
             # add the sorting checks based on the knowledge of the form.
             # This is done by manually setting the device ids in the forms
@@ -132,7 +135,10 @@ class CaseTestCase(unittest.TestCase):
         self.follow_fid.save()
         followup_data = self.follow_fid.get_data_maps()
         self.assertEqual(2, len(followup_data))
-        for id, dict in followup_data.items():
+        self.assertEqual(3, len(followup_data["demo_user"]))
+        self.assertEqual(2, len(followup_data["mary"]))
+        for id, list in followup_data.items():
+            dict = list[0]
             self.assertEqual(id, dict[self.follow_fid.identity_column])  
             if id == "demo_user":
                 self.assertEqual("device1", dict["meta_deviceid"])
@@ -146,17 +152,22 @@ class CaseTestCase(unittest.TestCase):
         self.follow_fid.save()
         followup_data = self.follow_fid.get_data_maps()
         self.assertEqual(2, len(followup_data))
-        for id, dict in followup_data.items():
+        self.assertEqual(3, len(followup_data["demo_user"]))
+        self.assertEqual(2, len(followup_data["mary"]))
+        for id, list in followup_data.items():
+            dict = list[0]
             self.assertEqual(id, dict[self.follow_fid.identity_column])  
             if id == "demo_user":
                 self.assertEqual("device3", dict["meta_deviceid"])
+                self.assertEqual(3, len(list))
             elif id == "mary":
                 self.assertEqual("device5", dict["meta_deviceid"])
+                self.assertEqual(2, len(list))
             else:
                 self.fail("unexpected identity: %s" % id)
-                
-    def testGetData(self):
-        data = self.pf_case.get_all_data_maps()
+        
+    def testGetTopmostData(self):
+        data = self.pf_case.get_topmost_data_maps()
         self.assertEqual(2, len(data))
         for id, col_map in data.items():
             if id == "demo_user":
@@ -178,4 +189,42 @@ class CaseTestCase(unittest.TestCase):
                 self.assertEqual(None,
                                  col_map["meta_uid_%s" % self.close_cfi.sequence_id])
             else:
-                self.fail("unexpected identity: %s" % id)                
+                self.fail("unexpected identity: %s" % id)
+                
+                
+    def testGetCaseData(self):
+        data = self.pf_case.get_data_for_case("demo_user")
+        self.assertEqual(3, len(data))
+        self.assertEqual(0, len(data[self.reg_fid]))
+        self.assertEqual(3, len(data[self.follow_fid]))
+        self.assertEqual(1, len(data[self.close_fid]))
+        data = self.pf_case.get_data_for_case("mary")
+        self.assertEqual(3, len(data))
+        self.assertEqual(1, len(data[self.reg_fid]))
+        self.assertEqual(2, len(data[self.follow_fid]))
+        self.assertEqual(0, len(data[self.close_fid]))
+    
+    def testGetAllData(self):
+        all_data = self.pf_case.get_all_data_maps()
+        self.assertEqual(2, len(all_data))
+        data = all_data["demo_user"]
+        self.assertEqual(3, len(data))
+        self.assertEqual(0, len(data[self.reg_fid]))
+        self.assertEqual(3, len(data[self.follow_fid]))
+        self.assertEqual("device3", 
+                         data[self.follow_fid][0]["meta_deviceid"])
+        self.assertEqual("device2", 
+                         data[self.follow_fid][1]["meta_deviceid"])
+        self.assertEqual("device1", 
+                         data[self.follow_fid][2]["meta_deviceid"])
+        self.assertEqual(1, len(data[self.close_fid]))
+        data = all_data["mary"]
+        self.assertEqual(3, len(data))
+        self.assertEqual(1, len(data[self.reg_fid]))
+        self.assertEqual(2, len(data[self.follow_fid]))
+        self.assertEqual("device5", 
+                         data[self.follow_fid][0]["meta_deviceid"])
+        self.assertEqual("device4", 
+                         data[self.follow_fid][1]["meta_deviceid"])
+        self.assertEqual(0, len(data[self.close_fid]))
+        
