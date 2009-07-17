@@ -72,7 +72,7 @@ def monitoring(request):
     context["open_referrals"] = moms_with_open_referrals
     context["very_pregnant"] = very_pregnant_moms
     context["need_followup"] = moms_needing_followup
-    context["empty_data_holder"] = "<b>???</b>"
+    context["empty_data_holder"] = "<b></b>"
     return render_to_string("reports/mvp/monitoring.html", context)
 
 def _is_blacklisted(data, blacklist, blacklist_columns):
@@ -175,7 +175,8 @@ class Mother(object):
                     incomplete_checklist_items.append(self._clean(item, "safe_pregnancy_preg_actions_", ""))
                     
             self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
-            
+        else:
+            self.incomplete_checklist_items = "No followup visits found."
             
         # Women Needing Followup 
         # > 1 month since last Followup if 1-6 Months, 
@@ -295,7 +296,7 @@ class Mother(object):
                 # the referral is open no matter what if the referral 
                 # is present but not completed 
                 self.has_open_referral = True
-            elif not self.date_referred or self.date_of_last_referral > self.date_referred:
+            elif self.date_referred is None or self.date_of_last_referral > self.date_referred:
                 # they completed it.  
                 self.has_open_referral = False
             else:
@@ -306,12 +307,7 @@ class Mother(object):
             # no information about a referral.  if there was one it's open
             self.has_open_referral = self.has_referral
 
-        
-        
-        
-                           
-                                 
-        
+
     def _clean(self, column, prefix, suffix):
         '''Cleans a column by removing a prefix and suffix, if they
            are present, and converting underscores to spaces.'''
