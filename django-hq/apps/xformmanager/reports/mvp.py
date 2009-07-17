@@ -186,8 +186,9 @@ class Mother(object):
         
         if data_map["meta_timestart_4"]:
             # we found a referral
-            self.date_of_referral = data_map["meta_timestart_4"]
-            if data_map["safe_pregnancy_visited_clinic_4"] != "yes":
+            self.date_of_referral = data_map["meta_timestart_4"] 
+            if data_map["safe_pregnancy_why_not_4"] == "feeling_better" or\
+               data_map["safe_pregnancy_treatment_4"] == "yes":
                 # the referral is open no matter what if the referral 
                 # is present but not completed
                 self.has_open_referral = True
