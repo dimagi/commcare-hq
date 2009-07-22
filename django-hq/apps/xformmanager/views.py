@@ -170,8 +170,12 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
 @login_required()
 def data(request, formdef_id, template_name="data.html"):
     context = {}
-    
-    xform = FormDefModel.objects.get(id=formdef_id)
+    xform = get_object_or_404(FormDefModel, id=formdef_id)
+    for i in request.POST.getlist('instance'):
+        if 'checked_'+ i in request.POST: 
+            data_id = int(i)
+            xformmanager = XFormManager()
+            xformmanager.remove_data(formdef_id, data_id)
     rows = xform.get_rows()
     context['columns'] = xform.get_column_names()
     

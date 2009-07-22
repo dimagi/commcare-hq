@@ -23,25 +23,32 @@
         {% endif %}
     </span>
 </div>
-
+<form action="" method="POST">
 <table class="sofT">
 	<thead class="commcare-heading">
 	   <tr>
+	      <th></th>
 	   {% for col in columns %}
 		  <th>{{col}}</th>	
 	   {% endfor%}
 	   </tr>
 	</thead>
     {% for record in data.object_list %}   	
-   	<tr class="{% cycle 'odd' 'even' %}">  
+   	<tr class="{% cycle 'odd' 'even' %}">
+       <td>
+	       <input type="hidden" name="instance" value="{{record|first}}"/>
+	       <input type="checkbox" name="checked_{{record|first}}"/>
+       </td>
 	   {% for field in record %}   
 	   		 <td>{{field}}</td> 
 	   {% endfor %}
 	</tr>
    {% endfor %}
+</table>
 
+<input type="submit" value="Delete" />
 
-   </table>
+</form>
 
 
 {% endblock %}

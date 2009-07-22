@@ -15,6 +15,9 @@ class XFormManager(object):
     def remove_schema(self, id):
         self.su.remove_schema(id)    
 
+    def remove_data(self, formdef_id, id):
+        self.su.remove_instance_matching_schema(formdef_id, id)
+
     def save_form_data(self, xml_file_name, submission):
         self.su.save_form_data(xml_file_name, submission)
 

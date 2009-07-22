@@ -251,11 +251,11 @@ class StorageUtility(object):
       if not elementdef: return
       
       table_name = retrieve_table_name( formatted_join(parent_name, elementdef.name) )      
-      if len( parent_table_name ) > 0:          
+      if len( parent_table_name ) > 0:
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
           cursor = connection.cursor()
-          s = "SELECT id FROM " + str(parent_table_name)
+          s = "SELECT id FROM " + str(parent_table_name) + " order by id DESC"
           logging.debug(s)
           cursor.execute(s)
           row = cursor.fetchone()
@@ -432,6 +432,42 @@ class StorageUtility(object):
             return field_name[:64]
         return field_name
     
+    # note that this does not remove the file from the filesystem 
+    # (by design, for security)
+    def remove_instance_matching_schema(self, formdef_id, instance_id):
+        fdm = FormDefModel.objects.get(pk=formdef_id)
+        edm_id = fdm.element.id
+        edm = ElementDefModel.objects.get(pk=edm_id)
+        cursor = connection.cursor()
+        cursor.execute( \
+            " delete from " + edm.table_name + " where id = %s ", [instance_id] )
+    
+    """ This is commented out for now because I suspect there's a bug in it which
+    may cause us to delete valuable data tables by accident
+    The vast majority of cases won't have nested tables, so keeping the nested
+    data around doesn't eat up that much space. TODO - fix and test rigorously
+    
+    @transaction.commit_on_success
+    def remove_instance_matching_schema(self, formdef_id, instance_id):
+        fdm = FormDefModel.objects.get(pk=formdef_id)
+        edm_id = fdm.ElementDefModel.id
+        edm = ElementDefModel.objects.get(pk=edm_id)
+        _remove_instance_inner_loop(edm.id, instance_id)
+
+    def _remove_instance_inner_loop(self, elementdef_id, instance_id):
+        edms = ElementDefModel.objects.filter(parent_id=elementdef_id)
+        for edm in edms:
+            rows = cursor.execute( " select id, parent_id from " + edm.table_name + \
+                                   " where parent_id = %s ", [instance_id] )
+            if rows:
+                for row in rows:
+                    _remove_instance_inner_loop( row['id'] )
+                    cursor.execute( " delete from " + edm.table_name + \
+                                   " where parent_id = %s ", [instance_id] )
+        edm = ElementDefModel.objects.get(id=elementdef_id)
+        cursor.execute( " delete from " + edm.table_name + " where id = %s ", [instance_id] )
+    """
+
     @transaction.commit_on_success
     def remove_schema(self, id):
         fdds = FormDefModel.objects.all().filter(id=id) 
@@ -445,6 +481,7 @@ class StorageUtility(object):
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
+
     def clear(self):
         """ removes all schemas found in XSD_REPOSITORY_PATH
             and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.        
@@ -553,7 +590,6 @@ class StorageUtility(object):
             logging.debug(  "  deleting data table:" + edd.table_name )
             cursor = connection.cursor()
             cursor.execute("drop table " + edd.table_name)
-
 
     def _case_insensitive_iter(self, data_tree, tag):
         if tag == "*":
