@@ -10,6 +10,7 @@ from xformmanager.forms import RegisterXForm
 from xformmanager.models import FormDefModel, Case
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
+from transformers.csv_ import UnicodeWriter
 import settings, os, sys
 import logging
 import traceback
@@ -209,7 +210,7 @@ def export_csv(request, formdef_id):
     columns = xform.get_column_names()
     
     output = StringIO()
-    w = csv.writer(output)
+    w = UnicodeWriter(output)
     w.writerow(columns)
     for row in rows:
         w.writerow(row)
