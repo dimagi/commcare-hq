@@ -1,14 +1,45 @@
 import re, os
 import logging
 import inspect
-#import xformmanager.reports.custom as custom_reports
-
 from lxml import etree
 
-#from django.db import backend
+MAX_MYSQL_TABLE_NAME_LENGTH = 64
+MAX_PREFIX_LENGTH= 7
+MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
 
-TABLE_PREFIX = "x_"
-MAX_LENGTH = 64 - len(TABLE_PREFIX)
+def table_name(name):
+    r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
+    if r:
+        tail = r.group('tail')
+        if tail: 
+            return "schema_" + sanitize(tail)
+    return "schema_" + sanitize(name)
+def old_table_name(name):
+    return "x_" + sanitize(name)
+# this is purely for backwards compatibility
+possible_naming_functions=[old_table_name,table_name]
+
+def create_table_name(name):
+    # current hack, fix later: 122 is mysql table limit, i think
+    return table_name( name )
+
+def retrieve_table_name(name):
+    # current hack, fix later: 122 is mysql table limit, i think
+    for func in possible_naming_functions:
+        table_name = func(name)
+        if table_exists( table_name ):
+            return table_name
+    return None
+
+from django.db import connection
+def table_exists( table_name):
+    query = "select * from " + table_name + " limit 1";
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query)
+    except:
+        return False
+    return True
 
 def skip_junk(stream_pointer):
     pass
@@ -22,12 +53,6 @@ def skip_junk(stream_pointer):
         logging.error("Poorly formatted schema")
         return
     stream_pointer.seek(count)
-
-def get_table_name(name):
-    # check for uniqueness!
-    # current hack, fix later: 122 is mysql table limit, i think
-    table_name = sanitize(name)
-    return TABLE_PREFIX + table_name
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
 def sanitize(name):
@@ -45,7 +70,7 @@ def sanitize(name):
     
 #temporary measure to get target form
 # todo - fix this to be more efficient, so we don't parse the file twice
-def get_xmlns(stream):
+def get_table_name(stream):
     try:
         logging.debug("Trying to parse xml_file")
         skip_junk(stream)
@@ -58,9 +83,9 @@ def get_xmlns(stream):
         if r is None:
             logging.error( "NO NAMESPACE FOUND" )
             return None
-        xmlns = get_table_name( r.group(0).strip('{').strip('}') )
-        logging.debug( "Xmlns is " + xmlns )
-        return xmlns
+        table_name = retrieve_table_name( r.group(0).strip('{').strip('}') )
+        logging.debug( "Table name is " + table_name )
+        return table_name
     except etree.XMLSyntaxError:
         # this is probably just some non-xml data.
         # not a big deal, just don't return an xmlns
