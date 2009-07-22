@@ -276,7 +276,7 @@ def case_export_csv(request, case_id, template_name="case_data.html"):
     cols = case.get_column_names()
     data = case.get_all_data().values()
     output = StringIO()
-    w = csv.writer(output)
+    w = UnicodeWriter(output)
     w.writerow(cols)
     for row in data:
         w.writerow(row)
