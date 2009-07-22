@@ -646,9 +646,11 @@ div.descendants ul {
 	list-style-type:None;
 }
 
-div.pagination {
-	float:left;
-	}
+div.pagination 
+{
+	float:none;
+	clear:both;
+}
 
 div.container
 {
