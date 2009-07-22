@@ -28,14 +28,15 @@
 	{% if thegraph.has_errors %}  
 	   <h3 style="color:red; text-align: left; float: left;">Sorry, something went wrong displaying that chart.  Please tell your administrator about this!</h3>
     {% else %}
-	   <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?bare">Printable View</a>
-	   <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?data">Data View</a>
-       {% with thegraph as chart %}
-		  {% include "dbanalyzer/inline_rawgraph.html" %}
-	   {% endwith %}
-       {% if thegraph.time_bound  %}
-           <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
-       {% endif %}
+        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?bare&{{ request.META.QUERY_STRING }}">Printable View</a>
+        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?data&{{ request.META.QUERY_STRING }}">Data View</a>
+        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url dbanalyzer.views.view_graph thegraph.id %}?csv&{{ request.META.QUERY_STRING }}">Download Data</a>
+        {% with thegraph as chart %}
+		   {% include "dbanalyzer/inline_rawgraph.html" %}
+	    {% endwith %}
+        {% if thegraph.time_bound  %}
+            <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
+        {% endif %}
     {% endif %}
 {%endblock%}
     

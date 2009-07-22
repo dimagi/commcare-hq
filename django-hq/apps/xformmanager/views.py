@@ -271,7 +271,7 @@ def case_data(request, case_id, template_name="case_data.html"):
     return render_to_response(request, template_name, context)
 
 @login_required()
-def case_export_csv(request, case_id, template_name="case_data.html"):
+def case_export_csv(request, case_id):
     case = Case.objects.get(id=case_id)
     cols = case.get_column_names()
     data = case.get_all_data().values()
