@@ -1,3 +1,8 @@
+""" This is the optimus prime solution for fixing csv.writer 
+to be unicode-compatible ( from http://docs.python.org/library/csv.html )
+
+"""
+
 import csv
 import codecs
 import cStringIO
