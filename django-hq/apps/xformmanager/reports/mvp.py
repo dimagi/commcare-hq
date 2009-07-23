@@ -278,6 +278,11 @@ class Mother(object):
                      if self.followup_referred[key] == value:
                          danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
                                                          self._clean(value, "", "")))
+                # add which illness
+                if "other illness: yes" in danger_signs and self.followup_referred["safe_pregnancy_which_illness"]:
+                    danger_signs.remove("other illness: yes")
+                    danger_signs.append("other illness: yes (%s)" % self.followup_referred["safe_pregnancy_which_illness"])
+                    
             else: 
                 # Close form is referred:
                 if self.close_referred["safe_pregnancy_mother_survived"] == "yes":
