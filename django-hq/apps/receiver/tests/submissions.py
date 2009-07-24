@@ -4,24 +4,11 @@ from receiver import submitprocessor
 from organization.models import Domain
 
 class ProcessingTestCase(unittest.TestCase):
+
     def setup(self):
-        print "ProcessingTestCase.Setup()"
-        
-#        attaches = Attachment.objects.all()
-#        for attach in attaches:
-#            attach.delete()
-#        
         allsubmits = Submission.objects.all()
         for submit in allsubmits:
             submit.delete()
-        
-        
-#        submits = os.listdir(settings.XFORM_SUBMISSION_PATH)
-#        self.assertEquals(0,len(submits))
-#        
-#        attaches = os.listdir(settings.ATTACHMENTS_PATH)
-#        self.assertEquals(0,len(attaches))
-    
 
     def testSubmitSimple(self):
         Submission.objects.all().delete()
@@ -86,7 +73,6 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
         
          
-        print '############################### testCheckMultipartAttachments'
         num = len(Submission.objects.all())
         makeNewEntry(get_full_path('multipart-meta.txt'),
                      get_full_path('multipart-body.txt'))
@@ -97,7 +83,7 @@ class ProcessingTestCase(unittest.TestCase):
         self.assertEquals(3,len(attaches))        
         
     def tearDown(self):
-        print "ProcessingTestCase.tearDown()"
+        pass
 
 def get_full_path(file_name):
     '''Joins a file name with the directory of the current file
