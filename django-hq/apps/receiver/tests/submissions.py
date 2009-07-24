@@ -23,7 +23,7 @@ class ProcessingTestCase(unittest.TestCase):
 #        self.assertEquals(0,len(attaches))
     
 
-    def testSubmitSimple(self):        
+    def testSubmitSimple(self):
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
         
@@ -31,6 +31,27 @@ class ProcessingTestCase(unittest.TestCase):
         makeNewEntry('simple-meta.txt','simple-body.txt')
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
+    
+    def testDuplicates(self):
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+        
+        num = len(Submission.objects.all())
+        self.assertEqual(0, num)
+        # make a submission and ensure it's not considered a duplicate
+        submission = makeNewEntry('simple-meta.txt','simple-body.txt')
+        self.assertEqual(1,len(submission.attachments.all()))
+        attachment = submission.attachments.all()[0]
+        self.assertFalse(attachment.is_duplicate())
+        
+        # duplicate it and make sure that both are now considered dupes
+        dupe_submission = makeNewEntry('simple-meta.txt','simple-body.txt')
+        self.assertEqual(1,len(dupe_submission.attachments.all()))
+        dupe_attachment = dupe_submission.attachments.all()[0]
+        self.assertTrue(dupe_attachment.is_duplicate())
+        self.assertTrue(attachment.is_duplicate())
+        
+        
     
     def testCheckSimpleAttachments(self):
         Submission.objects.all().delete()
@@ -74,7 +95,6 @@ class ProcessingTestCase(unittest.TestCase):
 
 
 def makeNewEntry(headerfile, bodyfile):
-    newsubmit = Submission()
     fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
     meta= fin.read()
     fin.close()
@@ -89,4 +109,4 @@ def makeNewEntry(headerfile, bodyfile):
         mockdomain.save()
     else:
         mockdomain = Domain.objects.all()[0]
-    submitprocessor.do_raw_submission(metahash, body, domain=mockdomain)
+    return submitprocessor.do_raw_submission(metahash, body, domain=mockdomain)

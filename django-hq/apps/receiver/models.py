@@ -35,7 +35,7 @@ class Submission(models.Model):
     
     @property
     def num_attachments(self):
-        return Attachment.objects.all().filter(submission=self).count()
+        return len(Attachment.objects.all().filter(submission=self))
         
     class Meta:
         ordering = ('-submit_time',)
@@ -127,7 +127,7 @@ class Backup(models.Model):
             
     
 class Attachment(models.Model):
-    submission = models.ForeignKey(Submission)
+    submission = models.ForeignKey(Submission, related_name="attachments")
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
     attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
     filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'],max_length=255)
@@ -143,6 +143,14 @@ class Attachment(models.Model):
         os.remove(self.filepath)        
         super(Attachment, self).delete()
     
+    def is_duplicate(self):
+        '''
+        Checks if this has any duplicate submissions, 
+        defined by having the same checksum, but a different
+        id.
+        '''
+        return len(Attachment.objects.filter(checksum=self.checksum).exclude(id=self.id)) != 0
+        
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
