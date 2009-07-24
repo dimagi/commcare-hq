@@ -1,5 +1,6 @@
 from xformmanager.manager import *
 from xformmanager.xformdef import *
+from receiver.tests.submissions import *
 import logging
 
 def create_xsd_and_populate(xsd_file_name, xml_file_name=''):
@@ -20,12 +21,9 @@ def populate(xml_file_name, manager=None):
         submission = create_fake_submission(xml_file_name)
         
 
-from receiver.tests.submissions import *
 def create_fake_submission(xml_file):
     # can't use get_full_path on the body since it's not relative to that file
     full_body_path = os.path.join(os.path.dirname(__file__), xml_file)
-    makeNewEntry(get_full_path('simple-meta.txt'), full_body_path)
-    
-    attachment = Attachment.objects.latest('id')
-    return attachment
+    submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path)
+    return submission.attachments.all()[0]
     
