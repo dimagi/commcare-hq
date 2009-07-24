@@ -77,8 +77,9 @@ class Submission(models.Model):
                 else:                   
                     new_attach= Attachment()
                     new_attach.submission = self
-                    new_attach.attachment_content_type=part.get_content_type()
-                    if part.get_content_type().startswith('text/'):                       
+                    content_type = part.get_content_type()
+                    new_attach.attachment_content_type=content_type
+                    if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):                       
                         new_attach.attachment_uri = 'xform'
                         filename='-xform.xml'
                     else:
@@ -95,7 +96,7 @@ class Submission(models.Model):
                     new_attach.filepath = os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename)
                     new_attach.save()                
                     logging.debug("Attachment Save complete")                    
-            except:
+            except Exception, e:
                 logging.error("error parsing attachments") 
                 #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
                 #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))

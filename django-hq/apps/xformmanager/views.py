@@ -1,20 +1,22 @@
+import settings, os, sys
+import tempfile
+import logging
+import traceback
+import hashlib
+import csv
 from django.http import Http404
 from rapidsms.webui.utils import render_to_response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction, connection
-import hashlib
 from django.contrib.auth.decorators import login_required
-from xformmanager.forms import RegisterXForm
+from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel, Case
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from transformers.csv_ import UnicodeWriter
-import settings, os, sys
-import logging
-import traceback
-import csv
+from receiver.submitprocessor import do_raw_submission
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from organization.models import *
@@ -93,6 +95,30 @@ def register_xform(request, template='register_and_list_xforms.html'):
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
     return render_to_response(request, template, context)
 
+@login_required()
+@transaction.commit_manually
+def submit_data(request, formdef_id, template='submit_data.html'):
+    """ A debug utility for admins to submit xml directly to a schema """ 
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    if request.method == 'POST':
+        form = SubmitDataForm(request.POST, request.FILES)        
+        if form.is_valid():
+            new_submission = do_raw_submission(request.META, \
+                request.FILES['file'].read(), domain=extuser.domain)
+            if new_submission == '[error]':
+                logging.error("Domain Submit(): Submission error")
+                context['errors'] = "Problem with submitting data"
+            else:
+                attachments = Attachment.objects.all().filter(submission=new_submission)
+                context['submission'] = new_submission
+                context['register_success'] = True
+    context['upload_form'] = SubmitDataForm()
+    return data(request, formdef_id, template, context)
+
 @transaction.commit_manually
 def reregister_xform(request, domain_name, template='register_and_list_xforms.html'):
     # registers an xform without having a user context, for 
@@ -168,8 +194,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         return render_to_response(request, template_name, context)
         
 @login_required()
-def data(request, formdef_id, template_name="data.html"):
-    context = {}
+def data(request, formdef_id, template_name="data.html", context={}):
     xform = get_object_or_404(FormDefModel, id=formdef_id)
     for i in request.POST.getlist('instance'):
         if 'checked_'+ i in request.POST: 

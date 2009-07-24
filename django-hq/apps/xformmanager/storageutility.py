@@ -107,9 +107,8 @@ class StorageUtility(object):
     @transaction.commit_on_success
     def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, submission):
         logging.debug("StorageProvider: saving form data")
-        skip_junk(data_stream_pointer)
-        tree = etree.parse(data_stream_pointer)
-        root = tree.getroot()
+        payload = get_xml_string(data_stream_pointer)
+        root = etree.XML(payload)
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         new_rawdata_id = queries.execute_insert()

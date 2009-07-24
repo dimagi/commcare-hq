@@ -36,8 +36,8 @@ class FormDef(ElementDef):
     def __init__(self, stream_pointer=None):
         self.types = {}
         if stream_pointer is not None:
-            skip_junk(stream_pointer)
-            self.parseStream(stream_pointer)
+            payload = get_xml_string(stream_pointer)
+            self.parseString(payload)
           
     def __str__(self):
         string =  "DEFINITION OF " + str(self.name) + "\n"
@@ -51,10 +51,9 @@ class FormDef(ElementDef):
         string = string + "ELEMENTS: \n"
         return string + ElementDef.__str__(self)
 
-    def parseStream(self, stream_pointer):
-        tree = etree.parse(stream_pointer)
+    def parseString(self, string):
+        root = etree.XML(string)
 
-        root = tree.getroot()
         target_namespace = root.get('targetNamespace')
         if target_namespace is None:
             logging.error("Target namespace is not found in xsd schema")

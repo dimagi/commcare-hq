@@ -41,18 +41,18 @@ def table_exists( table_name):
         return False
     return True
 
-def skip_junk(stream_pointer):
-    pass
+def get_xml_string(stream_pointer):
+    # formerly 'skip-junk'
     c = ''
     c = stream_pointer.read(1)
     count = 0
     while c != '<' and c != '':
-        c = stream_pointer.read(1)
         count = count + 1
+        c = stream_pointer.read(1)
     if c == '':
         logging.error("Poorly formatted schema")
         return
-    stream_pointer.seek(count)
+    return "<" + stream_pointer.read()
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
 def sanitize(name):
@@ -73,9 +73,8 @@ def sanitize(name):
 def get_table_name(stream):
     try:
         logging.debug("Trying to parse xml_file")
-        skip_junk(stream)
-        tree = etree.parse(stream)
-        root = tree.getroot()
+        payload = get_xml_string(stream)
+        root = etree.XML(payload)
         logging.debug("Parsing xml file successful")
         logging.debug("Find xmlns from " + root.tag)
         #todo - add checks in case we don't have a well-formatted xmlns
@@ -91,9 +90,8 @@ def get_table_name(stream):
         # not a big deal, just don't return an xmlns
         return None
 def get_target_namespace(stream):
-    skip_junk(stream)
-    tree = etree.parse(stream)
-    root = tree.getroot()
+    payload = get_xml_string(stream)
+    root = etree.XML(payload)
     return root.get('targetNamespace')
 
         

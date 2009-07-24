@@ -5,3 +5,6 @@ from django import forms
 class RegisterXForm(forms.Form):
     file  = forms.FileField()
     form_display_name= forms.CharField(max_length=128, label=u'Form Display Name')
+    
+class SubmitDataForm(forms.Form):
+    file  = forms.FileField()

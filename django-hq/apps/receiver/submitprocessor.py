@@ -24,7 +24,7 @@ def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
     else:
         if metadata.has_key('HTTP_X_FORWARDED_FOR'):
             new_submit.submit_ip = metadata['HTTP_X_FORWARDED_FOR']
-        elif metadata.has_key('REMOTE_HOST'):
+        elif metadata.has_key('REMOTE_HOST') and len(metadata['REMOTE_HOST'])>0:
             new_submit.submit_ip = metadata['REMOTE_HOST']
         else:
             new_submit.submit_ip = '127.0.0.1'
