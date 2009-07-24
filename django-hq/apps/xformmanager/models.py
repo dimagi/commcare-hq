@@ -480,6 +480,9 @@ class CaseFormIdentifier(models.Model):
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
 
+# process is here instead of views because in views it gets reloaded
+# everytime someone hits a view and that messes up the process registration
+# whereas models is loaded once
 def process(sender, instance, **kwargs): #get sender, instance, created
     from manager import XFormManager
     xml_file_name = instance.filepath
