@@ -28,7 +28,8 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
         
         num = len(Submission.objects.all())
-        makeNewEntry('simple-meta.txt','simple-body.txt')
+        makeNewEntry(get_full_path('simple-meta.txt'),
+                     get_full_path('simple-body.txt'))
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
@@ -39,13 +40,15 @@ class ProcessingTestCase(unittest.TestCase):
         num = len(Submission.objects.all())
         self.assertEqual(0, num)
         # make a submission and ensure it's not considered a duplicate
-        submission = makeNewEntry('simple-meta.txt','simple-body.txt')
+        submission = makeNewEntry(get_full_path('simple-meta.txt'),
+                                  get_full_path('simple-body.txt'))
         self.assertEqual(1,len(submission.attachments.all()))
         attachment = submission.attachments.all()[0]
         self.assertFalse(attachment.is_duplicate())
         
         # duplicate it and make sure that both are now considered dupes
-        dupe_submission = makeNewEntry('simple-meta.txt','simple-body.txt')
+        dupe_submission = makeNewEntry(get_full_path('simple-meta.txt'),
+                                       get_full_path('simple-body.txt'))
         self.assertEqual(1,len(dupe_submission.attachments.all()))
         dupe_attachment = dupe_submission.attachments.all()[0]
         self.assertTrue(dupe_attachment.is_duplicate())
@@ -58,7 +61,8 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
                 
         num = len(Submission.objects.all())
-        makeNewEntry('simple-meta.txt','simple-body.txt')
+        makeNewEntry(get_full_path('simple-meta.txt'),
+                     get_full_path('simple-body.txt'))
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
         mysub = Submission.objects.all()[0]
@@ -72,7 +76,8 @@ class ProcessingTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
            
         num = len(Submission.objects.all())
-        makeNewEntry('multipart-meta.txt','multipart-body.txt')
+        makeNewEntry(get_full_path('multipart-meta.txt'),
+                     get_full_path('multipart-body.txt'))
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
     
@@ -83,7 +88,8 @@ class ProcessingTestCase(unittest.TestCase):
          
         print '############################### testCheckMultipartAttachments'
         num = len(Submission.objects.all())
-        makeNewEntry('multipart-meta.txt','multipart-body.txt')
+        makeNewEntry(get_full_path('multipart-meta.txt'),
+                     get_full_path('multipart-body.txt'))
         num2 = len(Submission.objects.all())        
         self.assertEquals(num+1,num2)
         mysub = Submission.objects.all()[0]        
@@ -93,13 +99,19 @@ class ProcessingTestCase(unittest.TestCase):
     def tearDown(self):
         print "ProcessingTestCase.tearDown()"
 
-
+def get_full_path(file_name):
+    '''Joins a file name with the directory of the current file
+       to get the full path'''
+    return os.path.join(os.path.dirname(__file__),file_name)
+    
 def makeNewEntry(headerfile, bodyfile):
-    fin = open(os.path.join(os.path.dirname(__file__),headerfile),"r")
+    
+    fin = open(headerfile,"r")
     meta= fin.read()
     fin.close()
     
-    fin = open(os.path.join(os.path.dirname(__file__),bodyfile),"rb")
+    
+    fin = open(bodyfile,"rb")
     body = fin.read()
     fin.close()
     
