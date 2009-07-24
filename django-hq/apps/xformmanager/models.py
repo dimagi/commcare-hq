@@ -484,11 +484,20 @@ class CaseFormIdentifier(models.Model):
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
 def process(sender, instance, **kwargs): #get sender, instance, created
+    # yuck, this import is in here because they depend on each other
     from manager import XFormManager
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
-    manager = XFormManager()
-    table_name = manager.save_form_data(xml_file_name, instance)
+    
+    # only run the XFormManager logic if the submission isn't a duplicate 
+    if not instance.is_duplicate():
+        # TODO: make this a singleton?  Re-instantiating the manager every
+        # time seems wasteful
+        manager = XFormManager()
+        table_name = manager.save_form_data(xml_file_name, instance)
+    else:
+        logging.debug("Ignoring duplicate submission: %s" % instance)
+                
     
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)

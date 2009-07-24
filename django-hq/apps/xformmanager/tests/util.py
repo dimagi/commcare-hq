@@ -9,8 +9,8 @@ def create_xsd_and_populate(xsd_file_name, xml_file_name=''):
     f = open(os.path.join(os.path.dirname(__file__),xsd_file_name),"r")
     formdefmodel = manager.add_schema(xsd_file_name, f)
     f.close()
-    
-    populate(xml_file_name, manager)
+    if xml_file_name:
+        populate(xml_file_name, manager)
     return formdefmodel
 
 def populate(xml_file_name, manager=None):

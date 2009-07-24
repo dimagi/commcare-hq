@@ -6,7 +6,16 @@ import unittest
 
 class BasicTestCase(unittest.TestCase):
     
-    
+    def setUp(self):
+        # clean up, in case some other tests left some straggling
+        # form data, we want to start with a clean test environment
+        # each time.
+        su = StorageUtility()
+        su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+        
+
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml")
         populate("data/brac_chw_1.xml")
@@ -57,18 +66,30 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[7],"6")
         self.assertEquals(row[8],"RW07SHOPTWGAOJKUQJJJN215D")
 
+    def testMetaDataDuplicates(self):
+        create_xsd_and_populate("data/pf_followup.xsd")
+        running_count = 0
+        self.assertEqual(running_count, len(Metadata.objects.all()))
+        
+        for i in range(1, 6):
+            populate("data/pf_followup_%s.xml" % i)
+            # the first one should update the count.  The rest should not
+            running_count = running_count + 1
+            self.assertEqual(running_count, len(Metadata.objects.all()))
+            for j in range(0, 5):
+                populate("data/pf_followup_%s.xml" % i)
+                self.assertEqual(running_count, len(Metadata.objects.all()))
+    
     def testMetaData_3(self):
-        su = StorageUtility()
-        su.clear()
         create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
-        populate("data/pf_followup_1.xml")
+        populate("data/pf_followup_2.xml")
         create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml")
-        populate("data/pf_new_reg_1.xml")
+        populate("data/pf_new_reg_2.xml")
         create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
-        populate("data/pf_ref_completed_1.xml")
+        populate("data/pf_ref_completed_2.xml")
         create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml")
-        populate("data/mvp_mother_reg_1.xml")
-        populate("data/mvp_mother_reg_1.xml")
+        populate("data/mvp_mother_reg_2.xml")
+        populate("data/mvp_mother_reg_3.xml")
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_metadata order by id")
         row = cursor.fetchall()
