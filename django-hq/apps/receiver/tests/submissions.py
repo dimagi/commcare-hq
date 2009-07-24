@@ -31,15 +31,19 @@ class ProcessingTestCase(unittest.TestCase):
                                   get_full_path('simple-body.txt'))
         self.assertEqual(1,len(submission.attachments.all()))
         attachment = submission.attachments.all()[0]
+        self.assertFalse(attachment.has_duplicate())
         self.assertFalse(attachment.is_duplicate())
         
-        # duplicate it and make sure that both are now considered dupes
+        # duplicate it and make sure that both now have dupes, the
+        # second one of which is a dupe
         dupe_submission = makeNewEntry(get_full_path('simple-meta.txt'),
                                        get_full_path('simple-body.txt'))
         self.assertEqual(1,len(dupe_submission.attachments.all()))
         dupe_attachment = dupe_submission.attachments.all()[0]
+        self.assertTrue(dupe_attachment.has_duplicate())
+        self.assertTrue(attachment.has_duplicate())
         self.assertTrue(dupe_attachment.is_duplicate())
-        self.assertTrue(attachment.is_duplicate())
+        self.assertFalse(attachment.is_duplicate())
         
         
     

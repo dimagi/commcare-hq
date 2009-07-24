@@ -44,6 +44,7 @@ class Submission(models.Model):
         
     def __unicode__(self):
         return "Submission " + unicode(self.submit_time)
+    
     def save(self, **kwargs):        
         super(Submission, self).save()
         self.process_attachments()
@@ -143,7 +144,7 @@ class Attachment(models.Model):
         os.remove(self.filepath)        
         super(Attachment, self).delete()
     
-    def is_duplicate(self):
+    def has_duplicate(self):
         '''
         Checks if this has any duplicate submissions, 
         defined by having the same checksum, but a different
@@ -151,11 +152,25 @@ class Attachment(models.Model):
         '''
         return len(Attachment.objects.filter(checksum=self.checksum).exclude(id=self.id)) != 0
         
+    def is_duplicate(self):
+        '''
+        Checks if this is a duplicate submission,
+        defined by having other submissions with 
+        the same checksum, but a different id, and 
+        NOT being the first one
+        '''
+        all_matching_checksum = Attachment.objects.filter(checksum=self.checksum)
+        if len(all_matching_checksum) <= 1:
+            return False
+        all_matching_checksum = all_matching_checksum.order_by("submission__submit_time").order_by("id")
+        return self.id != all_matching_checksum.order_by("submission__submit_time").order_by("id")[0].id
+        
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
+    
     def __unicode__(self):
-        return "Attachment " + unicode(self.attachment_uri)
+        return "Attachment %s %s"  % (self.id, self.attachment_uri)
     
     
     
