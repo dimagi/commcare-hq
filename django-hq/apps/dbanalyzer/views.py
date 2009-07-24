@@ -20,6 +20,9 @@ from organization.models import *
 
 import organization.utils as utils
 
+from transformers.csv_ import UnicodeWriter
+from StringIO import StringIO
+
 from datetime import timedelta
 from django.db import transaction
 import uuid
@@ -98,8 +101,9 @@ def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
             template_name = 'dbanalyzer/view_graph_bare.html'
         elif item[0] == 'data':
             context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-            template_name='dbanalyzer/view_graph_data.html'            
-    
+            template_name='dbanalyzer/view_graph_data.html'
+        elif item[0] == 'csv':             
+            return _get_chart_csv(graph)
     return render_to_response(request, template_name, context)
 
 @login_required()
@@ -157,4 +161,18 @@ def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
     context['graphtree'] = graphtree
     
     return render_to_response(request, template_name, context)
+
+def _get_chart_csv(chart):
+    datatable = chart.get_data_as_table()
+    output = StringIO()
+    w = UnicodeWriter(output)
+    for row in datatable:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(),
+                        mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( chart.title, str(datetime.datetime.now().date()))
+    return response
+    
+    
 

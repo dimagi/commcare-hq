@@ -34,15 +34,32 @@ def monitoring(request):
     blacklist = ["teddy", "admin", "demo_user"]
     blacklist_columns = ["meta_username"]
     
+    final_list_of_maps = {}
+    # do a once-through pruning by the blacklist, and reclassifying by 
+    # both chw id and case id
+    for id, map in data_maps.items():
+        for form, list_of_forms in map.items():
+            for form_instance in list_of_forms:
+                # check blacklist and don't use this instance if it's in 
+                # the blacklist
+                if _is_blacklisted(form_instance, blacklist, blacklist_columns):
+                    continue
+                # make a new id that includes the 
+                new_id = "%s-%s" % (form_instance["meta_username"], id) 
+                if new_id not in final_list_of_maps:
+                    # initialize the new id with an empty list for each form
+                    this_id_map = {}
+                    for form_all in map:
+                        this_id_map[form_all] = []
+                    final_list_of_maps[new_id] = this_id_map
+                final_list_of_maps[new_id][form].append(form_instance)
+
     all_moms = []
     healthy_moms = []
     very_pregnant_moms = []
     moms_needing_followup = []
     moms_with_open_referrals = []
-    for id, map in data_maps.items():
-        # check blacklist
-        if _is_blacklisted(map, blacklist, blacklist_columns):
-            continue
+    for id, map in final_list_of_maps.items():
         mom = Mother(case, id, map)
         if not mom.chw:
             # don't include submissions from non-users
@@ -78,13 +95,10 @@ def monitoring(request):
 def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the
        columns contains one of the values, returns true'''
-    
-    for list_of_data in data.values():
-        for map_of_cols in list_of_data:
-            for column in blacklist_columns:
-                if column in map_of_cols and\
-                   map_of_cols[column] in blacklist:
-                    return True
+    for column in blacklist_columns:
+        if column in data and\
+           data[column] in blacklist:
+            return True
     return False
 
 class Mother(object):
@@ -264,6 +278,11 @@ class Mother(object):
                      if self.followup_referred[key] == value:
                          danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
                                                          self._clean(value, "", "")))
+                # add which illness
+                if "other illness: yes" in danger_signs and self.followup_referred["safe_pregnancy_which_illness"]:
+                    danger_signs.remove("other illness: yes")
+                    danger_signs.append("other illness: yes (%s)" % self.followup_referred["safe_pregnancy_which_illness"])
+                    
             else: 
                 # Close form is referred:
                 if self.close_referred["safe_pregnancy_mother_survived"] == "yes":
