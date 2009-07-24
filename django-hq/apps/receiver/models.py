@@ -80,8 +80,6 @@ class Submission(models.Model):
                     content_type = part.get_content_type()
                     new_attach.attachment_content_type=content_type
                     if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
-                    new_attach.attachment_content_type=part.get_content_type()
-                    if part.get_content_type().startswith('text/'):                       
                         new_attach.attachment_uri = 'xform'
                         filename='-xform.xml'
                     else:

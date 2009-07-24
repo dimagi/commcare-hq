@@ -77,24 +77,6 @@ class FormDef(ElementDef):
                     next_name_prefix = join_if_exists( name_prefix, name )
                     name = next_name_prefix
                     self.__populateElementFields(child_element, input_node, element.xpath, name )
-Auto-merging django-hq/apps/hqwebapp/static/stylesheets/style.css
-CONFLICT (content): Merge conflict in django-hq/apps/hqwebapp/static/stylesheets/style.css
-Auto-merging django-hq/apps/receiver/models.py
-CONFLICT (content): Merge conflict in django-hq/apps/receiver/models.py
-Auto-merging django-hq/apps/receiver/submitprocessor.py
-CONFLICT (content): Merge conflict in django-hq/apps/receiver/submitprocessor.py
-Auto-merging django-hq/apps/transformers/csv_.py
-CONFLICT (content): Merge conflict in django-hq/apps/transformers/csv_.py
-Auto-merging django-hq/apps/xformmanager/manager.py
-CONFLICT (content): Merge conflict in django-hq/apps/xformmanager/manager.py
-Auto-merging django-hq/apps/xformmanager/templates/data.html
-CONFLICT (content): Merge conflict in django-hq/apps/xformmanager/templates/data.html
-Auto-merging django-hq/apps/xformmanager/tests/meta.py
-CONFLICT (content): Merge conflict in django-hq/apps/xformmanager/tests/meta.py
-Auto-merging django-hq/apps/xformmanager/views.py
-Auto-merging django-hq/apps/xformmanager/xformdef.py
-CONFLICT (content): Merge conflict in django-hq/apps/xformmanager/xformdef.py
-Automatic merge failed; fix conflicts and then commit the result.
                 element.addChild(child_element)
                 #theoretically, simpleType enumerations and list values can be defined inside of elements
                 #in practice, this isn't how things are currently generated in the schema generator,
