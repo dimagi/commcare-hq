@@ -26,7 +26,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[7],"99")
         self.assertEquals(row[8],"Z6WRHCRXYQO1C1V6B2SB3RBG8")
         
-        cursor.execute("SELECT * FROM x_http__dev_commcarehq_org_brac_chw_chwvisit_v0_0_1")
+        cursor.execute("SELECT * FROM schema_brac_chw_chwvisit_v0_0_1")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         # checks to make sure that non-standard meta fields remain in the generated data table
