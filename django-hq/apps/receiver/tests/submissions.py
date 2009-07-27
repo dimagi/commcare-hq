@@ -94,7 +94,7 @@ def get_full_path(file_name):
        to get the full path'''
     return os.path.join(os.path.dirname(__file__),file_name)
     
-def makeNewEntry(headerfile, bodyfile):
+def makeNewEntry(headerfile, bodyfile, domain=None):
     
     fin = open(headerfile,"r")
     meta= fin.read()
@@ -106,7 +106,9 @@ def makeNewEntry(headerfile, bodyfile):
     fin.close()
     
     metahash = eval(meta)
-    if Domain.objects.all().count() == 0:
+    if domain:
+        mockdomain = domain
+    elif Domain.objects.all().count() == 0:
         mockdomain = Domain(name='mockdomain')
         mockdomain.save()
     else:

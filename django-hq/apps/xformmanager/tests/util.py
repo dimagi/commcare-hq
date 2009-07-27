@@ -3,27 +3,41 @@ from xformmanager.xformdef import *
 from receiver.tests.submissions import *
 import logging
 
-def create_xsd_and_populate(xsd_file_name, xml_file_name=''):
-    # Create a new form definition
-    manager = XFormManager()
-    
-    f = open(os.path.join(os.path.dirname(__file__),xsd_file_name),"r")
-    formdefmodel = manager.add_schema(xsd_file_name, f)
-    f.close()
-    if xml_file_name:
-        populate(xml_file_name, manager)
+def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None):
+    if domain:
+        mockdomain = domain
+    elif Domain.objects.all().count() == 0:
+        mockdomain = Domain(name='mockdomain')
+        mockdomain.save()
+    else:
+        mockdomain = Domain.objects.all()[0]    
+    formdefmodel = create_xsd(xsd_file_name, mockdomain)
+    populate(xml_file_name, mockdomain)
     return formdefmodel
 
-def populate(xml_file_name, manager=None):
-    if xml_file_name is not None:
-        # and input one xml instance
-        #arguments: data_stream_pointer, formdef, formdefmodel_id, submission_id
-        submission = create_fake_submission(xml_file_name)
-        
+def create_xsd(xsd_file_name, domain=None):
+    xsd_file_path = os.path.join(os.path.dirname(__file__),xsd_file_name)
+    if xsd_file_name is None:
+        return None
+    f = open(xsd_file_path,"r")
+    manager = XFormManager()
+    formdefmodel = manager.add_schema(xsd_file_name, f)
+    f.close()    
+    # fake out the form submission
+    formdefmodel.submit_ip = '127.0.0.1'
+    formdefmodel.bytes_received =  os.path.getsize(xsd_file_path)
+    formdefmodel.form_display_name = 'mock display name'             
+    formdefmodel.domain = domain
+    formdefmodel.save()
+    return formdefmodel
 
-def create_fake_submission(xml_file):
+def populate(xml_file_name, domain=None):
+    if xml_file_name:
+        submission = create_fake_submission(xml_file_name, domain)
+        
+def create_fake_submission(xml_file, domain):
     # can't use get_full_path on the body since it's not relative to that file
     full_body_path = os.path.join(os.path.dirname(__file__), xml_file)
-    submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path)
+    submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path, domain)
     return submission.attachments.all()[0]
     
