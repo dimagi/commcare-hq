@@ -34,7 +34,8 @@ class XForms(Resource):
         """ lists all registered schemas """
         extuser = ExtUser.objects.all().get(id=request.user.id)
         xforms = FormDefModel.objects.filter(domain=extuser.domain).order_by('id')
-        if not xforms: return HttpResponseBadRequest("No schemas have been registered.")
+        if not xforms: return HttpResponseBadRequest(\
+            "No schemas have been registered for %s." % extuser.domain)
         response = HttpResponse()
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'json':
@@ -65,11 +66,13 @@ class XFormSubmissionData(Resource):
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'xml':
                 formdef = FormDefModel.objects.get(pk=formdef_id)
-                if not formdef: return HttpResponseBadRequest("Schema not found.")
+                if not formdef: return HttpResponseBadRequest(\
+                    "Schema with primary key %s was not found." % formdef_id)
                 try:
                     meta = Metadata.objects.get(raw_data=form_id, formdefmodel=formdef)
                 except Metadata.DoesNotExist:
-                    return HttpResponseBadRequest("Instance not found.")
+                    return HttpResponseBadRequest(\
+                        "Instance with id %s and schema %s was not found." % form_id, formdef.id)
                 fin = open( meta.xml_file_location() ,"r")
                 response = HttpResponse(fin.read(), mimetype='text/xml')
                 fin.close()
@@ -90,7 +93,7 @@ class XFormSchema(Resource):
         try:
             xsd = FormDefModel.objects.get(pk=formdef_id )
         except FormDefModel.DoesNotExist:
-            return HttpResponseBadRequest("Schema not found.")
+            return HttpResponseBadRequest("Schema with primary key %s was not found." % formdef_id)
         fin = open( xsd.xsd_file_location ,"r")
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'text': 
@@ -114,7 +117,7 @@ class XFormMetadata(Resource):
         # CSV
         metadata = Metadata.objects.filter(formdefmodel=formdef_id).order_by('id')
         if not metadata:
-            return HttpResponseBadRequest("Metadata not found.")
+            return HttpResponseBadRequest("Metadata of schema with id %s not found." % formdef_id)
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'xml':
                 response = HttpResponse(mimetype='text/xml')
@@ -132,7 +135,8 @@ class XFormMetadatum(Resource):
         # CSV
         metadatum = Metadata.objects.filter(formdefmodel=formdef_id, raw_data=form_id)
         if not metadatum:
-            return HttpResponseBadRequest("Metadatum not found.")
+            return HttpResponseBadRequest(\
+                "Metadatum of form (id=%s) with schema (id=%s) not found." % (form_id, formdef_id) )
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'xml':
                 response = HttpResponse(mimetype='text/xml')
