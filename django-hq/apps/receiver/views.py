@@ -225,7 +225,7 @@ def save_post(request):
     filename = "%s - %s.rawpost" % (guid, timestamp)
     if request.raw_post_data:
         try:
-            newfilename = os.path.join(settings.rapidsms_apps_conf['receiver']['xform_submission_path'],filename)
+            newfilename = os.path.join(settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],filename)
             logging.debug("writing to %s" % newfilename)
             fout = open(newfilename, 'w')
             fout.write(request.raw_post_data)

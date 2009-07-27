@@ -10,7 +10,7 @@ import uuid
 from django.db import transaction
 
 def get_submission_path():
-    return settings.rapidsms_apps_conf['receiver']['xform_submission_path']                    
+    return settings.RAPIDSMS_APPS['receiver']['xform_submission_path']                    
 
 @transaction.commit_on_success
 def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):

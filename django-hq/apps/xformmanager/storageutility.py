@@ -490,8 +490,8 @@ class StorageUtility(object):
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
             
         # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
-        for file in os.listdir( settings.rapidsms_apps_conf['receiver']['xform_submission_path'] ):
-            file = os.path.join( settings.rapidsms_apps_conf['receiver']['xform_submission_path'] , file)
+        for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
+            file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
             logging.debug(  "Deleting " + file )
             stat = os.stat(file)
             if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):

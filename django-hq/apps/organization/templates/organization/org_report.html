@@ -3,40 +3,16 @@
 {% load mainreport_tags %}
 {% block title %}{% trans "My Dashboard" %}{% endblock %}
 {% block org_report_content %}
-<h3>Domain Management</h3>	
+<h2>Domain Management</h2>	
 	{% get_daterange_links view_name %}
 	
-	<h4>Domain: {{domain}}</h4>
+	<h3>Domain: {{domain}}</h3>
+	
+	{% for org, data in organization_data.items %}
+	<h4>Organization: {{org }} </h4>
+	
 	<div class="reports">
-	<table class="reporttable">
-		<tr>
-		<td>&nbsp;</td>
-		{% for item in daterange_header %}
-			<td class="headercol">{{item}}</td>
-		{% endfor %}
-		</tr>
-				
-		{% for depth, descriptor, item, rowdata in results %}
-			{% if descriptor %}
-			<tr>
-				<td class="rel_row" style="padding-left:{{depth}}0px;">	{{descriptor}}	</td>
-				{% aggregate_section_totals descriptor results 1 %}
-			</tr>
-			{% endif %}
-			<tr>
-				<td class="item_row" style="padding-left:{{depth}}9;">{{item}}</td> 
-				{% for data in rowdata %}
-					{% ifequal data 0 %}
-						<td style="color:gray">{{data}}</td>
-					{% else %}
-						<td><strong>{{data}}</strong></td>					
-					{% endifequal %}
-					 
-							
-				{% endfor %}		
-			</tr>			
-				
-		{% endfor %}
-		</table>
+		{% include "organization/reports/email_hierarchy_report.txt" %}	
 	</div>
+	{%endfor%}
 {% endblock %}

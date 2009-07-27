@@ -118,6 +118,31 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
     return row
 
 
+
+def get_single_org_data(organization, startdate, enddate):
+    fullret = []
+    fullret.append(get_single_item(None, organization, startdate, enddate, 0))
+    members, supervisors = utils.get_members_and_supervisors(organization)
+    is_first = True
+    for supervisor in supervisors:
+        # leaving the hack in that everything after the first is expected
+        # to have a "None" description.  This should be revisited
+        if is_first: 
+            fullret.append(get_single_item("Supervisors", supervisor, startdate, enddate, 1))
+            is_first = False
+        else: 
+            fullret.append(get_single_item(None, supervisor, startdate, enddate, 1))
+    
+    is_first = True #reset the first of the supervisors
+    for member in members:
+        if is_first:
+            fullret.append(get_single_item("Members", member, startdate, enddate, 1))
+            is_first = False
+        else: 
+            fullret.append(get_single_item(None, member, startdate, enddate, 1))
+    
+    return fullret
+
 def get_data_below(organization, startdate, enddate, depth):
     """Do a lookukp of the organizations children and flattens
        the recursive return into 
@@ -159,5 +184,9 @@ def get_data_below(organization, startdate, enddate, depth):
     return fullret
 
 def get_single_item(type, item, startdate, enddate, depth):
+    """renders a report item into the appropriate structure for the email/sms templates"""
+    return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
+    
+    """renders a report item into the appropriate structure for the email/sms templates"""
     return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
     
