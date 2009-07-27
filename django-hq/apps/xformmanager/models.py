@@ -72,7 +72,7 @@ class FormDefModel(models.Model):
     
     # META fields to be placed here eventually
     #settings.XSD_REPOSITORY_PATH
-    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], max_length=255, null=True)
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], max_length=255, null=True)
     
     # we should just call this table_name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
