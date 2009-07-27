@@ -56,7 +56,7 @@ class XForms(Resource):
 class XFormSubmissionsData(Resource):
     def read(self, request, formdef_id):
         """ list all submitted instance data for a particular schema """
-        return get_csv_from_form(formdef_id)        
+        return get_csv_from_form(formdef_id)
 
 # api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)
 class XFormSubmissionData(Resource):
