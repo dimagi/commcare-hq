@@ -3,6 +3,11 @@ import logging
 import inspect
 from lxml import etree
 
+from django.http import HttpResponseBadRequest
+from django.db import connection
+from transformers.csv_ import format_csv
+from xformmanager.models import FormDefModel
+
 MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
 MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
@@ -143,3 +148,23 @@ def get_custom_reports(report_module):
                        } 
             to_return.append(obj_rep)
     return to_return
+
+
+def get_csv_from_form(formdef_id, form_id=0):
+    try:
+        xsd = FormDefModel.objects.get(id=formdef_id)
+    except FormDefModel.DoesNotExist:
+        return HttpResponseBadRequest("Instance not found.")
+    cursor = connection.cursor()
+    row_count = 0
+    if form_id == 0:
+        cursor.execute("SELECT * FROM " + xsd.form_name + ' order by id')
+        rows = cursor.fetchall()
+    else:
+        cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
+        rows = cursor.fetchone()
+        row_count = 1
+    columns = xsd.get_column_names()    
+    name = xsd.form_name
+    return format_csv(rows, columns, name, row_count)
+

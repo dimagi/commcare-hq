@@ -35,6 +35,9 @@
       <resource href="http://dev.commcarehq.org/api/xforms/1/2/attachment/3">
       	  <desc>Download the third submitted attachment associated with the second instance data submitted to the first registered schema</desc>
       </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/schema">
+      	  <desc>Schema associated with the first registered schema</desc>
+      </resource>
       <resource href="http://dev.commcarehq.org/api/xforms/1/metadata">
       	  <desc>Metadata associated with the first registered schema</desc>
           <args>

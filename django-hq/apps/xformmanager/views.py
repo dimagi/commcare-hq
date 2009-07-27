@@ -15,6 +15,7 @@ from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel, Case
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
+from xformmanager.util import get_csv_from_form
 from transformers.csv_ import UnicodeWriter
 from receiver.submitprocessor import do_raw_submission
 
@@ -225,30 +226,9 @@ def data(request, formdef_id, template_name="data.html", context={}):
     
     return render_to_response(request, template_name, context)    
 
-
-
 @login_required()
 def export_csv(request, formdef_id):
-    context = {}
-    xform = FormDefModel.objects.get(id=formdef_id)
-
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM " + xform.form_name + ' order by id')
-    rows = cursor.fetchall()
-    
-    columns = xform.get_column_names()
-    
-    output = StringIO()
-    w = UnicodeWriter(output)
-    w.writerow(columns)
-    for row in rows:
-        w.writerow(row)
-    # rewind the virtual file
-    output.seek(0)
-    response = HttpResponse(output.read(),
-                        mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % (xform.form_name, str(datetime.now().date()))
-    return response
+    return get_csv_from_form(formdef_id)
     
 @login_required()
 def reports(request, template_name="reports/list.html"):

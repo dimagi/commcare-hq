@@ -190,6 +190,8 @@ class Metadata(models.Model):
         list = ["%s: %s" % (name, getattr(self, name)) for name in self.fields]
         return "Metadata: " + ", ".join(list) 
     
+    def xml_file_location(self):
+        return self.submission.filepath
 
 class FormIdentifier(models.Model):
     '''An identifier for a form.  This is a way for a case to point at
