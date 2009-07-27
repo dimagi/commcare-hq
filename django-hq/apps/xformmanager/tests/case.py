@@ -12,6 +12,9 @@ class CaseTestCase(unittest.TestCase):
         # form data.
         su = StorageUtility()
         su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+        
         # register some schemas
         create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
         for i in range(2, 6):
