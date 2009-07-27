@@ -88,7 +88,7 @@ def get_table_name(stream):
             logging.error( "NO NAMESPACE FOUND" )
             return None
         table_name = retrieve_table_name( r.group(0).strip('{').strip('}') )
-        logging.debug( "Table name is " + table_name )
+        logging.debug( "Table name is " + unicode(table_name) )
         return table_name
     except etree.XMLSyntaxError:
         # this is probably just some non-xml data.
@@ -154,14 +154,20 @@ def get_csv_from_form(formdef_id, form_id=0):
     try:
         xsd = FormDefModel.objects.get(id=formdef_id)
     except FormDefModel.DoesNotExist:
-        return HttpResponseBadRequest("Instance not found.")
+        return HttpResponseBadRequest("Schema not found.")
     cursor = connection.cursor()
     row_count = 0
     if form_id == 0:
-        cursor.execute("SELECT * FROM " + xsd.form_name + ' order by id')
+        try:
+            cursor.execute("SELECT * FROM " + xsd.form_name + ' order by id')
+        except Exception, e:
+            return HttpResponseBadRequest("Instances not found.")        
         rows = cursor.fetchall()
     else:
-        cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
+        try:
+            cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
+        except Exception, e:
+            return HttpResponseBadRequest("Instance not found.")        
         rows = cursor.fetchone()
         row_count = 1
     columns = xsd.get_column_names()    
