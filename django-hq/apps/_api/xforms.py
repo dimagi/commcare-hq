@@ -62,8 +62,8 @@ class XFormSubmissionsData(Resource):
         # CSV
         form_name = (FormDefModel.objects.get(id=schema_id)).form_name
         # once the metadata table is working, modify this to point to the database file location
-        if os.path.exists( os.path.join( settings.rapidsms_apps_conf['xformmanager']['csv_path'] ,form_name + ".csv" ) ):
-            f = open(  os.path.join( settings.rapidsms_apps_conf['xformmanager']['csv_path'] ,form_name+".csv") , "r" )
+        if os.path.exists( os.path.join( settings.RAPIDSMS_APPS['xformmanager']['csv_path'] ,form_name + ".csv" ) ):
+            f = open(  os.path.join( settings.RAPIDSMS_APPS['xformmanager']['csv_path'] ,form_name+".csv") , "r" )
             return HttpResponse(f.read(), mimetype='application/ms-excel')
         return HttpResponse("No CSV data available for form " + form_name)
 

@@ -32,8 +32,6 @@ class ReporterProfileAdmin(admin.ModelAdmin):
     
 
 
-
-
 admin.site.register(OrganizationType,OrganizationTypeAdmin)
 admin.site.register(ReportSchedule, ReportScheduleAdmin)
 admin.site.register(ExtUser,ExtUserAdmin)
@@ -41,5 +39,3 @@ admin.site.register(ExtUser,ExtUserAdmin)
 admin.site.register(Organization,OrganizationAdmin)
 admin.site.register(Domain,DomainAdmin)
 admin.site.register(ReporterProfile, ReporterProfileAdmin)
-
-

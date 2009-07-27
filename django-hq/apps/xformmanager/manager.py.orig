@@ -1,6 +1,10 @@
 from xformmanager.storageutility import * 
 import uuid
 import subprocess
+<<<<<<< HEAD:django-hq/apps/xformmanager/manager.py
+import subprocess
+=======
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/manager.py
 from subprocess import PIPE
 
 class XFormManager(object):
@@ -14,9 +18,12 @@ class XFormManager(object):
     def remove_schema(self, id):
         self.su.remove_schema(id)    
 
+<<<<<<< HEAD:django-hq/apps/xformmanager/manager.py
+=======
     def remove_data(self, formdef_id, id):
         self.su.remove_instance_matching_schema(formdef_id, id)
 
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/manager.py
     def save_form_data(self, xml_file_name, submission):
         self.su.save_form_data(xml_file_name, submission)
 
@@ -71,11 +78,11 @@ class XFormManager(object):
         return formdefmodel
 
     def __xsd_file_name(self, name):
-        return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
+        return os.path.join(settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
 
 def form_translate(name, input_stream):
     logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
-    p = subprocess.Popen(["java","-jar",os.path.join(settings.RAPIDSMS_APPS['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(["java","-jar",os.path.join(settings.rapidsms_apps_conf['xformmanager']['script_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
     
     #output,error = p.communicate( input_stream )    
@@ -87,4 +94,8 @@ def form_translate(name, input_stream):
     error = p.stderr.read()
     
     logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
+<<<<<<< HEAD:django-hq/apps/xformmanager/manager.py
     return (output,error)
+=======
+    return (output,error)
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/manager.py

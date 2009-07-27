@@ -12,6 +12,9 @@ class CaseTestCase(unittest.TestCase):
         # form data.
         su = StorageUtility()
         su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+        
         # register some schemas
         create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
         for i in range(2, 6):
@@ -21,9 +24,9 @@ class CaseTestCase(unittest.TestCase):
         create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
         
         # get the three forms
-        self.reg_form = FormDefModel.objects.get(form_name="x_dev_commcarehq_org_pathfinder_pathfinder_cc_registration_0_0_2")
-        self.follow_form = FormDefModel.objects.get(form_name="x_ttp__dev_commcarehq_org_pathfinder_pathfinder_cc_follow_0_0_2")
-        self.close_form = FormDefModel.objects.get(form_name="x___dev_commcarehq_org_pathfinder_pathfinder_cc_resolution_0_0_2")
+        self.reg_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_registration_0_0_2")
+        self.follow_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_follow_0_0_2")
+        self.close_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_resolution_0_0_2")
         
         # make some objects for these to build our case
         self.reg_fid = FormIdentifier.objects.create(form=self.reg_form, identity_column="meta_username")

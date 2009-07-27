@@ -72,9 +72,9 @@ class FormDefModel(models.Model):
     
     # META fields to be placed here eventually
     #settings.XSD_REPOSITORY_PATH
-    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.rapidsms_apps_conf['xformmanager']['xsd_repository_path'], max_length=255, null=True)
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], max_length=255, null=True)
     
-    #form_name is used as the table name
+    # we should just call this table_name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
     form_display_name = models.CharField(_('Readable Name'),max_length=128, null=True)
     
@@ -480,12 +480,24 @@ class CaseFormIdentifier(models.Model):
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
 
+# process is here instead of views because in views it gets reloaded
+# everytime someone hits a view and that messes up the process registration
+# whereas models is loaded once
 def process(sender, instance, **kwargs): #get sender, instance, created
+    # yuck, this import is in here because they depend on each other
     from manager import XFormManager
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
-    manager = XFormManager()
-    table_name = manager.save_form_data(xml_file_name, instance)
+    
+    # only run the XFormManager logic if the submission isn't a duplicate 
+    if not instance.is_duplicate():
+        # TODO: make this a singleton?  Re-instantiating the manager every
+        # time seems wasteful
+        manager = XFormManager()
+        table_name = manager.save_form_data(xml_file_name, instance)
+    else:
+        logging.debug("Ignoring duplicate submission: %s" % instance)
+                
     
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)

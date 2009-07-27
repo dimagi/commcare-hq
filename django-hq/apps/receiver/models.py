@@ -30,8 +30,8 @@ class Submission(models.Model):
     bytes_received = models.IntegerField(_('Bytes Received'))
     raw_header = models.TextField(_('Raw Header'))
     
-    #print settings.rapidsms_apps_conf
-    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'], max_length=255)    
+    #print settings.RAPIDSMS_APPS
+    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255)    
     
     @property
     def num_attachments(self):
@@ -44,6 +44,7 @@ class Submission(models.Model):
         
     def __unicode__(self):
         return "Submission " + unicode(self.submit_time)
+    
     def save(self, **kwargs):        
         super(Submission, self).save()
         self.process_attachments()
@@ -77,8 +78,9 @@ class Submission(models.Model):
                 else:                   
                     new_attach= Attachment()
                     new_attach.submission = self
-                    new_attach.attachment_content_type=part.get_content_type()
-                    if part.get_content_type().startswith('text/'):                       
+                    content_type = part.get_content_type()
+                    new_attach.attachment_content_type=content_type
+                    if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
                         new_attach.attachment_uri = 'xform'
                         filename='-xform.xml'
                     else:
@@ -89,13 +91,13 @@ class Submission(models.Model):
                     payload = part.get_payload().strip()
                     new_attach.filesize = len(payload)
                     new_attach.checksum = hashlib.md5(payload).hexdigest()
-                    fout = open(os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
+                    fout = open(os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
                     fout.write(payload)
                     fout.close() 
-                    new_attach.filepath = os.path.join(settings.rapidsms_apps_conf['receiver']['attachments_path'],self.transaction_uuid + filename)
+                    new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],self.transaction_uuid + filename)
                     new_attach.save()                
                     logging.debug("Attachment Save complete")                    
-            except:
+            except Exception, e:
                 logging.error("error parsing attachments") 
                 #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
                 #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
@@ -126,10 +128,10 @@ class Backup(models.Model):
             
     
 class Attachment(models.Model):
-    submission = models.ForeignKey(Submission)
+    submission = models.ForeignKey(Submission, related_name="attachments")
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
     attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
-    filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.rapidsms_apps_conf['receiver']['xform_submission_path'],max_length=255)
+    filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     checksum = models.CharField(_('Attachment MD5 Checksum'),max_length=32)
     
@@ -142,11 +144,33 @@ class Attachment(models.Model):
         os.remove(self.filepath)        
         super(Attachment, self).delete()
     
+    def has_duplicate(self):
+        '''
+        Checks if this has any duplicate submissions, 
+        defined by having the same checksum, but a different
+        id.
+        '''
+        return len(Attachment.objects.filter(checksum=self.checksum).exclude(id=self.id)) != 0
+        
+    def is_duplicate(self):
+        '''
+        Checks if this is a duplicate submission,
+        defined by having other submissions with 
+        the same checksum, but a different id, and 
+        NOT being the first one
+        '''
+        all_matching_checksum = Attachment.objects.filter(checksum=self.checksum)
+        if len(all_matching_checksum) <= 1:
+            return False
+        all_matching_checksum = all_matching_checksum.order_by("submission__submit_time").order_by("id")
+        return self.id != all_matching_checksum.order_by("submission__submit_time").order_by("id")[0].id
+        
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
+    
     def __unicode__(self):
-        return "Attachment " + unicode(self.attachment_uri)
+        return "Attachment %s %s"  % (self.id, self.attachment_uri)
     
     
     

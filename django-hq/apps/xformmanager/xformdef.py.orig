@@ -36,8 +36,13 @@ class FormDef(ElementDef):
     def __init__(self, stream_pointer=None):
         self.types = {}
         if stream_pointer is not None:
+<<<<<<< HEAD:django-hq/apps/xformmanager/xformdef.py
+            skip_junk(stream_pointer)
+            self.parseStream(stream_pointer)
+=======
             payload = get_xml_string(stream_pointer)
             self.parseString(payload)
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/xformdef.py
           
     def __str__(self):
         string =  "DEFINITION OF " + str(self.name) + "\n"
@@ -51,9 +56,16 @@ class FormDef(ElementDef):
         string = string + "ELEMENTS: \n"
         return string + ElementDef.__str__(self)
 
+<<<<<<< HEAD:django-hq/apps/xformmanager/xformdef.py
+    def parseStream(self, stream_pointer):
+        tree = etree.parse(stream_pointer)
+
+        root = tree.getroot()
+=======
     def parseString(self, string):
         root = etree.XML(string)
 
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/xformdef.py
         target_namespace = root.get('targetNamespace')
         if target_namespace is None:
             logging.error("Target namespace is not found in xsd schema")

@@ -378,8 +378,14 @@ class RawGraph(BaseGraph):
             return {}
         
         
+    def get_data_as_table(self): 
+        '''Get the data for this chart in a tabular, dictionary-like
+        format.  See also convert_data_to_table.'''
+        return self.convert_data_to_table(self.get_flot_data())
+    
     def convert_data_to_table(self, flot_data):
-        '''An alteration of the data, we want to return all the datda in this chart as a pretty little table.'''
+        '''An alteration of the data, we want to return all the data 
+           in this chart as a pretty little table.'''
         data_dict = flot_data
         #we are gonna make a hash, keyed by the x values
         #within each value of that it's a hash by series
@@ -390,8 +396,6 @@ class RawGraph(BaseGraph):
             for item in series:
                 retarr.append([item,data_dict[item]['data'][0][1]])
             return retarr
-        
-        
         
         series = data_dict.keys()        
         xvalue_dict = {}        

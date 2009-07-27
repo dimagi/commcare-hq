@@ -187,3 +187,6 @@ def get_single_item(type, item, startdate, enddate, depth):
     """renders a report item into the appropriate structure for the email/sms templates"""
     return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
     
+    """renders a report item into the appropriate structure for the email/sms templates"""
+    return [depth, type, item, get_aggregate_count(item, startdate, enddate)]
+    

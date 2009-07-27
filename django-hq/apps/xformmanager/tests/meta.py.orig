@@ -6,6 +6,9 @@ import unittest
 
 class BasicTestCase(unittest.TestCase):
     
+<<<<<<< HEAD:django-hq/apps/xformmanager/tests/meta.py
+    
+=======
     def setUp(self):
         # clean up, in case some other tests left some straggling
         # form data, we want to start with a clean test environment
@@ -16,6 +19,7 @@ class BasicTestCase(unittest.TestCase):
         Attachment.objects.all().delete()
         
 
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/tests/meta.py
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml")
         populate("data/brac_chw_1.xml")
@@ -35,7 +39,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[7],"99")
         self.assertEquals(row[8],"Z6WRHCRXYQO1C1V6B2SB3RBG8")
         
+<<<<<<< HEAD:django-hq/apps/xformmanager/tests/meta.py
+        cursor.execute("SELECT * FROM x_http__dev_commcarehq_org_brac_chw_chwvisit_v0_0_1")
+=======
         cursor.execute("SELECT * FROM schema_brac_chw_chwvisit_v0_0_1")
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/tests/meta.py
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         # checks to make sure that non-standard meta fields remain in the generated data table
@@ -66,6 +74,20 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[7],"6")
         self.assertEquals(row[8],"RW07SHOPTWGAOJKUQJJJN215D")
 
+<<<<<<< HEAD:django-hq/apps/xformmanager/tests/meta.py
+    def testMetaData_3(self):
+        su = StorageUtility()
+        su.clear()
+        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
+        populate("data/pf_followup_1.xml")
+        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml")
+        populate("data/pf_new_reg_1.xml")
+        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
+        populate("data/pf_ref_completed_1.xml")
+        create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml")
+        populate("data/mvp_mother_reg_1.xml")
+        populate("data/mvp_mother_reg_1.xml")
+=======
     def testMetaDataDuplicates(self):
         create_xsd_and_populate("data/pf_followup.xsd")
         running_count = 0
@@ -90,6 +112,7 @@ class BasicTestCase(unittest.TestCase):
         create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml")
         populate("data/mvp_mother_reg_2.xml")
         populate("data/mvp_mother_reg_3.xml")
+>>>>>>> 7a6d21f5a8df9eecf68f76c53eff762d4a65178e:django-hq/apps/xformmanager/tests/meta.py
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_metadata order by id")
         row = cursor.fetchall()

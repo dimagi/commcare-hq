@@ -82,7 +82,6 @@ def org_report(request, template_name="organization/org_single_report.html"):
     # set some default parameters for start and end if they aren't passed in
     # the request
     startdate, enddate = utils.get_dates(request)
-    
     context['startdate'] = startdate
     context['enddate'] = enddate        
             
