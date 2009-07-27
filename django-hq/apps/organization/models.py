@@ -31,14 +31,11 @@ class OrganizationType(models.Model):
 class ReporterProfile(models.Model):
     '''The profile for a reporter object.  For attaching some of our
        own metadata-type information to RapidSMS reporters.  This is 
-       loosely modeled on how django user profiles work.'''
-    
+       loosely modeled on how django user profiles work.'''    
     # The rationale for moving most of this information from ExtUser
     # is that most reporters shouldn't actually have django logins
-       
-    reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")
-    
-    
+           
+    reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")    
     # these fields are duplicates from ExtUser, and will replace
     # those when we sort out data migration
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
@@ -46,10 +43,14 @@ class ReporterProfile(models.Model):
     
     # these fields are also duplicated in ExtUser, but ExtUsers need them too.
     domain = models.ForeignKey(Domain)
-    organization = models.ForeignKey("Organization", null=True, blank=True)
+    
+    #dmyung - we will probably need to get rid of this unless there's a really compelling reason
+    organization = models.ForeignKey("Organization", null=True, blank=True) 
     
     # todo: eventually make these non-null.
     guid = models.CharField(max_length=32, null=True, blank=True)
+    approved = models.BooleanField(default=False)
+    active = models.BooleanField(default=False)
 
     @property
     def report_identity(self):         
@@ -127,6 +128,9 @@ class Organization(models.Model):
     
     def __unicode__(self):
         return self.name
+    
+    
+    
 
 REPORT_CLASS = (
     ('siteadmin', 'General Site Admin'),

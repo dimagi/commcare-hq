@@ -1,6 +1,7 @@
 from django.contrib import admin
 from organization.models import * 
 from django.contrib.auth.models import Group, User
+from reporters.models import Reporter
 
 class DomainAdmin(admin.ModelAdmin):
     list_display = ('id','name','description')
@@ -24,8 +25,13 @@ class OrganizationAdmin(admin.ModelAdmin):
 class ReportScheduleAdmin(admin.ModelAdmin):
     list_display = ('id','active','name','description','report_class', 'report_frequency','report_delivery', 'recipient_user', 'organization', 'report_function')
     list_filter = ['active','report_class','report_frequency', 'report_delivery', 'recipient_user']
+
+class ReporterProfileAdmin(admin.ModelAdmin):
+    list_display = ('id','chw_id','report_identity','domain','organization','active','approved','reporter')
+    list_filter = ['active','approved','domain', 'organization']
     
-    
+
+
 
 
 admin.site.register(OrganizationType,OrganizationTypeAdmin)
@@ -34,4 +40,6 @@ admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)
 admin.site.register(Domain,DomainAdmin)
-admin.site.register(ReporterProfile)
+admin.site.register(ReporterProfile, ReporterProfileAdmin)
+
+

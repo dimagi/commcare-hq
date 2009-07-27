@@ -21,6 +21,7 @@ from dbanalyzer import dbhelper
 from xformmanager.models import *
 from organization.models import *
 from dbanalyzer.models import *
+from receiver.models import *
 import dbanalyzer.views as chartviews
 
 from django.contrib.auth.models import User 
@@ -40,6 +41,7 @@ import os
 import string
 
 import organization.reporter.inspector as repinspector
+import organization.reporter.metadata as metadata
 
 
 logger_set = False
@@ -60,43 +62,104 @@ def dashboard(request, template_name="organization/dashboard.html"):
     context['view_name'] = 'organization.views.dashboard'
     return render_to_response(request, template_name, context)
 
+@login_required()
+def org_report(request, template_name="organization/org_single_report.html"):
+   # return org_email_report(request)
+   
+    context = {}
+    
+    try: 
+        extuser = ExtUser.objects.all().get(id=request.user.id)
+    except MyModel.DoesNotExist:
+        template_name="organization/no_permission.html"
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+        
+    if extuser.organization == None:
+        orgs = Organization.objects.filter(domain=extuser.domain)
+    else:
+        orgs = [extuser.organization]
+    
+    # set some default parameters for start and end if they aren't passed in
+    # the request
+    startdate, enddate = utils.get_dates(request)
+    
+    context['startdate'] = startdate
+    context['enddate'] = enddate        
+            
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
+    context['view_name'] = 'organization.views.org_report'
+    
+    context['organization_data'] = {}    
+    
+    do_sms = False
+    for item in request.GET.items():
+        if item[0] == 'sms':
+            do_sms = True    
+    
+    rendered = ''
+    if startdate == enddate:
+        heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
+    else: 
+        heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+    
+    if do_sms:
+        rendering_template = "organization/reports/sms_organization.txt"
+        renderfunc = reporter.render_direct_sms
+    else:
+        rendering_template = "organization/reports/email_hierarchy_report.txt"
+        renderfunc = reporter.render_direct_email 
+        
+        
+    for org in orgs:
+        context['organization_data'][org] = metadata.get_org_reportdata(org, startdate, enddate)
+        data = metadata.get_org_reportdata(org, startdate, enddate)
+        rendered =  rendered + "<br>" + renderfunc(data, startdate, enddate,     
+                                          rendering_template, 
+                                          {"heading" : heading })
+    context['report_display'] = rendered
+    context['report_title'] = "Submissions per day for all CHWs"
+        
+    ## this call makes the meat of the report.
+    #context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    
+    #return render_to_response(template_name, context, context_instance=RequestContext(request))
+    return render_to_response(request, template_name, context)
+
 
 @login_required()
-def org_report(request, template_name="organization/org_report.html"):
-    return org_email_report(request)
-    # czue - temporarily making org_report forward to email
-    # leaving this comment block in because we will probably
-    # want the hierarchical reports to show up in some form 
-    # in the future
-#    context = {}
-#    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-#        template_name="organization/no_permission.html"
-#        return render_to_response(template_name, context, context_instance=RequestContext(request))
-#    
-#    # set some default parameters for start and end if they aren't passed in
-#    # the request
-#    startdate, enddate = utils.get_dates(request)
-#    
-#    context['startdate'] = startdate
-#    context['enddate'] = enddate    
-#    
-#    extuser = ExtUser.objects.all().get(id=request.user.id)        
-#    context['extuser'] = extuser
-#    context['domain'] = extuser.domain
-#    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-#    context['view_name'] = 'organization.views.org_report'
-#    
-#    # get the domain from the user, the root organization from the domain,
-#    # and then the report from the root organization
-#    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
-#    # note: this pretty sneakily decides for you that you only care
-#    # about one root organization per domain.  should we lift this 
-#    # restriction?  otherwise this may hide data from you 
-#    root_org = root_orgs[0]
-#    # this call makes the meat of the report.
-#    context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
-#    
-#    return render_to_response(template_name, context, context_instance=RequestContext(request))
+def reporter_stats(request, template_name="organization/reporter_stats.html"):
+    context = {}   
+    
+    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    reprofiles = ReporterProfile.objects.filter(domain=context['domain'])
+    
+    #for a given domain, get all the formdefs
+    fdefs = FormDefModel.objects.filter(domain=extuser.domain)
+    
+    #for all those formdefs, scan the metadata for parsed submissions
+    allmetas_for_domain = Metadata.objects.filter(formdefmodel__in=fdefs)   
+    
+    statdict = {}
+    for prof in reprofiles:
+        statdict[prof] = {}
+        for_user = allmetas_for_domain.filter(username=prof.chw_username)
+        
+        statdict[prof]['total'] = for_user.count()
+        statdict[prof]['Last timeend'] = for_user.order_by("-timeend")[0].timeend
+        statdict[prof]['Last timeend Item'] = for_user.order_by("-timeend")[0].formname
+        statdict[prof]['Last timeend Submission Time'] = for_user.order_by("-timeend")[0].submission.submission.submit_time
+        
+        statdict[prof]['Last Actual Submission Time'] = for_user.order_by("-submission__submission__submit_time")[0].submission.submission.submit_time
+                
+        
+        
+    context['reporterstats'] = statdict    
+    
+    return render_to_response(request, template_name, context)
 
 @login_required()
 def org_email_report(request, template_name="organization/org_single_report.html"):
@@ -125,10 +188,10 @@ def org_email_report(request, template_name="organization/org_single_report.html
     root_org = root_orgs[0]
     
     # this call makes the meat of the report.
-    #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    data = repinspector.get_data_below(Organization.objects.all()[0], startdate, enddate, 0)
     
     # we add one to the enddate because the db query is not inclusive.
-    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
+    #data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     if startdate == enddate:
         heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
     else: 
@@ -140,47 +203,6 @@ def org_email_report(request, template_name="organization/org_single_report.html
     context['report_title'] = "Submissions per day for all CHWs"
     return render_to_response(request, template_name, context)
 
-@login_required
-def org_email_report_list(request, template_name="organization/org_email_report_list.html"):
-    return org_report_list(request, 'organization.views.org_email_report', template_name)
-
-@login_required
-def org_sms_report_list(request, template_name="organization/org_sms_report_list.html"):
-    return org_report_list(request, 'organization.views.org_sms_report', template_name)
-
-@login_required
-def org_report_list(request, single_report_url, template_name):
-    context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
-        return render_to_response(request, template_name, context)
-    
-    startdate, enddate = utils.get_dates(request)
-    context['startdate'] = startdate
-    context['enddate'] = enddate    
-    
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_sms_report_list'
-    context['single_report_view'] = 'organization.views.org_sms_report'
-    
-    # get the domain from the user, the root organization from the domain,
-    # and then the report from the root organization
-    available_reports = ReportSchedule.objects.all()
-    context['available_reports'] = available_reports
-    
-    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
-    # note: this pretty sneakily decides for you that you only care
-    # about one root organization per domain.  should we lift this 
-    # restriction?  otherwise this may hide data from you 
-    root_org = root_orgs[0]
-    # this call makes the meat of the report.
-    # we add one to the enddate because the db query is not inclusive.
-    context['results'] = repinspector.get_data_below(root_org, startdate, enddate + timedelta(days=1), 0)
-    
-    return render_to_response(request, template_name, context)
 
 @login_required
 def org_sms_report(request, template_name="organization/org_single_report.html"):
@@ -213,6 +235,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
     
     # this call makes the meat of the report.
     #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
+    #data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_sms(data, startdate, enddate, 
@@ -220,14 +243,6 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
                                           {"heading" : heading })
     context['report_display'] = rendered
     return render_to_response(request, template_name, context)
-
-@login_required()
-def register_xform(request, template_name="organization/register_xform.html"):
-    return ''
-
-@login_required()
-def manage_xforms(request, template_name="oranization/manage_xforms.html"):
-    return''
 
 
 @login_required()
@@ -245,7 +260,8 @@ def domain_charts(request):
         return chartviews.view_group(request, mychartgroup.id)
 
 @login_required()
-def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):    
+def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
+    """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
     context = {}        
     
     formname = ''
@@ -273,10 +289,3 @@ def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
     context ['maxdate'] = 0;
     context ['mindate'] = 0;
     return render_to_response(request, template_name, context)
-
-
-def _get_report_id(request):
-    for item in request.GET.items():
-        if item[0] == 'report_id':
-            return int(item[1])
-    return None
