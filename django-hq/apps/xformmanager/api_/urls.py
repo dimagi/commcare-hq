@@ -16,26 +16,26 @@ urlpatterns = patterns('',
    # form submitted to a specific schema
    # https://dev.commcarehq.org/api/xforms/metadata
    # ?format=xml&start-id=<start-id>&end-id=<end-id>
-   (r'^api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)/metadata/', XFormMetadatum() ),
+   (r'^api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)/metadata', XFormMetadatum() ),
 
    # Retrieve meta info (including unique instance data id) 
    # for all forms submitted to a specific schema
    # https://dev.commcarehq.org/api/xforms/metadata
    # ?format=xml&start-id=<start-id>&end-id=<end-id>
-   (r'^api/xforms/(?P<formdef_id>\d+)/metadata/', XFormMetadata() ),
+   (r'^api/xforms/(?P<formdef_id>\d+)/metadata', XFormMetadata() ),
 
    # Retrieve a specific form submitted to a specific schema
    # https://dev.commcarehq.org/api/xforms
    # ?format=xml&start-id=<start-id>&end-id=<end-id>
-   (r'^api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)$', XFormSubmissionData() ),    
+   (r'^api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)/$', XFormSubmissionData() ),    
 
    # Retrieve all forms submitted to a specific schema
    # https://dev.commcarehq.org/api/xforms
    # ?format=xml&start-id=<start-id>&end-id=<end-id>
-   (r'^api/xforms/(?P<formdef_id>\d+)$', XFormSubmissionsData() ),    
+   (r'^api/xforms/(?P<formdef_id>\d+)/$', XFormSubmissionsData() ),    
 
    # List all registered schemas
-   (r'^api/xforms$', XForms() ),
+   (r'^api/xforms/$', XForms() ),
 
    # List allowable api calls
    (r'api/$', XFormApi() ),
