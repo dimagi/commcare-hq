@@ -15,9 +15,9 @@ import urllib
 from cookielib import *
 from urlparse import urlparse
 
-serverhost = 'test.commcarehq.org'
+#serverhost = 'test.commcarehq.org'
 #serverhost = 'localhost'
-#serverhost = 'localhost:8000'
+serverhost = 'localhost:8000'
 
 curl_command = 'c:\curl\curl.exe'
 #curl_command = 'curl'
@@ -28,7 +28,8 @@ def run(argv):
     #directory = r'C:\Source\hq\commcare-hq\django-hq\export'
     #directory = r'C:\Source\hq\commcare-hq\django-hq\pathfinder\out'
     #directory = r'C:\Source\hq\commcare-hq\django-hq\brac\out'
-    directory = r'C:\Source\hq\data\grexport\grexport'
+    #directory = r'C:\Source\hq\data\grexport\grexport'
+    directory = r'C:\Source\hq\data\pathfinder\commcare\input\out'
     if len(argv) > 1:
         directory = argv[1]
     # loop through once uploading all the schemas
