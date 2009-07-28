@@ -39,13 +39,13 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         target_date = startdate + delta
         #print target_date.strftime('%m/%d/%Y')
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
-    #for now, we're going to get all the users in the system by querying the actual tables for usernames
+    # for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     ret = ""
     for fdef in defs:
         try: 
             helper = fdef.db_helper
-            #let's get the usernames
+            # let's get the usernames
             # hack!  manually set this for grameen
             usernames_to_filter = helper.get_uniques_for_column('meta_username')
             if extuser.domain.name == "Grameen":
@@ -60,11 +60,18 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
                                        ]
             for user in usernames_to_filter:            
                 if not username_to_count_hash.has_key(user):
-                    username_to_count_hash[user] = {}                        
+                    username_to_count_hash[user] = {}
                 # we add one to the enddate because the db query is not inclusive.
-                userdailies = helper.get_filtered_date_count(startdate, enddate + timedelta(days=1),filters={'meta_username': user})   
-                for dat in userdailies:                
-                    username_to_count_hash[user][dat[1]] = int(dat[0])
+                userdailies = helper.get_filtered_date_count(startdate, 
+                                                             enddate + timedelta(days=1),
+                                                             filters={'meta_username': user})
+                for date_count_pair in userdailies:
+                    # if there already was a count, we add it to it, otherwise
+                    # we set a new count equal to this value
+                    if username_to_count_hash[user].has_key(date_count_pair[1]):
+                        username_to_count_hash[user][date_count_pair[1]] += int(date_count_pair[0])
+                    else:
+                        username_to_count_hash[user][date_count_pair[1]] = int(date_count_pair[0])
         except Exception, e:
             # this shouldn't blow up the entire view
             logging.error("problem in dashboard display: %s" % e)
