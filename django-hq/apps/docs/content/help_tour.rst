@@ -11,6 +11,13 @@
 .. |dashboard| image:: ../static/docs/img/dashboard.jpg
    :alt: chart
 
+.. This period is necessary. The title doesn't show up unless we have something before it.
+.. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
+.. But let's not require patches to django
+
+.
+
+
 COMMCAREHQ TOUR
 ===============
 
@@ -22,6 +29,7 @@ The first step in using this site is to become familiar with the navigation link
 * Charts provides intuitive graphs and visualizations of data collected. 
 * Schemas and Reports is where you register CommCare XForms and where you can see individual submissions broken down by form type.
 * Submissions is a list of all the forms submitted to this system so far.
+
 
 Dashboard
 ---------

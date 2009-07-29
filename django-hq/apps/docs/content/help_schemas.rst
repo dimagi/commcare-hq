@@ -1,6 +1,12 @@
 .. |schemas| image:: ../static/docs/img/schemas.jpg
    :alt: chart
 
+.. This period is necessary. The title doesn't show up unless we have something before it.
+.. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
+.. But let's not require patches to django
+
+.
+
 Schemas and Reports
 ===================
 This is where you can view all the reports in the system broken down by XForm. If you decide to modify or create new XForms for CommCare, you can also register them with CommCare on this page.
