@@ -5,9 +5,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
-import modelrelationship.traversal as traversal
-from modelrelationship.models import *
-
 from xformmanager.models import *
 import xformmanager.adapter.querytools as qtools
 from organization.models import *
@@ -165,70 +162,3 @@ def flatten(lst):
 
 def render_blankrow():
     return '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>'
-
-@register.simple_tag
-def render_hierarchy_report(domain):    
-    ctype = ContentType.objects.get_for_model(domain)
-    root_orgs = Edge.objects.all().filter(parent_type=ctype,parent_id=domain.id,relationship__name='is domain root')
-    if len(root_orgs) == 0:
-        return '<h1>Error</h1>'
-    root_org = root_orgs[0].child_object
-
-    
-    edgetree = traversal.getDescendentEdgesForObject(root_org)    
-    fullret = ''
-    
-    prior_edgetype = None
-    group_edge = False
-    
-    edgelist = list(flatten(edgetree))
-    report_hierarchy = []
-    priorparent = None
-    relprior = None
-    fullret += '<div class="reportable">'
-#    fullret += "<h4>Aggregated Counts</h4>"
-    fullret += '<table>'
-    fullret += '<tr><td>Report</td><td>Last Submit</td><td>Count</td></tr>'
-    root = edgelist[0].parent_object
-    for edge in edgelist:
-        if edge.parent_object == root:
-            
-            continue
-        parent, relationship, child = edge.triple
-        
-        if relprior != relationship:
-            if relprior != None:
-                fullret += render_blankrow()
-                pass
-            relprior = relationship      
-       
-        
-        if parent != priorparent:
-            fullret += render_aggregate_countrow(parent)        
-            fullret += render_aggregate_countrow(child)
-            #report_hierarchy.append(parent)
-            #report_hierarchy.append('space')            
-            priorparent = parent        
-            
-            if isinstance(child, Organization):
-                #fullret += render_blankrow()
-                pass
-        else:
-            
-            fullret += render_aggregate_countrow(child)
-            
-            if isinstance(child, Organization):
-#                fullret += render_blankrow()
-                pass
-            
-        
-        
-        
-  
-                
-    fullret += "</table></div>"
-    return fullret
-
-
-
-

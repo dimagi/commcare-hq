@@ -1,0 +1,4 @@
+{% spaceless %}2 Week Idle Warning
+{% for reporterprofile in delinquent_reporterprofiles %}{{reporterprofile.chw_username}}
+{% endfor %}
+{%endspaceless%}

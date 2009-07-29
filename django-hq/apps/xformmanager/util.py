@@ -150,7 +150,7 @@ def get_custom_reports(report_module):
     return to_return
 
 
-def get_csv_from_form(formdef_id, form_id=0):
+def get_csv_from_form(formdef_id, form_id=0, filter=''):
     try:
         xsd = FormDefModel.objects.get(id=formdef_id)
     except FormDefModel.DoesNotExist:
@@ -159,7 +159,10 @@ def get_csv_from_form(formdef_id, form_id=0):
     row_count = 0
     if form_id == 0:
         try:
-            cursor.execute("SELECT * FROM " + xsd.form_name + ' order by id')
+            query= 'SELECT * FROM ' + xsd.form_name
+            if filter: query = query + " WHERE " + filter
+            query = query + ' ORDER BY id'
+            cursor.execute(query)
         except Exception, e:
             return HttpResponseBadRequest(\
                 "Schema %s has not been registered." % xsd.form_name)        

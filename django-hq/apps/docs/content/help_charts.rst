@@ -3,6 +3,13 @@
 .. |chart_nav| image:: ../static/docs/img/charts_nav.jpg
    :alt: chart
    
+.. This period is necessary. The title doesn't show up unless we have something before it.
+.. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
+.. But let's not require patches to django
+
+.
+
+
 CommCareHQ Charts
 =================
 Charts provide streamlined visuals that make it easy to manage CommCare users as well as patients and cases directly. 

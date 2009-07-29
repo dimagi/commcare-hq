@@ -14,6 +14,7 @@ from xformmanager.models import *
 from datetime import timedelta
 
 
+import metastats as metastats
 import inspector as repinspector
 
 def _get_flat_data_for_domain(domain, startdate, enddate):
@@ -107,7 +108,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
 def domain_flat(report_schedule, run_frequency):
     dom = report_schedule.organization.domain
     rendered_text = ''
-    from organization import reporter
+    
     # DAN HACK: everyone wants the daily reports to show the last week's worth of data
     # so change this 
     if run_frequency == 'daily':
@@ -247,9 +248,6 @@ def admin_catch_all(report_schedule, run_frequency):
         rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
 
         
-        
-        
-        
     if report_schedule.report_delivery == 'email':
         usr = report_schedule.recipient_user
         subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Global Admin"
@@ -318,5 +316,29 @@ def admin_per_form_report(report_schedule, run_frequency):
         fulltext += rendered_text
     newsubject = "[Commcare HQ] Itemized Report for: " + str(org)
     reporter.deliver_report(usr, fulltext, report_schedule.report_delivery,params={'startdate': startdate, 'enddate': enddate, 'frequency': run_frequency, 'email_subject': newsubject})
+
+def delinquent_alert(report_schedule, run_frequency):
+    org = report_schedule.organization
+    transport = report_schedule.report_delivery   
+    usr = report_schedule.recipient_user
+    from organization import reporter    
+    delinquents = []    
+    statdict = metastats.get_stats_for_domain(org.domain)    
+    for reporter_profile, result in statdict.items():
+        lastseen = result['Time since last submission (days)']
+        if lastseen == 14:
+            delinquents.append(reporter_profile)    
     
+    if len(delinquents) == 0:        
+        logging.debug("No delinquent reporters, report will not be sent")
+        return    
     
+    context = {}
+    context['delinquent_reporterprofiles'] = delinquents
+    rendered_text = render_to_string("organization/reports/sms_delinquent_report.txt",context)        
+        
+    if report_schedule.report_delivery == 'email':        
+        subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y')
+        reporter.transport_email(rendered_text, usr, params={"email_subject":subject})
+    else:
+        reporter.transport_sms(rendered_text, usr)

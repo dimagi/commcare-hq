@@ -35,7 +35,7 @@ urlpatterns = patterns('',
    (r'^api/xforms/(?P<formdef_id>\d+)/$', XFormSubmissionsData() ),    
 
    # List all registered schemas
-   (r'^api/xforms/$', XForms() ),
+   (r'^api/xforms/$', XFormSchemata() ),
 
    # List allowable api calls
    (r'api/$', XFormApi() ),

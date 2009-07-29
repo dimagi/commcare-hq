@@ -1,6 +1,12 @@
 .. |schemas| image:: ../static/docs/img/schemas.jpg
    :alt: chart
 
+.. This period is necessary. The title doesn't show up unless we have something before it.
+.. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
+.. But let's not require patches to django
+
+.
+
 Schemas and Reports
 ===================
 This is where you can view all the reports in the system broken down by XForm. If you decide to modify or create new XForms for CommCare, you can also register them with CommCare on this page.
@@ -8,8 +14,9 @@ This is where you can view all the reports in the system broken down by XForm. I
 |schemas|
 
 To view all of the submissions for a given XForm, click on the "Display Name". 
+
 * On the next page, you can see a list of all the submissions which conform to that XForm as well as all the raw data included in that form. 
-* Questions that are not completed appear as "None" (IS THIS CORRECT?) 
+* Questions that are not completed appear as "None" 
 * Note that the data can be exported into Excel or any other data manipulation software of your choice
 
 When you modify an existing XForm or create a new one:
@@ -19,6 +26,5 @@ When you modify an existing XForm or create a new one:
 * Click Submit.
 
 If the XForm parses correctly, you should see it added to the list of Registered XForms.
-
 If not, you will receive an error message telling you what was wrong with the XForm you submitted. 
 
