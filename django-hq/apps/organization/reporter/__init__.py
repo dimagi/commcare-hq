@@ -141,11 +141,11 @@ def render_direct_sms(prepared_data, startdate, enddate, template_name, params={
 
 def transport_email(rendered_text, recipient_usr, params={}):
     logging.debug("Email Report transport")
-    eml = agents.EmailAgent()
-    daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')        
+    eml = agents.EmailAgent()            
     if params.has_key('email_subject'):
         subject_line = params['email_subject']        
     else:
+        daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')
         subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
     eml.send_email(subject_line, recipient_usr.email, rendered_text)     
     

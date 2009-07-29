@@ -10,14 +10,16 @@
 		<li>{{prof}}
 			<ul>
 				{% for category, datum in statdict.items %}
-				<li>{{category}} :: {{datum}} </li>
-				{%endfor %}
-			
-			</ul>
-		
-		</li>
-	
+					{% ifequal category "IdleWarning" %}
+					    {% if datum %}
+					    	<li><strong>Delinquent!!!</strong></li>				    
+					    {%endif%}
+					{% else %}
+						<li>{{category}} :: {{datum}} </li>				
+					{%endifequal %}
+				{%endfor %}			
+			</ul>		
+		</li>	
 	{%endfor %}
-	</ul>
-	
+	</ul>	
 {% endblock %}
