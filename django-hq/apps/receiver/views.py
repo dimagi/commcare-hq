@@ -32,7 +32,10 @@ import submitprocessor
 
 
 @login_required()
-def show_submits(request, template_name="receiver/show_submits.html"):    
+def show_submits(request, template_name="receiver/show_submits.html"):
+    '''
+    View submissions for this domain.
+    '''
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="organization/no_permission.html"

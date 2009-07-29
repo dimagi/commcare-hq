@@ -7,9 +7,12 @@ register = template.Library()
 
 
 @register.simple_tag
-def get_attachements_links(submission):
+def get_attachments_links(submission):
     ret = ''
-    attachments = Attachment.objects.all().filter(submission=submission)
-    for attach in attachments:        
-        ret += ' <a href="%s">%d</a> |' % (reverse('receiver.views.single_attachment', kwargs={'attachment_id':attach.id}),attach.id)
+    # this shouldn't include the original xform, if that exists
+    attachments = submission.attachments.all()
+    xform = submission.xform
+    for attach in attachments:
+        if attach != xform:
+            ret += ' <a href="%s">%d</a> |' % (reverse('receiver.views.single_attachment', kwargs={'attachment_id':attach.id}),attach.id)
     return ret[0:-1]
