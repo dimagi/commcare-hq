@@ -113,6 +113,16 @@ class FormDefModel(models.Model):
         return len(self._get_cursor().description)
     
         
+    def get_row(self, id):
+        '''Get a row, by ID.'''
+        list = self.get_rows({"id" : id})
+        if len(list) == 1:
+            return list[0]
+        elif not list:
+            return None
+        else:
+            raise Exception("Multiple values for id %s found in form %s" % (id, self ))
+        
     def get_rows(self, column_filters={}, sort_column="id", sort_descending=True):
         '''Get rows associated with this form's schema.
            The column_filters parameter should take in column_name, value
@@ -154,6 +164,20 @@ class FormDefModel(models.Model):
            (not including repeats)'''
         return [col[0] for col in self._get_cursor().description]
 
+    def get_display_columns(self):
+        '''
+        Get all columns, in order, as display strings.
+        '''
+        # all this currently does is remove "meta" from the beginning 
+        # of anything and replace underscores with spaces
+        cols = self.get_column_names()
+        to_return = []
+        for col in cols:
+            if col.startswith("meta_"):
+                col = col[5:]
+            to_return.append(col.replace("_", " "))
+        return to_return
+        
     
     def __unicode__(self):
         return self.form_name
