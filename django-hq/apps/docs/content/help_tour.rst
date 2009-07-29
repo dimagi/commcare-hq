@@ -19,8 +19,8 @@ The first step in using this site is to become familiar with the navigation link
 |nav|
 
 * Dashboard is an overview of recent activity in the system.
-* Charts provides intuitive graphs and visualizations of data collected. 
-* Schemas and Reports is where you register CommCare XForms and where you can see individual submissions broken down by form type.
+* Charts_ provides intuitive graphs and visualizations of data collected. 
+* Schemas_ and Reports is where you register CommCare XForms and where you can see individual submissions broken down by form type.
 * Submissions is a list of all the forms submitted to this system so far.
 
 Dashboard
@@ -41,6 +41,7 @@ You will then see a list of available graphs. Click on whichever one you are int
 |charts_nav|
 
 For more information, read Charts_.
+
 
 Schemas and Reports
 -------------------
