@@ -5,15 +5,18 @@
 .. _Troubleshooting: help_misc
 .. _Contact: help_misc
 
-.. The title doesn't show up unless we have something before it.
+.. This period is necessary. The title doesn't show up unless we have something before it.
 .. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
 .. But let's not require patches to django
 
-CommCareHQ is a web-based utility for managing CommCare mobile deployments. Welcome!
+.
+
 
 ===============
 CommCareHQ Help
 ===============
+
+CommCareHQ is a web-based utility for managing CommCare mobile deployments. Welcome!
 
 * `Guided Tour`_
 * Charts_
