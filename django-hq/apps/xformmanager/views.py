@@ -195,6 +195,18 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         return render_to_response(request, template_name, context)
         
 @login_required()
+def single_instance(request, formdef_id, instance_id, template_name="single_instance.html"):
+    '''
+       View data for a single xform instance submission.  
+    '''
+    xform = FormDefModel.objects.get(id=formdef_id)
+    row = xform.get_row(instance_id)
+    headers = xform.get_display_columns()
+    # make them a dictionary of header->value pairs
+    data = zip(headers, row)
+    return render_to_response(request, template_name, {"data": data, "form" : xform })
+        
+@login_required()
 def data(request, formdef_id, template_name="data.html", context={}):
     xform = get_object_or_404(FormDefModel, id=formdef_id)
     for i in request.POST.getlist('instance'):

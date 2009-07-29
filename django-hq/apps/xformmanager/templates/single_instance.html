@@ -1,0 +1,19 @@
+{% extends "xformmanager_base.html" %}
+{% block title %}Instance Data for {{ form.form_display_name }}{% endblock %}
+{% block mgr_content %}
+<h2>Instance Data for {{ form.form_display_name }}</h2>
+<table class="sofT">
+    <thead class="commcare-heading">
+       <tr>
+          <th>Field</th>
+          <th>Value</th>
+       </tr>
+    </thead>
+    <tbody>
+    {% for key, value in data %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        <td><b>{{ key }}</b></td>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+{% endblock %}

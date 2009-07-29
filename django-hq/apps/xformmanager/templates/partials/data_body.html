@@ -25,6 +25,7 @@
 	<thead class="commcare-heading">
 	   <tr>
 	      <th></th>
+	      <th></th>
 	   {% for col in columns %}
 		  <th>{{col}}</th>	
 	   {% endfor%}
@@ -36,8 +37,12 @@
 	       <input type="hidden" name="instance" value="{{record|first}}"/>
 	       <input type="checkbox" name="checked_{{record|first}}"/>
        </td>
-	   {% for field in record %}   
-	   		 <td>{{field}}</td> 
+       {% for field in record %}
+	   		 {% if forloop.first %} 
+	   		     <td><a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a></td>
+	   		 {% else %}
+	   		     <td>{{field}}</td>
+	   		 {% endif %} 
 	   {% endfor %}
 	</tr>
    {% endfor %}
