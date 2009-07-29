@@ -2,8 +2,12 @@
 {% load i18n %}
 {% block title_suffix %} - Commcare HQ{% endblock %}
 {% block stylesheets %}
+<link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
 <link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/stylesheets/style.css" />
+<link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/stylesheets/modules.css" />
 {% block hq-stylesheets %}
+{% endblock %}
+{% block page_stylesheets %}
 {% endblock %}
 {% endblock %}
 {% block auth %}
