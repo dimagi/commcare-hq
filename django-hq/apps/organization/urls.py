@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     (r'^charts/default/?$', 'organization.views.summary_trend'),
     (r'^charts/?$', 'organization.views.domain_charts'),    
     (r'^stats/?$', 'organization.views.reporter_stats'),
+    (r'^stats/delinquents?$', 'organization.views.delinquent_report'),
 
     
 )

@@ -29,6 +29,7 @@ from django.contrib.contenttypes.models import ContentType
 import organization.utils as utils
 import organization.reporter as reporter
 import organization.reporter.custom as custom
+import organization.reporter.metastats as metastats
 
 
 #from forms import *
@@ -129,36 +130,30 @@ def org_report(request, template_name="organization/org_single_report.html"):
 
 @login_required()
 def reporter_stats(request, template_name="organization/reporter_stats.html"):
-    context = {}   
-    
+    context = {}       
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
-    reprofiles = ReporterProfile.objects.filter(domain=context['domain'])
     
-    #for a given domain, get all the formdefs
-    fdefs = FormDefModel.objects.filter(domain=extuser.domain)
-    
-    #for all those formdefs, scan the metadata for parsed submissions
-    allmetas_for_domain = Metadata.objects.filter(formdefmodel__in=fdefs)   
-    
-    statdict = {}
-    for prof in reprofiles:
-        statdict[prof] = {}
-        for_user = allmetas_for_domain.filter(username=prof.chw_username)
-        
-        statdict[prof]['total'] = for_user.count()
-        statdict[prof]['Last timeend'] = for_user.order_by("-timeend")[0].timeend
-        statdict[prof]['Last timeend Item'] = for_user.order_by("-timeend")[0].formname
-        statdict[prof]['Last timeend Submission Time'] = for_user.order_by("-timeend")[0].submission.submission.submit_time
-        
-        statdict[prof]['Last Actual Submission Time'] = for_user.order_by("-submission__submission__submit_time")[0].submission.submission.submit_time
-                
-        
-        
+    statdict = metastats.get_stats_for_domain(context['domain'])        
     context['reporterstats'] = statdict    
     
     return render_to_response(request, template_name, context)
+
+@login_required()
+def delinquent_report(request, template_name="organization/reports/sms_delinquent_report.txt"):
+    context = {}       
+    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    context['extuser'] = extuser
+    context['domain'] = extuser.domain
+    context['delinquent_reporterprofiles'] = []    
+    statdict = metastats.get_stats_for_domain(context['domain'])    
+    for reporter_profile, result in statdict.items():
+        lastseen = result['Time since last submission (days)']
+        if lastseen > 3:
+            context['delinquent_reporterprofiles'].append(reporter_profile)    
+    return render_to_response(request, template_name, context)
+
 
 @login_required()
 def org_email_report(request, template_name="organization/org_single_report.html"):
