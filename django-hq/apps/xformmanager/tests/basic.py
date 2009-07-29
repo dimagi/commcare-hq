@@ -11,7 +11,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test basic form definition created and data saved """
         create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_http__www_commcarehq_org_xml_basic")
+        cursor.execute("SELECT * FROM schema_xml_basic")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         self.assertEquals(row[1],"userid0")
@@ -26,7 +26,7 @@ class BasicTestCase(unittest.TestCase):
         cursor = connection.cursor()
         create_xsd_and_populate("2_types.xsd", "2_types.xml")
         if settings.DATABASE_ENGINE=='mysql' :
-            cursor.execute("DESCRIBE x_xml_types")
+            cursor.execute("DESCRIBE schema_xml_types")
             row = cursor.fetchall()
             self.assertEquals(row[1][1],"varchar(255)")
             self.assertEquals(row[2][1],"int(11)")
@@ -40,7 +40,7 @@ class BasicTestCase(unittest.TestCase):
             self.assertEquals(row[10][1],"tinyint(1)")
         else:
             pass
-        cursor.execute("SELECT * FROM x_xml_types")
+        cursor.execute("SELECT * FROM schema_xml_types")
         row = cursor.fetchone()
         self.assertEquals(row[1],"userid0")
         self.assertEquals(row[2],111)
@@ -79,7 +79,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test deep form definition created and data saved """
         create_xsd_and_populate("3_deep.xsd", "3_deep.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_xml_deep")
+        cursor.execute("SELECT * FROM schema_xml_deep")
         row = cursor.fetchone()
         self.assertEquals(row[1],"userid0")
         self.assertEquals(row[2],"abc")
@@ -91,7 +91,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test very deep form definition created and data saved """
         create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_xml_verydeep")
+        cursor.execute("SELECT * FROM schema_xml_verydeep")
         row = cursor.fetchone()
         self.assertEquals(row[1],"userid0")
         self.assertEquals(row[2],"great_grand1")
@@ -103,12 +103,12 @@ class BasicTestCase(unittest.TestCase):
         """ Test repeated form definition created and data saved """
         create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_xml_singlerepeat")
+        cursor.execute("SELECT * FROM schema_xml_singlerepeat")
         row = cursor.fetchone()
         self.assertEquals(row[1],"deviceid0")
         self.assertEquals(row[2],"starttime")
         self.assertEquals(row[3],"endtime")
-        cursor.execute("SELECT * FROM x_xml_singlerepeat_userid")
+        cursor.execute("SELECT * FROM schema_xml_singlerepeat_userid")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[1][1],"userid2")
@@ -121,13 +121,13 @@ class BasicTestCase(unittest.TestCase):
         """ Test nested repeated form definition created and data saved """
         create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM x_xml_nestedrepeats")
+        cursor.execute("SELECT * FROM schema_xml_nestedrepeats")
         row = cursor.fetchone()
         self.assertEquals(row[1],"foo")
         self.assertEquals(row[2],"bar")
         self.assertEquals(row[3],"yes")
         self.assertEquals(row[4],"no")
-        cursor.execute("SELECT * FROM x_xml_nestedrepeats_nested")
+        cursor.execute("SELECT * FROM schema_xml_nestedrepeats_nested")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")

@@ -2,7 +2,7 @@ import unittest
 import traceback, sys, os
 from xformmanager.tests.util import *
 
-class BasicTestCase(unittest.TestCase):
+class UtilTestCase(unittest.TestCase):
 
     def testTranslateXFormToSchema(self):
         """ Test basic xform to schema translation"""

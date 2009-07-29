@@ -4,7 +4,7 @@ from xformmanager.models import Metadata
 from receiver.models import Submission
 import unittest
 
-class BasicTestCase(unittest.TestCase):
+class MetaTestCase(unittest.TestCase):
     
     def setUp(self):
         # clean up, in case some other tests left some straggling

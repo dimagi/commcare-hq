@@ -6,7 +6,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
 from random import choice
 
-
 import uuid
 import settings
 import email
@@ -16,7 +15,6 @@ import hashlib
 import sys
 import os
 import traceback
-
 
 class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
@@ -36,6 +34,21 @@ class Submission(models.Model):
     @property
     def num_attachments(self):
         return Attachment.objects.all().filter(submission=self).count()
+    
+    @property
+    def xform(self):
+        '''
+        Returns the xform associated with this, defined by being the
+        first attachment that has a content type of text/xml.  If no such
+        attachments are found this will return nothing.
+        '''
+        attachments = self.attachments.order_by("id")
+        for attachment in attachments:
+            if attachment.attachment_content_type == "text/xml":
+                return attachment
+        return None
+        
+        
         
     class Meta:
         ordering = ('-submit_time',)
@@ -119,9 +132,9 @@ class Backup(models.Model):
         new_code = int(''.join([choice(nums) for i in range(6)]))
         while Backup.objects.all().filter(backup_code=new_code).count() != 0:
             new_code = int(''.join([choice(nums) for i in range(6)]))
-        return new_code        
+        return new_code
     
-    def save(self, **kwargs): 
+    def save(self, **kwargs):
         self.backup_code = self.__new_code()       
         #todo:  process password using similar method from the User model for password salt and hashing
         super(Backup, self).save()
@@ -164,7 +177,31 @@ class Attachment(models.Model):
             return False
         all_matching_checksum = all_matching_checksum.order_by("submission__submit_time").order_by("id")
         return self.id != all_matching_checksum.order_by("submission__submit_time").order_by("id")[0].id
-        
+    
+    def has_linked_schema(self):
+        '''
+        Returns whether this submission has a linked schema, defined
+        by having something in the xform manager that knows about this.
+        '''
+        # this method, and the one below are semo-dependant on the 
+        # xformmanager app.  if that app is not running, this will
+        # never be true but will still resolve.
+        if self.get_linked_metadata():
+            return True
+        return False
+    
+    def get_linked_metadata(self):
+        '''
+        Returns the linked metadata for the form, if it exists, otherwise
+        returns nothing.
+        '''
+        if hasattr(self, "form_metadata"):
+            try:
+                return self.form_metadata.get()
+            except:
+                return None
+        return None
+                            
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
@@ -172,13 +209,3 @@ class Attachment(models.Model):
     def __unicode__(self):
         return "Attachment %s %s"  % (self.id, self.attachment_uri)
     
-    
-    
-
-
-#signals example
-#from django.db.models.signals import post_save
-#def attachment_postsave_handler(sender, **kwargs):
-#    print "saved attachment!!!"
-#    
-#post_save.connect(attachment_postsave_handler, sender=Attachment)
