@@ -10,7 +10,7 @@ You are able to drop existing XForms and add new ones. HOWEVER, recall that drop
 From the website, you are able to delete submissions so you can indeed have a few 'test' submissions as long as you remember to delete them afterwards. Please remember to do this, though, since otherwise your test data will confuse the charts!
 
 *How do I delete a submission?*
-Go to Schemas and Reports -> Click on the appropriate XForm -> Select the checkbox next to the form you wish to delete, then scroll to the bottom and hit �delete�. NOTE: please only do this if you are certain that this submission is junk. 
+Go to Schemas and Reports -> Click on the appropriate XForm -> Select the checkbox next to the form you wish to delete, then scroll to the bottom and hit "delete". NOTE: please only do this if you are certain that this submission is junk. 
 
 Troubleshooting
 ===============

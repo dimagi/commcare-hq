@@ -1,5 +1,4 @@
 .. |schemas| image:: ../static/docs/img/schemas.jpg
-   :width: 600
    :alt: chart
 
 Schemas and Reports

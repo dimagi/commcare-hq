@@ -5,13 +5,10 @@
 .. _Troubleshooting: help_misc
 .. _Contact: help_misc
 .. |nav| image:: ../static/docs/img/nav.jpg
-   :width: 500
    :alt: chart
 .. |charts_nav| image:: ../static/docs/img/charts_nav.jpg
-   :width: 500
    :alt: chart
 .. |dashboard| image:: ../static/docs/img/dashboard.jpg
-   :width: 500
    :alt: chart
 
 COMMCAREHQ TOUR
