@@ -201,10 +201,36 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
     '''
     xform = FormDefModel.objects.get(id=formdef_id)
     row = xform.get_row(instance_id)
-    headers = xform.get_display_columns()
-    # make them a dictionary of header->value pairs
-    data = zip(headers, row)
-    return render_to_response(request, template_name, {"data": data, "form" : xform })
+    fields = xform.get_display_columns()
+    # make them a list of tuples of field, value pairs for easy iteration
+    data = zip(fields, row)
+    return render_to_response(request, template_name, {"form" : xform,
+                                                       "id": instance_id,  
+                                                       "data": data })
+        
+@login_required()
+def single_instance_csv(request, formdef_id, instance_id):
+    '''
+       CSV dowload for data for a single xform instance submission.  
+    '''
+    # unfortunate copy pasting of the above method.   
+    xform = FormDefModel.objects.get(id=formdef_id)
+    row = xform.get_row(instance_id)
+    fields = xform.get_display_columns()
+    data = zip(fields, row)
+    
+    output = StringIO()
+    w = UnicodeWriter(output)
+    headers = ["Field", "Value"]
+    w.writerow(headers)
+    for row in data:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(),
+                        mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( xform.form_display_name, instance_id)
+    return response
+
         
 @login_required()
 def data(request, formdef_id, template_name="data.html", context={}):
