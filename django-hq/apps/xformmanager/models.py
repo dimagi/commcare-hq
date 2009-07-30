@@ -136,7 +136,12 @@ class FormDefModel(models.Model):
         '''Gets a cursor associated with a query against this table.  See
            get_rows for documentation of the parameters.'''
         
-        sql = "SELECT * FROM %s " % self.table_name
+        # Note that the data view is dependent on id being first
+        sql = " SELECT s.*, su.submit_time FROM %s s " % self.table_name + \
+              " JOIN xformmanager_metadata m ON m.raw_data=s.id " + \
+              " JOIN receiver_attachment a ON m.submission_id=a.id " + \
+              " JOIN receiver_submission su ON a.submission_id=su.id " + \
+              " WHERE m.formdefmodel_id=%s " % self.pk
         # add filtering
         if column_filters:
             first = True
@@ -145,16 +150,16 @@ class FormDefModel(models.Model):
                     # this casts everything to a string.  verified
                     # to work for strings and integers, but might 
                     # not work for dates
-                    to_append = " WHERE %s = '%s' " % (col, value)
+                    to_append = " WHERE s.%s = '%s' " % (col, value)
                     first = False
                 else:
-                    to_append = " AND %s = %s " % (col, value)
+                    to_append = " WHERE s.%s = '%s' " % (col, value)
                 sql = sql + to_append
         
         desc = ""
         if sort_descending:
             desc = "desc"
-        sql = sql + (" ORDER BY %s %s " % (sort_column, desc))
+        sql = sql + (" ORDER BY s.%s %s " % (sort_column, desc))
         cursor = connection.cursor()
         cursor.execute(sql)
         return cursor
