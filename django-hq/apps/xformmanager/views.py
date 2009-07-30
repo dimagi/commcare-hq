@@ -15,7 +15,6 @@ from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel, Case
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
-from xformmanager.util import get_csv_from_form
 from transformers.csv_ import UnicodeWriter
 from receiver.submitprocessor import do_raw_submission
 
@@ -267,7 +266,7 @@ def data(request, formdef_id, template_name="data.html", context={}):
 @login_required()
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
-    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name, formdef_id==0)
+    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
     
 @login_required()
 def reports(request, template_name="reports/list.html"):

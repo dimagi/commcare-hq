@@ -150,30 +150,3 @@ def get_custom_reports(report_module):
     return to_return
 
 
-def get_csv_from_form(formdef_id, form_id=0, filter=''):
-    try:
-        xsd = FormDefModel.objects.get(id=formdef_id)
-    except FormDefModel.DoesNotExist:
-        return HttpResponseBadRequest("Schema with id %s not found." % formdef_id)
-    cursor = connection.cursor()
-    if form_id == 0:
-        try:
-            query= 'SELECT * FROM ' + xsd.form_name
-            if filter: query = query + " WHERE " + filter
-            query = query + ' ORDER BY id'
-            cursor.execute(query)
-        except Exception, e:
-            return HttpResponseBadRequest(\
-                "Schema %s could not be queried with query %s" % \
-                ( xsd.form_name,query) )        
-        rows = cursor.fetchall()
-    else:
-        try:
-            cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
-        except Exception, e:
-            return HttpResponseBadRequest(\
-                "Instance with id %s for schema %s not found." % (form_id,xsd.form_name) )
-        rows = cursor.fetchone()
-    columns = xsd.get_column_names()
-    return format_csv(rows, columns, xsd.form_name, form_id==0)
-

@@ -115,7 +115,7 @@ class FormDefModel(models.Model):
         
     def get_row(self, id):
         '''Get a row, by ID.'''
-        list = self.get_rows({"id" : id})
+        list = self.get_rows([['id','=',id]])
         if len(list) == 1:
             return list[0]
         elif not list:
@@ -123,7 +123,7 @@ class FormDefModel(models.Model):
         else:
             raise Exception("Multiple values for id %s found in form %s" % (id, self ))
         
-    def get_rows(self, column_filters={}, sort_column="id", sort_descending=True):
+    def get_rows(self, column_filters=[], sort_column="id", sort_descending=True):
         '''Get rows associated with this form's schema.
            The column_filters parameter should take in column_name, value
            pairs to be used in a where clause.  The default parameters
@@ -132,7 +132,7 @@ class FormDefModel(models.Model):
         return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
         
     
-    def _get_cursor(self, column_filters={}, sort_column="id", sort_descending=True):
+    def _get_cursor(self, column_filters=[], sort_column="id", sort_descending=True):
         '''Gets a cursor associated with a query against this table.  See
            get_rows for documentation of the parameters.'''
         
@@ -144,18 +144,16 @@ class FormDefModel(models.Model):
               " WHERE m.formdefmodel_id=%s " % self.pk
         # add filtering
         if column_filters:
-            first = True
-            for col, value in column_filters.items():
-                if first:
-                    # this casts everything to a string.  verified
-                    # to work for strings and integers, but might 
-                    # not work for dates
-                    to_append = " WHERE s.%s = '%s' " % (col, value)
-                    first = False
+            for filter in column_filters:
+                if len(filter) != 3:
+                    raise TypeError("_get_cursor expects column_filters of length 3 " + \
+                        "e.g.['pk','=','3'] (only %s given)" % len(filter))
+                if isinstance( filter[2],basestring ): 
+                    to_append = " AND s.%s %s '%s' " % tuple( filter )
                 else:
-                    to_append = " WHERE s.%s = '%s' " % (col, value)
+                    filter[2] = unicode(filter[2]) 
+                    to_append = " AND s.%s %s %s " % tuple( filter )
                 sql = sql + to_append
-        
         desc = ""
         if sort_descending:
             desc = "desc"
@@ -278,13 +276,13 @@ class FormIdentifier(models.Model):
     def get_data_for_case(self, case_id):
         '''Gets the list of entries for a single case.'''
         
-        filter_cols = {self.identity_column : case_id}
+        filter_col = [ [self.identity_column,'=',case_id] ]
         if self.sorting_column:
-            return self.form.get_rows(column_filters=filter_cols,
+            return self.form.get_rows(column_filters=filter_col,
                                       sort_column=self.sorting_column, 
                                       sort_descending=self.sort_descending)
         else:
-            return self.form.get_rows(column_filters=filter_cols)
+            return self.form.get_rows(column_filters=filter_col)
     
     
     def get_data_maps(self):

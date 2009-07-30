@@ -4,8 +4,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django_rest_interface.resource import Resource
-from transformers.csv_ import get_csv_from_django_query
-from xformmanager.util import get_csv_from_form
+from transformers.csv_ import get_csv_from_django_query, format_csv
 from xformmanager.xformdef import FormDef
 from xformmanager.models import *
 from organization.models import *
@@ -103,7 +102,7 @@ class XFormSubmissionsData(Resource):
         metadata = Metadata.objects.filter(formdefmodel=formdef).order_by('id')
         if not metadata:
             return HttpResponseBadRequest("Metadata of schema with id %s not found." % formdef_id)
-        filter = ''
+        filter = []
         if request.REQUEST.has_key('start-id'):
             if filter: filter = filter + " AND "
             filter = filter + "id >= " + request.GET['start-id']
@@ -116,17 +115,15 @@ class XFormSubmissionsData(Resource):
             # but it keeps our django orm reference and sql work separate
             metadata = metadata.filter(submission__submission__submit_time__gte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
-            if filter: filter = filter + " AND "
-            filter = filter + "id IN " + unicode(raw_ids)
-            filter = filter.replace('[','(').replace(']',')')
+            filter.append( ['id','IN',tuple(raw_ids)] )
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             metadata = metadata.filter(submission__submission__submit_time__lte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
-            if filter: filter = filter + " AND "
-            filter = filter + "id IN " + unicode(raw_ids)
-            filter = filter.replace('[','(').replace(']',')')
-        return get_csv_from_form(formdef_id, filter=filter)
+            filter.append( ['id','IN',tuple(raw_ids)] )
+        rows = formdef.get_rows( column_filters=filter )
+        column = formdef.get_column_names()
+        return format_csv(rows, column, formdef.form_name)
 
 # api/xforms/(?P<formdef_id>\d+)/(?P<form_id>\d+)
 class XFormSubmissionData(Resource):
@@ -149,7 +146,15 @@ class XFormSubmissionData(Resource):
             elif request.GET['format'].lower() == 'json': 
                 return get_json_from_form(formdef_id, form_id)
         #default to CSV
-        return get_csv_from_form(formdef_id, form_id=form_id)        
+        try:
+            formdef = FormDefModel.objects.get(pk=formdef_id )
+        except FormDefModel.DoesNotExist:
+            return HttpResponseBadRequest("Schema with primary key %s was not found." % formdef_id)
+        row = formdef.get_row(form_id)
+        if row is None:
+            return HttpResponseBadRequest("Instance matching %s of schema %s was not found." % (form_id,formdef_id) )
+        columns = formdef.get_column_names()
+        return format_csv(row, columns, formdef.form_name, form_id!=0)
 
 # api/xforms/(?P<formdef_id>\d+)/metadata/
 class XFormMetadata(Resource):
