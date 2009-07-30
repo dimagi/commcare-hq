@@ -59,6 +59,7 @@ def monitoring(request):
     very_pregnant_moms = []
     moms_needing_followup = []
     moms_with_open_referrals = []
+    closed_moms = []
     for id, map in final_list_of_maps.items():
         mom = Mother(case, id, map)
         if not mom.chw:
@@ -68,6 +69,12 @@ def monitoring(request):
         prev_list_size = len(moms_needing_followup) +\
                          len(very_pregnant_moms) +\
                          len(moms_with_open_referrals)
+        
+        # we don't want the closed cases showing up on any
+        # other lists 
+        if mom.is_closed:
+            closed_moms.append(mom)
+            continue
         if mom.needs_followup:
             moms_needing_followup.append(mom)
         if mom.months_pregnant >= 7:
@@ -89,6 +96,7 @@ def monitoring(request):
     context["open_referrals"] = moms_with_open_referrals
     context["very_pregnant"] = very_pregnant_moms
     context["need_followup"] = moms_needing_followup
+    context["closed_moms"] = closed_moms
     context["empty_data_holder"] = "<b></b>"
     return render_to_string("reports/mvp/monitoring.html", context)
 
@@ -231,7 +239,9 @@ class Mother(object):
                     
                     
         self.has_close_referral = False
+        self.is_closed = False
         if close_forms:
+            self.is_closed = True
             # referrals from close forms
             for close in close_forms:
                 if not self.has_close_referral:
