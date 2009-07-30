@@ -37,7 +37,7 @@ http://dev.commcarehq.org/api/xforms
   
     * allowable value: date in the format YYYY-MM-DD
 
-http://dev.commcarehq.org/api/xforms/1/schema">
+http://dev.commcarehq.org/api/xforms/1/schema
 
  * Schema associated with the first registered schema</desc> 
 
