@@ -115,14 +115,14 @@ class XFormSubmissionsData(Resource):
             # not the most efficient way of doing this 
             # but it keeps our django orm reference and sql work separate
             metadata = metadata.filter(submission__submission__submit_time__gte=date)
-            raw_ids = [m.raw_data for m in metadata]
+            raw_ids = [int(m.raw_data) for m in metadata]
             if filter: filter = filter + " AND "
             filter = filter + "id IN " + unicode(raw_ids)
             filter = filter.replace('[','(').replace(']',')')
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             metadata = metadata.filter(submission__submission__submit_time__lte=date)
-            raw_ids = [m.raw_data for m in metadata]
+            raw_ids = [int(m.raw_data) for m in metadata]
             if filter: filter = filter + " AND "
             filter = filter + "id IN " + unicode(raw_ids)
             filter = filter.replace('[','(').replace(']',')')
