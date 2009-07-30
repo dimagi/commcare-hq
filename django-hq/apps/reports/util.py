@@ -13,7 +13,7 @@ def get_custom_report_module(domain):
         return rep_module
     except ImportError:
         # this is ok, there just weren't any custom reports
-        raise
+        return None
         
         
 

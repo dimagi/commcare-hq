@@ -28,7 +28,14 @@ def reports(request, template_name="list.html"):
     report_module = util.get_custom_report_module(extuser.domain)
     if report_module:
         custom = util.get_custom_reports(report_module)
-        context['custom_reports'] = custom 
+        context['custom_reports'] = custom
+    else: 
+        # if no custom and no case reports, return a generic
+        # error message
+        if not context['case_reports']:
+            return render_to_response(request, 
+                                      "domain_not_found.html",
+                                      context)
     return render_to_response(request, template_name, context)
 
 @login_required()
