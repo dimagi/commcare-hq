@@ -1,8 +1,6 @@
 
-from modelrelationship.models import *
 from organization.models import *
 from dbanalyzer.models import *
-import modelrelationship.traversal as traversal
 
 from datetime import timedelta
 
@@ -17,32 +15,15 @@ def get_members_for_supervisor(organization, supervisor_user):
 
 def get_supervisor_roles(extuser):
     """return an array of organizations that a user is a supervisor.  The array is empty if they are nothing"""
-    (parents, children) = traversal.getImmediateRelationsForObject(extuser)
-    membership = []
-    for parent_edge in parents:
-        if parent_edge.relationship.id == SUPERVISOR_EDGE_TYPE: 
-            membership.append(parent_edge.parent_object)                    
-    return membership
-
+    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
+    
 def get_membership(extuser):
     """return an array of organizations that a user belongs to.  The array is empty if they are nothing"""
-    (parents, children) = traversal.getImmediateRelationsForObject(extuser)
-    membership = []
-    for parent_edge in parents:
-        if parent_edge.relationship.id == MEMBER_EDGE_TYPE: 
-            membership.append(parent_edge.parent_object)                    
-    return membership
+    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
 
 def get_members(organization):
     """return an array of members in an organization"""
-    (parents, children) = traversal.getImmediateRelationsForObject(organization)
-    
-    supervisors = []
-    members = []
-    for child_edge in children:
-        if child_edge.relationship.id == MEMBER_EDGE_TYPE:   
-            members.append(child_edge.child_object)                    
-    return members 
+    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
 
 def get_chart_group(extuser):
     # todo this makes a mean assumption there's only one
@@ -70,13 +51,8 @@ def get_members_and_supervisors(organization):
     
 def get_user_affiliation(extuser):
     (parents, children) = traversal.getImmediateRelationsForObject(extuser)
-        
-    membership = []
-    for parent_edge in parents:
-        if parent_edge.relationship.id == MEMBER_EDGE_TYPE or parent_edge.relationship.id == SUPERVISOR_EDGE_TYPE: 
-            membership.append(parent_edge.parent_object)                    
-    return membership
-
+    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
+    
 def get_dates(request, default_days=0):
     default_delta = timedelta(days=default_days)
     enddate = datetime.datetime.now().date()
