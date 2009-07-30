@@ -113,40 +113,34 @@ def join_if_exists(parent_name, child_name):
         return str(parent_name) + "_" + str(child_name)
     return str(child_name)
 
-def is_mod_function(mod, func):
-    '''Returns whether the object is a function in the module''' 
-    return inspect.isfunction(func) and inspect.getmodule(func) == mod
-
-def get_custom_report_module(domain):
-    '''Get the reports module for a domain, if it exists.  Otherwise
-       this returns nothing'''
+def get_csv_from_form(formdef_id, form_id=0, filter=''):
     try:
-        rep_module = __import__("xformmanager.reports.%s" % domain.name.lower(), 
-                                fromlist=[''])
-        return rep_module
-    except ImportError:
-        return None
-
-def get_custom_reports(report_module):
-    '''Given a reports module , get the list of custom reports defined
-       in that class.  These are returned as dictionaries of the 
-       following format:
-         { "name" : function_name, "display_name" : function_doc }
-       see reports/custom.py for more information 
-    '''
-    to_return = []
-    for name in dir(report_module):
-        obj = getattr(report_module, name)
-        # using ismethod filters out the builtins and any 
-        # other fields defined in the custom class.  
-        # also use the python convention of keeping methods
-        # that start with an "_" private.
-        if is_mod_function(report_module, obj) and\
-          not obj.func_name.startswith("_"):
-            obj_rep = {"name" : obj.func_name,
-                       "display_name" : obj.__doc__   
-                       } 
-            to_return.append(obj_rep)
-    return to_return
+        xsd = FormDefModel.objects.get(id=formdef_id)
+    except FormDefModel.DoesNotExist:
+        return HttpResponseBadRequest("Schema with id %s not found." % formdef_id)
+    cursor = connection.cursor()
+    row_count = 0
+    if form_id == 0:
+        try:
+            query= 'SELECT * FROM ' + xsd.form_name
+            if filter: query = query + " WHERE " + filter
+            query = query + ' ORDER BY id'
+            cursor.execute(query)
+        except Exception, e:
+            return HttpResponseBadRequest(\
+                "Schema %s could not be queried with query %s" % \
+                ( xsd.form_name,query) )        
+        rows = cursor.fetchall()
+    else:
+        try:
+            cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
+        except Exception, e:
+            return HttpResponseBadRequest(\
+                "Instance with id %s for schema %s not found." % (form_id,xsd.form_name) )
+        rows = cursor.fetchone()
+        row_count = 1
+    columns = xsd.get_column_names()    
+    name = xsd.form_name
+    return format_csv(rows, columns, name, row_count)
 
 

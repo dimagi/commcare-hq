@@ -1,4 +1,5 @@
 import unittest
+from reports.models import *
 from xformmanager.tests.util import *
 from xformmanager.models import *
 from xformmanager.storageutility import StorageUtility
@@ -41,6 +42,15 @@ class CaseTestCase(unittest.TestCase):
         self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2)
         self.close_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_fid, case=self.pf_case, sequence_id=3)
         
+    def tearDown(self):
+        # clean up, in case some other tests left some straggling
+        # form data.  Do this in setup and teardown because we want
+        # to start with a clean slate and leave a clean slate.
+        su = StorageUtility()
+        su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+    
     def testFormIdentifier(self):
         uniques = self.reg_fid.get_uniques()
         self.assertEqual(1, len(uniques))

@@ -4,7 +4,7 @@
 {%block mgr_content%}
 
 <h2>{% trans "Data for Report: " %}{{case}}</h2>
-<a href="{% url xformmanager.views.case_export_csv case.id %}">download csv file</a>
+<a href="{% url reports.views.case_export_csv case.id %}">download csv file</a>
 <br>
 <div class="pagination">
     <span class="step-links">

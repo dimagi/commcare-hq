@@ -1,0 +1,14 @@
+<pathfinder_followup xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2">
+  <Meta>
+    <formName>PathfinderFollowUpVisit</formName>
+    <formVersion>0.0.1</formVersion>
+    <DeviceID>device2</DeviceID>
+    <CommCareVersion>0.0.6</CommCareVersion>
+    <TimeStart>2009-04-21T13:25:27.637</TimeStart>
+    <TimeEnd>2009-04-21T13:31:15.191</TimeEnd>
+    <username>demo_user</username>
+    <chw_id>0</chw_id>
+    <uid>AW10ASUOVMOQIP82ZRZURILTZ</uid>
+  </Meta>
+  <client_name>my client's name</client_name>
+</pathfinder_followup>
