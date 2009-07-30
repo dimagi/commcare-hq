@@ -7,7 +7,7 @@
 ===================
 COMMCAREHQ REST API
 ===================
-If there are additional formats you would like us to support, feel free to email us at commcarehq-dev@dimagi.com.
+If there are additional formats you would like us to support, feel free to email us at commcarehq-support@dimagi.com.
 
 http://dev.commcarehq.org/api
 
@@ -18,7 +18,7 @@ Schema
 
 http://dev.commcarehq.org/api/xforms
 
-* List all registered schemas
+* List all registered schemas. GET parameters can optionally specify:
 
   * format
   
@@ -39,7 +39,7 @@ http://dev.commcarehq.org/api/xforms
 
 http://dev.commcarehq.org/api/xforms/1/schema
 
- * Schema associated with the first registered schema</desc> 
+ * Schema associated with the first registered schema. GET parameters can optionally specify:
 
   * format
   
@@ -51,7 +51,7 @@ Data
 ----
 http://dev.commcarehq.org/api/xforms/1
 
-* Data associated with the first registered schema
+* Data associated with the first registered schema. GET parameters can optionally specify:
 
   * format
   
@@ -71,7 +71,7 @@ http://dev.commcarehq.org/api/xforms/1
 
 http://dev.commcarehq.org/api/xforms/1/2
 
-* Data associated with the second instance data submitted to the first registered schema
+* Data associated with the second instance data submitted to the first registered schema. GET parameters can optionally specify:
 
   * format
   
@@ -81,18 +81,18 @@ http://dev.commcarehq.org/api/xforms/1/2
 
 .. http://dev.commcarehq.org/api/xforms/1/2/attachment
 
-.. * List all attachments associated with the second instance submitted to the first registered schema</desc> 
+.. * List all attachments associated with the second instance submitted to the first registered schema.
 
 .. http://dev.commcarehq.org/api/xforms/1/2/attachment/3
 
-.. * Download the third submitted attachment associated with the second instance data submitted to the first registered schema</desc> 
+.. * Download the third submitted attachment associated with the second instance data submitted to the first registered schema
 
 Metadata
 --------
 
 http://dev.commcarehq.org/api/xforms/1/metadata
 
- * Metadata associated with the first registered schema</desc> 
+ * Metadata associated with the first registered schema. GET parameters can optionally specify:
 
   * format
   
@@ -111,9 +111,9 @@ http://dev.commcarehq.org/api/xforms/1/metadata
   
     * allowable value: date in the format YYYY-MM-DD
     
-http://dev.commcarehq.org/api/xforms/1/2/metadata">
+http://dev.commcarehq.org/api/xforms/1/2/metadata
 
- * Metadata associated with the second submitted instance of the first registered schema
+ * Metadata associated with the second submitted instance of the first registered schema.  GET parameters can optionally specify:
 
   * format
   

@@ -8,7 +8,7 @@ FAQ
 ===
 *I've forgotten my password! What do I do?*
 
-Email us at commcarehq-dev@dimagi.com and we will reset it for you. 
+Email us at commcarehq-support@dimagi.com and we will reset it for you. 
 
 *I uploaded the wrong XForm! Can I change it?*
 
@@ -30,5 +30,5 @@ Contact
 =======
 
 More questions and/or feedback?
-Email us at commcarehq-dev@dimagi.com.
+Email us at commcarehq-support@dimagi.com.
 
