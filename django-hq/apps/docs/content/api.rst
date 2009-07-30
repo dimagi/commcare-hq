@@ -9,7 +9,7 @@ COMMCAREHQ REST API
 ===================
 If there are additional formats you would like us to support, feel free to email us at commcarehq-dev@dimagi.com.
 
-https://dev.commcarehq.org/api
+http://dev.commcarehq.org/api
 
 * List all allowable api calls in XML
 
