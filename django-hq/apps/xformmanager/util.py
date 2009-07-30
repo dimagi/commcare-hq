@@ -78,8 +78,8 @@ def sanitize(name):
 def get_table_name(stream):
     try:
         logging.debug("Trying to parse xml_file")
-        payload = get_xml_string(stream)
-        root = etree.XML(payload)
+        tree=etree.parse(stream)
+        root=tree.getroot()
         logging.debug("Parsing xml file successful")
         logging.debug("Find xmlns from " + root.tag)
         #todo - add checks in case we don't have a well-formatted xmlns
@@ -95,8 +95,8 @@ def get_table_name(stream):
         # not a big deal, just don't return an xmlns
         return None
 def get_target_namespace(stream):
-    payload = get_xml_string(stream)
-    root = etree.XML(payload)
+    tree = etree.parse(stream)
+    root = tree.getroot()
     return root.get('targetNamespace')
 
         
