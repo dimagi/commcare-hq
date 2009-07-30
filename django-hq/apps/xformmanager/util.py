@@ -156,7 +156,6 @@ def get_csv_from_form(formdef_id, form_id=0, filter=''):
     except FormDefModel.DoesNotExist:
         return HttpResponseBadRequest("Schema with id %s not found." % formdef_id)
     cursor = connection.cursor()
-    row_count = 0
     if form_id == 0:
         try:
             query= 'SELECT * FROM ' + xsd.form_name
@@ -175,8 +174,6 @@ def get_csv_from_form(formdef_id, form_id=0, filter=''):
             return HttpResponseBadRequest(\
                 "Instance with id %s for schema %s not found." % (form_id,xsd.form_name) )
         rows = cursor.fetchone()
-        row_count = 1
-    columns = xsd.get_column_names()    
-    name = xsd.form_name
-    return format_csv(rows, columns, name, row_count)
+    columns = xsd.get_column_names()
+    return format_csv(rows, columns, xsd.form_name, form_id==0)
 

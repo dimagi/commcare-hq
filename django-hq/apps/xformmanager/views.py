@@ -266,7 +266,8 @@ def data(request, formdef_id, template_name="data.html", context={}):
 
 @login_required()
 def export_csv(request, formdef_id):
-    return get_csv_from_form(formdef_id)
+    xsd = get_object_or_404( FormDefModel, pk=formdef_id)
+    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name, formdef_id==0)
     
 @login_required()
 def reports(request, template_name="reports/list.html"):
