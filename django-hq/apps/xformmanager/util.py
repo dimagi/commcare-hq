@@ -165,7 +165,8 @@ def get_csv_from_form(formdef_id, form_id=0, filter=''):
             cursor.execute(query)
         except Exception, e:
             return HttpResponseBadRequest(\
-                "Schema %s has not been registered." % xsd.form_name)        
+                "Schema %s could not be queried with query %s" % \
+                ( xsd.form_name,query) )        
         rows = cursor.fetchall()
     else:
         try:

@@ -96,7 +96,11 @@ class XFormSchema(Resource):
 class XFormSubmissionsData(Resource):
     def read(self, request, formdef_id):
         """ list all submitted instance data for a particular schema """
-        metadata = Metadata.objects.filter(formdefmodel=formdef_id).order_by('id')
+        try:
+            formdef = FormDefModel.objects.get(pk=formdef_id)
+        except FormDefModel.DoesNotExist:
+            return HttpResponseBadRequest("Schema with id %s could not found." % formdef_id)            
+        metadata = Metadata.objects.filter(formdefmodel=formdef).order_by('id')
         if not metadata:
             return HttpResponseBadRequest("Metadata of schema with id %s not found." % formdef_id)
         filter = ''
