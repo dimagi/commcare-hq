@@ -2,9 +2,10 @@
 local.ini
 .project
 .pydevproject
-django-hq/data/attachments/*
-django-hq/data/submissions/*
-django-hq/data/schemas/*
-django-hq/export/*
-django-hq/bad/*
-django-hq/rapidsms-django.log*
+data/attachments/*
+data/submissions/*
+data/schemas/*
+export/*
+bad/*
+rapidsms-django.log*
+rapidsms.log*
