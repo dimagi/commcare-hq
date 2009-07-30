@@ -1,0 +1,12 @@
+<sampledata xmlns="http://dev.commcarehq.org/MVP/safe_motherhood/registration_v0.2">
+<Meta>
+<formName>XOLIJZVDJKLORBQUABFLVGLEA</formName>
+<formVersion>QEQBDKWHIPCUEVCZMIVRWPOXTGAK</formVersion>
+<DeviceID>E</DeviceID>
+<TimeStart>2009-04-19T12:20:00.000</TimeStart>
+<TimeEnd>2009-04-19T12:44:00.000</TimeEnd>
+<username>gayo</username>
+<userid>mobile3</userid>
+</Meta>
+<household>1</household>
+</sampledata>

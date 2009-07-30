@@ -5,7 +5,7 @@
 from rapidsms.webui.utils import render_to_response
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from xformmanager.models import Case
+from reports.models import Case
 from datetime import datetime, date, timedelta
 
 '''Define custom reports in this file.  The rules are one module per
@@ -98,7 +98,7 @@ def monitoring(request):
     context["need_followup"] = moms_needing_followup
     context["closed_moms"] = closed_moms
     context["empty_data_holder"] = "<b></b>"
-    return render_to_string("reports/mvp/monitoring.html", context)
+    return render_to_string("custom/mvp/monitoring.html", context)
 
 def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the

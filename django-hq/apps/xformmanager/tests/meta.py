@@ -14,7 +14,6 @@ class MetaTestCase(unittest.TestCase):
         su.clear()
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
-        
 
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml")

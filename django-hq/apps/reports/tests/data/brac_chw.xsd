@@ -1,0 +1,50 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/BRAC/CHW/CHWVisit_v0.0.1" elementFormDefault="qualified">
+  <simpleType name="_brac_availability">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <element name="brac" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="CommCareVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="ChpName" minOccurs="0" type="string"/>
+        <element name="ChpId" minOccurs="0" type="integer"/>
+        <element name="availability" minOccurs="0" type="_brac_availability"/>
+        <element name="groupName" minOccurs="0" type="string"/>
+        <element name="Num_house" minOccurs="0" type="integer"/>
+        <element name="microf_meeting" minOccurs="0" type="integer"/>
+        <element name="microf_participant_count" minOccurs="0" type="integer"/>
+        <element name="comm_meeting" minOccurs="0" type="integer"/>
+        <element name="comm_participants_count" minOccurs="0" type="integer"/>
+        <element name="comm_Topic" minOccurs="0" type="string"/>
+        <element name="Tuberculosis" minOccurs="0" type="integer"/>
+        <element name="hiv_case" minOccurs="0" type="integer"/>
+        <element name="Malaria" minOccurs="0" type="integer"/>
+        <element name="Pante-natal_Care" minOccurs="0" type="integer"/>
+        <element name="pregnant_TT" minOccurs="0" type="integer"/>
+        <element name="BCG_Polio" minOccurs="0" type="integer"/>
+        <element name="Dpt_1" minOccurs="0" type="integer"/>
+        <element name="Dpt_2" minOccurs="0" type="integer"/>
+        <element name="Dpt_3" minOccurs="0" type="integer"/>
+        <element name="measles" minOccurs="0" type="integer"/>
+        <element name="total_amount" minOccurs="0" type="integer"/>
+      </sequence>
+    </complexType>
+  </element>
+</schema>

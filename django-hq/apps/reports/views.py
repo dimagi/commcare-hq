@@ -1,0 +1,106 @@
+from datetime import datetime
+
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseRedirect
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+
+from rapidsms.webui.utils import render_to_response
+
+from models import Case
+from xformmanager.models import FormDefModel
+from organization.models import ExtUser
+
+import util
+
+from StringIO import StringIO
+from transformers.csv_ import UnicodeWriter
+
+@login_required()
+def reports(request, template_name="list.html"):
+    # not sure where this view will live in the UI yet
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    context['domain'] = extuser.domain
+    context['case_reports'] = Case.objects.filter(domain=extuser.domain)
+    report_module = util.get_custom_report_module(extuser.domain)
+    if report_module:
+        custom = util.get_custom_reports(report_module)
+        context['custom_reports'] = custom 
+    return render_to_response(request, template_name, context)
+
+@login_required()
+def case_data(request, case_id, template_name="case_data.html"):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="organization/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    case = Case.objects.get(id=case_id)
+    
+    context['cols'] = case.get_column_names()
+    
+    data = case.get_topmost_data()
+    keys = data.keys()
+    keys.sort()
+    flattened = []
+    for key in keys:
+        flattened.append(data[key])
+    
+    paginator = Paginator(flattened, 25) 
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        data_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        data_pages = paginator.page(paginator.num_pages)
+    
+    context['data'] = data_pages    
+    context['case'] = case
+    
+    return render_to_response(request, template_name, context)
+
+@login_required()
+def case_export_csv(request, case_id):
+    case = Case.objects.get(id=case_id)
+    cols = case.get_column_names()
+    data = case.get_topmost_data().values()
+    output = StringIO()
+    w = UnicodeWriter(output)
+    w.writerow(cols)
+    for row in data:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(),
+                        mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( case.name, str(datetime.now().date()))
+    return response
+
+
+@login_required()
+def custom_report(request, domain_id, report_name):
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        return render_to_response(request, "organization/no_permission.html", 
+                                  context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    context["domain"] = extuser.domain
+    context["report_name"] = report_name
+    report_module = util.get_custom_report_module(extuser.domain)
+    if not report_module:
+        return render_to_response(request, 
+                                  "domain_not_found.html",
+                                  context)
+    if not hasattr(report_module, report_name):
+        return render_to_response(request, 
+                                  "custom/report_not_found.html",
+                                  context)
+    report_method = getattr(report_module, report_name)
+    context["report_display"] = report_method.__doc__
+    context["report_body"] = report_method(request)
+    return render_to_response(request, "custom/base.html", context)
+
