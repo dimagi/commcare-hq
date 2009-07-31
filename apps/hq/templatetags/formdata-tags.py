@@ -6,7 +6,7 @@ from xformmanager.models import *
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
-from organization.models import *
+from hq.models import *
 import dbanalyzer.dbhelper as dbhelper  
 
 import xformmanager.adapter.querytools as qtools
@@ -21,7 +21,7 @@ import time
 
 @register.simple_tag
 def get_form_links(user):
-    base_link = reverse('organization.views.summary_trend',kwargs={})
+    base_link = reverse('hq.views.summary_trend',kwargs={})
     #<a href="%s?content_type=%s&content_id=%s">%s</a>
     extuser = ExtUser.objects.all().get(id=user.id)    
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)

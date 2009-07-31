@@ -1,4 +1,4 @@
-from organization.models import *
+from hq.models import *
 import logging
 import string
 from django.template.loader import render_to_string
@@ -7,8 +7,8 @@ from datetime import datetime
 from datetime import timedelta
 import logging
 import settings
-import organization.utils as utils
-from organization.reporter import agents        
+import hq.utils as utils
+from hq.reporter import agents        
 import dbanalyzer.dbhelper as dbhelper
 from xformmanager.models import *
 from datetime import timedelta
@@ -106,7 +106,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
     return data
 
 def domain_flat(report_schedule, run_frequency):
-    dom = report_schedule.organization.domain
+    dom = report_schedule.hq.domain
     rendered_text = ''
     
     # DAN HACK: everyone wants the daily reports to show the last week's worth of data
@@ -119,7 +119,7 @@ def domain_flat(report_schedule, run_frequency):
     params = {}
     heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     params['heading'] = heading    
-    rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
+    rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
 
     if report_schedule.report_delivery == 'email':
         usr = report_schedule.recipient_user
@@ -128,10 +128,10 @@ def domain_flat(report_schedule, run_frequency):
 
 
 def admin_catch_all_flat(report_schedule, run_frequency):
-    #same as admin_catch_all, but do for all users, no organizational junks
+    #same as admin_catch_all, but do for all users, no hqal junks
     domains = Domain.objects.all()
     rendered_text = ''
-    from organization import reporter
+    from hq import reporter
     # DAN HACK: everyone wants the daily reports to show the last week's worth of data
     # so change this 
     if run_frequency == 'daily':
@@ -143,7 +143,7 @@ def admin_catch_all_flat(report_schedule, run_frequency):
         params = {}
         heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
         params['heading'] = heading    
-        rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
+        rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
 
 
     if report_schedule.report_delivery == 'email':
@@ -156,7 +156,7 @@ def admin_catch_all(report_schedule, run_frequency):
     #todo:  get all of the domains
     domains = Domain.objects.all()
     rendered_text = ''
-    from organization import reporter
+    from hq import reporter
     # DAN HACK: everyone wants the daily reports to show the last week's worth of data
     # so change this 
     if run_frequency == 'daily':
@@ -245,7 +245,7 @@ def admin_catch_all(report_schedule, run_frequency):
         #ok, so we just did all this data, let's append the data to the already existing data
         
         data = data + unclaimed_tuples        
-        rendered_text += reporter.render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
+        rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
 
         
     if report_schedule.report_delivery == 'email':
@@ -261,7 +261,7 @@ def pf_swahili_sms(report_schedule, run_frequency):
     org_domain = organization.domain
     transport = report_schedule.report_delivery
     if organization != None:
-        from organization import reporter
+        from hq import reporter
         (startdate, enddate) = reporter.get_daterange(run_frequency)
         
         root_orgs = Organization.objects.filter(parent=None, domain=org_domain)
@@ -280,7 +280,7 @@ def pf_swahili_sms(report_schedule, run_frequency):
         rendered_text = reporter.render_reportstring(org_domain, 
                    report_payload, 
                    run_frequency,
-                   template_name="organization/reports/hack_sms_swahili.txt",                                       
+                   template_name="hq/reports/hack_sms_swahili.txt",                                       
                    transport=transport)
         reporter.deliver_report(usr, rendered_text, report_schedule.report_delivery,params={'startdate': startdate, 'enddate': enddate, 'frequency': run_frequency})                
 
@@ -292,7 +292,7 @@ def admin_per_form_report(report_schedule, run_frequency):
     usr = report_schedule.recipient_user
     #report_txt = tree_report(organization, run_frequency, recipient=usr, transport=report.report_delivery)   
     
-    from organization import reporter
+    from hq import reporter
     (startdate, enddate) = reporter.get_daterange(run_frequency)
     
     
@@ -309,7 +309,7 @@ def admin_per_form_report(report_schedule, run_frequency):
             params = {}
             heading = "Itemized report for " + fdef.form_display_name 
             params['heading'] = heading
-            rendered_text = reporter.render_direct_email(report_payload, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)     
+            rendered_text = reporter.render_direct_email(report_payload, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)     
         else:
             do_separate=False
             
@@ -321,7 +321,7 @@ def delinquent_alert(report_schedule, run_frequency):
     org = report_schedule.organization
     transport = report_schedule.report_delivery   
     usr = report_schedule.recipient_user
-    from organization import reporter    
+    from hq import reporter    
     delinquents = []    
     statdict = metastats.get_stats_for_domain(org.domain)    
     for reporter_profile, result in statdict.items():
@@ -335,7 +335,7 @@ def delinquent_alert(report_schedule, run_frequency):
     
     context = {}
     context['delinquent_reporterprofiles'] = delinquents
-    rendered_text = render_to_string("organization/reports/sms_delinquent_report.txt",context)        
+    rendered_text = render_to_string("hq/reports/sms_delinquent_report.txt",context)        
         
     if report_schedule.report_delivery == 'email':        
         subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y')

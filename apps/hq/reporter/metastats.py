@@ -1,7 +1,7 @@
 from xformmanager.models import *
-from organization.models import *
+from hq.models import *
 from reporters.models import Reporter, ReporterGroup
-import organization.utils as utils        
+import hq.utils as utils        
 
 import datetime
 from datetime import timedelta

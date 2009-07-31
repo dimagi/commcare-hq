@@ -29,9 +29,9 @@
                       until we come up with a logical distinction between 
                       reports and the dashboard -->
                {% if user.is_superuser and False %}
-                  <li><a href="{% url organization.views.org_report %}">Reports</a></li>
+                  <li><a href="{% url hq.views.org_report %}">Reports</a></li>
                {%endif%}                
-                  <li><a href="{% url organization.views.domain_charts %}">Charts</a></li>
+                  <li><a href="{% url hq.views.domain_charts %}">Charts</a></li>
                {% if user.is_superuser %}            
                   <li><a href="{% url receiver.views.show_submits %}">Submissions</a></li>
                   <li><a href="{% url xformmanager.views.register_xform %}">Schemas</a></li>    

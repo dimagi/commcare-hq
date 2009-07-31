@@ -1,5 +1,5 @@
 
-from organization.models import *
+from hq.models import *
 from dbanalyzer.models import *
 
 from datetime import timedelta

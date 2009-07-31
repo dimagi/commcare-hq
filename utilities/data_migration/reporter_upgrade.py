@@ -9,7 +9,7 @@ import simplejson
 
 def run():
     print "starting"
-    from organization.models import ExtUser, ReporterProfile
+    from hq.models import ExtUser, ReporterProfile
     from reporters.models import Reporter, PersistantBackend, PersistantConnection
     
     all_users = ExtUser.objects.all()

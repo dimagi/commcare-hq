@@ -5,7 +5,7 @@ from django.template import Template, Context
 
 import datetime
 from datetime import timedelta
-from organization.models import *
+from hq.models import *
 import logging
 import urllib2
 import settings

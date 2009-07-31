@@ -5,10 +5,10 @@ from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
-from organization.models import *
+from hq.models import *
 
 import xformmanager.adapter.querytools as qtools
-import organization.utils as utils
+import hq.utils as utils
 from xformmanager.models import *
 import time
 from datetime import timedelta

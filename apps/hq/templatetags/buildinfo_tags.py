@@ -7,8 +7,8 @@ from types import ListType,TupleType
 
 from xformmanager.models import *
 import xformmanager.adapter.querytools as qtools
-from organization.models import *
-import organization.utils as utils
+from hq.models import *
+import hq.utils as utils
 
 register = template.Library()
 

@@ -7,7 +7,7 @@ from django_rest_interface.resource import Resource
 from transformers.csv_ import get_csv_from_django_query, format_csv
 from xformmanager.xformdef import FormDef
 from xformmanager.models import *
-from organization.models import *
+from hq.models import *
 
 """ changes to the API need to occur in 
 * api/urls.py (redirection)

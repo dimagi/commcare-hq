@@ -8,7 +8,7 @@ from rapidsms.webui.utils import render_to_response
 
 from models import Case
 from xformmanager.models import FormDefModel
-from organization.models import ExtUser
+from hq.models import ExtUser
 
 import util
 
@@ -20,7 +20,7 @@ def reports(request, template_name="list.html"):
     # not sure where this view will live in the UI yet
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     context['domain'] = extuser.domain
@@ -42,7 +42,7 @@ def reports(request, template_name="list.html"):
 def case_data(request, case_id, template_name="case_data.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     case = Case.objects.get(id=case_id)
@@ -92,7 +92,7 @@ def case_export_csv(request, case_id):
 def custom_report(request, domain_id, report_name):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        return render_to_response(request, "organization/no_permission.html", 
+        return render_to_response(request, "hq/no_permission.html", 
                                   context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     context["domain"] = extuser.domain

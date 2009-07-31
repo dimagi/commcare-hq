@@ -1,4 +1,4 @@
-from organization.models import *
+from hq.models import *
 import logging
 import string
 from django.template.loader import render_to_string
@@ -7,8 +7,8 @@ from datetime import datetime
 from datetime import timedelta
 import logging
 import settings
-import organization.utils as utils
-from organization.reporter import agents        
+import hq.utils as utils
+from hq.reporter import agents        
 
 import inspector as repinspector
 
@@ -56,10 +56,10 @@ def run_reports(run_frequency):
                 if report.report_delivery == 'email':
                     subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  " + str(organization)
                     
-                    rendered_text = render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
+                    rendered_text = render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
                     transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
                 else:
-                    rendered_text = render_direct_sms(data, startdate, enddate, "organization/reports/sms_organization.txt", params)
+                    rendered_text = render_direct_sms(data, startdate, enddate, "hq/reports/sms_organization.txt", params)
                     transport_sms(rendered_text, usr, params)
         elif report.report_class == 'supervisor' or report.report_class == 'member':
             #get the organization field and run the hierarchical report
@@ -73,7 +73,7 @@ def run_reports(run_frequency):
                 params = {}
                 heading = "User report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
                 params['heading'] = heading
-                rendered_text = render_direct_email(data, startdate, enddate, "organization/reports/email_hierarchy_report.txt", params)
+                rendered_text = render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
                 delivery_func = transport_email
                 #transporter.email_report(usr,rendered_text, report.report_delivery, "")
                 params={"subject":"blah",'startdate':startdate,'enddate':enddate, 'frequency':run_frequency}

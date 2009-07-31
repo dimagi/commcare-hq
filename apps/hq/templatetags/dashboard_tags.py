@@ -8,11 +8,11 @@ from types import ListType,TupleType
 
 from xformmanager.models import *
 import xformmanager.adapter.querytools as qtools
-from organization.models import *
-import organization.utils as utils
+from hq.models import *
+import hq.utils as utils
 from datetime import timedelta
 import dbanalyzer.dbhelper as dbhelper
-from organization.models import *
+from hq.models import *
 register = template.Library()
 
 from dbanalyzer.models import RawGraph

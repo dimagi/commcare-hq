@@ -1,4 +1,4 @@
-{% extends "organization/report_base.html" %}
+{% extends "hq/report_base.html" %}
 {% load i18n %}
 {% load mainreport_tags %}
 {% block title %}{% trans "My Dashboard" %}{% endblock %}
@@ -12,7 +12,7 @@
 	<h4>Organization: {{org }} </h4>
 	
 	<div class="reports">
-		{% include "organization/reports/email_hierarchy_report.txt" %}	
+		{% include "hq/reports/email_hierarchy_report.txt" %}	
 	</div>
 	{%endfor%}
 {% endblock %}

@@ -3,10 +3,10 @@ from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
 from xformmanager.models import *
-from organization.models import *
+from hq.models import *
 from reporters.models import Reporter, ReporterGroup
 import xformmanager.adapter.querytools as qtools
-import organization.utils as utils        
+import hq.utils as utils        
 import uuid
 import string
 

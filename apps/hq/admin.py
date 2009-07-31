@@ -1,5 +1,5 @@
 from django.contrib import admin
-from organization.models import * 
+from hq.models import * 
 from django.contrib.auth.models import Group, User
 from reporters.models import Reporter
 

@@ -1,5 +1,5 @@
 from django_extensions.management.jobs import WeeklyJob
-import organization.reporter as reporter
+import hq.reporter as reporter
 
 class Job(WeeklyJob):
     help = "Supervisor Weekly Report Job."

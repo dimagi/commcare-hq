@@ -1,7 +1,7 @@
 import unittest
 from receiver.models import *
 from receiver import submitprocessor 
-from organization.models import Domain
+from hq.models import Domain
 
 class ProcessingTestCase(unittest.TestCase):
 

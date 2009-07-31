@@ -19,17 +19,17 @@ from django.db import transaction
 from dbanalyzer import dbhelper
 
 from xformmanager.models import *
-from organization.models import *
+from hq.models import *
 from dbanalyzer.models import *
 from receiver.models import *
 import dbanalyzer.views as chartviews
 
 from django.contrib.auth.models import User 
 from django.contrib.contenttypes.models import ContentType
-import organization.utils as utils
-import organization.reporter as reporter
-import organization.reporter.custom as custom
-import organization.reporter.metastats as metastats
+import hq.utils as utils
+import hq.reporter as reporter
+import hq.reporter.custom as custom
+import hq.reporter.metastats as metastats
 
 
 #from forms import *
@@ -41,30 +41,30 @@ import sys
 import os
 import string
 
-import organization.reporter.inspector as repinspector
-import organization.reporter.metadata as metadata
+import hq.reporter.inspector as repinspector
+import hq.reporter.metadata as metadata
 
 
 logger_set = False
 
 @login_required()
-def dashboard(request, template_name="organization/dashboard.html"):
+def dashboard(request, template_name="hq/dashboard.html"):
     # this is uber hacky - set the log level to debug on the dashboard
     
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
         
     startdate, enddate = utils.get_dates(request)
     
     context['startdate'] = startdate
     context['enddate'] = enddate
-    context['view_name'] = 'organization.views.dashboard'
+    context['view_name'] = 'hq.views.dashboard'
     return render_to_response(request, template_name, context)
 
 @login_required()
-def org_report(request, template_name="organization/org_single_report.html"):
+def org_report(request, template_name="hq/org_single_report.html"):
    # return org_email_report(request)
    
     context = {}
@@ -72,7 +72,7 @@ def org_report(request, template_name="organization/org_single_report.html"):
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
     except MyModel.DoesNotExist:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
         
     if extuser.organization == None:
@@ -89,7 +89,7 @@ def org_report(request, template_name="organization/org_single_report.html"):
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_report'
+    context['view_name'] = 'hq.views.org_report'
     
     context['organization_data'] = {}    
     
@@ -105,10 +105,10 @@ def org_report(request, template_name="organization/org_single_report.html"):
         heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     
     if do_sms:
-        rendering_template = "organization/reports/sms_organization.txt"
+        rendering_template = "hq/reports/sms_organization.txt"
         renderfunc = reporter.render_direct_sms
     else:
-        rendering_template = "organization/reports/email_hierarchy_report.txt"
+        rendering_template = "hq/reports/email_hierarchy_report.txt"
         renderfunc = reporter.render_direct_email 
         
         
@@ -129,7 +129,7 @@ def org_report(request, template_name="organization/org_single_report.html"):
 
 
 @login_required()
-def reporter_stats(request, template_name="organization/reporter_stats.html"):
+def reporter_stats(request, template_name="hq/reporter_stats.html"):
     context = {}       
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
@@ -141,7 +141,7 @@ def reporter_stats(request, template_name="organization/reporter_stats.html"):
     return render_to_response(request, template_name, context)
 
 @login_required()
-def delinquent_report(request, template_name="organization/reports/sms_delinquent_report.txt"):
+def delinquent_report(request, template_name="hq/reports/sms_delinquent_report.txt"):
     context = {}       
     extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
@@ -156,10 +156,10 @@ def delinquent_report(request, template_name="organization/reports/sms_delinquen
 
 
 @login_required()
-def org_email_report(request, template_name="organization/org_single_report.html"):
+def org_email_report(request, template_name="hq/org_single_report.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     
     startdate, enddate = utils.get_dates(request)
@@ -169,7 +169,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_email_report'
+    context['view_name'] = 'hq.views.org_email_report'
     #context['view_args'] = {"id" : id}
     
     # get the domain from the user, the root organization from the domain,
@@ -191,7 +191,7 @@ def org_email_report(request, template_name="organization/org_single_report.html
     else: 
         heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_email(data, startdate, enddate, 
-                                          "organization/reports/email_hierarchy_report.txt", 
+                                          "hq/reports/email_hierarchy_report.txt", 
                                           {"heading" : heading })
     context['report_display'] = rendered
     context['report_title'] = "Submissions per day for all CHWs"
@@ -199,10 +199,10 @@ def org_email_report(request, template_name="organization/org_single_report.html
 
 
 @login_required
-def org_sms_report(request, template_name="organization/org_single_report.html"):
+def org_sms_report(request, template_name="hq/org_single_report.html"):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     
     startdate, enddate = utils.get_dates(request)
@@ -213,7 +213,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'organization.views.org_sms_report'
+    context['view_name'] = 'hq.views.org_sms_report'
     
     # commented out because these reports aren't actually different reports
     # report = ReportSchedule.objects.get(id=id)
@@ -233,7 +233,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
     data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_sms(data, startdate, enddate, 
-                                          "organization/reports/sms_organization.txt", 
+                                          "hq/reports/sms_organization.txt", 
                                           {"heading" : heading })
     context['report_display'] = rendered
     return render_to_response(request, template_name, context)
@@ -243,7 +243,7 @@ def org_sms_report(request, template_name="organization/org_single_report.html")
 def domain_charts(request):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)    
 
     extuser = ExtUser.objects.all().get(id=request.user.id)

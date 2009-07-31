@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 
 from dbanalyzer import dbhelper
 from receiver.models import Attachment
-from organization.models import *
+from hq.models import *
 import logging
 import uuid
 import settings
