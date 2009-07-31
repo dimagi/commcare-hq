@@ -74,13 +74,8 @@ def single_attachment(request, attachment_id):
         return response
     except:
         return ""
-    
-    context ['processed_header'] = processed_header
-    context['attachments'] = attachments
-    return render_to_response(request, template_name, context)
 
-
-@login_required()    
+@login_required()
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
@@ -240,7 +235,37 @@ def save_post(request):
             return HttpResponse("Oh no something bad happened!  %s" % e)
     return HttpResponse("Sorry, we didn't get anything there.")
     
+
+@login_required()
+def orphaned_data(request, template_name="receiver/show_orphans.html"):
+    '''
+    View submissions for this domain.
+    '''
+    context = {}
+    try:
+        extuser = ExtUser.objects.get(id=request.user.id)
+    except ExtUser.DoesNotExist:
+        template_name="hq/no_permission.html"
+        return render_to_response(request, template_name, context)
+    orphans = []
+    # TODO - optimize this into 1 db call
+    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
+    for slog in slogs:
+        # the first attachment is always the xml
+        xml_attachment = slog.attachments.all()[0]
+        if not xml_attachment.has_linked_schema():
+            slog.attachment_id = xml_attachment.id
+            orphans = orphans + [ slog ]
+    paginator = Paginator(orphans, 25) # Show 25 items per page
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
     
-    
-    
-    
+    try:
+        submits_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        submits_pages = paginator.page(paginator.num_pages)
+
+    context['submissions'] = submits_pages    
+    return render_to_response(request, template_name, context)

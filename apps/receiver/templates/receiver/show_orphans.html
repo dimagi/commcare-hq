@@ -1,0 +1,39 @@
+{% extends base_template %}
+{% load i18n %}
+{% load submission_tags %}
+{% block title %}{% trans "Submissions Not Matching Any Known Schema" %}{% endblock %}
+{% block content %}
+<h2>{% trans "Submissions Not Matching Any Known Schema" %}</h2>
+   <table class="sofT">
+   <thead class="commcare-heading">
+    <tr>
+        <th>ID</th><th>Date</th><th>From</th><th>Size (bytes)</th><th>Attachments</th>
+    </tr>
+   </thead>
+   {% for submission in submissions.object_list %}      
+   	<tr class="{% cycle 'odd' 'even' %}">
+   		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.id}}</a></td>
+   		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
+   		<td>{{submission.submit_ip}}</td>
+   		<td>{{submission.bytes_received}}</td>
+        <td><a href="{% url receiver.views.single_attachment submission.attachment_id %}">view xml submission</a></td>
+   	</tr>	
+   {% endfor %}
+   </table>
+   
+   <div class="pagination">
+    <span class="step-links">
+        {% if submissions.has_previous %}
+            <a href="?page={{ submissions.previous_page_number }}"><< Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ submissions.number }} of {{ submissions.paginator.num_pages }}.
+        </span>
+
+        {% if submissions.has_next %}
+            <a href="?page={{ submissions.next_page_number }}">Next >></a>
+        {% endif %}
+    </span>
+	</div>
+{% endblock %}
