@@ -1,7 +1,7 @@
 from django.db import models
 
 from xformmanager.models import FormDefModel
-from organization.models import Domain
+from hq.models import Domain
 
 class FormIdentifier(models.Model):
     '''An identifier for a form.  This is a way for a case to point at

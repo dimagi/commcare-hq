@@ -19,7 +19,7 @@ from xformmanager.util import get_csv_from_form
 from receiver.submitprocessor import do_raw_submission
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from organization.models import *
+from hq.models import *
 
 from StringIO import StringIO
 from transformers.csv_ import UnicodeWriter
@@ -51,7 +51,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     if request.method == 'POST':        
@@ -102,7 +102,7 @@ def submit_data(request, formdef_id, template='submit_data.html'):
     """ A debug utility for admins to submit xml directly to a schema """ 
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     extuser = ExtUser.objects.all().get(id=request.user.id)
     if request.method == 'POST':
