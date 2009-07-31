@@ -1,6 +1,6 @@
 
 from hq.models import *
-from dbanalyzer.models import *
+from graphing.models import *
 
 from datetime import timedelta
 

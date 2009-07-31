@@ -1,7 +1,7 @@
 [
   {
     "pk": 23, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "High Risk v. Regular Cumulative", 
       "title": "High Risk v. Regular Cumulative"
@@ -9,7 +9,7 @@
   }, 
   {
     "pk": 22, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "High Risk v. Regular Over Time", 
       "title": "High Risk v. Regular Over Time"
@@ -17,7 +17,7 @@
   }, 
   {
     "pk": 20, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "CHW Submissions Over Time", 
       "title": "CHW Submissions Over Time"
@@ -25,7 +25,7 @@
   }, 
   {
     "pk": 19, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Total Submissions by CHW", 
       "title": "Total Submissions by CHW"
@@ -33,7 +33,7 @@
   }, 
   {
     "pk": 18, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "CHW Submissions Today", 
       "title": "CHW Submissions Today"
@@ -41,7 +41,7 @@
   }, 
   {
     "pk": 17, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Avg time with patient", 
       "title": "Average Time Spent with Patient at Registration"
@@ -49,7 +49,7 @@
   }, 
   {
     "pk": 16, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Prior Birth distributions", 
       "title": "Distribution of Prior Births at Registration"
@@ -57,7 +57,7 @@
   }, 
   {
     "pk": 15, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Average number of Prior births", 
       "title": "Average number of Prior Births"
@@ -65,7 +65,7 @@
   }, 
   {
     "pk": 14, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "User Registrations to Date", 
       "title": "Total Registrations by User"
@@ -73,7 +73,7 @@
   }, 
   {
     "pk": 13, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "CHW Registrations Over Time", 
       "title": "CHW Registrations Over Time"
@@ -81,7 +81,7 @@
   }, 
   {
     "pk": 12, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Grameen User Daily Registrations", 
       "title": "Daily Pregnancy Registrations by user"
@@ -89,7 +89,7 @@
   }, 
   {
     "pk": 11, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Registrations per day", 
       "title": "Pregnancy Registration Activity"
@@ -97,7 +97,7 @@
   }, 
   {
     "pk": 10, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "All Registrations", 
       "title": "All Pregnancy Registrations"
@@ -105,7 +105,7 @@
   }, 
   {
     "pk": 9, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "absolute bar", 
       "title": "absolute bar"
@@ -113,7 +113,7 @@
   }, 
   {
     "pk": 8, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "absolute line", 
       "title": "absolute line"
@@ -121,7 +121,7 @@
   }, 
   {
     "pk": 7, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "cumulative line", 
       "title": "cumulative line"
@@ -129,7 +129,7 @@
   }, 
   {
     "pk": 6, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Global Daily Referral Count", 
       "title": "Global Report of Inbound Referrals (daily count)"
@@ -137,7 +137,7 @@
   }, 
   {
     "pk": 5, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Global Referral Trends", 
       "title": "Global Referral Trends (cumulative)"
@@ -145,7 +145,7 @@
   }, 
   {
     "pk": 4, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Histogram of all referrals", 
       "title": "Overall Given Referrals"
@@ -153,7 +153,7 @@
   }, 
   {
     "pk": 3, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Overall Submissions by User", 
       "title": "Overall Submissions by all users (cumulative)"
@@ -161,7 +161,7 @@
   }, 
   {
     "pk": 2, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "Total User Submissions", 
       "title": "All Submissions by User"
@@ -169,7 +169,7 @@
   }, 
   {
     "pk": 1, 
-    "model": "dbanalyzer.basegraph", 
+    "model": "graphing.basegraph", 
     "fields": {
       "shortname": "User Daily Submissions", 
       "title": "Submissions by User (daily count)"
@@ -177,7 +177,7 @@
   }, 
   {
     "pk": 23, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "High Risk|Regular", 
       "data_source": "", 
@@ -193,7 +193,7 @@
   }, 
   {
     "pk": 22, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "High Risk|Regular", 
       "data_source": "", 
@@ -209,7 +209,7 @@
   }, 
   {
     "pk": 20, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -227,7 +227,7 @@
   }, 
   {
     "pk": 19, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -243,7 +243,7 @@
   }, 
   {
     "pk": 18, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -259,7 +259,7 @@
   }, 
   {
     "pk": 17, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Time", 
       "data_source": "", 
@@ -275,7 +275,7 @@
   }, 
   {
     "pk": 16, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Counts", 
       "data_source": "", 
@@ -291,7 +291,7 @@
   }, 
   {
     "pk": 15, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -307,7 +307,7 @@
   }, 
   {
     "pk": 14, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -323,7 +323,7 @@
   }, 
   {
     "pk": 13, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -339,7 +339,7 @@
   }, 
   {
     "pk": 12, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "username", 
       "data_source": "", 
@@ -355,7 +355,7 @@
   }, 
   {
     "pk": 11, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -371,7 +371,7 @@
   }, 
   {
     "pk": 10, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Count", 
       "data_source": "", 
@@ -387,7 +387,7 @@
   }, 
   {
     "pk": 9, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Children|Babies", 
       "data_source": "commcarehq", 
@@ -403,7 +403,7 @@
   }, 
   {
     "pk": 8, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "1|2", 
       "data_source": "asdf", 
@@ -419,7 +419,7 @@
   }, 
   {
     "pk": 7, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "0|1", 
       "data_source": "", 
@@ -435,7 +435,7 @@
   }, 
   {
     "pk": 6, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
@@ -451,7 +451,7 @@
   }, 
   {
     "pk": 5, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "", 
@@ -467,7 +467,7 @@
   }, 
   {
     "pk": 4, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "TB Test|Malaria|Preg Mother|Ante Natal|HIV Test|Birth Registration", 
       "data_source": "commcarehq", 
@@ -483,7 +483,7 @@
   }, 
   {
     "pk": 3, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "0", 
       "data_source": "", 
@@ -499,7 +499,7 @@
   }, 
   {
     "pk": 2, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "count", 
       "data_source": "", 
@@ -515,7 +515,7 @@
   }, 
   {
     "pk": 1, 
-    "model": "dbanalyzer.rawgraph", 
+    "model": "graphing.rawgraph", 
     "fields": {
       "series_labels": "Username", 
       "data_source": "", 
@@ -531,7 +531,7 @@
   }, 
   {
     "pk": 1, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": null, 
       "graphs": [], 
@@ -541,7 +541,7 @@
   }, 
   {
     "pk": 2, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": 1, 
       "graphs": [
@@ -555,7 +555,7 @@
   }, 
   {
     "pk": 3, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": null, 
       "graphs": [
@@ -570,7 +570,7 @@
   }, 
   {
     "pk": 4, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": 1, 
       "graphs": [
@@ -583,7 +583,7 @@
   }, 
   {
     "pk": 5, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": null, 
       "graphs": [], 
@@ -593,7 +593,7 @@
   }, 
   {
     "pk": 6, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": 5, 
       "graphs": [
@@ -607,7 +607,7 @@
   }, 
   {
     "pk": 7, 
-    "model": "dbanalyzer.graphgroup", 
+    "model": "graphing.graphgroup", 
     "fields": {
       "parent_group": 5, 
       "graphs": [

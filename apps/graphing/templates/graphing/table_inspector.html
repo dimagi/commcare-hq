@@ -1,16 +1,74 @@
-{% extends "dbanalyzer/flot_base.html" %}
+{% extends "graphing/flot_base.html" %}
 {% load i18n %}
-{% load formdata-tags %}
+{% load inspector_tags %}
 {% block chart_extras %}
-	{% get_form_links user %}
-	
-	
 	<p id="choices">Show:</p>	
 	
 	<!-- Zoom criteria selection not quite there yet
 	<p>Zoom to: <button id="whole">Whole period</button>
 	<button id="nineties">1990-2000</button>
 	<button id="ninetynine">1999</button></p>-->
+	
+	<div class="colchooser" style="float:left;padding:10px;">
+	<h2>Filter Columns</h2>
+	{% get_string_columns for table_name as columns %}
+	<ul>
+		{% for col in columns %}
+			<li><a href="{% build_next_url table_name col%}">{{col}}</a></li>
+		{% endfor %}	
+	</ul>
+	</div>
+	
+	{%if str_column %}
+	<div class="colchooser" style="float:left;padding:10px;">
+	<h2>Filter Column Values</h2>
+	{% get_distinct_values_for_column for str_column in table_name as colvals %}
+	<ul>
+	{% for val in colvals %}
+		<li><a href="{% build_next_url table_name str_column val %}">{{val}}</a></li>
+	{%endfor%}
+	</ul>
+	</div>
+	{%endif%}
+	
+	{% if str_column_value %}
+	<div class="colchooser" style="float:left;padding:10px;">
+	<h2>Datetime Columns</h2>
+	{% get_datetime_columns for table_name as datecols %}
+	<ul>
+	{% for datecol in datecols %}
+		<li><a href="{% build_next_url table_name str_column str_column_value datecol data_column display_mode %}">{{datecol}}</a></li>
+	{%endfor%}
+	</ul>
+	</div>
+	{%endif%}	
+	
+	{% if datetime_column  %}
+	<div class="colchooser" style="float:left;padding:10px;">
+	<h2>Data Columns</h2>
+	{% get_data_columns for table_name as data %}
+	<ul>
+	{% for datum in data %}
+		<li><a href="{% build_next_url table_name str_column str_column_value datetime_column datum display_mode %}">{{datum}}</a></li>
+	{%endfor%}
+	</ul>
+	</div>
+	{%endif%}
+	
+	{% if data_column %}
+	<div class="colchooser" style="float:left;padding:10px;">
+	<h2>Graphing Type</h2>
+	<ul>
+	<li>Additive line over time</li>
+	<li>Absolute line over time</li>
+	<li>Bar over time</li>
+	<li>Global Bar count (Y) by unique values (X)</li>
+	<li>Bar by value (Y) over time (X)</li>
+	<li>Additive line</li>
+	</ul>
+	</div>
+	{% endif %}
+	
 {%endblock%}
 		
 		

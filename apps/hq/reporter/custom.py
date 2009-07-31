@@ -9,7 +9,7 @@ import logging
 import settings
 import hq.utils as utils
 from hq.reporter import agents        
-import dbanalyzer.dbhelper as dbhelper
+import graphing.dbhelper as dbhelper
 from xformmanager.models import *
 from datetime import timedelta
 

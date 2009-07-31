@@ -11,11 +11,11 @@ import xformmanager.adapter.querytools as qtools
 from hq.models import *
 import hq.utils as utils
 from datetime import timedelta
-import dbanalyzer.dbhelper as dbhelper
+import graphing.dbhelper as dbhelper
 from hq.models import *
 register = template.Library()
 
-from dbanalyzer.models import RawGraph
+from graphing.models import RawGraph
 
 import time
 
@@ -120,7 +120,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
         chart.domain = extuser.domain.name
         chart.startdate = startdate.strftime("%Y-%m-%d")
         chart.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
-        chart_display = render_to_string("dbanalyzer/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
+        chart_display = render_to_string("graphing/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
         # czue commenting this out until the chart is less ugly 
         # ret += chart_display
     except RawGraph.DoesNotExist:

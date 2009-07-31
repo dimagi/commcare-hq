@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
 from hq.models import *
-import dbanalyzer.dbhelper as dbhelper  
+import graphing.dbhelper as dbhelper  
 
 import xformmanager.adapter.querytools as qtools
 

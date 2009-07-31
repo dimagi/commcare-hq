@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 from django.db import connection, transaction, DatabaseError
-import dbanalyzer.dbhelper as dbhelper
+import graphing.dbhelper as dbhelper
 import time
 import logging
 import datetime

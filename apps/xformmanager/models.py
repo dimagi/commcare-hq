@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 
-from dbanalyzer import dbhelper
+from graphing import dbhelper
 from receiver.models import Attachment
 from hq.models import *
 import logging

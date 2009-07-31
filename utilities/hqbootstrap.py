@@ -499,19 +499,19 @@ def run():
     organization_reportschedule_5.save()
 
 
-    from dbanalyzer.models import GraphPref, GraphGroup
+    from graphing.models import GraphPref, GraphGroup
 
-    dbanalyzer_graphpref_1 = GraphPref()
-    dbanalyzer_graphpref_1.user = organization_extuser_4
-    dbanalyzer_graphpref_1.save()
-    dbanalyzer_graphpref_1.root_graphs = [GraphGroup.objects.get(id=5)]
-    dbanalyzer_graphpref_1.save()
+    graphing_graphpref_1 = GraphPref()
+    graphing_graphpref_1.user = organization_extuser_4
+    graphing_graphpref_1.save()
+    graphing_graphpref_1.root_graphs = [GraphGroup.objects.get(id=5)]
+    graphing_graphpref_1.save()
     
-    dbanalyzer_graphpref_2 = GraphPref()
-    dbanalyzer_graphpref_2.user = organization_extuser_3
-    dbanalyzer_graphpref_2.save()
-    dbanalyzer_graphpref_2.root_graphs = [GraphGroup.objects.get(id=1)]
-    dbanalyzer_graphpref_2.save()
+    graphing_graphpref_2 = GraphPref()
+    graphing_graphpref_2.user = organization_extuser_3
+    graphing_graphpref_2.save()
+    graphing_graphpref_2.root_graphs = [GraphGroup.objects.get(id=1)]
+    graphing_graphpref_2.save()
     
     from receiver.models import Submission
 

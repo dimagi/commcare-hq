@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.contenttypes import generic
-from dbanalyzer.models import *
+from graphing.models import *
 
 class RawGraphAdmin(admin.ModelAdmin):
     list_display = ('id','shortname','title','data_source','table_name','display_type')

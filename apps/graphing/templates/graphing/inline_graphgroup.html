@@ -4,12 +4,12 @@
 			{% if group.graphs %}				
 					{% for graph in group.graphs.all %}
 					<li>
-						<a href="{%url dbanalyzer.views.view_graph graph.id %}">{{graph.shortname}}</a>
+						<a href="{%url graphing.views.view_graph graph.id %}">{{graph.shortname}}</a>
 					</li>
 					{% endfor %}								
 			{% endif %}
 			{% if subgroups %}			
-				{% with "dbanalyzer/inline_graphgroup.html" as recursefile %}  		
+				{% with "graphing/inline_graphgroup.html" as recursefile %}  		
 				{% with subgroups as graphtree %}
 					{% include recursefile %}													
 				{% endwith %}					

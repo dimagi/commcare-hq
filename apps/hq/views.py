@@ -16,13 +16,13 @@ from django.core.urlresolvers import reverse
 
 from datetime import timedelta
 from django.db import transaction
-from dbanalyzer import dbhelper
+from graphing import dbhelper
 
 from xformmanager.models import *
 from hq.models import *
-from dbanalyzer.models import *
+from graphing.models import *
 from receiver.models import *
-import dbanalyzer.views as chartviews
+import graphing.views as chartviews
 
 from django.contrib.auth.models import User 
 from django.contrib.contenttypes.models import ContentType
@@ -254,7 +254,7 @@ def domain_charts(request):
         return chartviews.view_group(request, mychartgroup.id)
 
 @login_required()
-def summary_trend(request, template_name="dbanalyzer/summary_trend.html"):
+def summary_trend(request, template_name="graphing/summary_trend.html"):
     """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
     context = {}        
     

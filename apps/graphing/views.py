@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
 from xformmanager.models import *
-from dbanalyzer import dbhelper
+from graphing import dbhelper
 from django.utils.encoding import *
 from hq.models import *
 
@@ -37,7 +37,7 @@ import os
 import string
 
 
-def inspector(request, table_name, template_name="dbanalyzer/table_inspector.html"):
+def inspector(request, table_name, template_name="graphing/table_inspector.html"):
     context = {}
     context['table_name'] = table_name
     
@@ -71,7 +71,7 @@ def inspector(request, table_name, template_name="dbanalyzer/table_inspector.htm
 
 
 @login_required()
-def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
+def view_graph(request, graph_id, template_name="graphing/view_graph.html"):
     context = {}    
     graph = RawGraph.objects.all().get(id=graph_id)
     
@@ -92,28 +92,28 @@ def view_graph(request, graph_id, template_name="dbanalyzer/view_graph.html"):
     rootgroup = utils.get_chart_group(extuser)    
     graphtree = get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    context['view_name'] = 'dbanalyzer.views.view_graph'
+    context['view_name'] = 'graphing.views.view_graph'
     context['width'] = graph.width
     context['height'] = graph.height
     context['empty_dict'] = {}
     for item in request.GET.items():
         if item[0] == 'bare':
-            template_name = 'dbanalyzer/view_graph_bare.html'
+            template_name = 'graphing/view_graph_bare.html'
         elif item[0] == 'data':
             context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-            template_name='dbanalyzer/view_graph_data.html'
+            template_name='graphing/view_graph_data.html'
         elif item[0] == 'csv':             
             return _get_chart_csv(graph)
     return render_to_response(request, template_name, context)
 
 @login_required()
-def show_allgraphs(request, template_name="dbanalyzer/show_allgraphs.html"):
+def show_allgraphs(request, template_name="graphing/show_allgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()    
     return render_to_response(request, template_name, context)
 
 @login_required()
-def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
+def show_multi(request, template_name="graphing/multi_graph.html"):
     context = {}    
     context['width'] = 900
     context['height'] = 350
@@ -122,7 +122,7 @@ def show_multi(request, template_name="dbanalyzer/multi_graph.html"):
 
 
 @login_required()
-def view_groups(request, template_name="dbanalyzer/view_groups.html"):
+def view_groups(request, template_name="graphing/view_groups.html"):
     context = {}    
     context['groups'] = GraphGroup.objects.all()
     return render_to_response(request, template_name, context)
@@ -138,7 +138,7 @@ def get_graphgroup_children(graph_group):
     return ret
     
 @login_required()
-def view_group(request, group_id, template_name="dbanalyzer/view_group.html"):
+def view_group(request, group_id, template_name="graphing/view_group.html"):
     context = {}
     group = GraphGroup.objects.all().get(id=group_id)
     context['group'] = group  

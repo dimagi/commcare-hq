@@ -6,8 +6,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 
 
-from dbanalyzer.models import *
-import dbanalyzer.dbhelper as dbhelper
+from graphing.models import *
+import graphing.dbhelper as dbhelper
 
 class BasicTestCase(unittest.TestCase):
     def setup(self):

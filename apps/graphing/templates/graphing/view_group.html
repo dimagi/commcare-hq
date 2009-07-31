@@ -1,0 +1,58 @@
+{% extends base_template %}
+{% load i18n %}
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.min.js"></script><![endif]-->
+    
+    
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/graphing/superfish/superfish.css" media="screen">    
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
+    <script type="text/javascript">
+		// initialise plugins
+		jQuery(function(){
+			jQuery('ul.sf-menu').superfish();
+		});
+	</script>
+    
+    {{ form.media }}
+{% endblock %} 
+
+{% block content %}
+
+<ul class="sf-menu">
+	{% include "graphing/inline_graphgroup.html" %}	
+</ul>
+ 
+{%comment %}
+<h2>Charts for {{group.name}}</h2>
+<div style="float:top;">
+<ul class="sf-menu">
+{% for group in child_groups %}
+<li>
+   	<a href="{%url graphing.views.view_group group.id %}">{{group.name}}</a>
+   	<ul>
+   		<li><a>wassup1</a>
+   			<ul>
+   				<li><a>wassup3</a>
+   					<ul>
+   						<li><a>wassup5</a></li>
+   						<li><a>wassu6</a></li>
+   					</ul>
+   				</li>
+   				<li><a>wassup4</a></li>
+   			</ul>
+   		</li>
+   		<li><a>wassup2</a></li>
+   	</ul>
+</li>
+{% endfor %}
+</ul>
+{%endcomment%}
+</div>
+	{% for chart in group_charts %}
+		{% include "graphing/inline_rawgraph.html" %}
+	{%endfor %}
+	
+{%endblock%}

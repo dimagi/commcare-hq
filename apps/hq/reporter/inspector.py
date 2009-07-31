@@ -10,7 +10,7 @@ import hq.utils as utils
 
 import time
 from datetime import timedelta
-import dbanalyzer.dbhelper as dbhelper
+import graphing.dbhelper as dbhelper
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
