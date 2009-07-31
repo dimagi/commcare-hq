@@ -8,6 +8,7 @@ from datetime import timedelta
 
 
 def get_org_reportdata(organization, startdate, enddate):
+    """returns a full domain of data reportage information"""
     fullret = []    
     members, supervisors = utils.get_members_and_supervisors(organization)    
     is_first = True    
