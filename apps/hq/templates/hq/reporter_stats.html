@@ -1,0 +1,25 @@
+{% extends "hq/report_base.html" %}
+{% load i18n %}
+{% load mainreport_tags %}
+{% block title %}{% trans "Reporter Statistics" %}{% endblock %}
+{% block org_report_content %}
+<h2>Reporter Statistics</h2>	
+	<h3>Domain: {{domain}}</h3>
+	<ul>
+	{% for prof, statdict in reporterstats.items %}
+		<li>{{prof}}
+			<ul>
+				{% for category, datum in statdict.items %}
+					{% ifequal category "IdleWarning" %}
+					    {% if datum %}
+					    	<li><strong>Delinquent!!!</strong></li>				    
+					    {%endif%}
+					{% else %}
+						<li>{{category}} :: {{datum}} </li>				
+					{%endifequal %}
+				{%endfor %}			
+			</ul>		
+		</li>	
+	{%endfor %}
+	</ul>	
+{% endblock %}

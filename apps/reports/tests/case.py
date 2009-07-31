@@ -3,7 +3,7 @@ from reports.models import *
 from xformmanager.tests.util import *
 from xformmanager.models import *
 from xformmanager.storageutility import StorageUtility
-from organization.models import Domain
+from hq.models import Domain
 #from django.test import TestCase
 
 class CaseTestCase(unittest.TestCase):

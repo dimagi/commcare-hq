@@ -1,0 +1,11 @@
+{% extends "hq/report_base.html" %}
+{% load i18n %}
+{% load mainreport_tags %}
+{% block title %}{% trans "My Dashboard" %}{% endblock %}
+{% block org_report_content %}
+<h3>{{ report_title }}</h3> 
+{% get_daterange_links view_name %}
+<p>
+{{ report_display|safe }}
+</p>
+{% endblock %}

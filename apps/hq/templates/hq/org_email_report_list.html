@@ -1,0 +1,13 @@
+{% extends "hq/report_base.html" %}
+{% load i18n %}
+{% load mainreport_tags %}
+{% block title %}{% trans "My Dashboard" %}{% endblock %}
+{% block org_report_content %}
+<h3>Domain: {{domain}}</h3>
+<h4>Available Reports</h4> 
+{% for report in available_reports %}				
+<p>
+<a href="{% url hq.views.org_email_report report.id %}">{{ report }}</a>
+</p>
+{% endfor %}
+{% endblock %}

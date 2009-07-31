@@ -1,7 +1,7 @@
 import unittest
 import os
 from django.contrib.auth.models import Group, User
-from organization.models import *
+from hq.models import *
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 

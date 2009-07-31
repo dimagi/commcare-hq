@@ -1,0 +1,18 @@
+{% extends "hq/report_base.html" %}
+{% load i18n %}
+{% load mainreport_tags %}
+{% block title %}{% trans "My Dashboard" %}{% endblock %}
+{% block org_report_content %}
+<h2>Domain Management</h2>	
+	{% get_daterange_links view_name %}
+	
+	<h3>Domain: {{domain}}</h3>
+	
+	{% for org, data in organization_data.items %}
+	<h4>Organization: {{org }} </h4>
+	
+	<div class="reports">
+		{% include "hq/reports/email_hierarchy_report.txt" %}	
+	</div>
+	{%endfor%}
+{% endblock %}

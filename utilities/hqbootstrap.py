@@ -32,7 +32,7 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from organization.models import Domain
+    from hq.models import Domain
 
     organization_domain_1 = Domain()
     organization_domain_1.name = u'Pathfinder'
@@ -54,7 +54,7 @@ def run():
     organization_domain_4.description = u''
     organization_domain_4.save()
 
-    from organization.models import OrganizationType
+    from hq.models import OrganizationType
 
     organization_organizationtype_1 = OrganizationType()
     organization_organizationtype_1.name = u'NGO'
@@ -82,7 +82,7 @@ def run():
 
 
     
-    from organization.models import ExtUser
+    from hq.models import ExtUser
 
     organization_extuser_1 = ExtUser()
     organization_extuser_1.username = u'bracadmin'
@@ -374,7 +374,7 @@ def run():
     reporters_persistantconnection_1.save()
 
 
-    from organization.models import Organization
+    from hq.models import Organization
 
     organization_organization_1 = Organization()
     organization_organization_1.name = u'Pathfinder'
@@ -441,7 +441,7 @@ def run():
     organization_organization_6.organization_type.add(organization_organizationtype_4)
 
 
-    from organization.models import ReportSchedule
+    from hq.models import ReportSchedule
 
     organization_reportschedule_1 = ReportSchedule()
     organization_reportschedule_1.name = u'Direct to bracadmin'

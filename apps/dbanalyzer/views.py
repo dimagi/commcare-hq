@@ -16,9 +16,9 @@ from django.core.urlresolvers import reverse
 from xformmanager.models import *
 from dbanalyzer import dbhelper
 from django.utils.encoding import *
-from organization.models import *
+from hq.models import *
 
-import organization.utils as utils
+import hq.utils as utils
 
 from transformers.csv_ import UnicodeWriter
 from StringIO import StringIO

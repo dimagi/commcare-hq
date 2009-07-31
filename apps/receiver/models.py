@@ -1,6 +1,6 @@
 from django.db import models
 from datetime import datetime
-from organization.models import *
+from hq.models import *
 
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers

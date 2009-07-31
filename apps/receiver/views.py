@@ -38,7 +38,7 @@ def show_submits(request, template_name="receiver/show_submits.html"):
     '''
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="organization/no_permission.html"
+        template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     
     extuser = ExtUser.objects.get(id=request.user.id)
