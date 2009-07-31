@@ -2,18 +2,23 @@ from django.test import TestCase
 from django.test.client import Client
 from xformmanager.tests.util import create_xsd_and_populate
 from xformmanager.models import *
+from hq.models import ExtUser
 
 class APITestCase(TestCase):
-    fixtures = ['test.json', 'test']
-    
     def setUp(self):
         # we cannot load this using django built-in fixtures
         # because django filters are model dependent
         # (and we have a whack of dynamically generated non-model db tables)
-        domain = Domain.objects.get(name="BRAC")
+        domain = Domain(name='mockdomain')
+        domain.save()
+        user = ExtUser()
+        user.domain = domain
+        user.username = 'jewelstaite'
+        user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
+        user.save()
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", domain)
         response = self.client.post('/accounts/login/', \
-                         {'username': 'brian', 'password': 'test'})
+                         {'username': 'jewelstaite', 'password': 'test'})
         # the login screen always gives a 302 - temporarily relocated response
         self.assertStatus(response, 302)
         pass
