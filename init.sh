@@ -1,3 +1,3 @@
-./manager.py reset_db --noinput
-./manager.py syncdb --noinput
-./manager.py runscript utilities.hqbootstrap
+./manage.py reset_db --noinput
+./manage.py syncdb --noinput
+./manage.py runscript utilities.hqbootstrap
