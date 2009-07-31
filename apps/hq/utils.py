@@ -38,7 +38,9 @@ def get_chart_group(extuser):
 def get_members_and_supervisors(organization):
     """Return a tuple (members[], supervisors[]) for a given organization.
        Deals with the empty lists and null objects for you so you don't have 
-       to."""
+       to.
+       The contents of the tuples are reporter objects.
+       """
     members = []
     supervisors = []
     if organization:

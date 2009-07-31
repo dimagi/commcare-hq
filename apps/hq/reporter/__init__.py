@@ -9,7 +9,7 @@ import logging
 import settings
 import hq.utils as utils
 from hq.reporter import agents        
-
+from hq.reporter import metadata
 import inspector as repinspector
 
 import custom
@@ -40,63 +40,79 @@ def get_daterange(run_frequency):
 
     
 def run_reports(run_frequency):
+    """Entry point for all reports in ReportSchedule to run 
+    
+    For a given frequency, ALL corresponding reports for that frequency will be queried and executed."""
     (startdate, enddate) = get_daterange(run_frequency)    
-    print "running reports"
-    for report in ReportSchedule.objects.all().filter(active=True, report_frequency=run_frequency):  
-        if report.report_class == 'siteadmin':
-            #get the user id, then, get the report function.
-            usr = report.recipient_user
-            organization = report.organization
-            if organization != None:
-                data = get_data_for_organization(run_frequency, report.report_delivery,organization)
-                params = {}
-                heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-                params['heading'] = heading 
-                
-                if report.report_delivery == 'email':
-                    subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  " + str(organization)
+    logging.debug("running reports for " + run_frequency)
+    
+    
+    for report in ReportSchedule.objects.all().filter(active=True, report_frequency=run_frequency):
+        try:  
+            logging.debug("running report " + str(report))
+            #dmyung - note, this needs to be refactored ASAP to reflect the metadata based reports.
+            if report.report_class == 'siteadmin':    
+                #get the user id, then, get the report function.
+                usr = report.recipient_user
+                organization = report.organization
+                if organization != None:
+                    data = get_data_for_organization(run_frequency, report.report_delivery,organization)
+                    logging.debug("got report data")                    
+                    params = {}
+                    heading = "Report for: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+                    params['heading'] = heading 
                     
-                    rendered_text = render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-                    transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
-                else:
-                    rendered_text = render_direct_sms(data, startdate, enddate, "hq/reports/sms_organization.txt", params)
-                    transport_sms(rendered_text, usr, params)
-        elif report.report_class == 'supervisor' or report.report_class == 'member':
-            #get the organization field and run the hierarchical report
-            org = report.organization
-            (members, supervisors) = utils.get_members_and_supervisors(org)
-      
-            data = get_data_for_organization(run_frequency, report.report_delivery, report.organization)                
-            print "got data: " 
-            print data
-            if report.report_delivery == 'email':
+                    if report.report_delivery == 'email':
+                        subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  " + str(organization)
+                        rendered_text = render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
+                        transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
+                    else:
+                        rendered_text = render_direct_sms(data, startdate, enddate, "hq/reports/sms_organization.txt", params)
+                        transport_sms(rendered_text, usr, params)
+            elif report.report_class == 'supervisor' or report.report_class == 'member':
+                #get the organization field and run the hierarchical report
+                org = report.organization
+                (members, supervisors) = utils.get_members_and_supervisors(org)                                
+                orgdata = metadata.get_org_reportdata(org, startdate, enddate)
                 params = {}
-                heading = "User report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-                params['heading'] = heading
-                rendered_text = render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-                delivery_func = transport_email
-                #transporter.email_report(usr,rendered_text, report.report_delivery, "")
-                params={"subject":"blah",'startdate':startdate,'enddate':enddate, 'frequency':run_frequency}
-            else:
-                rendered_text = render_direct_sms(data, startdate, enddate, "")
-                delivery_func = transport_sms
-                params = {}     
+                if report.report_delivery == 'email':
+                    params['heading'] = "User report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
+                    rendering_template = "hq/reports/email_hierarchy_report.txt"
+                    renderfunc = render_direct_email
+                    delivery_func = transport_email
+                else:
+                    params['heading'] = "Report " + startdate.strftime('%m/%d') + " - " + enddate.strftime('%m/%d/%Y')
+                    rendering_template = "hq/reports/sms_organization.txt"
+                    renderfunc = render_direct_sms 
+                    delivery_func = transport_sms
                 
-            if report.report_class == 'member':
-                for member in members:
-                    delivery_func(member,rendered_text,params)                    
-            else:
-                for super in supervisors:
-                    delivery_func(rendered_text,[super.email], params)
-                
-                
-        elif report.report_class == 'other':
-            #get the report function and proceed.
-            funcname = report.report_function
-            print funcname
-            if hasattr(custom, funcname):
-                func = getattr(custom,funcname) 
-                func(report,run_frequency)
+                data = metadata.get_org_reportdata(org, startdate, enddate)                
+                rendered_message =  renderfunc(data, startdate, enddate,     
+                                                  rendering_template, 
+                                                  params)               
+                                   
+                raise Exception("Delivery of metadata based supervisor/member reports not completed yet")
+                if report.report_class == 'member':
+                    for member in members:
+                        delivery_func(member,rendered_text,params)                    
+                else:
+                    for super in supervisors:
+                        delivery_func(rendered_text,[super.email], params)                
+                logging.debug("report delivered")
+            elif report.report_class == 'other':
+                #Custom function.  We will check the attr for that function's existence and execute.      
+                funcname = report.report_function
+                logging.debug("Activating custom report function " + str(funcname))
+                print "Activating custom report function " + str(funcname)
+                if hasattr(custom, funcname):
+                    func = getattr(custom,funcname)                              
+                    func(report,run_frequency)                    
+                    logging.debug("custom report complete")                    
+                else:
+                    logging.error("Error, report custom function " + str(funcname) + " does not exist")
+        except Exception, e:
+            logging.error("Error running " + run_frequency + " report: " + str(report) + " Exception: " + str(e))
+                    
             
         
 def get_data_for_organization(run_frequency, transport, org_domain):
@@ -128,12 +144,15 @@ def render_direct_sms(prepared_data, startdate, enddate, template_name, params={
     
     #collpase the data
     context['results'] = []
+    print prepared_data
+    print "prepared data"
     for item in prepared_data:
         sum = 0
         for num in item[-1]:sum+=num # single line, let's sum up the values            
         context['results'].append([item[2], sum])
-    
-    rendered = render_to_string(template_name, context)        
+    print "got the context"
+    print context
+    rendered = render_to_string(template_name, context)
     return rendered
 
 
@@ -152,10 +171,12 @@ def transport_email(rendered_text, recipient_usr, params={}):
 def transport_sms(rendered_text, recipient_usr, params={}):
     logging.debug("SMS Report transport via clickatell")        
     ctell = agents.ClickatellAgent()
-    try:
-        ctell.send(recipient_usr.reporter.connection().identity, rendered_text)
+    try:    
+        #until we get the rapidsms connection() stuff figured out, reveritng back to the extended user primary phone
+        #ctell.send(recipient_usr.reporter.connection().identity, rendered_text)
+        ctell.send(recipient_usr.primary_phone, rendered_text)
     except Exception, e:
-        logging.error("Error sending SMS report to %s" % recipient_user)
+        logging.error("Error sending SMS report to %s" % recipient_usr)
         logging.error(e)
     
 
