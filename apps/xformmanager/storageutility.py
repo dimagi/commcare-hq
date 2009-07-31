@@ -523,6 +523,7 @@ class StorageUtility(object):
         
     def _parse_meta_data(self, data_tree):
         if data_tree is None: return
+        m = Metadata()
         meta_tree = None
         # find meta node
         for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
@@ -530,9 +531,8 @@ class StorageUtility(object):
             break;
         if meta_tree is None:
             logging.debug("xformmanager: storageutility - no metadata found for " + self.formdef.target_namespace)
-            return
+            return m
         
-        m = Metadata()
         # parse the meta data (children of meta node)
         for element in meta_tree:
             # element.tag is for example <FormName>

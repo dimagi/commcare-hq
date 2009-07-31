@@ -196,16 +196,16 @@ class Metadata(models.Model):
     # in fact, you probably shouldn't even change the order
     # (TODO - replace with an appropriate comparator object, so that the code is less brittle )
     fields = [ 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid' ]
-    formname = models.CharField(max_length=255)
-    formversion = models.CharField(max_length=255)
-    deviceid = models.CharField(max_length=255)
+    formname = models.CharField(max_length=255, null=True)
+    formversion = models.CharField(max_length=255, null=True)
+    deviceid = models.CharField(max_length=255, null=True)
     # do not remove default values, as these are currently used to discover field type
     timestart = models.DateTimeField(_('Time start form'), default = datetime.now())
     timeend= models.DateTimeField(_('Time end form'), default = datetime.now())
-    username = models.CharField(max_length=255)
-    chw_id = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, null=True)
+    chw_id = models.CharField(max_length=255, null=True)
     #unique id
-    uid = models.CharField(max_length=32)
+    uid = models.CharField(max_length=32, null=True)
     # foreign key to the associated submission (from receiver app)
     submission = models.ForeignKey(Attachment, null=True, related_name="form_metadata")
     # foreign key to the row in the manually generated data table
