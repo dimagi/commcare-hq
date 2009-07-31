@@ -8,7 +8,6 @@ None
 
 import datetime
 from decimal import Decimal
-from django.contrib.contenttypes.models import ContentType
 
 def run():
     from django.contrib.auth.models import Group
