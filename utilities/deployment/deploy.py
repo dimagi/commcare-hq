@@ -13,7 +13,9 @@ import sys
 import tarfile
 import gzip
 
-import sys, os, select
+import sys
+import os
+import select
 import paramiko
 import socket
 
@@ -22,14 +24,12 @@ debug = True
 hostport = 22
 
 def make_archive(path, target_filename):
+    """for a given path, generate the tarball for distribution"""
     print "Making archive %s : %s" % (path, target_filename)    
     tar = tarfile.open(target_filename, "w:gz")
     tar.add(path)
     tar.close()
     print "archive created successfully"
-
-def putfile(t,filename):
-    pass
 
 def run(t, cmd):
     'Open channel on transport, run command, capture output and return'
@@ -38,15 +38,13 @@ def run(t, cmd):
 
     if debug: print 'DEBUG: Running cmd:', cmd
     chan = t.open_session()
-    chan.setblocking(1)
-    #chan.setblosesscking(0)
+    chan.setblocking(1)   
 
     try:
         chan.exec_command(cmd)
     except SSHException:
         print "Error running remote command, yo", SSHException        
         sys.exit(1)
-    
 
     ### Read when data is available
     while True:
@@ -67,12 +65,8 @@ def run(t, cmd):
 
 
 def do_deploy(hostname, username, password, target_abs_path, target_deploy_path, build_number, revision_number):
-    ### Unbuffered sys.stdout
-    #COMMCARE VARS
-    #CCHQ_BUILD_NUMBER=-1
-    #CCHQ_REVISION_NUMBER=-1
-    #CCHQ_BUILD_DATE=''
     
+    #we are starting in commcare-hq/utilities/build because we are operating off of the build.xml
     #make the archive    
     #git revision numbers are nasty looking: b9cfdebe87d6-05/27/2009 16:03:43, so let's escape them    
     revision_number = revision_number.replace(' ', '_')
@@ -81,29 +75,27 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     #create the archive in the root directory where both rapidsms and commcarehq reside
-    archive_to_deploy = os.path.join('../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
+    archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
     
     #get the basedir that these reside in.  this could be arbitrary
-    basedir = os.path.basename(os.path.abspath('../')) #49120312421 or commcarehq   
+    basedir = os.path.basename(os.path.abspath('../../')) #49120312421 or commcare-/hq   
     curdir = os.getcwd()
     
     #go down to that level to actuall make archive
     print "cwd: " + os.getcwd()
-    os.chdir('../../')
+    os.chdir('../../../')
     print "archive to deploy: " + archive_to_deploy    
     print "cwd: " + os.getcwd()    
     make_archive(basedir,os.path.basename(archive_to_deploy))
     os.chdir(curdir)
     print "cwd: " + os.getcwd()
-    
-    
+        
     sys.stdout = os.fdopen(1, 'w', 0)    
     if debug:
         print 'DEBUG: Writing log to ssh-cmd.log'
         paramiko.util.log_to_file('ssh-cmd.log')
     
-    ### Open SSH transport
-    
+    ### Open SSH transport    
     transport = paramiko.Transport((hostname, hostport))
     transport.connect(username=username, password=password)
     
@@ -111,8 +103,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     sftp = paramiko.SFTPClient.from_transport(transport)
     archive_filename = os.path.basename(archive_to_deploy)
-    print "transporting file: " + archive_filename + " to: " + target_abs_path 
-    
+    print "transporting file: " + archive_filename + " to: " + target_abs_path    
     
     sftp.put(archive_to_deploy,target_abs_path + archive_filename)
     sftp.close()
