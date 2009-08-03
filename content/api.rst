@@ -43,8 +43,8 @@ http://dev.commcarehq.org/api/xforms/1/schema
 
   * format
   
-    * allowable values: CSV, XML, JSON
-    * default value: CSV
+    * allowable values: XML (XSD)
+    * default value: XML (XSD)
 
 
 Data
