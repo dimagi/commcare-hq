@@ -16,6 +16,8 @@ import sys
 import os
 import traceback
 
+_XFORM_URI = 'xform'
+
 class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
@@ -44,8 +46,11 @@ class Submission(models.Model):
         '''
         attachments = self.attachments.order_by("id")
         for attachment in attachments:
-            if attachment.attachment_content_type == "text/xml":
-                return attachment
+            # we use the uri because the content_type can be either 'text/xml'
+            # (if coming from a phone) or 'multipart/form-data'
+            # (if coming from a webui)
+            if attachment.attachment_uri == _XFORM_URI:
+                   return attachment
         return None
         
         
@@ -93,8 +98,9 @@ class Submission(models.Model):
                     new_attach.submission = self
                     content_type = part.get_content_type()
                     new_attach.attachment_content_type=content_type
+                    # data submitted from the webui is always 'multipart'
                     if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
-                        new_attach.attachment_uri = 'xform'
+                        new_attach.attachment_uri = _XFORM_URI
                         filename='-xform.xml'
                     else:
                         logging.debug("non XML section: " + part['Content-ID'])
