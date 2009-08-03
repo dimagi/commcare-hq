@@ -4,6 +4,7 @@ import logging
 import traceback
 import hashlib
 import csv
+from MySQLdb import IntegrityError
 from django.http import Http404
 from rapidsms.webui.utils import render_to_response
 from django.shortcuts import get_object_or_404
@@ -64,34 +65,28 @@ def register_xform(request, template='register_and_list_xforms.html'):
             except IOError, e:
                 logging.error("xformmanager.manager: " + str(e) )
                 context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
-                context['upload_form'] = RegisterXForm()
-                context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
-                return render_to_response(request, template, context)
+            except IntegrityError, e:
+                logging.error("Attempt to register schema with duplicate namespace")
+                context['errors'] = "An XFrom with this namespace (xmlns) already exists. Did you remember to update your version number?"
+                transaction.rollback()
             except Exception, e:
-                logging.error(e)
-                logging.error("Unable to write raw post data<br/>")
-                logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]) + "<br/>")
-                logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
-                type, value, tb = sys.exc_info()
-                logging.error(str(type.__name__), ":", str(value))
-                logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
-                logging.error("Transaction rolled back")
-                context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
-                transaction.rollback()                            
+                logging.error(str(e))
+                context['errors'] = str(e)
+                transaction.rollback()
             else:
                 formdefmodel.submit_ip = request.META['REMOTE_ADDR']
                 formdefmodel.bytes_received =  request.FILES['file'].size
-                
                 formdefmodel.form_display_name = form.cleaned_data['form_display_name']                
                 formdefmodel.uploaded_by = extuser
                 if extuser:
                     formdefmodel.domain = extuser.domain
                 
-                formdefmodel.save()                
+                formdefmodel.save()
                 logging.debug("xform registered")
-                transaction.commit()                
-                context['register_success'] = True
+                transaction.commit()
                 context['newsubmit'] = formdefmodel
+        else:
+            context['errors'] = form.errors
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
     return render_to_response(request, template, context)
