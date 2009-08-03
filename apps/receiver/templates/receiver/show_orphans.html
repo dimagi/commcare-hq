@@ -16,7 +16,7 @@
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
    		<td>{{submission.bytes_received}}</td>
-        <td><a href="{% url receiver.views.single_attachment submission.attachment_id %}">view xml submission</a></td>
+        <td><a href="{% url receiver.views.single_attachment submission.xform.id %}">view xml submission</a></td>
    	</tr>	
    {% endfor %}
    </table>

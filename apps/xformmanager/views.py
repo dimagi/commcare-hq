@@ -116,7 +116,9 @@ def submit_data(request, formdef_id, template='submit_data.html'):
             else:
                 attachments = Attachment.objects.all().filter(submission=new_submission)
                 context['submission'] = new_submission
-                context['register_success'] = True
+        else:
+             logging.error("Domain Submit(): Form submission error")
+             context['errors'] = form.errors
     context['upload_form'] = SubmitDataForm()
     return data(request, formdef_id, template, context)
 

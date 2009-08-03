@@ -79,6 +79,43 @@ class MetaTestCase(unittest.TestCase):
                 populate("data/pf_followup_%s.xml" % i)
                 self.assertEqual(running_count, len(Metadata.objects.all()))
     
+    def testSubmitHandling(self):
+        create_xsd_and_populate("data/pf_followup.xsd")
+        self.assertEqual(0, len(Metadata.objects.all()))
+        self.assertEqual(0, len(Submission.objects.all()))
+        self.assertEqual(0, len(SubmissionHandlingOccurrence.objects.all()))
+        
+        # this should create a linked submission
+        populate("data/pf_followup_1.xml")
+        
+        self.assertEqual(1, len(Metadata.objects.all()))
+        self.assertEqual(1, len(Submission.objects.all()))
+        submission = Submission.objects.all()[0]
+        self.assertEqual(1, len(SubmissionHandlingOccurrence.objects.all()))
+        way_handled = SubmissionHandlingOccurrence.objects.all()[0]
+        self.assertEqual(submission, way_handled.submission)
+        self.assertEqual("xformmanager", way_handled.handled.app)
+        self.assertEqual("instance_data", way_handled.handled.method)
+        self.assertFalse(submission.is_orphaned())
+        
+        # these should NOT create a linked submission.  No schema
+        populate("data/pf_new_reg_1.xml")
+        populate("data/pf_new_reg_2.xml")
+        populate("data/pf_ref_completed_1.xml")
+        
+        self.assertEqual(1, len(Metadata.objects.all()))
+        self.assertEqual(4, len(Submission.objects.all()))
+        for new_submission in Submission.objects.all():
+            if new_submission == submission:
+                self.assertFalse(new_submission.is_orphaned())
+            else:
+                self.assertTrue(new_submission.is_orphaned())
+        self.assertEqual(1, len(SubmissionHandlingOccurrence.objects.all()))
+        self.assertEqual(way_handled, SubmissionHandlingOccurrence.objects.all()[0])
+        
+        
+        
+    
     def testMetaData_3(self):
         create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
         populate("data/pf_followup_2.xml")

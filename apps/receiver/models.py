@@ -16,6 +16,8 @@ import sys
 import os
 import traceback
 
+_XFORM_URI = 'xform'
+
 class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
@@ -44,8 +46,11 @@ class Submission(models.Model):
         '''
         attachments = self.attachments.order_by("id")
         for attachment in attachments:
-            if attachment.attachment_content_type == "text/xml":
-                return attachment
+            # we use the uri because the content_type can be either 'text/xml'
+            # (if coming from a phone) or 'multipart/form-data'
+            # (if coming from a webui)
+            if attachment.attachment_uri == _XFORM_URI:
+                   return attachment
         return None
         
         
@@ -71,7 +76,18 @@ class Submission(models.Model):
                 attach.delete()                        
         super(Submission, self).delete()
         
+    def handled(self, handle_type):
+        """Mark the submission as being handled in the way that is passed in.
+           Returns the SubmissionHandlingOccurrence that is created."""
+        return SubmissionHandlingOccurrence.objects.create(submission=self, handled=handle_type)
     
+    def is_orphaned(self):
+        """Whether the submission is orphaned or not.  Orphanage is defined 
+           by having no information about the submission being handled."""
+        # this property will be horribly inaccurate until we clear and resubmit everything 
+        # in our already-deployed servers
+        return len(SubmissionHandlingOccurrence.objects.filter(submission=self)) == 0
+        
     def process_attachments(self):
         """Process attachments for a given submission blob.
         Will try to use the email parsing library to get all the MIME content from a given submission
@@ -93,8 +109,9 @@ class Submission(models.Model):
                     new_attach.submission = self
                     content_type = part.get_content_type()
                     new_attach.attachment_content_type=content_type
+                    # data submitted from the webui is always 'multipart'
                     if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
-                        new_attach.attachment_uri = 'xform'
+                        new_attach.attachment_uri = _XFORM_URI
                         filename='-xform.xml'
                     else:
                         logging.debug("non XML section: " + part['Content-ID'])
@@ -208,4 +225,26 @@ class Attachment(models.Model):
     
     def __unicode__(self):
         return "Attachment %s %s"  % (self.id, self.attachment_uri)
+    
+class SubmissionHandlingType(models.Model):
+    '''A way in which a submission can be handled.  Contains a reference
+       to both an app, that did the handling, and a method, representing
+       how the app did something.  For example, one app could be "xformmanager" 
+       and a way of handling could be "saved_form_data"'''
+    # todo? these names are pretty long-winded 
+    app = models.CharField(max_length=50)
+    method = models.CharField(max_length=100) 
+    
+class SubmissionHandlingOccurrence(models.Model):
+    """A class linking submissions to ways of handling them.  Other apps
+       should create instances of this model by calling submission.handled()
+       with the appropriate handling type as submissions are processed.
+       An app creating an instance of this implies that the app somehow 
+       'understood' the submission, so unparsed or error-full submisssions
+       should not have instances of this."""
+    # todo? these names are pretty long-winded 
+    submission = models.ForeignKey(Submission)    
+    handled = models.ForeignKey(SubmissionHandlingType)    
+     
+    
     
