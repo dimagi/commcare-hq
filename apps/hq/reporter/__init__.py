@@ -12,6 +12,13 @@ from hq.reporter import agents
 from hq.reporter import metadata
 import inspector as repinspector
 
+import base64
+import urllib2
+import urllib
+import httplib
+
+from urlparse import urlparse
+
 import custom
 
  
@@ -169,12 +176,21 @@ def transport_email(rendered_text, recipient_usr, params={}):
     eml.send_email(subject_line, recipient_usr.email, rendered_text)     
     
 def transport_sms(rendered_text, recipient_usr, params={}):
-    logging.debug("SMS Report transport via clickatell")        
-    ctell = agents.ClickatellAgent()
-    try:    
-        #until we get the rapidsms connection() stuff figured out, reveritng back to the extended user primary phone
-        #ctell.send(recipient_usr.reporter.connection().identity, rendered_text)
-        ctell.send(recipient_usr.primary_phone, rendered_text)
+    logging.debug("SMS Report transport via RapidSMS backend")    
+    try:       
+        #Send a message to the rapidsms backend via the Ajax app
+        #Call the messaging ajax http endpoint
+        ajax_endpoint = urlparse("http://localhost/ajax/messaging/send_message")        
+        conn = httplib.HTTPConnection(ajax_endpoint.netloc)        
+        
+        #do a POST with the correct submission passing the reporter ID.
+        #For more more information see the messaging and ajax apps.
+        conn.request('POST', 
+                     ajax_endpoint.path, 
+                     urllib.urlencode({'uid': recipient_usr.reporter.id, 'text': rendered_text}),
+                     {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'})
+        resp = conn.getresponse()
+        results = resp.read()                
     except Exception, e:
         logging.error("Error sending SMS report to %s" % recipient_usr)
         logging.error(e)
