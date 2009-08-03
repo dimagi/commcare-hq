@@ -100,6 +100,7 @@ def monitoring(request):
     context["empty_data_holder"] = "<b></b>"
     return render_to_string("custom/mvp/monitoring.html", context)
 
+
 def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the
        columns contains one of the values, returns true'''
