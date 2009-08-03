@@ -239,7 +239,7 @@ def save_post(request):
 @login_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
-    View submissions for this domain.
+     View data that we could not link to any known schema
     '''
     context = {}
     try:
@@ -252,10 +252,9 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     for slog in slogs:
         # the first attachment is always the xml
-        xml_attachment = slog.attachments.all()[0]
-        if not xml_attachment.has_linked_schema():
-            slog.attachment_id = xml_attachment.id
-            orphans = orphans + [ slog ]
+        if slog.xform:
+            if not slog.xform.has_linked_schema():
+                orphans = orphans + [ slog ]
     paginator = Paginator(orphans, 25) # Show 25 items per page
     try:
         page = int(request.GET.get('page', '1'))
