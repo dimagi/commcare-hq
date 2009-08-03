@@ -2,8 +2,15 @@
 {% load i18n %}
 {% load submission_tags %}
 {% block title %}{% trans "All Submissions" %}{% endblock %}
+
+<!-- stylesheets -->
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+
 {% block content %}
 <h2>{% trans "All Submissions" %}</h2>
+   Submissions with IDs highlighted in red could not be parsed. Please make sure a matching xform schema has been registered.
    <table class="sofT">
    <thead class="commcare-heading">
     <tr>
@@ -12,7 +19,22 @@
    </thead>
    {% for submission in submissions.object_list %}      
    	<tr class="{% cycle 'odd' 'even' %}">
-   		<td><a href="{%url receiver.views.single_submission submission.id %}">{{submission.id}}</a></td>
+   		<td><a href="{%url receiver.views.single_submission submission.id %}">
+		    {% if submission.xform %}
+			    {% if not submission.xform.has_linked_schema %}
+			    	<span class="orphan">
+			    {% endif %}
+		    {% endif %}
+
+   		    {{submission.id}}
+
+		    {% if submission.xform %}
+			    {% if not submission.xform.has_linked_schema %}
+			    	</span>
+			    {% endif %}
+		    {% endif %}
+
+   		</a></td>
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
    		<td>{{submission.bytes_received}}</td>
