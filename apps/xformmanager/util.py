@@ -5,7 +5,7 @@ from lxml import etree
 
 from django.http import HttpResponseBadRequest
 from django.db import connection
-from transformers.csv_ import format_csv
+from transformers.csv import format_csv
 from xformmanager.models import FormDefModel
 
 MAX_MYSQL_TABLE_NAME_LENGTH = 64
