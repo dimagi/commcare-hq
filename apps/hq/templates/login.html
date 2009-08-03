@@ -1,24 +1,26 @@
+{% extends request.base_template %}
 {% load i18n %}
-<html>
-<head>
-<title>Login to Commcare HQ</title>
-<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/style.css" />
-</head>
-<body>
-
+{% block title %}Login{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+<p>You're already logged in!</p>
+{% else %}
 <div id="loginblock">
-<h2>Commcare HQ</h2>
-<h4>Please sign in</h4>
-<form method="post" action=".">
-<table>
-<tr><td>{{ form.username.label_tag }}</td><td>{{ form.username }}</td></tr>
-<tr><td>{{ form.password.label_tag }}</td><td>{{ form.password }}</td></tr>
-</table>
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
-<input type="submit" value="Login" />
-<input type="hidden" name="next" value="{{ next }}" />
-</form>
+    <h2>Commcare HQ</h2>
+    <h4>Please sign in</h4>
+    <form method="post" action=".">
+        <table>
+            <tr><td>{{ form.username.label_tag }}</td><td>{{ form.username }}</td></tr>
+            <tr><td>{{ form.password.label_tag }}</td><td>{{ form.password }}</td></tr>
+        </table>
+        {% if form.errors %}
+            <p><font color="red">Your username and password didn't match. Please try again.</font></p>
+        {% endif %}
+        <input type="submit" value="Login" />
+        <input type="hidden" name="next" value="{{ next }}" />
+    </form>
+    <br>
 </div>
+{% endif %}
+{% endblock %}
 
