@@ -7,6 +7,7 @@ from django_rest_interface.resource import Resource
 from transformers.csv import get_csv_from_django_query, format_csv
 from xformmanager.xformdef import FormDef
 from xformmanager.models import *
+from xformmanager.util import get_zipfile
 from hq.models import *
 
 """ changes to the API need to occur in 
@@ -106,9 +107,11 @@ class XFormSubmissionsData(Resource):
         if request.REQUEST.has_key('start-id'):
             if filter: filter = filter + " AND "
             filter = filter + "id >= " + request.GET['start-id']
+            metadata = metadata.filter(raw_data__gte=request.GET['start-id'])
         if request.REQUEST.has_key('end-id'):
             if filter: filter = filter + " AND "
             filter = filter + "id <= " + request.GET['end-id']
+            metadata = metadata.filter(raw_data__lte=request.GET['end-id'])
         if request.REQUEST.has_key('start-date'):
             date = datetime.strptime(request.GET['start-date'],"%Y-%m-%d")
             # not the most efficient way of doing this 
@@ -121,6 +124,14 @@ class XFormSubmissionsData(Resource):
             metadata = metadata.filter(submission__submission__submit_time__lte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
             filter.append( ['id','IN',tuple(raw_ids)] )
+        if request.REQUEST.has_key('format'):
+            if request.GET['format'].lower() == 'xml' or \
+               request.GET['format'].lower() == 'zip':
+                file_list = []
+                for datum in metadata:
+                    file_list.append( datum.submission.filepath )
+                return get_zipfile(file_list)
+        # default to csv export
         rows = formdef.get_rows( column_filters=filter )
         column = formdef.get_column_names()
         return format_csv(rows, column, formdef.form_name)

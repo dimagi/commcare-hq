@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     (r'^xforms/show/(?P<formdef_id>\d+)/(?P<instance_id>\d+)/csv/?$', 'xformmanager.views.single_instance_csv'),
     (r'^xforms/data/(?P<formdef_id>\d+)$', 'xformmanager.views.data'),
     (r'^xforms/data/(?P<formdef_id>\d+)/csv/?$', 'xformmanager.views.export_csv'),
+    (r'^xforms/data/(?P<formdef_id>\d+)/xml/?$', 'xformmanager.views.export_xml'),
     (r'^xforms/(?P<formdef_id>\d+)/submit$', 'xformmanager.views.submit_data'),
     (r'', include('xformmanager.api_.urls')),    
 )

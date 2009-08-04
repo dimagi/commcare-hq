@@ -228,7 +228,19 @@ def single_instance_csv(request, formdef_id, instance_id):
     response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( xform.form_display_name, instance_id)
     return response
 
-        
+
+@login_required()
+def export_xml(request, formdef_id):
+    """
+    Get a zip file containing all submissions for this schema
+    """
+    formdef = get_object_or_404(FormDefModel, pk=formdef_id)
+    metadata = Metadata.objects.filter(formdefmodel=formdef).order_by('id')
+    file_list = []
+    for datum in metadata:
+        file_list.append( datum.submission.filepath )
+    return get_zipfile(file_list)
+
 @login_required()
 def data(request, formdef_id, template_name="data.html", context={}):
     xform = get_object_or_404(FormDefModel, id=formdef_id)
