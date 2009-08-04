@@ -20,7 +20,7 @@ from hq.models import *
 
 import hq.utils as utils
 
-from transformers.csv_ import UnicodeWriter
+from transformers.csv import UnicodeWriter
 from StringIO import StringIO
 
 from datetime import timedelta

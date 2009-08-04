@@ -8,7 +8,7 @@ from datetime import timedelta
 
 
 def get_stats_for_reporterprofile(reporter_profile, meta_qset, formdef_qset):
-    """For a given reporterprofile object, we want to see what some certain stats are for their submissions.    
+    """For a given reporterprofile object, return stats are for their submissions.    
     requires a Metadata, and a FormDefModel queryset for filtration"""    
     
     statresults = {}    
