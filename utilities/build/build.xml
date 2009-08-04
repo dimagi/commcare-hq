@@ -8,7 +8,7 @@
 	<property name="pydoc.dir" value="../../docs"/>
 	<property name="libs.dir" value="../../lib" />
 	<property name="deployment.dir" value="../deployment" />
-	<property name="rapidsms.dir" value="../..//rapidsms" />
+	<property name="rapidsms.dir" value="../../rapidsms" />
 	
 	<property name="antdepends.dir" value="../../utilities/build" />
 	<property name="postdeploy.dir" value="../../tests/deployment" />
@@ -114,7 +114,7 @@
 	</target>	
 	
 	<target name="deploy-to-server" depends="compile,django-tests-all,syncdb">
-		<py-run script="deploy.py" pythonpath="${deployment.dir}">			
+		<py-run script="${deployment.dir}/deploy.py" pythonpath="${deployment.dir}">			
 		</py-run>
 	</target>
 	
