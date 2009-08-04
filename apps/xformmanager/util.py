@@ -6,7 +6,7 @@ from lxml import etree
 from django.http import HttpResponseBadRequest
 from django.db import connection
 from transformers.csv import format_csv
-from xformmanager.models import FormDefModel
+from xformmanager.models import FormDefModel, ElementDefModel
 
 MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
@@ -20,7 +20,18 @@ def table_name(name):
             return "schema_" + sanitize(tail)
     return "schema_" + sanitize(name)
 def old_table_name(name):
-    return "x_" + sanitize(name)
+    return "x_" + _old_sanitize(name)
+def _old_sanitize(name):
+    _TABLE_PREFIX = "x_"
+    _MAX_LENGTH = 64 - len(_TABLE_PREFIX)
+    start = 0
+    if len(name) >= _MAX_LENGTH:
+        start = len(name)-_MAX_LENGTH
+    truncated_name = name[start:len(name)]
+    sanitized_name = truncated_name.replace("-","_").replace("/","_").replace(":","").replace(".","_").lower()
+    if sanitized_name.lower() == "where" or sanitized_name.lower() == "when":
+        return "_" + sanitized_name
+    return sanitized_name
 # this is purely for backwards compatibility
 possible_naming_functions=[old_table_name,table_name]
 
@@ -32,7 +43,7 @@ def retrieve_table_name(name):
     # current hack, fix later: 122 is mysql table limit, i think
     for func in possible_naming_functions:
         table_name = func(name)
-        if table_exists( table_name ):
+        if ElementDefModel.objects.filter(table_name=table_name):
             return table_name
     return None
 
