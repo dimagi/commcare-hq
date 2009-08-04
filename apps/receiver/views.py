@@ -132,7 +132,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if domain_name[-1] == '/':
         domain_name = domain_name[0:-1] #get rid of the trailing slash if it's there
     
-    logging.error("begin domained raw_submit(): " + domain_name)
+    logging.debug("begin domained raw_submit(): " + domain_name)
     currdomain = Domain.objects.filter(name=domain_name)
     if len(currdomain) != 1:
         template_name="receiver/submit_failed.html"

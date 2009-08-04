@@ -153,19 +153,12 @@ class DomainTestCase(unittest.TestCase):
                 return -1
 
 
-    def _getMaxSchemaSubmitId(self, xform_id):        
-        p = subprocess.Popen([curl_command,'-b', self.session_cookie, 'http://%s/xforms/data/%d' % (serverhost, xform_id)],stdout=PIPE,stderr=PIPE,shell=False)
+    def _getMaxSchemaSubmitId(self, xform_id):
+        url = 'http://%s/api/xforms/%d/?format=csv' % (serverhost, xform_id)
+        p = subprocess.Popen([curl_command,'-b', self.session_cookie, url],stdout=PIPE,stderr=PIPE,shell=False)
         data = p.stdout.read()
-        
-        
-        if data.count ('<tr class="dbodyrow') == 0:
-            return 0
-        else:
-            idx = data.index('<tr class')
-            tdstart = data[idx:].index('<td>') #get the first </td>
-            tdend = data[idx:].index('</td>') #get the first </td>
-            
-            return int(data[idx+tdstart+4:idx+tdend])       
+        count = data.count('\n') - 1
+        return count
 
     def _postXform2(self,submit_user, submit_pw, xformfile):
         # build opener with HTTPCookieProcessor
@@ -299,7 +292,7 @@ class DomainTestCase(unittest.TestCase):
             
             self._postSimpleData2(data_file, self.domain_name)            
             new_id = self._getMaxSchemaSubmitId(form_id)
-            #self.assertNotEqual(new_id, last_id)
+            self.assertNotEqual(new_id, last_id)
             print "Submitted file: " + data_file + " Row ID: " + str(new_id)                            
             last_id = new_id
     
