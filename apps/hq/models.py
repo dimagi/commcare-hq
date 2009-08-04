@@ -11,6 +11,7 @@ class Domain(models.Model):
        charts, etc.'''
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=255, null=True, blank=True)
+    timezone = models.CharField(max_length=64,null=True)
         
     def __unicode__(self):
         return self.name
