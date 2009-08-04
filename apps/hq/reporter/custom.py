@@ -321,6 +321,7 @@ def delinquent_alert(report_schedule, run_frequency):
     org = report_schedule.organization
     transport = report_schedule.report_delivery   
     usr = report_schedule.recipient_user    
+    threshold = 14
     
     #dan hack.  circularly referring back to some methods in our namespace
     from hq import reporter    
@@ -331,7 +332,7 @@ def delinquent_alert(report_schedule, run_frequency):
             lastseen = result['Time since last submission (days)']
         else:
             lastseen = 0
-        if lastseen == 14:        
+        if lastseen >= threshold:        
             delinquents.append(reporter_profile)    
     
     if len(delinquents) == 0:        
@@ -340,10 +341,11 @@ def delinquent_alert(report_schedule, run_frequency):
     else:
         context = {}
         context['delinquent_reporterprofiles'] = delinquents
+        context['threshold'] = threshold
         rendered_text = render_to_string("hq/reports/sms_delinquent_report.txt",context)      
         
     if report_schedule.report_delivery == 'email':        
-        subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y')
+        subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y') + " " + str(threshold) + " day threshold"
         reporter.transport_email(rendered_text, usr, params={"email_subject":subject})
     else:
         reporter.transport_sms(rendered_text, usr)
