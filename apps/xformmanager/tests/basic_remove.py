@@ -52,11 +52,12 @@ class RemoveTestCase(unittest.TestCase):
             self.assertEquals(row,None)
     
     def test3RemoveSchema(self):
-        """ Test removing one schema """
+        """ Test removing a more complicated schema """
         su = StorageUtility()
         su.clear()
         schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         su.remove_schema(schema_model.id)
+        # TODO fix the db call to be more standard here
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_formdefmodel")
         row = cursor.fetchone()
@@ -65,7 +66,7 @@ class RemoveTestCase(unittest.TestCase):
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
-            cursor.execute("show tables like 'x_xml_basic%'")
+            cursor.execute("show tables like 'schema_xml_basic%'")
             row = cursor.fetchone()
             self.assertEquals(row,None)
 
