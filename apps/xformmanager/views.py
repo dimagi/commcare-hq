@@ -23,7 +23,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from hq.models import *
 
 from StringIO import StringIO
-from transformers.csv_ import UnicodeWriter
+from transformers.csv import UnicodeWriter
 
 from receiver.models import Attachment
 from django.db.models import signals

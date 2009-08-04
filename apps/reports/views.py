@@ -13,7 +13,7 @@ from hq.models import ExtUser
 import util
 
 from StringIO import StringIO
-from transformers.csv_ import UnicodeWriter
+from transformers.csv import UnicodeWriter
 
 @login_required()
 def reports(request, template_name="list.html"):
