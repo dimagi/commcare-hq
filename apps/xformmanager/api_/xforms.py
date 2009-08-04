@@ -33,7 +33,7 @@ class XFormSchemata(Resource):
     def read(self, request, template= 'api_/xforms.xml'):
         """ lists all registered schemas """
         try:
-            extuser = ExtUser.objects.all().get(id=request.user.id)
+            extuser = ExtUser.objects.get(id=request.user.id)
         except ExtUser.DoesNotExist:
             return HttpResponseBadRequest("You do not have permission to use this API.")
         xforms = FormDefModel.objects.filter(domain=extuser.domain).order_by('id')
