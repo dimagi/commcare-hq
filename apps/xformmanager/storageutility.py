@@ -428,12 +428,13 @@ class StorageUtility(object):
             return
         logging.debug(queries)
         cursor = connection.cursor()
-        if settings.DATABASE_ENGINE=='mysql' :
-            cursor.execute(queries)            
-        else:
+        if queries.count(';') > 0:
             simple_queries = queries.split(';')
             for query in simple_queries: 
-                cursor.execute(query)
+                if len(query)>0:
+                    cursor.execute(query)
+        else:
+            cursor.execute(queries)            
     
     def _truncate(self, field_name):
         '''Truncates a field name to 64 characters, which is the max length allowed
