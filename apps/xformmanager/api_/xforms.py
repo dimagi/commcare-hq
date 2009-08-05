@@ -57,7 +57,7 @@ class XFormSchemata(Resource):
                 json_serializer = serializers.get_serializer("json")()
                 json_serializer.serialize(xforms, ensure_ascii=False, stream=response, fields = \
                     ('form_name','form_display_name','target_namespace','submit_time'))
-                response['mimetype'] = 'application/ms-excel'
+                response['mimetype'] = 'text/json'
                 return response
             elif request.GET['format'].lower() == 'xml': 
                 xml_serializer = serializers.get_serializer("xml")()
@@ -154,8 +154,6 @@ class XFormSubmissionData(Resource):
                 response = HttpResponse(fin.read(), mimetype='text/xml')
                 fin.close()
                 return response
-            elif request.GET['format'].lower() == 'json': 
-                return get_json_from_form(formdef_id, form_id)
         #default to CSV
         try:
             formdef = FormDefModel.objects.get(pk=formdef_id )
