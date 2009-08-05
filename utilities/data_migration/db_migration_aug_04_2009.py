@@ -134,6 +134,8 @@ def _perform_table_migration():
     for oldname, newname in table_remapping.items():
         _rename_table(oldname, newname)
     
+    # TODO: update columns.  hq_domain.time_zone!
+    
 def _rename_table(oldname, newname):
     '''Renames a table, with some sanity checks'''
     cursor = connection.cursor()
