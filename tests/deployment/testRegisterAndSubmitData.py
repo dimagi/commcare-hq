@@ -18,6 +18,7 @@ from urlparse import urlparse
 
 
 #serverhost = 'localhost:8000'
+#serverhost = 'test.commcarehq.org'
 serverhost = 'test.commcarehq.org'
 curl_command = 'c:\curl\curl.exe'
 
@@ -251,10 +252,11 @@ class DomainTestCase(unittest.TestCase):
             conn = httplib.HTTPConnection(up.netloc)
             conn.request('POST', up.path, filestr, {'Content-Type': 'text/xml', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
             resp = conn.getresponse()
-            results = resp.read()
-        except (httplib.HTTPException, socket.error):
+            results = resp.read()            
+        except (httplib.HTTPException, socket.error):            
             return None
         self._verifySubmission(results,1)
+        return results
                     
     def _postSimpleData(self, datafile, domain_name):        
         """Curl method to do data POSTs"""
@@ -281,19 +283,19 @@ class DomainTestCase(unittest.TestCase):
         
         print '\n\n****************\nverifySchemaSubmits for ' + formname
                 
-        datafiles = self._loadDataFilesList(formname)
         
+        datafiles = self._loadDataFilesList(formname)
         if len(datafiles) == 0:
             print "No instance data for " + formname
         
         last_id = self._getMaxSchemaSubmitId(form_id)
+        new_id = -1
         for file in datafiles:            
-            data_file = os.path.join(self.prefix,'data',file.strip())
-            
-            self._postSimpleData2(data_file, self.domain_name)            
+            data_file = os.path.join(self.prefix,'data',file.strip())            
+            submitresults = self._postSimpleData2(data_file, self.domain_name)  
             new_id = self._getMaxSchemaSubmitId(form_id)
             self.assertNotEqual(new_id, last_id)
-            print "Submitted file: " + data_file + " Row ID: " + str(new_id)                            
+            print "Submitted file: " + data_file + " Row ID: " + str(new_id)                     
             last_id = new_id
     
     def _doTest0PostXFormsAndVerify(self):

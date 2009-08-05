@@ -245,6 +245,4 @@ class SubmissionHandlingOccurrence(models.Model):
     # todo? these names are pretty long-winded 
     submission = models.ForeignKey(Submission)    
     handled = models.ForeignKey(SubmissionHandlingType)    
-     
-    
     

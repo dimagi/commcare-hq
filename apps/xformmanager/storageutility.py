@@ -481,25 +481,27 @@ class StorageUtility(object):
     """
 
     @transaction.commit_on_success
-    def remove_schema(self, id):
+    def remove_schema(self, id, delete_xml=True):
         fdds = FormDefModel.objects.all().filter(id=id) 
         if fdds is None or len(fdds) == 0:
             logging.error("  Schema " + name + " could not be found. Not deleted.")
             return    
         # must remove tables first since removing form_meta automatically deletes some tables
         self._remove_form_tables(fdds[0])
-        self._remove_form_models(fdds[0])
+        self._remove_form_models(fdds[0], delete_xml)
         meta = Metadata.objects.all().filter(formdefmodel=fdds[0]).delete()
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
 
-    def clear(self):
+    def clear(self, delete_xml=True):
         """ removes all schemas found in XSD_REPOSITORY_PATH
-            and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.        
+            and associated tables. 
+            If delete_xml is true (default) it also deletes the 
+            contents of XFORM_SUBMISSION_PATH.        
         """
         self._remove_form_tables()
-        self._remove_form_models()
+        self._remove_form_models(delete_xml=delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
             
         # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
@@ -572,17 +574,21 @@ class StorageUtility(object):
         tag = tag[i+1:len(tag)]
         return tag
 
-    def _remove_form_models(self,form=''):
-        # drop all schemas, associated tables, and files
+    def _remove_form_models(self,form='', delete_xml=True):
+        """Drop all schemas, associated tables, and files"""
         if form == '':
             fdds = FormDefModel.objects.all().filter()
         else:
             fdds = FormDefModel.objects.all().filter(target_namespace=form.target_namespace)            
         for fdd in fdds:
-            file = fdd.xsd_file_location
-            if file is not None:
-                logging.debug(  "  removing file " + file )
-                os.remove(file)
+            if delete_xml:
+                file = fdd.xsd_file_location
+                if file is not None:
+                    logging.debug(  "  removing file " + file )
+                    if os.path.exists(file):
+                        os.remove(file)
+                    else:
+                        logging.warn("Tried to delete schema file: %s but it wasn't found!" % file)
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
             fdd.delete()
             Metadata.objects.filter(formdefmodel=fdd).delete()
@@ -600,9 +606,23 @@ class StorageUtility(object):
             edds = ElementDefModel.objects.all().filter(form=form).order_by("-table_name")
         for edd in edds:
             logging.debug(  "  deleting data table:" + edd.table_name )
-            cursor = connection.cursor()
-            cursor.execute("drop table " + edd.table_name)
+            if self._table_exists(edd.table_name):
+                self._drop_table(edd.table_name)
+            else: 
+                logging.warn("Tried to delete %s table, but it wasn't there!" % edd.table_name)
 
+    def _table_exists(self, table_name):
+        '''Check if a table exists'''
+        cursor = connection.cursor()
+        cursor.execute("show tables like '%s'" % table_name)
+        return len(cursor.fetchall()) == 1
+        
+    def _drop_table(self, table_name):
+        '''Drop a table'''
+        cursor = connection.cursor()
+        cursor.execute("drop table %s" % table_name)
+        
+        
     def _case_insensitive_iter(self, data_tree, tag):
         if tag == "*":
             tag = None
