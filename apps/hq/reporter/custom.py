@@ -69,7 +69,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         except Exception, e:
             # todo: this try/except is here for the weekly reports.  this is likely 
             # a real error that should not be getting swallowed
-            logging.error(e)
+            logging.error("Report run failed for domain: " + str(domain) + " Exception: " + str(e))
         
     report_tuples = []
     #once all the formdefs have been calculated, we need to finally append the totals to the data array.  

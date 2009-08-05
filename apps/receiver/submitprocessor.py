@@ -34,10 +34,8 @@ def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
     else:
         content_type = metadata['CONTENT_TYPE']#"text/xml"    
     
-    new_submit.raw_header = repr(metadata)
-    logging.debug("compute checksum")
-    new_submit.checksum = hashlib.md5(payload).hexdigest()
-    logging.debug("Get bytes")
+    new_submit.raw_header = repr(metadata)    
+    new_submit.checksum = hashlib.md5(payload).hexdigest()    
     #new_submit.bytes_received = int(request.META['HTTP_CONTENT_LENGTH'])
     if metadata.has_key('HTTP_CONTENT_LENGTH'):
         new_submit.bytes_received = int(metadata['HTTP_CONTENT_LENGTH'])
@@ -55,13 +53,9 @@ def do_raw_submission(metadata, payload, domain=None, is_resubmission=False):
         new_submit.raw_post = newfilename
  
     except:
-        logging.error("Unable to write raw post data")
-        logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]))
-        logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))        
-        return '[error]'
-        
-    logging.debug("try to write model")   
+        logging.error("Unable to write raw post data: Exception " + str(sys.exc_info()[0]) + " Traceback: " + str(sys.exc_info()[1]))
+        return '[error]'       
     new_submit.domain = domain     
     new_submit.save()
-    logging.debug("save to db successful")
+    logging.debug("Raw submission save successful")
     return new_submit
