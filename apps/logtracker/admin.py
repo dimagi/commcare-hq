@@ -18,13 +18,24 @@ from django.contrib import admin
 
 # Initialise and register the handler
 handler = TrackingHandler()
-logging.root.setLevel(logging.NOTSET)
-logging.root.addHandler(handler)
 
+#set the threshold in which the logs will be handled.
+#in other words, we will only save logs with level > than what we set.
+#for reference:
+#CRITICAL = 50
+#FATAL = CRITICAL
+#ERROR = 40
+#WARNING = 30
+#WARN = WARNING
+#INFO = 20
+#DEBUG = 10
+#NOTSET = 0
+
+logging.root.setLevel(logging.ERROR)
+logging.root.addHandler(handler)
 
 class LogTrackAdmin(admin.ModelAdmin):
     list_display = ('id','level','channel','message','filename','line_no')
-    list_filter = ['level','channel','filename',]    
-
-
+    list_filter = ['level','channel','filename',]
+    
 admin.site.register(LogTrack,LogTrackAdmin)

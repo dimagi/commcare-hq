@@ -7,27 +7,18 @@ from logging import Handler
 from logtracker.models import *
 
 class TrackingHandler(Handler):
-    """ Realtime log analysis handling for alerts. """
-   
+    """ Realtime log analysis handling for alerts. """   
     def __init__(self):
         Handler.__init__(self)
 
-    def emit(self, record):
+    def emit(self, record,  *args, **kwargs):
         """ Append the record to the buffer for the current thread. """
-#        level = models.IntegerField(null=True)
-#    channel = models.CharField(max_length=128, null=True)
-#    created = models.DateTimeField(null=True)
-#    message = models.TextField(null=True)    
-#    pathname = models.TextField(null=True)
-#    filename = models.CharField(max_length=128, null=True)
-#    line_no = models.IntegerField(null=True)    
-#    traceback = models.TextField(null=True)
         newlog = LogTrack(level=record.levelno,
                           message=record.msg, 
                           filename=record.filename, 
                           line_no=record.lineno, 
                           pathname=record.pathname, 
                           funcname = record.funcName,
-                          module = record.module)
+                          module = record.module)       
         newlog.save()
         
