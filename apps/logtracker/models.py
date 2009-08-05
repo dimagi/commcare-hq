@@ -47,7 +47,11 @@ def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created
     context = {}
     context['log'] = instance    
     rendered_text = render_to_string("logtracker/alert_display.html", context)
-    eml.send_email("[Commcare-hq Alert] " + instance.message, 'dmyung@dimagi.com', rendered_text)    
+    
+    #Send it to an email address baked into the settings/ini file.
+    eml.send_email("[Commcare-hq Alert] " + instance.message, 
+                   settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
+                   rendered_text)    
                 
     
 # Register to receive signals from LogTrack
