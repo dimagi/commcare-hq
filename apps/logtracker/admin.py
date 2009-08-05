@@ -31,7 +31,7 @@ handler = TrackingHandler()
 #DEBUG = 10
 #NOTSET = 0
 
-logging.root.setLevel(settings.RAPIDSMS_APPS['logtracker']['log_threshold'])
+logging.root.setLevel(int(settings.RAPIDSMS_APPS['logtracker']['log_threshold']))
 logging.root.addHandler(handler)
 
 class LogTrackAdmin(admin.ModelAdmin):

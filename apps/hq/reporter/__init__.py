@@ -51,9 +51,7 @@ def run_reports(run_frequency):
     
     For a given frequency, ALL corresponding reports for that frequency will be queried and executed."""
     (startdate, enddate) = get_daterange(run_frequency)    
-    logging.debug("running reports for " + run_frequency)
-    
-    
+    logging.debug("running reports for " + run_frequency)    
     for report in ReportSchedule.objects.all().filter(active=True, report_frequency=run_frequency):
         try:  
             logging.debug("running report " + str(report))
