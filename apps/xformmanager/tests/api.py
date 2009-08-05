@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test.client import Client
 from xformmanager.tests.util import create_xsd_and_populate
 from xformmanager.models import *
+from xformmanager.manager import XFormManager
 from hq.models import ExtUser
 
 class APITestCase(TestCase):
@@ -58,7 +59,48 @@ class APITestCase(TestCase):
         response = self.client.get('/api/xforms/1/1/metadata/')
         self.assertStatus(response, 200)
 
+    def test_formats(self):
+        # oddly enough, if the GET variables are passed incorrectly,
+        # the unit tests fail on a TemplateSyntaxError. Why?
+        response = self.client.get('/api/xforms/')
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/',{'format':'json'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/',{'format':'xml'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/')
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/',{'format':'xml'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/',{'format':'zip'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/1/')
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/1/',{'format':'xml'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/metadata/')
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/metadata/',{'format':'xml'})
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/1/metadata/')
+        self.assertStatus(response, 200)
+        response = self.client.get('/api/xforms/1/1/metadata/',{'format':'xml'})
+        self.assertStatus(response, 200)
+        
+    # TODO - flesh this out properly once we've solidified our data format
+    def test_api_contents_INCOMPLETE(self):
+        response = self.client.get('/api/xforms/')
+        self.assertContains(response,"1,None", status_code=200)
+        response = self.client.get('/api/xforms/',{'format':'json'})
+        self.assertContains(response,"\"pk\": 1", status_code=200)
+
     def assertStatus(self, response, status):
         if response.status_code != status:
             print "ERROR :" + response.content    
         self.failUnlessEqual(response.status_code, status)
+
+    def tearDown(self):
+        manager = XFormManager()
+        manager.remove_schema(1)
+
+
