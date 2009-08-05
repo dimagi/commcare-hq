@@ -10,16 +10,19 @@ from transformers.csv import format_csv
 from xformmanager.models import FormDefModel, ElementDefModel
 
 MAX_MYSQL_TABLE_NAME_LENGTH = 64
-MAX_PREFIX_LENGTH= 7
-MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
+TABLE_PREFIX= "schema_"
+MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - len(TABLE_PREFIX)
 
 def table_name(name):
     r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
     if r:
         tail = r.group('tail')
         if tail: 
-            return "schema_" + sanitize(tail)
-    return "schema_" + sanitize(name)
+            # table prefix is appended after sanitation because
+            # sanitation truncates to MAX_LENGTH minus len(prefix)
+            return TABLE_PREFIX + sanitize(tail)
+    return TABLE_PREFIX + sanitize(name)
+
 def old_table_name(name):
     return "x_" + _old_sanitize(name)
 def _old_sanitize(name):
