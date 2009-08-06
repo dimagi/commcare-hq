@@ -23,11 +23,11 @@ class Report(object):
 class DataSet(object):
     """ represents a generic dataset """
     
-    def __init__(self, name='', params={}, stats={}, entries=[]):
+    def __init__(self, name=''):
         self.name = name
-        self.params = params
-        self.stats = stats
-        self.entries = entries
+        self.params = {}
+        self.stats = {}
+        self.entries = []
     
     def __unicode__(self):
         string = "DataSet: " + unicode(self.name) + "\n"
