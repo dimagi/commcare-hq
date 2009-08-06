@@ -107,13 +107,14 @@ class CaseTestCase(unittest.TestCase):
         reg_cols = self.reg_form.get_column_names()
         follow_cols = self.follow_form.get_column_names()
         close_cols = self.close_form.get_column_names()
-        total_cols = len(reg_cols) + len(follow_cols) + len(close_cols)
+        # start with a base count of 1 for the "case_id" column
+        total_cols = 1 + len(reg_cols) + len(follow_cols) + len(close_cols)
         case_cols = self.pf_case.get_column_names()
         self.assertEqual(total_cols, len(case_cols))
         
         # walk through the list of columns in order and
         # ensure that each table's columns match up. 
-        count = 0
+        count = 1
         for col in reg_cols:
             self.assertTrue(col in case_cols[count])
             count += 1
@@ -125,7 +126,7 @@ class CaseTestCase(unittest.TestCase):
         for col in close_cols:
             self.assertTrue(col in case_cols[count])
             count += 1
-    
+        
     def testGetDataFromFormIdentifier(self):
         followup_data = self.follow_fid.get_data_maps()
         self.assertEqual(2, len(followup_data))

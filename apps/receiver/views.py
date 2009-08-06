@@ -10,7 +10,6 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 from datetime import timedelta, datetime
 from django.db import transaction
@@ -20,6 +19,8 @@ import mimetypes
 from receiver.models import *
 from django.contrib.auth.models import User 
 
+from hq.utils import paginate
+ 
 #from forms import *
 import logging
 import hashlib
@@ -44,18 +45,7 @@ def show_submits(request, template_name="receiver/show_submits.html"):
     extuser = ExtUser.objects.get(id=request.user.id)
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     
-    paginator = Paginator(slogs, 25) # Show 25 items per page
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    
-    try:
-        submits_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        submits_pages = paginator.page(paginator.num_pages)
-
-    context['submissions'] = submits_pages    
+    context['submissions'] = paginate(request, slogs)
     return render_to_response(request, template_name, context)
 
 @login_required()    
