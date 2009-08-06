@@ -97,8 +97,9 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
         
     return username_count_dict
 
+# TODO - fix/remove this function. This was just copy/pasted for Clayton, august 5
 def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
-    """return a dictionary keyed by usernames and their corresponding meta form counts given a list of formdefs
+    """return a dictionary keyed by user ids and their corresponding meta form counts given a list of formdefs
     if the username_lst is None, then just do it over all users for a given formdef_lst
     
     this does not group by formdef.  if you want to do that, you should run each formdef individually.    
