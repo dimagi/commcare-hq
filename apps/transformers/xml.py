@@ -24,7 +24,9 @@ def _xmlify(object_):
         # the first element of tuple is attribute
         # the second is text
         root = etree.Element( 'entry', index=sanitize_value(unicode(object_[0])) )
-        root.text=unicode(object_[1])
+        child = etree.Element( 'value' )
+        child.text = unicode(object_[1])
+        root.append(child)
     else:
         root = etree.Element( sanitize_name(str(type(object_))) )
         for i in object_.__dict__:
@@ -52,7 +54,7 @@ def _xmlify(object_):
                 # i_val = actual field value
                 children = etree.Element( pluralize(i) )
                 for key in i_val.keys():
-                    child = etree.etree.Element( sanitize_name(i) , name=sanitize_value(key), value=sanitize_value(i_val[key]) )
+                    child = etree.Element( sanitize_name(i) , name=sanitize_value(key), value=sanitize_value(i_val[key]) )
                     children.append(child)
                 root.append(children)
             else:
@@ -70,6 +72,7 @@ def sanitize_name(string):
     return name_sanitized
 
 def sanitize_value(string):
+    string = unicode(string)
     sanitized = string.replace("<","_").replace(">","_").replace("'","_").replace(":","").replace(".","_")
     stripped = sanitized.strip('_')
     tail = stripped.rsplit('_',1)[-1]

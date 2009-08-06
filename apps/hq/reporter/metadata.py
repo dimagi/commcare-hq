@@ -71,7 +71,10 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
     totalspan = timeend-timestart
     if timestart==timeend:
         totalspan = timedelta(days=1)
-    metas = Metadata.objects.filter(formdefmodel__in=formdef_lst).filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+        
+    metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+    if formdef_lst:
+        metas = metas.filter(formdefmodel__in=formdef_lst)
        
     if username_lst is None or len(username_lst) == 0: 
         usernames = metas.values_list('username').distinct()
@@ -108,7 +111,9 @@ def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
     totalspan = timeend-timestart
     if timestart==timeend:
         totalspan = timedelta(days=0)
-    metas = Metadata.objects.filter(formdefmodel__in=formdef_lst).filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+    metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+    if formdef_lst:
+        metas = metas.filter(formdefmodel__in=formdef_lst)
        
     if user_id_lst is None or len(user_id_lst) == 0: 
         usernames = metas.values_list('username').distinct()
