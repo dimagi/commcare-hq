@@ -9,6 +9,7 @@ class Report(object):
     
     def __init__(self, title=''):
         self.title = title
+        self.generating_url = ''
         self.datasets = []
         
     def __unicode__(self):
@@ -23,11 +24,18 @@ class Report(object):
 class DataSet(object):
     """ represents a generic dataset """
     
+    class Entries(list):
+        """ represents a collection of index/value pairs """
+        def __init__(self):
+            list.__init__(self)
+            self.index_ = ''
+            self.value = ''
+
     def __init__(self, name=''):
         self.name = name
         self.params = {}
         self.stats = {}
-        self.entries = []
+        self.entries = self.Entries()
     
     def __unicode__(self):
         string = "DataSet: " + unicode(self.name) + "\n"

@@ -21,17 +21,17 @@ from hq.models import Domain
 
 
 def daily_report(request):
-    formdefs = FormDefModel.objects.filter(target_namespace__icontains='resolution')
+    formdefs = FormDefModel.objects.filter(target_namespace__icontains='resolution_0.0.2a')
     if not formdefs:
-        return HttpResponseBadRequest("No schema matches 'resolution'")
+        return HttpResponseBadRequest("No schema matches 'resolution_0.0.2a'")
     response = read(request=request, ids=[ formdefs[0].pk ], \
                                      index='day', value=['count'])
     return response
 
 def user_report(request):
-    formdefs = FormDefModel.objects.filter(target_namespace__icontains='resolution')
+    formdefs = FormDefModel.objects.filter(target_namespace__icontains='resolution_0.0.2a')
     if not formdefs:
-        return HttpResponseBadRequest("No schema matches 'resolution'")
+        return HttpResponseBadRequest("No schema matches 'resolution_0.0.2a'")
     response = read(request=request, ids=[ formdefs[0].pk ], \
                                     index='user', value=['count'])
     return response
@@ -39,20 +39,6 @@ def user_report(request):
 # it doesn't really make sense to define any of this as a 'resource'
 # since reports are by definition read-only
 def read(request, ids=[], index='',value=[]):
-    # temporary hack to get pf api working. TODO - remove
-    try:
-        domain = Domain.objects.get(name='Pathfinder')
-    except Domain.DoesNotExist:
-        return HttpResponseBadRequest( \
-            "Domain 'Pathfinder' does not exist.")
-    
-    #try:
-    #    extuser = ExtUser.objects.get(id=request.user.id)
-    #except ExtUser.DoesNotExist:
-    #    return HttpResponseBadRequest( \
-    #        "You do not have permission to use this API.")
-    #domain = extuser.domain
-    
     if not ids:
         if request.REQUEST.has_key('ids'):
             ids = [v.strip() for v in request.GET['id'].split(',')]
@@ -78,14 +64,14 @@ def read(request, ids=[], index='',value=[]):
         return HttpResponseBadRequest("Must specify end_date")   
     if request.REQUEST.has_key('stat'):
         stat = [v.strip() for v in request.GET['stat'].split(',')]
-    report = get_report(domain, ids, index, value, \
+    report = get_report(request, ids, index, value, \
                     start_date, end_date,request.GET)
     xml = xmlify(report)
     response = responsify('xml', xml)
     return response
 
 
-def get_report(domain, ids, index, value, start_date, end_date, params):
+def get_report(request, ids, index, value, start_date, end_date, params):
     """ There's probably a more generic way of hanlding this, 
     but we do need to support fairly custom titles and names for
     some of these elements. Anyways, it's worth revisiting and
@@ -93,15 +79,30 @@ def get_report(domain, ids, index, value, start_date, end_date, params):
     
     """
     if index == 'user':
-        return get_user_activity_report(domain, ids, index, value, start_date, end_date, params)
+        return get_user_activity_report(request, ids, index, value, start_date, end_date, params)
     elif index == 'day':
-        return get_daily_activity_report(domain, ids, index, value, start_date, end_date, params)
+        return get_daily_activity_report(request, ids, index, value, start_date, end_date, params)
     raise Exception("Your request does not match any known reports.")
 
 # TODO - filter returned data by user's domain
-def get_user_activity_report(domain, ids, index, value, start_date, end_date, params):
+def get_user_activity_report(request, ids, index, value, start_date, end_date, params):
+    # temporary hack to get pf api working. TODO - remove
+    try:
+        domain = Domain.objects.get(name='Pathfinder')
+    except Domain.DoesNotExist:
+        return HttpResponseBadRequest( \
+            "Domain 'Pathfinder' does not exist.")    
+    #try:
+    #    extuser = ExtUser.objects.get(id=request.user.id)
+    #except ExtUser.DoesNotExist:
+    #    return HttpResponseBadRequest( \
+    #        "You do not have permission to use this API.")
+    #domain = extuser.domain
+
+    
     # CHW Group Total Activity Report
     report = Report("CHW Group Total Activity Report")
+    report.generating_url = request.get_full_path()
     metadata = Metadata.objects.filter(formdefmodel__in=ids).order_by('id')
     if not metadata:
         raise Exception("Metadata of schema with id in %s not found." % str(ids) )
@@ -114,7 +115,9 @@ def get_user_activity_report(domain, ids, index, value, start_date, end_date, pa
     member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
     # get the specified forms
     for id in ids:
-        dataset = DataSet( unicode(value[0]) + " for " + unicode(index) )
+        dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
+        dataset.entries.index_ = unicode(index)
+        dataset.entries.value = unicode(value[0])
         form_metadata = metadata.filter(formdefmodel=id)
         #for param in params:
         #    dataset.params[param.name] = param.value
@@ -129,10 +132,24 @@ def get_user_activity_report(domain, ids, index, value, start_date, end_date, pa
     return report
 
 # TODO - filter returned data by user's domain
-def get_daily_activity_report(domain, ids, index, value, start_date, end_date, params):
+def get_daily_activity_report(request, ids, index, value, start_date, end_date, params):
+    # temporary hack to get pf api working. TODO - remove
+    try:
+        domain = Domain.objects.get(name='Pathfinder')
+    except Domain.DoesNotExist:
+        return HttpResponseBadRequest( \
+            "Domain 'Pathfinder' does not exist.")    
+    #try:
+    #    extuser = ExtUser.objects.get(id=request.user.id)
+    #except ExtUser.DoesNotExist:
+    #    return HttpResponseBadRequest( \
+    #        "You do not have permission to use this API.")
+    #domain = extuser.domain
+
     # TODO - this currrently only works for value lists of size 1. FIX. 
     # CHW Daily Activity Report
     report = Report("CHW Daily Activity Report")
+    report.generating_url = request.get_full_path()
     form_list = FormDefModel.objects.filter(pk__in=ids)
     # when 'organization' is properly populated, we can start using that
     #       member_list = utils.get_members(organization)
@@ -150,7 +167,9 @@ def get_daily_activity_report(domain, ids, index, value, start_date, end_date, p
     if params.has_key('chw'): chw = params['chw']
     else: raise Exception("This reports requires a CHW parameter")
     for form in form_list:
-        dataset = DataSet( unicode(value[0]) + " for " + unicode(index) )
+        dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
+        dataset.entries.index_ = unicode(index)
+        dataset.entries.value = unicode(value[0])
         #for param in params:
         #    dataset.params[param.name] = param.value
         # e.g. stat='sum'
