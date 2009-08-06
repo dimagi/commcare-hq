@@ -17,7 +17,7 @@ from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from xformmanager.util import get_csv_from_form
-from receiver.submitprocessor import do_raw_submission
+from receiver.submitprocessor import do_old_submission
 
 from hq.models import *
 from hq.utils import paginate
@@ -103,7 +103,7 @@ def submit_data(request, formdef_id, template='submit_data.html'):
     if request.method == 'POST':
         form = SubmitDataForm(request.POST, request.FILES)        
         if form.is_valid():
-            new_submission = do_raw_submission(request.META, \
+            new_submission = do_old_submission(request.META, \
                 request.FILES['file'].read(), domain=extuser.domain)
             if new_submission == '[error]':
                 logging.error("Domain Submit(): Submission error")
