@@ -384,7 +384,7 @@ def run():
     #hq_organization_1.members = [hq_extuser_6, hq_extuser_7]
     hq_organization_1.save()
     
-    hq_organization_1.organization_type.add(hq_organizationtype_1)
+    hq_organization_1.hq_type.add(hq_organizationtype_1)
 
     hq_organization_2 = Organization()
     hq_organization_2.name = u'BRAC'
@@ -392,7 +392,7 @@ def run():
     hq_organization_2.description = u''
     hq_organization_2.save()
 
-    hq_organization_2.organization_type.add(hq_organizationtype_2)
+    hq_organization_2.hq_type.add(hq_organizationtype_2)
 
     hq_organization_3 = Organization()
     hq_organization_3.name = u'BRAC-CHP'
@@ -406,7 +406,7 @@ def run():
     
     
 
-    hq_organization_3.organization_type.add(hq_organizationtype_2)
+    hq_organization_3.hq_type.add(hq_organizationtype_2)
 
     hq_organization_4 = Organization()
     hq_organization_4.name = u'BRAC-CHW'
@@ -417,7 +417,7 @@ def run():
     #hq_organization_4.members = [hq_extuser_4, hq_extuser_5]
     hq_organization_4.save()
     
-    hq_organization_4.organization_type.add(hq_organizationtype_2)
+    hq_organization_4.hq_type.add(hq_organizationtype_2)
 
     hq_organization_5 = Organization()
     hq_organization_5.name = u'Grameen-Intel'
@@ -429,7 +429,7 @@ def run():
     hq_organization_5.save()
     
 
-    hq_organization_5.organization_type.add(hq_organizationtype_3)
+    hq_organization_5.hq_type.add(hq_organizationtype_3)
     
     hq_organization_6 = Organization()
     hq_organization_6.name = u'MVP'
@@ -437,7 +437,7 @@ def run():
     hq_organization_6.description = u'MVP root organization'
     hq_organization_6.save()
 
-    hq_organization_6.organization_type.add(hq_organizationtype_4)
+    hq_organization_6.hq_type.add(hq_organizationtype_4)
 
 
     from hq.models import ReportSchedule
