@@ -2,13 +2,13 @@ from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 from rapidsms.webui.utils import render_to_response
 
 from models import Case
 from xformmanager.models import FormDefModel
 from hq.models import ExtUser
+from hq.utils import paginate
 
 import util
 
@@ -58,7 +58,7 @@ def case_flat(request, case_id, template_name="case_flat.html"):
         flattened.append(data[key])
     
     
-    context['data'] = _paginate(request, flattened)    
+    context['data'] = paginate(request, flattened)    
     context['case'] = case
     
     return render_to_response(request, template_name, context)
@@ -121,17 +121,3 @@ def custom_report(request, domain_id, report_name):
     context["report_body"] = report_method(request)
     return render_to_response(request, "custom/base.html", context)
 
-def _paginate(request, data):
-    '''Helper call to provide pagination'''
-    # todo? move this to a utils file somewhere.
-    paginator = Paginator(data, 25) 
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    try:
-        data_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        data_pages = paginator.page(paginator.num_pages)
-    return data_pages
-    

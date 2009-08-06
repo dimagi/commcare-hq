@@ -19,8 +19,8 @@ from xformmanager.manager import *
 from xformmanager.util import get_csv_from_form
 from receiver.submitprocessor import do_raw_submission
 
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from hq.models import *
+from hq.utils import paginate
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
@@ -256,20 +256,7 @@ def data(request, formdef_id, template_name="data.html", context={}):
     context['data'] = []
     context['xform'] = xform
     
-    paginator = Paginator(rows, 25) 
-
-    #get the current page number
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    
-    try:
-        data_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        data_pages = paginator.page(paginator.num_pages)
-    
-    context['data'] = data_pages    
+    context['data'] = paginate(request, rows)
     
     return render_to_response(request, template_name, context)    
 
