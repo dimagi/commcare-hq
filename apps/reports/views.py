@@ -2,13 +2,13 @@ from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 from rapidsms.webui.utils import render_to_response
 
 from models import Case
 from xformmanager.models import FormDefModel
 from hq.models import ExtUser
+from hq.utils import paginate
 
 import util
 
@@ -39,7 +39,8 @@ def reports(request, template_name="list.html"):
     return render_to_response(request, template_name, context)
 
 @login_required()
-def case_data(request, case_id, template_name="case_data.html"):
+def case_flat(request, case_id, template_name="case_flat.html"):
+    '''A flat view of the topmost data for all cases'''
     context = {}
     if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
         template_name="hq/no_permission.html"
@@ -56,17 +57,26 @@ def case_data(request, case_id, template_name="case_data.html"):
     for key in keys:
         flattened.append(data[key])
     
-    paginator = Paginator(flattened, 25) 
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    try:
-        data_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        data_pages = paginator.page(paginator.num_pages)
     
-    context['data'] = data_pages    
+    context['data'] = paginate(request, flattened)    
+    context['case'] = case
+    
+    return render_to_response(request, template_name, context)
+
+@login_required()
+def single_case_view(request, case_id, case_instance_id, template_name="single_case.html"):
+    '''View for all of a single case's data, broken down by form.'''
+    context = {}
+    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+        template_name="hq/no_permission.html"
+        return render_to_response(request, template_name, context)
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    
+    case = Case.objects.get(id=case_id)
+    data = case.get_data_for_case(case_instance_id)
+    
+    context['case_instance_id'] = case_instance_id
+    context['case_data'] = data
     context['case'] = case
     
     return render_to_response(request, template_name, context)

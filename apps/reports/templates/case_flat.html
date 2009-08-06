@@ -31,7 +31,11 @@
     {% for record in data.object_list %}   	
    	<tr class="{% cycle 'odd' 'even' %}">  
 	   {% for field in record %}   
-	   		 <td>{{field}}</td> 
+	   		 {% if forloop.first %}
+                 <td><a href = "{%url reports.views.single_case_view case.id field %}">&nbsp;{{ field }}&nbsp;</a></td>
+             {% else %}
+                 <td>{{field}}</td>
+             {% endif %}
 	   {% endfor %}
 	</tr>
    {% endfor %}

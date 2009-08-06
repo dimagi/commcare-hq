@@ -1,12 +1,9 @@
 
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from hq.models import *
 from graphing.models import *
 
 from datetime import timedelta
-
-PARENT_ORG_EDGE_TYPE=1
-SUPERVISOR_EDGE_TYPE=2
-MEMBER_EDGE_TYPE=3
 
 
 #get members under this supervisor for this group
@@ -68,3 +65,17 @@ def get_dates(request, default_days=0):
             enddate_str=item[1]
             enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y')
     return (startdate, enddate)
+
+def paginate(request, data, rows_per_page=25):
+    '''Helper call to provide django pagination of data'''
+    paginator = Paginator(data, rows_per_page) 
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        data_pages = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        data_pages = paginator.page(paginator.num_pages)
+    return data_pages
+    
