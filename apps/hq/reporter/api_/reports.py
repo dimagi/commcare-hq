@@ -6,18 +6,23 @@ class Report(object):
     we can arbitrarily change our api from xml to csv, json, etc.
     
     """
-    def __init__(self, title='', datasets=[]):
+    
+    def __init__(self, title=''):
         self.title = title
-        self.datasets = datasets
+        self.datasets = []
         
     def __unicode__(self):
-        string = "Report: " + unicode(self.name) + "\n"
+        string = "Report: " + unicode(self.title) + "\n"
         for dataset in self.datasets:
             string = string + unicode(dataset)
         return string + "\n\n"
     
+    def __str__(self):
+        return unicode(self)
+    
 class DataSet(object):
     """ represents a generic dataset """
+    
     def __init__(self, name='', params={}, stats={}, entries=[]):
         self.name = name
         self.params = params
@@ -25,7 +30,7 @@ class DataSet(object):
         self.entries = entries
     
     def __unicode__(self):
-        string = "DataSet: " + unicode(self.title) + "\n"
+        string = "DataSet: " + unicode(self.name) + "\n"
         for entry in self.entries:
             string = string + " " + unicode(entry) + "\n"
         return string
