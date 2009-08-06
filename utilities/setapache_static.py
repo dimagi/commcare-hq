@@ -18,9 +18,16 @@ def run():
             
             mod_dir = os.path.dirname(os.path.abspath(module.__file__))
             static_dir = "%s/static" % mod_dir
-                 
+            
+    
             if not os.path.exists(os.path.join(settings.MEDIA_ROOT, rs_app["type"])):
-                os.symlink(static_dir, os.path.join(settings.MEDIA_ROOT,rs_app["type"]))
+                print "Setting static/ symlink for app: " + rs_app['type']
+                if os.path.exists(static_dir):                    
+                    print '\tsymlink set'
+                    os.symlink(static_dir, os.path.join(settings.MEDIA_ROOT,rs_app["type"]))
+                else:
+                    print '\tno static directory, skipping.'
+                    
             
         except Exception, e:
             logging.debug("No urlpatterns, let's skip")
