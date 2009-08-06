@@ -1,9 +1,8 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
 from rapidsms.webui.utils import render_to_response
-#from django.shortcuts import render_to_response, get_object_or_404
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -21,10 +20,8 @@ from django.contrib.auth.models import User
 
 from hq.utils import paginate
  
-#from forms import *
 import logging
 import hashlib
-#import settings
 import traceback
 import sys
 import os
@@ -96,20 +93,10 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
 
 def raw_submit(request, template_name="receiver/submit.html"):
     context = {}            
-#    if request.method == 'POST':
-#        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data)        
-#        if new_submission == '[error]':
-#            template_name="receiver/submit_failed.html"            
-#        else:
-#            context['transaction_id'] = new_submission.transaction_uuid
-#            context['submission'] = new_submission
-#            attachments = Attachment.objects.all().filter(submission=new_submission)            
-#            context['attachments'] = attachments            
-#            template_name="receiver/submit_complete.html"
-            
-    #for real submissions from phone, the content-type should be:
-    #mimetype='text/plain' # add that to the end fo the render_to_response()                                     
-    return render_to_response(request, template_name, context)
+    # since this is not a real domain the following call will always
+    # fail to the end-user, but at least we'll have saved the post
+    # data and can have a record of the event.
+    return _do_domain_submission(request, "NO_DOMAIN_SPECIFIED", template_name, is_resubmission=False)
 
 def domain_resubmit(request, domain_name, template_name="receiver/submit.html"):
     return _do_domain_submission(request, domain_name, template_name, True)
@@ -118,27 +105,42 @@ def domain_submit(request, domain_name, template_name="receiver/submit.html"):
     return _do_domain_submission(request, domain_name, template_name, False)
 
 def _do_domain_submission(request, domain_name, template_name="receiver/submit.html", is_resubmission=False):
+    
+    if request.method != 'POST':
+        return HttpResponse("You have to POST to submit data.")
+
+    # first save the file to disk so we have it around before doing anything else.
+    try:
+        submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
+    except Exception, e:
+        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s", e)
+    
+    # alright the save worked.  now do some post processing if we can 
     context = {}
     if domain_name[-1] == '/':
-        domain_name = domain_name[0:-1] #get rid of the trailing slash if it's there
+        # get rid of the trailing slash if it's there
+        domain_name = domain_name[0:-1]
     
     logging.debug("begin domained raw_submit(): " + domain_name)
-    currdomain = Domain.objects.filter(name=domain_name)
-    if len(currdomain) != 1:
-        template_name="receiver/submit_failed.html"
-    if request.method == 'POST':                    
-        new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0], is_resubmission=is_resubmission)
-        if new_submission == '[error]':
-            logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
-            template_name="receiver/submit_failed.html"            
-        else:
-            context['transaction_id'] = new_submission.transaction_uuid
-            context['submission'] = new_submission
-            attachments = Attachment.objects.all().filter(submission=new_submission)
-            num_attachments = len(attachments)
-            context['num_attachments'] = num_attachments
-            template_name="receiver/submit_complete.html"
-            
+    try: 
+        currdomain = Domain.objects.get(name=domain_name)
+    except Domain.DoesNotExist:
+        logging.error("Submission failed! %s isn't a known domain.", domain_name)
+        return HttpResponseServerError("Submission failed! %s isn't a known domain.", domain_name)
+
+    new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
+                                                              currdomain, is_resubmission=is_resubmission)
+    if new_submission == '[error]':
+        logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
+        template_name="receiver/submit_failed.html"            
+    else:
+        context['transaction_id'] = new_submission.transaction_uuid
+        context['submission'] = new_submission
+        attachments = Attachment.objects.all().filter(submission=new_submission)
+        num_attachments = len(attachments)
+        context['num_attachments'] = num_attachments
+        template_name="receiver/submit_complete.html"
+        
     #for real submissions from phone, the content-type should be:
     #mimetype='text/plain' # add that to the end fo the render_to_response()             
     #resp = render_to_response(template_name, context, context_instance=RequestContext(request))
@@ -153,7 +155,7 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
         if len(currdomain) != 1:
             new_submission = '[error]'
         else:
-            new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0])
+            new_submission = submitprocessor.do_old_submission(request.META,request.raw_post_data, domain=currdomain[0])
                     
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"     
