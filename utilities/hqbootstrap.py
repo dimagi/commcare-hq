@@ -170,7 +170,7 @@ def run():
     organization_extuser_6.first_name = u''
     organization_extuser_6.last_name = u''
     organization_extuser_6.email = u''
-    organization_extuser_6.password = u'test'
+    organization_extuser_6.password = u'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
     organization_extuser_6.is_staff = False
     organization_extuser_6.is_active = True
     organization_extuser_6.is_superuser = False
@@ -186,7 +186,7 @@ def run():
     organization_extuser_7.first_name = u''
     organization_extuser_7.last_name = u''
     organization_extuser_7.email = u''
-    organization_extuser_7.password = u'test'
+    organization_extuser_7.password = u'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
     organization_extuser_7.is_staff = False
     organization_extuser_7.is_active = True
     organization_extuser_7.is_superuser = False
