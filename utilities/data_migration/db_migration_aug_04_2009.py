@@ -130,14 +130,20 @@ def _perform_table_migration():
                        "dbanalyzer_graphgroup_graphs": "graphing_graphgroup_graphs",
                        "dbanalyzer_graphpref": "graphing_graphpref",
                        "dbanalyzer_graphpref_root_graphs": "graphing_graphpref_root_graphs",
-                       "dbanalyzer_rawgraph": "graphing_rawgraph"}
+                       "dbanalyzer_rawgraph": "graphing_rawgraph",
+                       }
     for oldname, newname in table_remapping.items():
         _rename_table(oldname, newname)
     
-    # TODO: update columns.  hq_domain.time_zone!
+    cursor = connection.cursor()
+    # for some reason mysql insists on using these special slanted quote marks
+    # for this command.  
+    cursor.execute("ALTER TABLE `hq_domain` ADD COLUMN `timezone` VARCHAR(64) AFTER `description`;")
+    
+    
     
 def _rename_table(oldname, newname):
-    '''Renames a table, with some sanity checks'''
+    '''Renames a table, with some sanity checks'''  
     cursor = connection.cursor()
     if not _exists(oldname):
         raise Exception("Tried to rename %s but it didn't exist!" % oldname)
