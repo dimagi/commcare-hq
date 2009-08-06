@@ -15,4 +15,4 @@ body = fin.read()
 fin.close()
 
 metahash = eval(meta)
-submitprocessor.do_raw_submission(metahash, body)
+submitprocessor.do_old_submission(metahash, body)
