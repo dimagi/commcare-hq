@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
-# this module is called api_ because importing from "api.xforms" 
+# this module is called api_ because importing from "api.resources" 
 # conflicts with the builtin python namespace
-from xformmanager.api_.xforms import *
+from xformmanager.api_.resources import *
 
 urlpatterns = patterns('',
    # remember: order urls by most qualified to least

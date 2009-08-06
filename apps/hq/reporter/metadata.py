@@ -69,9 +69,11 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
     """
     
     totalspan = timeend-timestart
+    if timestart==timeend:
+        totalspan = timedelta(days=1)
     metas = Metadata.objects.filter(formdefmodel__in=formdef_lst).filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
        
-    if username_lst == None:    
+    if username_lst is None or len(username_lst) == 0: 
         usernames = metas.values_list('username').distinct()
     else:
         #ReporterProfile.chw_username!
@@ -95,6 +97,42 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
         
     return username_count_dict
 
+# TODO - fix/remove this function. This was just copy/pasted for Clayton, august 5
+def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
+    """return a dictionary keyed by user ids and their corresponding meta form counts given a list of formdefs
+    if the username_lst is None, then just do it over all users for a given formdef_lst
+    
+    this does not group by formdef.  if you want to do that, you should run each formdef individually.    
+    """
+    
+    totalspan = timeend-timestart
+    if timestart==timeend:
+        totalspan = timedelta(days=0)
+    metas = Metadata.objects.filter(formdefmodel__in=formdef_lst).filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+       
+    if user_id_lst is None or len(user_id_lst) == 0: 
+        usernames = metas.values_list('username').distinct()
+    else:
+        #ReporterProfile.chw_username!
+        usernames = metas.filter(chw_id__in=user_id_lst).values_list('username').distinct()
+    
+    username_count_dict = {}
+    for uname in usernames:
+        username_count_dict[uname[0]] = []
+   
+   #need to go through each DAY and do the query each time.
+    oneday = timedelta(days=1)
+    for day in range(0,totalspan.days+1):        
+        delta = timedelta(days=day)        
+        target_start = timestart + delta    
+        target_end = target_start + oneday
+            
+        dayslice = metas.filter(timestart__gte=target_start).filter(timeend__lt=target_end)
+    
+        for uname in usernames:
+            username_count_dict[uname[0]].append(dayslice.filter(username=uname[0]).count())     
+        
+    return username_count_dict
 
 
 

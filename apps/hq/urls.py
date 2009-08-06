@@ -12,6 +12,5 @@ urlpatterns = patterns('',
     (r'^charts/?$', 'hq.views.domain_charts'),    
     (r'^stats/?$', 'hq.views.reporter_stats'),
     (r'^stats/delinquents?$', 'hq.views.delinquent_report'),
-
-    
+    (r'', include('hq.reporter.api_.urls')),    
 )

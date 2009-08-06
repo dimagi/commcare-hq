@@ -18,6 +18,8 @@ def table_name(name):
     if r:
         tail = r.group('tail')
         if tail: 
+            # table prefix is appended after sanitation because
+            # sanitation truncates to MAX_LENGTH minus len(prefix)
             return "schema_" + sanitize(tail)
     return "schema_" + sanitize(name)
 def old_table_name(name):

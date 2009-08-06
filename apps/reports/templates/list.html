@@ -11,7 +11,7 @@
 {% if case_reports %}
     <h2>Data Export Reports for {{domain}}</h2>
     {% for report in case_reports %}
-        <li><a href="{% url reports.views.case_data report.id %}">{{ report }}</a></li>
+        <li><a href="{% url reports.views.case_flat report.id %}">{{ report }}</a></li>
     {% endfor %}
 {% endif %}
 {% endblock %}

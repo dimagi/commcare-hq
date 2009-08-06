@@ -2,6 +2,7 @@ from django.db import models
 
 from xformmanager.models import FormDefModel
 from hq.models import Domain
+import logging
 
 class FormIdentifier(models.Model):
     '''An identifier for a form.  This is a way for a case to point at
@@ -136,8 +137,10 @@ class Case(models.Model):
         return to_return        
         
     def get_column_names(self):
-        '''Get the full list of column names, for all the forms'''
-        to_return = []
+        '''Get the full list of column names, for all the forms.
+           The first column is "case_id" and the rest are the forms'
+           columns, in sequential order by form.'''
+        to_return = [ "case_id" ]
         for form in self.form_data.order_by('sequence_id'):
             for col in form.form_identifier.form.get_column_names():
                 # todo: what should these really be to differentiate
@@ -154,10 +157,10 @@ class Case(models.Model):
            Will be a dictionary of the id column to a single flat
            row aggregating the data across the forms.  E.g.:
 
-           { id_column_value_1: [form1_value1, form1_value2, ...,
+           { id_column_value_1: [case_id_1, form1_value1, form1_value2, ...,
                                  form2_value1, form2_value2, ...,
                                  ...],
-             id_column_value_1: [form1_value1, form1_value2, ...,
+             id_column_value_1: [case_id_2, form1_value1, form1_value2, ...,
                                  form2_value1, form2_value2, ...,
                                  ...],
              
@@ -171,7 +174,7 @@ class Case(models.Model):
         to_return = {}
         unique_ids = self.get_unique_ids()
         for id in unique_ids:
-            to_return[id] = [] 
+            to_return[id] = [id] 
         for form_id in self.form_identifiers:
             data_list = form_id.get_data_lists()
             for id in unique_ids:
@@ -228,7 +231,15 @@ class Case(models.Model):
            '''
         to_return = {}
         for form_id in self.form_identifiers:
-            to_return[form_id] = form_id.get_data_for_case(case_id) 
+            # blarg.  some cases may have old forms that use integer
+            # ids and new ones that use non ints.  in this case the
+            # following can throw an exception, so just catch and 
+            # swallow it here.
+            try: 
+                to_return[form_id] = form_id.get_data_for_case(case_id)
+            except Exception, e:
+                logging.warn("Couldn't get data from form %s for case %s.  Error is: %s" % (form_id, case_id, e))
+                to_return[form_id] = []
         return to_return
     
     
