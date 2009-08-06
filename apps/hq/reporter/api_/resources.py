@@ -4,11 +4,11 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django_rest_interface.resource import Resource
-from transformers.xml import *
-from transformers.http import *
+from transformers.xml import xmlify
+from transformers.http import responsify
 from xformmanager.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
-from hq.reporter.api_.reports import *
+from hq.reporter.api_.reports import Report, DataSet
 from hq.reporter.metadata import get_user_id_count, get_username_count
 import hq.utils as utils 
 
@@ -111,10 +111,10 @@ def get_user_activity_report(domain, ids, index, value, start_date, end_date, pa
     # when 'organization' is properly populated, we can start using that
     #       member_list = utils.get_members(organization)
     # for now, just use domain
-    member_list = [r.chw_id for r in ReporterProfile.objects.filter(domain=domain)]
+    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
     # get the specified forms
     for id in ids:
-        dataset = DataSet( str(value) + " for " + str(index) )
+        dataset = DataSet( unicode(value[0]) + " for " + unicode(index) )
         form_metadata = metadata.filter(formdefmodel=id)
         #for param in params:
         #    dataset.params[param.name] = param.value
@@ -123,7 +123,7 @@ def get_user_activity_report(domain, ids, index, value, start_date, end_date, pa
         #    dataset.stats[stat.name] = exec_stat(stat,form_metadata)
         for member in member_list:
             # entries are tuples of dates and counts
-            dataset.entries.append( (member, form_metadata.filter(chw_id=member).count()) )
+            dataset.entries.append( (member, form_metadata.filter(username=member).count()) )
         report.datasets.append(dataset)
     # get a sum of all forms
     return report
