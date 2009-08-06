@@ -139,7 +139,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if request.method == 'POST':                    
         new_submission = submitprocessor.do_raw_submission(request.META,request.raw_post_data, domain=currdomain[0], is_resubmission=is_resubmission)
         if new_submission == '[error]':
-            logging.error("Domain Submit(): Submission error")
+            logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
             template_name="receiver/submit_failed.html"            
         else:
             context['transaction_id'] = new_submission.transaction_uuid
@@ -157,8 +157,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
 #return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
-    context = {}            
-    logging.debug("begin backup()")
+    context = {}    
     if request.method == 'POST':
         currdomain = Domain.objects.filter(name=domain_name)
         if len(currdomain) != 1:
