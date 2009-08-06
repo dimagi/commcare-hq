@@ -21,16 +21,15 @@ _XFORM_URI = 'xform'
 class Submission(models.Model):   
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
-    #transaction_num = models.IntegerField(_('Submission Integer ID for Phone'),unique=True,null=False)
     
     domain = models.ForeignKey(Domain)
     
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
+    content_type = models.CharField(_('Content Type'), max_length=100)
     raw_header = models.TextField(_('Raw Header'))
     
-    #print settings.RAPIDSMS_APPS
     raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255)    
     
     @property
@@ -73,7 +72,7 @@ class Submission(models.Model):
         attaches = Attachment.objects.all().filter(submission = self)
         if len(attaches) > 0:
             for attach in attaches:
-                attach.delete()                        
+                attach.delete()      
         super(Submission, self).delete()
         
     def handled(self, handle_type):
