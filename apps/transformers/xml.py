@@ -2,10 +2,6 @@
 from lxml import etree
 
 def xmlify(object_):
-    root = _xmlify(object_)
-    return etree.tostring(root, pretty_print=True)
-
-def _xmlify(object_):
     """ a generic Python function to take a python object
     and serialize it as XML. Note that the output is entirely 
     dependent on the data structure of the input - which makes this 
@@ -18,6 +14,11 @@ def _xmlify(object_):
     plus lists of either basic types or any of the above
     
     """
+    
+    root = _xmlify(object_)
+    return etree.tostring(root, pretty_print=True)
+
+def _xmlify(object_):
     # end-condition: when we receive a tuple or a custom object
     if isinstance( object_, tuple):
         # the first element of tuple is attribute
@@ -35,6 +36,13 @@ def _xmlify(object_):
                 # i = string name of field
                 # i_val = actual field value
                 children = etree.Element( pluralize(i) )
+                # some lists have names
+                if hasattr(i_val,"__dict__"):
+                    for i in i_val.__dict__:
+                        value = getattr(i_val,i)
+                        if isinstance(value, basestring):
+                            # set strings to be attributes
+                            children.set(sanitize_name(i),sanitize_value(value) )
                 for val in i_val:
                     child = _xmlify(val)
                     children.append(child)
