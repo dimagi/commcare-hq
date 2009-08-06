@@ -127,14 +127,10 @@ class Submission(models.Model):
                     new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],self.transaction_uuid + filename)
                     new_attach.save()                
                     logging.debug("Attachment Save complete")                    
-            except Exception, e:
-                logging.error("error parsing attachments") 
-                #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[0]))
-                #logging.error("error parsing attachments: Exception: " + str(sys.exc_info()[1]))
+            except Exception, e:                 
                 type, value, tb = sys.exc_info()
-                logging.error("Attachment Parse Error Traceback:")
-                logging.error(type.__name__ +  ":" + str(value))            
-                logging.error(string.join(traceback.format_tb(tb),' '))
+                logging.error("Attachment Parsing Error!!! Traceback: " + type.__name__ +  ":" + str(value) + " " + string.join(traceback.format_tb(tb),' '))
+                
         
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)

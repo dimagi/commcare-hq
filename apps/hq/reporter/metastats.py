@@ -12,7 +12,11 @@ def get_stats_for_reporterprofile(reporter_profile, meta_qset, formdef_qset):
     requires a Metadata, and a FormDefModel queryset for filtration"""    
     
     statresults = {}    
-    for_user = meta_qset.filter(username=reporter_profile.chw_username)
+    #this is the wrong way to do the query, because usernames are not unique
+    #for_user = meta_qset.filter(username=reporter_profile.username)
+    
+    #correct way to do the query
+    for_user = meta_qset.filter(chw_id=reporter_profile.chw_id)
     
     statresults['Total Submissions'] = for_user.count()
     
