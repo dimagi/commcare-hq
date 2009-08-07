@@ -2,18 +2,16 @@ from django.conf.urls.defaults import *
 from django.http import HttpResponseBadRequest
 from hq.reporter.api_.resources import *
 
-urlpatterns = patterns('',
-   #TODO - clean up index/value once we hash out this spec more properly
-   (r'^api/reports/daily-report/', daily_report ),
-   (r'^api/reports/user-report/', user_report ),
-   (r'^api/reports/', read ),
-   #(r'^api/reports/daily-report', 'ReportResource',
-   #     {'ids': 9, \
-   #      'index': 'day', 'value': 'count'} ),
-   #(r'^api/reports/user-report', ReportResource().read, \
-   #     {'ids': [ get_form_id_from_desc('referral') ], \
-   #      'index': 'user', 'value': 'count'} ),
-   # manually specify formdef_id until we figure out how to do authentication properly
-   # TODO - filter returned data by user's domain
-)
+def _get_form_id_from_desc(desc):
+    formdefs = FormDefModel.objects.filter(target_namespace__icontains=desc)
+    return [ f.pk for f in formdefs ]
 
+urlpatterns = patterns('',
+   (r'^api/reports/daily-report', report, \
+       {'ids': _get_form_id_from_desc('resolution_0.0.2a'), \
+        'index': 'Day', 'value': ['Referrals']} ),
+   (r'^api/reports/user-report', report, \
+        {'ids': _get_form_id_from_desc('resolution_0.0.2a'), \
+         'index': 'User', 'value': ['Referrals']} ),
+   (r'^api/reports/', report ),
+)
