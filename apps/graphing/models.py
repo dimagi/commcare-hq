@@ -109,7 +109,8 @@ class RawGraph(BaseGraph):
                     query = query.replace(match, repl)
             return query 
         except Exception, e:
-            logging.error(e)
+            data_dump = {'exception':e, 'query':self.db_query}
+            logging.error("error cleaning query", extra={'data_dump':data_dump})
         return self.db_query
         
     @property
@@ -134,7 +135,8 @@ class RawGraph(BaseGraph):
             self.reset()
             return False
         except Exception, e:
-            logging.error("Error, rawgraph " + str(self) + " has a query error: " + str(e))
+            data_dump = {'exception':e}
+            logging.error("Error, rawgraph " + str(self) + " query error",extra={'data_dump':data_dump})
             return True
     
     def get_dataset(self):
@@ -143,7 +145,9 @@ class RawGraph(BaseGraph):
             rows = self.cursor.fetchall()            
             return rows
         except Exception, e:
-            logging.error("Error in doing sql query %s: %s" % (self.cleaned_query, str(e)))       
+            args = []
+            data_dump = {"exception": e, "query": self.cleaned_query}            
+            logging.log(logging.ERROR,"Error in doing sql query", extra={'data_dump':data_dump})       
             raise                 
                       
     
@@ -373,8 +377,9 @@ class RawGraph(BaseGraph):
                 
                 to_return = flot_dict
             return to_return
-        except Exception, e:
-            logging.error("Error rendering flot data: " + str(e))
+        except Exception, e:                
+            data_dump = {'exception':e, 'graphobject':self, 'display_type':self.display_type, 'table_name':self.table_name, 'db_query':self.db_query}
+            logging.error("Error rendering flot data",extra={'data_dump':data_dump})
             return {}
         
         

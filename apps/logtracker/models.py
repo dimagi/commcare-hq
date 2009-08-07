@@ -31,7 +31,7 @@ class LogTrack(models.Model):
     
     #If we can enable kwargs for debug message emits, then this would be useful.
     #but a good workaround is to WRITE DETAILED MESSAGES
-    #extras = models.TextField(null=True)
+    data_dump = models.TextField(null=True)
     
     def __unicode__(self):
         return self.message
