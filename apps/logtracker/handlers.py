@@ -19,6 +19,9 @@ class TrackingHandler(Handler):
                           line_no=record.lineno, 
                           pathname=record.pathname, 
                           funcname = record.funcName,
-                          module = record.module)       
+                          module = record.module                          
+                          )       
+        if hasattr(record, 'data_dump'):
+            newlog.data_dump = str(record.data_dump)
         newlog.save()
         

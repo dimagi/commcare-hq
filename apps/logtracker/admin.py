@@ -35,7 +35,7 @@ logging.root.setLevel(int(settings.RAPIDSMS_APPS['logtracker']['log_threshold'])
 logging.root.addHandler(handler)
 
 class LogTrackAdmin(admin.ModelAdmin):
-    list_display = ('id','level','channel','message','filename','line_no')
+    list_display = ('id','level','channel','message','filename','line_no', 'data_dump')
     list_filter = ['level','channel','filename',]
     
 admin.site.register(LogTrack,LogTrackAdmin)
