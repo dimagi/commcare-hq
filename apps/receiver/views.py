@@ -113,7 +113,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     try:
         submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
     except Exception, e:
-        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s", e)
+        return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
     
     # alright the save worked.  now do some post processing if we can 
     context = {}
@@ -128,26 +128,23 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         logging.error("Submission failed! %s isn't a known domain.", domain_name)
         return HttpResponseServerError("Submission failed! %s isn't a known domain.", domain_name)
 
-    new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
-                                                              currdomain, is_resubmission=is_resubmission)
-    
-    # TODO: this isn't actually a possible scenario anymore.  Fix up error handling.
-    if new_submission == '[error]':
-        logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
-        template_name="receiver/submit_failed.html"            
-    else:
+    try: 
+        new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
+                                                                  currdomain, is_resubmission=is_resubmission)
         context['transaction_id'] = new_submission.transaction_uuid
         context['submission'] = new_submission
         attachments = Attachment.objects.all().filter(submission=new_submission)
         num_attachments = len(attachments)
         context['num_attachments'] = num_attachments
         template_name="receiver/submit_complete.html"
-        
-    #for real submissions from phone, the content-type should be:
-    #mimetype='text/plain' # add that to the end fo the render_to_response()             
-    #resp = render_to_response(template_name, context, context_instance=RequestContext(request))
-    return render_to_response(request, template_name, context)
-    
+        return render_to_response(request, template_name, context)
+    except Exception, e:
+        logging.error("Submission error for domain %s, user: %s, data: %s" %
+                      (domain_name,str(request.user),str(request.raw_post_data)))
+        # should we return success or failure here?  I think failure, even though
+        # we did save the xml successfully.
+        return HttpResponseServerError("Submission processing failed!  This information probably won't help you: %s", e)
+
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
     context = {}    
