@@ -55,3 +55,36 @@ class Statistics(object):
         if stat_name=='sum':
             self.stats['sum'] = sum(dataset)
             return self.stats
+
+def get_stats(stats, entries):
+    """ gets statistics
+    
+    stats: specifies the statistics to return
+    entries: tuples with the second value a number no bigger than a Long
+    This function returns a dictionary of the requested statistics
+    """
+
+    ret = {}
+    if not stats:
+        return stats
+    for stat in stats:
+        if stat == 'sum':
+            sum = 0
+            for e in entries:
+                sum = sum + long(e[1])
+            ret[stat] = sum
+        # this function can be expanded to cover a variety of stats
+    return ret
+
+def get_params(request):
+    """ gets parameters
+    
+    request: http request object
+    This function returns a dictionary of the http GET parameters
+    """
+
+    params = {}
+    # get the part after '?' in the http request
+    for item in request.GET.items():
+        params[item[0]] = item[-1]
+    return params
