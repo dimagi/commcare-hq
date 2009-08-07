@@ -12,7 +12,7 @@ from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from receiver.models import SubmissionHandlingType
-from datetime import datetime
+from datetime import datetime, timedelta
 from lxml import etree
 import settings
 import logging
@@ -119,9 +119,16 @@ class StorageUtility(object):
             metadata_model.submission = submission
             metadata_model.raw_data = new_rawdata_id
             metadata_model.save()
-        self._add_handled(submission)
+            # respond with the number of submissions they have
+            # made today.
+            startdate = datetime.now().date() 
+            enddate = startdate + timedelta(days=1)
+            message = metadata_model.get_submission_count(startdate, enddate)
+        else:
+            message = ""
+        self._add_handled(submission, message)
         
-    def _add_handled(self, attachment):
+    def _add_handled(self, attachment, message):
         '''Tells the receiver that this attachment's submission was handled.  
            Should only be called _after_ we are sure that we got a linked 
            schema of this type.'''
@@ -129,8 +136,9 @@ class StorageUtility(object):
             handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
         except SubmissionHandlingType.DoesNotExist:
             handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        attachment.submission.handled(handle_type)
-            
+        attachment.submission.handled(handle_type, message)
+    
+    
     def save_form_data(self, xml_file_name, submission):
         logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")

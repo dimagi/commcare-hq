@@ -18,7 +18,9 @@ import traceback
 
 _XFORM_URI = 'xform'
 
-class Submission(models.Model):   
+class Submission(models.Model):
+    '''A Submission object.  Represents an instance of someone POST-ing something
+       to our site.'''
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
     
@@ -75,10 +77,12 @@ class Submission(models.Model):
                 attach.delete()      
         super(Submission, self).delete()
         
-    def handled(self, handle_type):
+    def handled(self, handle_type, message=""):
         """Mark the submission as being handled in the way that is passed in.
            Returns the SubmissionHandlingOccurrence that is created."""
-        return SubmissionHandlingOccurrence.objects.create(submission=self, handled=handle_type)
+        return SubmissionHandlingOccurrence.objects.create(submission=self, 
+                                                           handled=handle_type,
+                                                           message=message)
     
     def is_orphaned(self):
         """Whether the submission is orphaned or not.  Orphanage is defined 
@@ -153,6 +157,10 @@ class Backup(models.Model):
             
     
 class Attachment(models.Model):
+    '''An Attachment object, which is part of a submission.  Many submissions
+       will only have one attachment, but multipart submissions will be broken
+       into their individual attachments.'''
+    
     submission = models.ForeignKey(Submission, related_name="attachments")
     attachment_content_type = models.CharField(_('Attachment Content-Type'),max_length=64)
     attachment_uri = models.CharField(_('File attachment URI'),max_length=255)
@@ -238,6 +246,9 @@ class SubmissionHandlingOccurrence(models.Model):
        'understood' the submission, so unparsed or error-full submisssions
        should not have instances of this."""
     # todo? these names are pretty long-winded 
-    submission = models.ForeignKey(Submission)    
+    submission = models.ForeignKey(Submission, related_name="ways_handled")
     handled = models.ForeignKey(SubmissionHandlingType)    
     
+    # message allows any handler to add a short message that 
+    # the receiver app will display to the user
+    message = models.CharField(max_length=100, null=True, blank=True)

@@ -136,6 +136,12 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         attachments = Attachment.objects.all().filter(submission=new_submission)
         num_attachments = len(attachments)
         context['num_attachments'] = num_attachments
+        ways_handled = new_submission.ways_handled.all()
+        if len(ways_handled) > 0:
+            # if an app handled it and left a message then prefix the response
+            # with whatever was specified
+            app_messages = [way.message for way in ways_handled if way.message]
+            context["app_messages"] = app_messages
         template_name="receiver/submit_complete.html"
         return render_to_response(request, template_name, context)
     except Exception, e:
@@ -143,7 +149,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
                       (domain_name,str(request.user),str(request.raw_post_data)))
         # should we return success or failure here?  I think failure, even though
         # we did save the xml successfully.
-        return HttpResponseServerError("Submission processing failed!  This information probably won't help you: %s", e)
+        return HttpResponseServerError("Submission processing failed!  This information probably won't help you: %s" % e)
 
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
@@ -213,7 +219,7 @@ def save_post(request):
         submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
         return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
     except Exception, e:
-        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s", e)
+        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s" % e)
     
 @login_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):

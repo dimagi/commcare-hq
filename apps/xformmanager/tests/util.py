@@ -33,7 +33,7 @@ def create_xsd(xsd_file_name, domain=None):
 
 def populate(xml_file_name, domain=None):
     if xml_file_name:
-        submission = create_fake_submission(xml_file_name, domain)
+        return create_fake_submission(xml_file_name, domain)
         
 def create_fake_submission(xml_file, domain):
     # can't use get_full_path on the body since it's not relative to that file
