@@ -219,6 +219,16 @@ class Metadata(models.Model):
     
     def xml_file_location(self):
         return self.submission.filepath
+    
+    def get_submission_count(self, startdate, enddate):
+        '''Gets the number of submissions matching this one that 
+           fall within the specified date range.  "Matching" is 
+           currently defined by having the same chw_id.'''
+        # the matching criteria may need to be revised.
+        return len(Metadata.objects.filter(chw_id=self.chw_id, 
+                                           submission__submission__submit_time__gte=startdate,
+                                           submission__submission__submit_time__lte=enddate))
+        
 
 
 # process is here instead of views because in views it gets reloaded
