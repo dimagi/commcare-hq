@@ -139,7 +139,9 @@ def _perform_table_migration():
     # for some reason mysql insists on using these special slanted quote marks
     # for this command.  
     cursor.execute("ALTER TABLE `hq_domain` ADD COLUMN `timezone` VARCHAR(64) AFTER `description`;")
+    cursor.execute("ALTER TABLE `receiver_submission` ADD COLUMN `content_type` VARCHAR(100) AFTER `bytes_received`;")
     
+    # todo: null constraints?
     
     
 def _rename_table(oldname, newname):
