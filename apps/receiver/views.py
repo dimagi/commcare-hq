@@ -130,6 +130,8 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
 
     new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
                                                               currdomain, is_resubmission=is_resubmission)
+    
+    # TODO: this isn't actually a possible scenario anymore.  Fix up error handling.
     if new_submission == '[error]':
         logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
         template_name="receiver/submit_failed.html"            
@@ -148,7 +150,6 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
-#return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
     context = {}    
     if request.method == 'POST':
         currdomain = Domain.objects.filter(name=domain_name)
@@ -180,7 +181,7 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
 def restore(request, code_id, template_name="receiver/restore.html"):
     context = {}            
     logging.debug("begin restore()")
-    #need to somehow validate password, presmuably via the header objects.
+    # need to somehow validate password, presmuably via the header objects.
     restore = Backup.objects.all().filter(backup_code=code_id)
     if len(restore) != 1:
         template_name="receiver/nobackup.html"
@@ -242,20 +243,9 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     # TODO - optimize this into 1 db call
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     for slog in slogs:
-        # the first attachment is always the xml
         if slog.xform:
             if not slog.xform.has_linked_schema():
                 orphans = orphans + [ slog ]
-    paginator = Paginator(orphans, 25) # Show 25 items per page
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
     
-    try:
-        submits_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        submits_pages = paginator.page(paginator.num_pages)
-
-    context['submissions'] = submits_pages    
+    context['submissions'] = paginate(orphans) 
     return render_to_response(request, template_name, context)
