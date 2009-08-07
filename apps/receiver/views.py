@@ -210,24 +210,14 @@ def restore(request, code_id, template_name="receiver/restore.html"):
 def save_post(request):
     '''Saves the body of a post in a file.  Doesn't do any processing
        of any kind.'''
-    guid = str(uuid.uuid1())
-    timestamp = str(datetime.now())
-    filename = "%s - %s.rawpost" % (guid, timestamp)
-    if request.raw_post_data:
-        try:
-            newfilename = os.path.join(settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],filename)
-            logging.debug("writing to %s" % newfilename)
-            fout = open(newfilename, 'w')
-            fout.write(request.raw_post_data)
-            fout.close()
-            logging.debug("write successful")
-            return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
-        except Exception, e:
-            logging.error(e)
-            return HttpResponse("Oh no something bad happened!  %s" % e)
-    return HttpResponse("Sorry, we didn't get anything there.")
+    if request.method != 'POST':
+        return HttpResponse("You have to POST to submit data.")
+    try:
+        submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
+        return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
+    except Exception, e:
+        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s", e)
     
-
 @login_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
