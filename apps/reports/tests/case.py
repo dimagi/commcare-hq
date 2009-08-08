@@ -1,4 +1,5 @@
 import unittest
+from receiver.models import Submission, Attachment
 from reports.models import *
 from xformmanager.tests.util import *
 from xformmanager.models import *

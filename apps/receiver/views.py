@@ -9,6 +9,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
+from xformmanager.manager import XFormManager
 
 from datetime import timedelta, datetime
 from django.db import transaction
@@ -232,13 +233,23 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
+    if request.method == "POST":
+        for i in request.POST.getlist('instance'):
+            if 'checked_'+ i in request.POST:
+                submit_id = int(i)
+                xformmanager = XFormManager()
+                submission = Submission.objects.get(id=submit_id)
+                if request.POST['action'] == 'delete':
+                    submission.delete()
+                else: # default to resubmitting
+                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                    if not status:
+                        context['errors'] = "Resubmission failed"
     orphans = []
     # TODO - optimize this into 1 db call
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     for slog in slogs:
-        if slog.xform:
-            if not slog.xform.has_linked_schema():
-                orphans = orphans + [ slog ]
-    
-    context['submissions'] = paginate(orphans) 
+        if slog.is_orphaned():
+            orphans = orphans + [ slog ]
+    context['submissions'] = paginate(request, orphans)
     return render_to_response(request, template_name, context)

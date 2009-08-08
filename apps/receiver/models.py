@@ -84,6 +84,13 @@ class Submission(models.Model):
                                                            handled=handle_type,
                                                            message=message)
     
+    def unhandled(self):
+        """ Deletes the 'handled' reference (used when data is deleted) """
+        try:
+            SubmissionHandlingOccurrence.objects.get(submission=self).delete()
+        except SubmissionHandlingOccurrence.DoesNotExist:
+            return
+    
     def is_orphaned(self):
         """Whether the submission is orphaned or not.  Orphanage is defined 
            by having no information about the submission being handled."""
@@ -167,6 +174,9 @@ class Attachment(models.Model):
     filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     checksum = models.CharField(_('Attachment MD5 Checksum'),max_length=32)
+    
+    def is_xform(self):
+        return self.attachment_uri == _XFORM_URI
     
     def get_media_url(self):
         basename = os.path.basename(self.filepath)

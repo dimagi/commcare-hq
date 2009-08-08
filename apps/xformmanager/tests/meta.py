@@ -1,7 +1,7 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.tests.util import *
 from xformmanager.models import Metadata
-from receiver.models import Submission
+from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 import unittest
 from datetime import datetime, timedelta 
 
@@ -116,8 +116,11 @@ class MetaTestCase(unittest.TestCase):
         self.assertFalse(submission.is_orphaned())
         
         # these should NOT create a linked submission.  No schema
+        print "Expecting an error NOW:"
         populate("data/pf_new_reg_1.xml")
+        print "Expecting an error NOW:"
         populate("data/pf_new_reg_2.xml")
+        print "Expecting an error NOW:"
         populate("data/pf_ref_completed_1.xml")
         
         self.assertEqual(1, len(Metadata.objects.all()))

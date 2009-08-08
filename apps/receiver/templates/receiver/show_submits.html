@@ -10,7 +10,9 @@
 
 {% block content %}
 <h2>{% trans "All Submissions" %}</h2>
-   Submissions with IDs highlighted in red could not be parsed. Please make sure a matching xform schema has been registered.
+<a href="{% url receiver.views.orphaned_data %}">View All Unrecognized Submissions Here</a><br/>
+Submissions with IDs highlighted in <span class="orphan">red</span> could not be recognized. Please make sure a matching xform has been registered on this site.<p/>
+
    <table class="sofT">
    <thead class="commcare-heading">
     <tr>
@@ -66,4 +68,6 @@
         {% endif %}
     </span>
 	</div>
+
+
 {% endblock %}
