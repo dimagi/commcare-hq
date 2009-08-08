@@ -6,9 +6,9 @@ import logging
 
 class FormIdentifier(models.Model):
     '''An identifier for a form.  This is a way for a case to point at
-       a particular form, using a particular column in that form.  These
-       also have sequence ids so that you can define the ordering of a
-       full listing of the data for a case'''
+       a particular form, using a particular column in that form.  It
+       also allows you to pick an optional sorting column and sort order.  
+       These are used to access the data in a particular order.'''
     
     form = models.ForeignKey(FormDefModel)
     identity_column = models.CharField(max_length=255)
@@ -295,7 +295,9 @@ class CaseFormIdentifier(models.Model):
     # yuck.  todo: come up with a better name.
     '''A representation of a FormIdentifier as a part of a case.  This 
        contains a link to the FormIdentifier, a sequence id, and a link
-       to the case.'''
+       to the case.  This allows one to define what forms and columns
+       make up a case, and use the sequence_id to define how the 
+       data is ordered.'''
     form_identifier = models.ForeignKey(FormIdentifier)
     case = models.ForeignKey(Case, related_name="form_data")
     sequence_id = models.PositiveIntegerField()
