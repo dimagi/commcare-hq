@@ -1,6 +1,6 @@
 from xformmanager.manager import *
 from xformmanager.xformdef import *
-from receiver.tests.submissions import *
+from receiver.tests.util import *
 import logging
 
 def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None):

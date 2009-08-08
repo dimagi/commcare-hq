@@ -236,6 +236,9 @@ class Metadata(models.Model):
 # whereas models is loaded once
 def process(sender, instance, **kwargs): #get sender, instance, created
     # yuck, this import is in here because they depend on each other
+    if not instance.is_xform():
+        return
+
     from manager import XFormManager
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
