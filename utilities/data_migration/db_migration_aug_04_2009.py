@@ -141,8 +141,14 @@ def _perform_table_migration():
     cursor.execute("ALTER TABLE `hq_domain` ADD COLUMN `timezone` VARCHAR(64) AFTER `description`;")
     cursor.execute("ALTER TABLE `receiver_submission` ADD COLUMN `content_type` VARCHAR(100) AFTER `bytes_received`;")
     
-    # todo: null constraints?
-    
+    # update null constraints
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `formname` VARCHAR(255) DEFAULT NULL;")
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `formversion` VARCHAR(255) DEFAULT NULL;")
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `deviceid` VARCHAR(255) DEFAULT NULL;")
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `username` VARCHAR(255) DEFAULT NULL;")
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `chw_id` VARCHAR(255) DEFAULT NULL;")
+    cursor.execute("ALTER TABLE `xformmanager_metadata` MODIFY COLUMN `uid` VARCHAR(32) DEFAULT NULL;")
+
     
 def _rename_table(oldname, newname):
     '''Renames a table, with some sanity checks'''  
