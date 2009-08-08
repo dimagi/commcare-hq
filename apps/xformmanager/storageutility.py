@@ -101,7 +101,7 @@ class StorageUtility(object):
         fdd = self.update_models(formdef)
         self.formdata = fdd
         self.formdef = self._strip_meta_def( formdef )
-        queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
+        queries = self.queries_to_create_instance_tables( formdef, fdd.element.id, formdef.name, formdef.name)
         self._execute_queries(queries)
         return fdd
    	
@@ -206,7 +206,7 @@ class StorageUtility(object):
         
         # we don't really need a parent_id in our top-level table...
         # should be NOT NULL?
-        if parent_id is not '':
+        if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
                 queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + create_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
@@ -238,12 +238,12 @@ class StorageUtility(object):
               # repeatable elements must generate a new table
               if parent_id == '':
                   ed = ElementDefModel(name=str(child.name), form_id=self.formdata.id,
-                                  table_name = create_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
+                       table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
                   ed = ElementDefModel(name=str(child.name), parent_id=parent_id, form=self.formdata,
-                                  table_name = create_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
+                                  table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
           else: 
