@@ -17,8 +17,16 @@ def run():
     # this part of the script walks through all the registered
     # form definitions and bundles them with the original xsd
     # schema for resubmission
-    #all_schemas = FormDefModel.objects.all()
-    all_schemas = FormDefModel.objects.fiter(domain__name__iexact="MVP")
+   
+    domain = None
+    # you can manually set a single domain here.  if you don't then
+    # all the data will be exported.
+    domain = "Grameen"
+    if domain:
+        all_schemas = FormDefModel.objects.filter(domain__name__iexact=domain)
+    else:
+        all_schemas = FormDefModel.objects.all()
+ 
     for schema in all_schemas:
         print "processsing %s" % schema
         file_loc = schema.xsd_file_location
@@ -58,7 +66,10 @@ def run():
     # submitting IP and time, as well as a reference to the 
     # original post
     #all_submissions = Submission.objects.all()
-    all_submissions = Submission.objects.fiter(domain__name__iexact="MVP")
+    if domain:
+        all_submissions = Submission.objects.filter(domain__name__iexact=domain)
+    else:
+        all_submissions = Submission.objects.all()
     for submission in all_submissions:
         #print "processing %s (%s)" % (submission,submission.raw_post)
         post_file = open(submission.raw_post, "r")
