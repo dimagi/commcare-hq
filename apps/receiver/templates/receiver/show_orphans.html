@@ -48,7 +48,7 @@
    		{% if orphan.xform %}
             <td><a href="{% url receiver.views.single_attachment orphan.xform.id %}">view xml submission</a></td>
         {% else %}
-            <td><a href="{% url receiver.views.single_attachment orphan.attachments.0 %}">view first attachment</a></td>
+            <td>no xform found</td>
         {% endif %}
    	</tr>	
    {% endfor %}
