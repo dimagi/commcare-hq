@@ -7,7 +7,7 @@ import json
 import subprocess
 import sys
 from subprocess import PIPE
-import httplib
+import httplib  
 from urllib import urlencode
 from urllib2 import urlopen, Request, HTTPRedirectHandler
 import urllib2
@@ -18,18 +18,15 @@ from urlparse import urlparse
 #serverhost = 'test.commcarehq.org'
 #serverhost = 'localhost'
 serverhost = 'localhost:8000'
+#serverhost = 'dev.commcarehq.org'
 
 curl_command = 'c:\curl\curl.exe'
 #curl_command = 'curl'
 
+directory = r'C:\Source\hq\data\single_grameen'
 
 def run(argv):
-    #directory = r'C:\Source\hq\commcare-hq\django-hq\bad'
-    #directory = r'C:\Source\hq\commcare-hq\django-hq\export'
-    #directory = r'C:\Source\hq\commcare-hq\django-hq\pathfinder\out'
-    #directory = r'C:\Source\hq\commcare-hq\django-hq\brac\out'
-    #directory = r'C:\Source\hq\data\grexport\grexport'
-    directory = r'C:\Source\hq\data\pathfinder\commcare\input\out'
+
     if len(argv) > 1:
         directory = argv[1]
     # loop through once uploading all the schemas
@@ -46,7 +43,8 @@ def run(argv):
             _submit_form(os.path.join(directory,file))
             if count % 100 == 0:
                 print "uploaded %s of %s xforms" % (count, total)
-                time.sleep(10)
+                sys.stderr.write("uploaded %s of %s xforms\n" % (count, total))
+                time.sleep(5)
             count = count + 1
     print "done"
     
@@ -73,7 +71,6 @@ def _submit_schema(filename):
         conn.request('POST', up.path, data, dict)
         resp = conn.getresponse()
         results = resp.read()
-        
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
@@ -93,6 +90,13 @@ def _submit_form(filename):
     real_size = len(data)
     content_length = dict['content-length']
     domain_name = dict["domain"]
+    # czue - temporarily don't sumbit pf and brac data since it comes
+    # from supervisor
+    
+#    if domain_name == "Pathfinder" or domain_name == "BRAC":
+#        print "skipping domain: %s" % domain_name
+#        return 
+#        
     if int(real_size) != int(content_length):
         print "form %s has mismatched size and content-length %s != %s, automatically fixing!" % (filename, real_size, content_length)
         dict['content-length'] = real_size
@@ -107,6 +111,8 @@ def _submit_form(filename):
         results = resp.read()
         if not "thank you" in results:
             print "unexpected response for %s\n%s" % (filename, results)
+        else:
+            print "%s: success!" % filename
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
