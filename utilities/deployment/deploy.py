@@ -95,14 +95,18 @@ def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_
     
     
     make_archive(basedir,os.path.basename(archive_to_deploy))
-    archive_filename = os.path.basename(archive_to_deploy)
+    
     print "chdir back to original directory"
     os.chdir(curdir)
     print "cwd: " + os.getcwd()
     
+    archive_filename = os.path.basename(archive_to_deploy)
+    print "*************************"
+    print "Finished archiving.  Transporting file: " + archive_filename + " to: " + target_abs_path    
+
     shutil.move(archive_to_deploy, target_abs_path + archive_filename)
     
-    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', build_number, revision_number, basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-b%s-rev%s' % (build_number, revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
         
     p.stdin.flush()
     p.stdin.close()
