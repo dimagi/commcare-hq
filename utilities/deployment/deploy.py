@@ -12,12 +12,19 @@ import os
 import sys
 import tarfile
 import gzip
-
+import logging
 import sys
 import os
 import select
-import paramiko
+import shutil
+try:
+    import paramiko
+except:
+    logging.error("Paramiko not installed - you need it for remote ssh deployment")
 import socket
+
+import subprocess
+from subprocess import PIPE
 
 debug = True
 
@@ -64,8 +71,56 @@ def run(t, cmd):
     return out
 
 
-def do_deploy(hostname, username, password, target_abs_path, target_deploy_path, build_number, revision_number):
+def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_number):
+    #make the archive    
+    #git revision numbers are nasty looking: b9cfdebe87d6-05/27/2009 16:03:43, so let's escape them    
+    revision_number = revision_number.replace(' ', '_')
+    revision_number = revision_number.replace(':', '')
+    revision_number = revision_number.replace('/', '-')
     
+    #chdir to where this deploy is    
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))    
+    #create the archive in the root directory where both rapidsms and commcarehq reside
+    archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
+    
+    #get the basedir that these reside in.  this could be arbitrary
+    basedir = os.path.basename(os.path.abspath('../../')) #49120312421 or commcare-/hq   
+    curdir = os.getcwd()
+    
+    #go down to that level to actual make archive
+    print "cwd: " + os.getcwd()
+    os.chdir('../../../')
+    print "archive to deploy: " + archive_to_deploy    
+    print "cwd: " + os.getcwd()
+    
+    
+    make_archive(basedir,os.path.basename(archive_to_deploy))
+    
+    print "chdir back to original directory"
+    os.chdir(curdir)
+    print "cwd: " + os.getcwd()
+    
+    archive_filename = os.path.basename(archive_to_deploy)
+    print "*************************"
+    print "Finished archiving.  Transporting file: " + archive_filename + " to: " + target_abs_path    
+
+    shutil.move(archive_to_deploy, target_abs_path + archive_filename)
+    
+    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-b%s-rev%s' % (build_number, revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+        
+    p.stdin.flush()
+    p.stdin.close()
+    
+    output = p.stdout.read()    
+    error = p.stderr.read()  
+    
+    print "Command output: " + output
+    print "Command Errors: " + error
+    
+
+
+def do_deploy(hostname, username, password, target_abs_path, target_deploy_path, build_number, revision_number):
+   
     #we are starting in commcare-hq/utilities/build because we are operating off of the build.xml
     #make the archive    
     #git revision numbers are nasty looking: b9cfdebe87d6-05/27/2009 16:03:43, so let's escape them    
@@ -192,4 +247,5 @@ if __name__ == "__main__":
             build_number= sys.argv[6]
             revision_number= sys.argv[7]      
             
-    do_deploy(hostname, username, password, target_abs_path,target_url_path,build_number,revision_number)
+    #do_deploy(hostname, username, password, target_abs_path,target_url_path,build_number,revision_number)
+    do_local_deploy(target_abs_path,target_url_path,build_number,revision_number)
