@@ -12,7 +12,7 @@ from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from receiver.models import SubmissionHandlingType
-from datetime import datetime
+from datetime import datetime, timedelta
 from lxml import etree
 import settings
 import logging
@@ -101,7 +101,7 @@ class StorageUtility(object):
         fdd = self.update_models(formdef)
         self.formdata = fdd
         self.formdef = self._strip_meta_def( formdef )
-        queries = self.queries_to_create_instance_tables( formdef, '', formdef.name, formdef.name)
+        queries = self.queries_to_create_instance_tables( formdef, fdd.element.id, formdef.name, formdef.name)
         self._execute_queries(queries)
         return fdd
    	
@@ -114,49 +114,48 @@ class StorageUtility(object):
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         new_rawdata_id = queries.execute_insert()
         metadata_model = self._parse_meta_data( root )
-        if metadata_model is not None:
+        if metadata_model:
             metadata_model.formdefmodel = formdefmodel
             metadata_model.submission = submission
             metadata_model.raw_data = new_rawdata_id
             metadata_model.save()
-        self._add_handled(submission)
+            # respond with the number of submissions they have
+            # made today.
+            startdate = datetime.now().date() 
+            enddate = startdate + timedelta(days=1)
+            message = metadata_model.get_submission_count(startdate, enddate)
+        else:
+            message = ""
+	    return False
+        self._add_handled(submission, message)
+	return True
         
-    def _add_handled(self, attachment):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.'''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        attachment.submission.handled(handle_type)
-            
+    
     def save_form_data(self, xml_file_name, submission):
-        logging.debug("Getting data from xml file at " + xml_file_name)
         f = open(xml_file_name, "r")
-        xsd_table_name = get_table_name(f)
-        if xsd_table_name is None: return
-        logging.debug("Form name is " + xsd_table_name)
-        xsd = FormDefModel.objects.all().filter(form_name=xsd_table_name)
+        # should match XMLNS
+        xmlns = get_xmlns(f)
+        if xmlns is None: 
+            logging.error("NO XMLNS FOUND IN SUBMITTED FORM %s" % xml_file_name)
+            return False
+        formdef = FormDefModel.objects.all().filter(target_namespace=xmlns)
         
-        if xsd is None or len(xsd) == 0:
-            logging.error("NO XMLNS FOUND IN SUBMITTED FORM")
-            return
+        if formdef is None or len(formdef) == 0:
+            logging.error("XMLNS %s could not be matches to any registered formdef." % xmlns)
+            return False
         # the above check is not sufficient
-        if xsd[0].xsd_file_location is None:
-            logging.error("THIS INSTANCE DATA DOES NOT MATCH ANY REGISTERED SCHEMAS")
-            return
-        logging.debug("Schema is located at " + xsd[0].xsd_file_location)
-        g = open( xsd[0].xsd_file_location ,"r")
-        formdef = self._strip_meta_def( FormDef(g) )
+        if formdef[0].xsd_file_location is None:
+            logging.error("Schema for form %s could not be found on the file system." % formdef[0].id)
+            return False
+        g = open( formdef[0].xsd_file_location ,"r")
+        stripped_formdef = self._strip_meta_def( FormDef(g) )
         g.close()
         
-        logging.debug("Saving form data with known xsd")
         f.seek(0,0)
-        self.save_form_data_matching_formdef(f, formdef, xsd[0], submission)
+        status = self.save_form_data_matching_formdef(f, stripped_formdef, formdef[0], submission)
         f.close()
-        logging.debug("Form data successfully saved")
-        return xsd_table_name
+        logging.debug("Schema %s successfully registered" % xmlns)
+        return status
 
     def update_models(self, formdef):
         """ save element metadata """
@@ -207,7 +206,7 @@ class StorageUtility(object):
         
         # we don't really need a parent_id in our top-level table...
         # should be NOT NULL?
-        if parent_id is not '':
+        if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
                 queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + create_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
@@ -239,12 +238,12 @@ class StorageUtility(object):
               # repeatable elements must generate a new table
               if parent_id == '':
                   ed = ElementDefModel(name=str(child.name), form_id=self.formdata.id,
-                                  table_name = create_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
+                       table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
                   ed = ElementDefModel(name=str(child.name), parent_id=parent_id, form=self.formdata,
-                                  table_name = create_table_name( formatted_join(next_parent_name, child.name) ) ) #next_parent_name
+                                  table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
           else: 
@@ -261,7 +260,7 @@ class StorageUtility(object):
       if data_tree is None : return
       if not elementdef: return
       
-      table_name = retrieve_table_name( formatted_join(parent_name, elementdef.name) )      
+      table_name = get_registered_table_name( formatted_join(parent_name, elementdef.name) )      
       if len( parent_table_name ) > 0:
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
@@ -330,6 +329,104 @@ class StorageUtility(object):
       query.child_queries = query.child_queries + [ next_query ]
       return query
 
+    # note that this does not remove the file from the filesystem 
+    # (by design, for security)
+    def remove_instance_matching_schema(self, formdef_id, instance_id):
+        fdm = FormDefModel.objects.get(pk=formdef_id)
+        edm_id = fdm.element.id
+        edm = ElementDefModel.objects.get(pk=edm_id)
+        cursor = connection.cursor()
+        cursor.execute( \
+            " delete from " + edm.table_name + " where id = %s ", [instance_id] )
+        try:
+            meta = Metadata.objects.get(raw_id=instance_id, formdefmodel=formdef_id).delete()
+            _remove_handled(meta.submission.submission)
+        except Metadata.DoesNotExist:
+            # not a problem since this simply means the data was 
+            # never successfully registered
+            return
+    
+    """ This is commented out for now because I suspect there's a bug in it which
+    may cause us to delete valuable data tables by accident
+    The vast majority of cases won't have nested tables, so keeping the nested
+    data around doesn't eat up that much space. TODO - fix and test rigorously
+    
+    @transaction.commit_on_success
+    def remove_instance_matching_schema(self, formdef_id, instance_id):
+        fdm = FormDefModel.objects.get(pk=formdef_id)
+        edm_id = fdm.ElementDefModel.id
+        edm = ElementDefModel.objects.get(pk=edm_id)
+        _remove_instance_inner_loop(edm.id, instance_id)
+
+    def _remove_instance_inner_loop(self, elementdef_id, instance_id):
+        edms = ElementDefModel.objects.filter(parent_id=elementdef_id)
+        for edm in edms:
+            rows = cursor.execute( " select id, parent_id from " + edm.table_name + \
+                                   " where parent_id = %s ", [instance_id] )
+            if rows:
+                for row in rows:
+                    _remove_instance_inner_loop( row['id'] )
+                    cursor.execute( " delete from " + edm.table_name + \
+                                   " where parent_id = %s ", [instance_id] )
+        edm = ElementDefModel.objects.get(id=elementdef_id)
+        cursor.execute( " delete from " + edm.table_name + " where id = %s ", [instance_id] )
+    """
+
+    @transaction.commit_on_success
+    def remove_schema(self, id, delete_xml=True):
+        fdds = FormDefModel.objects.all().filter(id=id) 
+        if fdds is None or len(fdds) == 0:
+            logging.error("  Schema with id %s could not be found. Not deleted." % id)
+            return    
+        # must remove tables first since removing form_meta automatically deletes some tables
+        self._remove_form_tables(fdds[0])
+        self._remove_form_models(fdds[0], delete_xml)
+        meta = Metadata.objects.all().filter(formdefmodel=fdds[0]).delete()
+        # when we delete formdefdata, django automatically deletes all associated elementdefdata
+    
+    # make sure when calling this function always to confirm with the user
+
+    def clear(self, delete_xml=True):
+        """ removes all schemas found in XSD_REPOSITORY_PATH
+            and associated tables. 
+            If delete_xml is true (default) it also deletes the 
+            contents of XFORM_SUBMISSION_PATH.        
+        """
+        self._remove_form_tables()
+        self._remove_form_models(delete_xml=delete_xml)
+        # when we delete formdefdata, django automatically deletes all associated elementdefdata
+            
+        # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
+        for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
+            file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
+            logging.debug(  "Deleting " + file )
+            stat = os.stat(file)
+            if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):
+                os.remove( file )
+            else:
+                logging.debug(  "  WARNING: Permission denied to access " + file )
+                continue
+    
+    def _add_handled(self, attachment, message):
+        '''Tells the receiver that this attachment's submission was handled.  
+           Should only be called _after_ we are sure that we got a linked 
+           schema of this type.
+
+           (This is in currently in storageutility since we want save()'s to be 
+           rolled back if this function fails for whatever reason.)
+	'''
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
+        attachment.submission.handled(handle_type, message)
+    
+    def _remove_handled(self, attachment):
+        '''Tells the receiver that this attachment's submission was not handled.
+           Only used when we are deleting data from xformmanager but not receiver
+        '''
+        attachment.submission.unhandled()
+        
     def _trim2chars(self, string):
         return string[0:len(string)-2]
         
@@ -349,7 +446,7 @@ class StorageUtility(object):
     def _db_format(self, type, text):
         type = type.lower()
         if text == '':
-            logging.error("Poorly formatted xml input!")
+            logging.error("No xml input provided!")
             return ''
         if type in self.DB_NON_STRING_TYPES:
             #dmyung :: some additional input validation
@@ -444,76 +541,7 @@ class StorageUtility(object):
             return field_name[:64]
         return field_name
     
-    # note that this does not remove the file from the filesystem 
-    # (by design, for security)
-    def remove_instance_matching_schema(self, formdef_id, instance_id):
-        fdm = FormDefModel.objects.get(pk=formdef_id)
-        edm_id = fdm.element.id
-        edm = ElementDefModel.objects.get(pk=edm_id)
-        cursor = connection.cursor()
-        cursor.execute( \
-            " delete from " + edm.table_name + " where id = %s ", [instance_id] )
-    
-    """ This is commented out for now because I suspect there's a bug in it which
-    may cause us to delete valuable data tables by accident
-    The vast majority of cases won't have nested tables, so keeping the nested
-    data around doesn't eat up that much space. TODO - fix and test rigorously
-    
-    @transaction.commit_on_success
-    def remove_instance_matching_schema(self, formdef_id, instance_id):
-        fdm = FormDefModel.objects.get(pk=formdef_id)
-        edm_id = fdm.ElementDefModel.id
-        edm = ElementDefModel.objects.get(pk=edm_id)
-        _remove_instance_inner_loop(edm.id, instance_id)
 
-    def _remove_instance_inner_loop(self, elementdef_id, instance_id):
-        edms = ElementDefModel.objects.filter(parent_id=elementdef_id)
-        for edm in edms:
-            rows = cursor.execute( " select id, parent_id from " + edm.table_name + \
-                                   " where parent_id = %s ", [instance_id] )
-            if rows:
-                for row in rows:
-                    _remove_instance_inner_loop( row['id'] )
-                    cursor.execute( " delete from " + edm.table_name + \
-                                   " where parent_id = %s ", [instance_id] )
-        edm = ElementDefModel.objects.get(id=elementdef_id)
-        cursor.execute( " delete from " + edm.table_name + " where id = %s ", [instance_id] )
-    """
-
-    @transaction.commit_on_success
-    def remove_schema(self, id, delete_xml=True):
-        fdds = FormDefModel.objects.all().filter(id=id) 
-        if fdds is None or len(fdds) == 0:
-            logging.error("  Schema " + name + " could not be found. Not deleted.")
-            return    
-        # must remove tables first since removing form_meta automatically deletes some tables
-        self._remove_form_tables(fdds[0])
-        self._remove_form_models(fdds[0], delete_xml)
-        meta = Metadata.objects.all().filter(formdefmodel=fdds[0]).delete()
-        # when we delete formdefdata, django automatically deletes all associated elementdefdata
-    
-    # make sure when calling this function always to confirm with the user
-
-    def clear(self, delete_xml=True):
-        """ removes all schemas found in XSD_REPOSITORY_PATH
-            and associated tables. 
-            If delete_xml is true (default) it also deletes the 
-            contents of XFORM_SUBMISSION_PATH.        
-        """
-        self._remove_form_tables()
-        self._remove_form_models(delete_xml=delete_xml)
-        # when we delete formdefdata, django automatically deletes all associated elementdefdata
-            
-        # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
-        for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
-            file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
-            logging.debug(  "Deleting " + file )
-            stat = os.stat(file)
-            if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):
-                os.remove( file )
-            else:
-                logging.debug(  "  WARNING: Permission denied to access " + file )
-                continue
     
     #TODO: commcare-specific functionality - should pull out into separate file
     def _strip_meta_def(self, formdef):
