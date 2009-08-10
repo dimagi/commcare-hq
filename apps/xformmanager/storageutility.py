@@ -339,8 +339,8 @@ class StorageUtility(object):
         cursor.execute( \
             " delete from " + edm.table_name + " where id = %s ", [instance_id] )
         try:
-            meta = Metadata.objects.get(raw_id=instance_id, formdefmodel=formdef_id).delete()
-            _remove_handled(meta.submission.submission)
+            meta = Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id).delete()
+            self._remove_handled(meta.submission.submission)
         except Metadata.DoesNotExist:
             # not a problem since this simply means the data was 
             # never successfully registered
