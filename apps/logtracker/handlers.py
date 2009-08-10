@@ -6,6 +6,8 @@
 from logging import Handler
 from logtracker.models import *
 
+logrecord_keys = ['msecs', 'args', 'name', 'thread', 'created', 'process', 'threadName', 'module', 'filename', 'levelno', 'processName', 'lineno', 'exc_info', 'exc_text', 'pathname', 'funcName', 'relativeCreated', 'levelname', 'msg']
+
 class TrackingHandler(Handler):
     """ Realtime log analysis handling for alerts. """   
     def __init__(self):
@@ -19,9 +21,19 @@ class TrackingHandler(Handler):
                           line_no=record.lineno, 
                           pathname=record.pathname, 
                           funcname = record.funcName,
-                          module = record.module                          
-                          )       
-        if hasattr(record, 'data_dump'):
-            newlog.data_dump = str(record.data_dump)
+                          module = record.module                                              
+                          )
+        #Simple reading of extras
+        #data_dump=str(record.__dict__)
+        
+        #slightly more intelligent reading of extras
+        for key in record.__dict__().keys():
+            if logrecord_keys.count(key) > 0:
+                continue
+            else:
+                if newlog.data_dump == None:
+                    newlog.data_dump = ''
+                newlog.data_dump += key + ":=" + str(record.__dict__[key]) + "\n"
+               
         newlog.save()
         
