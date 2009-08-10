@@ -139,10 +139,17 @@ class DbHelper(object):
         """Get an array of all the unique values in a given column.
            Results are returned sorted by the column."""
         col_to_use = columname        
-
         query = "select distinct(%s) from %s order by %s" % (columname, self.tablename, columname)
         return self.get_single_column_query_data(query)
-        
+    
+    def get_uniques_for_columns(self, columns, delimiter='|'):
+        """Get an array of all the unique values in a given set of columns,
+           by concatenating them together separated by the delimeter.  
+           Results are returned sorted by the concatenated string."""
+        # this probably only works on mysql.  I think that's okay.
+        concat_string = "concat_ws('%s', %s)" % (delimiter, ", ".join(columns))
+        query = "select distinct %s as concatenated_result from %s order by concatenated_result" % (concat_string, self.tablename)
+        return self.get_single_column_query_data(query)
     
     def get_uniques_for_column_date_bound(self, columname, startdate=None, enddate=None):
         """return an array of all the unique values in a given column, allowing 
