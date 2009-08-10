@@ -3,7 +3,7 @@ from xformmanager.xformdef import *
 from receiver.tests.util import *
 import logging
 
-def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None):
+def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None, path=None):
     if domain:
         mockdomain = domain
     elif Domain.objects.all().count() == 0:
@@ -12,7 +12,7 @@ def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None):
     else:
         mockdomain = Domain.objects.all()[0]    
     formdefmodel = create_xsd(xsd_file_name, mockdomain)
-    populate(xml_file_name, mockdomain)
+    populate(xml_file_name, mockdomain, path)
     return formdefmodel
 
 def create_xsd(xsd_file_name, domain=None):
@@ -31,13 +31,16 @@ def create_xsd(xsd_file_name, domain=None):
     formdefmodel.save()
     return formdefmodel
 
-def populate(xml_file_name, domain=None):
+def populate(xml_file_name, domain=None, path=None):
     if xml_file_name:
-        return create_fake_submission(xml_file_name, domain)
+        return create_fake_submission(xml_file_name, domain, path)
         
-def create_fake_submission(xml_file, domain):
-    # can't use get_full_path on the body since it's not relative to that file
-    full_body_path = os.path.join(os.path.dirname(__file__), xml_file)
+def create_fake_submission(xml_file, domain, path=None):
+    if not path:
+        # can't use get_full_path on the body since it's not relative to that file
+        # the default assumes it's relative to this file
+        path = os.path.dirname(__file__)
+    full_body_path = os.path.join(path, xml_file)
     submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path, domain)
     return submission.attachments.all()[0]
     

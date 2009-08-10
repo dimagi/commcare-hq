@@ -1,4 +1,5 @@
 import unittest
+import os
 from receiver.models import Submission, Attachment
 from reports.models import *
 from xformmanager.tests.util import *
@@ -17,13 +18,17 @@ class CaseTestCase(unittest.TestCase):
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
         
+        path = os.path.dirname(__file__)
         # register some schemas
-        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
+        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", path=path)
         for i in range(2, 6):
-            populate("data/pf_followup_%s.xml" % i)
+            populate("data/pf_followup_%s.xml" % i, path=path)
         
-        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml")
-        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
+        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", path=path)
+        populate("data/pf_new_reg_2.xml", path=path)
+        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml", path=path)
+        populate("data/pf_ref_completed_2.xml", path=path)
+        
         
         # get the three forms
         self.reg_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_registration_0_0_2")
@@ -35,13 +40,24 @@ class CaseTestCase(unittest.TestCase):
         self.follow_fid = FormIdentifier.objects.create(form=self.follow_form, identity_column="meta_username", 
                                                         sorting_column="meta_timeend", sort_descending=True)
         self.close_fid = FormIdentifier.objects.create(form=self.close_form, identity_column="meta_username")
+        # and our complex case, which uses multiple columns as keys
+        self.reg_complex_fid = FormIdentifier.objects.create(form=self.reg_form, identity_column="meta_username|pathfinder_registration_meta_chw_id")
+        self.follow_complex_fid = FormIdentifier.objects.create(form=self.follow_form, identity_column="meta_username|pathfinder_followup_meta_chw_id", 
+                                                        sorting_column="meta_timeend", sort_descending=True)
+        self.close_complex_fid = FormIdentifier.objects.create(form=self.close_form, identity_column="meta_username|pathfinder_referral_meta_chw_id")
         
         pf_domain = Domain.objects.all()[0]
         self.pf_case = Case.objects.create(name="pathfinder cases", domain=pf_domain)
+        self.complex_case = Case.objects.create(name="pathfinder complex cases", domain=pf_domain)
         
         self.reg_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_fid, case=self.pf_case, sequence_id=1)
         self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2)
         self.close_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_fid, case=self.pf_case, sequence_id=3)
+        
+        self.reg_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_complex_fid, case=self.complex_case, sequence_id=1)
+        self.follow_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_complex_fid, case=self.complex_case, sequence_id=2)
+        self.close_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_complex_fid, case=self.complex_case, sequence_id=3)
+        
         
     def tearDown(self):
         # clean up, in case some other tests left some straggling
@@ -63,6 +79,22 @@ class CaseTestCase(unittest.TestCase):
         uniques = self.close_fid.get_uniques()
         self.assertEqual(1, len(uniques))
         self.assertEqual("demo_user", uniques[0])
+        
+    def testFormIdentifierComplex(self):
+        uniques = self.reg_complex_fid.get_uniques()
+        self.assertEqual(2, len(uniques))
+        self.assertEqual("mary|0", uniques[0])
+        self.assertEqual("mary|1", uniques[1])
+        uniques = self.follow_complex_fid.get_uniques()
+        self.assertEqual(4, len(uniques))
+        self.assertEqual("demo_user|0", uniques[0])
+        self.assertEqual("demo_user|1", uniques[1])
+        self.assertEqual("mary|0", uniques[2])
+        self.assertEqual("mary|2", uniques[3])
+        uniques = self.close_complex_fid.get_uniques()
+        self.assertEqual(2, len(uniques))
+        self.assertEqual("demo_user|0", uniques[0])
+        self.assertEqual("demo_user|2", uniques[1])
         
     def testGetFormUtilities(self):
         pf_forms = self.pf_case.forms
@@ -104,13 +136,46 @@ class CaseTestCase(unittest.TestCase):
         else:
             self.fail("Get uniques returned wrong first value: %s" % uniques[0])
         
+    def testGetUniqueIdsComplex(self):
+        uniques = self.complex_case.get_unique_ids()
+        self.assertEqual(6, len(uniques))
+        # for now, we don't know what order these will come back in
+        for user in ["mary", "demo_user"]:
+            for id in ["0", "1", "2"]:
+                key = "%s|%s" % (user, id)
+                self.assertTrue(key in uniques, "%s is in list of unique ids" % key)
+        
     def testGetColumnNames(self):
-        reg_cols = self.reg_form.get_column_names()
-        follow_cols = self.follow_form.get_column_names()
-        close_cols = self.close_form.get_column_names()
+        reg_cols = self.reg_fid.get_column_names()
+        follow_cols = self.follow_fid.get_column_names()
+        close_cols = self.close_fid.get_column_names()
         # start with a base count of 1 for the "case_id" column
         total_cols = 1 + len(reg_cols) + len(follow_cols) + len(close_cols)
         case_cols = self.pf_case.get_column_names()
+        self.assertEqual(total_cols, len(case_cols))
+        
+        # walk through the list of columns in order and
+        # ensure that each table's columns match up. 
+        count = 1
+        for col in reg_cols:
+            self.assertTrue(col in case_cols[count])
+            count += 1
+        
+        for col in follow_cols:
+            self.assertTrue(col in case_cols[count])
+            count += 1
+        
+        for col in close_cols:
+            self.assertTrue(col in case_cols[count])
+            count += 1
+        
+    def testGetColumnNamesComplex(self):
+        reg_cols = self.reg_complex_fid.get_column_names()
+        follow_cols = self.follow_complex_fid.get_column_names()
+        close_cols = self.close_complex_fid.get_column_names()
+        # start with a base count of 1 for the "case_id" column
+        total_cols = 1 + len(reg_cols) + len(follow_cols) + len(close_cols)
+        case_cols = self.complex_case.get_column_names()
         self.assertEqual(total_cols, len(case_cols))
         
         # walk through the list of columns in order and
@@ -181,6 +246,14 @@ class CaseTestCase(unittest.TestCase):
             else:
                 self.fail("unexpected identity: %s" % id)
         
+    def testGetDataFromFormIdentifierComplex(self):
+        followup_data = self.follow_complex_fid.get_data_maps()
+        self.assertEqual(4, len(followup_data))
+        self.assertEqual(2, len(followup_data["demo_user|0"]))
+        for id in ["demo_user|1", "mary|0", "mary|2"]:
+            self.assertEqual(1, len(followup_data[id]))
+        
+        
     def testGetTopmostData(self):
         data = self.pf_case.get_topmost_data_maps()
         self.assertEqual(2, len(data))
@@ -212,10 +285,10 @@ class CaseTestCase(unittest.TestCase):
         self.assertEqual(3, len(data))
         self.assertEqual(0, len(data[self.reg_fid]))
         self.assertEqual(3, len(data[self.follow_fid]))
-        self.assertEqual(1, len(data[self.close_fid]))
+        self.assertEqual(2, len(data[self.close_fid]))
         data = self.pf_case.get_data_for_case("mary")
         self.assertEqual(3, len(data))
-        self.assertEqual(1, len(data[self.reg_fid]))
+        self.assertEqual(2, len(data[self.reg_fid]))
         self.assertEqual(2, len(data[self.follow_fid]))
         self.assertEqual(0, len(data[self.close_fid]))
     
@@ -232,10 +305,10 @@ class CaseTestCase(unittest.TestCase):
                          data[self.follow_fid][1]["meta_deviceid"])
         self.assertEqual("device1", 
                          data[self.follow_fid][2]["meta_deviceid"])
-        self.assertEqual(1, len(data[self.close_fid]))
+        self.assertEqual(2, len(data[self.close_fid]))
         data = all_data["mary"]
         self.assertEqual(3, len(data))
-        self.assertEqual(1, len(data[self.reg_fid]))
+        self.assertEqual(2, len(data[self.reg_fid]))
         self.assertEqual(2, len(data[self.follow_fid]))
         self.assertEqual("device5", 
                          data[self.follow_fid][0]["meta_deviceid"])
