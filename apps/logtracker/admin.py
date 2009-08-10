@@ -31,6 +31,8 @@ handler = TrackingHandler()
 #DEBUG = 10
 #NOTSET = 0
 
+#the log_threshold is the ini value for what level the error handler should listen for
+#if it's less than the threshold set, the handler will never trigger. 
 logging.root.setLevel(int(settings.RAPIDSMS_APPS['logtracker']['log_threshold']))
 logging.root.addHandler(handler)
 
