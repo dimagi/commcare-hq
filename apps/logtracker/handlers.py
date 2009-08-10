@@ -27,13 +27,14 @@ class TrackingHandler(Handler):
         #data_dump=str(record.__dict__)
         
         #slightly more intelligent reading of extras
-        for key in record.__dict__().keys():
-            if logrecord_keys.count(key) > 0:
-                continue
-            else:
-                if newlog.data_dump == None:
-                    newlog.data_dump = ''
-                newlog.data_dump += key + ":=" + str(record.__dict__[key]) + "\n"
-               
-        newlog.save()
+        record_dict = dict(record)
+        if record_dict:
+            for key in record_dict:
+                if key in logrecord:
+                    continue
+                else:
+                    if newlog.data_dump == None:
+                        newlog.data_dump = ''
+                    newlog.data_dump += key + ":=" + str(record_dict[key]) + "\n"
+            newlog.save()
         
