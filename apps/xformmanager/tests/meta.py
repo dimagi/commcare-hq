@@ -116,11 +116,11 @@ class MetaTestCase(unittest.TestCase):
         self.assertFalse(submission.is_orphaned())
         
         # these should NOT create a linked submission.  No schema
-        print "Expecting an error NOW:"
+        logging.warn("\nExpecting an error NOW:")
         populate("data/pf_new_reg_1.xml")
-        print "Expecting an error NOW:"
+        logging.warn("Expecting an error NOW:")
         populate("data/pf_new_reg_2.xml")
-        print "Expecting an error NOW:"
+        logging.warn("Expecting an error NOW:")
         populate("data/pf_ref_completed_1.xml")
         
         self.assertEqual(1, len(Metadata.objects.all()))
