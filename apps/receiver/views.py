@@ -9,6 +9,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
+from xformmanager.manager import XFormManager
 
 from datetime import timedelta, datetime
 from django.db import transaction
@@ -113,7 +114,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     try:
         submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
     except Exception, e:
-        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s", e)
+        return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
     
     # alright the save worked.  now do some post processing if we can 
     context = {}
@@ -128,27 +129,31 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         logging.error("Submission failed! %s isn't a known domain.", domain_name)
         return HttpResponseServerError("Submission failed! %s isn't a known domain.", domain_name)
 
-    new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
-                                                              currdomain, is_resubmission=is_resubmission)
-    if new_submission == '[error]':
-        logging.error("Domain Submit(): Submission error for domain " + domain_name + " user: " + str(request.user) + " postdata: " + str(request.raw_post_data))
-        template_name="receiver/submit_failed.html"            
-    else:
+    try: 
+        new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
+                                                                  currdomain, is_resubmission=is_resubmission)
         context['transaction_id'] = new_submission.transaction_uuid
         context['submission'] = new_submission
         attachments = Attachment.objects.all().filter(submission=new_submission)
         num_attachments = len(attachments)
         context['num_attachments'] = num_attachments
+        ways_handled = new_submission.ways_handled.all()
+        if len(ways_handled) > 0:
+            # if an app handled it and left a message then prefix the response
+            # with whatever was specified
+            app_messages = [way.message for way in ways_handled if way.message]
+            context["app_messages"] = app_messages
         template_name="receiver/submit_complete.html"
-        
-    #for real submissions from phone, the content-type should be:
-    #mimetype='text/plain' # add that to the end fo the render_to_response()             
-    #resp = render_to_response(template_name, context, context_instance=RequestContext(request))
-    return render_to_response(request, template_name, context)
-    
+        return render_to_response(request, template_name, context)
+    except Exception, e:
+        logging.error("Submission error for domain %s, user: %s, data: %s" %
+                      (domain_name,str(request.user),str(request.raw_post_data)))
+        # should we return success or failure here?  I think failure, even though
+        # we did save the xml successfully.
+        return HttpResponseServerError("Submission processing failed!  This information probably won't help you: %s" % e)
+
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
-#return ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50)])
     context = {}    
     if request.method == 'POST':
         currdomain = Domain.objects.filter(name=domain_name)
@@ -180,7 +185,7 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
 def restore(request, code_id, template_name="receiver/restore.html"):
     context = {}            
     logging.debug("begin restore()")
-    #need to somehow validate password, presmuably via the header objects.
+    # need to somehow validate password, presmuably via the header objects.
     restore = Backup.objects.all().filter(backup_code=code_id)
     if len(restore) != 1:
         template_name="receiver/nobackup.html"
@@ -209,24 +214,14 @@ def restore(request, code_id, template_name="receiver/restore.html"):
 def save_post(request):
     '''Saves the body of a post in a file.  Doesn't do any processing
        of any kind.'''
-    guid = str(uuid.uuid1())
-    timestamp = str(datetime.now())
-    filename = "%s - %s.rawpost" % (guid, timestamp)
-    if request.raw_post_data:
-        try:
-            newfilename = os.path.join(settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],filename)
-            logging.debug("writing to %s" % newfilename)
-            fout = open(newfilename, 'w')
-            fout.write(request.raw_post_data)
-            fout.close()
-            logging.debug("write successful")
-            return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
-        except Exception, e:
-            logging.error(e)
-            return HttpResponse("Oh no something bad happened!  %s" % e)
-    return HttpResponse("Sorry, we didn't get anything there.")
+    if request.method != 'POST':
+        return HttpResponse("You have to POST to submit data.")
+    try:
+        submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
+        return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
+    except Exception, e:
+        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s" % e)
     
-
 @login_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
@@ -238,24 +233,23 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
+    if request.method == "POST":
+        for i in request.POST.getlist('instance'):
+            if 'checked_'+ i in request.POST:
+                submit_id = int(i)
+                xformmanager = XFormManager()
+                submission = Submission.objects.get(id=submit_id)
+                if request.POST['action'] == 'delete':
+                    submission.delete()
+                else: # default to resubmitting
+                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                    if not status:
+                        context['errors'] = "Resubmission failed"
     orphans = []
     # TODO - optimize this into 1 db call
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     for slog in slogs:
-        # the first attachment is always the xml
-        if slog.xform:
-            if not slog.xform.has_linked_schema():
-                orphans = orphans + [ slog ]
-    paginator = Paginator(orphans, 25) # Show 25 items per page
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    
-    try:
-        submits_pages = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        submits_pages = paginator.page(paginator.num_pages)
-
-    context['submissions'] = submits_pages    
+        if slog.is_orphaned():
+            orphans = orphans + [ slog ]
+    context['submissions'] = paginate(request, orphans)
     return render_to_response(request, template_name, context)

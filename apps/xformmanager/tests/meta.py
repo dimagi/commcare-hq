@@ -1,8 +1,9 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.tests.util import *
 from xformmanager.models import Metadata
-from receiver.models import Submission
+from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 import unittest
+from datetime import datetime, timedelta 
 
 class MetaTestCase(unittest.TestCase):
     
@@ -65,7 +66,21 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[7],"6")
         self.assertEquals(row[8],"RW07SHOPTWGAOJKUQJJJN215D")
 
-    def testMetaDataDuplicates(self):
+    def testSubmissionCount(self):
+        create_xsd_and_populate("data/pf_followup.xsd")
+        today = datetime.now().date()
+        tomorrow = today + timedelta(days=1)
+        day_after_tomorrow = today + timedelta(days=2)
+        yesterday = today - timedelta(days=1)
+        for i in range(1, 6):
+            attachment = populate("data/pf_followup_%s.xml" % i)
+            meta = Metadata.objects.get(submission=attachment)
+            self.assertEqual(i, meta.get_submission_count(today, tomorrow))
+            self.assertEqual(0, meta.get_submission_count(yesterday, today))
+            self.assertEqual(0, meta.get_submission_count(tomorrow, day_after_tomorrow))
+            self.assertEqual(i, meta.get_submission_count(yesterday, day_after_tomorrow))
+            
+    def testDuplicates(self):
         create_xsd_and_populate("data/pf_followup.xsd")
         running_count = 0
         self.assertEqual(running_count, len(Metadata.objects.all()))
@@ -94,13 +109,18 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(1, len(SubmissionHandlingOccurrence.objects.all()))
         way_handled = SubmissionHandlingOccurrence.objects.all()[0]
         self.assertEqual(submission, way_handled.submission)
+        # add check for a count from this user, equal to one
+        self.assertEqual("1", way_handled.message)
         self.assertEqual("xformmanager", way_handled.handled.app)
         self.assertEqual("instance_data", way_handled.handled.method)
         self.assertFalse(submission.is_orphaned())
         
         # these should NOT create a linked submission.  No schema
+        print "Expecting an error NOW:"
         populate("data/pf_new_reg_1.xml")
+        print "Expecting an error NOW:"
         populate("data/pf_new_reg_2.xml")
+        print "Expecting an error NOW:"
         populate("data/pf_ref_completed_1.xml")
         
         self.assertEqual(1, len(Metadata.objects.all()))

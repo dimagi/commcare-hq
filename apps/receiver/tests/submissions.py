@@ -1,7 +1,6 @@
 import unittest
-from receiver.models import *
-from receiver import submitprocessor 
-from hq.models import Domain
+from receiver.models import Submission, Attachment
+from receiver.tests.util import *
 
 class ProcessingTestCase(unittest.TestCase):
 
@@ -89,28 +88,3 @@ class ProcessingTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-def get_full_path(file_name):
-    '''Joins a file name with the directory of the current file
-       to get the full path'''
-    return os.path.join(os.path.dirname(__file__),file_name)
-    
-def makeNewEntry(headerfile, bodyfile, domain=None):
-    
-    fin = open(headerfile,"r")
-    meta= fin.read()
-    fin.close()
-    
-    
-    fin = open(bodyfile,"rb")
-    body = fin.read()
-    fin.close()
-    
-    metahash = eval(meta)
-    if domain:
-        mockdomain = domain
-    elif Domain.objects.all().count() == 0:
-        mockdomain = Domain(name='mockdomain')
-        mockdomain.save()
-    else:
-        mockdomain = Domain.objects.all()[0]
-    return submitprocessor.do_old_submission(metahash, body, domain=mockdomain)

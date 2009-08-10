@@ -5,7 +5,6 @@ from django.template import RequestContext
 from django.core.exceptions import *
 
 from rapidsms.webui.utils import render_to_response
-#from django.shortcuts import render_to_response, get_object_or_404
 from django.shortcuts import get_object_or_404
 
 from django.contrib.auth.decorators import login_required
@@ -13,6 +12,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
+from django.contrib.auth.forms import AdminPasswordChangeForm
 
 from datetime import timedelta
 from django.db import transaction
@@ -32,7 +32,6 @@ import hq.reporter.custom as custom
 import hq.reporter.metastats as metastats
 
 
-#from forms import *
 import logging
 import hashlib
 import settings
@@ -283,3 +282,17 @@ def summary_trend(request, template_name="graphing/summary_trend.html"):
     context ['maxdate'] = 0;
     context ['mindate'] = 0;
     return render_to_response(request, template_name, context)
+
+@login_required()
+def password_change(req):
+    user_to_edit = User.objects.get(id=req.user.id)
+    if req.method == 'POST': 
+        password_form = AdminPasswordChangeForm(user_to_edit, req.POST)
+        if password_form.is_valid():
+            password_form.save()
+            return HttpResponseRedirect('/')
+    else:
+        password_form = AdminPasswordChangeForm(user_to_edit)
+    template_name="password_change.html"
+    return render_to_response(req, template_name, {"form" : password_form})
+    
