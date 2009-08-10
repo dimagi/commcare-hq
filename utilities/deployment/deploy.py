@@ -92,8 +92,10 @@ def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_
     os.chdir('../../../')
     print "archive to deploy: " + archive_to_deploy    
     print "cwd: " + os.getcwd()
-        
+    
+    
     make_archive(basedir,os.path.basename(archive_to_deploy))
+    archive_filename = os.path.basename(archive_to_deploy)
     print "chdir back to original directory"
     os.chdir(curdir)
     print "cwd: " + os.getcwd()
