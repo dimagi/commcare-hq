@@ -250,7 +250,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
         manager = XFormManager()
         table_name = manager.save_form_data(xml_file_name, instance)
     else:
-        logging.debug("Ignoring duplicate submission: %s" % instance)
+        logging.error("Got a duplicate duplicate submission in the xformmanager: %s. It is being ignored." % instance)
                 
     
 # Register to receive signals from receiver
