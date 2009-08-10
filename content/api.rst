@@ -55,7 +55,8 @@ http://dev.commcarehq.org/api/xforms/1
 
   * format
   
-    * only in CSV
+    * allowable values: CSV, XML
+    * default value: CSV
   * start-id
   
     * allowable value: any integer
