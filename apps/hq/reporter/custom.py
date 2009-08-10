@@ -37,17 +37,6 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
             helper = fdef.db_helper
             #let's get the usernames
             all_usernames = helper.get_uniques_for_column('meta_username')
-            # hack!  manually set this for grameen
-            if domain.name == "Grameen":
-                all_usernames = ["mustafizurrahmna",
-                                 "mdyusufali",
-                                 "afrozaakter",
-                                 "renuaraakter",
-                                 "mostshahrinaakter",
-                                 "shahanaakter",
-                                 "sajedaparvin",
-                                 "nasimabegum"
-                                 ]
             #ok, so we got ALL usernames.  let's filter out the ones we've already seen
             unclaimed_users = []
             for existing in all_usernames:

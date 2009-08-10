@@ -124,7 +124,7 @@ class Submission(models.Model):
                         new_attach.attachment_uri = _XFORM_URI
                         filename='-xform.xml'
                     else:
-                        logging.debug("non XML section: " + part['Content-ID'])
+                        logging.debug("non XML section: %s" % part['Content-ID'])
                         new_attach.attachment_uri = part['Content-ID']
                         filename='-%s' % os.path.basename(new_attach.attachment_uri)
                
