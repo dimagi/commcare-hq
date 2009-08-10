@@ -16,17 +16,13 @@ import urllib
 from cookielib import * 
 from urlparse import urlparse
 
+#serverhost = 'localhost'  #for you local developers on apache
+#serverhost = 'localhost:8000' #for you local developers using runserver
+serverhost = 'test.commcarehq.org' #for the actual server
 
-#serverhost = 'localhost:8000'
-#serverhost = 'test.commcarehq.org'
-serverhost = 'test.commcarehq.org'
-curl_command = 'c:\curl\curl.exe'
+#curl_command = 'c:\curl\curl.exe'  #if you have curl installed on windows
+curl_command = 'curl' #if curl is in your path/linux
 
-#serverhost = 'localhost'
-#curl_command = 'curl'
-
-#serverhost = 'localhost:8000'
-#curl_command = 'curl'
 
 #example post to a form
 # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xforms/
