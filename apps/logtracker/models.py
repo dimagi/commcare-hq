@@ -29,9 +29,15 @@ class LogTrack(models.Model):
     line_no = models.IntegerField(null=True)    
     traceback = models.TextField(null=True)
     
-    #If we can enable kwargs for debug message emits, then this would be useful.
-    #but a good workaround is to WRITE DETAILED MESSAGES
-    #extras = models.TextField(null=True)
+    #when you do a logging message:
+    #logging.debug('something interesting, extra={}
+    #the extra kwarg should be a dictionary
+    #anytime you add a new item to the extra dictionary, it will be assigned to the LogRecord 
+    #object as a property
+    #(just be careful to not use a reserved/in use LogRecord object
+    #So, if you want to save some important local variable/state information for your error
+    #it's easier to extract the information by finding  
+    data_dump = models.TextField(null=True)
     
     def __unicode__(self):
         return self.message
@@ -43,15 +49,19 @@ class LogTrack(models.Model):
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
 def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created    
-    eml = EmailAgent()    
-    context = {}
-    context['log'] = instance    
-    rendered_text = render_to_string("logtracker/alert_display.html", context)
     
-    #Send it to an email address baked into the settings/ini file.
-    eml.send_email("[Commcare-hq Alert] " + instance.message, 
-                   settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
-                   rendered_text)    
+    #set a global threshold to say if anything is a logging.ERROR, chances are
+    #we always want an alert.
+    if instance.level >= int(settings.RAPIDSMS_APPS['logtracker']['log_threshold']):
+        eml = EmailAgent()    
+        context = {}
+        context['log'] = instance    
+        rendered_text = render_to_string("logtracker/alert_display.html", context)
+        
+        #Send it to an email address baked into the settings/ini file.
+        eml.send_email("[Commcare-hq Alert] " + instance.message, 
+                       settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
+                       rendered_text)    
                 
     
 # Register to receive signals from LogTrack

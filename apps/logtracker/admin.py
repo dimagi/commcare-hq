@@ -31,11 +31,13 @@ handler = TrackingHandler()
 #DEBUG = 10
 #NOTSET = 0
 
+#the log_threshold is the ini value for what level the error handler should listen for
+#if it's less than the threshold set, the handler will never trigger. 
 logging.root.setLevel(int(settings.RAPIDSMS_APPS['logtracker']['log_threshold']))
 logging.root.addHandler(handler)
 
 class LogTrackAdmin(admin.ModelAdmin):
-    list_display = ('id','level','channel','message','filename','line_no')
+    list_display = ('id','level','channel','message','filename','line_no', 'data_dump')
     list_filter = ['level','channel','filename',]
     
 admin.site.register(LogTrack,LogTrackAdmin)
