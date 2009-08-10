@@ -52,21 +52,26 @@ class XFormSchemata(Resource):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             xforms = xforms.filter(submit_time__lte=date)
         response = HttpResponse()
+        for xform in xforms:
+            # do NOT save this!!! this is just for display
+            xform.xsd_file_location = \
+                "http://127.0.0.1:8000/xforms/show/%s?show_schema=yes" % xform.pk
+        fields = ('form_name','form_display_name','target_namespace','submit_time','xsd_file_location')
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'json':
                 json_serializer = serializers.get_serializer("json")()
                 json_serializer.serialize(xforms, ensure_ascii=False, stream=response, fields = \
-                    ('form_name','form_display_name','target_namespace','submit_time'))
+                    fields)
                 response['mimetype'] = 'text/json'
                 return response
             elif request.GET['format'].lower() == 'xml': 
                 xml_serializer = serializers.get_serializer("xml")()
                 xml_serializer.serialize(xforms, stream=response, fields = \
-                    ('form_name','form_display_name','target_namespace','submit_time'))
+                    fields)
                 response['mimetype'] = 'text/xml'
                 return response
         # default to CSV
-        return get_csv_from_django_query(xforms)
+        return get_csv_from_django_query(xforms, fields)
 
 # api/xforms/(?P<formdef_id>\d+)/schema 
 class XFormSchema(Resource):
