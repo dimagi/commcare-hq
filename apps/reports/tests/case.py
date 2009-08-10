@@ -27,7 +27,7 @@ class CaseTestCase(unittest.TestCase):
         
         # get the three forms
         self.reg_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_registration_0_0_2")
-        self.follow_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_follow_0_0_2")
+        self.follow_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_follow_0_0_2a")
         self.close_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_resolution_0_0_2")
         
         # make some objects for these to build our case

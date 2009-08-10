@@ -23,6 +23,8 @@ import string
 from stat import S_ISREG, ST_MODE
 import sys
 
+_MAX_FIELD_NAME_LENTH = 64
+
 class StorageUtility(object):
     """ This class handles everything that touches the database - both form and instance data."""
     # should pull this out into a rsc file...
@@ -257,8 +259,15 @@ class StorageUtility(object):
       return (next_query, local_fields)
     
     def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
-      if data_tree is None : return
-      if not elementdef: return
+      if data_tree is None and not elementdef: return
+      if data_tree is None and elementdef:
+          # no biggie - repeatable and irrelevant fields in the schema 
+          # do not show up in the instance
+          return
+      if data_tree is not None and not elementdef: 
+          self._error("Unrecognized element: %s:%s" % \
+                     (self.formdef.target_namespace, data_tree.tag) )
+          return
       
       table_name = get_registered_table_name( formatted_join(parent_name, elementdef.name) )      
       if len( parent_table_name ) > 0:
@@ -279,10 +288,17 @@ class StorageUtility(object):
       return query
 
     def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
-      if data_tree is None: return
-      if not elementdef : return
-      local_field_value_dict = {};
+      if data_tree is None and not elementdef: return
+      if data_tree is None and elementdef:
+          # no biggie - repeatable and irrelevant fields in the schema 
+          # do not show up in the instance
+          return
+      if data_tree is not None and not elementdef: 
+          self._error("Unrecognized element: %s:%s" % \
+                     (self.formdef.target_namespace, data_tree.tag) )
+          return
       
+      local_field_value_dict = {};
       next_query = Query(parent_table_name)
       if len(elementdef.child_elements)== 0:
           field_value_dict = {}
@@ -309,14 +325,14 @@ class StorageUtility(object):
                 data_node = data_child
                 break;
             if data_node is None:
-                logging.debug("xformmanager: storageutility - no values parsed for " + '{'+self.formdef.target_namespace+'}' + def_child.name)
+                # no biggie - repeatable and irrelevant fields in the schema 
+                # do not show up in the instance
                 continue
             if( len(def_child.child_elements)>0 ):
-                if data_node is not None:
-                    # here we are propagating, not onlyt the list of fields and values, but aso the child queries
-                    query = self._populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
-                    next_query.child_queries = next_query.child_queries + query.child_queries
-                    local_field_value_dict.update( query.field_value_dict )
+                # here we are propagating, not onlyt the list of fields and values, but aso the child queries
+                query = self._populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
+                next_query.child_queries = next_query.child_queries + query.child_queries
+                local_field_value_dict.update( query.field_value_dict )
             else:
                 # if there are no children, then add values to the table
                 if data_node.text is not None :
@@ -456,7 +472,9 @@ class StorageUtility(object):
                     val = typefunc(text.strip())
                     return str(val)
                 except:
-                    logging.error("Error validating type %s with value %s, object is not a %s" % (type,text,str(typefunc)))
+                    self._error(\
+                        "Error validating type %s with value %s (is not %s)" \
+                        % (type,text,str(typefunc)))
                     return '0'
             elif type == "datetime" :
                 text = string.replace(text,'T',' ')
@@ -487,6 +505,7 @@ class StorageUtility(object):
         return name
 
     def _db_field_definition_string(self, elementdef):
+        """ generates the sql string to conform to the expected data type """
         label = self._hack_to_get_cchq_working( sanitize( elementdef.name ) )
         if elementdef.type[0:5] == 'list.':
             field = ''
@@ -534,14 +553,12 @@ class StorageUtility(object):
             cursor.execute(queries)            
     
     def _truncate(self, field_name):
-        '''Truncates a field name to 64 characters, which is the max length allowed
+        '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which is the max length allowed
            by mysql.  This is NOT smart enough to check for conflicts, so there could
            be issues if an xform has two very similar, very long, fields'''
-        if len(field_name) > 64:
-            return field_name[:64]
+        if len(field_name) > _MAX_FIELD_NAME_LENTH:
+            return field_name[:_MAX_FIELD_NAME_LENTH]
         return field_name
-    
-
     
     #TODO: commcare-specific functionality - should pull out into separate file
     def _strip_meta_def(self, formdef):
@@ -565,7 +582,10 @@ class StorageUtility(object):
         return formdef
         
     def _parse_meta_data(self, data_tree):
-        if data_tree is None: return
+        if data_tree is None:
+            self._error("Submitted form is empty!")
+            return
+        
         m = Metadata()
         meta_tree = None
         # find meta node
@@ -573,7 +593,8 @@ class StorageUtility(object):
             meta_tree = data_child
             break;
         if meta_tree is None:
-            logging.debug("xformmanager: storageutility - no metadata found for " + self.formdef.target_namespace)
+            self._info("xformmanager: storageutility - no metadata found for %s" % \
+                       (self.formdef.target_namespace) )
             return m
         
         # parse the meta data (children of meta node)
@@ -586,7 +607,8 @@ class StorageUtility(object):
                 value = self._format_field(m,tag,element.text)
                 # the following line means "model.tag = value"
                 setattr( m,tag,value )
-        #m.save()
+            else:
+                self._info( ("Metadata %s is nonstandard. Not saved." % (tag)) )
         return m
         
     # can flesh this out or integrate with other functions later
@@ -656,14 +678,25 @@ class StorageUtility(object):
             tag = None
         if tag is None or data_tree.tag.lower() == tag.lower():
             yield data_tree
-        for e in data_tree: 
-            for e in self._case_insensitive_iter(e,tag):
+        for d in data_tree: 
+            for e in self._case_insensitive_iter(d,tag):
                 yield e 
 
     def _data_name(self, parent_name, child_name):
         if child_name[0:len(parent_name)].lower() == parent_name.lower():
             child_name = child_name[len(parent_name)+1:len(child_name)]
         return child_name
+
+    def _info(self, string):
+        """ Currently this is only used to log extra metadata - no biggie. """
+        logging.info(string)
+        
+    def _error(self, string):
+        """ all parsing oddness gets logged here For now, we log and return.
+        We could also just throw an exception here...
+        
+        """
+        logging.error(string)
 
 class Query(object):
     """ stores all the information needed to run a query """

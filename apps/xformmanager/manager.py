@@ -18,9 +18,8 @@ class XFormManager(object):
         self.su.remove_instance_matching_schema(formdef_id, id)
 
     def save_form_data(self, xml_file_name, submission):
-        success = self.su.save_form_data(xml_file_name, submission)
-        return success
-
+        self.su.save_form_data(xml_file_name, submission)
+        
     def add_schema(self, file_name, input_stream):
         transaction_str = str(uuid.uuid1())
         logging.debug("temporary file name is " + transaction_str)                

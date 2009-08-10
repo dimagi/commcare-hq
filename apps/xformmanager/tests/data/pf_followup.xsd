@@ -1,4 +1,4 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2" elementFormDefault="qualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2a" elementFormDefault="qualified">
   <simpleType name="_pathfinder_followup_type_of_client">
     <restriction base="string">
       <enumeration value="HIV"/>
