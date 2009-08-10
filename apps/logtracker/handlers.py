@@ -15,26 +15,33 @@ class TrackingHandler(Handler):
 
     def emit(self, record,  *args, **kwargs):
         """ Append the record to the buffer for the current thread. """
-        newlog = LogTrack(level=record.levelno,
-                          message=record.msg, 
-                          filename=record.filename, 
-                          line_no=record.lineno, 
-                          pathname=record.pathname, 
-                          funcname = record.funcName,
-                          module = record.module                                              
-                          )
-        #Simple reading of extras
-        #data_dump=str(record.__dict__)
-        
-        #slightly more intelligent reading of extras
-        record_dict = record.__dict__
-        if record_dict:
-            for key in record_dict:
-                if key in logrecord_keys:
-                    continue
-                else:
-                    if newlog.data_dump == None:
-                        newlog.data_dump = ''
-                    newlog.data_dump += key + ":=" + str(record_dict[key]) + "\n"
-            newlog.save()
-        
+        try:
+            newlog = LogTrack(level=record.levelno,
+                              message=record.msg, 
+                              filename=record.filename, 
+                              line_no=record.lineno, 
+                              pathname=record.pathname, 
+                              funcname = record.funcName,
+                              module = record.module                                              
+                              )
+            #Simple reading of extras
+            #data_dump=str(record.__dict__)
+            
+            #slightly more intelligent reading of extras
+            record_dict = record.__dict__
+            if record_dict:
+                for key in record_dict:
+                    if key in logrecord_keys:
+                        continue
+                    else:
+                        if newlog.data_dump == None:
+                            newlog.data_dump = ''
+                        newlog.data_dump += key + ":=" + str(record_dict[key]) + "\n"
+                newlog.save()
+        except Exception:
+            # TODO: maybe do something more here.  Logging shouldn't blow
+            # up anything else, but at the same time we'd still like to 
+            # know that something went wrong.
+            # unfortunately we can't really log it, as that could land us in
+            # an infinite loop.
+            pass
