@@ -261,13 +261,17 @@ class Case(models.Model):
             to_return[id] = [id] 
         for form_id in self.form_identifiers:
             data_list = form_id.get_data_lists()
+            # in the case where there's no data for the form we'll
+            # append the form with this list - an equivalent length
+            # array of empty objects
+            this_forms_nones = [None] * form_id.form.column_count
             for id in unique_ids:
                 if id in data_list:
                     to_return[id].extend(data_list[id][0])
                 else:
                     # there was no data for this id for this
-                    # form so extend the list with empty values
-                    to_return[id].extend([None]*form_id.form.column_count)
+                    # form so extend the list with the empty values
+                    to_return[id].extend(this_forms_nones)
         return to_return
     
     def get_topmost_data_maps(self):
