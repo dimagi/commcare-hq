@@ -21,7 +21,7 @@
 </div>
 
 <div id="xform-register-block">
-<h1>Register a New XForm</h1>
+<h1>Register a New XForm*</h1>
 <form action="" method="POST" enctype="multipart/form-data">
 <table>
 {{ upload_form.as_ul}}
@@ -76,6 +76,6 @@
 </ol>
 </strong>
 
-
+*Note that files are processed as <a href="http://code.javarosa.org/wiki/xform">XForms</a>, unless they have a ".xsd" extension, in which case they are processed as <a href="http://www.w3schools.com/Schema/default.asp">XML Schema</a>.
 {% endblock %}
 

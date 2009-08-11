@@ -172,3 +172,20 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[8][9],latest_submission_id)
         self.assertEquals(row[8][10],3)
         self.assertEquals(row[8][11],latest_formdefmodel_id)
+
+    def testNoMetadata(self):
+        create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nometa.xml")
+        # raises a Metadata.DoesNotExist error on fail
+        metadata = Metadata.objects.get()
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM schema_brac_chp_homevisit_v0_0_1")
+        row = cursor.fetchone()
+        self.assertEquals(row[0],1)
+        self.assertEquals(int(row[10]),132) # this is commcareversion number
+        self.assertEquals(row[11],"EDINA KEJO")
+
+    def testEmptySubmission(self):
+        create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml")
+        # raises a Metadata.DoesNotExist error on fail
+        metadata = Metadata.objects.get()
+        # empty submissions do not create rows in the data tables
