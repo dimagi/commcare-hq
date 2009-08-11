@@ -91,6 +91,7 @@ class MetaTestCase(unittest.TestCase):
             running_count = running_count + 1
             self.assertEqual(running_count, len(Metadata.objects.all()))
             for j in range(0, 5):
+                logging.warn("Expecting a 'duplicate submission' error NOW:")
                 populate("data/pf_followup_%s.xml" % i)
                 self.assertEqual(running_count, len(Metadata.objects.all()))
     
