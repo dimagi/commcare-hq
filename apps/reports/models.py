@@ -11,7 +11,16 @@ class FormIdentifier(models.Model):
        These are used to access the data in a particular order.'''
     
     form = models.ForeignKey(FormDefModel)
-    identity_column = models.CharField(max_length=255)
+    # identity column can be either a single column, or a list of 
+    # columns separated by pipes (|'s).  If it is a list the ids
+    # will be concatenated lists of those columns, also separated
+    # by pipes.  e.g. 123|56 (<chw_id>|<case_id>)
+    identity_column = models.CharField(max_length=255, help_text=\
+     """Identity column can be either a single column, or a list of 
+        columns separated by pipes (|'s).  If it is a list the ids
+        will be concatenated lists of those columns, also separated
+        by pipes.  e.g. 123|56 (<chw_id>|<case_id>)""")
+    
     # the column that defines how sorting works.  if no sorting is 
     # defined the case will assume each member of identity_column
     # appears exactly once, and this may behave unexpectedly if that
@@ -21,9 +30,75 @@ class FormIdentifier(models.Model):
     sort_descending = models.BooleanField(default=True)
     
     
+    def get_id_columns(self):
+        '''Gets the list of columns out of this assuming that multiple.  
+           Columns are separated by pipes.  If there is only one column
+           this returns a single-item list containing that column'''
+        return self.identity_column.split("|")
+    
+    def get_column_names(self):
+        '''Gets the column names for this.  The only difference between
+           calling this and the method on the form is that this will
+           add a name equal to the identity column to the beginning
+           of the list if the column is complex''' 
+        form_cols = self.form.get_column_names()
+        if self.has_complex_id():
+           form_cols.insert(0, self.identity_column)
+        return form_cols
+            
+    def get_rows(self):
+        '''Gets all the rows for this.  The only difference between
+           calling this and the method on the form is that this will
+           add a value equal to concatenated identity column to the 
+           beginning of each returned result if the column is complex.''' 
+        # no complex id, just pass the query through to the form
+        if self.sorting_column:
+            data = self.form.get_rows(sort_column=self.sorting_column, 
+                                      sort_descending=self.sort_descending)
+        else:
+            # no sorting column, just get everything in an arbitrary order.  
+            data = self.form.get_rows()
+        if self.has_complex_id():
+            to_return = []
+            sort_column_indices = self._get_form_column_indices()
+            for row in data:
+                updated_row = list(row)
+                updated_row.insert(0,self._build_id(sort_column_indices, row))
+                to_return.append(updated_row)
+            return to_return
+        return data
+        
+    def has_complex_id(self):
+        '''Returns whether or not this is a complex id - pointing at
+           multiple columns, or a simple one.'''
+        return "|" in self.identity_column
+    
+    def _get_form_column_indices(self):
+        '''Get the indices of the identity columns this references
+           in the original form, as an ordered list of ints.'''
+        # use the _form_'s columns, since we are returning the
+        # indices of the columns according to the form.
+        column_names = self.form.get_column_names()
+        indices = []
+        for id_column in self.get_id_columns():
+            indices.append(column_names.index(id_column))
+        return indices
+    
+    def _build_id(self, indices, row):
+        # builds the case id from the row_dict, as it is in the database.
+        # if the identity only points at a single column this will 
+        # return just the value of that column.  Otherwise it will
+        # concatenate the values of the columns specified separated
+        # by pipes.
+        values = []
+        for index in indices:
+            values.append(str(row[index]))
+        return "|".join(values)
+        
+    
     def get_uniques(self):
         '''Return a list of unique values contained in this column'''
-        return self.form.db_helper.get_uniques_for_column(self.identity_column)
+        return self.form.db_helper.get_uniques_for_columns(self.get_id_columns())
     
     def get_data_lists(self):
         '''Gets all rows per unique identifier, sorted by the default
@@ -39,17 +114,10 @@ class FormIdentifier(models.Model):
            that form corresponding to the id column.  The lists
            will be ordered by the sorting column. 
            '''
-        if self.sorting_column:
-            list = self.form.get_rows(sort_column=self.sorting_column, 
-                                      sort_descending=self.sort_descending)
-            
-        else:
-            # no sorting column, just get everything in an arbitrary order.  
-            list = self.form.get_rows()
-        
-        id_index = self.form.get_column_names().index(self.identity_column)
+        data = self.get_rows()
+        id_index = self.get_column_names().index(self.identity_column)
         to_return = {}
-        for row in list:
+        for row in data:
             id_value = row[id_index]
             if not to_return.has_key(id_value):
                 to_return[id_value] = []
@@ -59,15 +127,31 @@ class FormIdentifier(models.Model):
     
     def get_data_for_case(self, case_id):
         '''Gets the list of entries for a single case.'''
-        
-        filter_col = [ [self.identity_column,'=',case_id] ]
+        id_parts = case_id.split("|")
+        id_cols = self.get_id_columns()
+        if len(id_parts) != len(id_cols):
+            # todo: what should happen here?  This is a fairly hard failure
+            logging.error("In a case report, tried to get a %s-part id, but passed in a %s value" %
+                          (len(id_cols), len(id_parts)))
+            return []
+        index_id_pairs = zip(id_cols, id_parts)
+        filter_cols = [[col,"=", value] for col, value in index_id_pairs]
         if self.sorting_column:
-            return self.form.get_rows(column_filters=filter_col,
+            data = self.form.get_rows(column_filters=filter_cols,
                                       sort_column=self.sorting_column, 
                                       sort_descending=self.sort_descending)
         else:
-            return self.form.get_rows(column_filters=filter_col)
-    
+            data = self.form.get_rows(column_filters=filter_cols)
+        
+        if self.has_complex_id():
+            to_return = []
+            # again, if we have a complex id, prepend it
+            for row in data:
+                row_as_list = list(row)
+                row_as_list.insert(0, case_id)
+                to_return.append(row_as_list)
+            return to_return
+        return data
     
     def get_data_maps(self):
         '''Gets one row per unique identifier, sorted by the default
@@ -92,7 +176,7 @@ class FormIdentifier(models.Model):
            '''
         data_lists = self.get_data_lists()
         to_return = {}
-        columns = self.form.get_column_names()
+        columns = self.get_column_names()
         for id, list in data_lists.items():
             # magically zip these up in a dictionary
             to_return[id] = [dict(zip(columns, sub_list)) for sub_list in list]
@@ -142,7 +226,7 @@ class Case(models.Model):
            columns, in sequential order by form.'''
         to_return = [ "case_id" ]
         for form in self.form_data.order_by('sequence_id'):
-            for col in form.form_identifier.form.get_column_names():
+            for col in form.form_identifier.get_column_names():
                 # todo: what should these really be to differentiate
                 # between the different forms?  the form name 
                 # is probably too long, and the display name

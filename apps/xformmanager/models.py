@@ -128,7 +128,6 @@ class FormDefModel(models.Model):
            The column_filters parameter should take in column_name, value
            pairs to be used in a where clause.  The default parameters
            return all the rows in the schema, sorted by id, descending.'''
-        
         return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
         
     
