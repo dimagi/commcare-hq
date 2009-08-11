@@ -2,7 +2,6 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 
-from rapidsms.webui.utils import render_to_response
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import datetime, date, timedelta
@@ -96,8 +95,7 @@ def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the
        columns contains one of the values, returns true'''
     for column in blacklist_columns:
-        if column in data and\
-           data[column] in blacklist:
+        if column in data and data[column] in blacklist:
             return True
     return False
 

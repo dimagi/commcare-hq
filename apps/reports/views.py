@@ -63,6 +63,7 @@ def case_flat(request, case_id, template_name="case_flat.html"):
     
     return render_to_response(request, template_name, context)
 
+    
 @login_required()
 def single_case_view(request, case_id, case_instance_id, template_name="single_case.html"):
     '''View for all of a single case's data, broken down by form.'''
