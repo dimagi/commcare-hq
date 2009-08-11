@@ -76,6 +76,7 @@ class PathfinderCHWData(object):
     pcg_existing_female = 0
     reg_forms = 0
     followup_forms = 0
+    clients = 0
     
     def __init__(self, case, chw_id, data_map, startdate, enddate):
         self.case = case
@@ -97,4 +98,4 @@ class PathfinderCHWData(object):
                     
                 self.reg_forms += len(reg_forms)
             self.followup_forms += len(followup_forms)
-            
+            self.clients += 1
