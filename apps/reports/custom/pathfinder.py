@@ -95,7 +95,19 @@ class PathfinderCHWData(object):
                         if self.chw_name != reg["meta_username"]:
                             logging.debug("Warning, multiple ids found for %s: %s and %s" %\
                                 (self.chw_id, self.chw_name, reg["meta_username"]))
-                    
+                
                 self.reg_forms += len(reg_forms)
-            self.followup_forms += len(followup_forms)
+            if followup_forms:
+                self.followup_forms += len(followup_forms)
+                for followup in followup_forms:
+                    found_not_home = False
+                    why_missing = followup["pathfinder_followup_why_missing"]
+                    if why_missing == "dead":
+                        self.deaths += 1
+                    elif why_missing == "moved":
+                        self.transfers += 1
+                    elif not found_not_home and why_missing == "not_home":
+                        # only count the first instance of this
+                        self.not_at_home += 1
+                        found_not_home = True
             self.clients += 1
