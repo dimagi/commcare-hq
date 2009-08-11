@@ -90,7 +90,7 @@ class APITestCase(TestCase):
     # TODO - flesh this out properly once we've solidified our data format
     def test_api_contents_INCOMPLETE(self):
         response = self.client.get('/api/xforms/')
-        self.assertContains(response,"1,None", status_code=200)
+        self.assertContains(response,"schema_brac_chw_chwvisit_v0_0_1,", status_code=200)
         response = self.client.get('/api/xforms/',{'format':'json'})
         self.assertContains(response,"\"pk\": 1", status_code=200)
 
