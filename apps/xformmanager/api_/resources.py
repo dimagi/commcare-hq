@@ -53,9 +53,9 @@ class XFormSchemata(Resource):
             xforms = xforms.filter(submit_time__lte=date)
         response = HttpResponse()
         for xform in xforms:
-            # do NOT save this!!! this is just for display
-            xform.xsd_file_location = \
-                "http://127.0.0.1:8000/xforms/show/%s?show_schema=yes" % xform.pk
+            # do NOT save this!!! This is just for display
+            xform.xsd_file_location = "http://%s/xforms/show/%s?show_schema=yes" % \
+                                      (request.get_host(), xform.pk)
         fields = ('form_name','form_display_name','target_namespace','submit_time','xsd_file_location')
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'json':
