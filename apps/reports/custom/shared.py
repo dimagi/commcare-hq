@@ -251,6 +251,13 @@ class Mother(object):
         self.is_closed = False
         if close_forms:
             self.is_closed = True
+            # add some fields that we display in the "closed" table
+            most_recent_closure = close_forms[0]
+            self.closed_outcome = most_recent_closure["safe_pregnancy_what_happened"]
+            self.mother_survived = most_recent_closure["safe_pregnancy_mother_survived"]
+            self.birth_location = most_recent_closure["safe_pregnancy_birth_location"]
+            self.children_registered = most_recent_closure["safe_pregnancy_infants_registered"]
+            self.children_survived = most_recent_closure["safe_pregnancy_infants_survived"]
             # referrals from close forms
             for close in close_forms:
                 if not self.has_close_referral:

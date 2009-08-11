@@ -158,7 +158,6 @@ class DbHelper(object):
             raise Exception("Unable to execute, table " + self.tablename + " has no usable datetime column")
         
         col_to_use = columname        
-            
         
         query = "select distinct(" + col_to_use + ") from """ + self.tablename
         if startdate != None and enddate != None:
