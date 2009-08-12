@@ -14,9 +14,7 @@ def government(request):
     '''Government Report'''
     context = {}
     case_name = "Pathfinder CHBCP"
-    print "getting dates"
     startdate, enddate = get_dates(request, 30)
-    print "got %s and %s" % (startdate, enddate)
     maxrows = 10
     show_test = False
     if "showtest" in request.GET:
