@@ -55,6 +55,11 @@ def government(request):
     context["startdate"] = startdate
     context["enddate"] = enddate
     context["showtest"] = show_test
+    # todo: stop hard coding these
+    context["supervisor_name"] = "Neal Lesh"
+    context["supervisor_code"] = 1234
+    context["ward"] = "A Ward"
+    context["district"] = "A District"
     return render_to_string("custom/pathfinder/government_report.html", context)
 
 class PathfinderCHWData(object):
