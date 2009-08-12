@@ -88,7 +88,7 @@ def monitoring_report(request, case):
     context["need_followup"] = moms_needing_followup
     context["closed_moms"] = closed_moms
     context["empty_data_holder"] = "<b></b>"
-    return render_to_string("custom/mvp/monitoring.html", context)
+    return render_to_string("custom/shared/monitoring.html", context)
 
 
 def _is_blacklisted(data, blacklist, blacklist_columns):
