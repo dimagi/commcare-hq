@@ -18,19 +18,15 @@ def government(request):
     except Case.DoesNotExist:
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
-    print "getting data"
     all_data = case.get_all_data_maps()
-    print "got data"
     # the case ids come back as chwid|case
     # we want to bucketize them by chw first
     data_by_chw = {}
-    print "organizing by chw"
     for id, map in all_data.items():
         chw_id = id.split("|")[0]
         if not chw_id in data_by_chw:
             data_by_chw[chw_id] = {}
         data_by_chw[chw_id][id] = map
-    print "organized"
     chw_data_list = []
     enddate = datetime.now().date()
     startdate = enddate - timedelta(days=30)
@@ -51,11 +47,11 @@ class PathfinderCHWData(object):
     deaths = 0
     transfers = 0
     not_at_home = 0
-    new_phla = 0
+    new_plha = 0
     new_chron = 0
     first_visit_plha = 0
     first_visit_chron = 0
-    freq_vists_plha = 0
+    freq_visits_plha = 0
     freq_visits_chron = 0
     male = 0
     female = 0
@@ -77,6 +73,9 @@ class PathfinderCHWData(object):
     reg_forms = 0
     followup_forms = 0
     clients = 0
+    reg_forms_in_period = 0
+    followup_forms_in_period = 0
+    clients_in_period = 0
     
     def __init__(self, case, chw_id, data_map, startdate, enddate):
         self.case = case
@@ -84,23 +83,115 @@ class PathfinderCHWData(object):
         self.startdate = startdate
         self.enddate = enddate
         
+        self.drug_counts = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 }
+        self.itns_waterguard_supplied = { 1:0, 2:0 }
         for client_id, client_data in data_map.items():
+            self.clients += 1
+            
             [reg_forms, followup_forms] =\
                 [client_data[form] for form in case.form_identifiers]
-            if reg_forms:
-                for reg in reg_forms:
-                    if not self.chw_name and reg["meta_username"]:
-                        self.chw_name = reg["meta_username"]
-                    elif self.chw_name and reg["meta_username"]:
-                        if self.chw_name != reg["meta_username"]:
-                            logging.debug("Warning, multiple ids found for %s: %s and %s" %\
-                                (self.chw_id, self.chw_name, reg["meta_username"]))
+            
+            self.reg_forms += len(reg_forms)
+            self.followup_forms += len(followup_forms)
+            matching_reg_forms = []
+            matching_followups = []
+            # filter on dates, set usernames
+            for reg in reg_forms:
+                date = reg['meta_timeend']
+                if date and date.date() >= startdate and date.date() <= enddate:
+                    matching_reg_forms.append(reg)
+
+                if not self.chw_name and reg["meta_username"]:
+                    self.chw_name = reg["meta_username"]
+                elif self.chw_name and reg["meta_username"]:
+                    if self.chw_name != reg["meta_username"]:
+                        logging.debug("Warning, multiple ids found for %s: %s and %s" %\
+                            (self.chw_id, self.chw_name, reg["meta_username"]))
+            for follow in followup_forms:
+                date = follow['meta_timeend']
+                if date and date.date() >= startdate and date.date() <= enddate:
+                    matching_followups.append(follow)
+            
+                if not self.chw_name and follow["meta_username"]:
+                    self.chw_name = follow["meta_username"]
+                elif self.chw_name and follow["meta_username"]:
+                    if self.chw_name != follow["meta_username"]:
+                        logging.debug("Warning, multiple ids found for %s: %s and %s" %\
+                            (self.chw_id, self.chw_name, follow["meta_username"]))
+
+            self.reg_forms_in_period += len(matching_reg_forms)
+            self.followup_forms_in_period += len(matching_followups)
+            if matching_reg_forms or matching_followups:
+                self.clients_in_period += 1
+
+            reg_form = None
+            if matching_reg_forms:
+                if len(matching_reg_forms)!= 1:
+                    logging.debug("Warning, multiple registration forms found for %s" %\
+                                  client_id)
+                reg_form = matching_reg_forms[0]
+                status = reg_form["pathfinder_registration_patient_status"]
+                if status == "People_living_with_HIV_(PLHA)":
+                    self.new_plha += 1
+                # should we explicitly check?  these could be empty
+                #elif status == "Chronic_Ill":
+                else:
+                    self.new_chron += 1
                 
-                self.reg_forms += len(reg_forms)
-            if followup_forms:
-                self.followup_forms += len(followup_forms)
-                for followup in followup_forms:
+                
+                if reg_form["pathfinder_registration_patient_existing_female_pcg"]:
+                    self.pcg_new_female += reg_form["pathfinder_registration_patient_existing_female_pcg"]
+                if reg_form["pathfinder_registration_patient_existing_male_pcg"]:
+                    self.pcg_new_male += reg_form["pathfinder_registration_patient_existing_male_pcg"]
+                
+            elif reg_forms:
+                if len(reg_forms)!= 1:
+                    logging.debug("Warning, multiple registration forms found for %s" %\
+                                  client_id)
+                reg_form = reg_forms[0]
+            
+            if matching_followups:
+                first_followup = followup_forms[len(followup_forms)- 1]
+                
+                matching_follow = matching_followups[0]
+                # use this one to do counts for pcgs
+                if matching_follow["pathfinder_followup_new_male_pcg"]:
+                    self.pcg_existing_male += matching_follow["pathfinder_followup_new_male_pcg"]
+                if matching_follow["pathfinder_followup_existing_male_pcg"]:
+                    self.pcg_existing_male += matching_follow["pathfinder_followup_existing_male_pcg"]
+                if matching_follow["pathfinder_followup_new_female_pcg"]:
+                    self.pcg_existing_female += matching_follow["pathfinder_followup_new_female_pcg"]
+                if matching_follow["pathfinder_followup_existing_female_pcg"]:
+                    self.pcg_existing_female += matching_follow["pathfinder_followup_existing_female_pcg"]
+        
+                count = 0
+                if reg_form:
+                    sex = reg_form["pathfinder_registration_patient_sex"]
+                    if sex == "M":
+                        self.male += 1
+                    elif sex == "F":
+                        self.female += 1
+                for followup in matching_followups:
+                    count += 1
+                    counted_second_followup = False
+                    type = followup["pathfinder_followup_type_of_client"]
+                    if followup == first_followup:
+                        # first followup ever, and it was in the report period
+                        if type == "HIV":
+                            self.first_visit_plha += 1
+                        else:
+                            self.first_visit_chron += 1
+                    elif not counted_second_followup:
+                        # second or later followup
+                        if type == "HIV":
+                            self.freq_visits_plha += 1
+                        else:
+                            self.freq_visits_chron += 1
+                        counted_second_followup = True
+                            
                     found_not_home = False
+                    
+                    # why missing?
                     why_missing = followup["pathfinder_followup_why_missing"]
                     if why_missing == "dead":
                         self.deaths += 1
@@ -110,4 +201,61 @@ class PathfinderCHWData(object):
                         # only count the first instance of this
                         self.not_at_home += 1
                         found_not_home = True
-            self.clients += 1
+                        
+                    # referrals
+                    for key, property_name in REFERRAL_MAPPING:
+                        if follow[key]:
+                            prev_val = getattr(self, property_name)
+                            setattr(self, property_name, prev_val + 1)
+                    
+                    for key, code in MED_MAPPING:
+                        if follow[key]:
+                            self.drug_counts[code] += 1
+                    
+                    for key, code in WATER_ITN_MAPPING:
+                        if follow[key]:
+                            self.itns_waterguard_supplied[code] += 1
+             
+    
+    def get_drug_counts_string(self):
+        """Gets the drug counts as a displayable string, showing only
+           those values with counts"""
+        return self._get_map_string(self.drug_counts)
+    
+    def get_water_itn_counts_string(self):
+        """Gets the water/itn counts as a displayable string, showing only
+           those values with counts"""
+        return self._get_map_string(self.itns_waterguard_supplied)
+               
+        
+    def _get_map_string(self, dict, delim="<br>"):
+        keys = dict.keys()
+        keys.sort()
+        vals = []
+        for key in keys:
+            if dict[key]:
+                vals.append("%s=%s" % (key, dict[key]))
+        return delim.join(vals)
+
+# maps fields in the xform to properties on the model
+REFERRAL_MAPPING = (("pathfinder_followup_referral_hiv_test", "ref_vct"),
+                    ("pathfinder_followup_referral_hiv_other_illness", "ref_oi"),
+                    ("pathfinder_followup_referral_health_facility", "ref_ctc"),
+                    ("pathfinder_followup_referral_prevention_from_mother_to_child", "ref_pmtct"),
+                    ("pathfinder_followup_referral_aid_from_other_groups", "ref_sg"),
+                    ("pathfinder_followup_referral_family_planning", "ref_fp"),
+                    ("pathfinder_followup_referral_tb", "ref_tb"),
+                    ("pathfinder_followup_referral_ophans", "ref_ovc"))
+
+# maps meds to their number codes
+MED_MAPPING = (("pathfinder_followup_type_med_septrini", 1),
+               ("pathfinder_followup_type_med_arv", 2),
+               ("pathfinder_followup_type_med_anti_tb", 3),
+               ("pathfinder_followup_type_med_kinga_ya_tb", 4),
+               ("pathfinder_followup_type_med_local_medicine", 5),
+               ("pathfinder_followup_type_med_other", 6))
+
+# maps meds to their number codes
+WATER_ITN_MAPPING = (("pathfinder_followup_mosquito_net", 1),
+                     ("pathfinder_followup_water_guard", 2))
+               

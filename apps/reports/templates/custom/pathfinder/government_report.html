@@ -1,4 +1,12 @@
 <div id="government-report">
+<h2 align="center">Pathfinder International</h2>
+<h3 align="center">Tutunzane - Community Home Based Care Program</h3>
+<b>Ward Supervisor Name:</b> {{ supervisor_name }}&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>Supervisor Code:</b> {{ supervisor_code }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>Ward:</b> {{ ward }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>Municipality/District:</b> {{ district }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>Month:</b> {{ month }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<br><br>
 <table class="sofT"> 
     <thead class="commcare-heading">
         <tr>        
@@ -41,7 +49,7 @@
             <th colspan=2>Revisit</th>
         </tr>
         <tr>
-            <th>PHLA</th>
+            <th>PLHA</th>
             <th>Chron</th>
             <th>PLHA</th>
             <th>Chron</th>
@@ -72,11 +80,11 @@
             <td>{{ chw.deaths }}</td>
             <td>{{ chw.transfers }}</td>
             <td>{{ chw.not_at_home }}</td>
-            <td>{{ chw.new_phla }}</td>
+            <td>{{ chw.new_plha }}</td>
             <td>{{ chw.new_chron }}</td>
             <td>{{ chw.first_visit_plha }}</td>
             <td>{{ chw.first_visit_chron }}</td>
-            <td>{{ chw.freq_vists_plha }}</td>
+            <td>{{ chw.freq_visits_plha }}</td>
             <td>{{ chw.freq_visits_chron }}</td>
             <td>{{ chw.male }}</td>
             <td>{{ chw.female }}</td>
@@ -89,8 +97,8 @@
             <td>{{ chw.ref_sg }}</td>
             <td>{{ chw.ref_ovc }}</td>
             <td>{{ chw.ref_tb }}</td>
-            <td>{{ chw.drug_counts }}</td>
-            <td>{{ chw.itns_waterguard_supplied }}</td>
+            <td>{{ chw.get_drug_counts_string|safe }}</td>
+            <td>{{ chw.get_water_itn_counts_string|safe }}</td>
             <td>{{ chw.pcg_new_male }}</td>
             <td>{{ chw.pcg_new_female }}</td>
             <td>{{ chw.pcg_existing_male }}</td>
