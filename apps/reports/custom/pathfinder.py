@@ -4,6 +4,7 @@
 from django.template.loader import render_to_string
 from datetime import datetime, timedelta
 from apps.reports.models import Case
+from apps.hq.utils import get_dates
 import logging
 '''Report file for custom Grameen reports'''
 # see mvp.py for an explanation of how these are used.
@@ -13,6 +14,24 @@ def government(request):
     '''Government Report'''
     context = {}
     case_name = "Pathfinder CHBCP"
+    print "getting dates"
+    startdate, enddate = get_dates(request, 30)
+    print "got %s and %s" % (startdate, enddate)
+    maxrows = 10
+    show_test = False
+    if "showtest" in request.GET:
+        show_test = True
+    if "maxrows" in request.GET:
+        try:
+            maxrows = int(request.GET["maxrows"])
+        except Exception:
+            # just default to the above
+            pass
+    if enddate < startdate:
+        return '''<p><b><font color="red">The date range you selected is not valid.  
+                  End date of %s must fall after start date of %s.</font></b></p>'''\
+                  % (enddate, startdate)
+
     try:
         case = Case.objects.get(name=case_name)
     except Case.DoesNotExist:
@@ -29,11 +48,13 @@ def government(request):
         data_by_chw[chw_id][id] = map
     chw_data_list = []
     enddate = datetime.now().date()
-    startdate = enddate - timedelta(days=30)
     for chw_id, chw_data in data_by_chw.items():
         chw_obj = PathfinderCHWData(case, chw_id, chw_data, startdate, enddate)
         chw_data_list.append(chw_obj)
-    context["all_data"] = chw_data_list[:10]
+    context["all_data"] = chw_data_list[:maxrows]
+    context["startdate"] = startdate
+    context["enddate"] = enddate
+    context["showtest"] = show_test
     return render_to_string("custom/pathfinder/government_report.html", context)
 
 class PathfinderCHWData(object):

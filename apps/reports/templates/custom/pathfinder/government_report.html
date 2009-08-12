@@ -5,7 +5,8 @@
 <b>Supervisor Code:</b> {{ supervisor_code }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
 <b>Ward:</b> {{ ward }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
 <b>Municipality/District:</b> {{ district }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-<b>Month:</b> {{ month }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>Start Date:</b> {{ startdate|date }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<b>End Date:</b> {{ enddate|date }} &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
 <br><br>
 <table class="sofT"> 
     <thead class="commcare-heading">
@@ -22,7 +23,9 @@
             <th>10</th>
             <th colspan=2>11</th>
             <th colspan=2>12</th>
-            <th colspan=3>Testing</th>
+            {% if showtest %} 
+            <th colspan=6>Testing</th>
+            {% endif %} 
         </tr>
         <tr>
             <th rowspan=3>CHBCP code</th>
@@ -34,9 +37,10 @@
             <th rowspan=3>Type of drugs patient uses*</th>
             <th rowspan=3>ITNs / waterguard supplied</th>
             <th colspan=4>Primary Caregiver</th>
-            <th rowspan=3>Unique Clients</th>
-            <th rowspan=3>Reg Forms</th>
-            <th rowspan=3>Followup Forms</th>
+            {% if showtest %} 
+            <th colspan=3>In Report Period</th>
+            <th colspan=3>All Time</th>
+            {% endif %}                        
         </tr>
         <tr>
             <th rowspan=2>Death</th>
@@ -47,6 +51,14 @@
             <th colspan=2>Freq visits</th>
             <th colspan=2>New</th>
             <th colspan=2>Revisit</th>
+            {% if showtest %}
+            <th rowspan=2>Unique Clients</th>
+            <th rowspan=2>Reg Forms</th>
+            <th rowspan=2>Followup Forms</th>
+            <th rowspan=2>Unique Clients</th>
+            <th rowspan=2>Reg Forms</th>
+            <th rowspan=2>Followup Forms</th>
+            {% endif %}
         </tr>
         <tr>
             <th>PLHA</th>
@@ -103,9 +115,14 @@
             <td>{{ chw.pcg_new_female }}</td>
             <td>{{ chw.pcg_existing_male }}</td>
             <td>{{ chw.pcg_existing_female }}</td>
+            {% if showtest %} 
+            <td>{{ chw.clients_in_period }}</td>
+            <td>{{ chw.reg_forms_in_period }}</td>
+            <td>{{ chw.followup_forms_in_period }}</td>
             <td>{{ chw.clients }}</td>
             <td>{{ chw.reg_forms }}</td>
             <td>{{ chw.followup_forms }}</td>
+            {% endif %}
     {% endfor %} 
     </tbody>
 </table>
