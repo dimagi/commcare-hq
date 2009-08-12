@@ -80,7 +80,7 @@ def monitoring_report(request, case):
             healthy_moms.append(mom) 
         
         
-        
+    context["domain"] = case.domain
     context["all_moms"] = all_moms
     context["healthy_moms"] = healthy_moms
     context["open_referrals"] = moms_with_open_referrals
