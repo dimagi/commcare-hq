@@ -45,7 +45,6 @@ def government(request):
             data_by_chw[chw_id] = {}
         data_by_chw[chw_id][id] = map
     chw_data_list = []
-    enddate = datetime.now().date()
     for chw_id, chw_data in data_by_chw.items():
         chw_obj = PathfinderCHWData(case, chw_id, chw_data, startdate, enddate)
         chw_data_list.append(chw_obj)
