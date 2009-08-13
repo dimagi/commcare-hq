@@ -18,36 +18,19 @@ def xmlify(object_):
     return etree.tostring(root, pretty_print=True)
 
 def _xmlify(object_):
-    # end-condition: when we receive a tuple or a custom object
-    if isinstance( object_, tuple):
-        # the first element of tuple is attribute
-        # the second is text
-        root = etree.Element( 'entry', index=_sanitize_text(unicode(object_[0])) )
-        child = etree.Element( 'value' )
-        child.text = unicode(object_[1])
-        root.append(child)
-    else:
-        root = etree.Element( _sanitize_tag(str(type(object_))) )
+    """ root is a special case just because there can be only one root """
+    root = etree.Element( _sanitize_tag(str(type(object_))) )
+    if hasattr(object_,"__dict__"):
         for i in object_.__dict__:
             i_val = getattr(object_,i)
             if isinstance(i_val, basestring):
                 # set strings to be attributes
                 root.set(_sanitize_tag(i),_sanitize_text(i_val) )
             elif isinstance( i_val, list):
-                # i = string name of field
-                # i_val = actual field value
-                children = etree.Element( i )
-                # some lists have names
-                if hasattr(i_val,"__dict__"):
-                    for i in i_val.__dict__:
-                        value = getattr(i_val,i)
-                        if isinstance(value, basestring):
-                            # set strings to be attributes
-                            children.set(_sanitize_tag(i),_sanitize_text(value) )
+                # for lists in root, we don't need to create child elements
+                # (because we already have 'root')
                 for val in i_val:
-                    child = _xmlify(val)
-                    children.append(child)
-                root.append(children)
+                    _inner_xmlify(val, root)
             elif isinstance( i_val, dict):
                 # i = string name of field
                 # i_val = actual field value
@@ -56,15 +39,64 @@ def _xmlify(object_):
                     child = etree.Element( _sanitize_tag(i) , name=_sanitize_text(key), value=_sanitize_text(i_val[key]) )
                     children.append(child)
                 root.append(children)
+    return root
+
+def _inner_xmlify(object_, parent, name=None):
+    """ creates children xml elements and automatically adds them to parent """
+    if name is None:
+        # oddly enough 'unicode' is not as universal as 'str'
+        name = _sanitize_tag(str(type(object_)))
+    # end-condition: when we receive a tuple, list, or custom python object
+    if isinstance( object_, tuple):
+        # the first element of tuple is attribute, the second is text
+        element = etree.Element( 'value', index=_sanitize_text(unicode(object_[0])) )
+        element.text = unicode(object_[1])
+        parent.append(element)
+    elif isinstance( object_, list):
+        element = etree.Element( name )
+        if hasattr(object_,"__dict__"):
+            for i in object_.__dict__:
+                i_val = getattr(object_,i)
+                if isinstance(i_val, basestring):
+                    # set strings to be attributes
+                    element.set(_sanitize_tag(i),_sanitize_text(i_val) )
+                elif isinstance( i_val, dict):
+                    # i = string name of field
+                    # i_val = actual field value
+                    children = etree.Element( i )
+                    for key in i_val.keys():
+                        child = etree.Element( _sanitize_tag(i) , name=_sanitize_text(key), value=_sanitize_text(i_val[key]) )
+                        children.append(child)
+                    element.append(children)
+        for val in object_:
+            _inner_xmlify(val, element)
+        parent.append(element)
+    else:
+        # child is a python object
+        element = etree.Element( name )
+        for i in object_.__dict__:
+            i_val = getattr(object_,i)
+            if isinstance(i_val, basestring):
+                # set strings to be attributes
+                element.set(_sanitize_tag(i),_sanitize_text(i_val) )
+            elif isinstance( i_val, list):
+                _inner_xmlify(i_val, element, i)
+            elif isinstance( i_val, dict):
+                # i = string name of field
+                # i_val = actual field value
+                children = etree.Element( i )
+                for key in i_val.keys():
+                    child = etree.Element( _sanitize_tag(i) , name=_sanitize_text(key), value=_sanitize_text(i_val[key]) )
+                    children.append(child)
+                element.append(children)
             else:
                 # set custom data structures to child elements
-                child = _xmlify(i)
-                root.append(child)
-    return root
+                _inner_xmlify(i, element)
+        parent.append(element)
 
 def _sanitize_tag(string):
     value_sanitized = _sanitize_text(string)
-    name_sanitized = value_sanitized.replace("/","_").replace(" ","_").replace("-","_")
+    name_sanitized = value_sanitized.replace("/","_").replace(" ","_").replace("-","_").lower()
     return name_sanitized
 
 def _sanitize_text(string):

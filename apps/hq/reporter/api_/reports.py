@@ -11,6 +11,7 @@ class Report(object):
     def __init__(self, title=''):
         self.title = title
         self.generating_url = ''
+        # should be a list of DataSets
         self.datasets = []
         
     def __unicode__(self):
@@ -23,27 +24,35 @@ class Report(object):
         return unicode(self)
     
 class DataSet(object):
-    """ represents a generic dataset """
+    """ represents a set or multiple sets of data 
+    with a common index (x-axis). So, for example, one dataset
+    could be composed of registrations per x, visits per x,
+    closures per x, etc. (x being the same for all sets)
     
-    class Entries(list):
-        """ represents a collection of index/value pairs """
-        def __init__(self):
-            list.__init__(self)
-            self.index_ = ''
-            self.value = ''
-
+    """
+    
     def __init__(self, name=''):
         self.name = name
         self.params = {}
-        self.stats = {}
-        self.entries = self.Entries()
+        # should be a list of valuesets
+        self.valuesets = []
+        self.indices = ''
     
     def __unicode__(self):
         string = "DataSet: " + unicode(self.name) + "\n"
-        for entry in self.entries:
-            string = string + " " + unicode(entry) + "\n"
+        for valueset in self.valuesets:
+            for value in valueset:
+                string = string + " " + unicode(value) + "\n"
+            string = string + "\n\n"
         return string
-    
+
+class Values(list):
+    """ represents a set of index/value pairs """
+    def __init__(self, name=''):
+        self.stats = {}
+        # indices are determined on a per-dataset basis
+        self.name = name
+
     def run_stats(self, stats):
         """ calculates statistics
         
@@ -58,7 +67,6 @@ class DataSet(object):
         for stat in stats:
             if stat == 'sum':
                 sum = 0
-                for e in self.entries:
-                    sum = sum + long(e[-1])
+                for v in self:
+                    sum = sum + long(v[-1])
                 self.stats[stat] = sum
-
