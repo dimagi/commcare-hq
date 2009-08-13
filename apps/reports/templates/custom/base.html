@@ -1,5 +1,7 @@
 {% extends base_template %}
+{% block title %}
+{{ report_display }}
+{% endblock %}
 {% block content %}
-<h2>{{ domain }} Report: {{ report_display }}</h2>
 {{ report_body|safe }}
 {%endblock%}
