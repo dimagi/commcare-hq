@@ -2,7 +2,6 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 
-from rapidsms.webui.utils import render_to_response
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import datetime, date, timedelta
@@ -81,7 +80,7 @@ def monitoring_report(request, case):
             healthy_moms.append(mom) 
         
         
-        
+    context["domain"] = case.domain
     context["all_moms"] = all_moms
     context["healthy_moms"] = healthy_moms
     context["open_referrals"] = moms_with_open_referrals
@@ -89,15 +88,14 @@ def monitoring_report(request, case):
     context["need_followup"] = moms_needing_followup
     context["closed_moms"] = closed_moms
     context["empty_data_holder"] = "<b></b>"
-    return render_to_string("custom/mvp/monitoring.html", context)
+    return render_to_string("custom/shared/monitoring.html", context)
 
 
 def _is_blacklisted(data, blacklist, blacklist_columns):
     '''Checks a set of columns and values, and if any of the
        columns contains one of the values, returns true'''
     for column in blacklist_columns:
-        if column in data and\
-           data[column] in blacklist:
+        if column in data and data[column] in blacklist:
             return True
     return False
 
@@ -251,6 +249,13 @@ class Mother(object):
         self.is_closed = False
         if close_forms:
             self.is_closed = True
+            # add some fields that we display in the "closed" table
+            most_recent_closure = close_forms[0]
+            self.closed_outcome = most_recent_closure["safe_pregnancy_what_happened"]
+            self.mother_survived = most_recent_closure["safe_pregnancy_mother_survived"]
+            self.birth_location = most_recent_closure["safe_pregnancy_birth_location"]
+            self.children_registered = most_recent_closure["safe_pregnancy_infants_registered"]
+            self.children_survived = most_recent_closure["safe_pregnancy_infants_survived"]
             # referrals from close forms
             for close in close_forms:
                 if not self.has_close_referral:

@@ -1,0 +1,60 @@
+{% load mvp_report_tags %}
+<h2>{{ domain }} Safe Pregnancy Monitoring Report</h2>
+<h2>Open Referrals</h2>
+<table class="sofT" width="100%"> 
+    <thead class="commcare-heading">
+        <tr>
+            <th>Mother Name</th>
+            <th>Name of CHW</th>
+            <th>Months Pregnant</th>
+            <th>Danger Signs</th>
+            <th>Date Referred</th>
+            <th>Last Referral Visit by CHW</th>
+        </tr>
+    </thead>
+        {% for mother in open_referrals %}
+            <tr class="{% cycle 'odd' 'even' %}">
+            <td>{% if mother.mother_name %}{{ mother.mother_name }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.chw %}{{ mother.chw }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.months_pregnant %}{{ mother.months_pregnant }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{{ mother.danger_signs}}</td>
+            <td>{{ mother.date_referred|date:"d-M-Y" }}</td>
+            <td>{{ mother.date_of_last_referral|date:"d-M-Y" }}</td>
+            </tr>
+        {% endfor %}
+</table>
+<br>
+<h2>Women 7-10 Months Pregnant</h2>
+{% get_monitoring_table very_pregnant %} 
+<br>
+<h2>Women Needing Followup (>1 month since last Followup if 1-6 Months, >15 days since last Followup if 7-10 Months)</h2>
+{% get_monitoring_table need_followup %} 
+<br>
+<h2>Other Active Cases (No Actions Required)</h2>
+{% get_monitoring_table healthy_moms %} 
+<h2>Closed Cases</h2>
+<table class="sofT" width="100%"> 
+    <thead class="commcare-heading">
+        <tr>
+            <th>Mother Name</th>
+            <th>Name of CHW</th>
+            <th>Outcome (Birth/Termination/etc.)</th>
+            <th># Children survived</th>
+            <th>Children registered?</th>
+            <th>Mother survived?</th>
+            <th>Delivery Location</th>
+        </tr>
+    </thead>
+        {% for mother in closed_moms %}
+            <tr class="{% cycle 'odd' 'even' %}">
+            <td>{% if mother.mother_name %}{{ mother.mother_name }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.chw %}{{ mother.chw }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.closed_outcome %}{{ mother.closed_outcome }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.children_survived %}{{ mother.children_survived }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.children_registered %}{{ mother.children_registered }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.mother_survived %}{{ mother.mother_survived }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.birth_location %}{{ mother.birth_location }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+</table>    
+
