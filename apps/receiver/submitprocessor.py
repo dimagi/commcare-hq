@@ -99,6 +99,7 @@ def do_submission_processing(metadata, submit_record, domain=None, is_resubmissi
     new_submit.content_type = submit_record.content_type
     new_submit.raw_post = submit_record.file_name
     new_submit.domain = domain
+    new_submit.checksum = submit_record.checksum
     new_submit.save()
     logging.debug("Raw submission save successful")
     return new_submit
