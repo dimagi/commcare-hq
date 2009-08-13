@@ -1,15 +1,16 @@
 {% load mvp_report_tags %}
+{% load i18n %}
 <h2>{{ domain }} Safe Pregnancy Monitoring Report</h2>
-<h2>Open Referrals</h2>
+<h2>{% trans "Open Referrals" %}</h2>
 <table class="sofT" width="100%"> 
     <thead class="commcare-heading">
         <tr>
-            <th>Mother Name</th>
-            <th>Name of CHW</th>
-            <th>Months Pregnant</th>
-            <th>Danger Signs</th>
-            <th>Date Referred</th>
-            <th>Last Referral Visit by CHW</th>
+            <th>{% trans "Mother Name" %}</th>
+            <th>{% trans "Name of CHW" %}</th>
+            <th>{% trans "Months Pregnant" %}</th>
+            <th>{% trans "Danger Signs" %}</th>
+            <th>{% trans "Date Referred" %}</th>
+            <th>{% trans "Last Referral Visit by CHW" %}</th>
         </tr>
     </thead>
         {% for mother in open_referrals %}
@@ -24,15 +25,15 @@
         {% endfor %}
 </table>
 <br>
-<h2>Women 7-10 Months Pregnant</h2>
+<h2>{% trans "Women 7-10 Months Pregnant" %}</h2>
 {% get_monitoring_table very_pregnant %} 
 <br>
-<h2>Women Needing Followup (>1 month since last Followup if 1-6 Months, >15 days since last Followup if 7-10 Months)</h2>
+<h2>{% trans "Women Needing Followup (>1 month since last Followup if 1-6 Months, >15 days since last Followup if 7-10 Months)" %}</h2>
 {% get_monitoring_table need_followup %} 
 <br>
-<h2>Other Active Cases (No Actions Required)</h2>
+<h2>{% trans "Other Active Cases (No Actions Required)" %}</h2>
 {% get_monitoring_table healthy_moms %} 
-<h2>Closed Cases</h2>
+<h2>{% trans "Closed Cases" %}</h2>
 <table class="sofT" width="100%"> 
     <thead class="commcare-heading">
         <tr>
