@@ -61,7 +61,7 @@ def get_report(request, ids, index, value, start_date, end_date, stats):
         return get_user_activity_report(request, ids, index, value, start_date, end_date, stats)
     elif index.lower() == 'day':
         return get_daily_activity_report(request, ids, index, value, start_date, end_date, stats)
-    raise Exception("Your request does not match any known reports.")
+    return HttpResponseBadRequest("Your request does not match any known reports.")
 
 def get_user_activity_report(request, ids, index, value, start_date, end_date, stats):
     """ CHW Group Total Activity Report - submissions per user over time
@@ -93,13 +93,15 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     #        "You do not have permission to use this API.")
     # domain = extuser.domain
     
+    if not ids: return HttpResponseBadRequest("The requested form was not found")
+    
     _report = Report("CHW Group Total Activity Report")
     _report.generating_url = request.path
     total_metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
     total_metadata = total_metadata.filter(submission__submission__submit_time__lte=end_date)
     metadata = total_metadata.filter(formdefmodel__in=ids).order_by('id')
     if not metadata:
-        raise Exception("Form with id in %s was not found." % str(ids) )
+        return HttpResponseBadRequest("Form with id in %s was not found." % str(ids) )
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
@@ -161,7 +163,9 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     # domain = extuser.domain
 
     if request.GET.has_key('chw'): chw = request.GET['chw']
-    else: raise Exception("This reports requires a CHW parameter")
+    else: return HttpResponseBadRequest("This reports requires a CHW parameter")
+
+    if not ids: return HttpResponseBadRequest("The requested form was not found")
 
     # TODO - this currrently only tested for value lists of size 1. test. 
     _report = Report("CHW Daily Activity Report")
@@ -173,7 +177,7 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     form_list = FormDefModel.objects.filter(pk__in=ids)
     username_counts = get_username_count(form_list, member_list, start_date, end_date)
     if chw not in username_counts:
-        raise Exception("Username could not be matched to any submitted forms")
+        return HttpResponseBadRequest("Username could not be matched to any submitted forms")
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
@@ -193,7 +197,7 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
     username_counts = get_username_count(None, member_list, start_date, end_date)
     if chw not in username_counts:
-        raise Exception("Username could not be matched to any submitted forms")
+        return HttpResponseBadRequest("Username could not be matched to any submitted forms")
     date = start_date
     day = timedelta(days=1)
     visits_per_day = Values( 'visits' )
