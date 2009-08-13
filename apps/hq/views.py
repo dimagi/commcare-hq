@@ -55,7 +55,7 @@ def dashboard(request, template_name="hq/dashboard.html"):
         template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
         
-    startdate, enddate = utils.get_dates(request)
+    startdate, enddate = utils.get_dates(request, 7)
     
     context['startdate'] = startdate
     context['enddate'] = enddate

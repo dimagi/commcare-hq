@@ -26,7 +26,6 @@ output_format = '%Y-%m-%d %H:%M'
 
 @register.simple_tag
 def get_dashboard_user_counts(user, startdate=None, enddate=None):
-    username_to_count_hash = {}
     
     #todo:  query the global meta tables to get all the users
     #and/or query the ExtUser table to get all the registered users.
@@ -42,15 +41,19 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     # for now, we're going to get all the users in the system by querying the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     ret = ""
+    
+    username_to_count_hash = { }
     for fdef in defs:
         try: 
             helper = fdef.db_helper
             # let's get the usernames
-            # hack!  manually set this for grameen
             usernames_to_filter = helper.get_uniques_for_column('meta_username')
-            for user in usernames_to_filter:            
+            for user in usernames_to_filter:       
                 if not username_to_count_hash.has_key(user):
-                    username_to_count_hash[user] = {}
+                    this_user_hash = {"total" : 0 }
+                    # this_user_hash = {}
+                else:
+                    this_user_hash = username_to_count_hash[user]   
                 # we add one to the enddate because the db query is not inclusive.
                 userdailies = helper.get_filtered_date_count(startdate, 
                                                              enddate + timedelta(days=1),
@@ -58,41 +61,80 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
                 for date_count_pair in userdailies:
                     # if there already was a count, we add it to it, otherwise
                     # we set a new count equal to this value
-                    if username_to_count_hash[user].has_key(date_count_pair[1]):
-                        username_to_count_hash[user][date_count_pair[1]] += int(date_count_pair[0])
+                    if date_count_pair[1] in this_user_hash:
+                        this_user_hash[date_count_pair[1]] += int(date_count_pair[0])
                     else:
-                        username_to_count_hash[user][date_count_pair[1]] = int(date_count_pair[0])
+                        this_user_hash[date_count_pair[1]] = int(date_count_pair[0])
+                    # either way it updates the total
+                    this_user_hash["total"] += int(date_count_pair[0])
+                username_to_count_hash[user] = this_user_hash
         except Exception, e:
             # this shouldn't blow up the entire view
             logging.error("problem in dashboard display: %s" % e)
             ret += '<p style="font-weight:bold; color:red;">problem in dashboard display.  Not all data will be visible.  Your error message is: %s</p>' % e
             
+    ret += '''<table class="sofT">\n<thead class="commcare-heading"><tr>
+                <th>Date</th>
+                <th>Grand Total</th>'''
+    
+    # preprocess all users by removing them if they don't have any data at all
+    # for the period
+    ordered_users = []
+    for user in username_to_count_hash:
+        if username_to_count_hash[user]["total"]:
+           ordered_users.append(user)  
+    ordered_users.sort()
+    
     # this block generates the table definition, and headers (one for each
     # user).  It also populates the hash of date-->count mappings per user
     # to be displayed in the next loop.
-    ret += '<table class="sofT">\n<thead class="commcare-heading"><tr><th>Date</th>'
-    for user in username_to_count_hash.keys():
-        ret += '<th>%s</th>' % (user)
+    
+    
+    total_counts_by_date = {"total": 0}
+    for user in ordered_users:
+        ret += '\n  <th>%s</th>' % (user)
         for datestr in username_to_count_hash[user].keys():
-            #dt = time.strptime(str(datestr[0:-4]),xmldate_format)
-            #datum = datetime(dt[0],dt[1],dt[2],dt[3],dt[4],dt[5],dt[6])
-            #date = datum.strftime('%m/%d/%Y')              
+            if datestr == "total":
+                continue
+            # czue - why is this check here?  I don't actually think
+            # its possible that the key is already there, and if it is
+            # it seems like an error.  Leaving for someone else 
             if not report_hash[datestr].has_key(user):
                 report_hash[datestr][user]=username_to_count_hash[user][datestr]
+            if not datestr in total_counts_by_date:
+                total_counts_by_date[datestr] = 0
+            total_counts_by_date[datestr] += username_to_count_hash[user][datestr]
+            total_counts_by_date["total"] += username_to_count_hash[user][datestr]
     ret += "</tr></thead>\n"
     count = 1
-    for day in range(0,totalspan.days+1):
+    # first add row for totals
+    if totalspan.days >= 0:
+        ret += "\n<tr class=%s>" % _get_class(count)
+        count += 1
+        ret += "<td><b>All Dates Shown</b></td>" 
+        ret += "<td><b>%s</b></td>" % (total_counts_by_date["total"])
+        for user in ordered_users:
+            ret += "<td><b>%s</b></td>" % (username_to_count_hash[user]["total"])
+    
+    dateranges = range(0,totalspan.days+1)
+    dateranges.reverse() 
+    for day in dateranges:
         delta = timedelta(days=day)
         target_date = startdate + delta
         date = target_date.strftime('%m/%d/%Y')
-        if count % 2 == 0:
-            row_class = "even"
-        else: 
-            row_class = "odd"
+        ret += '\n<tr class="%s">' % _get_class(count)
         count += 1 
-        ret += '<tr class="%s">' % row_class
         ret += "<td>%s</td>" % (date)
-        for user in username_to_count_hash.keys():
+        # add total for this date
+        if date in total_counts_by_date:
+            ret += "<td><b>%s</b></td>" % (total_counts_by_date[date])
+        else:
+            # we could theoretically append all 0's in one fall swoop here
+            # and move on to the next date.  For now just let it be 
+            # slightly less efficient and address this as a potential 
+            # performance gain
+            ret += "<td>0</td>"
+        for user in ordered_users:
             val = 0
             if report_hash[date].has_key(user):
                 val = report_hash[date][user]
@@ -101,22 +143,31 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     ret += "</table>"
     username_to_count_hash.clear()
     
+    append_chart = False
+    if append_chart:
+        ret += _get_chart_display(extuser.domain, startdate, enddate)
     
+    return ret
+
+def _get_chart_display(domain, startdate, enddate):
     # add the chart.  this might be a bit hacky, but we're going 
     # to try using render_to_string and inline_rawgraph to return 
     # this with the tag
     try:
         chart = RawGraph.objects.get(title="CHW Submissions Over Time")
-        chart.domain = extuser.domain.name
+        chart.domain = domain.name
         chart.startdate = startdate.strftime("%Y-%m-%d")
         chart.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
-        chart_display = render_to_string("graphing/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
-        # czue commenting this out until the chart is less ugly 
-        # ret += chart_display
+        return render_to_string("graphing/inline_rawgraph.html", {"chart" : chart, "width" : 900, "height": 500})
     except RawGraph.DoesNotExist:
         # they don't have this chart.  Just let it slide
-        pass
+        return ""
     except Exception, e:
         logging.error(e)
-    return ret
-
+        return ""
+    
+def _get_class(count):
+    if count % 2 == 0:
+        return "even"
+    return "odd"
+        
