@@ -11,12 +11,14 @@ def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None, path=N
         mockdomain.save()
     else:
         mockdomain = Domain.objects.all()[0]    
-    formdefmodel = create_xsd(xsd_file_name, mockdomain)
+    formdefmodel = create_xsd(xsd_file_name, mockdomain, path=path)
     populate(xml_file_name, mockdomain, path)
     return formdefmodel
 
-def create_xsd(xsd_file_name, domain=None):
-    xsd_file_path = os.path.join(os.path.dirname(__file__),xsd_file_name)
+def create_xsd(xsd_file_name, domain=None, path=None):
+    if not path:
+        path = os.path.dirname(__file__)
+    xsd_file_path = os.path.join(path,xsd_file_name)
     if xsd_file_name is None:
         return None
     f = open(xsd_file_path,"r")
