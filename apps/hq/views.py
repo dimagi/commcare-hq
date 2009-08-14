@@ -296,3 +296,7 @@ def password_change(req):
     template_name="password_change.html"
     return render_to_response(req, template_name, {"form" : password_form})
     
+def server_up(req):
+    '''View that just returns "success", which can be hooked into server
+       monitoring tools like: http://uptime.openacs.org/uptime/'''
+    return HttpResponse("success")
