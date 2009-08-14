@@ -1,0 +1,13 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{% trans "All Submissions" %}{% endblock %}
+<!-- stylesheets -->
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+{% block content %}
+<h2>{% trans "All builds " %} {{project}}</h2>
+
+{% include "buildmanager/partials/build_table.html" %}
+
+{%endblock%}
