@@ -68,13 +68,7 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
     this does not group by formdef.  if you want to do that, you should run each formdef individually.    
     """
     
-    if timeend < timestart:
-        totalspan = timedelta(0)
-    elif timestart==timeend:
-        totalspan = timedelta(days=1)
-    else:
-        totalspan = timeend-timestart
-        
+    totalspan = get_timespan(timestart, timeend)
     metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
     if formdef_lst:
         metas = metas.filter(formdefmodel__in=formdef_lst)
@@ -102,6 +96,14 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
             username_count_dict[uname[0]].append(dayslice.filter(username=uname[0]).count())     
         
     return username_count_dict
+
+def get_timespan(timestart, timeend):
+    if timeend < timestart:
+        return timedelta(0)
+    elif timestart==timeend:
+        return timedelta(days=1)
+    else:
+        return timeend-timestart
 
 # TODO - fix/remove this function. This was just copy/pasted for Clayton, august 5
 def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):

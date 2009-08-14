@@ -5,7 +5,7 @@ from transformers.http import responsify
 from xformmanager.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
 from hq.reporter.api_.reports import Report, DataSet, Values
-from hq.reporter.metadata import get_username_count
+from hq.reporter.metadata import get_username_count, get_timespan
 
 # TODO - clean up index/value once we hash out this spec more properly
 # TODO - pull out authentication stuff into some generic wrapper
@@ -177,32 +177,35 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     dataset.indices = unicode(index)
     dataset.params = request.GET
     
-    date = start_date
-    day = timedelta(days=1)
-    forms_per_day = Values( unicode(value[0]) )
-    if chw in username_counts:
-        for daily_count in username_counts[chw]:
-            # values are tuples of dates and daily counts
-            forms_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
-            date = date + day
-    forms_per_day.run_stats(stats)
-    dataset.valuesets.append( forms_per_day )
-
-    # get a sum of all the forms
-    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
-    if chw not in member_list: raise Exception("No matching CHW could be identified")
-    username_counts = get_username_count(None, member_list, start_date, end_date)
-    date = start_date
-    day = timedelta(days=1)
-    visits_per_day = Values( 'visits' )
-    if chw in username_counts:
-        for daily_count in username_counts[chw]:
-            # values are tuples of dates and daily counts
-            visits_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
-            date = date + day
-    visits_per_day.run_stats(stats)
-    dataset.valuesets.append( visits_per_day )
+    form_list = FormDefModel.objects.filter(pk__in=ids)
+    values = get_daily_activity_values(unicode(value[0]), form_list, chw, member_list, start_date, end_date, stats, domain)
+    dataset.valuesets.append( values )
+    
+    values = get_daily_activity_values('Visits', None, chw, member_list, start_date, end_date, stats, domain)
+    dataset.valuesets.append( values )
     
     _report.datasets.append(dataset)      
     return _report
 
+def get_daily_activity_values(name, form_list, chw, member_list, start_date, end_date, stats, domain):
+    # get a sum of all the forms
+    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
+    if chw not in member_list: raise Exception("No matching CHW could be identified")
+    username_counts = get_username_count(form_list, member_list, start_date, end_date)
+    date = start_date
+    day = timedelta(days=1)
+    values_per_day = Values( name )
+    if chw in username_counts:
+        for daily_count in username_counts[chw]:
+            # values are tuples of dates and daily counts
+            values_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
+            date = date + day
+    else:
+        # should return a set of '0s' even when no forms submitted
+        timespan = get_timespan(start_date, end_date)
+        for i in range(0,timespan.days+1):        
+            values_per_day.append( (date.strftime("%Y-%m-%d"), 0) )
+            date = date + day
+    values_per_day.run_stats(stats)
+    return values_per_day
+    
