@@ -114,7 +114,7 @@ table {
 		
 			tr.no-data td {
 				text-align: center;
-				background: #f8f8ff;
+				background: #ffffff;
 				padding: 2em;
 				color: #aaa;
 			}
@@ -246,7 +246,7 @@ table {
 	.module div.toolbar span {
 		display: block;
 		float: right;
-		color: #fff;
+		color: #369;
 		margin-right: 0.625em;
 		padding-left: 21px;
 		background-repeat: no-repeat;
@@ -305,7 +305,7 @@ table {
 		background: #f8f8ff;
 		text-align: center;
 		padding: 2em;
-		color: #aaa;
+		color: #333;
 	}
 		
 		.module form .no-data a.add {
@@ -345,7 +345,7 @@ table {
 			display: inline;
 			font-style: italic;
 			font-size: 80%;
-			color: #aaa;
+			color: #666;
 			margin: 0;
 		}
 		
@@ -417,7 +417,7 @@ table {
 	.module form p.help {
 		margin-top: 0.625em;
 		font-size: 80%;
-		color: #ccc;
+		color: #666;
 		width: 30em;
 	}
 	

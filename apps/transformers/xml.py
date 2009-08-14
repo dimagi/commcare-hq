@@ -74,24 +74,25 @@ def _inner_xmlify(object_, parent, name=None):
     else:
         # child is a python object
         element = etree.Element( name )
-        for i in object_.__dict__:
-            i_val = getattr(object_,i)
-            if isinstance(i_val, basestring):
-                # set strings to be attributes
-                element.set(_sanitize_tag(i),_sanitize_text(i_val) )
-            elif isinstance( i_val, list):
-                _inner_xmlify(i_val, element, i)
-            elif isinstance( i_val, dict):
-                # i = string name of field
-                # i_val = actual field value
-                children = etree.Element( i )
-                for key in i_val.keys():
-                    child = etree.Element( _sanitize_tag(i) , name=_sanitize_text(key), value=_sanitize_text(i_val[key]) )
-                    children.append(child)
-                element.append(children)
-            else:
-                # set custom data structures to child elements
-                _inner_xmlify(i, element)
+        if hasattr(object_,"__dict__"):
+            for i in object_.__dict__:
+                i_val = getattr(object_,i)
+                if isinstance(i_val, basestring):
+                    # set strings to be attributes
+                    element.set(_sanitize_tag(i),_sanitize_text(i_val) )
+                elif isinstance( i_val, list):
+                    _inner_xmlify(i_val, element, i)
+                elif isinstance( i_val, dict):
+                    # i = string name of field
+                    # i_val = actual field value
+                    children = etree.Element( i )
+                    for key in i_val.keys():
+                        child = etree.Element( _sanitize_tag(i) , name=_sanitize_text(key), value=_sanitize_text(i_val[key]) )
+                        children.append(child)
+                    element.append(children)
+                else:
+                    # set custom data structures to child elements
+                    _inner_xmlify(i, element)
         parent.append(element)
 
 def _sanitize_tag(string):
