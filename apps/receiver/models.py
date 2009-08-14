@@ -1,11 +1,3 @@
-from django.db import models
-from datetime import datetime
-from hq.models import *
-
-from django.utils.translation import ugettext_lazy as _
-from django.core import serializers
-from random import choice
-
 import uuid
 import settings
 import email
@@ -15,6 +7,15 @@ import hashlib
 import sys
 import os
 import traceback
+from random import choice
+from datetime import datetime
+
+from django.db import models
+from django.db.models.signals import post_save
+from django.utils.translation import ugettext_lazy as _
+from django.core import serializers
+
+from hq.models import *
 
 _XFORM_URI = 'xform'
 
@@ -93,7 +94,8 @@ class Submission(models.Model):
     
     def is_orphaned(self):
         """Whether the submission is orphaned or not.  Orphanage is defined 
-           by having no information about the submission being handled."""
+           by having no information about the submission being handled,
+           and NOT being a duplicate."""
         # this property will be horribly inaccurate until we clear and resubmit everything 
         # in our already-deployed servers
         return len(SubmissionHandlingOccurrence.objects.filter(submission=self)) == 0
@@ -237,7 +239,15 @@ class Attachment(models.Model):
         verbose_name = _("Submission Attachment")        
     
     def __unicode__(self):
-        return "Attachment %s %s"  % (self.id, self.attachment_uri)
+        return "%s : %s"  % (self.id, self.attachment_uri)
+    
+    def display_string(self):
+        return """Id: %s
+                  Submission: %s
+                  Submit Time: %s
+                  Content Type: %s
+                  URI: %s"""  % (self.id, self.submission.id, self.submission.submit_time,
+                                 self.attachment_content_type, self.attachment_uri)
     
 class SubmissionHandlingType(models.Model):
     '''A way in which a submission can be handled.  Contains a reference
@@ -262,3 +272,21 @@ class SubmissionHandlingOccurrence(models.Model):
     # message allows any handler to add a short message that 
     # the receiver app will display to the user
     message = models.CharField(max_length=100, null=True, blank=True)
+    
+    
+
+def log_duplicates(sender, instance, **kwargs): #get sender, instance, created
+    '''A django post-save event that logs duplicate submissions to the
+       handling log.'''
+    if instance.is_duplicate():
+        logging.error("Got a duplicate attachment: %s." % instance.display_string())
+        # also mark that we've handled this as a duplicate. 
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="receiver", method="duplicate_attachment")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="receiver", method="duplicate_attachment")
+        instance.submission.handled(handle_type)
+    
+# Register to receive signals on every attachment save.
+post_save.connect(log_duplicates, sender=Attachment)
+
