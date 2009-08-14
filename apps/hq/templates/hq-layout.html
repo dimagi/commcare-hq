@@ -18,9 +18,9 @@
                 &nbsp;&nbsp; <a href="/admin/">Admin Site</a>&nbsp;&nbsp; | 
          {% endif %}
          &nbsp;&nbsp;<a href="{% url hq.views.password_change %}">Change Password</a>&nbsp;&nbsp; |          
-         &nbsp;&nbsp;<a href="{% url webapp.views.logout %}">Logout</a>          
+         &nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>          
      {%else%}
-         <a href="{% url webapp.views.login %}">Log in</a>
+         <a href="{% url webapp.views.login %}">{% trans "Log in" %}</a>
      {%endif%}
   </div>
 {% endblock %}

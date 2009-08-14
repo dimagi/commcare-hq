@@ -37,7 +37,7 @@ def get_daterange_links_raw(base_link, args={}):
     #datetime.strptime(startdate_str,'%m/%d/%Y')
     ret = '\n'
     ret += '<div class="daterange_tabs"><ul>'
-    ret += '<li><a href="%s">Today</a>' % (base_link)
+    ret += '<li><a href="%s?startdate=%s&enddate=%s">Today</a>' % (base_link, enddate.strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Yesterday</a>' % (base_link, yesterday.strftime('%m/%d/%Y'), yesterday.strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Last Week</a>' % (base_link, (enddate - delta_week).strftime('%m/%d/%Y'), (enddate).strftime('%m/%d/%Y'))
     ret += '<li><a href="%s?startdate=%s&enddate=%s">Last Month</a>' % (base_link, (enddate - delta_month).strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))

@@ -250,6 +250,12 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     for slog in slogs:
         if slog.is_orphaned():
+            # czue: TEMPORARILY add a check for non-duplicateness
+            # this will be solved after data migration, but in order
+            # to keep this view accurate with previously processed
+            # data, should be included for now.
+            # czue: bah this is too slow.  nevermind. commenting out.
+            # if not slog.is_duplicate():  
             orphans = orphans + [ slog ]
     context['submissions'] = paginate(request, orphans)
     return render_to_response(request, template_name, context)

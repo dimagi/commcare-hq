@@ -18,10 +18,7 @@ class APITestCase(TestCase):
         user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
         user.save()
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", domain)
-        response = self.client.post('/accounts/login/', \
-                         {'username': 'jewelstaite', 'password': 'test'})
-        # the login screen always gives a 302 - temporarily relocated response
-        self.assertStatus(response, 302)
+        self.client.login(username='jewelstaite',password='test')
         pass
 
     def test_api_calls(self):

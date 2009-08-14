@@ -68,11 +68,10 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
     this does not group by formdef.  if you want to do that, you should run each formdef individually.    
     """
     
-    totalspan = timeend-timestart
-    if timestart==timeend:
-        totalspan = timedelta(days=1)
-        
-    metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
+    timespan = get_timespan(timestart, timeend)
+    delta = timedelta(days=timespan.days+1)
+    timeend = timestart+delta
+    metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)
     if formdef_lst:
         metas = metas.filter(formdefmodel__in=formdef_lst)
        
@@ -88,7 +87,7 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
    
    #need to go through each DAY and do the query each time.
     oneday = timedelta(days=1)
-    for day in range(0,totalspan.days+1):        
+    for day in range(0,timespan.days+1):        
         delta = timedelta(days=day)        
         target_start = timestart + delta    
         target_end = target_start + oneday
@@ -100,6 +99,12 @@ def get_username_count(formdef_lst, username_lst, timestart, timeend):
         
     return username_count_dict
 
+def get_timespan(timestart, timeend):
+    if timeend < timestart:
+        return timedelta(0)
+    else:
+        return timeend-timestart
+
 # TODO - fix/remove this function. This was just copy/pasted for Clayton, august 5
 def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
     """return a dictionary keyed by user ids and their corresponding meta form counts given a list of formdefs
@@ -108,9 +113,9 @@ def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
     this does not group by formdef.  if you want to do that, you should run each formdef individually.    
     """
     
-    totalspan = timeend-timestart
-    if timestart==timeend:
-        totalspan = timedelta(days=0)
+    timespan = get_timespan(timestart, timeend)
+    delta = timedelta(days=timespan.days+1)
+    timeend = timestart+delta
     metas = Metadata.objects.filter(timestart__gte=timestart).filter(timeend__lte=timeend)    
     if formdef_lst:
         metas = metas.filter(formdefmodel__in=formdef_lst)
@@ -127,7 +132,7 @@ def get_user_id_count(formdef_lst, user_id_lst, timestart, timeend):
    
    #need to go through each DAY and do the query each time.
     oneday = timedelta(days=1)
-    for day in range(0,totalspan.days+1):        
+    for day in range(0,timespan.days+1):        
         delta = timedelta(days=day)        
         target_start = timestart + delta    
         target_end = target_start + oneday
