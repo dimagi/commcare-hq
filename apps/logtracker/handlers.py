@@ -5,6 +5,7 @@
 
 from logging import Handler
 from logtracker.models import *
+import traceback
 
 logrecord_keys = ['msecs', 'args', 'name', 'thread', 'created', 'process', 'threadName', 'module', 'filename', 'levelno', 'processName', 'lineno', 'exc_info', 'exc_text', 'pathname', 'funcName', 'relativeCreated', 'levelname', 'msg']
 
@@ -29,6 +30,9 @@ class TrackingHandler(Handler):
             
             #slightly more intelligent reading of extras
             record_dict = record.__dict__
+            
+            #dmyung - get the traceback for this log message and set it as a value in the dump
+            newlog.data_dump = "traceback:" + str(traceback.extract_stack())            
             if record_dict:
                 for key in record_dict:
                     if key in logrecord_keys:
@@ -37,7 +41,9 @@ class TrackingHandler(Handler):
                         if newlog.data_dump == None:
                             newlog.data_dump = ''
                         newlog.data_dump += key + ":=" + str(record_dict[key]) + "\n"
-                newlog.save()
+                    
+            
+            newlog.save()
         except Exception:
             # TODO: maybe do something more here.  Logging shouldn't blow
             # up anything else, but at the same time we'd still like to 
