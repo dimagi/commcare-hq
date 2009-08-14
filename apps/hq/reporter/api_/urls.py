@@ -8,10 +8,10 @@ def _get_form_id_from_desc(desc):
 
 urlpatterns = patterns('',
    (r'^api/reports/daily-report', report, \
-       {'ids': _get_form_id_from_desc('resolution_0.0.2a'), \
+       {'ids': _get_form_id_from_desc('resolution_0.0.2'), \
         'index': 'Day', 'value': ['Referrals']} ),
    (r'^api/reports/user-report', report, \
-        {'ids': _get_form_id_from_desc('resolution_0.0.2a'), \
+        {'ids': _get_form_id_from_desc('resolution_0.0.2'), \
          'index': 'User', 'value': ['Referrals']} ),
    (r'^api/reports/', report ),
 )
