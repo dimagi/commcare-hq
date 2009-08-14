@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-
+from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import datetime, date, timedelta
@@ -205,7 +205,7 @@ class Mother(object):
                     
             self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
         else:
-            self.incomplete_checklist_items = "No followup visits found."
+            self.incomplete_checklist_items = _("No followup visits found.")
             
         # Women Needing Followup 
         # > 1 month since last Followup if 1-6 Months, 
@@ -358,4 +358,4 @@ class Mother(object):
             column = column[len(prefix):]
         if column.endswith(suffix):
             column = column[0:len(column) - len(suffix)]
-        return column.replace("_", " ")
+        return _(column).replace("_", " ")

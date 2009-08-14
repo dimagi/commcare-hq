@@ -1,3 +1,4 @@
+import operator
 from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
 from transformers.xml import xmlify
@@ -5,7 +6,7 @@ from transformers.http import responsify
 from xformmanager.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
 from hq.reporter.api_.reports import Report, DataSet, Values
-from hq.reporter.metadata import get_username_count
+from hq.reporter.metadata import get_username_count, get_timespan
 
 # TODO - clean up index/value once we hash out this spec more properly
 # TODO - pull out authentication stuff into some generic wrapper
@@ -45,7 +46,10 @@ def report(request, ids=[], index='', value=[]):
     stats = None
     if request.REQUEST.has_key('stats'):
         stats = [v.strip() for v in request.GET['stats'].split(',')]
-    _report = get_report(request, ids, index, value, start_date, end_date, stats)
+    try:
+        _report = get_report(request, ids, index, value, start_date, end_date, stats)
+    except Exception, e:
+        return HttpResponseBadRequest(str(e))
     xml = xmlify(_report)
     response = responsify('xml', xml)
     return response
@@ -79,11 +83,8 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     # <HACK>
     # temporary hack to get pf api working. TODO - remove once 
     # we figure out user authentication/login from the mobile phone
-    try:
-        domain = Domain.objects.get(name='Pathfinder')
-    except Domain.DoesNotExist:
-        return HttpResponseBadRequest( \
-            "Domain 'Pathfinder' does not exist.")    
+    domain = Domain.objects.get(name='Pathfinder')
+
     # </HACK>
     # this is the correct way to do it. use this in the long term.
     # try:
@@ -93,13 +94,21 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     #        "You do not have permission to use this API.")
     # domain = extuser.domain
     
+    if not ids: raise Exception("The requested form was not found")
+    
     _report = Report("CHW Group Total Activity Report")
     _report.generating_url = request.path
-    total_metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
-    total_metadata = total_metadata.filter(submission__submission__submit_time__lte=end_date)
-    metadata = total_metadata.filter(formdefmodel__in=ids).order_by('id')
-    if not metadata:
-        raise Exception("Form with id in %s was not found." % str(ids) )
+    metadata = Metadata.objects.filter(timestart__gte=start_date)
+    # the query below is used if you want to query by submission time (instead of form completion time)
+    #metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
+    
+    # since we are working at a granularity of 'days', we want to make sure include 
+    # complete days in our queries, so we round up
+    timespan = get_timespan(start_date, end_date)
+    delta = timedelta(days=timespan.days+1)
+    metadata = metadata.filter(timeend__lt=start_date+delta)
+    # the query below is used if you want to query by submission time (instead of form completion time)
+    #metadata = metadata.filter(submission__submission__submit_time__lte=end_date)
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
@@ -108,24 +117,27 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     # when 'organization' is properly populated, we can start using that
     #       member_list = utils.get_members(organization)
     # for now, just use domain
-    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
-    # get the specified forms
-    for id in ids:
-        form_per_member = Values( unicode(value[0]) )
-        form_metadata = metadata.filter(formdefmodel=id)
-        for member in member_list:
-            # values are tuples of dates and counts
-            form_per_member.append( (member, form_metadata.filter(username=member).count()) )
-        form_per_member.run_stats(stats)
-    dataset.valuesets.append( form_per_member )
-    
+    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain).order_by("chw_username")]
+
     # get a sum of all forms
     visits_per_member = Values( "visits" )
     for member in member_list:
-        visits_per_member.append( (member, total_metadata.filter(username=member).count()) )
+        visits_per_member.append( (member, metadata.filter(username=member).count()) )
     visits_per_member.run_stats(stats)
+    visits_per_member.sort(key=operator.itemgetter(1), reverse=True) 
     dataset.valuesets.append( visits_per_member )
-
+    
+    # this report only requires the first form. you can imagine other reports doing 
+    # this iteration: for id in ids:
+    form_per_member = Values( unicode(value[0]) )
+    form_metadata = metadata.filter(formdefmodel=ids[0])
+    for member in member_list:
+        # values are tuples of dates and counts
+        form_per_member.append( (member, form_metadata.filter(username=member).count()) )
+    form_per_member.run_stats(stats)
+    form_per_member.sort(key=operator.itemgetter(1), reverse=True) 
+    dataset.valuesets.append( form_per_member )
+    
     _report.datasets.append(dataset)
     return _report
 
@@ -146,11 +158,8 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     # <HACK>
     # temporary hack to get pf api working. TODO - remove once 
     # we figure out user authentication/login from the mobile phone
-    try:
-        domain = Domain.objects.get(name='Pathfinder')
-    except Domain.DoesNotExist:
-        return HttpResponseBadRequest( \
-            "Domain 'Pathfinder' does not exist.")    
+    domain = Domain.objects.get(name='Pathfinder')
+
     # </HACK>
     # this is the correct way to do it. use this in the long term.
     # try:
@@ -163,6 +172,8 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     if request.GET.has_key('chw'): chw = request.GET['chw']
     else: raise Exception("This reports requires a CHW parameter")
 
+    if not ids: raise Exception("The requested form was not found")
+
     # TODO - this currrently only tested for value lists of size 1. test. 
     _report = Report("CHW Daily Activity Report")
     _report.generating_url = request.path
@@ -170,40 +181,41 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     #       member_list = utils.get_members(organization)
     # for now, just use domain    
     member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
-    form_list = FormDefModel.objects.filter(pk__in=ids)
-    username_counts = get_username_count(form_list, member_list, start_date, end_date)
-    if chw not in username_counts:
-        raise Exception("Username could not be matched to any submitted forms")
+    if chw not in member_list: raise Exception("No matching CHW could be identified")
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
     dataset.params = request.GET
     
-    date = start_date
-    day = timedelta(days=1)
-    forms_per_day = Values( unicode(value[0]) )
-    for daily_count in username_counts[chw]:
-        # values are tuples of dates and daily counts
-        forms_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
-        date = date + day
-    forms_per_day.run_stats(stats)
-    dataset.valuesets.append( forms_per_day )
-
-    # get a sum of all the forms
-    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
-    username_counts = get_username_count(None, member_list, start_date, end_date)
-    if chw not in username_counts:
-        raise Exception("Username could not be matched to any submitted forms")
-    date = start_date
-    day = timedelta(days=1)
-    visits_per_day = Values( 'visits' )
-    for daily_count in username_counts[chw]:
-        # values are tuples of dates and daily counts
-        visits_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
-        date = date + day
-    visits_per_day.run_stats(stats)
-    dataset.valuesets.append( visits_per_day )
+    values = get_daily_activity_values('Visits', None, chw, member_list, start_date, end_date, stats, domain)
+    dataset.valuesets.append( values )
+    
+    form_list = FormDefModel.objects.filter(pk__in=ids)
+    values = get_daily_activity_values(unicode(value[0]), form_list, chw, member_list, start_date, end_date, stats, domain)
+    dataset.valuesets.append( values )
     
     _report.datasets.append(dataset)      
     return _report
 
+def get_daily_activity_values(name, form_list, chw, member_list, start_date, end_date, stats, domain):
+    # get a sum of all the forms
+    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
+    if chw not in member_list: raise Exception("No matching CHW could be identified")
+    username_counts = get_username_count(form_list, member_list, start_date, end_date)
+    date = start_date
+    day = timedelta(days=1)
+    values_per_day = Values( name )
+    if chw in username_counts:
+        for daily_count in username_counts[chw]:
+            # values are tuples of dates and daily counts
+            values_per_day.append( (date.strftime("%Y-%m-%d"), daily_count) )
+            date = date + day
+    else:
+        # should return a set of '0s' even when no forms submitted
+        timespan = get_timespan(start_date, end_date)
+        for i in range(0,timespan.days+1):
+            values_per_day.append( (date.strftime("%Y-%m-%d"), 0) )
+            date = date + day
+    values_per_day.run_stats(stats)
+    return values_per_day
+    
