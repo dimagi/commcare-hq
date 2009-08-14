@@ -1,3 +1,4 @@
+import operator
 from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
 from transformers.xml import xmlify
@@ -116,13 +117,14 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     # when 'organization' is properly populated, we can start using that
     #       member_list = utils.get_members(organization)
     # for now, just use domain
-    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
+    member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain).order_by("chw_username")]
 
     # get a sum of all forms
     visits_per_member = Values( "visits" )
     for member in member_list:
         visits_per_member.append( (member, metadata.filter(username=member).count()) )
     visits_per_member.run_stats(stats)
+    visits_per_member.sort(key=operator.itemgetter(1), reverse=True) 
     dataset.valuesets.append( visits_per_member )
     
     # this report only requires the first form. you can imagine other reports doing 
@@ -133,6 +135,7 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
         # values are tuples of dates and counts
         form_per_member.append( (member, form_metadata.filter(username=member).count()) )
     form_per_member.run_stats(stats)
+    form_per_member.sort(key=operator.itemgetter(1), reverse=True) 
     dataset.valuesets.append( form_per_member )
     
     _report.datasets.append(dataset)
