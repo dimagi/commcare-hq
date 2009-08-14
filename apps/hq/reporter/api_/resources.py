@@ -109,6 +109,14 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     #       member_list = utils.get_members(organization)
     # for now, just use domain
     member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
+
+    # get a sum of all forms
+    visits_per_member = Values( "visits" )
+    for member in member_list:
+        visits_per_member.append( (member, total_metadata.filter(username=member).count()) )
+    visits_per_member.run_stats(stats)
+    dataset.valuesets.append( visits_per_member )
+
     # get the specified forms
     for id in ids:
         form_per_member = Values( unicode(value[0]) )
@@ -119,13 +127,6 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
         form_per_member.run_stats(stats)
     dataset.valuesets.append( form_per_member )
     
-    # get a sum of all forms
-    visits_per_member = Values( "visits" )
-    for member in member_list:
-        visits_per_member.append( (member, total_metadata.filter(username=member).count()) )
-    visits_per_member.run_stats(stats)
-    dataset.valuesets.append( visits_per_member )
-
     _report.datasets.append(dataset)
     return _report
 
@@ -177,11 +178,11 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     dataset.indices = unicode(index)
     dataset.params = request.GET
     
-    form_list = FormDefModel.objects.filter(pk__in=ids)
-    values = get_daily_activity_values(unicode(value[0]), form_list, chw, member_list, start_date, end_date, stats, domain)
+    values = get_daily_activity_values('Visits', None, chw, member_list, start_date, end_date, stats, domain)
     dataset.valuesets.append( values )
     
-    values = get_daily_activity_values('Visits', None, chw, member_list, start_date, end_date, stats, domain)
+    form_list = FormDefModel.objects.filter(pk__in=ids)
+    values = get_daily_activity_values(unicode(value[0]), form_list, chw, member_list, start_date, end_date, stats, domain)
     dataset.valuesets.append( values )
     
     _report.datasets.append(dataset)      
