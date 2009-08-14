@@ -2,10 +2,12 @@
 {% load i18n %}
 {% load submission_tags %}
 {% block title %}{% trans "Submissions Not Matching Any Known Schema" %}{% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
 {% block content %}
-
 <h2>{% trans "Submissions Not Matching Any Known Schema" %}</h2>
-
+<p>NOTE: This page currently includes some duplicate submissions, shown in <span class="duplicate">orange</span>.  These will disappear the next time our server migrates.  Please be patient with us.</p>  
 {% if errors %}
 	<!-- TODO: put this formatting in stylesheets -->
     <label class="error"><strong>{{ errors|escape }}</strong></label>
@@ -16,11 +18,9 @@
     {% if submissions.has_previous %}
         <a href="?page={{ submissions.previous_page_number }}"><< Previous</a>
     {% endif %}
-
     <span class="current">
         Page {{ submissions.number }} of {{ submissions.paginator.num_pages }}.
     </span>
-
     {% if submissions.has_next %}
         <a href="?page={{ submissions.next_page_number }}">Next >></a>
     {% endif %}
@@ -41,7 +41,13 @@
 	       <input type="hidden" name="instance" value="{{orphan.id}}"/>
 	       <input type="checkbox" name="checked_{{orphan.id}}"/>
         </td>
-   		<td><a href="{%url receiver.views.single_submission orphan.id %}">{{orphan.id}}</a></td>
+   		<td><a href="{%url receiver.views.single_submission orphan.id %}">
+   		   {% if orphan.is_duplicate %}
+                  <span class="duplicate">{{orphan.id}}</span>
+           {% else %}
+                  {{orphan.id}}
+   		   {% endif %}
+   		   </a></td>
    		<td>{{orphan.submit_time|date}} - {{orphan.submit_time|time}}</td>
    		<td>{{orphan.submit_ip}}</td>
    		<td>{{orphan.bytes_received}}</td>

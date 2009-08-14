@@ -18,6 +18,8 @@ from django.core import serializers
 from hq.models import *
 
 _XFORM_URI = 'xform'
+_DUPLICATE_ATTACHMENT = "duplicate_attachment"
+_RECEIVER = "receiver"
 
 class Submission(models.Model):
     '''A Submission object.  Represents an instance of someone POST-ing something
@@ -94,12 +96,37 @@ class Submission(models.Model):
     
     def is_orphaned(self):
         """Whether the submission is orphaned or not.  Orphanage is defined 
-           by having no information about the submission being handled,
-           and NOT being a duplicate."""
+           by having no information about the submission being handled. This 
+           explicitly should never include something that's a duplicate, since
+           all dupes are explicitly logged as handled by this app.
+        """
         # this property will be horribly inaccurate until we clear and resubmit everything 
         # in our already-deployed servers
-        return len(SubmissionHandlingOccurrence.objects.filter(submission=self)) == 0
+        return len(SubmissionHandlingOccurrence.objects.filter(submission=self)) == 0 
         
+    def is_duplicate(self):
+        """Whether the submission is a duplicate or not.  Duplicates 
+           mean that at least one attachment from the submission was 
+           the exact same (defined by having the same md5) as a previously
+           seen attachment."""
+        # TODO: There's two ways to do this: one relies on the post_save event to 
+        # populate the handlers correctly.  The other would just call is_duplicate
+        # on all the attachments.  I think either one would be fine, but since
+        # one will work pre-migration while one will only work post migration
+        # I'm TEMPORARILY going with the one that walks the attachments.
+        # This is miserably slow (doing a full table scan for every submit) so 
+        # should really move as soon as we migrate.
+        
+        # Correct implementation commented out until migration
+        #for handled in SubmissionHandlingOccurrence.objects.filter(submission=self):
+        #    if handled.handled.method == _DUPLICATE_ATTACHMENT:
+        #        return True
+        #return False
+        for attach in self.attachments.all():
+            if attach.is_duplicate():
+                return True
+        return False
+    
     def process_attachments(self):
         """Process attachments for a given submission blob.
         Will try to use the email parsing library to get all the MIME content from a given submission
@@ -273,7 +300,7 @@ class SubmissionHandlingOccurrence(models.Model):
     # the receiver app will display to the user
     message = models.CharField(max_length=100, null=True, blank=True)
     
-    
+
 
 def log_duplicates(sender, instance, **kwargs): #get sender, instance, created
     '''A django post-save event that logs duplicate submissions to the
@@ -282,9 +309,9 @@ def log_duplicates(sender, instance, **kwargs): #get sender, instance, created
         logging.error("Got a duplicate attachment: %s." % instance.display_string())
         # also mark that we've handled this as a duplicate. 
         try:
-            handle_type = SubmissionHandlingType.objects.get(app="receiver", method="duplicate_attachment")
+            handle_type = SubmissionHandlingType.objects.get(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
         except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="receiver", method="duplicate_attachment")
+            handle_type = SubmissionHandlingType.objects.create(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
         instance.submission.handled(handle_type)
     
 # Register to receive signals on every attachment save.
