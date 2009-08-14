@@ -97,9 +97,17 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     
     _report = Report("CHW Group Total Activity Report")
     _report.generating_url = request.path
-    total_metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
-    total_metadata = total_metadata.filter(submission__submission__submit_time__lte=end_date)
-    metadata = total_metadata.filter(formdefmodel__in=ids).order_by('id')
+    metadata = Metadata.objects.filter(timestart__gte=start_date)
+    # the query below is used if you want to query by submission time (instead of form completion time)
+    #metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
+    
+    # since we are working at a granularity of 'days', we want to make sure include 
+    # complete days in our queries, so we round up
+    timespan = get_timespan(start_date, end_date)
+    delta = timedelta(days=timespan.days+1)
+    metadata = metadata.filter(timeend__lt=start_date+delta)
+    # the query below is used if you want to query by submission time (instead of form completion time)
+    #metadata = metadata.filter(submission__submission__submit_time__lte=end_date)
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
@@ -113,18 +121,18 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     # get a sum of all forms
     visits_per_member = Values( "visits" )
     for member in member_list:
-        visits_per_member.append( (member, total_metadata.filter(username=member).count()) )
+        visits_per_member.append( (member, metadata.filter(username=member).count()) )
     visits_per_member.run_stats(stats)
     dataset.valuesets.append( visits_per_member )
-
-    # get the specified forms
-    for id in ids:
-        form_per_member = Values( unicode(value[0]) )
-        form_metadata = metadata.filter(formdefmodel=id)
-        for member in member_list:
-            # values are tuples of dates and counts
-            form_per_member.append( (member, form_metadata.filter(username=member).count()) )
-        form_per_member.run_stats(stats)
+    
+    # this report only requires the first form. you can imagine other reports doing 
+    # this iteration: for id in ids:
+    form_per_member = Values( unicode(value[0]) )
+    form_metadata = metadata.filter(formdefmodel=ids[0])
+    for member in member_list:
+        # values are tuples of dates and counts
+        form_per_member.append( (member, form_metadata.filter(username=member).count()) )
+    form_per_member.run_stats(stats)
     dataset.valuesets.append( form_per_member )
     
     _report.datasets.append(dataset)
@@ -171,8 +179,6 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     # for now, just use domain    
     member_list = [r.chw_username for r in ReporterProfile.objects.filter(domain=domain)]
     if chw not in member_list: raise Exception("No matching CHW could be identified")
-    form_list = FormDefModel.objects.filter(pk__in=ids)
-    username_counts = get_username_count(form_list, member_list, start_date, end_date)
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)
@@ -204,7 +210,7 @@ def get_daily_activity_values(name, form_list, chw, member_list, start_date, end
     else:
         # should return a set of '0s' even when no forms submitted
         timespan = get_timespan(start_date, end_date)
-        for i in range(0,timespan.days+1):        
+        for i in range(0,timespan.days+1):
             values_per_day.append( (date.strftime("%Y-%m-%d"), 0) )
             date = date + day
     values_per_day.run_stats(stats)
