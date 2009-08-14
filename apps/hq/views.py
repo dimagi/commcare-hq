@@ -70,7 +70,7 @@ def org_report(request, template_name="hq/org_single_report.html"):
     
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
-    except MyModel.DoesNotExist:
+    except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))
         
