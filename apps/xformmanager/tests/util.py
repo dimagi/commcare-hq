@@ -44,5 +44,5 @@ def create_fake_submission(xml_file, domain, path=None):
         path = os.path.dirname(__file__)
     full_body_path = os.path.join(path, xml_file)
     submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path, domain)
-    return submission.attachments.all()[0]
+    return submission
     

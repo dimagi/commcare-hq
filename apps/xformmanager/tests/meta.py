@@ -1,6 +1,7 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.tests.util import *
 from xformmanager.models import Metadata
+from xformmanager.manager import XFormManager
 from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 import unittest
 from datetime import datetime, timedelta 
@@ -66,6 +67,42 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[7],"6")
         self.assertEquals(row[8],"RW07SHOPTWGAOJKUQJJJN215D")
 
+    def testMetaData_3(self):
+        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
+        populate("data/pf_followup_2.xml")
+        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml")
+        populate("data/pf_new_reg_2.xml")
+        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
+        populate("data/pf_ref_completed_2.xml")
+        create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml")
+        populate("data/mvp_mother_reg_2.xml")
+        populate("data/mvp_mother_reg_3.xml")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM xformmanager_metadata order by id")
+        row = cursor.fetchall()
+        
+        latest_submission_id = ( Attachment.objects.latest('id') ).id
+        latest_formdefmodel_id = ( FormDefModel.objects.latest('id') ).id
+        
+        self.assertEquals(row[0][1],"PathfinderFollowUpVisit")
+        self.assertEquals(row[0][9],latest_submission_id-8)
+        self.assertEquals(row[0][10],1)
+        self.assertEquals(row[0][11],latest_formdefmodel_id-3)
+        self.assertEquals(row[1][1],"PathfinderFollowUpVisit")
+        self.assertEquals(row[2][1],"PathfinderRegistratonVisit")
+        self.assertEquals(row[3][1],"PathfinderRegistratonVisit")
+        self.assertEquals(row[3][9],latest_submission_id-5)
+        self.assertEquals(row[3][10],2)
+        self.assertEquals(row[3][11],latest_formdefmodel_id-2)
+        self.assertEquals(row[4][1],"PathfinderReferralVisit")
+        self.assertEquals(row[5][1],"PathfinderReferralVisit")
+        self.assertEquals(row[6][1],"XOLIJZVDJKLORBQUABFLVGLEA")
+        self.assertEquals(row[7][1],"XOLIJZVDJKLORBQUABFLVGLEA")
+        self.assertEquals(row[8][1],"XOLIJZVDJKLORBQUABFLVGLEA")
+        self.assertEquals(row[8][9],latest_submission_id)
+        self.assertEquals(row[8][10],3)
+        self.assertEquals(row[8][11],latest_formdefmodel_id)
+        
     def testSubmissionCount(self):
         create_xsd_and_populate("data/pf_followup.xsd")
         today = datetime.now().date()
@@ -73,8 +110,8 @@ class MetaTestCase(unittest.TestCase):
         day_after_tomorrow = today + timedelta(days=2)
         yesterday = today - timedelta(days=1)
         for i in range(1, 6):
-            attachment = populate("data/pf_followup_%s.xml" % i)
-            meta = Metadata.objects.get(submission=attachment)
+            submission = populate("data/pf_followup_%s.xml" % i)
+            meta = Metadata.objects.get(submission=submission.xform)
             self.assertEqual(i, meta.get_submission_count(today, tomorrow))
             self.assertEqual(0, meta.get_submission_count(yesterday, today))
             self.assertEqual(0, meta.get_submission_count(tomorrow, day_after_tomorrow))
@@ -94,6 +131,20 @@ class MetaTestCase(unittest.TestCase):
                 logging.warn("Expecting a 'duplicate submission' error NOW:")
                 populate("data/pf_followup_%s.xml" % i)
                 self.assertEqual(running_count, len(Metadata.objects.all()))
+    
+    def testReSubmit(self):
+        print "HELLO"
+        # original submission
+        submission = populate("data/pf_followup_1.xml")
+        self.assertEquals(submission.is_orphaned(),True)
+        # register schema
+        create_xsd_and_populate("data/pf_followup.xsd")
+        
+        # xformmanagger resubmission
+        xformmanager = XFormManager()
+        status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+        self.assertEquals(status,True)
+        print "GOODBYE"
     
     def testSubmitHandling(self):
         create_xsd_and_populate("data/pf_followup.xsd")
@@ -134,45 +185,6 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(1, len(SubmissionHandlingOccurrence.objects.all()))
         self.assertEqual(way_handled, SubmissionHandlingOccurrence.objects.all()[0])
         
-        
-        
-    
-    def testMetaData_3(self):
-        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
-        populate("data/pf_followup_2.xml")
-        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml")
-        populate("data/pf_new_reg_2.xml")
-        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml")
-        populate("data/pf_ref_completed_2.xml")
-        create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml")
-        populate("data/mvp_mother_reg_2.xml")
-        populate("data/mvp_mother_reg_3.xml")
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xformmanager_metadata order by id")
-        row = cursor.fetchall()
-        
-        latest_submission_id = ( Attachment.objects.latest('id') ).id
-        latest_formdefmodel_id = ( FormDefModel.objects.latest('id') ).id
-        
-        self.assertEquals(row[0][1],"PathfinderFollowUpVisit")
-        self.assertEquals(row[0][9],latest_submission_id-8)
-        self.assertEquals(row[0][10],1)
-        self.assertEquals(row[0][11],latest_formdefmodel_id-3)
-        self.assertEquals(row[1][1],"PathfinderFollowUpVisit")
-        self.assertEquals(row[2][1],"PathfinderRegistratonVisit")
-        self.assertEquals(row[3][1],"PathfinderRegistratonVisit")
-        self.assertEquals(row[3][9],latest_submission_id-5)
-        self.assertEquals(row[3][10],2)
-        self.assertEquals(row[3][11],latest_formdefmodel_id-2)
-        self.assertEquals(row[4][1],"PathfinderReferralVisit")
-        self.assertEquals(row[5][1],"PathfinderReferralVisit")
-        self.assertEquals(row[6][1],"XOLIJZVDJKLORBQUABFLVGLEA")
-        self.assertEquals(row[7][1],"XOLIJZVDJKLORBQUABFLVGLEA")
-        self.assertEquals(row[8][1],"XOLIJZVDJKLORBQUABFLVGLEA")
-        self.assertEquals(row[8][9],latest_submission_id)
-        self.assertEquals(row[8][10],3)
-        self.assertEquals(row[8][11],latest_formdefmodel_id)
-
     def testNoMetadata(self):
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nometa.xml")
         # raises a Metadata.DoesNotExist error on fail
@@ -189,3 +201,10 @@ class MetaTestCase(unittest.TestCase):
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables
+        
+    def tearDown(self):
+        # duplicates setUp, but at least we know we're being clean
+        su = StorageUtility()
+        su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
