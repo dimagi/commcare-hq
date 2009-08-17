@@ -1,0 +1,24 @@
+<table>
+<tr>
+	<td>Build Number</td>
+	<td>Created</td>
+	<td>Jar File</td>
+	<td>Jad File</td>
+	<td>Uploaded By</td>
+	<td>Build Status</td>
+	<td>Description</td>
+	<td>Build Server URL</td>
+</tr>
+{% for build in builds %}
+    <tr>
+        <td>{{build.build_number}}</td>
+        <td>{{build.package_created|date}} {{build.package_created|time}}</td>
+        <td><a href="{{build.get_jar_downloadurl}}">{{build.jar_file}}</a></td>
+        <td><a href="{{build.get_jad_downloadurl}}">{{build.jad_file}}</a></td>
+        <td>{{build.uploaded_by}}</td>
+        <td>{{build.get_status_display}}</td>        
+        <td>{{build.description}}</td>
+        <td><a href="{{build.get_buildURL}}">Build URL</a></td>
+    </tr>
+{%endfor%}
+</table>
