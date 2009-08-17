@@ -7,6 +7,7 @@ import hashlib
 import sys
 import os
 import traceback
+import simplejson
 from random import choice
 from datetime import datetime
 
@@ -142,8 +143,38 @@ class Submission(models.Model):
             except Exception, e:                 
                 type, value, tb = sys.exc_info()
                 logging.error("Attachment Parsing Error!!! Traceback: " + type.__name__ +  ":" + str(value) + " " + string.join(traceback.format_tb(tb),' '))
-                
+
+    def export(self):
+        """ walks through the submission and bundles it
+        in an exportable format with the original submitting IP 
+        and time, as well as a reference to the original post
         
+        """
+        #print "processing %s (%s)" % (self,self.raw_post)
+        if not os.path.exists(self.raw_post):
+            raise Submission.DoesNotExist("%s could not be found" % self.raw_post)
+        post_file = open(self.raw_post, "r")
+        submit_time = str(self.submit_time)
+        # first line is content type
+        content_type = post_file.readline().split(":")[1].strip()
+        # second line is content length
+        content_length = post_file.readline().split(":")[1].strip()
+        # third line is empty
+        post_file.readline()
+        # the rest is the actual body of the post
+        headers = { "content-type" : content_type, 
+                    "content-length" : content_length,
+                    "time-received" : str(self.submit_time),
+                    "original-ip" : str(self.submit_ip),
+                    "domain" : self.domain.name
+                   }
+        # the format will be:
+        # {headers} (dict)
+        #           (empty line)
+        # <body>   
+        return simplejson.dumps(headers) + "\n\n" + post_file.read()
+
+
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)
     backup_code = models.IntegerField(unique=True)

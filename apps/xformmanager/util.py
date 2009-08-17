@@ -1,9 +1,8 @@
-import re, os, tempfile, zipfile
+import re, os
 import logging
 import inspect
 from lxml import etree
 
-from django.core.servers.basehttp import FileWrapper
 from django.db import connection
 from django.http import HttpResponse, HttpResponseBadRequest
 from transformers.csv import format_csv
@@ -153,20 +152,4 @@ def get_csv_from_form(formdef_id, form_id=0, filter=''):
     name = xsd.form_name
     return format_csv(rows, columns, name, row_count)
 
-def get_zipfile(file_list):
-    """
-    Create a ZIP file on disk and transmit it in chunks of 8KB,                 
-    without loading the whole file into memory.                                    
-    """
-    temp = tempfile.TemporaryFile()
-    archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
-    for file in file_list:
-        file = file.encode("utf-8")
-        archive.write(file, os.path.basename(file))
-    archive.close()
-    wrapper = FileWrapper(temp)
-    response = HttpResponse(wrapper, content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=test.zip'
-    response['Content-Length'] = temp.tell()
-    temp.seek(0)
-    return response
+
