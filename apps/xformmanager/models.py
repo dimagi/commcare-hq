@@ -1,3 +1,9 @@
+import os
+import uuid
+import logging
+import settings
+import simplejson
+
 from django.db import models, connection
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
@@ -7,10 +13,6 @@ from django.db.models.signals import post_save
 from graphing import dbhelper
 from receiver.models import Attachment
 from hq.models import *
-import logging
-import uuid
-import settings
-import os
 
 class ElementDefModel(models.Model):
     # this class is really not used
@@ -189,6 +191,31 @@ class FormDefModel(models.Model):
         # this is left to make domains backwards compatible (?)
         # we can probably get rid of it, actually
         return self.domain
+    
+    def export(self):
+        """ walks through all the registered form definitions and
+        bundles them with the original xsd schema for resubmission
+    
+        """
+        file_loc = self.xsd_file_location
+        if not file_loc:
+            logging.warn("Could not find xsd at %s" % self.xsd_file_location)
+        else:
+            headers = {
+                "original-submit-time" : str(self.submit_time),
+                "original-submit-ip" : str(self.submit_ip),
+                "bytes-received" : self.bytes_received,
+                "form-name" : self.form_name,
+                "form-display-name" : self.form_display_name,
+                "target-namespace" : self.target_namespace,
+                "date-created" : str(self.date_created),
+                "domain" : str(self.get_domain)
+                }
+            xsd_file = open(file_loc, "r")
+            payload = xsd_file.read()
+            xsd_file.close() 
+            return simplejson.dumps(headers) + "\n\n" + payload
+
 
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other

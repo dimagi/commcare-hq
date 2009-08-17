@@ -5,9 +5,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django_rest_interface.resource import Resource
 from transformers.csv import get_csv_from_django_query, format_csv
+from transformers.zip import get_zipfile, get_tarfile
 from xformmanager.xformdef import FormDef
 from xformmanager.models import *
-from xformmanager.util import get_zipfile
 from hq.models import *
 
 """ changes to the API need to occur in 
@@ -51,13 +51,23 @@ class XFormSchemata(Resource):
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             xforms = xforms.filter(submit_time__lte=date)
-        response = HttpResponse()
+        if request.REQUEST.has_key('format'):
+            if request.GET['format'].lower() == 'sync':
+                # this is a special case: used for server synchronization
+                # so we pass *all* data (not just a subset)
+                file_list = []
+                for schema in xforms:
+                    file_list.append( schema.xsd_file_location )
+                export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
+                export_file = os.path.join(export_path, "commcarehq-schemata.tar")
+                return get_tarfile(file_list, export_file)
         for xform in xforms:
             # do NOT save this!!! This is just for display
             xform.xsd_file_location = "http://%s/xforms/show/%s?show_schema=yes" % \
                                       (request.get_host(), xform.pk)
         fields = ('form_name','form_display_name','target_namespace','submit_time','xsd_file_location')
         if request.REQUEST.has_key('format'):
+            response = HttpResponse()
             if request.GET['format'].lower() == 'json':
                 json_serializer = serializers.get_serializer("json")()
                 json_serializer.serialize(xforms, ensure_ascii=False, stream=response, fields = \
@@ -117,15 +127,15 @@ class XFormSubmissionsData(Resource):
             if filter: filter = filter + " AND "
             filter = filter + "id <= " + request.GET['end-id']
             metadata = metadata.filter(raw_data__lte=request.GET['end-id'])
-        if request.REQUEST.has_key('start-date'):
-            date = datetime.strptime(request.GET['start-date'],"%Y-%m-%d")
+        if request.REQUEST.has_key('start-submit-date'):
+            date = datetime.strptime(request.GET['start-submit-date'],"%Y-%m-%d")
             # not the most efficient way of doing this 
             # but it keeps our django orm reference and sql work separate
             metadata = metadata.filter(submission__submission__submit_time__gte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
             filter.append( ['id','IN',tuple(raw_ids)] )
-        if request.REQUEST.has_key('end-date'):
-            date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
+        if request.REQUEST.has_key('end-submit-date'):
+            date = datetime.strptime(request.GET['end-submit-date'],"%Y-%m-%d")
             metadata = metadata.filter(submission__submission__submit_time__lte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
             filter.append( ['id','IN',tuple(raw_ids)] )

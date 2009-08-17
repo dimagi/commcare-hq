@@ -30,10 +30,10 @@ http://dev.commcarehq.org/api/xforms
   * end-id 
   
     * allowable value: any integer
-  * start-date
+  * start-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
-  * end-date
+  * end-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
 
@@ -63,10 +63,10 @@ http://dev.commcarehq.org/api/xforms/1
   * end-id 
   
     * allowable value: any integer
-  * start-date
+  * start-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
-  * end-date
+  * end-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
 
@@ -105,10 +105,10 @@ http://dev.commcarehq.org/api/xforms/1/metadata
   * end-id 
   
     * allowable value: any integer
-  * start-date
+  * start-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
-  * end-date
+  * end-submit-date
   
     * allowable value: date in the format YYYY-MM-DD
     
@@ -127,7 +127,7 @@ http://dev.commcarehq.org/api/xforms/1/2/metadata
 A few examples
 --------------
 
-http://dev.commcarehq.org/api/xforms/1?format=xml&start-date=2008-08-30
+http://dev.commcarehq.org/api/xforms/1?format=xml&start-submit-date=2008-08-30
 
 * Retrieve all data submitted after August 30, 2008, to the first registered schema
 * Return the results in XML format

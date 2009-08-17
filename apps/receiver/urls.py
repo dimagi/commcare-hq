@@ -12,4 +12,5 @@ urlpatterns = patterns('',
     url(r'^receiver/review/(?P<submission_id>\d+)$', 'receiver.views.single_submission', name='single_submission'),
     url(r'^receiver/attachment/(?P<attachment_id>\d+)$', 'receiver.views.single_attachment', name='single_attachment'),
     url(r'^receiver/orphaned_data/$', 'receiver.views.orphaned_data', name='orphaned_data'),
+    (r'', include('receiver.api_.urls')),    
 )
