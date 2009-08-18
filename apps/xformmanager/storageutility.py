@@ -11,8 +11,7 @@ from xformmanager.models import ElementDefModel, FormDefModel, Metadata
 from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
-from receiver.models import SubmissionHandlingType
-from datetime import datetime, timedelta
+from datetime import datetime
 from lxml import etree
 import settings
 import logging
@@ -121,16 +120,8 @@ class StorageUtility(object):
             metadata_model.submission = submission
             metadata_model.raw_data = new_rawdata_id
             metadata_model.save()
-            # respond with the number of submissions they have
-            # made today.
-            startdate = datetime.now().date() 
-            enddate = startdate + timedelta(days=1)
-            message = metadata_model.get_submission_count(startdate, enddate)
-        else:
-            message = ""
-	    return False
-        self._add_handled(submission, message)
-	return True
+            return True
+        return False
         
     
     def save_form_data(self, xml_file_name, submission):
@@ -355,10 +346,7 @@ class StorageUtility(object):
         cursor.execute( \
             " delete from " + edm.table_name + " where id = %s ", [instance_id] )
         try:
-            meta = Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id)
-            # TODO - fix meta.submission to point to real submission
-            self._remove_handled(meta.submission.submission)
-            meta.delete()
+            Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id).delete()
         except Metadata.DoesNotExist:
             # not a problem since this simply means the data was 
             # never successfully registered
@@ -425,26 +413,6 @@ class StorageUtility(object):
                 logging.debug(  "  WARNING: Permission denied to access " + file )
                 continue
     
-    def _add_handled(self, attachment, message):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-
-           (This is in currently in storageutility since we want save()'s to be 
-           rolled back if this function fails for whatever reason.)
-	'''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        attachment.submission.handled(handle_type, message)
-    
-    def _remove_handled(self, submission):
-        '''Tells the receiver that this attachment's submission was not handled.
-           Only used when we are deleting data from xformmanager but not receiver
-        '''
-        submission.unhandled()
-        
     def _trim2chars(self, string):
         return string[0:len(string)-2]
         
@@ -458,8 +426,6 @@ class StorageUtility(object):
             if type in self.XSD_TO_DEFAULT_TYPES: 
                 return self.XSD_TO_DEFAULT_TYPES[type]
             return self.XSD_TO_DEFAULT_TYPES['default']
-
-        
         
     def _db_format(self, type, text):
         type = type.lower()
@@ -584,12 +550,12 @@ class StorageUtility(object):
         return formdef
         
     def _parse_meta_data(self, data_tree):
-        if data_tree is None:
-            self._error("Submitted form is empty!")
-            return
-        
         m = Metadata()
         meta_tree = None
+        
+        if data_tree is None:
+            self._error("Submitted form is empty!")
+            return m
         # find meta node
         for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
             meta_tree = data_child

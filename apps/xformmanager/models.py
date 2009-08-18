@@ -5,13 +5,13 @@ import settings
 import simplejson
 
 from django.db import models, connection
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 
 from graphing import dbhelper
-from receiver.models import Attachment
+from receiver.models import Attachment, SubmissionHandlingType
 from hq.models import *
 
 class ElementDefModel(models.Model):
@@ -256,8 +256,40 @@ class Metadata(models.Model):
         return len(Metadata.objects.filter(chw_id=self.chw_id, 
                                            submission__submission__submit_time__gte=startdate,
                                            submission__submission__submit_time__lte=enddate))
-        
 
+    def save(self, **kwargs):        
+        super(Metadata, self).save(**kwargs)
+        # respond with the number of submissions they have
+        # made today.
+        startdate = datetime.now().date() 
+        enddate = startdate + timedelta(days=1)
+        message = self.get_submission_count(startdate, enddate)
+        # TODO - fix meta.submission to point to real submission
+        self._add_handled(self.submission.submission, message)
+        
+    def _add_handled(self, attachment, message):
+        '''Tells the receiver that this attachment's submission was handled.  
+           Should only be called _after_ we are sure that we got a linked 
+           schema of this type.
+        '''
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
+        # TODO - fix meta.submission to point to real submission
+        self.submission.submission.handled(handle_type, message)
+
+    def _remove_handled(self, submission):
+        '''Tells the receiver that this attachment's submission was not handled.
+           Only used when we are deleting data from xformmanager but not receiver
+        '''
+        # TODO - fix meta.submission to point to real submission
+        self.submission.submission.unhandled()
+        
+    def delete(self, **kwargs):
+        # TODO - fix meta.submission to point to real submission
+        self._remove_handled(self.submission.submission)
+        super(Metadata, self).delete(**kwargs)
 
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
