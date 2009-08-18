@@ -4,7 +4,6 @@ import logging
 import traceback
 import hashlib
 import csv
-from MySQLdb import IntegrityError
 from django.http import Http404
 from rapidsms.webui.utils import render_to_response
 from django.shortcuts import get_object_or_404
@@ -62,13 +61,6 @@ def register_xform(request, template='register_and_list_xforms.html'):
             try:
                 xformmanager = XFormManager()
                 formdefmodel = xformmanager.add_schema(request.FILES['file'].name, request.FILES['file'])
-            except IOError, e:
-                logging.error("xformmanager.manager: " + str(e) )
-                context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
-            except IntegrityError, e:
-                logging.error("Attempt to register schema with duplicate namespace")
-                context['errors'] = "An XFrom with this namespace (xmlns) already exists. Did you remember to update your version number?"
-                transaction.rollback()
             except Exception, e:
                 logging.error(str(e))
                 context['errors'] = str(e)
