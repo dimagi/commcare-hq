@@ -355,8 +355,10 @@ class StorageUtility(object):
         cursor.execute( \
             " delete from " + edm.table_name + " where id = %s ", [instance_id] )
         try:
-            meta = Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id).delete()
+            meta = Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id)
+            # TODO - fix meta.submission to point to real submission
             self._remove_handled(meta.submission.submission)
+            meta.delete()
         except Metadata.DoesNotExist:
             # not a problem since this simply means the data was 
             # never successfully registered
@@ -437,11 +439,11 @@ class StorageUtility(object):
             handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
         attachment.submission.handled(handle_type, message)
     
-    def _remove_handled(self, attachment):
+    def _remove_handled(self, submission):
         '''Tells the receiver that this attachment's submission was not handled.
            Only used when we are deleting data from xformmanager but not receiver
         '''
-        attachment.submission.unhandled()
+        submission.unhandled()
         
     def _trim2chars(self, string):
         return string[0:len(string)-2]

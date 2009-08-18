@@ -233,7 +233,9 @@ class Metadata(models.Model):
     #unique id
     uid = models.CharField(max_length=32, null=True)
     # foreign key to the associated submission (from receiver app)
-    submission = models.ForeignKey(Attachment, null=True, related_name="form_metadata")
+    # this is currently required. if we decide to decouple this from receiver,
+    # then remember to link metadata.delete() to submission.unhandled() 
+    submission = models.ForeignKey(Attachment, related_name="form_metadata")
     # foreign key to the row in the manually generated data table
     raw_data = models.IntegerField(_('Raw Data Id'), null=True)
     # foreign key to the schema definition (so can identify table and domain)

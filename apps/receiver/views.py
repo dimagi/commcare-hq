@@ -234,17 +234,33 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
         template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
     if request.method == "POST":
-        for i in request.POST.getlist('instance'):
-            if 'checked_'+ i in request.POST:
-                submit_id = int(i)
-                xformmanager = XFormManager()
-                submission = Submission.objects.get(id=submit_id)
-                if request.POST['action'] == 'delete':
-                    submission.delete()
-                else: # default to resubmitting
-                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
-                    if not status:
-                        context['errors'] = "Resubmission failed"
+        xformmanager = XFormManager()
+        count = 0
+        
+        def _process(submission, action):
+            if action == 'delete':
+                submission.delete()
+                return True
+            elif action == 'resubmit':
+                status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                return status
+            return False            
+        if 'select_all' in request.POST:
+            submissions = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
+            # TODO - optimize this into 1 db call
+            for submission in submissions:
+                if submission.is_orphaned():
+                    if _process(submission, request.POST['action']): 
+                        count = count + 1
+        else: 
+            for i in request.POST.getlist('instance'):
+                if 'checked_'+ i in request.POST:
+                    submit_id = int(i)
+                    submission = Submission.objects.get(id=submit_id)
+                    if _process(submission, request.POST['action']): 
+                        count = count + 1
+        context['status'] = "%s attempted. %s forms processed." % \
+                            (request.POST['action'], count)
     orphans = []
     # TODO - optimize this into 1 db call
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
@@ -259,3 +275,4 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
             orphans = orphans + [ slog ]
     context['submissions'] = paginate(request, orphans)
     return render_to_response(request, template_name, context)
+
