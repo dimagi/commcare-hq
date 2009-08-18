@@ -133,18 +133,15 @@ class MetaTestCase(unittest.TestCase):
                 self.assertEqual(running_count, len(Metadata.objects.all()))
     
     def testReSubmit(self):
-        print "HELLO"
         # original submission
         submission = populate("data/pf_followup_1.xml")
         self.assertEquals(submission.is_orphaned(),True)
         # register schema
         create_xsd_and_populate("data/pf_followup.xsd")
-        
         # xformmanagger resubmission
         xformmanager = XFormManager()
         status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
         self.assertEquals(status,True)
-        print "GOODBYE"
     
     def testSubmitHandling(self):
         create_xsd_and_populate("data/pf_followup.xsd")
