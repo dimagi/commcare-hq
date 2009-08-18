@@ -338,45 +338,32 @@ class StorageUtility(object):
 
     # note that this does not remove the file from the filesystem 
     # (by design, for security)
+    @transaction.commit_on_success
     def remove_instance_matching_schema(self, formdef_id, instance_id):
         fdm = FormDefModel.objects.get(pk=formdef_id)
         edm_id = fdm.element.id
         edm = ElementDefModel.objects.get(pk=edm_id)
-        cursor = connection.cursor()
-        cursor.execute( \
-            " delete from " + edm.table_name + " where id = %s ", [instance_id] )
+        self._remove_instance_inner_loop(edm, instance_id)
         try:
             Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id).delete()
         except Metadata.DoesNotExist:
             # not a problem since this simply means the data was 
             # never successfully registered
             return
-    
-    """ This is commented out for now because I suspect there's a bug in it which
-    may cause us to delete valuable data tables by accident
-    The vast majority of cases won't have nested tables, so keeping the nested
-    data around doesn't eat up that much space. TODO - fix and test rigorously
-    
-    @transaction.commit_on_success
-    def remove_instance_matching_schema(self, formdef_id, instance_id):
-        fdm = FormDefModel.objects.get(pk=formdef_id)
-        edm_id = fdm.ElementDefModel.id
-        edm = ElementDefModel.objects.get(pk=edm_id)
-        _remove_instance_inner_loop(edm.id, instance_id)
 
-    def _remove_instance_inner_loop(self, elementdef_id, instance_id):
-        edms = ElementDefModel.objects.filter(parent_id=elementdef_id)
+    def _remove_instance_inner_loop(self, elementdef, instance_id):
+        edms = ElementDefModel.objects.filter(parent=elementdef)
+        cursor = connection.cursor()
         for edm in edms:
-            rows = cursor.execute( " select id, parent_id from " + edm.table_name + \
-                                   " where parent_id = %s ", [instance_id] )
+            cursor.execute( " select id, parent_id from " + edm.table_name + \
+                            " where parent_id = %s ", [instance_id] )
+            rows = cursor.fetchall()
             if rows:
                 for row in rows:
-                    _remove_instance_inner_loop( row['id'] )
-                    cursor.execute( " delete from " + edm.table_name + \
-                                   " where parent_id = %s ", [instance_id] )
-        edm = ElementDefModel.objects.get(id=elementdef_id)
-        cursor.execute( " delete from " + edm.table_name + " where id = %s ", [instance_id] )
-    """
+                    self._remove_instance_inner_loop( edm, row[0] )
+                query = " delete from " + edm.table_name + " where parent_id = %s "
+                cursor.execute(query , [instance_id] )
+        cursor.execute( " delete from " + elementdef.table_name + " where id = %s ", [instance_id] )
 
     @transaction.commit_on_success
     def remove_schema(self, id, delete_xml=True):

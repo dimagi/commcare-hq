@@ -208,3 +208,11 @@ class MetaTestCase(unittest.TestCase):
         su.clear()
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
+        
+    def testSubmissionHandling(self):
+        count = len(SubmissionHandlingOccurrence.objects.all())
+        self.assertEquals(0,count)
+        formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
+        count = len(SubmissionHandlingOccurrence.objects.all())
+        self.assertEquals(1,count)
+                
