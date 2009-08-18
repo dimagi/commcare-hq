@@ -422,7 +422,7 @@ class StorageUtility(object):
     def _db_format(self, type, text):
         type = type.lower()
         if text == '':
-            logging.error("No xml input provided!")
+            logging.error("No xml input provided to _db_format!")
             return ''
         if type in self.DB_NON_STRING_TYPES:
             #dmyung :: some additional input validation
