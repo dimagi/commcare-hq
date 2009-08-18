@@ -6,6 +6,7 @@ and it only knows about the data structures in xformdef.py
 
 """
 
+from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
 from xformmanager.xformdata import *
@@ -157,8 +158,12 @@ class StorageUtility(object):
         #todo: fix this so we don't have to parse table twice
         fdd.form_name = create_table_name(formdef.target_namespace)
         fdd.target_namespace = formdef.target_namespace
-        fdd.save()
 
+        try:
+            fdd.save()
+        except IntegrityError, e:
+            raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
+                                   " Did you remember to update your version number?")
         ed = ElementDefModel()
         ed.name=str(fdd.name)
         ed.table_name=create_table_name(formdef.target_namespace)
