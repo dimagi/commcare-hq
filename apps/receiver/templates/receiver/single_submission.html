@@ -19,9 +19,10 @@
    	</div>
 
 <h2>{% trans "Submission Information" %}</h2>
+	<a href="{% url receiver.views.delete_submission submission_item.id %}">
+		{% trans "Delete This Submission" %}
+	</a><p/><p/>
     <ul>  
-    
-    
 	   	<li>
 	   		{% trans "Submission ID:" %} {{submission_item.id}}   		
 	   	</li>

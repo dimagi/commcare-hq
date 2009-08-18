@@ -276,3 +276,17 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     context['submissions'] = paginate(request, orphans)
     return render_to_response(request, template_name, context)
 
+@login_required()
+@transaction.commit_on_success
+def delete_submission(request, submission_id=None, template='receiver/confirm_delete.html'):
+    context = {}
+    extuser = ExtUser.objects.all().get(id=request.user.id)    
+    submission = get_object_or_404(Submission, pk=submission_id)
+    if request.method == "POST":
+        if request.POST["confirm_delete"]: # user has confirmed deletion.
+            submission.delete()
+            logging.debug("Submission %s deleted ", submission_id)
+            return HttpResponseRedirect(reverse('show_submits'))
+    context['object'] = submission
+    context['type'] = 'Submission'
+    return render_to_response(request, template, context)
