@@ -33,7 +33,8 @@ class XFormManager(object):
             schema,err = form_translate( file_name, input_stream.read() )
             if err is not None:
                 if err.lower().find("exception") != -1:
-                    raise IOError, "XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + file_name + "\nerror: " + str(err)
+                    raise IOError, ("Could not convert xform (%s) to schema." % file_name) + \
+                                    " Please verify that this is a valid xform file."
             fout = open(new_file_name, 'w')
             fout.write( schema )
             fout.close()

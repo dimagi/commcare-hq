@@ -1,0 +1,19 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Data for Schema: {{form_name}}{% endblock %}
+{% block mgr_content %}
+
+<h2>{% trans "Are you sure? " %}</h2>
+
+Are you sure you want to delete the following data? <br/>
+{{xform_data}}<p/>
+
+<form action="" method="post">
+<div>
+<input type="hidden" name="confirm_delete" value="yes" />
+<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+</div>
+</form>
+
+{% endblock %}
+
