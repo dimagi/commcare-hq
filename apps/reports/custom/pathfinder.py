@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from apps.reports.models import Case
 from apps.hq.utils import get_dates
 import logging
-'''Report file for custom Grameen reports'''
+'''Report file for custom Pathfinder reports'''
 # see mvp.py for an explanation of how these are used.
 
 
