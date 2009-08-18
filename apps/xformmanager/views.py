@@ -4,13 +4,13 @@ import logging
 import traceback
 import hashlib
 import csv
-from MySQLdb import IntegrityError
 from django.http import Http404
 from rapidsms.webui.utils import render_to_response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction, connection
+from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
@@ -62,13 +62,6 @@ def register_xform(request, template='register_and_list_xforms.html'):
             try:
                 xformmanager = XFormManager()
                 formdefmodel = xformmanager.add_schema(request.FILES['file'].name, request.FILES['file'])
-            except IOError, e:
-                logging.error("xformmanager.manager: " + str(e) )
-                context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
-            except IntegrityError, e:
-                logging.error("Attempt to register schema with duplicate namespace")
-                context['errors'] = "An XFrom with this namespace (xmlns) already exists. Did you remember to update your version number?"
-                transaction.rollback()
             except Exception, e:
                 logging.error(str(e))
                 context['errors'] = str(e)
@@ -244,21 +237,43 @@ def export_xml(request, formdef_id):
 @login_required()
 def data(request, formdef_id, template_name="data.html", context={}):
     xform = get_object_or_404(FormDefModel, id=formdef_id)
-    for i in request.POST.getlist('instance'):
-        if 'checked_'+ i in request.POST: 
-            data_id = int(i)
-            xformmanager = XFormManager()
-            xformmanager.remove_data(formdef_id, data_id)
     rows = xform.get_rows()
     context['columns'] = xform.get_column_names()
-    
     context['form_name'] = xform.form_name
-    context['data'] = []
     context['xform'] = xform
-    
     context['data'] = paginate(request, rows)
-    
-    return render_to_response(request, template_name, context)    
+    return render_to_response(request, template_name, context)
+
+@login_required()
+@transaction.commit_manually
+def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
+    context = {}
+    extuser = ExtUser.objects.all().get(id=request.user.id)
+    form = get_object_or_404(FormDefModel, pk=formdef_id)
+    if request.method == "POST":
+        if 'instance' in request.POST:
+            request.session['xform_data'] = [] 
+            for i in request.POST.getlist('instance'):
+                # user has selected items and clicked 'delete'
+                # redirect to confirmation
+                if 'checked_'+ i in request.POST: 
+                    data_id = int(i)
+                    request.session['xform_data'].append(data_id)
+                context['xform_data'] = request.session['xform_data']
+        elif 'confirm_delete' in request.POST: 
+            # user has confirmed deletion. Proceed.
+            xformmanager = XFormManager()
+            for id in request.session['xform_data']:
+                xformmanager.remove_data(formdef_id, id)
+            logging.debug("Instances %s of schema %s were deleted.", \
+                          (str(request.session['xform_data']), formdef_id))
+            request.session['xform_data'] = None
+            return HttpResponseRedirect( reverse("xformmanager.views.data", \
+                                         args=[formdef_id]) )
+    else:
+        request.session['xform_data'] = None
+    context['form_name'] = form.form_display_name
+    return render_to_response(request, template, context)
 
 @login_required()
 def export_csv(request, formdef_id):
