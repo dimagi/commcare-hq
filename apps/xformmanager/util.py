@@ -60,17 +60,32 @@ def table_exists( table_name):
     return True
 
 def get_xml_string(stream_pointer):
-    # formerly 'skip-junk'
-    c = ''
+    # This function avoid stream_pointer.seek() for the vast majority
+    # of cases (when xml is formatted correctly) just because i don't
+    # like using 'seek' (never know when you're getting non-rewindable 
+    # streams
     c = stream_pointer.read(1)
     count = 0
     while c != '<' and c != '':
         count = count + 1
         c = stream_pointer.read(1)
     if c == '':
-        logging.error("Poorly formatted schema")
+        stream_pointer.seek(0)
+        logging.error("Poorly formatted schema - no '<' found", \
+                      extra={'xml':stream_pointer.read()})
         return
-    return "<" + stream_pointer.read()
+    xml_string = "<" + stream_pointer.read()
+    if count > 0:
+        stream_pointer.seek(0)
+        logging.error("Poorly formatted schema", \
+                      extra={'xml':stream_pointer.read()}) 
+    return xml_string
+
+    # This used to be implemented with streams
+    # using stream.seek(0), but this wasn't always
+    # reliable depending on when the server clean up
+    # the temp download file. So now we use strings.
+
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
 def sanitize(name):
