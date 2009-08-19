@@ -258,7 +258,6 @@ def data(request, formdef_id, template_name="data.html", context={}):
             pass
     if "sort_column" in request.GET:
         if request.GET["sort_column"] in columns:
-            print "found %s in %s" % (request.GET["sort_column"], columns)
             sort_column = request.GET["sort_column"]
         else:
             context["errors"] = "Sorry, we currently can't sort by the column '%s' and have sorted by the default column, '%s', instead."  %\
