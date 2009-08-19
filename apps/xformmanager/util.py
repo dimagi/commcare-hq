@@ -90,11 +90,8 @@ def sanitize(name):
 # todo - fix this to be more efficient, so we don't parse the file twice
 def get_xmlns(stream):
     try:
-        logging.debug("Trying to parse xml_file")
-        tree=etree.parse(stream)
-        root=tree.getroot()
-        logging.debug("Find xmlns from " + root.tag)
-        #todo - add checks in case we don't have a well-formatted xmlns
+        xml_string = get_xml_string(stream)
+        root = etree.XML(xml_string)
         r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
         if r is None: return None
         return r.group(0).strip('{').strip('}')
