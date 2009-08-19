@@ -7,7 +7,9 @@
 <br>
 <a href="{% url xformmanager.views.export_xml xform.id %}">download zip file of xml submissions</a>
 <br>
-
+{% if errors %}
+    <p class="error">{{ errors }}</p>
+{% endif %}
 <br>
 <div class="pagination">
     <span class="step-links">

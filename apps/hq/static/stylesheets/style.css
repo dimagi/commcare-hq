@@ -464,6 +464,11 @@ td.sorted {
     background-color: lightyellow;
 }
 
+p.error {
+    font-weight: bold;
+    color: red;
+}
+
 #government-report th {
 	text-align: center;
     border:  2px #404040 solid;
