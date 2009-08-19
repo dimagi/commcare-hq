@@ -100,20 +100,6 @@ def sanitize(name):
     if sanitized_name.lower() == "where" or sanitized_name.lower() == "when":
         return "_" + sanitized_name
     return sanitized_name
-    
-#temporary measure to get target form
-# todo - fix this to be more efficient, so we don't parse the file twice
-def get_xmlns(stream):
-    try:
-        xml_string = get_xml_string(stream)
-        root = etree.XML(xml_string)
-        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
-        if r is None: return None
-        return r.group(0).strip('{').strip('}')
-    except etree.XMLSyntaxError:
-        # this is probably just some non-xml data.
-        # not a big deal, just don't return an xmlns
-        return None
 
 def get_target_namespace(stream):
     tree = etree.parse(stream)
@@ -163,5 +149,4 @@ def get_csv_from_form(formdef_id, form_id=0, filter=''):
     columns = xsd.get_column_names()    
     name = xsd.form_name
     return format_csv(rows, columns, name, row_count)
-
 
