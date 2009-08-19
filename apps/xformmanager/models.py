@@ -158,7 +158,7 @@ class FormDefModel(models.Model):
         desc = ""
         if sort_descending:
             desc = "desc"
-        sql = sql + (" ORDER BY s.%s %s " % (sort_column, desc))
+        sql = sql + (" ORDER BY %s %s " % (sort_column, desc))
         cursor = connection.cursor()
         cursor.execute(sql)
         return cursor
