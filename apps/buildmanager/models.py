@@ -120,7 +120,7 @@ class ProjectBuild(models.Model):
     def set_jadfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""        
         try:
-            new_file_name = self.__get_destination(filename)
+            new_file_name = self._get_destination(filename)
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
@@ -133,7 +133,7 @@ class ProjectBuild(models.Model):
     def set_jarfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
         try:
-            new_file_name = self.__get_destination(filename)
+            new_file_name = self._get_destination(filename)
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
@@ -142,7 +142,7 @@ class ProjectBuild(models.Model):
             logging.error("Error, saving jarfile failed", extra={"exception":e, "jar_filename":filename})
         
     
-    def __get_destination(self,filename):
+    def _get_destination(self,filename):
         destinationpath = os.path.join(BUILDFILES_PATH,
                                            str(self.project.id),
                                            str(self.build_number))
