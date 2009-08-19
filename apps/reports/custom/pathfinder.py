@@ -23,7 +23,8 @@ def government(request):
         try:
             maxrows = int(request.GET["maxrows"])
         except Exception:
-            # just default to the above
+            # just default to the above if we couldn't 
+            # parse it
             pass
     if enddate < startdate:
         return '''<p><b><font color="red">The date range you selected is not valid.  
