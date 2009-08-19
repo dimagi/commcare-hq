@@ -9,7 +9,6 @@ and it only knows about the data structures in xformdef.py
 from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
-from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from datetime import datetime
@@ -128,19 +127,13 @@ class StorageUtility(object):
     def save_form_data(self, xml_file_name, submission):
         f = open(xml_file_name, "r")
         # should match XMLNS
-        xmlns = get_xmlns(f)
-        if xmlns is None: 
-            logging.error("NO XMLNS FOUND IN SUBMITTED FORM %s" % xml_file_name)
-            return False
+        xmlns = self._get_xmlns(f)
         formdef = FormDefModel.objects.all().filter(target_namespace=xmlns)
         
         if formdef is None or len(formdef) == 0:
-            logging.error("XMLNS %s could not be matches to any registered formdef." % xmlns)
-            return False
-        # the above check is not sufficient
+            raise self.XFormError("XMLNS %s could not be matched to any registered formdef." % xmlns)
         if formdef[0].xsd_file_location is None:
-            logging.error("Schema for form %s could not be found on the file system." % formdef[0].id)
-            return False
+            raise self.XFormError("Schema for form %s could not be found on the file system." % formdef[0].id)
         g = open( formdef[0].xsd_file_location ,"r")
         stripped_formdef = self._strip_meta_def( FormDef(g) )
         g.close()
@@ -405,6 +398,10 @@ class StorageUtility(object):
                 logging.debug(  "  WARNING: Permission denied to access " + file )
                 continue
     
+    class XFormError(SyntaxError):
+        """ Generic error for XFormManager """
+        pass
+    
     def _trim2chars(self, string):
         return string[0:len(string)-2]
         
@@ -658,6 +655,20 @@ class StorageUtility(object):
         """
         logging.error(string)
 
+    #temporary measure to get target form
+    # todo - fix this to be more efficient, so we don't parse the file twice
+    def _get_xmlns(self, stream):
+        xml_string = get_xml_string(stream)
+        try:
+            root = etree.XML(xml_string)
+        except etree.XMLSyntaxError:
+            raise self.XFormError("XML Syntax Error")
+        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
+        if r is None:
+            raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
+        return r.group(0).strip('{').strip('}')
+
+
 class Query(object):
     """ stores all the information needed to run a query """
     
@@ -719,4 +730,4 @@ class Query(object):
         
     def _trim2chars(self, string):
         return string[0:len(string)-2]
-        
+    
