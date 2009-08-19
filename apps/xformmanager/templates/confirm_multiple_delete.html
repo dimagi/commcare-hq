@@ -10,7 +10,7 @@
 	Are you sure you want to delete the following xform submissions? <br/>
 	XForm submissions with the following IDs will be deleted: <p/>
 	{% for datum in xform_data %}
-		<li><a href="{% url xformmanager.views.single_instance formdef_id datum.id%}">
+		<li><a href="{% url xformmanager.views.single_instance formdef_id datum.raw_data%}">
 			{{datum.formname}} ( started:{{datum.timestart}} completed:{{datum.timeend}})
 		</a></li>
 	{% endfor %}

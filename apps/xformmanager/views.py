@@ -291,13 +291,15 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     if request.method == "POST":
         if 'instance' in request.POST:
             request.session['xform_data'] = [] 
+            metadata = []
             for i in request.POST.getlist('instance'):
                 # user has selected items and clicked 'delete'
                 # redirect to confirmation
                 if 'checked_'+ i in request.POST:
                     meta = Metadata.objects.get(formdefmodel=form, raw_data=int(i))
-                    request.session['xform_data'].append(meta)
-                context['xform_data'] = request.session['xform_data']
+                    metadata.append(meta)
+                    request.session['xform_data'].append(int(i))
+                context['xform_data'] = metadata
         elif 'confirm_delete' in request.POST: 
             # user has confirmed deletion. Proceed.
             xformmanager = XFormManager()
