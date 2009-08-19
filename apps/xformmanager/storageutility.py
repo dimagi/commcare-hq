@@ -9,7 +9,6 @@ and it only knows about the data structures in xformdef.py
 from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
-from xformmanager.xformdata import *
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from datetime import datetime
