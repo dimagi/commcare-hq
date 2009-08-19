@@ -246,7 +246,8 @@ def data(request, formdef_id, template_name="data.html", context={}):
     xform = get_object_or_404(FormDefModel, id=formdef_id)
     # extract params
     items = 25
-    sort_column = "id" # todo: see if we can sort better
+    sort_column = "id" # todo: see if we can sort better by default
+    columns = xform.get_column_names()
     sort_descending = True
     if "items" in request.GET:
         try:
@@ -256,8 +257,12 @@ def data(request, formdef_id, template_name="data.html", context={}):
             # parse it
             pass
     if "sort_column" in request.GET:
-        # todo: check this for non-existence in the form
-        sort_column = request.GET["sort_column"]
+        if request.GET["sort_column"] in columns:
+            print "found %s in %s" % (request.GET["sort_column"], columns)
+            sort_column = request.GET["sort_column"]
+        else:
+            context["errors"] = "Sorry, we currently can't sort by the column '%s' and have sorted by the default column, '%s', instead."  %\
+                                (request.GET["sort_column"], sort_column)
     if "sort_descending" in request.GET:
         # a very dumb boolean parser
         sort_descending_str = request.GET["sort_descending"]
@@ -265,9 +270,10 @@ def data(request, formdef_id, template_name="data.html", context={}):
             sort_descending = False
         else:
             sort_descending = True
+    
+    
         
     rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
-    columns = xform.get_column_names()
     context["sort_index"] = columns.index(sort_column)
     context['columns'] = columns 
     context['form_name'] = xform.form_name
