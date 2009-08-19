@@ -308,7 +308,12 @@ def process(sender, instance, **kwargs): #get sender, instance, created
         # TODO: make this a singleton?  Re-instantiating the manager every
         # time seems wasteful
         manager = XFormManager()
-        manager.save_form_data(xml_file_name, instance)
+        try:
+            manager.save_form_data(xml_file_name, instance)
+        except Exception, e:
+            logging.error(str(e), extra={'file_name':xml_file_name,\
+                                         'instance':instance.id,\
+                                         'submission':instance.submission.id})
     else:
         pass
         # this error logging moved to the receiver duplicate handler
