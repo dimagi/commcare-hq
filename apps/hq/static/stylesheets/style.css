@@ -430,15 +430,38 @@ td.subanswer {
 
 thead.commcare-heading
 { 
-border-bottom: 2px solid #6699CC;
-border-left: 1px solid #6699CC;
-background-color: #BEC8D1;
-text-align: left;
-text-indent: 5px;
-font-family: Verdana;
-font-weight: bold;
-font-size: 11px;
-color: #404040;
+    border-bottom: 2px solid #6699CC;
+    border-left: 1px solid #6699CC;
+    background-color: #BEC8D1;
+    text-align: left;
+    text-indent: 5px;
+    font-family: Verdana;
+    font-weight: bold;
+    font-size: 11px;
+    color: #404040;
+
+     
+}
+
+/* sort stuff.  this could be done really poorly */
+
+th.sorted-descending {
+	background-color: lightyellow;
+    background-image: url("../../webapp/icons/silk/arrow_up.png");
+    background-repeat: no-repeat;
+    background-position: right;
+}
+
+
+th.sorted-ascending {
+    background-color: lightyellow;
+    background-image: url("../../webapp/icons/silk/arrow_down.png");
+    background-repeat: no-repeat; 
+    background-position: right;
+}
+
+td.sorted {
+    background-color: lightyellow;
 }
 
 #government-report th {
@@ -521,7 +544,8 @@ padding:8px;
 
 }
 
-tr.even td {background:#e5ecf9;}
+tr.even td { background:#e5ecf9; }
+tr.even td.sorted { background:lightyellow; }
 
 /* add a little brightness while hovering */
 tr:hover td {
