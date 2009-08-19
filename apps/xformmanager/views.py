@@ -236,12 +236,50 @@ def export_xml(request, formdef_id):
 
 @login_required()
 def data(request, formdef_id, template_name="data.html", context={}):
+    '''View the xform data for a particular schema.  Accepts as
+       url parameters the following (with defaults specified):
+       items: 25 (the number of items to paginate at a time
+       page: 1 (the page you are on)
+       sort_column: id (?) (the column to sort by)
+       sort_descending: True (?) (the sort order of the column)
+       ''' 
     xform = get_object_or_404(FormDefModel, id=formdef_id)
-    rows = xform.get_rows()
-    context['columns'] = xform.get_column_names()
+    # extract params
+    items = 25
+    sort_column = "id" # todo: see if we can sort better
+    sort_descending = True
+    if "items" in request.GET:
+        try:
+            items = int(request.GET["items"])
+        except Exception:
+            # just default to the above if we couldn't 
+            # parse it
+            pass
+    if "sort_column" in request.GET:
+        # todo: check this for non-existence in the form
+        sort_column = request.GET["sort_column"]
+    if "sort_descending" in request.GET:
+        # a very dumb boolean parser
+        sort_descending_str = request.GET["sort_descending"]
+        if sort_descending_str.startswith("f"):
+            sort_descending = False
+        else:
+            sort_descending = True
+        
+    rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
+    columns = xform.get_column_names()
+    context["sort_index"] = columns.index(sort_column)
+    context['columns'] = columns 
     context['form_name'] = xform.form_name
     context['xform'] = xform
-    context['data'] = paginate(request, rows)
+    context['sort_descending'] = sort_descending
+    context['data'] = paginate(request, rows, rows_per_page=items)
+    # python! rebuild the query string, removing the "page" argument so it can
+    # be passed on when paginating.
+    
+    context['param_string_no_page'] = "&".join(['%s=%s' % (key, value)\
+                                                for key, value in request.GET.items()\
+                                                if key != "page"])
     return render_to_response(request, template_name, context)
 
 @login_required()
