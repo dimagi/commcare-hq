@@ -16,9 +16,12 @@ class SubmitRecord(object):
         self.checksum = checksum
         self.file_name = file_name
         
+    def __unicode__(self):
+        return "Content_type: " + unicode(self.content_type) + \
+               "\n content_length: " + unicode(self.content_length) + \
+               "\n guid: " + unicode(self.guid) + \
+               "\n checksum: " + unicode(self.checksum) + \
+               "\n file_name: " + unicode(self.file_name)
+
     def __str__(self):
-        return "Content_type: " + str(self.content_type) + \
-               "\n content_length: " + str(self.content_length) + \
-               "\n guid: " + str(self.guid) + \
-               "\n checksum: " + str(self.checksum) + \
-               "\n file_name: " + str(self.file_name)
+        return unicode(self).encode('utf-8')
