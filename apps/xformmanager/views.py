@@ -4,14 +4,16 @@ import logging
 import traceback
 import hashlib
 import csv
+from StringIO import StringIO
+import util as xutils
 from django.http import Http404
-from rapidsms.webui.utils import render_to_response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from rapidsms.webui.utils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
@@ -22,12 +24,11 @@ from receiver.submitprocessor import do_old_submission
 from hq.models import *
 from hq.utils import paginate
 
-from StringIO import StringIO
 from transformers.csv import UnicodeWriter
+from transformers.zip import get_zipfile
 
 from receiver.models import Attachment
 from django.db.models import signals
-import util as xutils
 
 @login_required()
 @transaction.commit_manually

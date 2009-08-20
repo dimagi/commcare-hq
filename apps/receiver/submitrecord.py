@@ -16,4 +16,9 @@ class SubmitRecord(object):
         self.checksum = checksum
         self.file_name = file_name
         
-    
+    def __str__(self):
+        return "Content_type: " + str(self.content_type) + \
+               "\n content_length: " + str(self.content_length) + \
+               "\n guid: " + str(self.guid) + \
+               "\n checksum: " + str(self.checksum) + \
+               "\n file_name: " + str(self.file_name)
