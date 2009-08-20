@@ -150,7 +150,8 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         traceback_string = "\n\nTRACEBACK: " + '\n'.join(traceback.format_tb(tb))
         logging.error("Submission error for domain %s, user: %s, data: %s" % \
                       (domain_name,str(request.user),str(request.raw_post_data)), \
-                      extra={'exception':str(e), 'traceback':traceback_string})
+                      extra={'submit_exception':str(e), 'submit_traceback':traceback_string, \
+                             'submit_record':str(submit_record)})
         # should we return success or failure here?  I think failure, even though
         # we did save the xml successfully.
         return HttpResponseServerError("Submission processing failed!  " + \
