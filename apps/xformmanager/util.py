@@ -60,6 +60,15 @@ def table_exists( table_name):
     return True
 
 def get_xml_string(stream_pointer):
+    """ This function checks for valid xml in a stream
+    and skips bytes until it hits something that looks like
+    xml. In general, this 'skipping' should never be used, as
+    we expect to see well-formed XML from the server.
+    
+    stream_pointer: input stream
+    returns: string of xml
+    
+    """
     # This function avoid stream_pointer.seek() for the vast majority
     # of cases (when xml is formatted correctly) just because i don't
     # like using 'seek' (never know when you're getting non-rewindable 
@@ -80,12 +89,6 @@ def get_xml_string(stream_pointer):
         logging.error("Poorly formatted schema", \
                       extra={'xml':stream_pointer.read()}) 
     return xml_string
-
-    # This used to be implemented with streams
-    # using stream.seek(0), but this wasn't always
-    # reliable depending on when the server clean up
-    # the temp download file. So now we use strings.
-
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
 def sanitize(name):
