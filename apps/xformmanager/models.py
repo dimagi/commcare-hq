@@ -1,7 +1,9 @@
 import os
+import sys
 import uuid
 import logging
 import settings
+import traceback
 import simplejson
 
 from django.db import models, connection
@@ -311,9 +313,14 @@ def process(sender, instance, **kwargs): #get sender, instance, created
         try:
             manager.save_form_data(xml_file_name, instance)
         except Exception, e:
-            logging.error(str(e), extra={'file_name':xml_file_name,\
-                                         'instance':instance.id,\
-                                         'submission':instance.submission.id})
+            type, value, tb = sys.exc_info()
+            traceback_string = '\n'.join(traceback.format_tb(tb))
+            # we use 'xform_traceback' insetad of traceback since
+            # dan's custom logger uses 'traceback'
+            logging.error(str(e) + ", instance: %s, submission: %s" % \
+                          ( instance.id, instance.submission.id ), \
+                          extra={'file_name':xml_file_name, \
+                          'xform_traceback':traceback_string} )
     else:
         pass
         # this error logging moved to the receiver duplicate handler
