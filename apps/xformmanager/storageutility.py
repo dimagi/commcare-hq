@@ -418,7 +418,7 @@ class StorageUtility(object):
         
     def _db_format(self, type, text):
         type = type.lower()
-        if text == '':
+        if text == '' or text is None:
             logging.error("No xml input provided to _db_format!")
             return ''
         if type in self.DB_NON_STRING_TYPES:
@@ -571,6 +571,7 @@ class StorageUtility(object):
     # can flesh this out or integrate with other functions later
     def _format_field(self, model, name, value):
         """ should handle any sort of conversion for 'meta' field values """
+        if value is None: return value
         t = type( getattr(model,name) )
         if t == datetime:
             return value.replace('T',' ')
