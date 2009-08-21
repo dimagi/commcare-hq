@@ -4,6 +4,23 @@
 
 .
 
+
+NAMESPACES
+==========
+**Note: The only mechanism by which CommCareHQ identifies a form is by its namespace (xmlns - short for XML NameSpace).**
+
+We are currently working on a mechanisms for versioning. However this feature is not supported at this point in time, so revisions to any form should also include a unique namespace. For example, if you decide to modify a form with:
+
+xmlns="http://dev.commcarehq.org/my_domain/my_form"
+
+Then you should update the xmlns to be something like
+
+xmlns="http://dev.commcarehq.org/my_domain/my_form/v0.2"
+
+And re-register it on CommCareHQ at http://dev.commcarehq.org/xforms/register.
+
+
+
 Modifying XForms
 ================
 Most CommCare users want the flexibility to tweak and tune their XForms over the lifetime of a project. If this is something you choose to do, please **remember to re-register the XForm on CommCareHQ**.
