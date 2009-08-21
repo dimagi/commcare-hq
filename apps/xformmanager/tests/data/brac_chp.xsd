@@ -1,4 +1,4 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/BRAC/CHP/HomeVisit_v0.0.1" elementFormDefault="qualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/test_no_meta" elementFormDefault="qualified">
   <simpleType name="_brac_client_available">
     <restriction base="string">
       <enumeration value="y"/>

@@ -3,8 +3,18 @@
       <element name="root" minOccurs="0">
             <complexType>
                   <sequence>
+			        <element name="Meta" minOccurs="0">
+			          <complexType>
+			            <sequence>
+			              <element name="DeviceID" minOccurs="0" type="string"/>
+			              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+			              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+			              <element name="username" minOccurs="0" type="string"/>
+			            </sequence>
+			          </complexType>
+			        </element>
                     <element name="UserID" type="string"/>
-                    <element name="DeviceID" type="string"/>
+                    <element name="my_device" type="string"/>
                     <element name="TimeStartRecorded" type="string"/>
                     <element name="TimeEndRecorded" type="string"/>
                   </sequence>

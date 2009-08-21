@@ -18,7 +18,6 @@ from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
-from xformmanager.util import get_csv_from_form
 from receiver.submitprocessor import do_old_submission
 
 from hq.models import *
@@ -327,3 +326,33 @@ def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
     return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
     
+def get_csv_from_form(formdef_id, form_id=0, filter=''):
+    try:
+        xsd = FormDefModel.objects.get(id=formdef_id)
+    except FormDefModel.DoesNotExist:
+        return HttpResponseBadRequest("Schema with id %s not found." % formdef_id)
+    cursor = connection.cursor()
+    row_count = 0
+    if form_id == 0:
+        try:
+            query= 'SELECT * FROM ' + xsd.form_name
+            if filter: query = query + " WHERE " + filter
+            query = query + ' ORDER BY id'
+            cursor.execute(query)
+        except Exception, e:
+            return HttpResponseBadRequest(\
+                "Schema %s could not be queried with query %s" % \
+                ( xsd.form_name,query) )        
+        rows = cursor.fetchall()
+    else:
+        try:
+            cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
+        except Exception, e:
+            return HttpResponseBadRequest(\
+                "Instance with id %s for schema %s not found." % (form_id,xsd.form_name) )
+        rows = cursor.fetchone()
+        row_count = 1
+    columns = xsd.get_column_names()    
+    name = xsd.form_name
+    return format_csv(rows, columns, name, row_count)
+
