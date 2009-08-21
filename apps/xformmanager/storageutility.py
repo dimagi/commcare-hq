@@ -570,9 +570,6 @@ class StorageUtility(object):
                 else: 
                     self._error( ("Metadata %s in form (%s) should not be null!" % \
                                  (tag, self.formdef.target_namespace)) )
-            else:
-                self._error( ("Metadata %s in form (%s) is nonstandard. Not saved." % \
-                              (tag, self.formdef.target_namespace)) )
         return m
         
     # can flesh this out or integrate with other functions later
