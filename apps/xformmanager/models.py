@@ -317,7 +317,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
             traceback_string = '\n'.join(traceback.format_tb(tb))
             # we use 'xform_traceback' insetad of traceback since
             # dan's custom logger uses 'traceback'
-            logging.error(str(e) + ", instance: %s, submission: %s" % \
+            logging.error(str(e) + ", attachment: %s, submission: %s" % \
                           ( instance.id, instance.submission.id ), \
                           extra={'file_name':xml_file_name, \
                           'xform_traceback':traceback_string} )

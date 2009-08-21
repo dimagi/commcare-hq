@@ -96,7 +96,10 @@ class StorageUtility(object):
     
     META_FIELDS = ['meta_formname','meta_commcareversion','meta_formversion','meta_deviceid','meta_timestart','meta_timeend','meta_username','meta_chw_id','meta_uid']
     
-
+    def __init__(self):
+        self.formdef = ''
+        self.formdata = None
+        
     @transaction.commit_on_success
     def add_schema(self, formdef):
         fdd = self.update_models(formdef)
@@ -543,17 +546,17 @@ class StorageUtility(object):
         meta_tree = None
         
         if data_tree is None:
-            self._error("Submitted form is empty!")
+            self._error("Submitted form (%s) is empty!" % self.formdef.target_namespace)
             return m
         # find meta node
         for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
             meta_tree = data_child
             break;
         if meta_tree is None:
-            self._info("xformmanager: storageutility - no metadata found for %s" % \
-                       (self.formdef.target_namespace) )
+            self._error("No metadata found for %s" % self.formdef.target_namespace )
             return m
         
+        # this routine silently ignores metadata fields which are poorly formatted
         # parse the meta data (children of meta node)
         for element in meta_tree:
             # element.tag is for example <FormName>
@@ -563,9 +566,13 @@ class StorageUtility(object):
                 # must find out the type of an element field
                 value = self._format_field(m,tag,element.text)
                 # the following line means "model.tag = value"
-                setattr( m,tag,value )
+                if value is not None: setattr( m,tag,value )
+                else: 
+                    self._error( ("Metadata %s in form (%s) should not be null!" % \
+                                 (tag, self.formdef.target_namespace)) )
             else:
-                self._info( ("Metadata %s is nonstandard. Not saved." % (tag)) )
+                self._error( ("Metadata %s in form (%s) is nonstandard. Not saved." % \
+                              (tag, self.formdef.target_namespace)) )
         return m
         
     # can flesh this out or integrate with other functions later
@@ -645,10 +652,6 @@ class StorageUtility(object):
             child_name = child_name[len(parent_name)+1:len(child_name)]
         return child_name
 
-    def _info(self, string):
-        """ Currently this is only used to log extra metadata - no biggie. """
-        logging.info(string)
-        
     def _error(self, string):
         """ all parsing oddness gets logged here For now, we log and return.
         We could also just throw an exception here...
