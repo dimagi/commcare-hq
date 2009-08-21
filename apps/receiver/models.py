@@ -243,8 +243,13 @@ class Attachment(models.Model):
         return settings.MEDIA_URL + "attachment/" + basename
 
     
-    def delete(self, **kwargs):       
-        os.remove(self.filepath)        
+    def delete(self, **kwargs):
+        try:
+            # if for some reason deleting the file fails,
+            # we should still continue deleting the data model
+            os.remove(self.filepath)
+        except Exception, e:
+            logging.warn(str(e))
         super(Attachment, self).delete()
     
     def has_duplicate(self):

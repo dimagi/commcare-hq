@@ -117,12 +117,13 @@ class StorageUtility(object):
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         new_rawdata_id = queries.execute_insert()
-        metadata_model = self._parse_meta_data( root )
+        metadata_model = Metadata()
+        metadata_model.init( root, self.formdef.target_namespace )
         if metadata_model:
             metadata_model.formdefmodel = formdefmodel
             metadata_model.submission = submission
             metadata_model.raw_data = new_rawdata_id
-            metadata_model.save()
+            metadata_model.save(self.formdef.target_namespace)
             return True
         return False
         
@@ -305,7 +306,7 @@ class StorageUtility(object):
         # todo - put in a check for root.isRepeatable
         next_parent_name = formatted_join(parent_name, elementdef.name)
         if def_child.is_repeatable :
-            for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
                 if next_query is not None:
                     next_query.child_queries = next_query.child_queries + [ query ]
@@ -313,7 +314,7 @@ class StorageUtility(object):
                     next_query = query
         else:
             # if there are children (which are not repeatable) then flatten the table
-            for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 data_node = data_child
                 break;
             if data_node is None:
@@ -541,51 +542,6 @@ class StorageUtility(object):
         """
         return formdef
         
-    def _parse_meta_data(self, data_tree):
-        m = Metadata()
-        meta_tree = None
-        
-        if data_tree is None:
-            self._error("Submitted form (%s) is empty!" % self.formdef.target_namespace)
-            return m
-        # find meta node
-        for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
-            meta_tree = data_child
-            break;
-        if meta_tree is None:
-            self._error("No metadata found for %s" % self.formdef.target_namespace )
-            return m
-        
-        # this routine silently ignores metadata fields which are poorly formatted
-        # parse the meta data (children of meta node)
-        for element in meta_tree:
-            # element.tag is for example <FormName>
-            # todo: this comparison should be made much less brittle - replace with a comparator object?
-            tag = self._strip_namespace( element.tag ).lower()
-            if tag in Metadata.fields:
-                # must find out the type of an element field
-                value = self._format_field(m,tag,element.text)
-                # the following line means "model.tag = value"
-                if value is not None: setattr( m,tag,value )
-                else: 
-                    self._error( ("Metadata %s in form (%s) should not be null!" % \
-                                 (tag, self.formdef.target_namespace)) )
-        return m
-        
-    # can flesh this out or integrate with other functions later
-    def _format_field(self, model, name, value):
-        """ should handle any sort of conversion for 'meta' field values """
-        if value is None: return value
-        t = type( getattr(model,name) )
-        if t == datetime:
-            return value.replace('T',' ')
-        return value
-        
-    def _strip_namespace(self, tag):
-        i = tag.find('}')
-        tag = tag[i+1:len(tag)]
-        return tag
-
     def _remove_form_models(self,form='', delete_xml=True):
         """Drop all schemas, associated tables, and files"""
         if form == '':
@@ -634,16 +590,6 @@ class StorageUtility(object):
         cursor = connection.cursor()
         cursor.execute("drop table %s" % table_name)
         
-        
-    def _case_insensitive_iter(self, data_tree, tag):
-        if tag == "*":
-            tag = None
-        if tag is None or data_tree.tag.lower() == tag.lower():
-            yield data_tree
-        for d in data_tree: 
-            for e in self._case_insensitive_iter(d,tag):
-                yield e 
-
     def _data_name(self, parent_name, child_name):
         if child_name[0:len(parent_name)].lower() == parent_name.lower():
             child_name = child_name[len(parent_name)+1:len(child_name)]
@@ -669,6 +615,13 @@ class StorageUtility(object):
             raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
         return r.group(0).strip('{').strip('}')
 
+def get_registered_table_name(name):
+    # this is purely for backwards compatibility
+    for func in possible_naming_functions:
+        table_name = func(name)
+        if ElementDefModel.objects.filter(table_name=table_name):
+            return table_name
+    return None
 
 class Query(object):
     """ stores all the information needed to run a query """

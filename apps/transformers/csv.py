@@ -6,7 +6,6 @@ import cStringIO
 from datetime import datetime
 from django.http import HttpResponse
 from django.template.defaultfilters import slugify
-from xformmanager.models import FormDefModel
 from django.db import connection
 
 def get_csv_from_django_query(qs, fields=None):
