@@ -116,7 +116,7 @@ def _catch_all_report(report_schedule, run_frequency, domains, title):
         run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
     
-    for dom in domains:
+    for domain in domains:
         rendered_text += _get_catch_all_email_text(domain, startdate, enddate)
         
     if report_schedule.report_delivery == 'email':
