@@ -23,27 +23,25 @@ import custom
 
  
 def get_daterange(run_frequency):
+    '''Get a daterange based on a display string for a frequency.
+       valid inputs are: daily, weekly, monthly, or quarterly.  
+       If it gets a string it doesn't understand it will default
+       to 7 days (weekly).  The end date is always assumed to be
+       tomorrow, since consumers of this API generally aren't 
+       inclusive (they want to see all data up to and including 
+       today by calling WHERE date < enddate.'''
+    enddate = datetime.now().date() + timedelta(days=1)
+    delta = timedelta(days=7)
     if run_frequency == 'daily':
-        default_delta = timedelta(days=1)
-        enddate = datetime.now()
-        startdate = datetime.now() - default_delta    
+        delta = timedelta(days=1)
     elif run_frequency == 'weekly':
-        default_delta = timedelta(days=7)
-        enddate = datetime.now()
-        startdate = datetime.now() - default_delta    
+        delta = timedelta(days=7)
     elif run_frequency == 'monthly':
-        default_delta = timedelta(days=30)
-        enddate = datetime.now()
-        startdate = datetime.now() - default_delta    
+        delta = timedelta(days=30)
     elif run_frequency == 'quarterly':
-        default_delta = timedelta(days=90)
-        enddate = datetime.now()
-        startdate = datetime.now() - default_delta
-
+        delta = timedelta(days=90)
+    startdate = enddate - delta    
     return (startdate, enddate)
-
-
-
 
     
 def run_reports(run_frequency):
