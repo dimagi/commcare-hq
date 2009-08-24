@@ -95,30 +95,19 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
     return data
 
 def domain_flat(report_schedule, run_frequency):
-    dom = report_schedule.hq.domain
-    rendered_text = ''
+    '''A report that shows, per user, how many forms were submitted over
+       time, for a single domain (the domain of the associated user)'''
+    domain = report_schedule.recipient_user.domain
+    title = "Domain Report - %s" % domain
+    return _catch_all_report(report_schedule, run_frequency, [domain], title)
     
-    # DAN HACK: everyone wants the daily reports to show the last week's worth of data
-    # so change this 
-    if run_frequency == 'daily':
-        run_frequency='weekly'    
-    (startdate, enddate) = reporter.get_daterange(run_frequency)
-
-    data = _get_flat_data_for_domain(dom, startdate, enddate)        
-    params = {}
-    heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-    params['heading'] = heading    
-    rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-
-    if report_schedule.report_delivery == 'email':
-        usr = report_schedule.recipient_user
-        subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Domain Report - " + str(dom)
-        reporter.transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
-
-
 def admin_catch_all_flat(report_schedule, run_frequency):
-    #same as admin_catch_all, but do for all users, no hqal junks
+    '''A report that shows, per user, how many forms were submitted over
+       time, for all domains in the system'''
     domains = Domain.objects.all()
+    return _catch_all_report(report_schedule, run_frequency, domains, "Global Admin")
+    
+def _catch_all_report(report_schedule, run_frequency, domains, title):
     rendered_text = ''
     from hq import reporter
     # DAN HACK: everyone wants the daily reports to show the last week's worth of data
@@ -126,20 +115,24 @@ def admin_catch_all_flat(report_schedule, run_frequency):
     if run_frequency == 'daily':
         run_frequency='weekly'    
     (startdate, enddate) = reporter.get_daterange(run_frequency)
+    
     for dom in domains:
-        #get the root organization
-        data = _get_flat_data_for_domain(dom, startdate, enddate)        
-        params = {}
-        heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-        params['heading'] = heading    
-        rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-
-
+        rendered_text += _get_catch_all_email_text(domain, startdate, enddate)
+        
     if report_schedule.report_delivery == 'email':
         usr = report_schedule.recipient_user
-        subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Global Admin"
+        subject = "[CommCare HQ] %s report %s - %s :: %s" %\
+                    (run_frequency, startdate.strftime('%m/%d/%Y'),
+                     enddate.strftime('%m/%d/%Y'), title)
         reporter.transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
 
+def _get_catch_all_email_text(domain, startdate, enddate):
+    data = _get_flat_data_for_domain(domain, startdate, enddate)        
+    params = {}
+    heading = "%s report: %s - %s" % (domain, startdate.strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))
+    params['heading'] = heading    
+    from hq import reporter
+    return reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
 
 def admin_catch_all(report_schedule, run_frequency):
     #todo:  get all of the domains
