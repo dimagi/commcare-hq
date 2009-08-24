@@ -52,7 +52,7 @@ def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created
     
     #set a global threshold to say if anything is a logging.ERROR, chances are
     #we always want an alert.
-    if instance.level >= int(settings.RAPIDSMS_APPS['logtracker']['log_threshold']):
+    if instance.level >= int(settings.RAPIDSMS_APPS['logtracker']['alert_threshold']):
         eml = EmailAgent()    
         context = {}
         context['log'] = instance    
