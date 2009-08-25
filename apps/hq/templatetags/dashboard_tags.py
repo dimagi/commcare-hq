@@ -45,6 +45,11 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     username_to_count_hash = { }
     for fdef in defs:
         try: 
+            # don't do anything if we can't find a username column
+            if not "meta_username" in fdef.get_column_names():
+                logging.warning("No username column found in %s, will not display dashboard data." % fdef)
+                ret += '<p style="font-weight:bold; color:orange;">Warning: no username column found in %s, no dashboard data will be displayed for this form</p>' % fdef
+                continue
             helper = fdef.db_helper
             # let's get the usernames
             usernames_to_filter = helper.get_uniques_for_column('meta_username')
