@@ -1,14 +1,16 @@
+{% if builds %}
 <table>
-<tr>
-	<td>Build Number</td>
-	<td>Created</td>
-	<td>Jar File</td>
-	<td>Jad File</td>
-	<td>Uploaded By</td>
-	<td>Build Status</td>
-	<td>Description</td>
-	<td>Build Server URL</td>
-</tr>
+<thead>
+	<th>Build Number</th>
+	<th>Created</th>
+	<th>Jar File</th>
+	<th>Jad File</th>
+	<th>Uploaded By</th>
+	<th>Build Status</th>
+	<th>Description</th>
+	<th>Build Server URL</th>
+	<th></th>
+</thead>
 {% for build in builds %}
     <tr>
         <td>{{build.build_number}}</td>
@@ -19,6 +21,13 @@
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
         <td><a href="{{build.get_buildURL}}">Build URL</a></td>
+        <td>{% ifequal build.status "build" %}
+           <a href="{% url buildmanager.views.release build.id %}">Promote to Release</a>
+            {% endifequal %}
+        </td>
     </tr>
 {%endfor%}
 </table>
+{% else %}
+No builds found
+{% endif %}

@@ -24,7 +24,7 @@ import urllib
 
 @login_required()
 def all_projects(request, template_name="buildmanager/all_projects.html"):    
-    context = {}    
+    context = {}
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
         context['projects'] = Project.objects.filter(domain=extuser.domain)
@@ -48,24 +48,26 @@ def all_builds(request, template_name="buildmanager/all_builds.html"):
     context = {}    
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
-        context['builds'] = ProjectBuild.objects.filter(project__domain=extuser.domain).order_by('-package_created')
+        context['normal_builds'] = ProjectBuild.get_non_released_builds(extuser.domain)
+        context['release_builds'] = ProjectBuild.get_released_builds(extuser.domain)
     except ExtUser.DoesNotExist:
+        # TODO: I don't think we should just show them everything if this person 
+        # isn't an ExtUser
         context['builds'] = ProjectBuild.objects.all().order_by('-package_created')
     return render_to_response(request, template_name, context)
 
 
 @login_required()
-def project_builds(request, template_name="buildmanager/all_builds.html"):    
+def project_builds(request, project_id, template_name="buildmanager/all_builds.html"):    
     context = {}
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
     except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
         return render_to_response(template_name, context, context_instance=RequestContext(request))    
-
-    
     try:
-        context['builds'] = ProjectBuild.objects.filter(project__domain=extuser.domain).order_by('-package_created')
+        context['normal_builds'] = ProjectBuild.get_non_released_builds(extuser.domain)
+        context['release_builds'] = ProjectBuild.get_released_builds(extuser.domain)    
     except:
         raise Http404
     return render_to_response(request, template_name, context)
@@ -75,7 +77,7 @@ def project_builds(request, template_name="buildmanager/all_builds.html"):
 def show_build(request, build_id, template_name="buildmanager/show_build.html"):    
     context = {}
     try:
-        context['builds'] = ProjectBuild.objects.get(id=build_id)
+        context['build'] = ProjectBuild.objects.get(id=build_id)
     except:
         raise Http404
     return render_to_response(request, template_name, context)
@@ -126,8 +128,10 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
         print e        
         raise Http404
        
-    
-    
+@login_required
+def release(request, build_id, template_name="buildmanager/new_build.html"): 
+    print "build id: %s" % build_id
+    return HttpResponse("thanks!")
 
 
 @login_required

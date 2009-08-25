@@ -1,0 +1,10 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{% trans "Build Details" %}{% endblock %}
+<!-- stylesheets -->
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+{% block content %}
+Here's your build as a string {{ build }}
+{%endblock%}
