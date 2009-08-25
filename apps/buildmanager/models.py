@@ -143,7 +143,7 @@ class ProjectBuild(models.Model):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
         try:
             new_file_name = self._get_destination(filename)
-            fout = open(new_file_name, 'w')
+            fout = open(new_file_name, 'wb')
             fout.write( filestream.read() )
             fout.close()
             self.jar_file = new_file_name
