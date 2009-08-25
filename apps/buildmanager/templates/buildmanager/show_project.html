@@ -1,10 +1,6 @@
 {% extends base_template %}
 {% load i18n %}
 {% block title %}{% trans "All Projects" %}{% endblock %}
-<!-- stylesheets -->
-{% block page_stylesheets %}
-    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
-{% endblock %}
 {% block content %}
 <h2>{% trans "Project" %} {{project.name}}</h2>
 <h3>Description</h3>
