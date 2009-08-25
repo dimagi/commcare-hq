@@ -10,6 +10,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
 from xformmanager.manager import XFormManager
+# this import is just so we can get StorageUtility.XFormError
+from xformmanager.storageutility import StorageUtility
 
 from datetime import timedelta, datetime
 from django.db import transaction
@@ -246,7 +248,12 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                 submission.delete()
                 return True
             elif action == 'resubmit':
-                status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                status = False
+                try:
+                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                except StorageUtility.XFormError, e:
+                    # if xform doesn't match schema, that's ok
+                    pass
                 return status
             return False            
         if 'select_all' in request.POST:
