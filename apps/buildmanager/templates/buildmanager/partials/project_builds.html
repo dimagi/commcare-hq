@@ -1,0 +1,11 @@
+{% load i18n %}
+<h3>{% trans "Released Builds" %}</h3>
+    {% with build_map.release as builds %}
+        {% include "buildmanager/partials/build_table.html" %}
+    {% endwith %}
+<br>
+<h3>{% trans "Unreleased Builds" %}</h3>
+    {% with build_map.normal as builds %}
+        {% include "buildmanager/partials/build_table.html" %}
+    {% endwith %}
+<br><br>

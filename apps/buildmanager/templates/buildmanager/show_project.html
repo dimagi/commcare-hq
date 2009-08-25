@@ -9,12 +9,7 @@
 <br><br>
 
 
-{% if builds %}
-<h3>Builds</h3>
-{% include "buildmanager/partials/build_table.html" %}
-{%else%}
-<strong>No builds</strong>
+{% if build_map %}
+{% include "buildmanager/partials/project_builds.html" %}
 {% endif %}
-{%endblock%}
-
-
+{% endblock %}
