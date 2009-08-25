@@ -88,10 +88,11 @@ class Submission(models.Model):
                                                            handled=handle_type,
                                                            message=message)
     
-    def unhandled(self):
+    def unhandled(self, handle_type):
         """ Deletes the 'handled' reference (used when data is deleted) """
         try:
-            SubmissionHandlingOccurrence.objects.get(submission=self).delete()
+            SubmissionHandlingOccurrence.objects.get(submission=self, \
+                                                     handled=handle_type).delete()
         except SubmissionHandlingOccurrence.DoesNotExist:
             return
     
@@ -234,6 +235,18 @@ class Attachment(models.Model):
     filepath = models.FilePathField(_('Attachment File'),match='.*\.attach$',path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'],max_length=255)
     filesize = models.IntegerField(_('Attachment filesize'))
     checksum = models.CharField(_('Attachment MD5 Checksum'),max_length=32)
+    
+    def handled(self, handle_type, message=""):
+        """ For now, handling any attachment is equivalent to handling the 
+        submission instance. We can imagine changing this at some future date
+        to use some other sort of heuristic for when a submission is 'handled'.
+        
+        """
+        return self.submission.handled(handle_type, message)
+    
+    def unhandled(self, handle_type):
+        """ Deletes the 'handled' reference for this attachment's submission"""
+        self.submission.unhandled(handle_type)
     
     def is_xform(self):
         return self.attachment_uri == _XFORM_URI

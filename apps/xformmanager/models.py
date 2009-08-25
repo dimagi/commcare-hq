@@ -345,38 +345,7 @@ class Metadata(models.Model):
                              (field, target_namespace)) )
             break
         super(Metadata, self).save(**kwargs)
-        # respond with the number of submissions they have
-        # made today.
-        startdate = datetime.now().date() 
-        enddate = startdate + timedelta(days=1)
-        message = self.get_submission_count(startdate, enddate)
-        # TODO - fix meta.submission to point to real submission
-        self._add_handled(self.submission.submission, message)
 
-    def delete(self, **kwargs):
-        # TODO - fix meta.submission to point to real submission
-        self._remove_handled(self.submission.submission)
-        super(Metadata, self).delete(**kwargs)
-        
-    def _add_handled(self, attachment, message):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        # TODO - fix meta.submission to point to real submission
-        self.submission.submission.handled(handle_type, message)
-
-    def _remove_handled(self, submission):
-        '''Tells the receiver that this attachment's submission was not handled.
-           Only used when we are deleting data from xformmanager but not receiver
-        '''
-        # TODO - fix meta.submission to point to real submission
-        self.submission.submission.unhandled()
-        
     def _strip_namespace(self, tag):
         i = tag.find('}')
         tag = tag[i+1:len(tag)]
