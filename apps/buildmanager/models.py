@@ -8,8 +8,11 @@ import settings
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-
 BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
+
+class BuildError(Exception):
+    """Generic error for the Build Manager to throw"""
+    pass
 
 class Project (models.Model):
     """
@@ -112,7 +115,6 @@ class ProjectBuild(models.Model):
                                self.build_number, 
                                 os.path.basename(self.jar_file)))
         
-        
     def get_jad_downloadurl(self):
         """do a reverse to get the urls for the given project/buildnumber for the direct download"""
         return reverse('get_buildfile', 
@@ -157,6 +159,14 @@ class ProjectBuild(models.Model):
             os.makedirs(destinationpath)        
         return os.path.join(destinationpath, os.path.basename(str(filename)))  
     
+    def release(self):
+        '''Release a build, by setting its status as such.'''
+        if self.status == "release":
+            raise BuildError("Tried to release an already released build!")
+        else:
+            self.status = "release"
+            self.save()
+        
     @classmethod
     def get_non_released_builds(cls, domain):
         '''Get all non-released builds for a domain'''

@@ -125,13 +125,20 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
         
         return response
     except Exception, e:
-        print e        
+        logging.error("problem accessing buildfile: %s" % e)
         raise Http404
        
 @login_required
 def release(request, build_id, template_name="buildmanager/new_build.html"): 
-    print "build id: %s" % build_id
-    return HttpResponse("thanks!")
+    try: 
+        build = ProjectBuild.objects.get(id=build_id)
+    except ProjectBuild.DoesNotExist:
+        raise Http404
+    try:
+        build.release()
+    except BuildError, e:
+        logging.error("Problem releasing build: %s, the error is %s" % (build, e))
+    return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
 
 
 @login_required
