@@ -5,6 +5,7 @@ from hq.models import Domain
 import os
 import logging
 import settings
+from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
@@ -22,10 +23,28 @@ class Project (models.Model):
     domain = models.ForeignKey(Domain) 
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=512, null=True, blank=True)
+    # the optional project id in a different server (e.g. the build server)
+    project_id = models.CharField(max_length=20, null=True, blank=True)
     
+    def get_non_released_builds(self):
+        '''Get all non-released builds for this project'''
+        return self.builds.exclude(status="release").order_by('-package_created')
     
+    def get_released_builds(self):
+        '''Get all released builds for a project'''
+        return self.builds.filter(status="release").order_by('-released')
+        
+    def get_latest_released_build(self):
+        '''Gets the latest released build for a project, based on the 
+           released date.'''
+        releases = self.get_released_builds()
+        if releases:
+           return releases[0]
+        
+        
     def num_builds(self):
-        return ProjectBuild.objects.filter(project=self).count()
+        '''Get the number of builds associated with this project'''
+        return self.builds.all().count()
     
     def __unicode__(self):
         return unicode(self.name)
@@ -48,16 +67,15 @@ class ProjectBuild(models.Model):
     With all corresponding meta information on release info and build 
     information such that it can be traced back to a url/build info in source 
     control.'''    
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, related_name="builds")
     
     # we have it as a User instead of ExtUser here because we want our 
     # build server User to be able to push to multiple omains
-    uploaded_by = models.ForeignKey(User) 
+    uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
        
     build_number = models.CharField(max_length=255)       
     revision_number = models.CharField(max_length=255, null=True, blank=True)
-     
     package_created = models.DateTimeField()    
       
     jar_file = models.FilePathField(_('JAR File Location'), 
@@ -76,6 +94,9 @@ class ProjectBuild(models.Model):
     jar_download_count = models.PositiveIntegerField(default=0)
     jad_download_count = models.PositiveIntegerField(default=0)
     
+    # release info
+    released = models.DateTimeField(null=True, blank=True)
+    released_by = models.ForeignKey(User, null=True, blank=True, related_name="builds_released")
     
     def __unicode__(self):
         return "%s build: %s" % (self.project, self.build_number)
@@ -159,22 +180,14 @@ class ProjectBuild(models.Model):
             os.makedirs(destinationpath)        
         return os.path.join(destinationpath, os.path.basename(str(filename)))  
     
-    def release(self):
+    def release(self, user):
         '''Release a build, by setting its status as such.'''
         if self.status == "release":
             raise BuildError("Tried to release an already released build!")
         else:
             self.status = "release"
+            self.released = datetime.now()
+            self.released_by = user
             self.save()
         
-    @classmethod
-    def get_non_released_builds(cls, domain):
-        '''Get all non-released builds for a domain'''
-        return ProjectBuild.objects.filter(project__domain=domain)\
-                 .filter(status="build").order_by('-package_created')
     
-    @classmethod
-    def get_released_builds(cls, domain):
-        '''Get all released builds for a domain'''
-        return ProjectBuild.objects.filter(project__domain=domain)\
-                 .filter(status="release").order_by('-package_created')

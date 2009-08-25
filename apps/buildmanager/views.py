@@ -38,8 +38,9 @@ def all_projects(request, template_name="buildmanager/all_projects.html"):
 def show_project(request, project_id, template_name="buildmanager/show_project.html"):    
     context = {}
     try:
-        context['project'] = Project.objects.get(id=project_id)
-        context['builds'] = ProjectBuild.objects.filter(project=context['project']).order_by('-package_created')
+        project = Project.objects.get(id=project_id)
+        context['project'] = project
+        context['build_map'] = _get_single_project_builds(project)
     except:
         raise Http404    
     return render_to_response(request, template_name, context)
@@ -49,31 +50,27 @@ def all_builds(request, template_name="buildmanager/all_builds.html"):
     context = {}    
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
-        context['normal_builds'] = ProjectBuild.get_non_released_builds(extuser.domain)
-        context['release_builds'] = ProjectBuild.get_released_builds(extuser.domain)
-    except ExtUser.DoesNotExist:
-        # TODO: I don't think we should just show them everything if this person 
-        # isn't an ExtUser
-        context['builds'] = ProjectBuild.objects.all().order_by('-package_created')
-    return render_to_response(request, template_name, context)
-
-
-@login_required()
-def project_builds(request, project_id, template_name="buildmanager/all_builds.html"):    
-    context = {}
-    try: 
-        extuser = ExtUser.objects.all().get(id=request.user.id)
+        context["domain"] = extuser.domain
+        projects = Project.objects.filter(domain=extuser.domain)
+        builds = _get_build_dictionary(projects)
+        context['all_builds'] = builds
     except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))    
-    try:
-        context['normal_builds'] = ProjectBuild.get_non_released_builds(extuser.domain)
-        context['release_builds'] = ProjectBuild.get_released_builds(extuser.domain)    
-    except:
-        raise Http404
+        return render_to_response(request, template_name, context)
     return render_to_response(request, template_name, context)
-    
-    
+
+def _get_build_dictionary(projects):
+    builds = {}
+    for project in projects:
+        builds[project] = _get_single_project_builds(project)
+    return builds  
+
+def _get_single_project_builds(project):
+    this_project_dict = {}
+    this_project_dict["normal"] = project.get_non_released_builds()
+    this_project_dict["release"] = project.get_released_builds()
+    return this_project_dict
+        
 @login_required()
 def show_build(request, build_id, template_name="buildmanager/show_build.html"):    
     context = {}
@@ -134,7 +131,7 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     try:
         jarfile = build.jar_file
         validate_jar(jarfile)
-        build.release()
+        build.release(request.user)
         return render_to_response(request, template_name, { "build": build })
     except BuildError, e:
         error_string = "Problem releasing build: %s, the error is: %s" % (build, e)

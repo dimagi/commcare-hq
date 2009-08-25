@@ -2,14 +2,12 @@
 {% load i18n %}
 {% block title %}{% trans "All Builds" %}{% endblock %}
 {% block content %}
-<h2>{% trans "All Released Builds " %} {{project}}</h2>
-{% with release_builds as builds %}
-{% include "buildmanager/partials/build_table.html" %}
-{% endwith %}
-<br><br>
-<h2>{% trans "All Unreleased Builds " %} {{project}}</h2>
-{% with normal_builds as builds %}
-{% include "buildmanager/partials/build_table.html" %}
-{% endwith %}
-
+{% if all_builds %} 
+{% for project, build_map in all_builds.items %}
+<h2>{% trans "Builds for Project: " %} {{project}}</h2>
+{% include "buildmanager/partials/project_builds.html" %}
+{% endfor %}
+{% else %}
+Sorry, we couldn't find any projects for {{ domain }}
+{% endif %}
 {%endblock%}
