@@ -22,13 +22,12 @@ def extract_xforms( filename, dir ):
     pushd = os.getcwd()
     if not os.path.isdir( dir ):
         os.mkdir( dir )
-    os.chdir( dir )
     extracted_forms = []
     # extract files that match the xforms definition 
     for filename in filelist:
         if filename.endswith(".xml") or filename.endswith(".xhtml"):
             try:
-                out = open( filename, 'wb' )
+                out = open( os.path.join(dir,filename), 'wb' )
                 buffer = StringIO( zf.read( filename ))
                 buflen = 2 ** 20
                 datum = buffer.read( buflen )
@@ -39,7 +38,6 @@ def extract_xforms( filename, dir ):
                 extracted_forms.append(os.path.join(dir, filename))
             except Exception, e:
                 logging.error("Problem extracting xform: %s, error is %s" % filename, e)
-    os.chdir( pushd )
     return extracted_forms
     
 def validate_jar(filename):
