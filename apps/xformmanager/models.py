@@ -15,6 +15,7 @@ from django.db.models.signals import post_save
 from graphing import dbhelper
 from receiver.models import Attachment, SubmissionHandlingType
 from hq.models import *
+from xformmanager.util import case_insensitive_iter, format_field
 
 class ElementDefModel(models.Model):
     # this class is really not used
@@ -223,7 +224,13 @@ class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other
     # in fact, you probably shouldn't even change the order
     # (TODO - replace with an appropriate comparator object, so that the code is less brittle )
-    fields = [ 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid' ]
+
+    # instead of 'username' we should really be using chw_id
+    required_fields = [ 'deviceid','timestart','timeend','username' ]
+    
+    # these are all the fields that we accept (though do not require)
+    fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid']
+    
     formname = models.CharField(max_length=255, null=True)
     formversion = models.CharField(max_length=255, null=True)
     deviceid = models.CharField(max_length=255, null=True)
@@ -243,9 +250,70 @@ class Metadata(models.Model):
     # foreign key to the schema definition (so can identify table and domain)
     formdefmodel = models.ForeignKey(FormDefModel, null=True)
     
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
     def __unicode__(self):
         list = ["%s: %s" % (name, getattr(self, name)) for name in self.fields]
         return "Metadata: " + ", ".join(list) 
+    
+    def init(self, data_tree, target_namespace):
+        """ Initializes a metadata object. We make this external to 'init'
+        because it's useful for us to format data according to the object's
+        instantiated data types (see format_field function below)
+         
+        Arguments: takes the 'root' element of an lxml etree object
+        """
+        meta_tree = None
+        
+        if data_tree is None:
+            logging.error("Submitted form (%s) is empty!" % target_namespace)
+            return
+        # find meta node
+        for data_child in case_insensitive_iter(data_tree, '{'+target_namespace+'}'+ "Meta" ):
+            meta_tree = data_child
+            break;
+        if meta_tree is None:
+            logging.error("No metadata found for %s" % target_namespace )
+            return
+        
+        """ we do not use this for now since we are still sorting out whether to have
+        uid or guid or whatever
+        # <parse by schema tree>
+        # this method silently discards metadata which it does not anticipate
+        for field in Metadata.fields:
+            data_element = None
+            for data_child in case_insensitive_iter(meta_tree, '{'+target_namespace+'}'+ field ):
+                data_element = data_child
+                break;
+            if data_element is None:
+                logging.error("Submitted form (%s) is missing metadata field (%s)" % \
+                            (target_namespace, field) )
+                continue
+            if data_element.text is None: 
+                logging.error( ("Metadata %s in form (%s) should not be null!" % \
+                             (field, target_namespace)) )
+                continue
+            value = format_field(self, field, data_element.text)
+            setattr( self,field,value )
+        # </parse by schema tree>
+        """
+        
+        # <parse by instance tree>
+        # this routine silently ignores metadata fields which are poorly formatted
+        # parse the meta data (children of meta node)
+        for element in meta_tree:
+            # element.tag is for example <FormName>
+            # todo: this comparison should be made much less brittle - replace with a comparator object?
+            tag = self._strip_namespace( element.tag ).lower()
+            if tag in Metadata.fields:
+                # must find out the type of an element field
+                value = format_field(self, tag, element.text)
+                # the following line means "model.tag = value"
+                if value is not None: setattr( self,tag,value )
+        # </parse by instance tree>
+        
+        return
     
     def xml_file_location(self):
         return self.submission.filepath
@@ -259,39 +327,29 @@ class Metadata(models.Model):
                                            submission__submission__submit_time__gte=startdate,
                                            submission__submission__submit_time__lte=enddate))
 
-    def save(self, **kwargs):        
+    def save(self, target_namespace, **kwargs):
+        for field in self.required_fields:
+            # log errors when metadata not complete
+            if not hasattr(self, field):
+                # this should never, ever happen. 'field' variables are wrong.
+                logging.error( ("Metadata for form (%s) does not contain %s" % \
+                             (target_namespace, field)) )
+                # we 'break' instead of 'continue'ing because we don't want 
+                # to swamp the server with emails
+                break
+            value = getattr(self, field)
+            if value is None:
+                # raise this error if the element is not provided 
+                # or if it is provided but not populated
+                logging.error( ("Metadata %s in form (%s) should not be null!" % \
+                             (field, target_namespace)) )
+            break
         super(Metadata, self).save(**kwargs)
-        # respond with the number of submissions they have
-        # made today.
-        startdate = datetime.now().date() 
-        enddate = startdate + timedelta(days=1)
-        message = self.get_submission_count(startdate, enddate)
-        # TODO - fix meta.submission to point to real submission
-        self._add_handled(self.submission.submission, message)
-        
-    def _add_handled(self, attachment, message):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        # TODO - fix meta.submission to point to real submission
-        self.submission.submission.handled(handle_type, message)
 
-    def _remove_handled(self, submission):
-        '''Tells the receiver that this attachment's submission was not handled.
-           Only used when we are deleting data from xformmanager but not receiver
-        '''
-        # TODO - fix meta.submission to point to real submission
-        self.submission.submission.unhandled()
-        
-    def delete(self, **kwargs):
-        # TODO - fix meta.submission to point to real submission
-        self._remove_handled(self.submission.submission)
-        super(Metadata, self).delete(**kwargs)
+    def _strip_namespace(self, tag):
+        i = tag.find('}')
+        tag = tag[i+1:len(tag)]
+        return tag
 
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration

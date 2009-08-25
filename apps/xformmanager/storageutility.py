@@ -6,18 +6,21 @@ and it only knows about the data structures in xformdef.py
 
 """
 
+import re
+import os
+import logging
+import settings
+import string
+from datetime import datetime, timedelta
+
+from lxml import etree
 from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
+
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
-from datetime import datetime
-from lxml import etree
-import settings
-import logging
-import re
-import os
-import string
+from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 
 from stat import S_ISREG, ST_MODE
 import sys
@@ -111,23 +114,31 @@ class StorageUtility(object):
    	
     @transaction.commit_on_success
     def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, submission):
+        """ returns True on success """
         logging.debug("StorageProvider: saving form data")
         tree=etree.parse(data_stream_pointer)
         root=tree.getroot()
         self.formdef = formdef
         queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
         new_rawdata_id = queries.execute_insert()
-        metadata_model = self._parse_meta_data( root )
-        if metadata_model:
-            metadata_model.formdefmodel = formdefmodel
-            metadata_model.submission = submission
-            metadata_model.raw_data = new_rawdata_id
-            metadata_model.save()
-            return True
-        return False
-        
+        metadata_model = Metadata()
+        metadata_model.init( root, self.formdef.target_namespace )
+        metadata_model.formdefmodel = formdefmodel
+        metadata_model.submission = submission
+        metadata_model.raw_data = new_rawdata_id
+        metadata_model.save(self.formdef.target_namespace)
+        # rl - seems like a strange place to put this message...
+        # respond with the number of submissions they have
+        # made today.
+        startdate = datetime.now().date() 
+        enddate = startdate + timedelta(days=1)
+        message = metadata_model.get_submission_count(startdate, enddate)
+        # TODO - fix meta.submission to point to real submission
+        self._add_handled(metadata_model.submission, message)
+        return True
     
     def save_form_data(self, xml_file_name, submission):
+        """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
         xmlns = self._get_xmlns(f)
@@ -305,7 +316,7 @@ class StorageUtility(object):
         # todo - put in a check for root.isRepeatable
         next_parent_name = formatted_join(parent_name, elementdef.name)
         if def_child.is_repeatable :
-            for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
                 if next_query is not None:
                     next_query.child_queries = next_query.child_queries + [ query ]
@@ -313,7 +324,7 @@ class StorageUtility(object):
                     next_query = query
         else:
             # if there are children (which are not repeatable) then flatten the table
-            for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 data_node = data_child
                 break;
             if data_node is None:
@@ -346,11 +357,50 @@ class StorageUtility(object):
         edm = ElementDefModel.objects.get(pk=edm_id)
         self._remove_instance_inner_loop(edm, instance_id)
         try:
-            Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id).delete()
+            meta = Metadata.objects.get(raw_data=instance_id, formdefmodel=formdef_id)
         except Metadata.DoesNotExist:
             # not a problem since this simply means the data was 
             # never successfully registered
             return
+        # mark as intentionally handled
+        # TODO - fix meta.submission to point to real submission
+        self._add_handled_as_deleted(meta.submission)
+        meta.delete()
+
+    def _add_handled_as_deleted(self, attachment, message=''):
+        '''Tells the receiver that this attachment's submission was handled.  
+           Should only be called _after_ we are sure that we got a linked 
+           schema of this type.
+        '''
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="deleted")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="deleted")
+        # TODO - fix meta.submission to point to real submission
+        attachment.handled(handle_type, message)
+
+    def _add_handled(self, attachment, message):
+        '''Tells the receiver that this attachment's submission was handled.  
+           Should only be called _after_ we are sure that we got a linked 
+           schema of this type.
+        '''
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
+        # TODO - fix meta.submission to point to real submission
+        attachment.handled(handle_type, message)
+
+    def _remove_handled(self, attachment):
+        '''Tells the receiver that this attachment's submission was not handled.
+           Only used when we are deleting data from xformmanager but not receiver
+        '''
+        try:
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
+        except SubmissionHandlingType.DoesNotExist:
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
+        # TODO - fix meta.submission to point to real submission
+        attachment.unhandled(handle_type)
 
     def _remove_instance_inner_loop(self, elementdef, instance_id):
         edms = ElementDefModel.objects.filter(parent=elementdef)
@@ -375,7 +425,6 @@ class StorageUtility(object):
         # must remove tables first since removing form_meta automatically deletes some tables
         self._remove_form_tables(fdds[0])
         self._remove_form_models(fdds[0], delete_xml)
-        meta = Metadata.objects.all().filter(formdefmodel=fdds[0]).delete()
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
@@ -541,51 +590,6 @@ class StorageUtility(object):
         """
         return formdef
         
-    def _parse_meta_data(self, data_tree):
-        m = Metadata()
-        meta_tree = None
-        
-        if data_tree is None:
-            self._error("Submitted form (%s) is empty!" % self.formdef.target_namespace)
-            return m
-        # find meta node
-        for data_child in self._case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ "Meta" ):
-            meta_tree = data_child
-            break;
-        if meta_tree is None:
-            self._error("No metadata found for %s" % self.formdef.target_namespace )
-            return m
-        
-        # this routine silently ignores metadata fields which are poorly formatted
-        # parse the meta data (children of meta node)
-        for element in meta_tree:
-            # element.tag is for example <FormName>
-            # todo: this comparison should be made much less brittle - replace with a comparator object?
-            tag = self._strip_namespace( element.tag ).lower()
-            if tag in Metadata.fields:
-                # must find out the type of an element field
-                value = self._format_field(m,tag,element.text)
-                # the following line means "model.tag = value"
-                if value is not None: setattr( m,tag,value )
-                else: 
-                    self._error( ("Metadata %s in form (%s) should not be null!" % \
-                                 (tag, self.formdef.target_namespace)) )
-        return m
-        
-    # can flesh this out or integrate with other functions later
-    def _format_field(self, model, name, value):
-        """ should handle any sort of conversion for 'meta' field values """
-        if value is None: return value
-        t = type( getattr(model,name) )
-        if t == datetime:
-            return value.replace('T',' ')
-        return value
-        
-    def _strip_namespace(self, tag):
-        i = tag.find('}')
-        tag = tag[i+1:len(tag)]
-        return tag
-
     def _remove_form_models(self,form='', delete_xml=True):
         """Drop all schemas, associated tables, and files"""
         if form == '':
@@ -602,10 +606,12 @@ class StorageUtility(object):
                     else:
                         logging.warn("Tried to delete schema file: %s but it wasn't found!" % file)
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
+            all_meta = Metadata.objects.filter(formdefmodel=fdd)
+            for meta in all_meta:
+                self._remove_handled(meta.submission)
+            all_meta.delete()
             fdd.delete()
-            Metadata.objects.filter(formdefmodel=fdd).delete()
-            
-                        
+    
     # in theory, there should be away to *not* remove elemenetdefdata when deleting formdef
     # until we figure out how to do that, this'll work fine
     def _remove_form_tables(self,form=''):
@@ -634,16 +640,6 @@ class StorageUtility(object):
         cursor = connection.cursor()
         cursor.execute("drop table %s" % table_name)
         
-        
-    def _case_insensitive_iter(self, data_tree, tag):
-        if tag == "*":
-            tag = None
-        if tag is None or data_tree.tag.lower() == tag.lower():
-            yield data_tree
-        for d in data_tree: 
-            for e in self._case_insensitive_iter(d,tag):
-                yield e 
-
     def _data_name(self, parent_name, child_name):
         if child_name[0:len(parent_name)].lower() == parent_name.lower():
             child_name = child_name[len(parent_name)+1:len(child_name)]
@@ -669,6 +665,13 @@ class StorageUtility(object):
             raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
         return r.group(0).strip('{').strip('}')
 
+def get_registered_table_name(name):
+    # this is purely for backwards compatibility
+    for func in possible_naming_functions:
+        table_name = func(name)
+        if ElementDefModel.objects.filter(table_name=table_name):
+            return table_name
+    return None
 
 class Query(object):
     """ stores all the information needed to run a query """

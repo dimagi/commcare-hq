@@ -2,11 +2,13 @@ import re, os
 import logging
 import inspect
 from lxml import etree
+from datetime import datetime
 
 from django.db import connection
 from django.http import HttpResponse, HttpResponseBadRequest
 from transformers.csv import format_csv
-from xformmanager.models import FormDefModel, ElementDefModel
+from django.db import connection
+
 
 MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
@@ -34,22 +36,12 @@ def _old_sanitize(name):
     if sanitized_name.lower() == "where" or sanitized_name.lower() == "when":
         return "_" + sanitized_name
     return sanitized_name
-# this is purely for backwards compatibility
 possible_naming_functions=[old_table_name,table_name]
 
 def create_table_name(name):
     # current hack, fix later: 122 is mysql table limit, i think
     return table_name( name )
 
-def get_registered_table_name(name):
-    # current hack, fix later: 122 is mysql table limit, i think
-    for func in possible_naming_functions:
-        table_name = func(name)
-        if ElementDefModel.objects.filter(table_name=table_name):
-            return table_name
-    return None
-
-from django.db import connection
 def table_exists( table_name):
     query = "select * from " + table_name + " limit 1";
     cursor = connection.cursor()
@@ -58,6 +50,15 @@ def table_exists( table_name):
     except:
         return False
     return True
+
+# can flesh this out or integrate with other functions later
+def format_field(model, name, value):
+    """ should handle any sort of conversion for 'meta' field values """
+    if value is None: return value
+    t = type( getattr(model,name) )
+    if t == datetime:
+        return value.replace('T',' ')
+    return value
 
 def get_xml_string(stream_pointer):
     """ This function checks for valid xml in a stream
@@ -123,33 +124,12 @@ def join_if_exists(parent_name, child_name):
         return str(parent_name) + "_" + str(child_name)
     return str(child_name)
 
-def get_csv_from_form(formdef_id, form_id=0, filter=''):
-    try:
-        xsd = FormDefModel.objects.get(id=formdef_id)
-    except FormDefModel.DoesNotExist:
-        return HttpResponseBadRequest("Schema with id %s not found." % formdef_id)
-    cursor = connection.cursor()
-    row_count = 0
-    if form_id == 0:
-        try:
-            query= 'SELECT * FROM ' + xsd.form_name
-            if filter: query = query + " WHERE " + filter
-            query = query + ' ORDER BY id'
-            cursor.execute(query)
-        except Exception, e:
-            return HttpResponseBadRequest(\
-                "Schema %s could not be queried with query %s" % \
-                ( xsd.form_name,query) )        
-        rows = cursor.fetchall()
-    else:
-        try:
-            cursor.execute("SELECT * FROM " + xsd.form_name + ' where id=%s', [form_id])
-        except Exception, e:
-            return HttpResponseBadRequest(\
-                "Instance with id %s for schema %s not found." % (form_id,xsd.form_name) )
-        rows = cursor.fetchone()
-        row_count = 1
-    columns = xsd.get_column_names()    
-    name = xsd.form_name
-    return format_csv(rows, columns, name, row_count)
-
+def case_insensitive_iter(data_tree, tag):
+    """ An iterator for lxml etree which is case-insensitive """
+    if tag == "*":
+        tag = None
+    if tag is None or data_tree.tag.lower() == tag.lower():
+        yield data_tree
+    for d in data_tree: 
+        for e in case_insensitive_iter(d,tag):
+            yield e 

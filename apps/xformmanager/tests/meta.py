@@ -127,8 +127,8 @@ class MetaTestCase(unittest.TestCase):
             # the first one should update the count.  The rest should not
             running_count = running_count + 1
             self.assertEqual(running_count, len(Metadata.objects.all()))
-            for j in range(0, 5):
-                logging.warn("Expecting a 'duplicate submission' error NOW:")
+            for j in range(0, 3):
+                logging.warn("EXPECTING A 'duplicate submission' ERROR NOW:")
                 populate("data/pf_followup_%s.xml" % i)
                 self.assertEqual(running_count, len(Metadata.objects.all()))
     
@@ -165,11 +165,11 @@ class MetaTestCase(unittest.TestCase):
         self.assertFalse(submission.is_orphaned())
         
         # these should NOT create a linked submission.  No schema
-        logging.warn("\nExpecting an error NOW:")
+        logging.warn("\nEXPECTING AN ERROR NOW:")
         populate("data/pf_new_reg_1.xml")
-        logging.warn("Expecting an error NOW:")
+        logging.warn("EXPECTING AN ERROR NOW:")
         populate("data/pf_new_reg_2.xml")
-        logging.warn("Expecting an error NOW:")
+        logging.warn("EXPECTING AN ERROR NOW:")
         populate("data/pf_ref_completed_1.xml")
         
         self.assertEqual(1, len(Metadata.objects.all()))
@@ -183,28 +183,23 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(way_handled, SubmissionHandlingOccurrence.objects.all()[0])
         
     def testNoMetadata(self):
+        logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nometa.xml")
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_brac_chp_homevisit_v0_0_1")
+        cursor.execute("SELECT * FROM schema_test_no_meta")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         self.assertEquals(int(row[10]),132) # this is commcareversion number
         self.assertEquals(row[11],"EDINA KEJO")
 
     def testEmptySubmission(self):
+        logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml")
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables
-        
-    def tearDown(self):
-        # duplicates setUp, but at least we know we're being clean
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
         
     def testSubmissionHandling(self):
         count = len(SubmissionHandlingOccurrence.objects.all())
@@ -212,4 +207,10 @@ class MetaTestCase(unittest.TestCase):
         formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         count = len(SubmissionHandlingOccurrence.objects.all())
         self.assertEquals(1,count)
-                
+        
+    def tearDown(self):
+        # duplicates setUp, but at least we know we're being clean
+        su = StorageUtility()
+        su.clear()
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
