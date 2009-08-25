@@ -12,6 +12,7 @@ class RemoveTestCase(unittest.TestCase):
         su.clear()
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
+        SubmissionHandlingOccurrence.objects.all().delete()
         
     def test1ClearFormData(self):
         """ Tests clear out all forms. """
@@ -59,8 +60,20 @@ class RemoveTestCase(unittest.TestCase):
     def test3RemoveSchema(self):
         """ Test removing a more complicated schema """
         schema_model = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
+        num_handled = SubmissionHandlingOccurrence.objects.all().count()
+        self.assertEquals(1,num_handled)
+        all_meta = Metadata.objects.all()
+        count = all_meta.count()
+        self.assertEquals(1,count)
+        attachment = all_meta[0].submission
         su = StorageUtility()
         su.remove_schema(schema_model.id)
+        # Test that children have become orphans
+        num_handled = SubmissionHandlingOccurrence.objects.all().count()
+        self.assertEquals(0,num_handled)
+        count = Metadata.objects.all().count()
+        self.assertEquals(0,count)
+        self.assertTrue(attachment.submission.is_orphaned())
         # TODO fix the db call to be more standard here
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_formdefmodel")
@@ -81,6 +94,12 @@ class RemoveTestCase(unittest.TestCase):
         formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd")
         instance_6 = populate("6_nestedrepeats.xml")
         xformmanager = XFormManager()
+
+        num_handled = SubmissionHandlingOccurrence.objects.all().count()
+        self.assertEquals(2,num_handled)
+        count = Metadata.objects.all().count()
+        self.assertEquals(2,count)
+        
         # TODO - change this syntax once meta.attachment becomes meta.submission
         xformmanager.remove_data(formdefmodel_5.id, instance_5.xform.form_metadata.all()[0].raw_data )
         xformmanager.remove_data(formdefmodel_6.id, instance_6.xform.form_metadata.all()[0].raw_data )
@@ -90,10 +109,18 @@ class RemoveTestCase(unittest.TestCase):
         #count = len(Attachment.objects.all())
         #self.assertEquals(0,count)
         # test metadata deletion
-        count = len(Metadata.objects.all())
+
+        # Test that children have been marked as 'doubly handled' and remain 'initially handled'
+        # (so that they are not considered 'orphans' i.e. unhandled)
+        num_handled = SubmissionHandlingOccurrence.objects.all().count()
+        self.assertEquals(4,num_handled)
+        self.assertFalse(instance_5.is_orphaned())        
+        self.assertFalse(instance_6.is_orphaned())        
+        
+        count = Metadata.objects.all().count()
         self.assertEquals(0,count)
-        count = len(SubmissionHandlingOccurrence.objects.all()) 
-        self.assertEquals(0,count)
+        count = SubmissionHandlingOccurrence.objects.all().count()
+        self.assertEquals(4,count)
         # test raw data deletion
         if settings.DATABASE_ENGINE == 'mysql':
             cursor = connection.cursor()
@@ -121,9 +148,7 @@ class RemoveTestCase(unittest.TestCase):
         instance_6.delete()
         # receiver unit tests already check for count([Submission|Attachment]) = 0
         # so here we test for metadata deletion
-        count = len(Metadata.objects.all())
-        self.assertEquals(0,count)
-        count = len(SubmissionHandlingOccurrence.objects.all()) 
+        count = Metadata.objects.all().count()
         self.assertEquals(0,count)
         
     def tearDown(self):
