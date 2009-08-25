@@ -92,12 +92,9 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
     try:
         proj = Project.objects.get(id=project_id)
         build = ProjectBuild.objects.filter(project=proj).get(build_number=build_number)
-        print proj
-        print build
         
         if filename.endswith('.jar'):
             fpath = os.path.basename(build.jar_file)
-            print fpath
             if fpath != filename:
                 raise Http404
             
@@ -108,7 +105,6 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
             
         elif filename.endswith('.jad'):
             fpath = os.path.basename(build.jad_file)
-            print fpath
             mtype = mimetypes.guess_type(build.jad_file)[0]            
             if fpath != filename:
                 raise Http404
