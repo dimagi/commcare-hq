@@ -7,6 +7,7 @@ from hq.models import Domain
 
 from buildmanager.models import *
 from buildmanager.forms import *
+from buildmanager.jar import validate_jar
 
 from rapidsms.webui.utils import render_to_response
 
@@ -131,9 +132,19 @@ def release(request, build_id, template_name="buildmanager/new_build.html"):
     except ProjectBuild.DoesNotExist:
         raise Http404
     try:
+        jarfile = build.jar_file
+        validate_jar(jarfile)
         build.release()
     except BuildError, e:
-        logging.error("Problem releasing build: %s, the error is %s" % (build, e))
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
+        logging.error(error_string)
+        return render_to_response(request, "500.html", {"error_message" : error_string})
+    except Exception, e:
+        # we may want to differentiate from expected (BuildError) and unexpected
+        # (everything else) errors down the road, for now we treat them the same.
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
+        logging.error(error_string)
+        return render_to_response(request, "500.html", {"error_message" : error_string})
     return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
 
 
