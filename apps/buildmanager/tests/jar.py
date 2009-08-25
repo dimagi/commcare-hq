@@ -16,7 +16,8 @@ class JarTestCase(unittest.TestCase):
 
     def tearDown(self):
         # clean the folder we created after every test
-        shutil.rmtree(self.output_dir)
+        if os.path.isdir(self.output_dir):
+            shutil.rmtree(self.output_dir)
         
     
     def testExtractXForms(self):
@@ -33,4 +34,6 @@ class JarTestCase(unittest.TestCase):
                          "There should be two xforms in the directory")
         self.assertTrue("brac_chw.xml" in filelist)
         self.assertTrue("weekly_update.xml" in filelist)
-        
+
+    def testValidateJar(self):
+        validate_jar(self.jarfile)
