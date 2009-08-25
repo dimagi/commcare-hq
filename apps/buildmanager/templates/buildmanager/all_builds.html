@@ -1,10 +1,6 @@
 {% extends base_template %}
 {% load i18n %}
 {% block title %}{% trans "All Builds" %}{% endblock %}
-<!-- stylesheets -->
-{% block page_stylesheets %}
-    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
-{% endblock %}
 {% block content %}
 <h2>{% trans "All Released Builds " %} {{project}}</h2>
 {% with release_builds as builds %}
