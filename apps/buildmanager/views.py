@@ -126,7 +126,7 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
         raise Http404
        
 @login_required
-def release(request, build_id, template_name="buildmanager/new_build.html"): 
+def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
     try: 
         build = ProjectBuild.objects.get(id=build_id)
     except ProjectBuild.DoesNotExist:
@@ -135,6 +135,7 @@ def release(request, build_id, template_name="buildmanager/new_build.html"):
         jarfile = build.jar_file
         validate_jar(jarfile)
         build.release()
+        return render_to_response(request, template_name, { "build": build })
     except BuildError, e:
         error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
         logging.error(error_string)
@@ -145,7 +146,6 @@ def release(request, build_id, template_name="buildmanager/new_build.html"):
         error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
         logging.error(error_string)
         return render_to_response(request, "500.html", {"error_message" : error_string})
-    return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
 
 
 @login_required
