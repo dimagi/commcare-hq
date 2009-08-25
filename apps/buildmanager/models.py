@@ -13,8 +13,8 @@ BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
 
 class Project (models.Model):
     """
-    A project is a high level container for a given build project.  A project can contain
-    a history of builds
+    A project is a high level container for a given build project.  A project 
+    can contain a history of builds
     """
     domain = models.ForeignKey(Domain) 
     name = models.CharField(max_length=255)
@@ -30,20 +30,25 @@ class Project (models.Model):
 
 BUILD_STATUS = (    
     ('build', 'Standard Build'),    
-    ('alpha', 'Alpha'),
-    ('beta', 'Beta'),
-    ('rc', 'Release Candidate'),    
+    # CZUE: removed extraneous build types to make this as simple as possible
+    # we may want to reintroduce these down the road when we really sort
+    # out our processes
+    # ('alpha', 'Alpha'),
+    # ('beta', 'Beta'),
+    # ('rc', 'Release Candidate'),    
     ('release', 'Release'),   
 )
 
 
 class ProjectBuild(models.Model):
     '''When a jad/jar is built, it should correspond to a unique ReleasePackage
-    With all corresponding meta information on release info and build information such that
-    it can be traced back to a url/build info in source control.'''    
+    With all corresponding meta information on release info and build 
+    information such that it can be traced back to a url/build info in source 
+    control.'''    
     project = models.ForeignKey(Project)
     
-    #we have it as a User here because we want our build server to be able to push without knowledge of domains
+    # we have it as a User instead of ExtUser here because we want our 
+    # build server User to be able to push to multiple omains
     uploaded_by = models.ForeignKey(User) 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
        
@@ -69,7 +74,9 @@ class ProjectBuild(models.Model):
     jad_download_count = models.PositiveIntegerField(default=0)
     
     
-    
+    def __unicode__(self):
+        return "%s build: %s" % (self.project, self.build_number)
+
     
     def save(self):
         """Override save to provide some simple enforcement of uniqueness to the build numbers
@@ -124,7 +131,7 @@ class ProjectBuild(models.Model):
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
-            self.jad_file = newfilename
+            self.jad_file = new_file_name 
         except Exception, e:
             logging.error("Error, saving jadfile failed", extra={"exception":e, "jad_filename":filename})
         
@@ -137,7 +144,7 @@ class ProjectBuild(models.Model):
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
-            self.jar_file = newfilename
+            self.jar_file = new_file_name
         except Exception, e:
             logging.error("Error, saving jarfile failed", extra={"exception":e, "jar_filename":filename})
         
@@ -148,4 +155,16 @@ class ProjectBuild(models.Model):
                                            str(self.build_number))
         if not os.path.exists(destinationpath):
             os.makedirs(destinationpath)        
-        return os.path.join(destinationpath, os.path.basename(str(filename)))    
+        return os.path.join(destinationpath, os.path.basename(str(filename)))  
+    
+    @classmethod
+    def get_non_released_builds(cls, domain):
+        '''Get all non-released builds for a domain'''
+        return ProjectBuild.objects.filter(project__domain=domain)\
+                 .filter(status="build").order_by('-package_created')
+    
+    @classmethod
+    def get_released_builds(cls, domain):
+        '''Get all released builds for a domain'''
+        return ProjectBuild.objects.filter(project__domain=domain)\
+                 .filter(status="release").order_by('-package_created')
