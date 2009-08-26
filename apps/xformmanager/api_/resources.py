@@ -58,6 +58,9 @@ class XFormSchemata(Resource):
             if request.GET['format'].lower() == 'sync':
                 # this is a special case: used for server synchronization
                 # so we pass *all* data (not just a subset)
+                if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
+                    return HttpResponseBadRequest("Please set 'export_path' " + \
+                                                  "in your cchq xformmanager settings.")
                 file_list = []
                 for schema in xforms:
                     exported_file = self._full_schema_to_file(schema)
