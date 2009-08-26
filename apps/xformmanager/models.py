@@ -387,3 +387,21 @@ def process(sender, instance, **kwargs): #get sender, instance, created
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
 
+class MetaDataValidationError(Exception):
+    '''Exception to make dealing with meta data errors easier.
+       See StorageUtility.get_meta_validation_errors for how
+       this is used.'''
+       
+    def __init__(self, error_dict, form_display=None):
+        self.form_display = form_display
+        self.missing = []
+        self.duplicate = []
+        self.extra = []
+        error_msgs = []
+        for type, list in error_dict.items():
+            setattr(self, type, list)
+            error_msgs.append("%s fields: %s" % (type, ",".join(list)))
+        self.error_string = "\n".join(error_msgs)
+          
+    def __unicode__(self):
+        return "Errors for %s:\n%s" % (self.form_display, self.error_string) 

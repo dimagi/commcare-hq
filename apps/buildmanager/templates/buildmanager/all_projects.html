@@ -9,8 +9,8 @@
 	    :: {{project.description}} 
 	    {% if project.get_latest_released_build %}
 	       | <a href="{% url buildmanager.views.show_latest_build project.id %}">Latest build</a> | 
-	       <a href="{% url buildmanager.views.get_latest_buildfile project.id project.get_latest_released_build.get_jad_filename %}">Download jad</a> | 
-           <a href="{% url buildmanager.views.get_latest_buildfile project.id project.get_latest_released_build.get_jar_filename %}">Download jar</a> 
+             <a href="{% url buildmanager.views.get_latest_buildfile project.id project.get_latest_released_build.get_jad_filename %}">Download jad</a> | 
+             <a href="{% url buildmanager.views.get_latest_buildfile project.id project.get_latest_released_build.get_jar_filename %}">Download jar</a> 
 	    {% endif %}
 	</ul>  
 {%endfor%}
