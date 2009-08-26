@@ -5,8 +5,9 @@ deletes local xforms and submissions, and loads the data
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from xformmanager.management.commands.download_xforms import download_xforms
-from xformmanager.management.commands.load_xforms import load_xforms
+from xformmanager.management.commands.load_xforms import load_schemata, load_submissions
 from xformmanager.management.commands.reset_xforms import reset_xforms, reset_submits
+import tarfile
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (
@@ -27,19 +28,17 @@ class Command(LabelCommand):
         print "WARNING: This command will DELETE all existing xforms " +\
               "and synchronize with the remote server at %s " % remote_ip
         #util.are_you_sure()
+
         (schemata, submissions) = download_xforms(remote_ip, username, password)
-
-        # make sure we finish downloading the files before we proceed with delete
-        # (this is only critical when downloading from self)
-        import time
-        time.sleep(5)
-
-        # clear self
-        reset_xforms()
-        reset_submits()
-
+        
+        # (when downloading from self, the following is useful to prevent
+        # file concurrent access errors)
+        # import time
+        # time.sleep(5)
+        
         localport = options.get('localport', 8000)
-        load_xforms(localport, schemata, submissions)
+        load_schemata(localport, schemata)
+        load_submissions(localport, submissions)
         
     def __del__(self):
         pass

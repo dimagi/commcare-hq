@@ -18,6 +18,8 @@ class Command(BaseCommand):
         if verbose:
             util.are_you_sure()
         reset_xforms()
+        # TODO - make a reset_submits command in receiver/management
+        # reset_submits()
         
 # we make these functions global so they can be reused by other scripts
 def reset_xforms():
