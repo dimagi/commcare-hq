@@ -41,6 +41,9 @@ class Submissions(Resource):
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             submissions = submissions.filter(submit_time__lte=date)
+        if 'export_path' not in settings.RAPIDSMS_APPS['receiver']:
+            return HttpResponseBadRequest("Please set 'export_path' " + \
+                                          "in your cchq receiver settings.")
         export_path = os.path.join( settings.RAPIDSMS_APPS['receiver']['export_path'], \
                                     "commcarehq-submissions.tar")
         export_file = open( export_path, mode="w+b")
@@ -52,7 +55,7 @@ class Submissions(Resource):
             # Revisit if xforms get super long
             string = StringIO.StringIO()
             try:
-                string.write( unicode(submission.export()) )
+                string.write( submission.export() )
             except Submission.DoesNotExist:
                 logging.error("%s could not be found. Data export failed." \
                               % submission.raw_post)

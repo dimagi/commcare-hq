@@ -49,9 +49,10 @@ def download_xforms(remote_url, username, password, latest=True):
         # for now, we assume schemas and submissions appear with monotonically 
         # increasing id's. I doubt this is always the case.
         # TODO: fix 
+        start_id = -1
         try: start_id = django_model.objects.order_by('-id')[0].pk + 1
         except IndexError: pass
-        if start_id:
+        if start_id != -1:
             if url.find("?") == -1:
                 # no existing GET variables
                 url = url + ("?start-id=%s" % start_id)
@@ -59,6 +60,7 @@ def download_xforms(remote_url, username, password, latest=True):
                 # add new GET variable
                 url = url + ("&start-id=%s" % start_id)
         # TODO - update this to use content-disposition instead of FILE_NAME
+        print "Hitting %s" % url
         urllib.urlretrieve(url, to_file)
         print "Downloaded %s" % to_file
     
