@@ -1,11 +1,16 @@
-{% extends base_template %}
+{% extends "buildmanager/base.html" %}
 {% load i18n %}
 {% block title %}{% trans "All Projects" %}{% endblock %}
-{% block content %}
+{% block buildmanager_content %}
 <h2>{% trans "All Projects" %}</h2>
 <ul>
 {% for project in projects %}
-	<ul>{{project.name}} :: {{project.description}} <a href="{% url buildmanager.views.show_project project.id %}">{{project.id}}</a></ul>
+	<ul><a href="{% url buildmanager.views.show_project project.id %}">{{project.name}}</a> 
+	    :: {{project.description}} 
+	    {% if project.get_latest_released_build %}
+	       <a href="{% url buildmanager.views.show_latest_build project.id %}">Latest build</a>
+	    {% endif %}
+	</ul>  
 {%endfor%}
 </ul>
 
