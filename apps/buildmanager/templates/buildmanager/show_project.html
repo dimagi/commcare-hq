@@ -7,9 +7,7 @@
 <p>{{project.description}}</p>
 <a href="{{project.get_buildURL}}">Build Server Entry</a>
 <br><br>
-
-
 {% if build_map %}
-{% include "buildmanager/partials/project_builds.html" %}
+    {% include "buildmanager/partials/project_builds.html" %}
 {% endif %}
 {% endblock %}
