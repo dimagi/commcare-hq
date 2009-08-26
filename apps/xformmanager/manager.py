@@ -24,18 +24,17 @@ class XFormManager(object):
     def add_schema(self, file_name, input_stream):
         transaction_str = str(uuid.uuid1())
         logging.debug("temporary file name is " + transaction_str)                
-        new_file_name = self.__xsd_file_name(transaction_str)
+        new_file_name = self._xsd_file_name(transaction_str)
         if file_name.endswith("xsd"):
             fout = open(new_file_name, 'w')
             fout.write( input_stream.read() )
             fout.close()
         else: 
             #user has uploaded an xhtml/xform file
-            schema,err = form_translate( file_name, input_stream.read() )
-            if err is not None:
-                if err.lower().find("exception") != -1:
-                    raise IOError, ("Could not convert xform (%s) to schema." % file_name) + \
-                                    " Please verify that this is a valid xform file."
+            schema,err,has_error = form_translate( file_name, input_stream.read() )
+            if has_error:
+                raise IOError, ("Could not convert xform (%s) to schema." % file_name) + \
+                                " Please verify that this is a valid xform file."
             fout = open(new_file_name, 'w')
             fout.write( schema )
             fout.close()
@@ -47,16 +46,15 @@ class XFormManager(object):
            with it.  These two methods should be merged.'''
         transaction_str = str(uuid.uuid1())
         logging.debug("temporary file name is " + transaction_str)                
-        new_file_name = self.__xsd_file_name(transaction_str)
+        new_file_name = self._xsd_file_name(transaction_str)
         if type == "xsd":
             fout = open(new_file_name, 'w')
             fout.write( schema ) 
             fout.close()
         else: 
-            schema,err = form_translate( file_name, schema )
-            if err is not None:
-                if err.lower().find("exception") != -1:
-                    raise IOError, "XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + file_name + "\nerror: " + str(err)
+            schema,err,has_error = form_translate( file_name, schema )
+            if has_error:
+                raise IOError, "XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + file_name + "\nerror: " + str(err)
             fout = open(new_file_name, 'w')
             fout.write( schema )
             fout.close()
@@ -72,15 +70,16 @@ class XFormManager(object):
         formdefmodel.save()
         return formdefmodel
 
-    def __xsd_file_name(self, name):
-        return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], str(name) + '-xsd.xml')
+    def _xsd_file_name(self, name):
+        return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], 
+                            str(name) + '-xsd.xml')
 
 def form_translate(name, input_stream):
+    '''Translates an xform into an xsd file'''
     logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
     p = subprocess.Popen(["java","-jar",os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
     
-    #output,error = p.communicate( input_stream )    
     p.stdin.write(input_stream)
     p.stdin.flush()
     p.stdin.close()
@@ -88,5 +87,9 @@ def form_translate(name, input_stream):
     output = p.stdout.read()    
     error = p.stderr.read()
     
+    # error has data even when things go perfectly, so return both
+    # the full stream and a boolean indicating whether there was an
+    # error.  This should be fixed in a cleaner way.
+    has_error = "exception" in error.lower() 
     logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
-    return (output,error)
+    return (output,error, has_error)

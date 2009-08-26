@@ -1,13 +1,13 @@
 {% extends base_template %}
 {% load i18n %}
-{% block title %}{% trans "All Submissions" %}{% endblock %}
-<!-- stylesheets -->
-{% block page_stylesheets %}
-    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
-{% endblock %}
+{% block title %}{% trans "All Builds" %}{% endblock %}
 {% block content %}
-<h2>{% trans "All builds " %} {{project}}</h2>
-
-{% include "buildmanager/partials/build_table.html" %}
-
+{% if all_builds %} 
+{% for project, build_map in all_builds.items %}
+<h2>{% trans "Builds for Project: " %} {{project}}</h2>
+{% include "buildmanager/partials/project_builds.html" %}
+{% endfor %}
+{% else %}
+Sorry, we couldn't find any projects for {{ domain }}
+{% endif %}
 {%endblock%}

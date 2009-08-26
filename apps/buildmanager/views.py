@@ -7,6 +7,7 @@ from hq.models import Domain
 
 from buildmanager.models import *
 from buildmanager.forms import *
+from buildmanager.jar import validate_jar
 
 from rapidsms.webui.utils import render_to_response
 
@@ -24,7 +25,7 @@ import urllib
 
 @login_required()
 def all_projects(request, template_name="buildmanager/all_projects.html"):    
-    context = {}    
+    context = {}
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
         context['projects'] = Project.objects.filter(domain=extuser.domain)
@@ -37,8 +38,9 @@ def all_projects(request, template_name="buildmanager/all_projects.html"):
 def show_project(request, project_id, template_name="buildmanager/show_project.html"):    
     context = {}
     try:
-        context['project'] = Project.objects.get(id=project_id)
-        context['builds'] = ProjectBuild.objects.filter(project=context['project']).order_by('-package_created')
+        project = Project.objects.get(id=project_id)
+        context['project'] = project
+        context['build_map'] = _get_single_project_builds(project)
     except:
         raise Http404    
     return render_to_response(request, template_name, context)
@@ -48,34 +50,32 @@ def all_builds(request, template_name="buildmanager/all_builds.html"):
     context = {}    
     try: 
         extuser = ExtUser.objects.all().get(id=request.user.id)
-        context['builds'] = ProjectBuild.objects.filter(project__domain=extuser.domain).order_by('-package_created')
-    except ExtUser.DoesNotExist:
-        context['builds'] = ProjectBuild.objects.all().order_by('-package_created')
-    return render_to_response(request, template_name, context)
-
-
-@login_required()
-def project_builds(request, template_name="buildmanager/all_builds.html"):    
-    context = {}
-    try: 
-        extuser = ExtUser.objects.all().get(id=request.user.id)
+        context["domain"] = extuser.domain
+        projects = Project.objects.filter(domain=extuser.domain)
+        builds = _get_build_dictionary(projects)
+        context['all_builds'] = builds
     except ExtUser.DoesNotExist:
         template_name="hq/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))    
-
-    
-    try:
-        context['builds'] = ProjectBuild.objects.filter(project__domain=extuser.domain).order_by('-package_created')
-    except:
-        raise Http404
+        return render_to_response(request, template_name, context)
     return render_to_response(request, template_name, context)
-    
-    
+
+def _get_build_dictionary(projects):
+    builds = {}
+    for project in projects:
+        builds[project] = _get_single_project_builds(project)
+    return builds  
+
+def _get_single_project_builds(project):
+    this_project_dict = {}
+    this_project_dict["normal"] = project.get_non_released_builds()
+    this_project_dict["release"] = project.get_released_builds()
+    return this_project_dict
+        
 @login_required()
 def show_build(request, build_id, template_name="buildmanager/show_build.html"):    
     context = {}
     try:
-        context['builds'] = ProjectBuild.objects.get(id=build_id)
+        context['build'] = ProjectBuild.objects.get(id=build_id)
     except:
         raise Http404
     return render_to_response(request, template_name, context)
@@ -90,12 +90,9 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
     try:
         proj = Project.objects.get(id=project_id)
         build = ProjectBuild.objects.filter(project=proj).get(build_number=build_number)
-        print proj
-        print build
         
         if filename.endswith('.jar'):
             fpath = os.path.basename(build.jar_file)
-            print fpath
             if fpath != filename:
                 raise Http404
             
@@ -106,7 +103,6 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
             
         elif filename.endswith('.jad'):
             fpath = os.path.basename(build.jad_file)
-            print fpath
             mtype = mimetypes.guess_type(build.jad_file)[0]            
             if fpath != filename:
                 raise Http404
@@ -123,11 +119,30 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
         
         return response
     except Exception, e:
-        print e        
+        logging.error("problem accessing buildfile: %s" % e)
         raise Http404
        
-    
-    
+@login_required
+def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
+    try: 
+        build = ProjectBuild.objects.get(id=build_id)
+    except ProjectBuild.DoesNotExist:
+        raise Http404
+    try:
+        jarfile = build.jar_file
+        validate_jar(jarfile)
+        build.release(request.user)
+        return render_to_response(request, template_name, { "build": build })
+    except BuildError, e:
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
+        logging.error(error_string)
+        return render_to_response(request, "500.html", {"error_message" : error_string})
+    except Exception, e:
+        # we may want to differentiate from expected (BuildError) and unexpected
+        # (everything else) errors down the road, for now we treat them the same.
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
+        logging.error(error_string)
+        return render_to_response(request, "500.html", {"error_message" : error_string})
 
 
 @login_required
