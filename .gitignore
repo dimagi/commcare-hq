@@ -5,6 +5,7 @@ local.ini
 data/attachments/*
 data/submissions/*
 data/schemas/*
+data/builds/*
 export/*
 bad/*
 rapidsms-django.log*
