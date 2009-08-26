@@ -48,6 +48,7 @@ def extract_and_process(file_name, callback, *additional_args):
     os.mkdir(folder_name)
     try:
         print "Extracting %s to %s" % (file_name, folder_name)
+        if not tarfile.is_tarfile(file_name): raise Exception("Not a tarfile")
         tar = tarfile.open(file_name)
         tar.extractall(folder_name)
         tar.close()
