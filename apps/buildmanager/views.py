@@ -132,7 +132,10 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
         jarfile = build.jar_file
         validate_jar(jarfile)
         build.release(request.user)
-        return render_to_response(request, template_name, { "build": build })
+        context = {}
+        context["build"] = build
+        context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl()) 
+        return render_to_response(request, template_name, context)
     except BuildError, e:
         error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
         logging.error(error_string)
