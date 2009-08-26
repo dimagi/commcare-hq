@@ -113,6 +113,14 @@ class ProjectBuild(models.Model):
         else:            
             super(ProjectBuild, self).save()
     
+    def get_jar_filename(self):
+        '''Returns the name (no paths) of the jar file'''
+        return os.path.basename(self.jar_file)
+    
+    def get_jad_filename(self):
+        '''Returns the name (no paths) of the jad file'''
+        return os.path.basename(self.jad_file)
+    
     def get_jar_filestream(self):
         
         try:

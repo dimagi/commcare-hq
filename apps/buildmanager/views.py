@@ -119,7 +119,7 @@ def get_latest_buildfile(request, project_id, filename, template_name=None):
         
 def _get_buildfile(request,project, build, filename):
     if filename.endswith('.jar'):
-        fpath = os.path.basename(build.jar_file)
+        fpath = build.get_jar_filename()
         if fpath != filename:
             raise Http404
         
@@ -128,7 +128,7 @@ def _get_buildfile(request,project, build, filename):
         fin = build.get_jar_filestream()            
 
     elif filename.endswith('.jad'):
-        fpath = os.path.basename(build.jad_file)
+        fpath = build.get_jad_filename()
         mtype = mimetypes.guess_type(build.jad_file)[0]            
         if fpath != filename:
             raise Http404
