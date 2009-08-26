@@ -1,6 +1,10 @@
-{% extends base_template %}
+{% extends "buildmanager/base.html" %}
 {% load i18n %}
 {% block title %}{% trans "Build Details" %}{% endblock %}
-{% block content %}
-Here's your build as a string {{ build }}
+{% block buildmanager_content %}
+{% if build %} 
+{% include "buildmanager/partials/single_build.html" %}
+{% else %}
+Sorry, the build with that ID couldn't be found.
+{% endif %}
 {%endblock%}

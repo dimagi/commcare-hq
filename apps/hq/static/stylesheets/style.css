@@ -474,6 +474,11 @@ p.error {
     color: red;
 }
 
+p.subheading {
+    font-size: 14px;
+    margin: 8px;
+}
+
 #government-report th {
 	text-align: center;
     border:  2px #404040 solid;

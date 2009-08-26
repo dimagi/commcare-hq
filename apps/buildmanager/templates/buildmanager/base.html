@@ -1,0 +1,9 @@
+{% extends base_template %}
+{% block content %}
+<p class="subheading">
+<a href="{% url buildmanager.views.all_projects %}">Projects</a> |  
+<a href="{% url buildmanager.views.all_builds %}"> Builds</a>
+</p>
+{% block buildmanager_content %}
+{% endblock %}
+{% endblock %}
