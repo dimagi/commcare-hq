@@ -22,7 +22,9 @@ class Submissions(Resource):
         TODO - make this mutipart/byte-friendly
         """
         
-        submissions = Submission.objects.all().order_by('id')
+        # for synchronization, this should be the default ordering
+        submissions = Submission.objects.order_by('-submit_time').order_by('-id')
+
         # domain_id=0 is a temporary hack until we get server-server authentication
         # working properly
         if domain_id != 0:
@@ -41,6 +43,13 @@ class Submissions(Resource):
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             submissions = submissions.filter(submit_time__lte=date)
+        if request.REQUEST.has_key('received_count'):
+            # when the satellite server specifies how many it has received
+            # the master server responds with all the missing submissions
+            received_count = int(request.GET['received_count'])
+            count = submissions.count()
+            missing_count = count - received_count
+            submissions = submissions[0:missing_count]
         if 'export_path' not in settings.RAPIDSMS_APPS['receiver']:
             return HttpResponseBadRequest("Please set 'export_path' " + \
                                           "in your cchq receiver settings.")
