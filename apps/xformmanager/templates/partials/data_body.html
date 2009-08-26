@@ -34,6 +34,11 @@
 		     <th class="sorted-{% if sort_descending %}descending{% else %}ascending{% endif %}">
 		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}">
 		         {{col}}&nbsp&nbsp&nbsp
+		         {% comment %}
+		          The unfortunate spaces above are because I don't understand 
+		          web markup/css enough to make the arrow not go over the text
+		          without this hack.  Someone more skilled should fix.
+                 {% endcomment %}		           
 		     </th>
           {% else %}
 		     <th><a href="?sort_column={{col}}">{{col}}</th>

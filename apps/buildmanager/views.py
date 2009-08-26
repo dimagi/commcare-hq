@@ -41,6 +41,7 @@ def show_project(request, project_id, template_name="buildmanager/show_project.h
         project = Project.objects.get(id=project_id)
         context['project'] = project
         context['build_map'] = _get_single_project_builds(project)
+        context['latest_build'] = project.get_latest_released_build()
     except:
         raise Http404    
     return render_to_response(request, template_name, context)
@@ -72,7 +73,18 @@ def _get_single_project_builds(project):
     return this_project_dict
         
 @login_required()
-def show_build(request, build_id, template_name="buildmanager/show_build.html"):    
+def show_latest_build(request, project_id, template_name="buildmanager/show_build.html"):
+    context = {}
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        raise Http404
+    build = project.get_latest_released_build()
+    context['build'] = build
+    return render_to_response(request, template_name, context)
+
+@login_required()
+def show_build(request, build_id, template_name="buildmanager/show_build.html"):
     context = {}
     try:
         context['build'] = ProjectBuild.objects.get(id=build_id)
@@ -80,48 +92,59 @@ def show_build(request, build_id, template_name="buildmanager/show_build.html"):
         raise Http404
     return render_to_response(request, template_name, context)
 
-
-
-@login_required()
 def get_buildfile(request,project_id, build_number, filename, template_name=None):    
-    """For a given build, we now have a direct and unique download URL for it within a given project
-    This will directly stream the file to the browser.  This is because we want to track download counts    
+    """For a given build, we now have a direct and unique download URL for it 
+       within a given project. This will directly stream the file to the 
+       browser.  This is because we want to track download counts    
     """
     try:
         proj = Project.objects.get(id=project_id)
         build = ProjectBuild.objects.filter(project=proj).get(build_number=build_number)
-        
-        if filename.endswith('.jar'):
-            fpath = os.path.basename(build.jar_file)
-            if fpath != filename:
-                raise Http404
-            
-            
-            mtype = mimetypes.guess_type(build.jar_file)[0]
-            build.jar_download_count += 1
-            fin = build.get_jar_filestream()            
-            
-        elif filename.endswith('.jad'):
-            fpath = os.path.basename(build.jad_file)
-            mtype = mimetypes.guess_type(build.jad_file)[0]            
-            if fpath != filename:
-                raise Http404
-            
-            build.jad_download_count += 1
-            fin = build.get_jad_filestream()        
-        if mtype == None:
-            response = HttpResponse(mimetype='text/plain')
-        else:
-            response = HttpResponse(mimetype=mtype)
-        response.write(fin.read())
-        fin.close() 
-        build.save()
-        
-        return response
+        return _get_buildfile(request, proj, build, filename)
     except Exception, e:
-        logging.error("problem accessing buildfile: %s" % e)
-        raise Http404
+        return _handle_error("problem accessing build/file: %s/%s for project: %s. error is: %s" % 
+                             (build_number, filename, project_id, e))
        
+def get_latest_buildfile(request, project_id, filename, template_name=None):
+    '''Gets the latest released build file for a given project'''
+    try:
+        proj = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        raise Http404
+    build = proj.get_latest_released_build() 
+    if build:
+        return _get_buildfile(request, proj, build, filename)
+    else:
+        raise Http404
+        
+def _get_buildfile(request,project, build, filename):
+    if filename.endswith('.jar'):
+        fpath = build.get_jar_filename()
+        if fpath != filename:
+            raise Http404
+        
+        mtype = mimetypes.guess_type(build.jar_file)[0]
+        build.jar_download_count += 1
+        fin = build.get_jar_filestream()            
+
+    elif filename.endswith('.jad'):
+        fpath = build.get_jad_filename()
+        mtype = mimetypes.guess_type(build.jad_file)[0]            
+        if fpath != filename:
+            raise Http404
+        
+        build.jad_download_count += 1
+        fin = build.get_jad_filestream()        
+    
+    if mtype == None:
+        response = HttpResponse(mimetype='text/plain')
+    else:
+        response = HttpResponse(mimetype=mtype)
+    response.write(fin.read())
+    fin.close() 
+    build.save()
+    return response
+
 @login_required
 def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
     try: 
@@ -132,17 +155,19 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
         jarfile = build.jar_file
         validate_jar(jarfile)
         build.release(request.user)
-        return render_to_response(request, template_name, { "build": build })
+        context = {}
+        context["build"] = build
+        context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl()) 
+        return render_to_response(request, template_name, context)
     except BuildError, e:
         error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
-        logging.error(error_string)
-        return render_to_response(request, "500.html", {"error_message" : error_string})
+        return _handle_error(request, error_string)
     except Exception, e:
         # we may want to differentiate from expected (BuildError) and unexpected
         # (everything else) errors down the road, for now we treat them the same.
-        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
-        logging.error(error_string)
-        return render_to_response(request, "500.html", {"error_message" : error_string})
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, e) 
+        return _handle_error(request, error_string)
+        
 
 
 @login_required
@@ -175,3 +200,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     return render_to_response(request, template_name, context)
 
 
+def _handle_error(request, error_message):
+    """Handles an error, by logging it and returning a 500 page"""
+    logging.error(error_message)
+    return render_to_response(request, "500.html", {"error_message" : error_message})

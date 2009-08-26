@@ -1,7 +1,7 @@
-{% extends base_template %}
+{% extends "buildmanager/base.html" %}
 {% load i18n %}
 {% block title %}{% trans "All Builds" %}{% endblock %}
-{% block content %}
+{% block buildmanager_content %}
 {% if all_builds %} 
 {% for project, build_map in all_builds.items %}
 <h2>{% trans "Builds for Project: " %} {{project}}</h2>

@@ -58,8 +58,9 @@ def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created
         context['log'] = instance    
         rendered_text = render_to_string("logtracker/alert_display.html", context)
         
-        #Send it to an email address baked into the settings/ini file.
-        eml.send_email("[Commcare-hq Alert] " + instance.message, 
+        # Send it to an email address baked into the settings/ini file.
+        # restrict the subject to 78 characters to comply with the RFC  
+        eml.send_email(("[Commcare-hq Alert] " + instance.message)[:78], 
                        settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
                        rendered_text)    
                 

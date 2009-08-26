@@ -1,4 +1,3 @@
-{% load i18n %}
 {% if builds %}
 <table>
 <thead>
@@ -14,7 +13,7 @@
 </thead>
 {% for build in builds %}
     <tr>
-        <td>{{build.build_number}}</td>
+        <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>
         <td><a href="{{build.get_jar_downloadurl}}">{{build.jar_file}}</a></td>
         <td><a href="{{build.get_jad_downloadurl}}">{{build.jad_file}}</a></td>
