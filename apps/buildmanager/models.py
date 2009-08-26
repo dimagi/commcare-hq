@@ -5,24 +5,46 @@ from hq.models import Domain
 import os
 import logging
 import settings
+from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-
 BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
+
+class BuildError(Exception):
+    """Generic error for the Build Manager to throw"""
+    pass
 
 class Project (models.Model):
     """
-    A project is a high level container for a given build project.  A project can contain
-    a history of builds
+    A project is a high level container for a given build project.  A project 
+    can contain a history of builds
     """
     domain = models.ForeignKey(Domain) 
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=512, null=True, blank=True)
+    # the optional project id in a different server (e.g. the build server)
+    project_id = models.CharField(max_length=20, null=True, blank=True)
     
+    def get_non_released_builds(self):
+        '''Get all non-released builds for this project'''
+        return self.builds.exclude(status="release").order_by('-package_created')
     
+    def get_released_builds(self):
+        '''Get all released builds for a project'''
+        return self.builds.filter(status="release").order_by('-released')
+        
+    def get_latest_released_build(self):
+        '''Gets the latest released build for a project, based on the 
+           released date.'''
+        releases = self.get_released_builds()
+        if releases:
+           return releases[0]
+        
+        
     def num_builds(self):
-        return ProjectBuild.objects.filter(project=self).count()
+        '''Get the number of builds associated with this project'''
+        return self.builds.all().count()
     
     def __unicode__(self):
         return unicode(self.name)
@@ -30,26 +52,30 @@ class Project (models.Model):
 
 BUILD_STATUS = (    
     ('build', 'Standard Build'),    
-    ('alpha', 'Alpha'),
-    ('beta', 'Beta'),
-    ('rc', 'Release Candidate'),    
+    # CZUE: removed extraneous build types to make this as simple as possible
+    # we may want to reintroduce these down the road when we really sort
+    # out our processes
+    # ('alpha', 'Alpha'),
+    # ('beta', 'Beta'),
+    # ('rc', 'Release Candidate'),    
     ('release', 'Release'),   
 )
 
 
 class ProjectBuild(models.Model):
     '''When a jad/jar is built, it should correspond to a unique ReleasePackage
-    With all corresponding meta information on release info and build information such that
-    it can be traced back to a url/build info in source control.'''    
-    project = models.ForeignKey(Project)
+    With all corresponding meta information on release info and build 
+    information such that it can be traced back to a url/build info in source 
+    control.'''    
+    project = models.ForeignKey(Project, related_name="builds")
     
-    #we have it as a User here because we want our build server to be able to push without knowledge of domains
-    uploaded_by = models.ForeignKey(User) 
+    # we have it as a User instead of ExtUser here because we want our 
+    # build server User to be able to push to multiple omains
+    uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
        
     build_number = models.CharField(max_length=255)       
     revision_number = models.CharField(max_length=255, null=True, blank=True)
-     
     package_created = models.DateTimeField()    
       
     jar_file = models.FilePathField(_('JAR File Location'), 
@@ -68,8 +94,13 @@ class ProjectBuild(models.Model):
     jar_download_count = models.PositiveIntegerField(default=0)
     jad_download_count = models.PositiveIntegerField(default=0)
     
+    # release info
+    released = models.DateTimeField(null=True, blank=True)
+    released_by = models.ForeignKey(User, null=True, blank=True, related_name="builds_released")
     
-    
+    def __unicode__(self):
+        return "%s build: %s" % (self.project, self.build_number)
+
     
     def save(self):
         """Override save to provide some simple enforcement of uniqueness to the build numbers
@@ -105,7 +136,6 @@ class ProjectBuild(models.Model):
                                self.build_number, 
                                 os.path.basename(self.jar_file)))
         
-        
     def get_jad_downloadurl(self):
         """do a reverse to get the urls for the given project/buildnumber for the direct download"""
         return reverse('get_buildfile', 
@@ -124,7 +154,7 @@ class ProjectBuild(models.Model):
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
-            self.jad_file = newfilename
+            self.jad_file = new_file_name 
         except Exception, e:
             logging.error("Error, saving jadfile failed", extra={"exception":e, "jad_filename":filename})
         
@@ -134,10 +164,10 @@ class ProjectBuild(models.Model):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
         try:
             new_file_name = self._get_destination(filename)
-            fout = open(new_file_name, 'w')
+            fout = open(new_file_name, 'wb')
             fout.write( filestream.read() )
             fout.close()
-            self.jar_file = newfilename
+            self.jar_file = new_file_name
         except Exception, e:
             logging.error("Error, saving jarfile failed", extra={"exception":e, "jar_filename":filename})
         
@@ -148,4 +178,16 @@ class ProjectBuild(models.Model):
                                            str(self.build_number))
         if not os.path.exists(destinationpath):
             os.makedirs(destinationpath)        
-        return os.path.join(destinationpath, os.path.basename(str(filename)))    
+        return os.path.join(destinationpath, os.path.basename(str(filename)))  
+    
+    def release(self, user):
+        '''Release a build, by setting its status as such.'''
+        if self.status == "release":
+            raise BuildError("Tried to release an already released build!")
+        else:
+            self.status = "release"
+            self.released = datetime.now()
+            self.released_by = user
+            self.save()
+        
+    

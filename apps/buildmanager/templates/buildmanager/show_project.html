@@ -1,10 +1,6 @@
 {% extends base_template %}
 {% load i18n %}
 {% block title %}{% trans "All Projects" %}{% endblock %}
-<!-- stylesheets -->
-{% block page_stylesheets %}
-    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
-{% endblock %}
 {% block content %}
 <h2>{% trans "Project" %} {{project.name}}</h2>
 <h3>Description</h3>
@@ -13,12 +9,7 @@
 <br><br>
 
 
-{% if builds %}
-<h3>Builds</h3>
-{% include "buildmanager/partials/build_table.html" %}
-{%else%}
-<strong>No builds</strong>
+{% if build_map %}
+{% include "buildmanager/partials/project_builds.html" %}
 {% endif %}
-{%endblock%}
-
-
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{% trans "Build Released!" %}{% endblock %}
+{% block content %}
+Build {{ build }} was successfully released!<br>
+Here is a unique URL for this build that can install the application on any Java-Enabled Phone:
+<a href="{{ build.get_jad_downloadurl }}">{{ build.get_jad_downloadurl }}</a>
+{%endblock%}
