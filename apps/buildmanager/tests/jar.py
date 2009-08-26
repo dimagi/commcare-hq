@@ -1,9 +1,11 @@
 import unittest
 import os
-from buildmanager.jar import *
 from datetime import datetime
 import time
 import shutil
+
+from xformmanager.models import MetaDataValidationError
+from buildmanager.jar import *
 
 class JarTestCase(unittest.TestCase):
     
@@ -11,6 +13,9 @@ class JarTestCase(unittest.TestCase):
         # set some variables we'll use to process our jar file
         self.path = os.path.dirname(__file__)
         self.jarfile = os.path.join(self.path, "Test.jar")
+        self.extra_jar = os.path.join(self.path, "ExtraMetaField.jar")
+        self.missing_jar = os.path.join(self.path, "MissingMetaField.jar")
+        self.duplicate_jar = os.path.join(self.path, "DuplicateMetaField.jar")
         self.output_dir = os.path.join(self.path, "jarout-%s" % time.time())
         
 
@@ -37,3 +42,26 @@ class JarTestCase(unittest.TestCase):
 
     def testValidateJar(self):
         validate_jar(self.jarfile)
+        try:
+            validate_jar(self.missing_jar)
+            self.fail("Missing meta field did not raise an exception")
+        except MetaDataValidationError, e:
+            self.assertTrue(e.missing)
+            self.assertFalse(e.duplicate)
+            self.assertFalse(e.extra)
+        try:
+            validate_jar(self.extra_jar)
+            self.fail("Extra meta field did not raise an exception")
+        except MetaDataValidationError, e:
+            self.assertTrue(e.extra)
+            self.assertFalse(e.duplicate)
+            self.assertFalse(e.missing)
+        try:
+            validate_jar(self.duplicate_jar)
+            self.fail("Missing meta field did not raise an exception")
+        except MetaDataValidationError, e:
+            self.assertTrue(e.duplicate)
+            self.assertFalse(e.missing)
+            self.assertFalse(e.extra)
+    
+            
