@@ -50,17 +50,12 @@ def download_xforms(remote_url, username, password, latest=True):
         # increasing id's. I doubt this is always the case.
         # TODO: fix 
         start_id = -1
-        try: start_id = django_model.objects.order_by('-id')[0].pk + 1
-        except IndexError: pass
-        if start_id != -1:
-            if url.find("?") == -1:
-                # no existing GET variables
-                url = url + ("?start-id=%s" % start_id)
-            else:
-                # add new GET variable
-                url = url + ("&start-id=%s" % start_id)
-        # TODO - update this to use content-disposition instead of FILE_NAME
+        received_count = django_model.objects.count()
+        if url.find("?") == -1: url = url + "?"
+        else: url = url + "&"
+        url = url + ("received_count=%s" % received_count)
         print "Hitting %s" % url
+        # TODO - update this to use content-disposition instead of FILE_NAME
         urllib.urlretrieve(url, to_file)
         print "Downloaded %s" % to_file
     
