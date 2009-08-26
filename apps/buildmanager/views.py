@@ -72,7 +72,7 @@ def _get_single_project_builds(project):
     return this_project_dict
         
 @login_required()
-def show_build(request, build_id, template_name="buildmanager/show_build.html"):    
+def show_build(request, build_id, template_name="buildmanager/show_build.html"):
     context = {}
     try:
         context['build'] = ProjectBuild.objects.get(id=build_id)
@@ -82,10 +82,10 @@ def show_build(request, build_id, template_name="buildmanager/show_build.html"):
 
 
 
-@login_required()
 def get_buildfile(request,project_id, build_number, filename, template_name=None):    
-    """For a given build, we now have a direct and unique download URL for it within a given project
-    This will directly stream the file to the browser.  This is because we want to track download counts    
+    """For a given build, we now have a direct and unique download URL for it 
+       within a given project. This will directly stream the file to the 
+       browser.  This is because we want to track download counts    
     """
     try:
         proj = Project.objects.get(id=project_id)
@@ -95,7 +95,6 @@ def get_buildfile(request,project_id, build_number, filename, template_name=None
             fpath = os.path.basename(build.jar_file)
             if fpath != filename:
                 raise Http404
-            
             
             mtype = mimetypes.guess_type(build.jar_file)[0]
             build.jar_download_count += 1
