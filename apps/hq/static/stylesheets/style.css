@@ -443,7 +443,12 @@ thead.commcare-heading
      
 }
 
-/* sort stuff.  this could be done really poorly */
+/* 
+   sort stuff.  this could be done really poorly 
+   but the author (Cory) is a css noob. If these
+   can somehow extend some base class and just
+   override the image that would be ideal.
+*/
 
 th.sorted-descending {
 	background-color: lightyellow;
