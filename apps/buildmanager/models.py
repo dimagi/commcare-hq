@@ -40,7 +40,10 @@ class Project (models.Model):
         releases = self.get_released_builds()
         if releases:
            return releases[0]
-        
+    
+    def get_buildURL(self):
+        """Hard coded build url for our build server"""
+        return 'http://build.dimagi.com:250/viewType.html?buildTypeId=%s' % self.project_id
         
     def num_builds(self):
         '''Get the number of builds associated with this project'''
@@ -109,6 +112,14 @@ class ProjectBuild(models.Model):
                 raise Exception ("Error, the build number must be unique for this project build: " + str(self.build_number) + " project: " + str(self.project.id))
         else:            
             super(ProjectBuild, self).save()
+    
+    def get_jar_filename(self):
+        '''Returns the name (no paths) of the jar file'''
+        return os.path.basename(self.jar_file)
+    
+    def get_jad_filename(self):
+        '''Returns the name (no paths) of the jad file'''
+        return os.path.basename(self.jad_file)
     
     def get_jar_filestream(self):
         

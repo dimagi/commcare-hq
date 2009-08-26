@@ -1,15 +1,21 @@
-{% extends base_template %}
+{% extends "buildmanager/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "All Projects" %}{% endblock %}
-{% block content %}
+{% block title %}{% trans "Builds for Project: " %}{{ project }}{% endblock %}
+{% block buildmanager_content %}
 <h2>{% trans "Project" %} {{project.name}}</h2>
 <h3>Description</h3>
 <p>{{project.description}}</p>
-<a href="{{project.get_buildURL}}">Build Server Entry</a>
+{% if latest_build %}
+   <b>Latest Build:</b>
+       <a href="{% url buildmanager.views.show_latest_build project.id %}">view</a> |   
+       <a href="{{latest_build.get_jad_downloadurl}}">download jad</a> | 
+       <a href="{{latest_build.get_jar_downloadurl}}">download jar</a>
+   <br>        
+{% endif %}
+<br>
+<a href="{{project.get_buildURL}}">View on Build Server</a>
 <br><br>
-
-
 {% if build_map %}
-{% include "buildmanager/partials/project_builds.html" %}
+    {% include "buildmanager/partials/project_builds.html" %}
 {% endif %}
 {% endblock %}
