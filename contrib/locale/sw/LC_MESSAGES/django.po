@@ -112,60 +112,60 @@ msgstr "Mama ambao wamefungulia"
 msgid "Other Active Cases (No Actions Required)"
 msgstr "Wajauzito wengine"
 
-msgid "safe_pregnancy_feeling"
+msgid "feeling"
 msgstr "akjisikia vibaya"
 
-msgid "safe_pregnancy_pain_from_vagina"
+msgid "pain_from_vagina"
 msgstr "ana matatizo ukeni"
 
-msgid "safe_pregnancy_headache_or_b_vision"
+msgid "headache_or_b_vision"
 msgstr "anaumwa na kichwa au kupata kizunguzungu"
 
-msgid "safe_pregnancy_dark_urine"
+msgid "dark_urine"
 msgstr "ana mkojo mweusi"
 
-msgid "safe_pregnancy_swelling"
+msgid "swelling"
 msgstr "anavimba miguu au vidole"
 
-msgid "safe_pregnancy_unusual_pain"
+msgid "unusual_pain"
 msgstr "ana maumivu ya tumbo"
 
-msgid "safe_pregnancy_burn_urinate"
+msgid "burn_urinate"
 msgstr "anasikia maumivu makali wakati anapokojoa"
 
-msgid "safe_pregnancy_baby_not_moving"
+msgid "baby_not_moving"
 msgstr "mtoto tumboni ameacha kucheza"
 
-msgid "safe_pregnancy_fever"
+msgid "fever"
 msgstr "amepata homa"
 
-msgid "safe_pregnancy_other_illness"
+msgid "other_illness"
 msgstr "ameugua magonjwa mengine (INSERT 'which_illness')"
 
-msgid "safe_pregnancy_heavy_bleeding"
+msgid "heavy_bleeding"
 msgstr "ametokwa damu nyingi"
 
-msgid "safe_pregnancy_fits"
+msgid "fits"
 msgstr "amekuwa na kifafa cha uzazi"
 
-msgid "safe_pregnancy_abdominal_pain_discharge"
+msgid "abdominal_pain_discharge"
 msgstr "ana maumivu makali ya tumbo au anatokwa na uchafu ukeni"
 
-msgid "safe_pregnancy_pain_bleeding_urination"
+msgid "pain_bleeding_urination"
 msgstr "anapata maumivu makali wakati wa kukojoa"
 
-msgid "safe_pregnancy_leg_swelling"
+msgid "leg_swelling"
 msgstr "miguu yake imevimba"
 
-msgid "safe_pregnancy_breast_problems"
+msgid "breast_problems"
 msgstr "kuna uvimbe kwenye maziwa"
 
-msgid "safe_pregnancy_uncontrolled_urination"
+msgid "uncontrolled_urination"
 msgstr "anashindwa kuzuia mkojo wake kutoka"
 
-msgid "safe_pregnancy_vaginal_stool_leaking"
+msgid "vaginal_stool_leaking"
 msgstr "kuna mkojo au kinyesi kinatokea ukeni"
 
-msgid "safe_pregnancy_anemia"
+msgid "anemia"
 msgstr "dalili za kupungufuwa damu"
 

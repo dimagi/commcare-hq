@@ -64,61 +64,61 @@ msgstr ""
 msgid "Everyone Else"
 msgstr ""
 
-msgid "safe_pregnancy_feeling"
+msgid "feeling"
 msgstr "not feeling well"
 
-msgid "safe_pregnancy_pain_from_vagina"
+msgid "pain_from_vagina"
 msgstr "vaginal pain"
 
-msgid "safe_pregnancy_headache_or_b_vision"
+msgid "headache_or_b_vision"
 msgstr "headache/blurred vision"
 
-msgid "safe_pregnancy_dark_urine"
+msgid "dark_urine"
 msgstr "dark urine"
 
-msgid "safe_pregnancy_swelling"
+msgid "swelling"
 msgstr "swelling of feet/fingers"
 
-msgid "safe_pregnancy_unusual_pain"
+msgid "unusual_pain"
 msgstr "unusual stomach pain"
 
-msgid "safe_pregnancy_burn_urinate"
+msgid "burn_urinate"
 msgstr "burns when urinating"
 
-msgid "safe_pregnancy_baby_not_moving"
+msgid "baby_not_moving"
 msgstr "baby stopped moving"
 
-msgid "safe_pregnancy_fever"
+msgid "fever"
 msgstr "fever"
 
-msgid "safe_pregnancy_other_illness"
+msgid "other_illness"
 msgstr "other illness (INSERT 'which_illness')"
 
-msgid "safe_pregnancy_heavy_bleeding"
+msgid "heavy_bleeding"
 msgstr "heavy vaginal bleeding"
 
-msgid "safe_pregnancy_fits"
+msgid "fits"
 msgstr "uncontrolled fits"
 
-msgid "safe_pregnancy_abdominal_pain_discharge"
+msgid "abdominal_pain_discharge"
 msgstr "abdominal pain/discharge"
 
-msgid "safe_pregnancy_pain_bleeding_urination"
+msgid "pain_bleeding_urination"
 msgstr "pain/blood when urinating"
 
-msgid "safe_pregnancy_leg_swelling"
+msgid "leg_swelling"
 msgstr "swelling of legs"
 
-msgid "safe_pregnancy_breast_problems"
+msgid "breast_problems"
 msgstr "swelling/redness of breasts"
 
-msgid "safe_pregnancy_uncontrolled_urination"
+msgid "uncontrolled_urination"
 msgstr "uncontrolled urination"
 
-msgid "safe_pregnancy_vaginal_stool_leaking"
+msgid "vaginal_stool_leaking"
 msgstr "urine/stool leaking through vagina"
 
-msgid "safe_pregnancy_anemia"
+msgid "anemia"
 msgstr "anemia symptoms"
 
 
