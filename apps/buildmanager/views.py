@@ -160,12 +160,12 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
         context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl()) 
         return render_to_response(request, template_name, context)
     except BuildError, e:
-        error_string = "Problem releasing build: %s, the error is: %s" % (build, e)
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, unicode(e))
         return _handle_error(request, error_string)
     except Exception, e:
         # we may want to differentiate from expected (BuildError) and unexpected
         # (everything else) errors down the road, for now we treat them the same.
-        error_string = "Problem releasing build: %s, the error is: %s" % (build, e) 
+        error_string = "Problem releasing build: %s, the error is: %s" % (build, unicode(e)) 
         return _handle_error(request, error_string)
         
 
