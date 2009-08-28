@@ -63,3 +63,115 @@ msgstr "Wanawake ambao wanahitaji Ufuatiliaji (Followup) (> mwezi 1 tangu Ufuati
 
 msgid "Everyone Else"
 msgstr "Wajauzito wengine"
+
+msgid "Mother Name"
+msgstr "Jina la Mama"
+
+msgid "Name of CHW"
+msgstr "Jina la Mhudumu wa Afya Vijijini"
+
+msgid "Months Pregnant"
+msgstr "Ujauzito ina miezi mingapi"
+
+msgid "Danger Signs"
+msgstr "Ugonjwa gani"
+
+msgid "Date Referred"
+msgstr "Tarehe ya rufaa"
+
+msgid "Last Referral Visit by CHW"
+msgstr "Tarehe ya ziara ya Mhudumu wa Afya Vijijini"
+
+msgid "Days Since Last Seen"
+msgstr "Siku ngapi tangu ziara ya mwisho"
+
+msgid "High Risk Factors"
+msgstr "Dalili za hatari gani"
+
+msgid "Incomplete Checklist Items"
+msgstr "Maandalizi Kabla ya Kujifungua"
+
+msgid "Outcome (Birth/Termination/etc.)"
+msgstr "Nini kilichotokea"
+
+msgid "# Children survived"
+msgstr "Watoto wangapi walinusurika"
+
+msgid "Children registered?"
+msgstr "Watoto wameandikishwa kliniki?"
+
+msgid "Mother survived?"
+msgstr "Mama alinusurika?"
+
+msgid "Delivery location"
+msgstr "Alifungulia wapi"
+
+msgid "Closed Cases"
+msgstr "Mama ambao wamefungulia"
+
+msgid "Other Active Cases (No Actions Required)"
+msgstr "Wajauzito wengine"
+
+msgid "feeling"
+msgstr "akjisikia vibaya"
+
+msgid "pain_from_vagina"
+msgstr "ana matatizo ukeni"
+
+msgid "headache_or_b_vision"
+msgstr "anaumwa na kichwa au kupata kizunguzungu"
+
+msgid "dark_urine"
+msgstr "ana mkojo mweusi"
+
+msgid "swelling"
+msgstr "anavimba miguu au vidole"
+
+msgid "unusual_pain"
+msgstr "ana maumivu ya tumbo"
+
+msgid "burn_urinate"
+msgstr "anasikia maumivu makali wakati anapokojoa"
+
+msgid "baby_not_moving"
+msgstr "mtoto tumboni ameacha kucheza"
+
+msgid "fever"
+msgstr "amepata homa"
+
+msgid "other_illness"
+msgstr "ameugua magonjwa mengine (INSERT 'which_illness')"
+
+msgid "heavy_bleeding"
+msgstr "ametokwa damu nyingi"
+
+msgid "fits"
+msgstr "amekuwa na kifafa cha uzazi"
+
+msgid "abdominal_pain_discharge"
+msgstr "ana maumivu makali ya tumbo au anatokwa na uchafu ukeni"
+
+msgid "pain_bleeding_urination"
+msgstr "anapata maumivu makali wakati wa kukojoa"
+
+msgid "leg_swelling"
+msgstr "miguu yake imevimba"
+
+msgid "breast_problems"
+msgstr "kuna uvimbe kwenye maziwa"
+
+msgid "uncontrolled_urination"
+msgstr "anashindwa kuzuia mkojo wake kutoka"
+
+msgid "vaginal_stool_leaking"
+msgstr "kuna mkojo au kinyesi kinatokea ukeni"
+
+msgid "anemia"
+msgstr "dalili za kupungufuwa damu"
+
+msgid "yes"
+msgstr "ndio"
+
+msgid "no"
+msgstr "hapana"
+

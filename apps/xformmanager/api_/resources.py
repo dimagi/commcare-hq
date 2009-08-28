@@ -32,14 +32,15 @@ class XFormApi(Resource):
 # api/xforms
 class XFormSchemata(Resource):
     def read(self, request, template= 'api_/xforms.xml'):
-        """ lists all registered schemas """
-        try:
-            extuser = ExtUser.objects.get(id=request.user.id)
-        except ExtUser.DoesNotExist:
-            return HttpResponseBadRequest("You do not have permission to use this API.")
-        xforms = FormDefModel.objects.filter(domain=extuser.domain).order_by('id')
-        if not xforms: return HttpResponseBadRequest(\
-            "No schemas have been registered for %s." % extuser.domain)
+        xforms = FormDefModel.objects.order_by('id')
+        if not request.REQUEST.has_key('format') or request.GET['format'].lower() != 'sync':
+            # temporary measure until we get server-server authentication working
+            # TODO - remove
+            try:
+                extuser = ExtUser.objects.get(id=request.user.id)
+            except ExtUser.DoesNotExist:
+                return HttpResponseBadRequest("You do not have permission to use this API.")
+            xforms = xforms.filter(domain=extuser.domain)
         # using django's lazy queryset evaluation awesomeness
         if request.REQUEST.has_key('start-id'):
             xforms = xforms.filter(pk__gte=request.GET['start-id'])
@@ -51,13 +52,19 @@ class XFormSchemata(Resource):
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             xforms = xforms.filter(submit_time__lte=date)
+        if not xforms:
+            return HttpResponseBadRequest("No schemas have been registered.")
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'sync':
                 # this is a special case: used for server synchronization
                 # so we pass *all* data (not just a subset)
+                if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
+                    return HttpResponseBadRequest("Please set 'export_path' " + \
+                                                  "in your cchq xformmanager settings.")
                 file_list = []
                 for schema in xforms:
-                    file_list.append( schema.xsd_file_location )
+                    exported_file = self._full_schema_to_file(schema)
+                    if exported_file: file_list.append( exported_file )
                 export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
                 export_file = os.path.join(export_path, "commcarehq-schemata.tar")
                 return get_tarfile(file_list, export_file)
@@ -82,6 +89,34 @@ class XFormSchemata(Resource):
                 return response
         # default to CSV
         return get_csv_from_django_query(xforms, fields)
+        
+    def _full_schema_to_file(self, schema):
+        """ exports schema to file and returns full path to exported file """
+        file_loc = schema.xsd_file_location
+        if not file_loc:
+            return
+        headers = {
+            "original-submit-time" : str(schema.submit_time),
+            "original-submit-ip" : str(schema.submit_ip),
+            "bytes-received" : schema.bytes_received,
+            "form-name" : schema.form_name,
+            "form-display-name" : schema.form_display_name,
+            "target-namespace" : schema.target_namespace,
+            "date-created" : str(schema.date_created),
+            "domain" : str(schema.get_domain)
+            }
+        dir, filename = os.path.split(file_loc)
+        export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
+        write_file = os.path.join(export_path, \
+                                  filename.replace(".xml", ".xsdexport"))
+        fout = open(write_file, 'w')
+        fout.write( simplejson.dumps(headers) + "\n\n" )
+        xsd_file = open(file_loc, "r")
+        payload = xsd_file.read()
+        xsd_file.close()
+        fout.write(payload)
+        fout.close()
+        return write_file
 
 # api/xforms/(?P<formdef_id>\d+)/schema 
 class XFormSchema(Resource):
