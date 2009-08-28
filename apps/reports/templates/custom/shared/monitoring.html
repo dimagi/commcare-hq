@@ -50,10 +50,10 @@
             <tr class="{% cycle 'odd' 'even' %}">
             <td>{% if mother.mother_name %}{{ mother.mother_name }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{% if mother.chw %}{{ mother.chw }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
-            <td>{% if mother.closed_outcome %}{{ mother.closed_outcome }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.closed_outcome %}{% trans mother.closed_outcome %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{% if mother.children_survived %}{{ mother.children_survived }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
-            <td>{% if mother.children_registered %}{{ mother.children_registered }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
-            <td>{% if mother.mother_survived %}{{ mother.mother_survived }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.children_registered %}{% trans mother.children_registered %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.mother_survived %}{% trans mother.mother_survived %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{% if mother.birth_location %}{{ mother.birth_location }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             </tr>
         {% endfor %}

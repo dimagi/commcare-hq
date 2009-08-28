@@ -169,3 +169,9 @@ msgstr "kuna mkojo au kinyesi kinatokea ukeni"
 msgid "anemia"
 msgstr "dalili za kupungufuwa damu"
 
+msgid "yes"
+msgstr "ndio"
+
+msgid "no"
+msgstr "hapana"
+
