@@ -12,7 +12,7 @@
 	   <thead class="commcare-heading">
 	       <tr>
 	       {% for heading in form.get_column_names %}
-	           <th>{{ heading }}</th>	
+	           <th>{% trans heading %}</th>	
 	       {% endfor%}
 	       </tr>
        </thead>

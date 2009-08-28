@@ -64,3 +64,61 @@ msgstr ""
 msgid "Everyone Else"
 msgstr ""
 
+msgid "feeling"
+msgstr "not feeling well"
+
+msgid "pain_from_vagina"
+msgstr "vaginal pain"
+
+msgid "headache_or_b_vision"
+msgstr "headache/blurred vision"
+
+msgid "dark_urine"
+msgstr "dark urine"
+
+msgid "swelling"
+msgstr "swelling of feet/fingers"
+
+msgid "unusual_pain"
+msgstr "unusual stomach pain"
+
+msgid "burn_urinate"
+msgstr "burns when urinating"
+
+msgid "baby_not_moving"
+msgstr "baby stopped moving"
+
+msgid "fever"
+msgstr "fever"
+
+msgid "other_illness"
+msgstr "other illness (INSERT 'which_illness')"
+
+msgid "heavy_bleeding"
+msgstr "heavy vaginal bleeding"
+
+msgid "fits"
+msgstr "uncontrolled fits"
+
+msgid "abdominal_pain_discharge"
+msgstr "abdominal pain/discharge"
+
+msgid "pain_bleeding_urination"
+msgstr "pain/blood when urinating"
+
+msgid "leg_swelling"
+msgstr "swelling of legs"
+
+msgid "breast_problems"
+msgstr "swelling/redness of breasts"
+
+msgid "uncontrolled_urination"
+msgstr "uncontrolled urination"
+
+msgid "vaginal_stool_leaking"
+msgstr "urine/stool leaking through vagina"
+
+msgid "anemia"
+msgstr "anemia symptoms"
+
+

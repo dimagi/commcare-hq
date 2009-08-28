@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import *
-
+import hq.views as views
 
 urlpatterns = patterns('',
     (r'^$', 'hq.views.dashboard'),    
@@ -11,8 +11,9 @@ urlpatterns = patterns('',
     (r'^report/email/?$', 'hq.views.org_email_report'),    
     (r'^report/sms/?$', 'hq.views.org_sms_report'),    
     
-    
-    
+    url(r'^reporters/add$',         views.add_reporter,  name="add-reporter"),
+    url(r'^reporters/(?P<pk>\d+)$', views.edit_reporter, name="view-reporter"),
+       
     (r'^charts/default/?$', 'hq.views.summary_trend'),
     (r'^charts/?$', 'hq.views.domain_charts'),    
     (r'^stats/?$', 'hq.views.reporter_stats'),

@@ -6,6 +6,7 @@ from receiver.api_.resources import *
 urlpatterns = patterns('',
    # Retrieve all forms submitted to a specific schema
    # ?format=xml&start-id=<start-id>&end-id=<end-id>
+   (r'^api/submissions/$', Submissions() ),    
    (r'^api/(?P<domain_id>\d+)/submissions/$', Submissions() ),    
 )
 

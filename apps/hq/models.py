@@ -65,7 +65,9 @@ class ReporterProfile(models.Model):
         else:
             return str(self.reporter)
     
-    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+        
 class ExtUser(User):
     '''Extended users, which have some additional metadata associated with them'''
     

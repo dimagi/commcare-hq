@@ -41,3 +41,27 @@ def get_tarfile(file_list, output_file):
     export_file.seek(0)    
     return response
 
+class Compressor(object):
+    def open(self, output_file):
+        raise NotImplementedError()
+
+    def add_stream(self, stream, size=0, name=None ):
+        raise NotImplementedError()
+    
+    def close(self):
+        raise NotImplementedError()
+    
+class TarCompressor(Compressor):
+    def __init__(self):
+        self._tar = None
+    
+    def open(self, output_file):
+        self._tar = tarfile.open(fileobj=output_file, mode="w")
+
+    def add_stream(self, stream, size=0, name=None):
+        tar_info = tarfile.TarInfo(name=name )
+        tar_info.size = size
+        self._tar.addfile(tar_info, fileobj=stream)
+    
+    def close(self):
+        self._tar.close()
