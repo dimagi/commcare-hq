@@ -175,3 +175,27 @@ msgstr "ndio"
 msgid "no"
 msgstr "hapana"
 
+msgid "hospital"
+msgstr "hospitali"
+
+msgid "clinic"
+msgstr "zahanati"
+
+msgid "home"
+msgstr "byumbani"
+
+msgid "birth"
+msgstr "alijifungua"
+
+msgid "terminated"
+msgstr "mimba ilioharibika"
+
+msgid "moved"
+msgstr "amehama"
+
+msgid "not pregnant"
+msgstr "mama hakuwa na mimba"
+
+msgid "other"
+msgstr "mengineo"
+
