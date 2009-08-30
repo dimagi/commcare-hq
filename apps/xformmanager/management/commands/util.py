@@ -77,7 +77,7 @@ def process_folder(folder_name, callback, *additional_arg):
             continue
         elif S_ISREG(mode):
             # It's a file, call the callback function
-            print "Processing %s" % pathname
+            print "%s %s" % (callback, pathname)
             callback(pathname, *additional_arg)
 
 def submit_schema(filename, destination_url):
