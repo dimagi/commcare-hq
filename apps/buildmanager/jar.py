@@ -73,6 +73,11 @@ def validate_jar(filename):
             if not formdef:
                 raise BuildError("Could not get a valid form definition from the xml file: %s"
                                   % xform)
+                
+            # check xmlns not none
+            if not formdef.target_namespace:
+                raise BuildError("No namespace found in submitted form: %s" % xform)
+            
             meta_element = formdef.get_meta_element()
             if not meta_element:
                 raise BuildError("From %s had no meta block!" % xform)

@@ -56,7 +56,7 @@ class FormDef(ElementDef):
         root = etree.XML(string)
 
         target_namespace = root.get('targetNamespace')
-        if target_namespace is None:
+        if not target_namespace:
             logging.error("Target namespace is not found in xsd schema")
         self.target_namespace = target_namespace
         ElementDef.__init__(self, target_namespace)
