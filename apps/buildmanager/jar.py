@@ -4,6 +4,7 @@ import zipfile
 import os
 import tempfile
 import shutil
+import logging
 from StringIO import StringIO
 
 from models import BuildError
@@ -59,33 +60,54 @@ def validate_jar(filename):
         xforms = extract_xforms(filename, temp_directory)
         if not xforms:
             raise BuildError("Jar file must have at least 1 xform")
+        
+        # when things go wrong we'll store them here.  
+        # we'll throw a big fat exception at the end, that
+        # will wrap all the other ones.
+        errors = []
+        
         # now run through each of the forms and try to convert to 
-        # a schema
+        # a schema, as well as adding all kinds of validation checks
         for xform in xforms:
-            body = open(xform, "r")
-            output, errorstream, has_error = form_translate(xform, body.read())
-            if has_error:
-                raise BuildError("Could not convert xform (%s) to schema.  Your error is %s" % 
-                                 (xform, errorstream))
-            # if no errors, we should have a valid schema in the output
-            # check the meta block, by creating a formdef object and inspecting it
-            formdef = FormDef(StringIO(output))
-            if not formdef:
-                raise BuildError("Could not get a valid form definition from the xml file: %s"
-                                  % xform)
+            try:
+                body = open(xform, "r")
+                output, errorstream, has_error = form_translate(xform, body.read())
+                if has_error:
+                    raise BuildError("Could not convert xform (%s) to schema.  Your error is %s" % 
+                                     (xform, errorstream))
+                # if no errors, we should have a valid schema in the output
+                # check the meta block, by creating a formdef object and inspecting it
+                formdef = FormDef(StringIO(output))
+                if not formdef:
+                    raise BuildError("Could not get a valid form definition from the xml file: %s"
+                                      % xform)
+                    
+                # check xmlns not none
+                if not formdef.target_namespace:
+                    raise BuildError("No namespace found in submitted form: %s" % xform)
                 
-            # check xmlns not none
-            if not formdef.target_namespace:
-                raise BuildError("No namespace found in submitted form: %s" % xform)
-            
-            meta_element = formdef.get_meta_element()
-            if not meta_element:
-                raise BuildError("From %s had no meta block!" % xform)
-            
-            meta_issues = StorageUtility.get_meta_validation_errors(meta_element)
-            if meta_issues:
-                raise MetaDataValidationError(meta_issues, xform)
-            # if we made it here we're all good
+                meta_element = formdef.get_meta_element()
+                if not meta_element:
+                    raise BuildError("From %s had no meta block!" % xform)
+                
+                meta_issues = StorageUtility.get_meta_validation_issues(meta_element)
+                if meta_issues:
+                    mve = MetaDataValidationError(meta_issues, xform)
+                    # until we have a clear understanding of how meta versions will work,
+                    # don't fail on issues that only come back with "extra" set.  i.e.
+                    # look for missing or duplicate
+                    if mve.duplicate or mve.missing:
+                        raise mve
+                    else:
+                        logging.warning("Found extra meta fields in xform %s: %s" % 
+                                        (xform, mve.extra))
+                
+                # if we made it here we're all good
+            except Exception, e:
+                errors.append(e)
+        if errors:
+            raise BuildError("Problem validating jar!", errors)
+        
     finally:
         # clean up after ourselves
         if body:
