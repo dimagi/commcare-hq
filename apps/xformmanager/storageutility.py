@@ -100,12 +100,14 @@ class StorageUtility(object):
     META_FIELDS = ['meta_formname','meta_commcareversion','meta_formversion','meta_deviceid',
                    'meta_timestart','meta_timeend','meta_username','meta_chw_id','meta_uid']
     
+    
     def __init__(self):
         self.formdef = ''
         self.formdata = None
     
+    
     @classmethod
-    def get_meta_validation_errors(cls, element):
+    def get_meta_validation_issues(cls, element):
         '''Validates an ElementDef, assuming it is a meta block.  Ensures
            that every field we expect to find in the meta is there, and 
            that there are no extra fields.  Returns a dictionary of
@@ -118,6 +120,7 @@ class StorageUtility(object):
            and therefore if all are empty this method will return an empty
            dictionary.
         '''
+        
         missing_fields = []
         extra_fields = []
         duplicate_fields = []

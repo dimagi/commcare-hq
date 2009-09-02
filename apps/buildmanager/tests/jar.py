@@ -46,21 +46,22 @@ class JarTestCase(unittest.TestCase):
         try:
             validate_jar(self.missing_jar)
             self.fail("Missing meta field did not raise an exception")
-        except MetaDataValidationError, e:
+        except BuildError, be:
+            self.assertEqual(1, len(be.errors))
+            e = be.errors[0]
             self.assertTrue(e.missing)
             self.assertFalse(e.duplicate)
             self.assertFalse(e.extra)
-        try:
-            validate_jar(self.extra_jar)
-            self.fail("Extra meta field did not raise an exception")
-        except MetaDataValidationError, e:
-            self.assertTrue(e.extra)
-            self.assertFalse(e.duplicate)
-            self.assertFalse(e.missing)
+        
+        # No longer have extra meta fields fail hard.  We may 
+        # want to validate this better in the future.  
+        validate_jar(self.extra_jar)
         try:
             validate_jar(self.duplicate_jar)
             self.fail("Missing meta field did not raise an exception")
-        except MetaDataValidationError, e:
+        except BuildError, be:
+            self.assertEqual(1, len(be.errors))
+            e = be.errors[0]
             self.assertTrue(e.duplicate)
             self.assertFalse(e.missing)
             self.assertFalse(e.extra)

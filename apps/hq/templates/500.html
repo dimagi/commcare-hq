@@ -3,7 +3,7 @@
 {% block content %}
 <p class="error">
 {% if error_message %}
-    {{ error_message }}
+    {{ error_message|safe }}
 {% else %} 
     Oops!  Sorry something went wrong.  Please try again later...
 {% endif %}
