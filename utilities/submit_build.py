@@ -90,13 +90,14 @@ if __name__ == "__main__":
         project_id = os.environ['project_id']        
         status = os.environ['build_status']
         revision_number = os.environ['revision_number']
-        build_number = os.environ['build_number']        
+        build_number = os.environ['build_number']
         jar_file = os.environ['jar_file_path']
         jad_file = os.environ['jad_file_path']
-        description = os.environ['description']    
-    except:
+        description = os.environ['description']  
+    except Exception, e:
         #no environmental variables, check to see if the arguments are there in the cmdline
         if len(sys.argv) < 11:
+            print e
             print """\tUsage: 
                 submit_build.py
                      <remote hostname> 
