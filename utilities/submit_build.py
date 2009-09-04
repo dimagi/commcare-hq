@@ -124,13 +124,13 @@ if __name__ == "__main__":
             jad_file = sys.argv[9]
             description = ' '.join(sys.argv[10:])
 
-        uploader = AuthenticatedHandler(username,password,hostname)
-        uploader.do_upload_build(hostname,
-                                 project_id, 
-                                 status,
-                                 revision_number,
-                                 build_number,
-                                 jar_file,
-                                 jad_file,
-                                 description)
+    uploader = AuthenticatedHandler(username,password,hostname)
+    uploader.do_upload_build(hostname,
+                             project_id, 
+                             status,
+                             revision_number,
+                             build_number,
+                             jar_file,
+                             jad_file,
+                             description)
       
