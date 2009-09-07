@@ -444,25 +444,32 @@ thead.commcare-heading
 }
 
 /* 
-   sort stuff.  this could be done really poorly 
-   but the author (Cory) is a css noob. If these
-   can somehow extend some base class and just
-   override the image that would be ideal.
+   Sort stuff.  This could be done really poorly 
+   but the author (Cory) is a css noob. 
+   The class "sorted" defines the color, the position
+   of the image, and the padding for the image.  The
+   id "ascending" or "descending" defines which image 
+   is used.
+   So the way to get this to show up in html would be
+   <th class="sorted" id="descending">
+   This works well and allows inheritance of all the
+   relevant attributes, but I'm not sure if it's a 
+   mangling of the definitions of "id" and "class" 
 */
 
-th.sorted-descending {
+th.sorted {
 	background-color: lightyellow;
-    background-image: url("../../webapp/icons/silk/arrow_up.png");
     background-repeat: no-repeat;
     background-position: right;
+    padding-right:15px;
 }
 
+th#descending {
+    background-image: url("../../webapp/icons/silk/arrow_up.png");
+}
 
-th.sorted-ascending {
-    background-color: lightyellow;
+th#ascending {
     background-image: url("../../webapp/icons/silk/arrow_down.png");
-    background-repeat: no-repeat; 
-    background-position: right;
 }
 
 td.sorted {
