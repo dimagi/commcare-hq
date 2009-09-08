@@ -15,8 +15,8 @@ import urllib
 from cookielib import * 
 from urlparse import urlparse
 
-curl_command = 'curl' #if curl is in your path/linux
-#curl_command = 'c:\curl\curl.exe' #if curl is in your path/linux
+#curl_command = 'curl' #if curl is in your path/linux
+curl_command = 'c:\curl\curl.exe' #if curl is in your path/linux
 
 class AuthenticatedHandler(object):    
     def __init__(self, username, password, hostname):
@@ -26,7 +26,8 @@ class AuthenticatedHandler(object):
         self.session_cookie=''        
         self.cookie_header = ''
 
-        self._establishSession()    
+        self._establishSession()
+    
     def _establishSession(self):
         self.session_cookie = os.path.join(os.path.dirname(__file__),str(uuid.uuid1()) + "_cookie.txt")
         p = subprocess.Popen([curl_command,'-c',self.session_cookie, '-F username=%s' % self.username, '-F password=%s' % self.password,'--request', 'POST', 'http://%s/accounts/login/' % hostname],stdout=PIPE,stderr=PIPE,shell=False)
@@ -52,7 +53,7 @@ class AuthenticatedHandler(object):
 #            fin = open(jad_file,'r')
 #            jadfile_str= fin.read()
 #            fin.close()
-    
+
             command_arr = [curl_command,'-b', 
                                   self.session_cookie, 
                                   '-F jar_file_upload=@%s' % jar_file, 
@@ -90,20 +91,21 @@ if __name__ == "__main__":
         project_id = os.environ['project_id']        
         status = os.environ['build_status']
         revision_number = os.environ['revision_number']
-        build_number = os.environ['build_number']        
+        build_number = os.environ['build_number']
         jar_file = os.environ['jar_file_path']
         jad_file = os.environ['jad_file_path']
-        description = os.environ['description']    
-    except:
+        description = os.environ['description']  
+    except Exception, e:
         #no environmental variables, check to see if the arguments are there in the cmdline
         if len(sys.argv) < 11:
+            print e
             print """\tUsage: 
                 submit_build.py
                      <remote hostname> 
                      <remote username> 
                      <remote password>                      
-                     <build status>
                      <project_id>                     
+                     <build status>
                      <build_number>
                      <revision_number>                     
                      <jar_file_path>
@@ -123,13 +125,13 @@ if __name__ == "__main__":
             jad_file = sys.argv[9]
             description = ' '.join(sys.argv[10:])
 
-        uploader = AuthenticatedHandler(username,password,hostname)
-        uploader.do_upload_build(hostname,
-                                 project_id, 
-                                 status,
-                                 revision_number,
-                                 build_number,
-                                 jar_file,
-                                 jad_file,
-                                 description)
+    uploader = AuthenticatedHandler(username,password,hostname)
+    uploader.do_upload_build(hostname,
+                             project_id, 
+                             status,
+                             revision_number,
+                             build_number,
+                             jar_file,
+                             jad_file,
+                             description)
       
