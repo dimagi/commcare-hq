@@ -389,7 +389,7 @@ post_save.connect(process, sender=Attachment)
 
 class MetaDataValidationError(Exception):
     '''Exception to make dealing with meta data errors easier.
-       See StorageUtility.get_meta_validation_errors for how
+       See StorageUtility.get_meta_validation_issues for how
        this is used.'''
        
     def __init__(self, error_dict, form_display=None):

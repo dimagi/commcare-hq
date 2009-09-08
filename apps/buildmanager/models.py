@@ -12,9 +12,26 @@ from django.core.urlresolvers import reverse
 BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
 
 class BuildError(Exception):
-    """Generic error for the Build Manager to throw"""
-    pass
-
+    """Generic error for the Build Manager to throw.  Also
+       supports wrapping a collection of other errors."""
+    
+    def __init__(self, msg, errors=[]):
+        super(BuildError, self).__init__(msg)
+        # reimplementing base message, since .message is deprecated in 2.6
+        self.msg = msg 
+        self.errors = errors
+        
+    def get_error_string(self, delim="\n"):
+        '''Get the error string associated with any passed in errors, 
+           joined by an optionally passed in delimiter''' 
+        return delim.join([unicode(error) for error in self.errors])
+    
+    def __unicode__(self):
+        return "%s\n%s" % (self.msg, self.get_error_string()) 
+    
+    
+    
+    
 class Project (models.Model):
     """
     A project is a high level container for a given build project.  A project 
@@ -77,7 +94,7 @@ class ProjectBuild(models.Model):
     uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
        
-    build_number = models.CharField(max_length=255)       
+    build_number = models.PositiveIntegerField()       
     revision_number = models.CharField(max_length=255, null=True, blank=True)
     package_created = models.DateTimeField()    
       
