@@ -139,6 +139,7 @@ REPORT_CLASS = (
     ('siteadmin', 'General Site Admin'),
     ('supervisor', 'Organizational Supervisor'),
     ('member', 'Organization Member'),
+    ('domain', 'Custom Domain Report'),   
     ('other', 'Other Report Type'),   
 )
 
@@ -170,6 +171,16 @@ class ReportSchedule(models.Model):
                                        help_text=_("The view or other python function  you want run for this report.  This is necessary only for General Site admin and Other report types."))
     active = models.BooleanField(default=True)
     
+    @property
+    def domain(self):
+        '''Get the domain, trying first the organization, then the user.  If neither
+           are set, will return nothing'''
+        if self.organization:
+            return self.organization.domain
+        elif self.recipient_user:
+            return self.recipient_user.domain
+        return None
+           
     def __unicode__(self):
         return unicode(self.name + " - " + self.report_frequency)
         
