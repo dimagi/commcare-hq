@@ -179,8 +179,7 @@ class StorageUtility(object):
         startdate = datetime.now().date() 
         enddate = startdate + timedelta(days=1)
         message = metadata_model.get_submission_count(startdate, enddate)
-        # TODO - fix meta.submission to point to real submission
-        self._add_handled(metadata_model.submission, message)
+        self._add_handled(metadata_model.submission, method="instance_data", message=message)
         return True
     
     def save_form_data(self, xml_file_name, submission):
@@ -409,32 +408,18 @@ class StorageUtility(object):
             # never successfully registered
             return
         # mark as intentionally handled
-        # TODO - fix meta.submission to point to real submission
-        self._add_handled_as_deleted(meta.submission)
+        self._add_handled(meta.submission, method="deleted")
         meta.delete()
 
-    def _add_handled_as_deleted(self, attachment, message=''):
+    def _add_handled(self, attachment, method, message=''):
         '''Tells the receiver that this attachment's submission was handled.  
            Should only be called _after_ we are sure that we got a linked 
            schema of this type.
         '''
         try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="deleted")
+            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method=method)
         except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="deleted")
-        # TODO - fix meta.submission to point to real submission
-        attachment.handled(handle_type, message)
-
-    def _add_handled(self, attachment, message):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        # TODO - fix meta.submission to point to real submission
+            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method=method)
         attachment.handled(handle_type, message)
 
     def _remove_handled(self, attachment):
@@ -445,7 +430,6 @@ class StorageUtility(object):
             handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
         except SubmissionHandlingType.DoesNotExist:
             handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        # TODO - fix meta.submission to point to real submission
         attachment.unhandled(handle_type)
 
     def _remove_instance_inner_loop(self, elementdef, instance_id):

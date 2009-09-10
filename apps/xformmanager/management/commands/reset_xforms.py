@@ -13,13 +13,14 @@ class Command(BaseCommand):
                     default=True, help='Quiet output'),
     )
     def handle(self, *app_labels, **options):
-        print "WARNING: Deleting all saved xforms, schemas, and instance data."
+        print "WARNING: Deleting ALL SUBMISSIONS from the local server!"
+        # print "WARNING: Deleting all saved xforms, schemas, and instance data."
         verbose = options.get('verbose', True)
         if verbose:
             util.are_you_sure()
         reset_xforms()
         # TODO - make a reset_submits command in receiver/management
-        # reset_submits()
+        reset_submits()
         
 # we make these functions global so they can be reused by other scripts
 def reset_xforms():

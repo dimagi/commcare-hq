@@ -12,10 +12,12 @@ class Command(LabelCommand):
         make_option('-p','--localport', action='store', dest='localport', \
                     default='8000', help='Port of local server'),
     )
-    help = "Load data into CommCareHQ. Be sure to run './manage.py reset_xforms'" + \
-           "if you want to start from a clean server."
+    help = "Load data into CommCareHQ.\n" + \
+           "1) To start from a clean server, first run './manage.py reset_xforms'\n" + \
+           "2) This script assumes a local server is running. To launch your local " + \
+           "server, run './manage.py runserver'"
     args = "<submissions_tar optional:schemata_tar>"
-    label = 'tar file of exported schemata, tar file of exported submissions'
+    label = 'tar file of exported submissions, tar file of exported schemata'
     
     def handle(self, *args, **options):
         if len(args) < 1:

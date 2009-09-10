@@ -7,6 +7,7 @@ from django.core.management.base import LabelCommand, CommandError
 from xformmanager.management.commands.download_xforms import download_xforms
 from xformmanager.management.commands.load_xforms import load_schemata, load_submissions
 from xformmanager.management.commands.reset_xforms import reset_xforms, reset_submits
+from xformmanager.management.commands.util import are_you_sure
 import tarfile
 
 class Command(LabelCommand):
@@ -25,9 +26,11 @@ class Command(LabelCommand):
         remote_ip = args[0]
         username = args[1]
         password = args[2]
-        print "WARNING: This command will DELETE all existing xforms " +\
+        print "This script assumes a local server is running. " + \
+              "To launch your local server, run './manage.py runserver'"
+        print "WARNING: This command will DELETE all existing xforms " + \
               "and synchronize with the remote server at %s " % remote_ip
-        #util.are_you_sure()
+        are_you_sure()
 
         (schemata, submissions) = download_xforms(remote_ip, username, password)
         
