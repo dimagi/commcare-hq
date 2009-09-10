@@ -54,7 +54,7 @@
             <td>{% if mother.children_survived %}{{ mother.children_survived }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{% if mother.children_registered %}{% trans mother.children_registered %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             <td>{% if mother.mother_survived %}{% trans mother.mother_survived %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
-            <td>{% if mother.birth_location %}{{ mother.birth_location }}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
+            <td>{% if mother.birth_location %}{% trans mother.birth_location %}{% else %}{{ empty_data_holder|safe }}{% endif %}</td>
             </tr>
         {% endfor %}
 </table>    
