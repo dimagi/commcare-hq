@@ -163,7 +163,7 @@ class Mother(object):
                 # ANNOYING: we have to check the existence of the column, since
                 # not all these are in both forms. 
                 if col in reg_form_data and reg_form_data[col]:
-                    risk_factor = self._clean(col, "sampledata_hi_risk_info_", "")
+                    risk_factor = self._clean_and_translate(col, "sampledata_hi_risk_info_", "")
                     hi_risk_values.append(risk_factor)
             self.high_risk_factors = ",".join(hi_risk_values)
         else:
@@ -201,7 +201,7 @@ class Mother(object):
             incomplete_checklist_items = []
             for item in checklist_items:
                 if followup_forms[0][item] != 1:
-                    incomplete_checklist_items.append(self._clean(item, "safe_pregnancy_preg_actions_", ""))
+                    incomplete_checklist_items.append(self._clean_and_translate(item, "safe_pregnancy_preg_actions_", ""))
                     
             self.incomplete_checklist_items = ", ".join(incomplete_checklist_items)
         else:
@@ -300,8 +300,8 @@ class Mother(object):
                 
                 for key, value in followup_warnings.items():
                      if self.followup_referred[key] == value:
-                         danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
-                                                         self._clean(value, "", "")))
+                         danger_signs.append("%s: %s" % (self._clean_and_translate(key, "safe_pregnancy_", ""),
+                                                         self._clean_and_translate(value, "", "")))
                 # add which illness
                 if "other illness: yes" in danger_signs and self.followup_referred["safe_pregnancy_which_illness"]:
                     danger_signs.remove("other illness: yes")
@@ -323,8 +323,8 @@ class Mother(object):
                                         }
                     for key, value in closure_warnings.items():
                          if self.close_referred[key] == value:
-                             danger_signs.append("%s: %s" % (self._clean(key, "safe_pregnancy_", ""),
-                                                             self._clean(value, "", "")))
+                             danger_signs.append("%s: %s" % (self._clean_and_translate(key, "safe_pregnancy_", ""),
+                                                             self._clean_and_translate(value, "", "")))
             
             self.danger_signs = ", ".join(danger_signs)
         
@@ -351,11 +351,12 @@ class Mother(object):
             self.has_open_referral = self.has_referral
 
 
-    def _clean(self, column, prefix, suffix):
+    def _clean_and_translate(self, column, prefix, suffix):
         '''Cleans a column by removing a prefix and suffix, if they
-           are present, and converting underscores to spaces.'''
+           are present, and converting underscores to spaces.
+           Also does translation of the data, if possible.'''
         if column.startswith(prefix):
             column = column[len(prefix):]
         if column.endswith(suffix):
-            column = column[0:len(column) - len(suffix)]
+            column = column[0:len(column) - len(suffix)] 
         return _(column).replace("_", " ")
