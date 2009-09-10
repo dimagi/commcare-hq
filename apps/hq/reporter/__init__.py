@@ -3,6 +3,7 @@ import logging
 import string
 from django.template.loader import render_to_string
 from django.template import Template, Context
+from django.utils import translation
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -12,6 +13,7 @@ from hq.reporter import agents
 from hq.reporter import metadata
 import inspector as repinspector
 
+from reports.util import get_custom_report_module
 import base64
 import urllib2
 import urllib
@@ -105,18 +107,59 @@ def run_reports(run_frequency):
             elif report.report_class == 'other':
                 #Custom function.  We will check the attr for that function's existence and execute.      
                 funcname = report.report_function
-                logging.debug("Activating custom report function " + str(funcname))
-                print "Activating custom report function " + str(funcname)
+                _debug_and_print("Activating custom report function " + str(funcname))
                 if hasattr(custom, funcname):
                     func = getattr(custom,funcname)                              
                     func(report,run_frequency)                    
                     logging.debug("custom report complete")                    
                 else:
                     logging.error("Error, report custom function " + str(funcname) + " does not exist")
+            elif report.report_class == 'domain':
+                # added this enum for the custom domained reports defined in 
+                # apps/reports/<domain>.py
+                if not report.domain or not report.report_function:
+                    raise Exception("Domain report %s must have domain and function set."
+                                    % report)
+                _debug_and_print("Activating custom domain report function %s for domain %s." 
+                                 % (report.report_function, report.domain))
+                report_module = get_custom_report_module(report.domain)
+                if not report_module:
+                    raise Exception("No custom reports found for %s" % report.domain)
+                if not hasattr(report_module, report.report_function):
+                    raise Exception("No report named %s found for %s" % 
+                                    (report.report_function, report.domain))
+                # alrighty, we found the method we want to run.
+                report_method = getattr(report_module, report.report_function)
+                
+                # HACK!  For now try manually setting the language to swahili
+                # as a proof of concept.  Eventually this will come from the 
+                # attached reporter profile. 
+                
+                # So in django all management commands default to english for
+                # some reason, so we have to manually activate the language rather than
+                # just assuming it'll work with the settings.
+                translation.activate('sw')
+                try: 
+                    # TODO: not all reports may be okay with us passing in an empty
+                    # request object.  For the time being we assume that they are
+                    report_body = report_method(None)
+                finally:
+                    # make sure we set the default back.
+                    translation.activate(settings.LANGUAGE_CODE)
+                #_debug_and_print(report_body)
+                transport_email(report_body, report.recipient_user, 
+                                params={"startdate": startdate,
+                                        "enddate": enddate,
+                                        "email_subject": report_method.__doc__})
+                
         except Exception, e:
             logging.error("Error running " + run_frequency + " report: " + str(report) + " Exception: " + str(e))
                     
-            
+def _debug_and_print(message):
+    """Convenience method to debug and print a message, so that we don't 
+       have to copy paste two lines of code everywhere"""
+    logging.debug(message)
+    print message 
         
 def get_data_for_organization(run_frequency, transport, org_domain):
     (startdate, enddate) = get_daterange(run_frequency)
@@ -165,7 +208,7 @@ def transport_email(rendered_text, recipient_usr, params={}):
     logging.debug("Email Report transport")
     eml = agents.EmailAgent()            
     if params.has_key('email_subject'):
-        subject_line = params['email_subject']        
+        subject_line = params['email_subject']
     else:
         daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')
         subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
