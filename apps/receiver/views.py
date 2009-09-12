@@ -16,7 +16,6 @@ from transformers.zip import get_zipfile
 
 from datetime import timedelta, datetime
 from django.db import transaction
-import uuid
 import mimetypes
 
 from receiver.models import *

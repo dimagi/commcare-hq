@@ -118,7 +118,7 @@ def submit_form(filename, destination_url):
         print e
         return None
 
-def POST_file(buffer, url):
+def POST_data_as_file(buffer, url):
     # Create the form with simple fields
     form = MultiPartForm()
     # Add a fake file

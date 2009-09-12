@@ -14,7 +14,7 @@ import cStringIO
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from receiver.management.commands import util
-from receiver.management.commands.forms import POST_file
+from receiver.management.commands.forms import POST_data_as_file
 from receiver.models import Submission
 
 class Command(LabelCommand):
@@ -53,7 +53,8 @@ def generate_submissions(remote_url, username, password, latest=True):
     url = 'http://%s/api/submissions/' % remote_url
     try:
         if latest:
-            POST_MD5(url, Submission)
+            MD5_buffer = get_MD5(Submission)
+            POST_data_as_file(MD5_buffer, url)
             print "Generated latest remote submissions archive"
         else:
             urllib2.urlopen(url)
@@ -66,11 +67,10 @@ def generate_submissions(remote_url, username, password, latest=True):
         print "Exception raised on server."
     return
 
-
-def POST_MD5(url, django_model):
-    """ generate a string with all MD5s
+def get_MD5_data(django_model):
+    """ generate a string with all MD5s.
+    Some operations require a buffer...
     
-    url - URL of remote server
     django_model - django model with a 'checksum' property
                    which we will POST in a tarfile
     """
@@ -79,6 +79,13 @@ def POST_MD5(url, django_model):
     for obj in objs:
         string.write(unicode(obj.checksum) + '\n')
     md5_compressed = bz2.compress(string.getvalue())
+
+def get_MD5_handle(django_model):
+    """ ...some operations require a handle 
     
-    # POST that string to destination URL
-    POST_file(md5_compressed, url)
+    returns a READ-ONLY handle
+    """
+    buffer = get_MD5_data(django_model)
+    string = cStringIO.StringIO(buffer)
+    return string
+
