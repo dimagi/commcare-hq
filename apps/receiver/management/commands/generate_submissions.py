@@ -14,7 +14,6 @@ import cStringIO
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from receiver.management.commands import util
-from receiver.management.commands.forms import POST_data_as_file
 from receiver.models import Submission
 
 class Command(LabelCommand):
@@ -53,8 +52,9 @@ def generate_submissions(remote_url, username, password, latest=True):
     url = 'http://%s/api/submissions/' % remote_url
     try:
         if latest:
-            MD5_buffer = get_MD5(Submission)
-            POST_data_as_file(MD5_buffer, url)
+            MD5_buffer = get_MD5_data(Submission)
+            request = util.generate_POST_request(url, MD5_buffer)
+            urllib2.urlopen(request)
             print "Generated latest remote submissions archive"
         else:
             urllib2.urlopen(url)
@@ -78,7 +78,7 @@ def get_MD5_data(django_model):
     objs = django_model.objects.all().order_by('checksum')
     for obj in objs:
         string.write(unicode(obj.checksum) + '\n')
-    md5_compressed = bz2.compress(string.getvalue())
+    return bz2.compress(string.getvalue())
 
 def get_MD5_handle(django_model):
     """ ...some operations require a handle 
