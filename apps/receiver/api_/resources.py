@@ -98,14 +98,15 @@ def _get_submissions(request, domain_id=0):
         # use StringIO for now, since tarfile requires a stream object
         # Revisit if xforms get super long
         try:
-            string = cStringIO.StringIO( submission.export() )
+            export = submission.export()
         except Submission.DoesNotExist:
             logging.error("%s could not be found. Data export failed." \
                           % submission.raw_post)
             continue
         file_added = True
-        size = string.tell()
-        string.seek(0)
+        # not efficient
+        size = len(export)
+        string = cStringIO.StringIO( export )
         compressor.add_stream(string, size, name=os.path.basename(submission.raw_post) )    
     compressor.close()
     if not file_added:

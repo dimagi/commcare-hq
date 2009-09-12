@@ -7,6 +7,7 @@ import simplejson
 from stat import S_ISDIR, S_ISREG, ST_MODE
 from urlparse import urlparse
 import tarfile
+from receiver.management.commands.forms import MultiPartForm
 
 def are_you_sure():
     should_proceed = raw_input("Are you sure you want to proceed? (yes or no) ")
@@ -118,7 +119,7 @@ def submit_form(filename, destination_url):
         print e
         return None
 
-def POST_data_as_file(buffer, url):
+def generate_POST_request(url, buffer):
     # Create the form with simple fields
     form = MultiPartForm()
     # Add a fake file
@@ -132,4 +133,4 @@ def POST_data_as_file(buffer, url):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     # outoing_data = request.get_data()
-    urllib2.urlopen(request)
+    return request
