@@ -363,7 +363,9 @@
 				<TimeStart />
 				<TimeEnd />
 				<username />
-				<userid />			
+				<userid />
+	   		        <chw_id />
+			        <uid />
 			</Meta>
 		
       <given_name />

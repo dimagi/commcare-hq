@@ -117,6 +117,8 @@
           <TimeEnd />
           <username />
           <userid />
+   	  <chw_id />
+	  <uid />
         </Meta>
 
         <visited_clinic />
