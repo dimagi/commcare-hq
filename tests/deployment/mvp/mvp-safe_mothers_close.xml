@@ -141,6 +141,8 @@
           <TimeEnd />
           <username />
           <userid />
+   	  <chw_id />
+	  <uid />
         </Meta>
 
         <what_happened />

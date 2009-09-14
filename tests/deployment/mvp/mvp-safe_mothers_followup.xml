@@ -155,6 +155,8 @@
           <TimeEnd />
           <username />
           <userid />
+   	  <chw_id />
+	  <uid />
         </Meta>
 
         <pain_from_vagina />

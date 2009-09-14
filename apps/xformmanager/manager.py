@@ -1,4 +1,6 @@
 from xformmanager.storageutility import * 
+from xformmanager.xformdef import FormDef
+from xformmanager.models import MetaDataValidationError
 import uuid
 import subprocess
 from subprocess import PIPE
@@ -65,6 +67,39 @@ class XFormManager(object):
         fout = open(new_file_name, 'r')
         formdef = FormDef(fout)
         fout.close()
+        
+        # This is taken directly from buildmanager.jar.validate_jar
+        # replicated here since we expect different behaviour on the 
+        # different error conditions (i.e. XFormManager.Errors instead of
+        # BuildErrors
+        # </copy>
+        
+        # check xmlns not none
+        if not formdef.target_namespace:
+            raise FormDefError("No namespace found in submitted form. Form saved to %s" % new_file_name)
+        
+        # all the forms in use today have a superset namespace they default to
+        # something like: http://www.w3.org/2002/xforms
+        if formdef.target_namespace.lower().find('www.w3.org') != -1:
+            raise FormDefError("No namespace found in submitted form. Form saved to %s" % new_file_name)
+
+        meta_element = formdef.get_meta_element()
+        if not meta_element:
+            raise FormDefError("From has no meta block! Saved to %s" % new_file_name)
+        
+        meta_issues = FormDef.get_meta_validation_issues(meta_element)
+        if meta_issues:
+            mve = MetaDataValidationError(meta_issues, new_file_name)
+            # until we have a clear understanding of how meta versions will work,
+            # don't fail on issues that only come back with "extra" set.  i.e.
+            # look for missing or duplicate
+            if mve.duplicate or mve.missing:
+                raise mve
+            else:
+                logging.warning("Found extra meta fields in form. Form saved to %s, %s" % \
+                                (new_file_name, mve.extra))
+        # </copy>
+                
         formdefmodel = self.su.add_schema (formdef)
         formdefmodel.xsd_file_location = new_file_name
         formdefmodel.save()
@@ -73,6 +108,10 @@ class XFormManager(object):
     def _xsd_file_name(self, name):
         return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], 
                             str(name) + '-xsd.xml')
+
+class FormDefError(SyntaxError):
+    """ Generic error for XFormManager.Manager """
+    pass
 
 def form_translate(name, input_stream):
     '''Translates an xform into an xsd file'''

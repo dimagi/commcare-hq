@@ -1,7 +1,7 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.tests.util import *
-from xformmanager.models import Metadata
-from xformmanager.manager import XFormManager
+from xformmanager.models import Metadata, MetaDataValidationError
+from xformmanager.manager import XFormManager, FormDefError
 from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 import unittest
 from datetime import datetime, timedelta 
@@ -181,7 +181,14 @@ class MetaTestCase(unittest.TestCase):
                 self.assertTrue(new_submission.is_orphaned())
         self.assertEqual(1, len(SubmissionHandlingOccurrence.objects.all()))
         self.assertEqual(way_handled, SubmissionHandlingOccurrence.objects.all()[0])
-        
+
+    def testSubmissionHandling(self):
+        count = len(SubmissionHandlingOccurrence.objects.all())
+        self.assertEquals(0,count)
+        formdefmodel_6 = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml")
+        count = len(SubmissionHandlingOccurrence.objects.all())
+        self.assertEquals(1,count)
+
     def testNoMetadata(self):
         logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nometa.xml")
@@ -200,14 +207,44 @@ class MetaTestCase(unittest.TestCase):
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables
+    
+    def testSchemaNoNamespace(self):
+        try:
+            create_xsd_and_populate("data/no_xmlns.xml")
+            self.fail("Missing namespace did not raise an exception")
+        except FormDefError, e:
+            # we expect this error to say something about no namespace
+            self.assertTrue( "no namespace" in unicode(e).lower() )
         
-    def testSubmissionHandling(self):
-        count = len(SubmissionHandlingOccurrence.objects.all())
-        self.assertEquals(0,count)
-        formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
-        count = len(SubmissionHandlingOccurrence.objects.all())
-        self.assertEquals(1,count)
-        
+    def testSchemaNoMeta(self):
+        try:
+            create_xsd_and_populate("data/no_meta.xml")
+            self.fail("Missing meta did not raise an exception")
+        except FormDefError, e:
+            # we expect this error to say something about no meta
+            self.assertTrue( "no meta" in unicode(e).lower() )
+    
+    def testSchemaDuplicateMeta(self):
+        try:
+            create_xsd_and_populate("data/duplicate_meta.xml")
+            self.fail("Duplicate XMLNS did not raise an exception")
+        except MetaDataValidationError, e:
+            # we expect this error to say something about a duplicate meta
+            self.assertTrue( "duplicate" in unicode(e).lower() )
+    
+    def testSchemaMissingMeta(self):
+        try:
+            create_xsd_and_populate("data/missing_meta.xml")
+            self.fail("Missing XMLNS did not raise an exception")
+        except MetaDataValidationError, e:
+            # we expect this error to say something about a duplicate meta
+            self.assertTrue( "missing" in unicode(e).lower() )
+    
+    def testSchemaExtraMeta(self):
+        logging.warn("EXPECTING A 'No metadata found' warning now:")
+        create_xsd_and_populate("data/extra_meta.xml")
+        # this should not raise an error
+
     def tearDown(self):
         # duplicates setUp, but at least we know we're being clean
         su = StorageUtility()

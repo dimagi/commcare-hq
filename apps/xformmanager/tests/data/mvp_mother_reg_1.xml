@@ -6,7 +6,8 @@
 <TimeStart>2009-04-19T12:20:00.000</TimeStart>
 <TimeEnd>2009-04-19T12:44:00.000</TimeEnd>
 <username>gayo</username>
-<userid>mobile3</userid>
+<uid>mobile3</uid>
+<chw_id>mobile3</chw_id>
 </Meta>
 <household>1</household>
 </sampledata>
