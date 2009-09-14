@@ -11,7 +11,6 @@ from models import BuildError
 from xformmanager.models import MetaDataValidationError
 from xformmanager.manager import XFormManager, form_translate
 from xformmanager.xformdef import FormDef, ElementDef
-from xformmanager.storageutility import StorageUtility
 
 def extract_xforms( filename, dir ):
     '''Extracts the xforms from a jar file to a given directory.  
@@ -85,12 +84,17 @@ def validate_jar(filename):
                 # check xmlns not none
                 if not formdef.target_namespace:
                     raise BuildError("No namespace found in submitted form: %s" % xform)
+
+                # all the forms in use today have a superset namespace they default to
+                # something like: http://www.w3.org/2002/xforms
+                if formdef.target_namespace.lower().find('www.w3.org') != -1:
+                    raise BuildError("No namespace found in submitted form: %s" % xform)
                 
                 meta_element = formdef.get_meta_element()
                 if not meta_element:
                     raise BuildError("From %s had no meta block!" % xform)
                 
-                meta_issues = StorageUtility.get_meta_validation_issues(meta_element)
+                meta_issues = FormDef.get_meta_validation_issues(meta_element)
                 if meta_issues:
                     mve = MetaDataValidationError(meta_issues, xform)
                     # until we have a clear understanding of how meta versions will work,

@@ -403,6 +403,9 @@ class MetaDataValidationError(Exception):
             setattr(self, type, list)
             error_msgs.append("%s fields: %s" % (type, ",".join(list)))
         self.error_string = "\n".join(error_msgs)
-          
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+        
     def __unicode__(self):
         return "Errors for %s:\n%s" % (self.form_display, self.error_string) 

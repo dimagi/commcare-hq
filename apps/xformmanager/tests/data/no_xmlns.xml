@@ -355,17 +355,17 @@
 		</itext>
 
 		<instance>
-			<sampledata xmlns="http://www.commcare.org/MVP/safe_motherhood/registration_v0.1">
+			<sampledata>
 			<Meta>
 				<formName>Safe Pregnancy Registration</formName>
 				<formVersion>0.0.1</formVersion>
+				<chw_id/>
+				<uid/>
 				<DeviceID />
 				<TimeStart />
 				<TimeEnd />
 				<username />
-				<userid />
-	   		        <chw_id />
-			        <uid />
+				<userid />			
 			</Meta>
 		
       <given_name />

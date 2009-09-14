@@ -49,8 +49,8 @@ def _get_submissions(request, domain_id=0):
         try:
             md5_string = bz2.decompress(request.FILES['file'].read())
         except Exception, e:
-            logging.error("Poorly formatted tar file. Expecting a tar of md5 values.")
-            return HttpResponseBadRequest("Poorly formatted tar file. Expecting a tar of md5 values.")
+            logging.error("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
+            return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
         md5_stream = cStringIO.StringIO(md5_string)
         stack_received = []
         
