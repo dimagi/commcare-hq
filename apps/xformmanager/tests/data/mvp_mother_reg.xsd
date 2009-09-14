@@ -127,7 +127,8 @@
               <element name="TimeStart" minOccurs="0" type="dateTime"/>
               <element name="TimeEnd" minOccurs="0" type="dateTime"/>
               <element name="username" minOccurs="0" type="string"/>
-              <element name="userid" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
             </sequence>
           </complexType>
         </element>

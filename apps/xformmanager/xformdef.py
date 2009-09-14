@@ -1,4 +1,5 @@
 from xformmanager.util import *
+from xformmanager.models import Metadata
 from lxml import etree
 import re
 import logging
@@ -82,10 +83,52 @@ class FormDef(ElementDef):
             if child.short_name.lower() == "meta":
                 return child
         
+    @classmethod
+    def get_meta_validation_issues(cls, element):
+        '''Validates an ElementDef, assuming it is a meta block.  Ensures
+           that every field we expect to find in the meta is there, and 
+           that there are no extra fields.  Returns a dictionary of
+           of any errors/warnings found in the following format:
+           { "missing" : [list, of, missing, expected, fields]
+             "duplicate" : [list, of, duplicate, fields]
+             "extra" : [list, of, unexpected, fields]
+           }
+           If any of these lists are empty they won't be in the dictionary,
+           and therefore if all are empty this method will return an empty
+           dictionary.
+        '''
+        
+        missing_fields = []
+        extra_fields = []
+        duplicate_fields = []
+        found_fields = []
+        missing_fields.extend(Metadata.fields)
+        for field in element.child_elements:
+            field_name = field.short_name.lower()
+            if field_name in missing_fields:
+                missing_fields.remove(field_name)
+                found_fields.append(field_name)
+            elif field_name in found_fields:
+                # it was already found, therefore it must be 
+                # a duplicate
+                duplicate_fields.append(field_name)
+            else:
+                # it wasn't in the expected list, and wasn't a 
+                # dupe, it must be an extra
+                extra_fields.append(field_name)
+        to_return = {}
+        if missing_fields:
+            to_return["missing"] = missing_fields
+        if duplicate_fields:
+            to_return["duplicate"] = duplicate_fields
+        if extra_fields:
+            to_return["extra"] = extra_fields
+        return to_return
+
     def _addAttributesAndChildElements(self, element, input_tree, xpath, name_prefix):
         for input_node in etree.ElementChildIterator(input_tree):
             name = str(input_node.get('name'))
-            if (str(input_node.tag)).find("element") > -1 and ( name.find('root') == -1 ):
+            if (str(input_node.tag)).find("element") > -1:
                 next_name_prefix = ''
                 if input_node.get('maxOccurs') > 1:
                     child_element = ElementDef(is_repeatable=True)
