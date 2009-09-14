@@ -65,7 +65,7 @@ def dashboard(request, template_name="hq/dashboard.html"):
 
 @login_required()
 def org_report(request, template_name="hq/org_single_report.html"):
-   # return org_email_report(request)
+    # return org_email_report(request)
    
     context = {}
     

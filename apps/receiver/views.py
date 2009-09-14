@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
@@ -130,7 +130,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         currdomain = Domain.objects.get(name=domain_name)
     except Domain.DoesNotExist:
         logging.error("Submission failed! %s isn't a known domain.", domain_name)
-        return HttpResponseServerError("Submission failed! %s isn't a known domain.", domain_name)
+        return HttpResponseBadRequest("Submission failed! %s isn't a known domain.", domain_name)
 
     try: 
         new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
