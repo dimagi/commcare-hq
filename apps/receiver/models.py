@@ -25,7 +25,7 @@ _RECEIVER = "receiver"
 class Submission(models.Model):
     '''A Submission object.  Represents an instance of someone POST-ing something
        to our site.'''
-    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
+    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now)
     transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
     
     domain = models.ForeignKey(Domain)
