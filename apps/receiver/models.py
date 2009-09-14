@@ -291,7 +291,7 @@ class Attachment(models.Model):
         Returns whether this submission has a linked schema, defined
         by having something in the xform manager that knows about this.
         '''
-        # this method, and the one below are semo-dependant on the 
+        # this method, and the one below are semi-dependant on the 
         # xformmanager app.  if that app is not running, this will
         # never be true but will still resolve.
         if self.get_linked_metadata():
@@ -329,10 +329,15 @@ class SubmissionHandlingType(models.Model):
     '''A way in which a submission can be handled.  Contains a reference
        to both an app, that did the handling, and a method, representing
        how the app did something.  For example, one app could be "xformmanager" 
-       and a way of handling could be "saved_form_data"'''
-    # todo? these names are pretty long-winded 
+       and a way of handling could be "saved_form_data".
+       If app.methodname is a valid python method, receiver will attempt
+       to call it with the handling occurrence as the argument, and if 
+       the method returns an HttpResponse object that will override
+       the default response.  See __init__.py in this module for an example.
+    '''
+    # todo? these model names are pretty long-winded 
     app = models.CharField(max_length=50)
-    method = models.CharField(max_length=100) 
+    method = models.CharField(max_length=100)
     
 class SubmissionHandlingOccurrence(models.Model):
     """A class linking submissions to ways of handling them.  Other apps
@@ -341,7 +346,7 @@ class SubmissionHandlingOccurrence(models.Model):
        An app creating an instance of this implies that the app somehow 
        'understood' the submission, so unparsed or error-full submisssions
        should not have instances of this."""
-    # todo? these names are pretty long-winded 
+    # todo? these model names are pretty long-winded 
     submission = models.ForeignKey(Submission, related_name="ways_handled")
     handled = models.ForeignKey(SubmissionHandlingType)    
     

@@ -20,6 +20,7 @@ import mimetypes
 
 from receiver.models import *
 from receiver.models import _XFORM_URI as XFORM_URI
+from receiver.submitresponse import SubmitResponse
 from django.contrib.auth.models import User 
 
 from hq.utils import paginate
@@ -120,7 +121,6 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
     
     # alright the save worked.  now do some post processing if we can 
-    context = {}
     if domain_name[-1] == '/':
         # get rid of the trailing slash if it's there
         domain_name = domain_name[0:-1]
@@ -130,24 +130,45 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         currdomain = Domain.objects.get(name=domain_name)
     except Domain.DoesNotExist:
         logging.error("Submission failed! %s isn't a known domain.", domain_name)
-        return HttpResponseBadRequest("Submission failed! %s isn't a known domain.", domain_name)
-
+        response = SubmitResponse(status_code=404, or_status_code=4040, 
+                                  or_status="%s isn't a known domain." % domain_name)
+        return response.to_response()
     try: 
         new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
                                                                   currdomain, is_resubmission=is_resubmission)
-        context['transaction_id'] = new_submission.transaction_uuid
-        context['submission'] = new_submission
+        ways_handled = new_submission.ways_handled.all()
+        # loop through the potential ways it was handled and see if any
+        # of the apps want to override the response.  
+        # TODO: the first response will override all the others.  These
+        # need a priority and/or more engineering if we want to allow
+        # multiple responses.  See reciever/__init__.py for an example
+        # of this in action
+        for way_handled in ways_handled:
+            app_name = way_handled.handled.app
+            method_name = way_handled.handled.method
+            try:
+                module = __import__(app_name,fromlist=[''])
+                if hasattr(module, method_name):
+                    method = getattr(module, method_name)
+                    response = method(way_handled)
+                    if response and isinstance(response, HttpResponse):
+                        return response
+            except ImportError:
+                # this is ok it just wasn't a valid handling method
+                continue
+        # either no one handled it, or they didn't want to override the 
+        # response.  This falls back to the old default. 
+        response_keys = {}
+        response_keys['TransactionId'] = new_submission.transaction_uuid
+        response_keys['Submission'] = new_submission
         attachments = Attachment.objects.all().filter(submission=new_submission)
         num_attachments = len(attachments)
-        context['num_attachments'] = num_attachments
-        ways_handled = new_submission.ways_handled.all()
-        if len(ways_handled) > 0:
-            # if an app handled it and left a message then prefix the response
-            # with whatever was specified
-            app_messages = [way.message for way in ways_handled if way.message]
-            context["app_messages"] = app_messages
-        template_name="receiver/submit_complete.html"
-        return render_to_response(request, template_name, context)
+        response_keys['NumAttachments'] = num_attachments
+        response = SubmitResponse(status_code=200, or_status_code=2000,
+                                  submit_id=new_submission.id,
+                                  **response_keys)
+        return response.to_response()
+            
     except Exception, e:
         type, value, tb = sys.exc_info()
         traceback_string = "\n\nTRACEBACK: " + '\n'.join(traceback.format_tb(tb))
@@ -157,8 +178,9 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
                              'submit_record':str(submit_record)})
         # should we return success or failure here?  I think failure, even though
         # we did save the xml successfully.
-        return HttpResponseServerError("Submission processing failed!  " + \
-                                       "This information probably won't help you: %s" % e)
+        response = SubmitResponse(status_code=500, or_status_code=5000, 
+                                  or_status="FAIL. %s" % e)
+        return response.to_response()
 
 def backup(request, domain_name, template_name="receiver/backup.html"):
     context = {}    

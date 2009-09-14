@@ -1,4 +1,6 @@
 from lxml import etree
+from django.http import HttpResponse
+
 
 # standard xml tags for the OR-compliant forms
 OPENROSA_RESPONSE_TAG = "OpenRosaResponse"
@@ -26,6 +28,7 @@ class SubmitResponse(object):
            keyword arguments passed in will be included in the response.
         '''
         self._all_params = {}
+        self.status_code = status_code
         self.add_param(STATUS_CODE_TAG, status_code)
         self.add_param(OPENROSA_STATUS_CODE, or_status_code)
         self.add_param(OPENROSA_STATUS, or_status)
@@ -42,7 +45,12 @@ class SubmitResponse(object):
            any previously set parameter.'''
         if value != None:
              self._all_params[key] = value
-            
+    
+    def to_response(self):
+        '''Gets this object as a django HTTP response'''
+        return HttpResponse(content=str(self), status=self.status_code, 
+                            content_type="text/xml")
+        
     
     def __unicode__(self):
         '''Gets this as an xml string, in compliance with:
