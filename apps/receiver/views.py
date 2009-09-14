@@ -12,13 +12,14 @@ from django.core.urlresolvers import reverse
 from xformmanager.manager import XFormManager
 # this import is just so we can get StorageUtility.XFormError
 from xformmanager.storageutility import StorageUtility
+from transformers.zip import get_zipfile
 
 from datetime import timedelta, datetime
 from django.db import transaction
-import uuid
 import mimetypes
 
 from receiver.models import *
+from receiver.models import _XFORM_URI as XFORM_URI
 from django.contrib.auth.models import User 
 
 from hq.utils import paginate
@@ -272,19 +273,11 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                         count = count + 1
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
-    orphans = []
-    # TODO - optimize this into 1 db call
-    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
-    for slog in slogs:
-        if slog.is_orphaned():
-            # czue: TEMPORARILY add a check for non-duplicateness
-            # this will be solved after data migration, but in order
-            # to keep this view accurate with previously processed
-            # data, should be included for now.
-            # czue: bah this is too slow.  nevermind. commenting out.
-            # if not slog.is_duplicate():  
-            orphans = orphans + [ slog ]
-    context['submissions'] = paginate(request, orphans)
+    inner_qs = SubmissionHandlingOccurrence.objects.all().values('pk').query
+    orphans = Submission.objects.exclude(id__in=inner_qs)
+    # We could also put a check in here to not display duplicate data
+    # using 'if not orphan.is_duplicate()'
+    context['submissions'] = paginate(request, orphans )
     return render_to_response(request, template_name, context)
 
 @login_required()
@@ -301,3 +294,20 @@ def delete_submission(request, submission_id=None, template='receiver/confirm_de
     context['object'] = submission
     context['type'] = 'Submission'
     return render_to_response(request, template, context)
+
+@login_required()
+def orphaned_data_xml(request):
+    """
+    Get a zip file containing all orphaned submissions
+    """
+    context = {}
+    try:
+        extuser = ExtUser.objects.get(id=request.user.id)
+    except ExtUser.DoesNotExist:
+        template_name="hq/no_permission.html"
+        return render_to_response(request, template_name, context)
+    inner_qs = SubmissionHandlingOccurrence.objects.all().values('pk').query
+    orphans = Submission.objects.exclude(id__in=inner_qs)
+    attachments = Attachment.objects.filter(submission__in=orphans)
+    xforms = attachments.filter(attachment_uri=XFORM_URI)
+    return get_zipfile( xforms.values_list('filepath', flat=True) )

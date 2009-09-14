@@ -7,7 +7,10 @@
 {% endblock %}
 {% block content %}
 <h2>{% trans "Submissions Not Matching Any Known Schema" %}</h2>
+<a href="{% url receiver.views.orphaned_data_xml %}">download zip file of xml submissions</a>
+<br>
 <p>NOTE: This page currently includes some duplicate submissions, shown in <span class="duplicate">orange</span>.  These will disappear the next time our server migrates.  Please be patient with us.</p>  
+
 {% if errors %}
 	<!-- TODO: put this formatting in stylesheets -->
     <label class="error"><strong>{{ errors|escape }}</strong></label>

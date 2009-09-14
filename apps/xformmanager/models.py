@@ -71,7 +71,7 @@ class FormDefModel(models.Model):
     # the domain this form is associated with, if any
     domain = models.ForeignKey(Domain, null=True, blank=True)
     
-    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now())
+    submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now)
     submit_ip = models.IPAddressField(_('Submitting IP Address'), null=True)
     bytes_received = models.IntegerField(_('Bytes Received'), null=True)
     
@@ -235,8 +235,8 @@ class Metadata(models.Model):
     formversion = models.CharField(max_length=255, null=True)
     deviceid = models.CharField(max_length=255, null=True)
     # do not remove default values, as these are currently used to discover field type
-    timestart = models.DateTimeField(_('Time start form'), default = datetime.now())
-    timeend= models.DateTimeField(_('Time end form'), default = datetime.now())
+    timestart = models.DateTimeField(_('Time start form'), default = datetime.now)
+    timeend= models.DateTimeField(_('Time end form'), default = datetime.now)
     username = models.CharField(max_length=255, null=True)
     chw_id = models.CharField(max_length=255, null=True)
     #unique id
