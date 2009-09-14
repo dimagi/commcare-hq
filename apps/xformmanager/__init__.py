@@ -1,10 +1,13 @@
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 
 from django.http import HttpResponse
 
 from receiver.submitresponse import SubmitResponse
 
-def instance_data(way_handled):
+SUCCESSFUL_SUBMISSION = "Thanks!"
+
+def instance_data(way_handled, additional_params):
     '''Return a custom http response associated the handling
        of the xform, in this case as a valid submission matched
        to a schema.
@@ -21,8 +24,9 @@ def instance_data(way_handled):
             response = SubmitResponse(status_code=200, forms_sent_today=submits_today,
                                       submit_id=way_handled.submission.id, 
                                       or_status_code=2000, 
-                                      or_status="Thanks!",
-                                      total_forms_sent=submits_all_time)
+                                      or_status=SUCCESSFUL_SUBMISSION,
+                                      total_forms_sent=submits_all_time, 
+                                      **additional_params)
                                       
             return response.to_response()
     except Exception, e:
