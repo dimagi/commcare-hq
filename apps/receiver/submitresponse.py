@@ -25,7 +25,9 @@ class SubmitResponse(object):
                  total_forms_sent=None, **kwargs):
         '''Create an instance of a submission response object.  The only
            required field is the status code, the rest are optional.  Any
-           keyword arguments passed in will be included in the response.
+           keyword arguments passed in will be included in the response, 
+           however if a keyword conflicts with an explicit key above, that
+           will be overridden.
         '''
         self._all_params = {}
         self.status_code = status_code

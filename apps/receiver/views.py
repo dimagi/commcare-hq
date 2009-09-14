@@ -136,6 +136,12 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     try: 
         new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
                                                                   currdomain, is_resubmission=is_resubmission)
+        
+        # the receiver creates its own set of params it cares about 
+        receiver_params = {}
+        receiver_params['TransactionId'] = new_submission.transaction_uuid
+        receiver_params['Submission'] = new_submission
+        receiver_params['NumAttachments'] = len(new_submission.attachments.all())
         ways_handled = new_submission.ways_handled.all()
         # loop through the potential ways it was handled and see if any
         # of the apps want to override the response.  
@@ -143,6 +149,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         # need a priority and/or more engineering if we want to allow
         # multiple responses.  See reciever/__init__.py for an example
         # of this in action
+        # NOTE
         for way_handled in ways_handled:
             app_name = way_handled.handled.app
             method_name = way_handled.handled.method
@@ -150,7 +157,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
                 module = __import__(app_name,fromlist=[''])
                 if hasattr(module, method_name):
                     method = getattr(module, method_name)
-                    response = method(way_handled)
+                    response = method(way_handled, receiver_params)
                     if response and isinstance(response, HttpResponse):
                         return response
             except ImportError:
@@ -158,15 +165,9 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
                 continue
         # either no one handled it, or they didn't want to override the 
         # response.  This falls back to the old default. 
-        response_keys = {}
-        response_keys['TransactionId'] = new_submission.transaction_uuid
-        response_keys['Submission'] = new_submission
-        attachments = Attachment.objects.all().filter(submission=new_submission)
-        num_attachments = len(attachments)
-        response_keys['NumAttachments'] = num_attachments
         response = SubmitResponse(status_code=200, or_status_code=2000,
                                   submit_id=new_submission.id,
-                                  **response_keys)
+                                  **receiver_params)
         return response.to_response()
             
     except Exception, e:

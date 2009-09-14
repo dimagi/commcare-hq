@@ -331,7 +331,8 @@ class SubmissionHandlingType(models.Model):
        how the app did something.  For example, one app could be "xformmanager" 
        and a way of handling could be "saved_form_data".
        If app.methodname is a valid python method, receiver will attempt
-       to call it with the handling occurrence as the argument, and if 
+       to call it with the handling occurrence and a dictionary of additional
+       parameters as the arguments, and if 
        the method returns an HttpResponse object that will override
        the default response.  See __init__.py in this module for an example.
     '''

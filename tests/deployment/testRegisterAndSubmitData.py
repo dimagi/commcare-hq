@@ -4,7 +4,7 @@ import unittest
 import os
 import time
 import uuid
-
+import re
 import subprocess
 import sys
 from subprocess import PIPE
@@ -180,16 +180,9 @@ class DomainTestCase(unittest.TestCase):
             resp = conn.getresponse()
             
             data = resp.read()
-            #return resp if resp.status == httplib.OK else None
         except:
             return None
 
-        
-#        f = o.open( 'http://%s/xforms/register/' % (serverhost), p2 )
-#        #f = urllib2.urlopen( 'http://%s/xforms/register/' % (serverhost), p2 )
-#        data = f.read()
-#        f.close()
-        
         return self._verifySchema(data, shortname)
 
 
@@ -214,25 +207,25 @@ class DomainTestCase(unittest.TestCase):
     def _verifySubmission(self, resultstring, num_attachments):
         """Verify that a raw xform submission is submitted and the correct reply comes back in.  This also checks to make sure that the attachments are parsed out correctly"""
         
-        #print "Domain submission results: " + resultstring
-        rescount = resultstring.count("Submission received, thank you")
+        # this should == xformmanager.SUCCESSFUL_SUBMISSION
+        rescount = resultstring.count("Thanks!")
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
         if rescount != 1:
             msg = "Data submission failed, not successful: " + str(rescount)
             print msg
+            print "===== xform =====pn%s" % resultstring
             self.fail(msg)
-            #print resultstring
         else:
-            idx = resultstring.index("<p>Attachments:")
-            attachment_count = resultstring[idx+15:].replace('</p>','')
+            attach_pattern = re.compile(r"<NumAttachments>(\d+)</NumAttachments>")
             try:
-                anum = int(attachment_count)
-                self.assertEqual(anum, num_attachments)
-                
+                matches = attach_pattern.search(resultstring)
+                attachment_count = int(matches.groups()[0])
+                self.assertEqual(attachment_count, num_attachments)
             except Exception, ex:
-                print "Data submission error:  attachment not found: " + attachment_count + " Exception: " + str(ex)
-                self.assertFalse(True)                        
+                msg = "Data submission error:  attachment not found: " + attachment_count + " Exception: " + str(ex)
+                print "===== xform =====pn%s" % resultstring
+                self.fail(msg)
         
     def _postSimpleData2(self, datafile,domain_name):
         """Pure python method to submit direct POSTs"""
@@ -447,7 +440,6 @@ class TestSimpleSubmits(unittest.TestCase):
         datadir = os.path.join(curdir,'multipart')        
         datafiles = os.listdir(datadir)
         for file in datafiles:
-#            time.sleep(.1)
             if file == ".svn":
                 continue
             fullpath = os.path.join(datadir,file)
@@ -463,35 +455,6 @@ class TestSimpleSubmits(unittest.TestCase):
             results = p.stdout.read()
             #self._verifySubmission(results,3)
             
-#    def testPostBracCHW(self):        
-#        files = getFiles('brac-chw', '.xml')
-#        self._postSimpleData(files, 'BRAC')
-#    
-#    def testPostBracCHP(self):
-#        
-#        files = getFiles('brac-chp', '.xml')
-#        self._postSimpleData(files, 'BRAC')
-#        
-#    def testPostPF_Registration(self):
-#        #files = getFiles('pf', '.xml')
-#        files = getFilesFromList('pf','registration.lst')
-#        self._postSimpleData(files, 'Pathfinder')       
-#        
-#    def testPostPF_Referral(self):
-#        #files = getFiles('pf', '.xml')
-#        files = getFilesFromList('pf','referral.lst')
-#        self._postSimpleData(files, 'Pathfinder')       
-#        
-#    def testPostPF_Followup(self):
-#        #files = getFiles('pf', '.xml')
-#        files = getFilesFromList('pf','fup.lst')
-#        self._postSimpleData(files, 'Pathfinder')       
-#    
-#    def testPostOther(self):
-#        
-#        files = getFiles('data', '.xml')
-#        self._postSimpleData(files, 'grameen')
-
 
 class TestBackupRestore(unittest.TestCase):
     def setup(self):
