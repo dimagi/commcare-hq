@@ -63,8 +63,8 @@ def register_xform(request, template='register_and_list_xforms.html'):
                 xformmanager = XFormManager()
                 formdefmodel = xformmanager.add_schema(request.FILES['file'].name, request.FILES['file'])
             except Exception, e:
-                logging.error(str(e))
-                context['errors'] = str(e)
+                logging.error(unicode(e))
+                context['errors'] = unicode(e)
                 transaction.rollback()
             else:
                 formdefmodel.submit_ip = request.META['REMOTE_ADDR']
@@ -132,7 +132,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             xformmanager = XFormManager()
             formdefmodel = xformmanager.add_schema_manual(schema, type)
         except IOError, e:
-            logging.error("xformmanager.manager: " + str(e) )
+            logging.error("xformmanager.manager: " + unicode(e) )
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
             context['upload_form'] = RegisterXForm()
             context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
@@ -140,13 +140,13 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
         except Exception, e:
             logging.error(e)
             logging.error("Unable to write raw post data<br/>")
-            logging.error("Unable to write raw post data: Exception: " + str(sys.exc_info()[0]) + "<br/>")
-            logging.error("Unable to write raw post data: Traceback: " + str(sys.exc_info()[1]))
+            logging.error("Unable to write raw post data: Exception: " + unicode(sys.exc_info()[0]) + "<br/>")
+            logging.error("Unable to write raw post data: Traceback: " + unicode(sys.exc_info()[1]))
             type, value, tb = sys.exc_info()
-            logging.error(str(type.__name__), ":", str(value))
+            logging.error(unicode(type.__name__), ":", unicode(value))
             logging.error("error parsing attachments: Traceback: " + '\n'.join(traceback.format_tb(tb)))
             logging.error("Transaction rolled back")
-            context['errors'] = "Unable to write raw post data" + str(sys.exc_info()[0]) + str(sys.exc_info()[1])
+            context['errors'] = "Unable to write raw post data" + unicode(sys.exc_info()[0]) + unicode(sys.exc_info()[1])
             transaction.rollback()                            
         else:
             formdefmodel.submit_ip = metadata['HTTP_ORIGINAL_SUBMIT_IP']
@@ -311,7 +311,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
             for id in request.session['xform_data']:
                 xformmanager.remove_data(formdef_id, id)
             logging.debug("Instances %s of schema %s were deleted.", \
-                          (str(request.session['xform_data']), formdef_id))
+                          (unicode(request.session['xform_data']), formdef_id))
             request.session['xform_data'] = None
             return HttpResponseRedirect( reverse("xformmanager.views.data", \
                                          args=[formdef_id]) )
