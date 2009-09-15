@@ -3,4 +3,5 @@ import unittest
 # please make your test classes in this directory and be sure 
 # to include them in this file for them to be included in the tests
 from jar import *
-
+# TODO - fix buildmanager views unit test
+# from views import *

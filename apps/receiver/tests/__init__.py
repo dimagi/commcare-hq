@@ -4,3 +4,4 @@ import unittest
 from submissions import *
 from deletions import *
 from submitresponse import *
+from views import *
