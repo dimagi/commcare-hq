@@ -7,3 +7,4 @@ from basic_remove import *
 from basic_util import *
 from meta import *
 from api import *
+from views import *
