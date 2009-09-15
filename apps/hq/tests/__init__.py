@@ -3,3 +3,4 @@ import unittest
 # and be sure to include them in this file for them to be included in the tests
 from basic import *
 #from reportingTests import *
+from views import *

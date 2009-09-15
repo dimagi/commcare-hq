@@ -1,0 +1,83 @@
+from django.test import TestCase
+from django.test.client import Client
+from hq.models import ExtUser, Domain, Organization, ReporterProfile
+from reporters.models import Reporter
+
+class ViewsTestCase(TestCase):
+    def setUp(self):
+        domain = Domain(name='mockdomain')
+        domain.save()
+        user = ExtUser()
+        user.domain = domain
+        user.username = 'brian'
+        user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
+        user.save()
+        self.client.login(username='brian',password='test')
+        org = Organization(name='mockorg', domain=domain)
+        org.save()            
+
+    def testBasicViews(self):
+        reporter = Reporter(alias="rapporteur")
+        reporter.save()
+        domain = Domain.objects.get(name='mockdomain')
+        profile = ReporterProfile(reporter=reporter, domain=domain)
+        profile.save()
+
+        response = self.client.get('/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/serverup.txt')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/change_password/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/report/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/report/email/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+        
+        response = self.client.get('/report/sms/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/reporters/add/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+        
+        response = self.client.get('/reporters/%s/' % reporter.id)
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/charts/default/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/charts/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+
+        response = self.client.get('/stats/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+        
+        # TODO - fix
+        """
+        response = self.client.get('/stats/delinquents/')
+        self.assertNotContains(response,"Error", status_code=200)
+        self.assertNotContains(response,"Exception", status_code=200)
+        """
+        # format url variables like so: 
+        # response = self.client.get('/api/xforms/',{'format':'json'})
+
+    def tearDown(self):
+        user = ExtUser.objects.get(username='brian')
+        user.delete()
+        domain = Domain.objects.get(name='mockdomain')
+        domain.delete()
