@@ -351,6 +351,7 @@ class Metadata(models.Model):
         tag = tag[i+1:len(tag)]
         return tag
 
+
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once

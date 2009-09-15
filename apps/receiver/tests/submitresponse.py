@@ -7,8 +7,8 @@ from receiver.submitresponse import SubmitResponse
 class SubmitResponseTestCase(unittest.TestCase):
     
     # Expected responses.  This isn't a great test since
-    # the order is currently somewhat arbitrary and this 
-    # will be volitile if small things change, however this
+    # the order is currently somewhat arbitrary (alphabetical)
+    # and this will fall if that changes, however this
     # is slightly better than printing the responses and 
     # looking at them, and re-parsing the XML kind of
     # defeats the purpose of 'unit' test.
