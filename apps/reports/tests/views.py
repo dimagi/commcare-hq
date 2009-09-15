@@ -15,7 +15,8 @@ class ViewsTestCase(TestCase):
 
     def testBasicViews(self):
         domain = Domain.objects.get(name='mockdomain')
-        case = ?
+        # TODO: fix
+        # case = ?
 
         response = self.client.get('/reports/')
         self.assertNotContains(response,"Error", status_code=200)
