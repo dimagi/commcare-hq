@@ -49,10 +49,10 @@ logger_set = False
 
 @login_required()
 def dashboard(request, template_name="hq/dashboard.html"):
-    # this is uber hacky - set the log level to debug on the dashboard
-    
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
+    # the hq middleware populates this field for us, if there's
+    # an extuser
+    if not request.extuser:
         template_name="hq/no_permission.html"
         return render_to_response(request, template_name, context)
         

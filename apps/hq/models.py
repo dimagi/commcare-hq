@@ -12,6 +12,16 @@ class Domain(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=64,null=True)
+    
+    def get_blacklist(self):
+        '''Get the list of names on the active blacklist.'''
+        # NOTE: using this as a blacklist check implies a list lookup for each 
+        # user which could eventually get inefficient.  We could make this a 
+        # hashset if desired to make this O(1)
+        return self.blacklisteduser_set.filter(active=True)\
+                        .values_list('username', flat=True)
+        
+        
         
     def __unicode__(self):
         return self.name
@@ -67,7 +77,7 @@ class ReporterProfile(models.Model):
     
     def __str__(self):
         return unicode(self).encode('utf-8')
-        
+
 class ExtUser(User):
     '''Extended users, which have some additional metadata associated with them'''
     
@@ -184,3 +194,20 @@ class ReportSchedule(models.Model):
     def __unicode__(self):
         return unicode(self.name + " - " + self.report_frequency)
         
+class BlacklistedUser(models.Model):
+    '''Model for a blacklisted user.  Blacklisted users should be excluded from 
+       most views of the data, including, but not limited to, charts, reports,
+       submission logs(?), data/tabular views, etc.'''
+    # this is a temporary solution until we get real reporters for everyone 
+    # we care about.
+    domains = models.ManyToManyField(Domain)
+    # could use reporters here, but this will keep things simple, which is 
+    # desirable for a short-term solution
+    username = models.CharField(max_length=64)
+    # allow temporary enabling/disabling of blacklist at a global level.
+    active = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return "%s in %s" %\
+                  (self.username, 
+                   ",".join([domain.name for domain in self.domains.all()]))

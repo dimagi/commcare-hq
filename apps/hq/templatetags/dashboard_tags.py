@@ -27,8 +27,8 @@ output_format = '%Y-%m-%d %H:%M'
 @register.simple_tag
 def get_dashboard_user_counts(user, startdate=None, enddate=None):
     
-    #todo:  query the global meta tables to get all the users
-    #and/or query the ExtUser table to get all the registered users.
+    # todo:  query the global meta tables to get all the users
+    # and/or query the ExtUser table to get all the registered users.
     totalspan = enddate-startdate
     report_hash = {}
     extuser = ExtUser.objects.get(id=user.id)
@@ -36,13 +36,15 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
-        #print target_date.strftime('%m/%d/%Y')
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
-    # for now, we're going to get all the users in the system by querying the actual tables for usernames
+    # for now, we're going to get all the users in the system by querying
+    # the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     ret = ""
     
     username_to_count_hash = { }
+    
+    domain_blacklist = extuser.domain.get_blacklist()
     for fdef in defs:
         try: 
             # don't do anything if we can't find a username column
@@ -53,7 +55,9 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
             helper = fdef.db_helper
             # let's get the usernames
             usernames_to_filter = helper.get_uniques_for_column('meta_username')
-            for user in usernames_to_filter:       
+            for user in usernames_to_filter:
+                if user in domain_blacklist:
+                    continue
                 if not username_to_count_hash.has_key(user):
                     this_user_hash = {"total" : 0 }
                     # this_user_hash = {}
