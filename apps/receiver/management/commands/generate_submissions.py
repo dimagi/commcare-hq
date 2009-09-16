@@ -10,7 +10,9 @@ settings)
 import bz2
 import sys
 import urllib2
+import httplib
 import cStringIO
+from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from receiver.management.commands import util
@@ -58,8 +60,12 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
     url = 'http://%s/api/submissions/' % remote_url
     if latest:
         MD5_buffer = get_MD5_data(Submission, debug)
-        request = util.generate_POST_request(url, MD5_buffer)
-        response = urllib2.urlopen(request)
+
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse()
+        
         print "Generated latest remote submissions"
     else:
         response = urllib2.urlopen(url)
@@ -70,7 +76,7 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
         fout.write(response.read())
         fout.close()
         print "Submissions downloaded to %s" % submissions_file        
-    return
+    return response
 
 def get_MD5_data(django_model, debug=False):
     """ generate a string with all MD5s.
@@ -85,7 +91,7 @@ def get_MD5_data(django_model, debug=False):
     else:
         print "DEBUG MODE: Only generating some submissions"
         # arbitrarily return only 10 of the MD5s
-        objs = django_model.objects.all().order_by('checksum')[:10]
+        objs = django_model.objects.all().order_by('checksum')[:5]
     for obj in objs:
         string.write(unicode(obj.checksum) + '\n')
     return bz2.compress(string.getvalue())

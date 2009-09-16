@@ -142,7 +142,7 @@ class StorageUtility(object):
         """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
-        xmlns = self._get_xmlns(f)
+        xmlns = get_xmlns(f)
         formdef = FormDefModel.objects.all().filter(target_namespace=xmlns)
         
         if formdef is None or len(formdef) == 0:
@@ -352,7 +352,7 @@ class StorageUtility(object):
     # note that this does not remove the file from the filesystem 
     # (by design, for security)
     @transaction.commit_on_success
-    def remove_instance_matching_schema(self, formdef_id, instance_id):
+    def remove_instance_matching_schema(self, formdef_id, instance_id, remove_submission=False):
         fdm = FormDefModel.objects.get(pk=formdef_id)
         edm_id = fdm.element.id
         edm = ElementDefModel.objects.get(pk=edm_id)
@@ -365,6 +365,8 @@ class StorageUtility(object):
             return
         # mark as intentionally handled
         self._add_handled(meta.submission, method="deleted")
+        if remove_submission:
+            meta.submission.submission.delete()
         meta.delete()
 
     def _add_handled(self, attachment, method, message=''):
@@ -403,26 +405,26 @@ class StorageUtility(object):
         cursor.execute( " delete from " + elementdef.table_name + " where id = %s ", [instance_id] )
 
     @transaction.commit_on_success
-    def remove_schema(self, id, delete_xml=True):
+    def remove_schema(self, id, remove_submissions=False, delete_xml=True):
         fdds = FormDefModel.objects.all().filter(id=id) 
         if fdds is None or len(fdds) == 0:
             logging.error("  Schema with id %s could not be found. Not deleted." % id)
             return    
         # must remove tables first since removing form_meta automatically deletes some tables
         self._remove_form_tables(fdds[0])
-        self._remove_form_models(fdds[0], delete_xml)
+        self._remove_form_models(fdds[0], remove_submissions, delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
 
-    def clear(self, delete_xml=True):
+    def clear(self, remove_submissions=False, delete_xml=True):
         """ removes all schemas found in XSD_REPOSITORY_PATH
             and associated tables. 
             If delete_xml is true (default) it also deletes the 
             contents of XFORM_SUBMISSION_PATH.        
         """
         self._remove_form_tables()
-        self._remove_form_models(delete_xml=delete_xml)
+        self._remove_form_models(remove_submissions=remove_submissions, delete_xml=delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
             
         # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
@@ -577,7 +579,7 @@ class StorageUtility(object):
         """
         return formdef
         
-    def _remove_form_models(self,form='', delete_xml=True):
+    def _remove_form_models(self,form='', remove_submissions=False, delete_xml=True):
         """Drop all schemas, associated tables, and files"""
         if form == '':
             fdds = FormDefModel.objects.all().filter()
@@ -595,6 +597,8 @@ class StorageUtility(object):
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
             all_meta = Metadata.objects.filter(formdefmodel=fdd)
             for meta in all_meta:
+                if remove_submissions:
+                    meta.submission.submission.delete()
                 self._remove_handled(meta.submission)
             all_meta.delete()
             fdd.delete()
@@ -639,18 +643,18 @@ class StorageUtility(object):
         """
         logging.error(string)
 
-    #temporary measure to get target form
-    # todo - fix this to be more efficient, so we don't parse the file twice
-    def _get_xmlns(self, stream):
-        xml_string = get_xml_string(stream)
-        try:
-            root = etree.XML(xml_string)
-        except etree.XMLSyntaxError:
-            raise self.XFormError("XML Syntax Error")
-        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
-        if r is None:
-            raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
-        return r.group(0).strip('{').strip('}')
+#temporary measure to get target form
+# todo - fix this to be more efficient, so we don't parse the file twice
+def get_xmlns(stream):
+    xml_string = get_xml_string(stream)
+    try:
+        root = etree.XML(xml_string)
+    except etree.XMLSyntaxError:
+        raise self.XFormError("XML Syntax Error")
+    r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
+    if r is None:
+        raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
+    return r.group(0).strip('{').strip('}')
 
 def get_registered_table_name(name):
     # this is purely for backwards compatibility

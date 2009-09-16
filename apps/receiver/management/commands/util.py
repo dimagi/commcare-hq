@@ -57,11 +57,8 @@ def extract_and_process(file_name, callback, *additional_args):
 
         process_folder(folder_name, callback, *additional_args)
     finally:
-        pass
-        #Windows always returns a 'file is in use' error when we try
-        #to clean up after ourselves
-        #process_folder(folder_name, os.remove)
-        #os.rmdir(folder_name)
+        process_folder(folder_name, os.remove)
+        os.rmdir(folder_name)
         
 def process_folder(folder_name, callback, *additional_arg):
     """ Runs 'callback' on all files inside folder_name
@@ -100,8 +97,7 @@ def submit_form(filename, destination_url):
     content_length = submit_dict['content-length']
     domain_name = submit_dict["domain"]
     if int(real_size) != int(content_length):
-        print "form %s has mismatched size and content-length %s != %s" + \
-              ", automatically fixing!" % (filename, real_size, content_length)
+        print "form %s has mismatched size and content-length %s != %s, automatically fixing!" % (filename, real_size, content_length)
         submit_dict['content-length'] = real_size
     parsed_url = urlparse('http://%s/receiver/resubmit/%s' % (destination_url, domain_name))
     submit_dict["is_resubmission" ] =  "True" 
