@@ -15,10 +15,6 @@ def get_org_reportdata(organization, startdate, enddate):
     
     fdefs = get_formdefs_for_domain(organization.domain)
     
-    
-    #[depth, type, item, get_aggregate_count(item, startdate, enddate)]
-    
-    
     for supervisor in supervisors:
         # leaving the hack in that everything after the first is expected
         # to have a "None" description.  This should be revisited

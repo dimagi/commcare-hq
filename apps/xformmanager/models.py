@@ -128,11 +128,18 @@ class FormDefModel(models.Model):
         else:
             raise Exception("Multiple values for id %s found in form %s" % (id, self ))
         
-    def get_rows(self, column_filters=[], sort_column="id", sort_descending=True):
+    def get_rows(self, column_filters=[], sort_column="id", sort_descending=True,
+                 blacklist=[]):
         '''Get rows associated with this form's schema.
-           The column_filters parameter should take in column_name, value
-           pairs to be used in a where clause.  The default parameters
-           return all the rows in the schema, sorted by id, descending.'''
+           The column_filters parameter should take in column_name, operation,
+           value triplets to be used in a where clause.  (e.g. ['pk','=','3']) 
+           The default parameters return all the rows in the schema, sorted 
+           by id, descending.'''
+           
+        username_col = self.get_username_column() 
+        if username_col:
+            for blacklisted_user in blacklist:
+                column_filters.append((username_col, "<>", blacklisted_user))
         return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
         
     
@@ -194,6 +201,16 @@ class FormDefModel(models.Model):
         # this is left to make domains backwards compatible (?)
         # we can probably get rid of it, actually
         return self.domain
+    
+    def get_username_column(self):
+        '''Get the column where usernames are stored.  This is used by the
+           blacklist.  Returns nothing if no username column is known or
+           found.'''
+        # TODO: not hard code this.
+        column = "meta_username"
+        if column in self.get_column_names():
+            return column
+                
     
     def export(self):
         """ walks through all the registered form definitions and

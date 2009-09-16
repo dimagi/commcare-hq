@@ -44,6 +44,7 @@ def get_user_forms_count(domain, username, startdate=None, enddate=None, forms_t
     
     for fdef in defs:        
         helper = fdef.db_helper
+        # TODO: blacklist isn't applied here.  Should it be?
         userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': username})                        
         for dat in userdailies:         
             #dt = time.strptime(str(dat[1][0:-4]),xmldate_format)
