@@ -24,7 +24,8 @@ from receiver.submitresponse import SubmitResponse
 from django.contrib.auth.models import User 
 
 from hq.utils import paginate
- 
+from hq.decorators import extuser_required
+
 import logging
 import hashlib
 import traceback
@@ -34,23 +35,19 @@ import string
 import submitprocessor
 
 
-@login_required()
+@extuser_required()
 def show_submits(request, template_name="receiver/show_submits.html"):
     '''
     View submissions for this domain.
     '''
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    
-    extuser = ExtUser.objects.get(id=request.user.id)
+    extuser = request.extuser
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
     
     context['submissions'] = paginate(request, slogs)
     return render_to_response(request, template_name, context)
 
-@login_required()    
+@extuser_required()    
 def single_attachment(request, attachment_id):
     try:
         attachment = Attachment.objects.get(id=attachment_id)
@@ -67,7 +64,7 @@ def single_attachment(request, attachment_id):
     except:
         return ""
 
-@login_required()
+@extuser_required()
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
@@ -252,17 +249,13 @@ def save_post(request):
     except Exception, e:
         return HttpResponseServerError("Submission failed!  This information probably won't help you: %s" % e)
     
-@login_required()
+@extuser_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
      View data that we could not link to any known schema
     '''
     context = {}
-    try:
-        extuser = ExtUser.objects.get(id=request.user.id)
-    except ExtUser.DoesNotExist:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
+    extuser = request.extuser
     if request.method == "POST":
         xformmanager = XFormManager()
         count = 0
@@ -303,11 +296,11 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     context['submissions'] = paginate(request, orphans )
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 @transaction.commit_on_success
 def delete_submission(request, submission_id=None, template='receiver/confirm_delete.html'):
     context = {}
-    extuser = ExtUser.objects.all().get(id=request.user.id)    
+    extuser = request.extuser
     submission = get_object_or_404(Submission, pk=submission_id)
     if request.method == "POST":
         if request.POST["confirm_delete"]: # user has confirmed deletion.
@@ -318,17 +311,13 @@ def delete_submission(request, submission_id=None, template='receiver/confirm_de
     context['type'] = 'Submission'
     return render_to_response(request, template, context)
 
-@login_required()
+@extuser_required()
 def orphaned_data_xml(request):
     """
     Get a zip file containing all orphaned submissions
     """
     context = {}
-    try:
-        extuser = ExtUser.objects.get(id=request.user.id)
-    except ExtUser.DoesNotExist:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
+    extuser = request.extuser
     inner_qs = SubmissionHandlingOccurrence.objects.all().values('pk').query
     orphans = Submission.objects.exclude(id__in=inner_qs)
     attachments = Attachment.objects.filter(submission__in=orphans)
