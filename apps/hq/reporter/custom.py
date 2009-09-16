@@ -17,7 +17,7 @@ from datetime import timedelta
 import metastats as metastats
 import inspector as repinspector
 
-def _get_flat_data_for_domain(domain, startdate, enddate):
+def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
     
     data = []
     #next, let's get all the unclaimed
@@ -36,7 +36,11 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
         try:
             helper = fdef.db_helper
             #let's get the usernames
-            all_usernames = helper.get_uniques_for_column('meta_username')
+            username_col = fdef.get_username_column()
+            if not username_col:
+                logging.error("unable to run report for %s, no username column found" % fdef)
+                continue
+            all_usernames = helper.get_uniques_for_column(username_col)
             #ok, so we got ALL usernames.  let's filter out the ones we've already seen
             unclaimed_users = []
             for existing in all_usernames:
@@ -44,10 +48,17 @@ def _get_flat_data_for_domain(domain, startdate, enddate):
                     if configured_users.count(existing.lower()) == 0:
                         unclaimed_users.append(existing.lower())
             
+            if use_blacklist:
+                if fdef.domain:
+                    blacklist = fdef.domain.get_blacklist()
+                else:
+                    blacklist = []
             #now that we've got ALL users, we can now the count query of their occurences in the formdef tables
             #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
-            for user in all_usernames:                
-                userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
+            for user in all_usernames:
+                if use_blacklist and user in blacklist:
+                    continue
+                userdailies = helper.get_filtered_date_count(startdate, enddate,filters={username_col: user})
                 if not user_date_hash.has_key(user):
                     user_date_hash[user] = {}
                 for dat in userdailies:               
@@ -133,108 +144,6 @@ def _get_catch_all_email_text(domain, startdate, enddate):
     params['heading'] = heading    
     from hq import reporter
     return reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-
-def admin_catch_all(report_schedule, run_frequency):
-    #todo:  get all of the domains
-    domains = Domain.objects.all()
-    rendered_text = ''
-    from hq import reporter
-    # DAN HACK: everyone wants the daily reports to show the last week's worth of data
-    # so change this 
-    if run_frequency == 'daily':
-        run_frequency='weekly'    
-    (startdate, enddate) = reporter.get_daterange(run_frequency)
-    for dom in domains:
-        #get the root organization
-        #TODO: clean this up
-        # note: this pretty sneakily decides for you that you only care
-        # about one root organization per domain.  should we lift this 
-        # restriction?  otherwise this may hide data from you 
-        root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
-        root_org = root_orgs[0]
-    
-        data = reporter.get_data_for_organization(run_frequency, report_schedule.report_delivery,root_org)
-        params = {}
-        heading = str(dom) + " report: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-        params['heading'] = heading 
-        
-        
-        
-        #next, let's get all the unclaimed
-        #first, let's iterate through all the data and get the usernames
-        #get all the usernames in question
-        configured_users = []
-        for datum in data:
-            if isinstance(datum[2], ExtUser):
-                configured_users.append(datum[2].report_identity.lower())
-        
-        
-        #next, do a query of all the forms in this domain to get an idea of all the usernames
-        defs = FormDefModel.objects.all().filter(domain=dom)
-        user_date_hash = {}
-        
-        for fdef in defs:        
-            helper = fdef.db_helper
-            #let's get the usernames
-            all_usernames = helper.get_uniques_for_column('meta_username')
-            #ok, so we got ALL usernames.  let's filter out the ones we've already seen
-            unclaimed_users = []
-            for existing in all_usernames:
-                if configured_users.count(existing.lower()) == 0:
-                    unclaimed_users.append(existing.lower())
-            
-            #now that we've filtered out the unclaimed users, we can now the count query of their occurences in the formdef tables
-            #as in the dashboard query, we need to hash it by username and by date to do the aggregate counts
-            for user in unclaimed_users:                
-                userdailies = helper.get_filtered_date_count(startdate, enddate,filters={'meta_username': user})
-                if not user_date_hash.has_key(user):
-                    user_date_hash[user] = {}
-                for dat in userdailies:                
-                    
-                    if not user_date_hash[user].has_key(dat[1]):
-                        user_date_hash[user][dat[1]] = 0                   
-                    
-                    user_date_hash[user][dat[1]] = user_date_hash[user][dat[1]] + int(dat[0]) #additive
-        #end for loop through all the fdefs
-        
-        
-        unclaimed_tuples = []
-        #once all the formdefs have been calculated, we need to finally append the totals to the data array.  
-        for unclaimed_user, datehash in user_date_hash.items():
-            usertuple = []
-            usertuple.append(1)
-            if len(unclaimed_tuples) == 0:
-                usertuple.append('Unassigned Users')
-            else:
-                usertuple.append(None)
-            usertuple.append(unclaimed_user)
-            udata = []
-#            for dat, val in datehash.items():
-#                udata.append(val)
-            #let's walk through all the days in order to get the dates correct.
-            
-            totalspan = enddate - startdate
-            for day in range(0,totalspan.days+1):
-                delta = timedelta(days=day)
-                target_date = startdate + delta
-                datestr = target_date.strftime('%m/%d/%Y')
-                if datehash.has_key(datestr):
-                    udata.append(datehash[datestr])
-                else:
-                    udata.append(0)            
-            usertuple.append(udata)            
-            unclaimed_tuples.append(usertuple)                  
-        #ok, so we just did all this data, let's append the data to the already existing data
-        
-        data = data + unclaimed_tuples        
-        rendered_text += reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-
-        
-    if report_schedule.report_delivery == 'email':
-        usr = report_schedule.recipient_user
-        subject = "[CommCare HQ] " + run_frequency + " report " + startdate.strftime('%m/%d/%Y') + "-" + enddate.strftime('%m/%d/%Y') + " ::  Global Admin"
-        reporter.transport_email(rendered_text, usr, params={"startdate":startdate,"enddate":enddate,"email_subject":subject})
-
 
 
 def pf_swahili_sms(report_schedule, run_frequency):

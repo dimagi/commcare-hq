@@ -231,7 +231,7 @@ def export_xml(request, formdef_id):
     return get_zipfile(file_list)
 
 @extuser_required()
-def data(request, formdef_id, template_name="data.html", context={}):
+def data(request, formdef_id, template_name="data.html", context={}, use_blacklist=True):
     '''View the xform data for a particular schema.  Accepts as
        url parameters the following (with defaults specified):
        items: 25 (the number of items to paginate at a time
@@ -240,7 +240,7 @@ def data(request, formdef_id, template_name="data.html", context={}):
        sort_descending: True (?) (the sort order of the column)
        ''' 
     xform = get_object_or_404(FormDefModel, id=formdef_id)
-    # extract params
+    # extract params from the URL
     items = 25
     sort_column = "id" # todo: see if we can sort better by default
     columns = xform.get_column_names()
@@ -267,8 +267,12 @@ def data(request, formdef_id, template_name="data.html", context={}):
             sort_descending = True
     
     
-        
-    rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
+    if use_blacklist:
+        blacklist_users = request.extuser.domain.get_blacklist()
+        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+                              blacklist=blacklist_users)
+    else:
+        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
     context["sort_index"] = columns.index(sort_column)
     context['columns'] = columns 
     context['form_name'] = xform.form_name
