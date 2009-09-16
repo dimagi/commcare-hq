@@ -45,9 +45,9 @@ def _get_submissions(request, domain_id=0):
         logging.error("Please set 'export_path' in your cchq receiver settings.")
         return HttpResponseBadRequest("Please set 'export_path' in your cchq receiver settings.")
     export_dir = settings.RAPIDSMS_APPS['receiver']['export_path']
-    if 'file' in request.FILES:
+    if len(request.raw_post_data) > 0:
         try:
-            md5_string = bz2.decompress(request.FILES['file'].read())
+            md5_string = bz2.decompress(request.raw_post_data)
         except Exception, e:
             logging.error("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
             return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")

@@ -13,11 +13,11 @@ class XFormManager(object):
     def __init__(self):
         self.su  = StorageUtility()
 
-    def remove_schema(self, id):
-        self.su.remove_schema(id)    
+    def remove_schema(self, id, remove_submissions=False):
+        self.su.remove_schema(id, remove_submissions)    
 
-    def remove_data(self, formdef_id, id):
-        self.su.remove_instance_matching_schema(formdef_id, id)
+    def remove_data(self, formdef_id, id, remove_submission=False):
+        self.su.remove_instance_matching_schema(formdef_id, id, remove_submission)
 
     def save_form_data(self, xml_file_name, submission):
         """ return True on success and False on fail """
