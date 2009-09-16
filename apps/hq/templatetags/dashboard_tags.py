@@ -25,7 +25,7 @@ output_format = '%Y-%m-%d %H:%M'
 
 
 @register.simple_tag
-def get_dashboard_user_counts(user, startdate=None, enddate=None):
+def get_dashboard_user_counts(user, startdate=None, enddate=None, use_blacklist=True):
     
     # todo:  query the global meta tables to get all the users
     # and/or query the ExtUser table to get all the registered users.
@@ -43,8 +43,8 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     ret = ""
     
     username_to_count_hash = { }
-    
-    domain_blacklist = extuser.domain.get_blacklist()
+    if use_blacklist:
+        domain_blacklist = extuser.domain.get_blacklist()
     for fdef in defs:
         try: 
             # don't do anything if we can't find a username column
@@ -56,7 +56,8 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
             # let's get the usernames
             usernames_to_filter = helper.get_uniques_for_column('meta_username')
             for user in usernames_to_filter:
-                if user in domain_blacklist:
+                if use_blacklist and user in domain_blacklist:
+                    # skip over blacklisted users
                     continue
                 if not username_to_count_hash.has_key(user):
                     this_user_hash = {"total" : 0 }
