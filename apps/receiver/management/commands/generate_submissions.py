@@ -46,7 +46,7 @@ class Command(LabelCommand):
     def __del__(self):
         pass
 
-def generate_submissions(remote_url, username, password, latest=True, debug=False, download=False):
+def generate_submissions(remote_url, username, password, latest=True, debug=False, download=False, to='submissions.tar'):
     """ Generate sync data from remote server
     
     remote_url: url of remote server (ip:port)
@@ -71,11 +71,10 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
         response = urllib2.urlopen(url)
         print "Generated all remote submissions archive"
     if download:
-        submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
+        fout = open(to, 'w+b')
         fout.write(response.read())
         fout.close()
-        print "Submissions downloaded to %s" % submissions_file        
+        print "Submissions downloaded to %s" % to        
     return response
 
 def get_MD5_data(django_model, debug=False):
