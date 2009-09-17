@@ -173,7 +173,8 @@ class ProjectBuild(models.Model):
     
     def get_buildURL(self):
         """Hard coded build url for our build server"""
-        return 'http://build.dimagi.com:250/viewLog.html?buildId=%s' % self.build_number
+        return 'http://build.dimagi.com:250/viewLog.html?buildTypeId=bt%s&buildNumber=%s' % \
+                (self.project.project_id, self.build_number)
     
     def set_jadfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""        
