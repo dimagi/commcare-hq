@@ -60,7 +60,7 @@ class Project (models.Model):
     
     def get_buildURL(self):
         """Hard coded build url for our build server"""
-        return 'http://build.dimagi.com:250/viewType.html?buildTypeId=%s' % self.project_id
+        return 'http://build.dimagi.com:250/viewType.html?buildTypeId=bt%s' % self.project_id
         
     def num_builds(self):
         '''Get the number of builds associated with this project'''
