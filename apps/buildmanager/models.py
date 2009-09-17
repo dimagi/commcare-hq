@@ -58,6 +58,26 @@ class Project (models.Model):
         if releases:
            return releases[0]
     
+    def get_latest_jar_url(self):
+        '''Get the URL for the latest released jar file, empty if no builds
+           have been released'''
+        build = self.get_latest_released_build()
+        if build:
+            return reverse('get_latest_buildfile',
+                           args=(self.id,
+                                  build.get_jar_filename()))
+        return None
+    
+    def get_latest_jad_url(self):
+        '''Get the URL for the latest released jad file, empty if no builds
+           have been released'''
+        build = self.get_latest_released_build()
+        if build:
+            return reverse('get_latest_buildfile',
+                            args=(self.id,
+                                  build.get_jad_filename()))
+        return None
+                                             
     def get_buildURL(self):
         """Hard coded build url for our build server"""
         return 'http://build.dimagi.com:250/viewType.html?buildTypeId=bt%s' % self.project_id
