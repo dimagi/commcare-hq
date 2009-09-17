@@ -30,7 +30,7 @@ def all_projects(request, template_name="buildmanager/all_projects.html"):
         extuser = ExtUser.objects.all().get(id=request.user.id)
         context['projects'] = Project.objects.filter(domain=extuser.domain)
     except:
-        context['projects'] = Project.objects.all()    
+        context['projects'] = Project.objects.all()
     return render_to_response(request, template_name, context)
 
     
@@ -157,7 +157,9 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
         build.release(request.user)
         context = {}
         context["build"] = build
-        context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl()) 
+        context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl())
+        context["latest_url"] = request.build_absolute_uri(build.project.get_latest_jad_url()) 
+         
         return render_to_response(request, template_name, context)
     except BuildError, e:
         error_string = "Problem releasing build: %s, the errors are as follows:<br><br>%s" % (build, e.get_error_string("<br><br>"))
