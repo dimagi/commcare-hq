@@ -15,6 +15,7 @@ import cStringIO
 from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
+from django_rest_interface import util as rest_util
 from receiver.management.commands import util
 from receiver.models import Submission
 
@@ -52,15 +53,14 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
     remote_url: url of remote server (ip:port)
     username, password: credentials for logging in
     """
-    status = util.login(remote_url, username, password)
+    status = rest_util.login(remote_url, username, password)
     if not status:
         print "Sorry. Your credentials were not accepted."
         sys.exit()
     
     url = 'http://%s/api/submissions/' % remote_url
     if latest:
-        MD5_buffer = get_MD5_data(Submission, debug)
-
+        MD5_buffer = rest_util.get_field_as_bz2(Submission, 'checksum', debug)
         up = urlparse(url)
         conn = httplib.HTTPConnection(up.netloc)
         conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
@@ -76,31 +76,3 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
         fout.close()
         print "Submissions downloaded to %s" % to        
     return response
-
-def get_MD5_data(django_model, debug=False):
-    """ generate a string with all MD5s.
-    Some operations require a buffer...
-    
-    django_model - django model with a 'checksum' property
-                   which we will POST in a tarfile
-    """
-    string = cStringIO.StringIO()
-    if not debug:
-        objs = django_model.objects.all().order_by('checksum')
-    else:
-        print "DEBUG MODE: Only generating some submissions"
-        # arbitrarily return only 10 of the MD5s
-        objs = django_model.objects.all().order_by('checksum')[:5]
-    for obj in objs:
-        string.write(unicode(obj.checksum) + '\n')
-    return bz2.compress(string.getvalue())
-
-def get_MD5_handle(django_model):
-    """ ...some operations require a handle 
-    
-    returns a READ-ONLY handle
-    """
-    buffer = get_MD5_data(django_model)
-    string = cStringIO.StringIO(buffer)
-    return string
-

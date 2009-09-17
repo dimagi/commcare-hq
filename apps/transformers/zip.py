@@ -24,25 +24,23 @@ def get_zipfile(file_list):
     temp.seek(0)    
     return response
 
-# tarfile: using gzip vs. bzip2
-# 60 seconds of googling leads me to believe bzip2 makes smaller files
-# but takes more time. Feel free 2 change compression method if u know better.
-
 def get_tarfile(file_list, output_file):
     """
     Creates a tarfile on disk, given a list of input files
     """
-    export_file = open( output_file, "w+b" )
-    tar = tarfile.open(fileobj=export_file, mode="w:bz2")
+    tar = tarfile.open(name=output_file, mode="w:bz2")
+    if len (file_list) == 0:
+        logging.info("No submissions could be found.")
+        return HttpResponse("No submissions could be found.")
     for file in file_list:
         tar.add(file, os.path.basename(file) )
     tar.close()
-    wrapper = FileWrapper(export_file)
+    fin = open(output_file, 'rb')
+    wrapper = FileWrapper(fin)
     response = HttpResponse(wrapper, content_type='application/tar')
     response['Content-Disposition'] = 'attachment; filename=commcarehq.tar'
-    response['Content-Length'] = export_file.tell()
+    response['Content-Length'] = os.path.getsize(output_file)
     # this seek is required for 'response' to work
-    export_file.seek(0)    
     return response
 
 class Compressor(object):

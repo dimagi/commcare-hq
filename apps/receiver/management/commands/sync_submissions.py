@@ -4,9 +4,9 @@ deletes local xforms and submissions, and loads the data
 """
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
+from django_rest_interface import util as rest_util
 from receiver.management.commands.generate_submissions import generate_submissions
 from receiver.management.commands.load_submissions import load_submissions
-from receiver.management.commands.util import are_you_sure
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (
@@ -26,7 +26,7 @@ class Command(LabelCommand):
         password = args[2]
         print "This script assumes a local server is running. " + \
               "To launch your local server, run './manage.py runserver'"
-        are_you_sure()
+        rest_util.are_you_sure()
         
         synchronize_submissions(remote_ip, username, password)
                 

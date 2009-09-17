@@ -417,26 +417,27 @@ class StorageUtility(object):
     
     # make sure when calling this function always to confirm with the user
 
-    def clear(self, remove_submissions=False, delete_xml=True):
+    def clear(self, remove_submissions=True, delete_xml=True):
         """ removes all schemas found in XSD_REPOSITORY_PATH
             and associated tables. 
             If delete_xml is true (default) it also deletes the 
             contents of XFORM_SUBMISSION_PATH.        
         """
         self._remove_form_tables()
-        self._remove_form_models(remove_submissions=remove_submissions, delete_xml=delete_xml)
+        self._remove_form_models(remove_submissions=remove_submissions)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
-            
-        # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
-        for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
-            file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
-            logging.debug(  "Deleting " + file )
-            stat = os.stat(file)
-            if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):
-                os.remove( file )
-            else:
-                logging.debug(  "  WARNING: Permission denied to access " + file )
-                continue
+        
+        if delete_xml:
+            # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
+            for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
+                file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
+                logging.debug(  "Deleting " + file )
+                stat = os.stat(file)
+                if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):
+                    os.remove( file )
+                else:
+                    logging.debug(  "  WARNING: Permission denied to access " + file )
+                    continue
     
     class XFormError(SyntaxError):
         """ Generic error for XFormManager """
