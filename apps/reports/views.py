@@ -9,20 +9,18 @@ from models import Case
 from xformmanager.models import FormDefModel
 from hq.models import ExtUser
 from hq.utils import paginate
+from hq.decorators import extuser_required
 
 import util
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
 
-@login_required()
+@extuser_required()
 def reports(request, template_name="list.html"):
     # not sure where this view will live in the UI yet
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     context['domain'] = extuser.domain
     context['case_reports'] = Case.objects.filter(domain=extuser.domain)
     report_module = util.get_custom_report_module(extuser.domain)
@@ -38,14 +36,11 @@ def reports(request, template_name="list.html"):
                                       context)
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 def case_flat(request, case_id, template_name="case_flat.html"):
     '''A flat view of the topmost data for all cases'''
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     case = Case.objects.get(id=case_id)
     
     context['cols'] = case.get_column_names()
@@ -64,14 +59,11 @@ def case_flat(request, case_id, template_name="case_flat.html"):
     return render_to_response(request, template_name, context)
 
     
-@login_required()
+@extuser_required()
 def single_case_view(request, case_id, case_instance_id, template_name="single_case.html"):
     '''View for all of a single case's data, broken down by form.'''
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     
     case = Case.objects.get(id=case_id)
     data = case.get_data_for_case(case_instance_id)
@@ -82,7 +74,7 @@ def single_case_view(request, case_id, case_instance_id, template_name="single_c
     
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 def case_export_csv(request, case_id):
     case = Case.objects.get(id=case_id)
     cols = case.get_column_names()
@@ -99,13 +91,10 @@ def case_export_csv(request, case_id):
     return response
 
 
-@login_required()
+@extuser_required()
 def custom_report(request, domain_id, report_name):
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        return render_to_response(request, "hq/no_permission.html", 
-                                  context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     context["domain"] = extuser.domain
     context["report_name"] = report_name
     report_module = util.get_custom_report_module(extuser.domain)
