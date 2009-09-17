@@ -1,82 +1,8 @@
 """ Utility functions used by various xformmanager.management.commands """
-import sys
-import urllib, urllib2, httplib
 import logging
-import os.path
 import simplejson
-from stat import S_ISDIR, S_ISREG, ST_MODE
 from urlparse import urlparse
-import tarfile
-from receiver.management.commands.forms import MultiPartForm
-
-def are_you_sure():
-    should_proceed = raw_input("Are you sure you want to proceed? (yes or no) ")
-    if should_proceed != "yes":
-        print "Ok, exiting."
-        sys.exit()
-    
-def login(url, username, password):
-    params = urllib.urlencode({'username': username, 'password': password})
-    headers = {"Content-type": "application/x-www-form-urlencoded",
-                "Accept": "text/plain"}
-    conn = httplib.HTTPConnection(url)
-    conn.request("POST", "/accounts/login/", params, headers)
-    response = conn.getresponse()
-    print "Attempting login using supplied credentials"
-    print "Response: ", response.status, response.reason
-    print "Response:  ", response.read()
-    conn.close()
-    # 302 (redirect) means login was successful
-    if response.status == 302:
-        return True
-    else:
-        return False
-
-def extract_and_process(file_name, callback, *additional_args):
-    """ Extracts a tar file and runs 'callback' on all files inside 
-    
-    file_name: tar file to extract
-    callback: function to run on all files
-    additional_args: optional, additional arguments for callback
-    """
-    folder_name = os.path.basename(file_name).split('.')[0]
-    if os.path.exists(folder_name):
-        print "This script will delete the folder" + \
-              "'%s' and all its contents" % folder_name
-        are_you_sure()
-        process_folder(folder_name, os.remove)
-        os.rmdir(folder_name)
-    os.mkdir(folder_name)
-    try:
-        print "Extracting %s to %s" % (file_name, folder_name)
-        if not tarfile.is_tarfile(file_name): raise Exception("Not a tarfile")
-        tar = tarfile.open(file_name)
-        tar.extractall(folder_name)
-        tar.close()
-        print "Extraction successful."
-
-        process_folder(folder_name, callback, *additional_args)
-    finally:
-        process_folder(folder_name, os.remove)
-        os.rmdir(folder_name)
-        
-def process_folder(folder_name, callback, *additional_arg):
-    """ Runs 'callback' on all files inside folder_name
-    
-    folder_name: folder to process
-    callback: function to run on all files
-    additional_args: optional, additional arguments for callback
-    """
-    for filename in os.listdir(folder_name):
-        pathname = os.path.join (folder_name, filename)
-        mode = os.stat(pathname)[ST_MODE]
-        if S_ISDIR(mode):
-            # Ignore subfolders
-            continue
-        elif S_ISREG(mode):
-            # It's a file, call the callback function
-            print "%s %s" % (callback, pathname)
-            callback(pathname, *additional_arg)
+import urllib, urllib2, httplib
 
 def submit_form(filename, destination_url):
     """ Submits a submission to a CommCareHQ server
@@ -114,19 +40,3 @@ def submit_form(filename, destination_url):
         print"problem submitting form: %s" % filename 
         print e
         return None
-
-def generate_POST_request(url, buffer):
-    # Create the form with simple fields
-    form = MultiPartForm()
-    # Add a fake file
-    form.add_buffer('file', 'file', buffer=buffer)
-
-    # Build the request
-    request = urllib2.Request(url)
-    request.add_header('User-agent', 'CommCareHQ')
-    body = str(form)
-    request.add_header('Content-type', form.get_content_type())
-    request.add_header('Content-length', len(body))
-    request.add_data(body)
-    # outoing_data = request.get_data()
-    return request

@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django_rest_interface.resource import Resource
+from django_rest_interface import util
 from transformers.csv import get_csv_from_django_query, format_csv
 from transformers.zip import get_zipfile, get_tarfile
 from xformmanager.xformdef import FormDef
@@ -53,21 +54,8 @@ class XFormSchemata(Resource):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             xforms = xforms.filter(submit_time__lte=date)
         if not xforms:
+            logging.error("No schemas have been registered.")
             return HttpResponseBadRequest("No schemas have been registered.")
-        if request.REQUEST.has_key('format'):
-            if request.GET['format'].lower() == 'sync':
-                # this is a special case: used for server synchronization
-                # so we pass *all* data (not just a subset)
-                if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
-                    return HttpResponseBadRequest("Please set 'export_path' " + \
-                                                  "in your cchq xformmanager settings.")
-                file_list = []
-                for schema in xforms:
-                    exported_file = self._full_schema_to_file(schema)
-                    if exported_file: file_list.append( exported_file )
-                export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
-                export_file = os.path.join(export_path, "commcarehq-schemata.tar")
-                return get_tarfile(file_list, export_file)
         for xform in xforms:
             # do NOT save this!!! This is just for display
             xform.xsd_file_location = "http://%s/xforms/show/%s?show_schema=yes" % \
@@ -89,32 +77,48 @@ class XFormSchemata(Resource):
                 return response
         # default to CSV
         return get_csv_from_django_query(xforms, fields)
-        
-    def _full_schema_to_file(self, schema):
+    
+    def create(self, request, template= 'api_/xforms.xml'):
+        # CREATE is actually POST
+        xforms = FormDefModel.objects.order_by('id')
+        if not xforms:
+            logging.error("No schemas have been registered.")
+            return HttpResponseBadRequest("No schemas have been registered.")
+        if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
+            logging.error("Please set 'export_path' " + \
+                          "in your cchq xformmanager settings.")
+            return HttpResponseBadRequest("Please set 'export_path' " + \
+                                          "in your cchq xformmanager settings.")
+        # We check > 1 (instead of >0 ) since sync requests with no namespaces
+        # to match will still POST some junk character
+        if len(request.raw_post_data) > 1:
+            try:
+                stack_received = util.bz2_to_list(request.raw_post_data)
+            except Exception, e:
+                logging.error("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
+                return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")            
+            stack_local = FormDefModel.objects.all().order_by('target_namespace').values_list('target_namespace', flat=True)
+            results = util.get_stack_diff(stack_received, stack_local)
+            xforms = FormDefModel.objects.filter(target_namespace__in=results).order_by("target_namespace")                    
+        file_list = []
+        for schema in xforms:
+            exported_file = self._export_to_file(schema)
+            if exported_file: 
+                file_list.append( exported_file )
+        export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
+        export_file = os.path.join(export_path, "commcarehq-schemata.tar")
+        return get_tarfile(file_list, export_file)
+            
+    def _export_to_file(self, schema):
         """ exports schema to file and returns full path to exported file """
-        file_loc = schema.xsd_file_location
-        if not file_loc:
+        if not schema.xsd_file_location:
             return
-        headers = {
-            "original-submit-time" : str(schema.submit_time),
-            "original-submit-ip" : str(schema.submit_ip),
-            "bytes-received" : schema.bytes_received,
-            "form-name" : schema.form_name,
-            "form-display-name" : schema.form_display_name,
-            "target-namespace" : schema.target_namespace,
-            "date-created" : str(schema.date_created),
-            "domain" : str(schema.get_domain)
-            }
-        dir, filename = os.path.split(file_loc)
+        dir, filename = os.path.split(schema.xsd_file_location)
         export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
         write_file = os.path.join(export_path, \
                                   filename.replace(".xml", ".xsdexport"))
         fout = open(write_file, 'w')
-        fout.write( simplejson.dumps(headers) + "\n\n" )
-        xsd_file = open(file_loc, "r")
-        payload = xsd_file.read()
-        xsd_file.close()
-        fout.write(payload)
+        fout.write(schema.export())
         fout.close()
         return write_file
 
@@ -265,4 +269,5 @@ class XFormMetadatum(Resource):
                      'username','chw_id','uid','raw_data') )
                 return response
         return get_csv_from_django_query(metadatum)
+
 

@@ -40,10 +40,11 @@ import unittest
 from urlparse import urlparse
 
 from receiver.models import Submission
-from receiver.management.commands.generate_submissions import get_MD5_data
 from receiver.management.commands.generate_submissions import generate_submissions
 from receiver.management.commands.load_submissions import load_submissions
+from xformmanager.management.commands.sync_schema import generate_schemata, load_schemata
 from xformmanager.tests.util import create_xsd_and_populate, populate
+from django_rest_interface import util as rest_util
 from xformmanager.models import FormDefModel
 from xformmanager.manager import XFormManager
 from xformmanager.xformdef import FormDef
@@ -54,7 +55,7 @@ class TestSync(unittest.TestCase):
         self._delete_schema_from_filename("pf_followup.xsd", path = DATA_DIR)
         self._delete_schema_from_filename("pf_new_reg.xsd", path = DATA_DIR)
         self._delete_schema_from_filename("pf_ref_completed.xsd", path = DATA_DIR)
-
+        
     def test_generate_all_submissions(self):
         """ Tests downloading all submissions from self """
         # setup
@@ -173,7 +174,7 @@ class TestSync(unittest.TestCase):
         schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", "pf_ref_completed_1.xml", path = DATA_DIR)
         
         # get MD5 of 3 populated files
-        MD5_buffer = get_MD5_data(Submission)
+        MD5_buffer = rest_util.get_field_as_bz2(Submission, 'checksum')
         
         # populate a few more files
         submit_1 = populate("pf_followup_2.xml", path = DATA_DIR)
@@ -185,7 +186,7 @@ class TestSync(unittest.TestCase):
         
         # get the difference between the first 3 files and the current
         # set of files (i.e. the last 4 files)
-
+    
         url = 'http://%s/api/submissions/' % (serverhost)
         up = urlparse(url)
         conn = httplib.HTTPConnection(up.netloc)
@@ -195,7 +196,7 @@ class TestSync(unittest.TestCase):
         
         #request = util.generate_POST_request(url, MD5_buffer)
         #response = urllib2.urlopen(request)
-
+    
         submissions_file = "submissions.tar"
         fout = open(submissions_file, 'w+b')
         fout.write(response.read())
@@ -260,7 +261,111 @@ class TestSync(unittest.TestCase):
             manager.remove_schema(schema_1.id, remove_submissions = True)
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
-            
+
+    def test_sync_all_schemata(self):
+        """ Tests synchronizing all schemata from self (no xmlns posted) """
+        manager = XFormManager()
+    
+        # load data
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
+        starting_schemata_count = FormDefModel.objects.all().count()
+        
+        # get sync file from self
+        schemata_file = "schemata.tar"
+        generate_schemata(serverhost, 'brian', 'test', latest=False, download=True, to=schemata_file)
+                
+        manager.remove_schema(schema_1.id, remove_submissions = True)
+        manager.remove_schema(schema_2.id, remove_submissions = True)
+        manager.remove_schema(schema_3.id, remove_submissions = True)
+
+        # load data from sync file
+        load_schemata(serverhost, schemata_file)
+        
+        try:
+            # verify that the submissions etc. count are correct
+            self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())
+        finally:
+            # clean up
+            self._delete_schema_from_filename("pf_followup.xsd", path = DATA_DIR)
+            self._delete_schema_from_filename("pf_new_reg.xsd", path = DATA_DIR)
+            self._delete_schema_from_filename("pf_ref_completed.xsd", path = DATA_DIR)
+    
+    def test_sync_some_schemata(self):
+        """ Tests synchronizing some schemata from self (posts a few xmlns) """
+        manager = XFormManager()
+    
+        # populate some files
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
+
+        # get xmlns of populated schemas
+        xmlns_buffer = rest_util.get_field_as_bz2(FormDefModel, 'target_namespace')
+        
+        # populate a few more schema
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
+        starting_schemata_count = FormDefModel.objects.all().count()
+        
+        # get the difference between the first schema and current state
+        url = 'http://%s/api/xforms/?format=sync' % (serverhost)
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        conn.request('POST', up.path, xmlns_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse()
+       
+        #request = util.generate_POST_request(url, MD5_buffer)
+        #response = urllib2.urlopen(request)
+
+        schemata_file = "schemata.tar"
+        fout = open(schemata_file, 'w+b')
+        fout.write(response.read())
+        fout.close()
+    
+        # delete the ones just populated (d,e,f)
+        manager.remove_schema(schema_2.id, remove_submissions = True)
+        manager.remove_schema(schema_3.id, remove_submissions = True)
+        
+        # load data from sync file (d,e,f)
+        load_schemata(serverhost, schemata_file)
+        
+        try:
+            # verify that the schematas etc. count are correct (d,e,f)
+            self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())
+        finally:
+            # clean up
+            manager = XFormManager()
+            manager.remove_schema(schema_1.id, remove_submissions = True)
+            self._delete_schema_from_filename("pf_new_reg.xsd", path = DATA_DIR)
+            self._delete_schema_from_filename("pf_ref_completed.xsd", path = DATA_DIR)
+    
+    def test_sync_no_schemata(self):
+        """ Tests synchronizing no data from self (posts all MD5s) """
+        manager = XFormManager()
+    
+        # load data
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
+        
+        # get sync file from self
+        schemata_file = 'schemata.tar'
+        generate_schemata(serverhost, 'brian', 'test', download=True, to=schemata_file)
+        
+        # test that the received schemata file is empty
+        self._assert_tar_count_equals(schemata_file, 0)
+    
+        starting_schemata_count = FormDefModel.objects.all().count()
+        load_schemata(serverhost, schemata_file)    
+        try:
+            # verify that no new schemata were loaded
+            self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())
+        finally:            
+            # clean up
+            manager.remove_schema(schema_1.id, remove_submissions = True)
+            manager.remove_schema(schema_2.id, remove_submissions = True)
+            manager.remove_schema(schema_3.id, remove_submissions = True)
+
     def tearDown(self):
         pass
     
@@ -268,9 +373,9 @@ class TestSync(unittest.TestCase):
         if not tarfile.is_tarfile(file_name):
             # Mabye it's not a tar cuz it's a status message.
             fin = open(file_name, 'r')
-            contents = fin.read()
+            contents = fin.read(256)
             fin.close()
-            if contents.lower().find("no submissions") != -1:
+            if contents.lower().find("no s") != -1:
                 self.assertEqual( 0, count)
                 return
             raise Exception("%s is not a tar file" % file_name)
@@ -322,4 +427,8 @@ if __name__ == "__main__":
     
     print curl_command
     unittest.main(argv=real_args)
+
+
+
+
 

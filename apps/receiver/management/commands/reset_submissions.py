@@ -6,8 +6,8 @@ Be VERY VERY careful when using this!
 """
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from receiver.management.commands import util
 from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
+from django_rest_interface import util as rest_util
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -19,7 +19,7 @@ class Command(BaseCommand):
         # print "WARNING: Deleting all saved xforms, schemas, and instance data."
         verbose = options.get('verbose', True)
         if verbose:
-            util.are_you_sure()
+            rest_util.are_you_sure()
         reset_submits()
 
 def reset_submits():

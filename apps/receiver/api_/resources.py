@@ -10,6 +10,8 @@ from django.core.servers.basehttp import FileWrapper
 from receiver.models import Submission
 from transformers.zip import TarCompressor
 from hq.models import Domain
+from django_rest_interface import util
+
 # TODO - pull out authentication stuff into some generic wrapper
 
 # api/receiver/(?P<domain_id>\d+)
@@ -45,48 +47,16 @@ def _get_submissions(request, domain_id=0):
         logging.error("Please set 'export_path' in your cchq receiver settings.")
         return HttpResponseBadRequest("Please set 'export_path' in your cchq receiver settings.")
     export_dir = settings.RAPIDSMS_APPS['receiver']['export_path']
-    if len(request.raw_post_data) > 0:
+    # We check > 1 (instead of >0 ) since sync requests with no namespaces
+    # to match will still POST some junk character
+    if len(request.raw_post_data) > 1:
         try:
-            md5_string = bz2.decompress(request.raw_post_data)
+            stack_received = util.bz2_to_list(request.raw_post_data)
         except Exception, e:
             logging.error("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
-            return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
-        md5_stream = cStringIO.StringIO(md5_string)
-        stack_received = []
-        
-        line = md5_stream.readline()
-        while len(line)>0:
-            # assume we receive an ordered list of MD5
-            stack_received.append( line.strip() )
-            line = md5_stream.readline()
-        
-        # compare the list of received MD5's with the local mD5
-        counter_received = 0
-        counter_local = 0
-        results = []
+            return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")            
         stack_local = Submission.objects.all().order_by('checksum').values_list('checksum', flat=True)
-        while True:
-            if counter_received == len(stack_received):
-                results.extend(stack_local[counter_local:])
-                break
-            if counter_local == len(stack_local):
-                # Reached the end of the list of local submissions before reaching
-                # the end of received mD5s. This should really never happen. 
-                # But might, if you were syncing with two different cchq servers.
-                logging.warn("Local submission count less than received submission count!")
-                break
-            if stack_received[counter_received] == stack_local[counter_local]:
-                counter_received = counter_received + 1
-                counter_local = counter_local + 1
-            elif stack_received[counter_received] > stack_local[counter_local]:
-                # found an entry in local which is not in received
-                results.append( stack_local[counter_local] )
-                counter_local = counter_local + 1
-            else:
-                # found an entry in received which is not in local
-                # skip it
-                logging.error("Skipping unrecognized received MD5!")
-                counter_received = counter_received + 1
+        results = util.get_stack_diff(stack_received, stack_local)
         # this could get really large.... O_O
         submissions = Submission.objects.filter(checksum__in=results).order_by("checksum")
     

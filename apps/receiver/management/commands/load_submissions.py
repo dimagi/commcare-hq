@@ -4,7 +4,8 @@ loads new data into the local CommCareHQ server """
 import tarfile
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
-from receiver.management.commands import util
+from receiver.management.commands.util import submit_form
+from django_rest_interface import util as rest_util
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (
@@ -24,14 +25,14 @@ class Command(LabelCommand):
         submissions = args[0]
         if len(args)>1: schemata = args[1]
         print "WARNING: Loading new data"
-        util.are_you_sure()
+        rest_util.are_you_sure()
 
         localport = options.get('localport', 8000)
         localserver = "127.0.0.1:%s" % localserver
 
         # make sure to load schemas before submissions
         if len(args)>1: load_schemata(localport, schemata)
-        load_submissions(localport, submissions)
+        load_submissions(localserver, submissions)
         
     def __del__(self):
         pass
@@ -51,4 +52,4 @@ def load_submissions(localserver, submissions_file):
         else:
             print "This is not a valid submissions file"
     else:
-        util.extract_and_process(submissions_file, util.submit_form, localserver)
+        rest_util.extract_and_process(submissions_file, submit_form, localserver)
