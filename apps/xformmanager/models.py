@@ -90,6 +90,13 @@ class FormDefModel(models.Model):
     
     element = models.OneToOneField(ElementDefModel, null=True)
     
+    def _get_xform_file_location(self):
+        loc = self.xsd_file_location + str(".xform")
+        if os.path.exists(loc):
+            return loc
+        return None
+    xform_file_location = property(_get_xform_file_location)
+    
     # formdefs have a one-to-one relationship with elementdefs
     # yet elementdefs have a form_id which points to formdef
     # without this fix, delete is deadlocked

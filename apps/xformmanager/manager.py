@@ -33,7 +33,14 @@ class XFormManager(object):
             fout.close()
         else: 
             #user has uploaded an xhtml/xform file
-            schema,err,has_error = form_translate( file_name, input_stream.read() )
+            # save the raw xform
+            xform_filename = new_file_name + str(".xform")
+            xform_handle = open(xform_filename, 'w')
+            xform_handle.write(input_stream.read())
+            xform_handle.close()
+            fin = open(xform_filename, 'r')
+            schema,err,has_error = form_translate( file_name, fin.read() )
+            fin.close()
             if has_error:
                 raise IOError, ("Could not convert xform (%s) to schema." % file_name) + \
                                 " Please verify that this is a valid xform file."
