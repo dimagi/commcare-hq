@@ -15,8 +15,9 @@
     <tr>
         <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>
-        <td><a href="{{build.get_jar_downloadurl}}">{{build.jar_file}}</a></td>
-        <td><a href="{{build.get_jad_downloadurl}}">{{build.jad_file}}</a></td>
+        <td><a href="{{build.get_jar_downloadurl}}">{{build.get_jar_filename}}</a></td>
+        <td><a href="{{build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{build.get_jad_contents}}');return false"> 
+        {{build.get_jad_filename}}</a></td>
         <td>{{build.uploaded_by}}</td>
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
@@ -31,3 +32,4 @@
 {% else %}
 No builds found
 {% endif %}
+<a href="#"
