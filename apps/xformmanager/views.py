@@ -22,6 +22,7 @@ from receiver.submitprocessor import do_old_submission
 
 from hq.models import *
 from hq.utils import paginate
+from hq.decorators import extuser_required
 
 from transformers.csv import UnicodeWriter
 from transformers.zip import get_zipfile
@@ -29,11 +30,11 @@ from transformers.zip import get_zipfile
 from receiver.models import Attachment
 from django.db.models import signals
 
-@login_required()
+@extuser_required()
 @transaction.commit_manually
 def remove_xform(request, form_id=None, template='confirm_delete.html'):
     context = {}
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     
     form = get_object_or_404(FormDefModel, pk=form_id)
     
@@ -47,14 +48,11 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
     context['form_name'] = form.form_display_name
     return render_to_response(request, template, context)
 
-@login_required()
+@extuser_required()
 @transaction.commit_manually
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     if request.method == 'POST':        
         form = RegisterXForm(request.POST, request.FILES)        
         if form.is_valid():
@@ -84,15 +82,12 @@ def register_xform(request, template='register_and_list_xforms.html'):
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
     return render_to_response(request, template, context)
 
-@login_required()
+@extuser_required()
 @transaction.commit_manually
 def submit_data(request, formdef_id, template='submit_data.html'):
     """ A debug utility for admins to submit xml directly to a schema """ 
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     if request.method == 'POST':
         form = SubmitDataForm(request.POST, request.FILES)        
         if form.is_valid():
@@ -120,7 +115,8 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
         try:
             extuser = ExtUser.objects.all().get(id=request.user.id)
         except ExtUser.DoesNotExist:
-            # we don't really care about this.  
+            # we don't really care about this.
+            # czue: then why is this whole check here?
             pass
     if request.method == 'POST':        
         # must add_schema to storage provide first since forms are dependent upon elements 
@@ -234,8 +230,8 @@ def export_xml(request, formdef_id):
         file_list.append( datum.submission.filepath )
     return get_zipfile(file_list)
 
-@login_required()
-def data(request, formdef_id, template_name="data.html", context={}):
+@extuser_required()
+def data(request, formdef_id, template_name="data.html", context={}, use_blacklist=True):
     '''View the xform data for a particular schema.  Accepts as
        url parameters the following (with defaults specified):
        items: 25 (the number of items to paginate at a time
@@ -244,7 +240,7 @@ def data(request, formdef_id, template_name="data.html", context={}):
        sort_descending: True (?) (the sort order of the column)
        ''' 
     xform = get_object_or_404(FormDefModel, id=formdef_id)
-    # extract params
+    # extract params from the URL
     items = 25
     sort_column = "id" # todo: see if we can sort better by default
     columns = xform.get_column_names()
@@ -271,8 +267,12 @@ def data(request, formdef_id, template_name="data.html", context={}):
             sort_descending = True
     
     
-        
-    rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
+    if use_blacklist:
+        blacklist_users = request.extuser.domain.get_blacklist()
+        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+                              blacklist=blacklist_users)
+    else:
+        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
     context["sort_index"] = columns.index(sort_column)
     context['columns'] = columns 
     context['form_name'] = xform.form_name
@@ -287,11 +287,11 @@ def data(request, formdef_id, template_name="data.html", context={}):
                                                 if key != "page"])
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 @transaction.commit_manually
 def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context = {}
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    extuser = request.extuser
     form = get_object_or_404(FormDefModel, pk=formdef_id)
     if request.method == "POST":
         if 'instance' in request.POST:
@@ -321,7 +321,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context['formdef_id'] = formdef_id
     return render_to_response(request, template, context)
 
-@login_required()
+@extuser_required()
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
     return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)

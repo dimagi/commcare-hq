@@ -25,10 +25,10 @@ output_format = '%Y-%m-%d %H:%M'
 
 
 @register.simple_tag
-def get_dashboard_user_counts(user, startdate=None, enddate=None):
+def get_dashboard_user_counts(user, startdate=None, enddate=None, use_blacklist=True):
     
-    #todo:  query the global meta tables to get all the users
-    #and/or query the ExtUser table to get all the registered users.
+    # todo:  query the global meta tables to get all the users
+    # and/or query the ExtUser table to get all the registered users.
     totalspan = enddate-startdate
     report_hash = {}
     extuser = ExtUser.objects.get(id=user.id)
@@ -36,24 +36,30 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
     for day in range(0,totalspan.days+1):
         delta = timedelta(days=day)
         target_date = startdate + delta
-        #print target_date.strftime('%m/%d/%Y')
         report_hash[target_date.strftime('%m/%d/%Y')] = {}
-    # for now, we're going to get all the users in the system by querying the actual tables for usernames
+    # for now, we're going to get all the users in the system by querying
+    # the actual tables for usernames
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)
     ret = ""
     
     username_to_count_hash = { }
+    if use_blacklist:
+        domain_blacklist = extuser.domain.get_blacklist()
     for fdef in defs:
         try: 
             # don't do anything if we can't find a username column
-            if not "meta_username" in fdef.get_column_names():
+            username_col = fdef.get_username_column()
+            if not username_col:
                 logging.warning("No username column found in %s, will not display dashboard data." % fdef)
                 ret += '<p style="font-weight:bold; color:orange;">Warning: no username column found in %s, no dashboard data will be displayed for this form</p>' % fdef
                 continue
             helper = fdef.db_helper
             # let's get the usernames
-            usernames_to_filter = helper.get_uniques_for_column('meta_username')
-            for user in usernames_to_filter:       
+            usernames_to_filter = helper.get_uniques_for_column(username_col)
+            for user in usernames_to_filter:
+                if use_blacklist and user in domain_blacklist:
+                    # skip over blacklisted users
+                    continue
                 if not username_to_count_hash.has_key(user):
                     this_user_hash = {"total" : 0 }
                     # this_user_hash = {}
@@ -62,7 +68,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None):
                 # we add one to the enddate because the db query is not inclusive.
                 userdailies = helper.get_filtered_date_count(startdate, 
                                                              enddate + timedelta(days=1),
-                                                             filters={'meta_username': user})
+                                                             filters={username_col: user})
                 for date_count_pair in userdailies:
                     # if there already was a count, we add it to it, otherwise
                     # we set a new count equal to this value

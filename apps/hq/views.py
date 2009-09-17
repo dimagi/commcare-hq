@@ -40,6 +40,8 @@ import hq.reporter.metastats as metastats
 
 import hq.reporter.inspector as repinspector
 import hq.reporter.metadata as metadata
+from hq.decorators import extuser_required
+
 from reporters.utils import *
 from reporters.views import message, check_reporter_form, update_reporter
 from reporters.models import Reporter, PersistantBackend, PersistantConnection
@@ -47,15 +49,9 @@ from reporters.models import Reporter, PersistantBackend, PersistantConnection
 
 logger_set = False
 
-@login_required()
+@extuser_required()
 def dashboard(request, template_name="hq/dashboard.html"):
-    # this is uber hacky - set the log level to debug on the dashboard
-    
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-        
     startdate, enddate = utils.get_dates(request, 7)
     
     context['startdate'] = startdate
@@ -63,16 +59,11 @@ def dashboard(request, template_name="hq/dashboard.html"):
     context['view_name'] = 'hq.views.dashboard'
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 def org_report(request, template_name="hq/org_single_report.html"):
     context = {}
-    
-    try: 
-        extuser = ExtUser.objects.all().get(id=request.user.id)
-    except ExtUser.DoesNotExist:
-        template_name="hq/no_permission.html"
-        return render_to_response(template_name, context, context_instance=RequestContext(request))
-        
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     if extuser.organization == None:
         orgs = Organization.objects.filter(domain=extuser.domain)
     else:
@@ -126,10 +117,11 @@ def org_report(request, template_name="hq/org_single_report.html"):
     return render_to_response(request, template_name, context)
 
 
-@login_required()
+@extuser_required()
 def reporter_stats(request, template_name="hq/reporter_stats.html"):
     context = {}       
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     
@@ -138,10 +130,11 @@ def reporter_stats(request, template_name="hq/reporter_stats.html"):
     
     return render_to_response(request, template_name, context)
 
-@login_required()
+@extuser_required()
 def delinquent_report(request, template_name="hq/reports/sms_delinquent_report.txt"):
     context = {}       
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['delinquent_reporterprofiles'] = []    
@@ -153,17 +146,14 @@ def delinquent_report(request, template_name="hq/reports/sms_delinquent_report.t
     return render_to_response(request, template_name, context)
 
 
-@login_required()
+@extuser_required()
 def org_email_report(request, template_name="hq/org_single_report.html"):
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
@@ -196,18 +186,15 @@ def org_email_report(request, template_name="hq/org_single_report.html"):
     return render_to_response(request, template_name, context)
 
 
-@login_required
+@extuser_required()
 def org_sms_report(request, template_name="hq/org_single_report.html"):
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
-    
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
     
-    extuser = ExtUser.objects.all().get(id=request.user.id)        
     context['extuser'] = extuser
     context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
@@ -237,28 +224,26 @@ def org_sms_report(request, template_name="hq/org_single_report.html"):
     return render_to_response(request, template_name, context)
 
 
-@login_required()
+@extuser_required()
 def domain_charts(request):
     context = {}
-    if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)    
-
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     mychartgroup = utils.get_chart_group(extuser)
     if mychartgroup == None:
         return summary_trend(request)
     else:  
         return chartviews.view_group(request, mychartgroup.id)
 
-@login_required()
+@extuser_required()
 def summary_trend(request, template_name="graphing/summary_trend.html"):
     """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
     context = {}        
     
     formname = ''
     formdef_id = -1
-    extuser = ExtUser.objects.all().get(id=request.user.id)
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
     
     for item in request.GET.items():
         if item[0] == 'formdef_id':
@@ -375,6 +360,8 @@ def add_reporter(req):
     if   req.method == "GET":  return get(req)
     elif req.method == "POST": return post(req)
 
+
+    
 @require_http_methods(["GET", "POST"])  
 def edit_reporter(req, pk):
     rep = get_object_or_404(Reporter, pk=pk)
@@ -488,3 +475,8 @@ def check_profile_form(req):
     errors['exists'] = []
     if rps: errors['exists'] = "chw_id"
     return errors    
+
+
+def no_permissions(request):
+    template_name="hq/no_permission.html"
+    return render_to_response(request, template_name, {})
