@@ -162,7 +162,6 @@ class ProjectBuild(models.Model):
         file = self.get_jad_filestream()
         lines = []
         for line in file:
-            print line
             lines.append(line.strip())
         return "<br>".join(lines)
         
