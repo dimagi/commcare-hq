@@ -103,6 +103,10 @@ class FormDef(ElementDef):
         duplicate_fields = []
         found_fields = []
         missing_fields.extend(Metadata.fields)
+        
+        # hackily remove some stuff we no longer want to require
+        missing_fields.remove('formname')
+        missing_fields.remove('formversion')
         for field in element.child_elements:
             field_name = field.short_name.lower()
             if field_name in missing_fields:
