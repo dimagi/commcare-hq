@@ -19,9 +19,9 @@ class XFormManager(object):
     def remove_data(self, formdef_id, id, remove_submission=False):
         self.su.remove_instance_matching_schema(formdef_id, id, remove_submission)
 
-    def save_form_data(self, xml_file_name, submission):
+    def save_form_data(self, xml_file_name, attachment):
         """ return True on success and False on fail """
-        return self.su.save_form_data(xml_file_name, submission)
+        return self.su.save_form_data(xml_file_name, attachment)
         
     def add_schema(self, file_name, input_stream):
         transaction_str = str(uuid.uuid1())

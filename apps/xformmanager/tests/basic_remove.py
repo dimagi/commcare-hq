@@ -65,7 +65,7 @@ class RemoveTestCase(unittest.TestCase):
         all_meta = Metadata.objects.all()
         count = all_meta.count()
         self.assertEquals(1,count)
-        attachment = all_meta[0].submission
+        attachment = all_meta[0].attachment
         su = StorageUtility()
         su.remove_schema(schema_model.id)
         # Test that children have become orphans

@@ -27,10 +27,10 @@ def get_stats_for_reporterprofile(reporter_profile, meta_qset, formdef_qset):
         
         #last actual submission time recorded by server
         statresults['Last timeend Submission Time'] = for_user.order_by("-timeend")[0].submission.submission.submit_time
-        statresults['Last Actual Submission Time'] = for_user.order_by("-submission__submission__submit_time")[0].submission.submission.submit_time
+        statresults['Last Actual Submission Time'] = for_user.order_by("-attachment__submission__submit_time")[0].submission.submission.submit_time
     
         #calculated metrics of interest
-        days_since_submission = (datetime.datetime.now() - for_user.order_by("-submission__submission__submit_time")[0].submission.submission.submit_time).days
+        days_since_submission = (datetime.datetime.now() - for_user.order_by("-attachment__submission__submit_time")[0].submission.submission.submit_time).days
         statresults['Time since last submission (days)'] = days_since_submission
         if days_since_submission == 14: 
             #at the 2 week marker we want to send an alert.  

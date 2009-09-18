@@ -100,7 +100,7 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     _report.generating_url = request.path
     metadata = Metadata.objects.filter(timestart__gte=start_date)
     # the query below is used if you want to query by submission time (instead of form completion time)
-    #metadata = Metadata.objects.filter(submission__submission__submit_time__gte=start_date)
+    #metadata = Metadata.objects.filter(attachment__submission__submit_time__gte=start_date)
     
     # since we are working at a granularity of 'days', we want to make sure include 
     # complete days in our queries, so we round up
@@ -108,7 +108,7 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     delta = timedelta(days=timespan.days+1)
     metadata = metadata.filter(timeend__lt=start_date+delta)
     # the query below is used if you want to query by submission time (instead of form completion time)
-    #metadata = metadata.filter(submission__submission__submit_time__lte=end_date)
+    #metadata = metadata.filter(attachment__submission__submit_time__lte=end_date)
     
     dataset = DataSet( unicode(value[0]) + " per " + unicode(index) )
     dataset.indices = unicode(index)

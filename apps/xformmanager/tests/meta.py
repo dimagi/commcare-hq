@@ -81,17 +81,17 @@ class MetaTestCase(unittest.TestCase):
         cursor.execute("SELECT * FROM xformmanager_metadata order by id")
         row = cursor.fetchall()
         
-        latest_submission_id = ( Attachment.objects.latest('id') ).id
+        latest_attachment_id = ( Attachment.objects.latest('id') ).id
         latest_formdefmodel_id = ( FormDefModel.objects.latest('id') ).id
         
         self.assertEquals(row[0][1],"PathfinderFollowUpVisit")
-        self.assertEquals(row[0][9],latest_submission_id-8)
+        self.assertEquals(row[0][9],latest_attachment_id-8)
         self.assertEquals(row[0][10],1)
         self.assertEquals(row[0][11],latest_formdefmodel_id-3)
         self.assertEquals(row[1][1],"PathfinderFollowUpVisit")
         self.assertEquals(row[2][1],"PathfinderRegistratonVisit")
         self.assertEquals(row[3][1],"PathfinderRegistratonVisit")
-        self.assertEquals(row[3][9],latest_submission_id-5)
+        self.assertEquals(row[3][9],latest_attachment_id-5)
         self.assertEquals(row[3][10],2)
         self.assertEquals(row[3][11],latest_formdefmodel_id-2)
         self.assertEquals(row[4][1],"PathfinderReferralVisit")
@@ -99,7 +99,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[6][1],"XOLIJZVDJKLORBQUABFLVGLEA")
         self.assertEquals(row[7][1],"XOLIJZVDJKLORBQUABFLVGLEA")
         self.assertEquals(row[8][1],"XOLIJZVDJKLORBQUABFLVGLEA")
-        self.assertEquals(row[8][9],latest_submission_id)
+        self.assertEquals(row[8][9],latest_attachment_id)
         self.assertEquals(row[8][10],3)
         self.assertEquals(row[8][11],latest_formdefmodel_id)
         
@@ -111,7 +111,7 @@ class MetaTestCase(unittest.TestCase):
         yesterday = today - timedelta(days=1)
         for i in range(1, 6):
             submission = populate("data/pf_followup_%s.xml" % i)
-            meta = Metadata.objects.get(submission=submission.xform)
+            meta = Metadata.objects.get(attachment=submission.xform)
             self.assertEqual(i, meta.get_submission_count(today, tomorrow))
             self.assertEqual(0, meta.get_submission_count(yesterday, today))
             self.assertEqual(0, meta.get_submission_count(tomorrow, day_after_tomorrow))

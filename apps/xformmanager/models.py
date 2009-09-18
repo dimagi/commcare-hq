@@ -157,7 +157,7 @@ class FormDefModel(models.Model):
         # Note that the data view is dependent on id being first
         sql = " SELECT s.*, su.submit_time FROM %s s " % self.table_name + \
               " JOIN xformmanager_metadata m ON m.raw_data=s.id " + \
-              " JOIN receiver_attachment a ON m.submission_id=a.id " + \
+              " JOIN receiver_attachment a ON m.attachment_id=a.id " + \
               " JOIN receiver_submission su ON a.submission_id=su.id " + \
               " WHERE m.formdefmodel_id=%s " % self.pk
         # add filtering
@@ -268,7 +268,7 @@ class Metadata(models.Model):
     # foreign key to the associated submission (from receiver app)
     # this is currently required. if we decide to decouple this from receiver,
     # then remember to link metadata.delete() to submission.unhandled() 
-    submission = models.ForeignKey(Attachment, related_name="form_metadata")
+    attachment = models.ForeignKey(Attachment, related_name="form_metadata")
     # foreign key to the row in the manually generated data table
     raw_data = models.IntegerField(_('Raw Data Id'), null=True)
     # foreign key to the schema definition (so can identify table and domain)
@@ -340,7 +340,7 @@ class Metadata(models.Model):
         return
     
     def xml_file_location(self):
-        return self.submission.filepath
+        return self.attachment.filepath
     
     def get_submission_count(self, startdate, enddate):
         '''Gets the number of submissions matching this one that 
@@ -348,8 +348,8 @@ class Metadata(models.Model):
            currently defined by having the same chw_id.'''
         # the matching criteria may need to be revised.
         return len(Metadata.objects.filter(chw_id=self.chw_id, 
-                                           submission__submission__submit_time__gte=startdate,
-                                           submission__submission__submit_time__lte=enddate))
+                                           attachment__submission__submit_time__gte=startdate,
+                                           attachment__submission__submit_time__lte=enddate))
 
     def save(self, target_namespace, **kwargs):
         for field in self.required_fields:
@@ -388,7 +388,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     
-    # only run the XFormManager logic if the submission isn't a duplicate 
+    # only run the XFormManager logic if the attachment isn't a duplicate 
     if not instance.is_duplicate():
         # TODO: make this a singleton?  Re-instantiating the manager every
         # time seems wasteful

@@ -227,7 +227,7 @@ def export_xml(request, formdef_id):
     metadata = Metadata.objects.filter(formdefmodel=formdef).order_by('id')
     file_list = []
     for datum in metadata:
-        file_list.append( datum.submission.filepath )
+        file_list.append( datum.attachment.filepath )
     return get_zipfile(file_list)
 
 @extuser_required()
