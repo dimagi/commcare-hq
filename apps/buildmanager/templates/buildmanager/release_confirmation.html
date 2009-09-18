@@ -4,8 +4,8 @@
 {% block buildmanager_content %}
 <h3>Build {{ build }} was successfully released!</h3>
 <br>
-<b>Here is a unique URL for this build that can install the application on any Java-Enabled Phone:
-<br><a href="{{ jad_url }}">{{ jad_url }}</a></b>
+<b>Here is the URL for this latest build that can install the application on any Java-Enabled Phone
+<br><a href="{{ latest_url }}">{{ latest_url }}</a></b>
 <br><br>
 <a href="{% url buildmanager.views.all_builds %}">Back to build list</a>
 {% endblock %}
