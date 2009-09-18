@@ -115,7 +115,7 @@ class StorageUtility(object):
         return fdd
    	
     @transaction.commit_on_success
-    def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, submission):
+    def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
         """ returns True on success """
         logging.debug("StorageProvider: saving form data")
         tree=etree.parse(data_stream_pointer)
@@ -126,7 +126,7 @@ class StorageUtility(object):
         metadata_model = Metadata()
         metadata_model.init( root, self.formdef.target_namespace )
         metadata_model.formdefmodel = formdefmodel
-        metadata_model.submission = submission
+        metadata_model.attachment = attachment
         metadata_model.raw_data = new_rawdata_id
         metadata_model.save(self.formdef.target_namespace)
         # rl - seems like a strange place to put this message...
@@ -135,10 +135,10 @@ class StorageUtility(object):
         startdate = datetime.now().date() 
         enddate = startdate + timedelta(days=1)
         message = metadata_model.get_submission_count(startdate, enddate)
-        self._add_handled(metadata_model.submission, method="instance_data", message=message)
+        self._add_handled(metadata_model.attachment, method="instance_data", message=message)
         return True
     
-    def save_form_data(self, xml_file_name, submission):
+    def save_form_data(self, xml_file_name, attachment):
         """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
@@ -154,7 +154,7 @@ class StorageUtility(object):
         g.close()
         
         f.seek(0,0)
-        status = self.save_form_data_matching_formdef(f, stripped_formdef, formdef[0], submission)
+        status = self.save_form_data_matching_formdef(f, stripped_formdef, formdef[0], attachment)
         f.close()
         logging.debug("Schema %s successfully registered" % xmlns)
         return status
@@ -364,9 +364,9 @@ class StorageUtility(object):
             # never successfully registered
             return
         # mark as intentionally handled
-        self._add_handled(meta.submission, method="deleted")
+        self._add_handled(meta.attachment, method="deleted")
         if remove_submission:
-            meta.submission.submission.delete()
+            meta.attachment.submission.delete()
         meta.delete()
 
     def _add_handled(self, attachment, method, message=''):
@@ -599,8 +599,8 @@ class StorageUtility(object):
             all_meta = Metadata.objects.filter(formdefmodel=fdd)
             for meta in all_meta:
                 if remove_submissions:
-                    meta.submission.submission.delete()
-                self._remove_handled(meta.submission)
+                    meta.attachment.submission.delete()
+                self._remove_handled(meta.attachment)
             all_meta.delete()
             fdd.delete()
     

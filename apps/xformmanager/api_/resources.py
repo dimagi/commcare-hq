@@ -170,12 +170,12 @@ class XFormSubmissionsData(Resource):
             date = datetime.strptime(request.GET['start-submit-date'],"%Y-%m-%d")
             # not the most efficient way of doing this 
             # but it keeps our django orm reference and sql work separate
-            metadata = metadata.filter(submission__submission__submit_time__gte=date)
+            metadata = metadata.filter(attachment__submission__submit_time__gte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
             filter.append( ['id','IN',tuple(raw_ids)] )
         if request.REQUEST.has_key('end-submit-date'):
             date = datetime.strptime(request.GET['end-submit-date'],"%Y-%m-%d")
-            metadata = metadata.filter(submission__submission__submit_time__lte=date)
+            metadata = metadata.filter(attachment__submission__submit_time__lte=date)
             raw_ids = [int(m.raw_data) for m in metadata]
             filter.append( ['id','IN',tuple(raw_ids)] )
         if request.REQUEST.has_key('format'):
@@ -183,7 +183,7 @@ class XFormSubmissionsData(Resource):
                request.GET['format'].lower() == 'zip':
                 file_list = []
                 for datum in metadata:
-                    file_list.append( datum.submission.filepath )
+                    file_list.append( datum.attachment.filepath )
                 return get_zipfile(file_list)
         # default to csv export
         rows = formdef.get_rows( column_filters=filter )
@@ -237,10 +237,10 @@ class XFormMetadata(Resource):
             metadata = metadata.filter(pk__lte=request.GET['end-id'])
         if request.REQUEST.has_key('start-date'):
             date = datetime.strptime(request.GET['start-date'],"%Y-%m-%d")
-            metadata = metadata.filter(submission__submission__submit_time__gte=date)
+            metadata = metadata.filter(attachment__submission__submit_time__gte=date)
         if request.REQUEST.has_key('end-date'):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
-            metadata = metadata.filter(submission__submission__submit_time__lte=date)
+            metadata = metadata.filter(attachment__submission__submit_time__lte=date)
         if request.REQUEST.has_key('format'):
             if request.GET['format'].lower() == 'xml':
                 response = HttpResponse(mimetype='text/xml')

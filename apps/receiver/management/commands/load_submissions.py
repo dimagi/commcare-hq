@@ -16,22 +16,20 @@ class Command(LabelCommand):
            "1) To start from a clean server, first run './manage.py reset_xforms'\n" + \
            "2) This script assumes a local server is running. To launch your local " + \
            "server, run './manage.py runserver'"
-    args = "<submissions_tar optional:schemata_tar>"
+    args = "<submissions_tar>"
     label = 'tar file of exported submissions, tar file of exported schemata'
     
     def handle(self, *args, **options):
         if len(args) < 1:
             raise CommandError('Please specify %s.' % self.label)
         submissions = args[0]
-        if len(args)>1: schemata = args[1]
         print "WARNING: Loading new data"
         rest_util.are_you_sure()
 
         localport = options.get('localport', 8000)
-        localserver = "127.0.0.1:%s" % localserver
+        localserver = "127.0.0.1:%s" % localport
 
         # make sure to load schemas before submissions
-        if len(args)>1: load_schemata(localport, schemata)
         load_submissions(localserver, submissions)
         
     def __del__(self):

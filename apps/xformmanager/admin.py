@@ -8,7 +8,7 @@ class FormDefModelAdmin(admin.ModelAdmin):
     list_filter = ["domain"]
 
 class MetaDataModelAdmin(admin.ModelAdmin):
-    list_display = ( 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid', 'submission', 'raw_data', 'formdefmodel')
+    list_display = ( 'formname','formversion','deviceid','timestart','timeend','username','chw_id','uid', 'attachment', 'raw_data', 'formdefmodel')
     list_filter = ( 'formname','formversion','deviceid','timestart','timeend','username','chw_id','formdefmodel')
 
 admin.site.register(FormDefModel,FormDefModelAdmin)
