@@ -406,9 +406,7 @@ def process(sender, instance, **kwargs): #get sender, instance, created
                                  'xform_traceback':traceback_string} )
     else:
         pass
-        # this error logging moved to the receiver duplicate handler
-        # logging.error("Got a duplicate submission in the xformmanager: %s. It is being ignored." % instance)
-    
+        
 # Register to receive signals from receiver
 post_save.connect(process, sender=Attachment)
 

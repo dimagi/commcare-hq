@@ -58,6 +58,26 @@ class Project (models.Model):
         if releases:
            return releases[0]
     
+    def get_latest_jar_url(self):
+        '''Get the URL for the latest released jar file, empty if no builds
+           have been released'''
+        build = self.get_latest_released_build()
+        if build:
+            return reverse('get_latest_buildfile',
+                           args=(self.id,
+                                  build.get_jar_filename()))
+        return None
+    
+    def get_latest_jad_url(self):
+        '''Get the URL for the latest released jad file, empty if no builds
+           have been released'''
+        build = self.get_latest_released_build()
+        if build:
+            return reverse('get_latest_buildfile',
+                            args=(self.id,
+                                  build.get_jad_filename()))
+        return None
+                                             
     def get_buildURL(self):
         """Hard coded build url for our build server"""
         return 'http://build.dimagi.com:250/viewType.html?buildTypeId=bt%s' % self.project_id
@@ -157,6 +177,15 @@ class ProjectBuild(models.Model):
                                                            "jad_file": self.jad_file, 
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
+    def get_jad_contents(self):
+        '''Returns the contents of the jad as text.'''
+        file = self.get_jad_filestream()
+        lines = []
+        for line in file:
+            lines.append(line.strip())
+        return "<br>".join(lines)
+        
+    
     def get_jar_downloadurl(self):
         """do a reverse to get the urls for the given project/buildnumber for the direct download"""
         return reverse('get_buildfile',
