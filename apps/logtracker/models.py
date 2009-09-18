@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
 import datetime
+import settings
 
 #this is hacky until the email backend is incorporated fully
 from hq.reporter.agents import *
@@ -57,13 +58,14 @@ def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created
         context = {}
         context['log'] = instance    
         rendered_text = render_to_string("logtracker/alert_display.html", context)
-        
         # Send it to an email address baked into the settings/ini file.
-        # restrict the subject to 78 characters to comply with the RFC  
-        eml.send_email(("[Commcare-hq Alert] " + instance.message)[:78], 
+        # restrict the subject to 78 characters to comply with the RFC
+        title = ("[Commcare-hq Alert] " + instance.message)[:78]
+        # newlines makey title mad
+        title = title.replace("\n", ",")
+        eml.send_email(title,
                        settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
-                       rendered_text)    
-                
-    
+                       rendered_text)
+        
 # Register to receive signals from LogTrack
 post_save.connect(sendAlert, sender=LogTrack)
