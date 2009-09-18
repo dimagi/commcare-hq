@@ -142,7 +142,7 @@ class StorageUtility(object):
         """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
-        xmlns = get_xmlns(f)
+        xmlns = self.get_xmlns(f)
         formdef = FormDefModel.objects.all().filter(target_namespace=xmlns)
         
         if formdef is None or len(formdef) == 0:
@@ -644,18 +644,18 @@ class StorageUtility(object):
         """
         logging.error(string)
 
-#temporary measure to get target form
-# todo - fix this to be more efficient, so we don't parse the file twice
-def get_xmlns(stream):
-    xml_string = get_xml_string(stream)
-    try:
-        root = etree.XML(xml_string)
-    except etree.XMLSyntaxError:
-        raise self.XFormError("XML Syntax Error")
-    r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
-    if r is None:
-        raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
-    return r.group(0).strip('{').strip('}')
+    #temporary measure to get target form
+    # todo - fix this to be more efficient, so we don't parse the file twice
+    def get_xmlns(self, stream):
+        xml_string = get_xml_string(stream)
+        try:
+            root = etree.XML(xml_string)
+        except etree.XMLSyntaxError:
+            raise self.XFormError("XML Syntax Error")
+        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
+        if r is None:
+            raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
+        return r.group(0).strip('{').strip('}')
 
 def get_registered_table_name(name):
     # this is purely for backwards compatibility
