@@ -5,38 +5,43 @@ It is currently designed to be run from the commcare-hq install dir, like:
 
 """ VARIABLES """
 import os
-serverhost = 'localhost:8000'
-curl_command = 'c:\curl\curl.exe'
-DATA_DIR = "apps/xformmanager/tests/data/".replace('/',os.sep)
+#serverhost = 'localhost:8000'
+serverhost = 'test.commcarehq.org' #for the actual server
+#curl_command = 'c:\curl\curl.exe' #if you have curl installed on windows
+curl_command = 'curl' #if curl is in your path/linux
+
+filedir = os.path.dirname(__file__)
+DATA_DIR = os.path.join( filedir, 'data' )
 
 """ FIXING PATH """
-filedir = os.path.dirname(__file__)
-filedir = os.path.join(filedir,'..' + os.sep + '..')
+projectdir = os.path.realpath( os.path.join(filedir,'..' + os.sep + '..') )
 
 import sys
-sys.path.append(os.path.join(filedir))
-sys.path.append(os.path.join(filedir, 'apps'))
-sys.path.append(os.path.join(filedir, 'rapidsms'))
-sys.path.append(os.path.join(filedir, 'rapidsms', 'apps'))
+sys.path.append(os.path.join(projectdir))
+sys.path.append(os.path.join(projectdir, 'apps'))
+sys.path.append(os.path.join(projectdir, 'rapidsms'))
+sys.path.append(os.path.join(projectdir, 'rapidsms', 'apps'))
 
 #rapidsms lib stuff
-sys.path.append(os.path.join(filedir, 'rapidsms', 'lib'))
-sys.path.append(os.path.join(filedir, 'rapidsms', 'lib','rapidsms'))
-sys.path.append(os.path.join(filedir, 'rapidsms', 'lib','rapidsms','webui'))
+sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib'))
+sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib','rapidsms'))
+sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib','rapidsms','webui'))
 
 """ ENVIRONMENT """
 import rapidsms
-os.environ["RAPIDSMS_INI"] = "local.ini"
-os.environ["RAPIDSMS_HOME"] = os.path.abspath(os.path.dirname(__file__))
+os.environ["RAPIDSMS_INI"] = os.path.join(projectdir,"local.ini")
+os.environ["RAPIDSMS_HOME"] = projectdir
 from django.core.management import setup_environ
 from rapidsms.webui import settings
 setup_environ(settings)
 
 """ IMPORTS """
+import bz2
 import urllib2
 import tarfile
 import httplib
 import unittest
+import cStringIO
 from urlparse import urlparse
 
 from receiver.models import Submission
@@ -45,7 +50,7 @@ from receiver.management.commands.load_submissions import load_submissions
 from xformmanager.management.commands.sync_schema import generate_schemata, load_schemata
 from xformmanager.tests.util import create_xsd_and_populate, populate
 from django_rest_interface import util as rest_util
-from xformmanager.models import FormDefModel
+from xformmanager.models import FormDefModel, Metadata
 from xformmanager.manager import XFormManager
 from xformmanager.xformdef import FormDef
 
@@ -70,11 +75,8 @@ class TestSync(unittest.TestCase):
         populate("pf_ref_completed_2.xml", path = DATA_DIR)
         
         # download and check
-        response = generate_submissions(serverhost, 'brian', 'test', latest=False)
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        response = generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
         try:
             self._assert_tar_count_equals(submissions_file, Submission.objects.all().count())
             
@@ -103,11 +105,8 @@ class TestSync(unittest.TestCase):
         populate("pf_ref_completed_2.xml", path = DATA_DIR)
         
         # the 'debug' flag limits the generated MD5s to a count of 5
-        response = generate_submissions(serverhost, 'brian', 'test', debug=True)
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        response = generate_submissions(serverhost, 'brian', 'test', debug=True, download=True, to=submissions_file)
         try:
             self._assert_tar_count_equals(submissions_file, Submission.objects.all().count()-5)
             
@@ -137,11 +136,8 @@ class TestSync(unittest.TestCase):
         starting_submissions_count = Submission.objects.all().count()
         
         # get sync file from self
-        response = generate_submissions(serverhost, 'brian', 'test', latest=False)
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        response = generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
     
         # delete all data on self
         manager.remove_schema(schema_1.id, remove_submissions = True)
@@ -192,24 +188,21 @@ class TestSync(unittest.TestCase):
         conn = httplib.HTTPConnection(up.netloc)
         conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
         response = conn.getresponse()
-        
-        
-        #request = util.generate_POST_request(url, MD5_buffer)
-        #response = urllib2.urlopen(request)
-    
         submissions_file = "submissions.tar"
         fout = open(submissions_file, 'w+b')
         fout.write(response.read())
         fout.close()
     
-        # delete the ones just populated (d,e,f)
-        manager.remove_data(schema_1.id, submit_1.xform.form_metadata.all()[0].raw_data, \
+        # save checksums and delete the ones just populated (d,e,f)
+        checksums = [ submit_1.checksum, submit_2.checksum, submit_3.checksum, submit_3.checksum ]
+        
+        manager.remove_data(schema_1.id, Metadata.objects.get(attachment=submit_1.xform).raw_data, \
                             remove_submission = True)
-        manager.remove_data(schema_2.id, submit_2.xform.form_metadata.all()[0].raw_data, \
+        manager.remove_data(schema_2.id, Metadata.objects.get(attachment=submit_2.xform).raw_data, \
                             remove_submission = True)
-        manager.remove_data(schema_3.id, submit_3.xform.form_metadata.all()[0].raw_data, \
+        manager.remove_data(schema_3.id, Metadata.objects.get(attachment=submit_3.xform).raw_data, \
                             remove_submission = True)
-        manager.remove_data(schema_3.id, submit_4.xform.form_metadata.all()[0].raw_data, \
+        manager.remove_data(schema_3.id, Metadata.objects.get(attachment=submit_4.xform).raw_data, \
                             remove_submission = True)
         
         # load data from sync file (d,e,f)
@@ -218,13 +211,73 @@ class TestSync(unittest.TestCase):
         try:
             # verify that the submissions etc. count are correct (d,e,f)
             self.assertEqual( starting_submissions_count, Submission.objects.all().count())
-        finally:            
+            submits = Submission.objects.all().order_by('-submit_time')[:4]
+            # verify that the correct submissions were loaded
+            Submission.objects.get(checksum=checksums[0])
+            Submission.objects.get(checksum=checksums[1])
+            Submission.objects.get(checksum=checksums[2])
+            Submission.objects.get(checksum=checksums[3])
+        except Submission.DoesNotExist:
+            self.fail("Incorrect submission received")
+        finally:
             # clean up
             manager = XFormManager()
             manager.remove_schema(schema_1.id, remove_submissions = True)
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
+    
+    def test_sync_weird_submissions(self):
+        """ Tests synchronizing some data from self (posts a few MD5s) """
         
+        # setup - if we don't do this, we just get back "no submissions found"
+        manager = XFormManager()
+    
+        # populate some files
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", "pf_followup_1.xml", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", "pf_new_reg_1.xml", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", "pf_ref_completed_1.xml", path = DATA_DIR)
+
+        url = 'http://%s/api/submissions/' % (serverhost)
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        
+        # test posting junk md5
+        MD5_buffer = "sadfndan;ofansdn"
+        conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        self.assertTrue( response.lower().find('poorly formatted') != -1 )
+
+        # test posting non-existent md5s
+        md5 = "e402f026c762a6bc999f9f2703efd367"
+        bz2_md5 = bz2.compress(md5)
+        conn.request('POST', up.path, bz2_md5, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        submissions_file = "submissions.tar"
+        fout = open(submissions_file, 'wb')
+        fout.write(response)
+        fout.close()
+        # should get the same 3 schemas we registered above
+        self._assert_tar_count_equals(submissions_file, 3)
+
+        # test posting duplicate md5s
+        string = cStringIO.StringIO()
+        submits = Submission.objects.all().order_by('checksum')[:2]
+        for submit in submits:
+            string.write(unicode( submit.checksum ) + '\n')
+            string.write(unicode( submit.checksum  ) + '\n')
+        dupe_buffer = bz2.compress(string.getvalue())
+        conn.request('POST', up.path, dupe_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        submissions_file = "submissions.tar"
+        fout = open(submissions_file, 'wb')
+        fout.write(response)
+        fout.close()
+        self._assert_tar_count_equals(submissions_file, 1)
+
+        manager.remove_schema(schema_1.id, remove_submissions = True)
+        manager.remove_schema(schema_2.id, remove_submissions = True)
+        manager.remove_schema(schema_3.id, remove_submissions = True)
+
     def test_sync_no_submissions(self):
         """ Tests synchronizing no data from self (posts all MD5s) """
         manager = XFormManager()
@@ -261,7 +314,8 @@ class TestSync(unittest.TestCase):
             manager.remove_schema(schema_1.id, remove_submissions = True)
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
-
+    
+    # a lot of similar code below as above - should modularize better
     def test_sync_all_schemata(self):
         """ Tests synchronizing all schemata from self (no xmlns posted) """
         manager = XFormManager()
@@ -313,10 +367,6 @@ class TestSync(unittest.TestCase):
         conn = httplib.HTTPConnection(up.netloc)
         conn.request('POST', up.path, xmlns_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
         response = conn.getresponse()
-       
-        #request = util.generate_POST_request(url, MD5_buffer)
-        #response = urllib2.urlopen(request)
-
         schemata_file = "schemata.tar"
         fout = open(schemata_file, 'w+b')
         fout.write(response.read())
@@ -332,12 +382,67 @@ class TestSync(unittest.TestCase):
         try:
             # verify that the schematas etc. count are correct (d,e,f)
             self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())
+            self._assert_schema_registered("pf_followup.xsd", DATA_DIR)
+            self._assert_schema_registered("pf_new_reg.xsd", DATA_DIR)
+            self._assert_schema_registered("pf_ref_completed.xsd", DATA_DIR)
         finally:
             # clean up
             manager = XFormManager()
             manager.remove_schema(schema_1.id, remove_submissions = True)
             self._delete_schema_from_filename("pf_new_reg.xsd", path = DATA_DIR)
             self._delete_schema_from_filename("pf_ref_completed.xsd", path = DATA_DIR)
+    
+    def test_sync_weird_schemata(self):
+        """ Tests synchronizing some data from self (posts a few MD5s) """
+        
+        # setup - if we don't do this, we just get back "no submissions found"
+        manager = XFormManager()
+    
+        # populate some files
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
+
+        url = 'http://%s/api/xforms/?format=sync' % (serverhost)
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        
+        # test posting junk namespace
+        namespace_buffer = "sadfndan;ofansdn"
+        conn.request('POST', up.path, namespace_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        self.assertTrue( response.lower().find('poorly formatted') != -1 )
+
+        # test posting non-existent namespaces
+        namespace = "http://zilch.com"
+        bz2_namespace = bz2.compress(namespace)
+        conn.request('POST', up.path, bz2_namespace, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        schemata_file = "schemata.tar"
+        fout = open(schemata_file, 'wb')
+        fout.write(response)
+        fout.close()
+        # should get the same 3 schemas we registered above
+        self._assert_tar_count_equals(schemata_file, 3)
+
+        # test posting duplicate namespaces
+        string = cStringIO.StringIO()
+        formdefs = FormDefModel.objects.all().order_by('target_namespace')[:2]
+        for formdef in formdefs:
+            string.write(unicode( formdef.target_namespace ) + '\n')
+            string.write(unicode( formdef.target_namespace ) + '\n')
+        dupe_buffer = bz2.compress(string.getvalue())
+        conn.request('POST', up.path, dupe_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse().read()
+        schemata_file = "schemata.tar"
+        fout = open(schemata_file, 'wb')
+        fout.write(response)
+        fout.close()
+        self._assert_tar_count_equals(schemata_file, 1)
+
+        manager.remove_schema(schema_1.id, remove_submissions = True)
+        manager.remove_schema(schema_2.id, remove_submissions = True)
+        manager.remove_schema(schema_3.id, remove_submissions = True)
     
     def test_sync_no_schemata(self):
         """ Tests synchronizing no data from self (posts all MD5s) """
@@ -398,6 +503,16 @@ class TestSync(unittest.TestCase):
                 os.remove(os.path.join(tmp_dir, file))
             os.rmdir(tmp_dir)
         
+    def _assert_schema_registered(self, schema, path):
+        schema = open(os.path.join(path, schema), 'r')
+        formdef = FormDef(schema)
+        schema.close()
+        try:
+            formdef = FormDefModel.objects.get(target_namespace=formdef.target_namespace)
+        except FormDefModel.DoesNotExist:
+            self.fail("%s schema not registered!" % formdef.target_namespace)
+        return
+
     def _delete_schema_from_filename(self, file_name, path):
         schema = open(os.path.join(path, file_name), 'r')
         formdef = FormDef(schema)

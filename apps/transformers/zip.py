@@ -66,7 +66,7 @@ class TarCompressor(Compressor):
         self._tar = tarfile.open(name=name, fileobj=fileobj, mode="w:bz2")
 
     def add_stream(self, stream, size=0, name=None):
-        tar_info = tarfile.TarInfo(name=name )
+        tar_info = tarfile.TarInfo( name=name )
         tar_info.size = size
         self._tar.addfile(tar_info, fileobj=stream)
     

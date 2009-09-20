@@ -1,0 +1,26 @@
+<pathfinder_followup xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2a">
+  <Meta>
+    <formName>PathfinderFollowUpVisit</formName>
+    <formVersion>0.0.1</formVersion>
+    <DeviceID>device2</DeviceID>
+    <CommCareVersion>0.0.6</CommCareVersion>
+    <TimeStart>2009-04-21T13:25:27.637</TimeStart>
+    <TimeEnd>2009-04-21T13:31:15.191</TimeEnd>
+    <username>demo_user</username>
+    <chw_id>0</chw_id>
+    <uid>AW10ASUOVMOQIP82ZRZURILTZ</uid>
+  </Meta>
+  <client_name> JOHN MZE JJ</client_name>
+  <client_number>2</client_number>
+  <type_of_client>HIV</type_of_client>
+  <client_available>1</client_available>
+  <referral>hiv_test</referral>
+  <new_male_pcg>2</new_male_pcg>
+  <existing_male_pcg>3</existing_male_pcg>
+  <new_female_pcg>3</new_female_pcg>
+  <existing_female_pcg>5</existing_female_pcg>
+  <type_med>ARV</type_med>
+  <mosquito_net>0</mosquito_net>
+  <water_guard>0</water_guard>
+  <service_stopped>0</service_stopped>
+</pathfinder_followup>
