@@ -133,6 +133,8 @@ def get_field_as_bz2(django_model, field_name, debug=False):
         print "DEBUG MODE: Only generating some schemata"
         # arbitrarily return only 10 of the MD5s
         objs = django_model.objects.all().order_by(field_name)[:5]
+    if objs.count() == 0:
+        return ''
     for obj in objs:
         string.write(unicode( getattr(obj, field_name) ) + '\n')
     return bz2.compress(string.getvalue())
