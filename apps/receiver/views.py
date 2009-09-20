@@ -126,7 +126,8 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     try: 
         currdomain = Domain.objects.get(name=domain_name)
     except Domain.DoesNotExist:
-        logging.error("Submission failed! %s isn't a known domain.", domain_name)
+        logging.error("Submission failed! %s isn't a known domain.  The file has been saved as %s" %
+                       (domain_name, submit_record))
         response = SubmitResponse(status_code=404, or_status_code=4040, 
                                   or_status="%s isn't a known domain." % domain_name)
         return response.to_response()
