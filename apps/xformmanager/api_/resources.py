@@ -99,7 +99,10 @@ class XFormSchemata(Resource):
                 return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")            
             stack_local = FormDefModel.objects.all().order_by('target_namespace').values_list('target_namespace', flat=True)
             results = util.get_stack_diff(stack_received, stack_local)
-            xforms = FormDefModel.objects.filter(target_namespace__in=results).order_by("target_namespace")                    
+            xforms = FormDefModel.objects.filter(target_namespace__in=results).order_by("target_namespace")
+            if not xforms:
+                logging.error("No new schemas have been registered.")
+                return HttpResponse("No new schemas have been registered.")
         file_list = []
         for schema in xforms:
             exported_file = self._export_to_file(schema)

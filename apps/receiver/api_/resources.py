@@ -60,6 +60,9 @@ def _get_submissions(request, domain_id=0):
         # this could get really large.... O_O
         submissions = Submission.objects.filter(checksum__in=results).order_by("checksum")
     
+    if submissions.count() == 0:
+        logging.info("No submissions could be found.")
+        return HttpResponse("No submissions could be found.")
     compressor = TarCompressor()
     export_path = os.path.join( export_dir, "commcarehq-submissions.tar")
     compressor.open(name=export_path)
@@ -80,8 +83,8 @@ def _get_submissions(request, domain_id=0):
         compressor.add_stream(string, size, name=os.path.basename(submission.raw_post) )    
     compressor.close()
     if not file_added:
-        logging.info("No submissions could be found.")
-        return HttpResponse("No submissions could be found.")
+        logging.info("Original submission files could not be found on the server.")
+        return HttpResponse("Original submission files could not be found on the server.")
     response = HttpResponse()
     response['Content-Length'] = os.path.getsize(export_path)
     fin = open(export_path, 'rb')
