@@ -45,8 +45,8 @@ def load_submissions(localserver, submissions_file):
         fin = open(submissions_file)
         contents = fin.read(256)
         fin.close()
-        if contents.find("No submissions") != -1:
-            print "No new schemas"
+        if contents.lower().find("no ") != -1:
+            print "No new submissions"
         else:
             print "This is not a valid submissions file"
     else:

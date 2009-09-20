@@ -93,7 +93,7 @@ def load_schemata(localserver, schemata_file):
         fin = open(schemata_file)
         contents = fin.read(256)
         fin.close()
-        if contents.lower().find("no s") != -1:
+        if contents.lower().find("no ") != -1:
             print "No new schemata"
         else:
             print "This is not a valid schemata file"
