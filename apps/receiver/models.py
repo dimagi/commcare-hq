@@ -72,8 +72,11 @@ class Submission(models.Model):
         super(Submission, self).save()
         self.process_attachments()
     
-    def delete(self, **kwargs):        
-        os.remove(self.raw_post)
+    def delete(self, **kwargs):
+        if os.path.exists(self.raw_post) and os.path.isfile(self.raw_post):
+            os.remove(self.raw_post)
+        else:
+            logging.warn("Raw post not found on file system.")
         
         attaches = Attachment.objects.all().filter(submission = self)
         if len(attaches) > 0:
