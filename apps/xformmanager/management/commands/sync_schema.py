@@ -67,7 +67,7 @@ def generate_schemata(remote_url, username, password, latest=True, download=Fals
         xmlns_buffer = rest_util.get_field_as_bz2(FormDefModel, 'target_namespace', debug)
         print "Generating latest remote schemata..."
     else:
-        xmlns_buffer = '0'
+        xmlns_buffer = ''
         print "Generating all remote submissions archive..."
     up = urlparse(url)
     conn = httplib.HTTPConnection("localhost:8000")
