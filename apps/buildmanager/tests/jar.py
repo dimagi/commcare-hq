@@ -58,7 +58,7 @@ class JarTestCase(unittest.TestCase):
         validate_jar(self.extra_jar)
         try:
             validate_jar(self.duplicate_jar)
-            self.fail("Missing meta field did not raise an exception")
+            self.fail("Duplicate meta field did not raise an exception")
         except BuildError, be:
             self.assertEqual(1, len(be.errors))
             e = be.errors[0]
@@ -71,7 +71,6 @@ class JarTestCase(unittest.TestCase):
         except BuildError, e:
             # we expect this error to say something about a missing namespace
             self.assertTrue("namespace" in unicode(e))
-            
-            
+
         
             
