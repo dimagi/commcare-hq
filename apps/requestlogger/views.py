@@ -19,6 +19,7 @@ from django.core.urlresolvers import reverse
 import mimetypes
 import urllib
 
+@login_required()
 @log_request()
 def demo(request):
     return HttpResponse("Thanks!")

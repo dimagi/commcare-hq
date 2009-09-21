@@ -3,6 +3,8 @@ from django.http import HttpRequest
 
 from requestlogger.models import RequestLog
 
+import logging
+
 def log_request():
     """Decorator for views that logs information about the 
        request before passing it to the view."""
@@ -35,8 +37,14 @@ def log_request():
             except Exception, e:
                 logging.error("Error logging request!  The error is: %s." % e)
             return f(*args, **kwargs) 
-        wrapped_func.func_name = f.func_name
-        return wrapped_func
+        if hasattr(f, "func_name"):
+            wrapped_func.func_name = f.func_name
+            return wrapped_func
+        else:
+            # this means it wasn't actually a view.  I think we
+            # want to default to not wrapping or logging it here.
+            logging.error("%s is not a function.  Request will not be logged" % f)
+            return f 
     return log_and_call
 
 def _is_http_request(obj):
