@@ -54,8 +54,8 @@ class XFormSchemata(Resource):
             date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
             xforms = xforms.filter(submit_time__lte=date)
         if not xforms:
-            logging.error("No schemas have been registered.")
-            return HttpResponseBadRequest("No schemas have been registered.")
+            logging.info("No schemas have been registered.")
+            return HttpResponse("No schemas have been registered.")
         for xform in xforms:
             # do NOT save this!!! This is just for display
             xform.xsd_file_location = "http://%s/xforms/show/%s?show_schema=yes" % \
@@ -82,8 +82,8 @@ class XFormSchemata(Resource):
         # CREATE is actually POST
         xforms = FormDefModel.objects.order_by('id')
         if not xforms:
-            logging.error("No schemas have been registered.")
-            return HttpResponseBadRequest("No schemas have been registered.")
+            logging.info("No schemas have been registered.")
+            return HttpResponse("No schemas have been registered.")
         if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
             logging.error("Please set 'export_path' " + \
                           "in your cchq xformmanager settings.")
@@ -101,7 +101,7 @@ class XFormSchemata(Resource):
             results = util.get_stack_diff(stack_received, stack_local)
             xforms = FormDefModel.objects.filter(target_namespace__in=results).order_by("target_namespace")
             if not xforms:
-                logging.error("No new schemas have been registered.")
+                logging.info("No new schemas have been registered.")
                 return HttpResponse("No new schemas have been registered.")
         file_list = []
         for schema in xforms:

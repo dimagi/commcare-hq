@@ -71,7 +71,7 @@ def validate_jar(filename):
             try:
                 body = open(xform, "r")
                 form_display = os.path.basename(xform)
-                output, errorstream, has_error = form_translate(xform, body.read())
+                output, errorstream, has_error = form_translate(body.read())
                 if has_error:
                     raise BuildError("Could not convert xform (%s) to schema.  Your error is %s" % 
                                      (form_display, errorstream))
