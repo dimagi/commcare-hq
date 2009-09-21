@@ -18,60 +18,29 @@ class XFormManager(object):
 
     def remove_data(self, formdef_id, id, remove_submission=False):
         self.su.remove_instance_matching_schema(formdef_id, id, remove_submission)
+        
+    def save_schema_POST_to_file(self, stream, file_name):
+        """ save POST to file """
+        try:
+            type = file_name.rsplit('.',1)[1]
+        except IndexError:
+            # POSTed file has no extension
+            type = "xform"
+        filename = self._save_schema_stream_to_file(stream, type)
+        return filename
 
     def save_form_data(self, xml_file_name, attachment):
         """ return True on success and False on fail """
         return self.su.save_form_data(xml_file_name, attachment)
-        
-    def add_schema(self, file_name, input_stream):
-        transaction_str = str(uuid.uuid1())
-        logging.debug("temporary file name is " + transaction_str)                
-        new_file_name = self._xsd_file_name(transaction_str)
-        if file_name.endswith("xsd"):
-            fout = open(new_file_name, 'w')
-            fout.write( input_stream.read() )
-            fout.close()
-        else: 
-            #user has uploaded an xhtml/xform file
-            # save the raw xform
-            xform_filename = new_file_name + str(".xform")
-            xform_handle = open(xform_filename, 'w')
-            xform_handle.write(input_stream.read())
-            xform_handle.close()
-            fin = open(xform_filename, 'r')
-            schema,err,has_error = form_translate( file_name, fin.read() )
-            fin.close()
-            if has_error:
-                raise IOError, ("Could not convert xform (%s) to schema." % file_name) + \
-                                " Please verify that this is a valid xform file."
-            fout = open(new_file_name, 'w')
-            fout.write( schema )
-            fout.close()
-        return self._create_schema_from_temp_file(new_file_name)
-
-    def add_schema_manual(self, schema, type):
-        '''A fairly duplicated API of add_schema to support passing 
-           in the schema an in-memory string, and including some metadata
-           with it.  These two methods should be merged.'''
-        transaction_str = str(uuid.uuid1())
-        logging.debug("temporary file name is " + transaction_str)                
-        new_file_name = self._xsd_file_name(transaction_str)
-        if type == "xsd":
-            fout = open(new_file_name, 'w')
-            fout.write( schema ) 
-            fout.close()
-        else: 
-            schema,err,has_error = form_translate( file_name, schema )
-            if has_error:
-                raise IOError, "XFORMMANAGER.VIEWS: problem converting xform to xsd: + " + file_name + "\nerror: " + str(err)
-            fout = open(new_file_name, 'w')
-            fout.write( schema )
-            fout.close()
-        return self._create_schema_from_temp_file(new_file_name)
-        
-    def _create_schema_from_temp_file(self, new_file_name):
+    
+    def validate_schema(self, file_name):
+        """ validate schema 
+        Returns a tuple (is_valid, error)
+        is_valid - True if valid, False if not
+        error - Relevant validation error
+        """
         #process xsd file to FormDef object
-        fout = open(new_file_name, 'r')
+        fout = open(file_name, 'r')
         formdef = FormDef(fout)
         fout.close()
         
@@ -83,34 +52,79 @@ class XFormManager(object):
         
         # check xmlns not none
         if not formdef.target_namespace:
-            raise FormDefError("No namespace found in submitted form. Form saved to %s" % new_file_name)
+            return False, FormDefError("No namespace found in submitted form. Form saved to %s" % file_name)
         
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
         if formdef.target_namespace.lower().find('www.w3.org') != -1:
-            raise FormDefError("No namespace found in submitted form. Form saved to %s" % new_file_name)
+            return False, FormDefError("No namespace found in submitted form. Form saved to %s" % file_name)
 
         meta_element = formdef.get_meta_element()
         if not meta_element:
-            raise FormDefError("From has no meta block! Saved to %s" % new_file_name)
+            return False, FormDefError("From has no meta block! Saved to %s" % file_name)
         
         meta_issues = FormDef.get_meta_validation_issues(meta_element)
         if meta_issues:
-            mve = MetaDataValidationError(meta_issues, new_file_name)
+            mve = MetaDataValidationError(meta_issues, file_name)
             # until we have a clear understanding of how meta versions will work,
             # don't fail on issues that only come back with "extra" set.  i.e.
             # look for missing or duplicate
             if mve.duplicate or mve.missing:
-                raise mve
+                return False, mve
             else:
                 logging.warning("Found extra meta fields in form. Form saved to %s, %s" % \
-                                (new_file_name, mve.extra))
+                                (file_name, mve.extra))
         # </copy>
-                
+        return True, None
+
+    def create_schema_from_file(self, new_file_name):
+        """ process schema """
+        #process xsd file to FormDef object
+        fout = open(new_file_name, 'r')
+        formdef = FormDef(fout)
+        fout.close()
         formdefmodel = self.su.add_schema (formdef)
         formdefmodel.xsd_file_location = new_file_name
         formdefmodel.save()
         return formdefmodel
+
+    def add_schema_manually(self, schema, type):
+        """ manually register a schema """
+        file_name = self._save_schema_string_to_file(schema, type)
+        return self.create_schema_from_file(file_name)
+
+    def add_schema(self, file_name, input_stream):
+        """ we keep this api open for the unit tests """
+        file_name = self.save_schema_POST_to_file(input_stream, file_name)
+        return self.create_schema_from_file(file_name)
+        
+    def _save_schema_string_to_file(self, string, type ):
+        transaction_str = str(uuid.uuid1())
+        new_file_name = self._xsd_file_name(transaction_str)
+        if type.lower() == "xsd":
+            fout = open(new_file_name, 'w')
+            fout.write( string )
+            fout.close()
+        else:
+            #user has uploaded an xhtml/xform file
+            # save the raw xform
+            xform_filename = new_file_name + str(".xform")
+            xform_handle = open(xform_filename, 'w')
+            xform_handle.write( string )
+            xform_handle.close()
+            fin = open(xform_filename, 'r')
+            schema,err,has_error = form_translate( fin.read() )
+            fin.close()
+            if has_error:
+                raise IOError, "Could not convert xform to schema." + \
+                               " Please verify that this is a valid xform file."
+            fout = open(new_file_name, 'w')
+            fout.write( schema )
+            fout.close()
+        return new_file_name
+
+    def _save_schema_stream_to_file(self, stream, type):
+        return self._save_schema_string_to_file(stream.read(), type)
 
     def _xsd_file_name(self, name):
         return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], 
@@ -120,9 +134,9 @@ class FormDefError(SyntaxError):
     """ Generic error for XFormManager.Manager """
     pass
 
-def form_translate(name, input_stream):
+def form_translate(input_stream):
     '''Translates an xform into an xsd file'''
-    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < " + name + " > ")
+    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < input file > ")
     p = subprocess.Popen(["java","-jar",os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
     
