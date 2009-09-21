@@ -1,4 +1,4 @@
-<pathfinder_referral xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2">
+<pathfinder_referral xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_test">
   <Meta>
     <formName>PathfinderReferralVisit</formName>
     <formVersion>0.01</formVersion>
