@@ -4,10 +4,12 @@ import logging
 
 from hq.models import ExtUser
 from hq.models import Domain
+from requestlogger.models import RequestLog
 
 from buildmanager.models import *
 from buildmanager.forms import *
 from buildmanager.jar import validate_jar
+
 
 from rapidsms.webui.utils import render_to_response
 
@@ -92,7 +94,7 @@ def show_build(request, build_id, template_name="buildmanager/show_build.html"):
         raise Http404
     return render_to_response(request, template_name, context)
 
-def get_buildfile(request,project_id, build_number, filename, template_name=None):    
+def get_buildfile(request, project_id, build_number, filename, template_name=None):    
     """For a given build, we now have a direct and unique download URL for it 
        within a given project. This will directly stream the file to the 
        browser.  This is because we want to track download counts    
@@ -117,7 +119,7 @@ def get_latest_buildfile(request, project_id, filename, template_name=None):
     else:
         raise Http404
         
-def _get_buildfile(request,project, build, filename):
+def _get_buildfile(request, project, build, filename):
     if filename.endswith('.jar'):
         fpath = build.get_jar_filename()
         if fpath != filename:
@@ -125,26 +127,36 @@ def _get_buildfile(request,project, build, filename):
         
         mtype = mimetypes.guess_type(build.jar_file)[0]
         build.jar_download_count += 1
-        fin = build.get_jar_filestream()            
-
+        fin = build.get_jar_filestream()
+        if not fin:
+            raise Http404
+        _log_build_download(request, build, "jar")
     elif filename.endswith('.jad'):
         fpath = build.get_jad_filename()
         mtype = mimetypes.guess_type(build.jad_file)[0]            
         if fpath != filename:
             raise Http404
-        
         build.jad_download_count += 1
-        fin = build.get_jad_filestream()        
-    
+        fin = build.get_jad_filestream()
+        if not fin:
+            raise Http404
+        _log_build_download(request, build, "jad")
     if mtype == None:
         response = HttpResponse(mimetype='text/plain')
     else:
         response = HttpResponse(mimetype=mtype)
     response.write(fin.read())
-    fin.close() 
+    fin.close()
     build.save()
     return response
 
+def _log_build_download(request, build, type):
+    '''Logs and saves a build download.'''
+    log = RequestLog.from_request(request)
+    log.save()
+    download = BuildDownload(type=type, build=build, log=log)
+    download.save()
+    
 @login_required
 def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
     try: 
@@ -196,8 +208,6 @@ def new_build(request, template_name="buildmanager/new_build.html"):
                                      'request.FILES': request.FILES, 
                                      'form':form})
                 context['errors'] = "Could not commit build: " + str(e)
-    
-    
     context['form'] = form
     return render_to_response(request, template_name, context)
 
