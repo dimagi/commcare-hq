@@ -74,5 +74,11 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
         fout = open(to, 'w+b')
         fout.write(response.read())
         fout.close()
-        print "Submissions downloaded to %s" % to        
+        print "Submissions downloaded to %s" % to
+    else:
+        # Check for status messages
+        # (i think tar payloads always begin 'BZ'...)
+        response = response.read(255)
+        if response[:2] != "BZ":
+            print response
     return response

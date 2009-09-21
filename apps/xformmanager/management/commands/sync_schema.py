@@ -46,8 +46,7 @@ class Command(LabelCommand):
         generate_schemata(remote_ip, username, \
                           password, download=True, to=file, debug=False)
         localport = options.get('localport', 8000)
-        localserver = "127.0.0.1:%s" % localport
-        load_schemata(localserver, file)
+        load_schemata(file, localport)
         
     def __del__(self):
         pass
@@ -70,7 +69,7 @@ def generate_schemata(remote_url, username, password, latest=True, download=Fals
         xmlns_buffer = ''
         print "Generating all remote submissions archive..."
     up = urlparse(url)
-    conn = httplib.HTTPConnection("localhost:8000")
+    conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', "/api/xforms/?format=sync", xmlns_buffer, \
                  {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
     response = conn.getresponse()
@@ -83,12 +82,13 @@ def generate_schemata(remote_url, username, password, latest=True, download=Fals
         print "Schemata downloaded to %s" % to
     return response 
 
-def load_schemata(localserver, schemata_file):
+def load_schemata(schemata_file, localport=8000):
     """ This script loads new data into the local CommCareHQ server
     
     Arguments: 
     args[0] - tar file of exported schemata
     """
+    localserver = "127.0.0.1:%s" % localport
     if not tarfile.is_tarfile(schemata_file):
         fin = open(schemata_file)
         contents = fin.read(256)

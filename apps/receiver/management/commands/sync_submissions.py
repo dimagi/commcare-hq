@@ -28,13 +28,14 @@ class Command(LabelCommand):
               "To launch your local server, run './manage.py runserver'"
         rest_util.are_you_sure()
         
-        synchronize_submissions(remote_ip, username, password)
+        localport = options.get('localport', 8000)
+        synchronize_submissions(remote_ip, username, password, localport)
                 
     def __del__(self):
         pass
     
-def synchronize_submissions(remote_ip, username, password):
+def synchronize_submissions(remote_ip, username, password, localport=8000):
     file = 'submissions.tar'
     generate_submissions(remote_ip, username, password, \
                          download=True, to=file)
-    load_submissions(remote_ip, file)
+    load_submissions(file, localport)

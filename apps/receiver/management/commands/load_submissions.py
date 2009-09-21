@@ -17,7 +17,7 @@ class Command(LabelCommand):
            "2) This script assumes a local server is running. To launch your local " + \
            "server, run './manage.py runserver'"
     args = "<submissions_tar>"
-    label = 'tar file of exported submissions, tar file of exported schemata'
+    label = 'tar file of exported submissions'
     
     def handle(self, *args, **options):
         if len(args) < 1:
@@ -27,20 +27,18 @@ class Command(LabelCommand):
         rest_util.are_you_sure()
 
         localport = options.get('localport', 8000)
-        localserver = "127.0.0.1:%s" % localport
-
-        # make sure to load schemas before submissions
-        load_submissions(localserver, submissions)
+        load_submissions( submissions, localport )
         
     def __del__(self):
         pass
 
-def load_submissions(localserver, submissions_file):
+def load_submissions(submissions_file, localport=8000):
     """ This script loads new data into the local CommCareHQ server
     
     Arguments: 
     args[0] - tar file of exported submissions
     """
+    localserver = "127.0.0.1:%s" % localport
     if not tarfile.is_tarfile(submissions_file):
         fin = open(submissions_file)
         contents = fin.read(256)

@@ -5,10 +5,10 @@ It is currently designed to be run from the commcare-hq install dir, like:
 
 """ VARIABLES """
 import os
-#serverhost = 'localhost:8000'
-serverhost = 'test.commcarehq.org' #for the actual server
-#curl_command = 'c:\curl\curl.exe' #if you have curl installed on windows
-curl_command = 'curl' #if curl is in your path/linux
+serverhost = 'localhost:8000'
+#serverhost = 'test.commcarehq.org' #for the actual server
+curl_command = 'c:\curl\curl.exe' #if you have curl installed on windows
+#curl_command = 'curl' #if curl is in your path/linux
 
 filedir = os.path.dirname(__file__)
 DATA_DIR = os.path.join( filedir, 'data' )
@@ -76,7 +76,7 @@ class TestSync(unittest.TestCase):
         
         # download and check
         submissions_file = "submissions.tar"
-        response = generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
+        generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
         try:
             self._assert_tar_count_equals(submissions_file, Submission.objects.all().count())
             
@@ -106,7 +106,7 @@ class TestSync(unittest.TestCase):
         
         # the 'debug' flag limits the generated MD5s to a count of 5
         submissions_file = "submissions.tar"
-        response = generate_submissions(serverhost, 'brian', 'test', debug=True, download=True, to=submissions_file)
+        generate_submissions(serverhost, 'brian', 'test', debug=True, download=True, to=submissions_file)
         try:
             self._assert_tar_count_equals(submissions_file, Submission.objects.all().count()-5)
             
@@ -137,7 +137,7 @@ class TestSync(unittest.TestCase):
         
         # get sync file from self
         submissions_file = "submissions.tar"
-        response = generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
+        generate_submissions(serverhost, 'brian', 'test', latest=False, download=True, to=submissions_file)
     
         # delete all data on self
         manager.remove_schema(schema_1.id, remove_submissions = True)
@@ -149,7 +149,7 @@ class TestSync(unittest.TestCase):
         schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
         
         # load data from sync file
-        load_submissions(serverhost, submissions_file)
+        load_submissions(submissions_file)
         
         try:
             # verify that the submissions etc. count are correct
@@ -206,7 +206,7 @@ class TestSync(unittest.TestCase):
                             remove_submission = True)
         
         # load data from sync file (d,e,f)
-        load_submissions(serverhost, submissions_file)
+        load_submissions(submissions_file)
         
         try:
             # verify that the submissions etc. count are correct (d,e,f)
@@ -296,16 +296,13 @@ class TestSync(unittest.TestCase):
         starting_submissions_count = Submission.objects.all().count()
         
         # get sync file from self
-        response = generate_submissions(serverhost, 'brian', 'test')
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        generate_submissions(serverhost, 'brian', 'test', download=True, to=submissions_file)
         
         # test that the received submissions file is empty
         self._assert_tar_count_equals(submissions_file, 0)
     
-        load_submissions(serverhost, submissions_file)    
+        load_submissions(submissions_file)    
         try:
             # verify that no new submissions were loaded
             self.assertEqual( starting_submissions_count, Submission.objects.all().count())
@@ -335,7 +332,7 @@ class TestSync(unittest.TestCase):
         manager.remove_schema(schema_3.id, remove_submissions = True)
 
         # load data from sync file
-        load_schemata(serverhost, schemata_file)
+        load_schemata(schemata_file)
         
         try:
             # verify that the submissions etc. count are correct
@@ -377,7 +374,7 @@ class TestSync(unittest.TestCase):
         manager.remove_schema(schema_3.id, remove_submissions = True)
         
         # load data from sync file (d,e,f)
-        load_schemata(serverhost, schemata_file)
+        load_schemata(schemata_file)
         
         try:
             # verify that the schematas etc. count are correct (d,e,f)
@@ -399,6 +396,7 @@ class TestSync(unittest.TestCase):
         manager = XFormManager()
     
         # populate some files
+        starting_schemata_count = FormDefModel.objects.count()
         schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
         schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
         schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
@@ -422,8 +420,8 @@ class TestSync(unittest.TestCase):
         fout = open(schemata_file, 'wb')
         fout.write(response)
         fout.close()
-        # should get the same 3 schemas we registered above
-        self._assert_tar_count_equals(schemata_file, 3)
+        # should get all the schemas back
+        self._assert_tar_count_equals(schemata_file, starting_schemata_count+3)
 
         # test posting duplicate namespaces
         string = cStringIO.StringIO()
@@ -438,7 +436,7 @@ class TestSync(unittest.TestCase):
         fout = open(schemata_file, 'wb')
         fout.write(response)
         fout.close()
-        self._assert_tar_count_equals(schemata_file, 1)
+        self._assert_tar_count_equals(schemata_file, starting_schemata_count+1)
 
         manager.remove_schema(schema_1.id, remove_submissions = True)
         manager.remove_schema(schema_2.id, remove_submissions = True)
@@ -461,7 +459,7 @@ class TestSync(unittest.TestCase):
         self._assert_tar_count_equals(schemata_file, 0)
     
         starting_schemata_count = FormDefModel.objects.all().count()
-        load_schemata(serverhost, schemata_file)    
+        load_schemata(schemata_file)    
         try:
             # verify that no new schemata were loaded
             self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())
@@ -480,7 +478,7 @@ class TestSync(unittest.TestCase):
             fin = open(file_name, 'r')
             contents = fin.read(256)
             fin.close()
-            if contents.lower().find("no s") != -1:
+            if contents.lower().find("no ") != -1:
                 self.assertEqual( 0, count)
                 return
             raise Exception("%s is not a tar file" % file_name)
