@@ -208,6 +208,10 @@ class MetaTestCase(unittest.TestCase):
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables
     
+    """
+    Since we're not failing on bad meta, these unit tests are deprecated.
+    But we'll keep them around in case they come in handy later.
+    
     def testSchemaNoNamespace(self):
         try:
             create_xsd_and_populate("data/no_xmlns.xml")
@@ -244,7 +248,8 @@ class MetaTestCase(unittest.TestCase):
         logging.warn("EXPECTING A 'No metadata found' warning now:")
         create_xsd_and_populate("data/extra_meta.xml")
         # this should not raise an error
-
+    """
+    
     def tearDown(self):
         # duplicates setUp, but at least we know we're being clean
         su = StorageUtility()

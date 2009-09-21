@@ -53,34 +53,87 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
 def register_xform(request, template='register_and_list_xforms.html'):
     context = {}
     extuser = request.extuser
-    if request.method == 'POST':        
-        form = RegisterXForm(request.POST, request.FILES)        
-        if form.is_valid():
-            # must add_schema to storage provide first since forms are dependent upon elements 
+    if request.method == 'POST':
+        if 'confirm_register' in request.POST:
+            # user has already confirmed registration 
+            # process saved file without bothering with validation
             try:
-                xformmanager = XFormManager()
-                formdefmodel = xformmanager.add_schema(request.FILES['file'].name, request.FILES['file'])
+                formdefmodel = _register_xform(request, \
+                                    request.session['schema_file'], \
+                                    request.session['display_name'], \
+                                    request.session['REMOTE_ADDR'], \
+                                    request.session['file_size']                                
+                                    )
             except Exception, e:
                 logging.error(unicode(e))
                 context['errors'] = unicode(e)
                 transaction.rollback()
             else:
-                formdefmodel.submit_ip = request.META['REMOTE_ADDR']
-                formdefmodel.bytes_received =  request.FILES['file'].size
-                formdefmodel.form_display_name = form.cleaned_data['form_display_name']                
-                formdefmodel.uploaded_by = extuser
-                if extuser:
-                    formdefmodel.domain = extuser.domain
-                
-                formdefmodel.save()
-                logging.debug("xform registered")
                 transaction.commit()
                 context['newsubmit'] = formdefmodel
         else:
-            context['errors'] = form.errors
+            # validate and attempt to process schema
+            form = RegisterXForm(request.POST, request.FILES)
+            if form.is_valid():
+                xformmanager = XFormManager()
+                try:
+                    file_name = xformmanager.save_schema_POST_to_file(\
+                                request.FILES['file'], request.FILES['file'].name
+                                )
+                except Exception, e:
+                    # typically this error is because we could not translate xform to schema
+                    logging.error(unicode(e))
+                    context['errors'] = unicode(e)
+                    transaction.rollback()
+                else:
+                    is_valid, errors = xformmanager.validate_schema(file_name)
+                    if is_valid:
+                        try:
+                            formdefmodel = _register_xform(request, file_name, \
+                                               form.cleaned_data['form_display_name'], \
+                                               request.META['REMOTE_ADDR'], \
+                                               request.FILES['file'].size
+                                               )                            
+                        except Exception, e:
+                            logging.error(unicode(e))
+                            context['errors'] = unicode(e)
+                            transaction.rollback()
+                        else:
+                            transaction.commit()
+                            context['newsubmit'] = formdefmodel
+                    else:
+                        # if there are validation errors, 
+                        # redirect to the confirmation page
+                        logging.error(unicode(errors))
+                        context['errors'] = unicode(errors)
+                        context['file_name'] = request.FILES['file'].name
+                        request.session['schema_file'] = file_name
+                        request.session['display_name'] = form.cleaned_data['form_display_name']
+                        request.session['REMOTE_ADDR'] = request.META['REMOTE_ADDR']
+                        request.session['file_size'] = request.FILES['file'].size
+                        template='confirm_register.html'
+                        transaction.rollback()
+                        return render_to_response(request, template, context)                    
+            else:
+                transaction.rollback()
+                context['errors'] = form.errors
     context['upload_form'] = RegisterXForm()
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
     return render_to_response(request, template, context)
+
+def _register_xform(request, file_name, display_name, remote_addr, file_size):
+    """ does the actual creation and saving of the formdef model """
+    xformmanager = XFormManager()
+    formdefmodel = xformmanager.create_schema_from_file(file_name)
+    formdefmodel.submit_ip = remote_addr
+    formdefmodel.bytes_received =  file_size
+    formdefmodel.form_display_name = display_name                
+    formdefmodel.uploaded_by = request.extuser
+    if request.extuser:
+        formdefmodel.domain = request.extuser.domain
+    formdefmodel.save()
+    logging.debug("xform registered")
+    return formdefmodel
 
 @extuser_required()
 @transaction.commit_manually
@@ -126,7 +179,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             type = metadata["HTTP_SCHEMA_TYPE"]
             schema = request.raw_post_data
             xformmanager = XFormManager()
-            formdefmodel = xformmanager.add_schema_manual(schema, type)
+            formdefmodel = xformmanager.add_schema_manually(schema, type)
         except IOError, e:
             logging.error("xformmanager.manager: " + unicode(e) )
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
