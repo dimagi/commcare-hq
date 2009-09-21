@@ -1,4 +1,4 @@
-<pathfinder_registration xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2">
+<pathfinder_registration xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_test">
   <Meta>
     <formName>PathfinderRegistratonVisit</formName>
     <formVersion>0.01</formVersion>

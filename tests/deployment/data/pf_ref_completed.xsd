@@ -1,4 +1,4 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2" elementFormDefault="qualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_test" elementFormDefault="qualified">
   <simpleType name="_pathfinder_referral_referral">
     <restriction base="string">
       <enumeration value="yes"/>
