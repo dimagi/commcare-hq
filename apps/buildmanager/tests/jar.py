@@ -12,11 +12,12 @@ class JarTestCase(unittest.TestCase):
     def setUp(self):
         # set some variables we'll use to process our jar file
         self.path = os.path.dirname(__file__)
-        self.jarfile = os.path.join(self.path, "Test.jar")
-        self.extra_jar = os.path.join(self.path, "ExtraMetaField.jar")
-        self.missing_jar = os.path.join(self.path, "MissingMetaField.jar")
-        self.duplicate_jar = os.path.join(self.path, "DuplicateMetaField.jar")
-        self.no_xmlns_jar = os.path.join(self.path, "NoXmlns.jar")
+        path_to_data = os.path.join(self.path, "data")
+        self.jarfile = os.path.join(path_to_data , "Test.jar")
+        self.extra_jar = os.path.join(path_to_data , "ExtraMetaField.jar")
+        self.missing_jar = os.path.join(path_to_data , "MissingMetaField.jar")
+        self.duplicate_jar = os.path.join(path_to_data , "DuplicateMetaField.jar")
+        self.no_xmlns_jar = os.path.join(path_to_data , "NoXmlns.jar")
         self.output_dir = os.path.join(self.path, "jarout-%s" % time.time())
         
 
