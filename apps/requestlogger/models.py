@@ -58,13 +58,13 @@ class RequestLog(models.Model):
         elif request.META.has_key('REMOTE_HOST') and request.META['REMOTE_HOST']:
             log.ip = request.META['REMOTE_HOST']
         log.user = request.user
+        
         def _convert_to_dict(obj):
             # converts a django-querydict to a true python dict
             # and converts any values to strings.  This could result
             # in a loss of information 
             to_return = {}
             for key, value in obj.items(): 
-                
                 to_return[key] = str(value)
             return to_return
         
