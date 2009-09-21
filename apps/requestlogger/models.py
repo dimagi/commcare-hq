@@ -39,6 +39,10 @@ class RequestLog(models.Model):
     headers = PickledObjectField(_('Request Headers'))
     parameters = PickledObjectField(_('Request Parameters'))
     
+    def __unicode__(self):
+        return "%s to %s at %s from %s" % (self.method, self.url, 
+                                           self.time, self.ip)
+                
     @classmethod
     def from_request(cls, request):
         '''Creates an instance of a RequestLog from a standard
