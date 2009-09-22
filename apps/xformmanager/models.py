@@ -49,7 +49,6 @@ class ElementDefModel(models.Model):
     """
 
     xpath = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
     table_name = models.CharField(max_length=255, unique=True)
     # For now, store all allowable values/enum definitions in one table per form
     allowable_values_table = models.CharField(max_length=255, null=True)

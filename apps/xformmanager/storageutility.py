@@ -177,7 +177,6 @@ class StorageUtility(object):
             raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
                                    " Did you remember to update your version number?")
         ed = ElementDefModel()
-        ed.name=str(fdd.name)
         ed.xpath=formdef.root.xpath
         ed.table_name=format_table_name(formdef.target_namespace, formdef.version)
         #ed.form_id = fdd.id
@@ -248,12 +247,12 @@ class StorageUtility(object):
           if child.is_repeatable :
               # repeatable elements must generate a new table
               if parent_id == '':
-                  ed = ElementDefModel(name=child.name, form_id=self.formdefmodel.id, xpath=child.xpath, 
+                  ed = ElementDefModel(form_id=self.formdefmodel.id, xpath=child.xpath, 
                                        table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
-                  ed = ElementDefModel(name=child.name, parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
+                  ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
                                   table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
