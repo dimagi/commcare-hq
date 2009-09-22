@@ -109,6 +109,7 @@ class StorageUtility(object):
     
     @transaction.commit_on_success
     def add_schema(self, formdef):
+        formdef.force_to_valid()
         fdd = self.update_models(formdef)
         self.formdefmodel = fdd
         self.formdef = self._strip_meta_def( formdef )
@@ -128,6 +129,15 @@ class StorageUtility(object):
                                                            parent_name=formdef.name)
         new_rawdata_id = queries.execute_insert()
         metadata_model = Metadata()
+        
+        version = root.get("version") or root.get("Version") or root.get("VERSION")
+        if version and version.strip().isdigit():
+            metadata_model.version = version.strip()
+            
+        uiversion = root.get("uiversion") or root.get("uiVersion") or root.get("UIVERSION")
+        if uiversion and uiversion.strip().isdigit():
+            metadata_model.uiversion = uiversion.strip()
+        
         metadata_model.init( root, self.formdef.target_namespace )
         metadata_model.formdefmodel = formdefmodel
         metadata_model.attachment = attachment
@@ -146,19 +156,21 @@ class StorageUtility(object):
         """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
-        xmlns, version = self.get_xmlns(f)
-        formdef = FormDefModel.objects.all().filter(target_namespace=xmlns, version=version)
+        xmlns, version = self.get_xmlns_from_instance(f)
+        formdefmodel = FormDefModel.objects.all().filter(target_namespace=xmlns, version=version)
         
-        if formdef is None or len(formdef) == 0:
-            raise self.XFormError("XMLNS %s could not be matched to any registered formdef." % xmlns)
-        if formdef[0].xsd_file_location is None:
-            raise self.XFormError("Schema for form %s could not be found on the file system." % formdef[0].id)
-        g = open( formdef[0].xsd_file_location ,"r")
-        stripped_formdef = self._strip_meta_def( FormDef(g) )
+        if formdefmodel is None or len(formdefmodel) == 0:
+            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel." % xmlns)
+        if formdefmodel[0].xsd_file_location is None:
+            raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
+        g = open( formdefmodel[0].xsd_file_location ,"r")
+        formdef = FormDef(g)
+        formdef.force_to_valid()
+        stripped_formdef = self._strip_meta_def( formdef )
         g.close()
         
         f.seek(0,0)
-        status = self.save_form_data_matching_formdef(f, stripped_formdef, formdef[0], attachment)
+        status = self.save_form_data_matching_formdef(f, stripped_formdef, formdefmodel[0], attachment)
         f.close()
         return status
 
@@ -170,6 +182,7 @@ class StorageUtility(object):
         fdd.form_name = format_table_name(formdef.target_namespace, formdef.version)
         fdd.target_namespace = formdef.target_namespace
         fdd.version = formdef.version
+        fdd.uiversion = formdef.uiversion
         
         try:
             fdd.save()
@@ -658,7 +671,7 @@ class StorageUtility(object):
 
     #temporary measure to get target form
     # todo - fix this to be more efficient, so we don't parse the file twice
-    def get_xmlns(self, stream):
+    def get_xmlns_from_instance(self, stream):
         xml_string = get_xml_string(stream)
         try:
             root = etree.XML(xml_string)
@@ -669,7 +682,9 @@ class StorageUtility(object):
             raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
         xmlns = r.group(0).strip('{').strip('}')
         version = root.get('version') or root.get('Version') or root.get('VERSION')
-        return (xmlns, version)
+        if version and version.strip().isdigit():
+            return (xmlns, version.strip())
+        return (xmlns, None)
 
 def get_registered_table_name(xpath, target_namespace, version=None):
     """ the correct lookup function """

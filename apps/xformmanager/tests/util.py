@@ -32,6 +32,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
     return formdefmodel
 
 def populate(xml_file_name, domain=None, path=None):
+    """ returns submission """
     if xml_file_name:
         return create_fake_submission(xml_file_name, domain, path)
         
