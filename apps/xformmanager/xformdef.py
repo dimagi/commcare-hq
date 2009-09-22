@@ -1,5 +1,5 @@
 from xformmanager.util import *
-from xformmanager.models import Metadata
+from xformmanager.models import Metadata, MetaDataValidationError
 from lxml import etree
 import re
 import logging
@@ -50,6 +50,8 @@ class FormDef(ElementDef):
     def __init__(self, stream_pointer=None):
         self.types = {}
         self.version = None
+        self.uiversion = None
+        self.target_namespace = ''
         if stream_pointer is not None:
             payload = get_xml_string(stream_pointer)
             self.parseString(payload)
@@ -70,10 +72,20 @@ class FormDef(ElementDef):
         return string + ElementDef.__str__(self)
 
     def parseString(self, string):
+        """ populates formdef with data from xml string
+        
+        Note that we currently allow 'bad form' xforms 
+        (e.g. bad metadata, bad version numbers)
+        Such errors can be caught/reported using FormDef.validate()
+        """
         root = etree.XML(string)
 
         # there must be a better way of finding case-insensitive version
-        self.version = root.get("version") or root.get("Version") or root.get("VERSION") 
+        self.version = root.get("version") or root.get("Version") or root.get("VERSION")
+        
+        # there must be a better way of finding case-insensitive version
+        self.uiversion = root.get("uiversion") or root.get("uiVersion") or root.get("UIVERSION")
+
         self.target_namespace = root.get('targetNamespace')
         if not self.target_namespace:
             logging.error("Target namespace is not found in xsd schema")
@@ -181,7 +193,54 @@ class FormDef(ElementDef):
             else:
                 # Skip non-elements (e.g. <sequence>, <complex-type>
                 self._addAttributesAndChildElements(element, input_node, element.xpath, name_prefix)
+
+    def validate(self):
+        # check xmlns not none
+        if not self.target_namespace:
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
+
+        # all the forms in use today have a superset namespace they default to
+        # something like: http://www.w3.org/2002/xforms
+        if self.target_namespace.lower().find('www.w3.org') != -1:
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
         
+        if self.version:
+            if not self.version.strip().isdigit():
+                # should make this into a custom exception
+                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % self.target_namespace)
+
+        meta_element = self.get_meta_element()
+        if not meta_element:
+            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
+        
+        meta_issues = FormDef.get_meta_validation_issues(meta_element)
+        if meta_issues:
+            mve = MetaDataValidationError(meta_issues, self.target_namespace)
+            # until we have a clear understanding of how meta versions will work,
+            # don't fail on issues that only come back with "extra" set.  i.e.
+            # look for missing or duplicate
+            if mve.duplicate or mve.missing:
+                raise mve
+            else:
+                logging.warning("Found extra meta fields in xform %s: %s" % 
+                                (self.target_namespace, mve.extra))
+        # validated! 
+        return True
+    
+    def force_to_valid(self):
+        if self.version and self.version.strip().isdigit():
+            self.version = self.version.strip()
+        else:
+            self.version = None
+        if self.uiversion and self.uiversion.strip().isdigit():
+            self.uiversion = self.uiversion.strip()
+        else:
+            self.uiversion = None
+        
+    class FormDefError(Exception):
+        """ Error from FormDef Processing """
+        
+
 class SimpleType(object):
     """ Stores type definition for simple types """
     def __init__(self, name=''):

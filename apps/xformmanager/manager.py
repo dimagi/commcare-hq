@@ -44,37 +44,10 @@ class XFormManager(object):
         formdef = FormDef(fout)
         fout.close()
         
-        # This is taken directly from buildmanager.jar.validate_jar
-        # replicated here since we expect different behaviour on the 
-        # different error conditions (i.e. XFormManager.Errors instead of
-        # BuildErrors
-        # </copy>
-        
-        # check xmlns not none
-        if not formdef.target_namespace:
-            return False, FormDefError("No namespace found in submitted form. Form saved to %s" % file_name)
-        
-        # all the forms in use today have a superset namespace they default to
-        # something like: http://www.w3.org/2002/xforms
-        if formdef.target_namespace.lower().find('www.w3.org') != -1:
-            return False, FormDefError("No namespace found in submitted form. Form saved to %s" % file_name)
-
-        meta_element = formdef.get_meta_element()
-        if not meta_element:
-            return False, FormDefError("From has no meta block! Saved to %s" % file_name)
-        
-        meta_issues = FormDef.get_meta_validation_issues(meta_element)
-        if meta_issues:
-            mve = MetaDataValidationError(meta_issues, file_name)
-            # until we have a clear understanding of how meta versions will work,
-            # don't fail on issues that only come back with "extra" set.  i.e.
-            # look for missing or duplicate
-            if mve.duplicate or mve.missing:
-                return False, mve
-            else:
-                logging.warning("Found extra meta fields in form. Form saved to %s, %s" % \
-                                (file_name, mve.extra))
-        # </copy>
+        try:
+            formdef.validate()
+        except Exception, e:
+            return False, e
         return True, None
 
     def create_schema_from_file(self, new_file_name):
