@@ -24,12 +24,15 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id','name','description','domain','num_builds')
     list_filter = ['domain',]
     #inlines = [ProjectBuildInlineAdmin]
-admin.site.register(Project,ProjectAdmin)
-
 
 class ProjectBuildAdmin(admin.ModelAdmin):
-    list_display = ('id','build_number','project','revision_number','description','uploaded_by')
+    list_display = ('id','build_number','project','revision_number',
+                    'description','uploaded_by', "get_jar_download_count", 
+                    "get_jad_download_count")
     list_filter = ['project','uploaded_by',]
+
+admin.site.register(Project,ProjectAdmin)
 admin.site.register(ProjectBuild,ProjectBuildAdmin)    
+admin.site.register(BuildDownload)    
 
     

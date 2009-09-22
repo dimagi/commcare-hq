@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from hq.models import ExtUser
 from hq.models import Domain
+from requestlogger.models import RequestLog
+
 import os
 import logging
 import settings
@@ -28,10 +30,8 @@ class BuildError(Exception):
     
     def __unicode__(self):
         return "%s\n%s" % (self.msg, self.get_error_string()) 
-    
-    
-    
-    
+
+
 class Project (models.Model):
     """
     A project is a high level container for a given build project.  A project 
@@ -42,6 +42,12 @@ class Project (models.Model):
     description = models.CharField(max_length=512, null=True, blank=True)
     # the optional project id in a different server (e.g. the build server)
     project_id = models.CharField(max_length=20, null=True, blank=True)
+    
+    @property
+    def downloads(self):
+        '''Get all the downloads associated with this project, across
+           builds.'''
+        return BuildDownload.objects.filter(build__project=self)
     
     def get_non_released_builds(self):
         '''Get all non-released builds for this project'''
@@ -131,9 +137,7 @@ class ProjectBuild(models.Model):
                                     max_length=255)
     
     description = models.CharField(max_length=512, null=True, blank=True)
-    jar_download_count = models.PositiveIntegerField(default=0)
-    jad_download_count = models.PositiveIntegerField(default=0)
-    
+
     # release info
     released = models.DateTimeField(null=True, blank=True)
     released_by = models.ForeignKey(User, null=True, blank=True, related_name="builds_released")
@@ -141,6 +145,12 @@ class ProjectBuild(models.Model):
     def __unicode__(self):
         return "%s build: %s" % (self.project, self.build_number)
 
+    def get_jar_download_count(self):
+        return len(self.downloads.filter(type="jar"))
+    
+    def get_jad_download_count(self):
+        return len(self.downloads.filter(type="jad"))
+    
     
     def save(self):
         """Override save to provide some simple enforcement of uniqueness to the build numbers
@@ -216,8 +226,7 @@ class ProjectBuild(models.Model):
         except Exception, e:
             logging.error("Error, saving jadfile failed", extra={"exception":e, "jad_filename":filename})
         
-        
-        
+
     def set_jarfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
         try:
@@ -248,4 +257,20 @@ class ProjectBuild(models.Model):
             self.released_by = user
             self.save()
         
+BUILD_FILE_TYPE = (    
+    ('jad', '.jad file'),    
+    ('jar', '.jar file'),   
+)
+
+class BuildDownload(models.Model):    
+    """Represents an instance of a download of a build file.  Included are the
+       type of file, the build id, and the request log.""" 
+
+    type = models.CharField(max_length=3, choices=BUILD_FILE_TYPE)
+    build = models.ForeignKey(ProjectBuild, related_name="downloads")
+    log = models.ForeignKey(RequestLog, unique=True)
     
+    def __unicode__(self):
+        return "%s download for build %s.  Request: %s" %\
+                (self.type, self.build, self.log)
+     
