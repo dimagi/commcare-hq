@@ -26,20 +26,28 @@ class ElementDef(object):
 
     def __str__(self, depth=0, string='', ):
         indent = ' '*depth
-        string = indent + "xpath=" + str(self.name) + "\n"
+        string = indent + "xpath=" + str(self.xpath) + "\n"
         string = string + indent + "name=" + str(self.name) + ", type=" + str(self.type) + ", repeatable=" + str(self.is_repeatable)  + "\n"
         for child in self.child_elements:
             string = string + child.__str__(depth+1, string)
         return string
 
 class FormDef(ElementDef):
-    """ Stores metadata about forms """
+    """ Stores metadata about forms 
+    When this code was written, I didn't realize XML requires having
+    only one root element. Ergo, the root of this xml is accessed via
+    FormDef.root (rather than just FormDef)
+    """
 
     def __init__(self, stream_pointer=None):
         self.types = {}
+        self.version = None
         if stream_pointer is not None:
             payload = get_xml_string(stream_pointer)
             self.parseString(payload)
+        if len(self.child_elements)>1:
+            raise Exception("Poorly formed XML. Multiple root elements!")
+        self.root = self.child_elements[0]
           
     def __str__(self):
         string =  "DEFINITION OF " + str(self.name) + "\n"
@@ -55,6 +63,11 @@ class FormDef(ElementDef):
 
     def parseString(self, string):
         root = etree.XML(string)
+
+        # there must be a better way of finding case-insensitive version
+        version = root.get("version") or root.get("Version") or root.get("VERSION") 
+        if version:
+            self.version = version
 
         target_namespace = root.get('targetNamespace')
         if not target_namespace:
@@ -173,8 +186,8 @@ class FormDef(ElementDef):
         element.tag = input_node.tag
         name = input_node.get('name')
         element.short_name = name
-        if xpath: element.xpath = xpath + "/x:" + name
-        else: element.xpath = "x:" + name
+        if xpath: element.xpath = xpath + "/" + name
+        else: element.xpath = name
         
 class SimpleType(object):
     """ Stores type definition for simple types """
