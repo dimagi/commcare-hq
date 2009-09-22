@@ -1,26 +1,19 @@
-import datetime
-import os
-import logging
-
-from hq.models import ExtUser
-from hq.models import Domain
-from requestlogger.decorators import log_request                   
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 
 from rapidsms.webui.utils import render_to_response
 
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth.models import User
-from django.http import *
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect, Http404
-from django.core.urlresolvers import reverse
+from requestlogger.decorators import log_request                   
+from requestlogger.models import RequestLog
 
-import mimetypes
-import urllib
 
 @login_required()
 @log_request()
 def demo(request):
-    return HttpResponse("Thanks!")
+    return HttpResponse("Thanks!  Your request was logged.")
+
+def list(request, template_name="requestlogger/log_list.html"):
+    all_logs = RequestLog.objects.all()
+    return render_to_response(request, template_name, {"all_requests": all_logs})
+    
     
