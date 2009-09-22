@@ -104,7 +104,8 @@ def get_buildfile(request, project_id, build_number, filename, template_name=Non
         build = ProjectBuild.objects.filter(project=proj).get(build_number=build_number)
         return _get_buildfile(request, proj, build, filename)
     except Exception, e:
-        return _handle_error("problem accessing build/file: %s/%s for project: %s. error is: %s" % 
+        return _handle_error(request,
+                             "problem accessing build/file: %s/%s for project: %s. error is: %s" % 
                              (build_number, filename, project_id, e))
        
 def get_latest_buildfile(request, project_id, filename, template_name=None):
@@ -126,7 +127,6 @@ def _get_buildfile(request, project, build, filename):
             raise Http404
         
         mtype = mimetypes.guess_type(build.jar_file)[0]
-        build.jar_download_count += 1
         fin = build.get_jar_filestream()
         if not fin:
             raise Http404
@@ -136,7 +136,6 @@ def _get_buildfile(request, project, build, filename):
         mtype = mimetypes.guess_type(build.jad_file)[0]            
         if fpath != filename:
             raise Http404
-        build.jad_download_count += 1
         fin = build.get_jad_filestream()
         if not fin:
             raise Http404
@@ -147,7 +146,6 @@ def _get_buildfile(request, project, build, filename):
         response = HttpResponse(mimetype=mtype)
     response.write(fin.read())
     fin.close()
-    build.save()
     return response
 
 def _log_build_download(request, build, type):
