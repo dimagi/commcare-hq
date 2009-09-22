@@ -102,13 +102,15 @@ class StorageUtility(object):
     
     
     def __init__(self):
+        # our own, transient data structure
         self.formdef = ''
-        self.formdata = None
+        # the persistent django model of this form
+        self.formdefmodel = None
     
     @transaction.commit_on_success
     def add_schema(self, formdef):
         fdd = self.update_models(formdef)
-        self.formdata = fdd
+        self.formdefmodel = fdd
         self.formdef = self._strip_meta_def( formdef )
         queries = self.queries_to_create_instance_tables( formdef, fdd.element.id, formdef.name, formdef.name)
         self._execute_queries(queries)
@@ -121,7 +123,9 @@ class StorageUtility(object):
         tree=etree.parse(data_stream_pointer)
         root=tree.getroot()
         self.formdef = formdef
-        queries = self.queries_to_populate_instance_tables(data_tree=root, elementdef=formdef, parent_name=formdef.name )
+        queries = self.queries_to_populate_instance_tables(data_tree=root, \
+                                                           elementdef=formdef.root, \
+                                                           parent_name=formdef.name)
         new_rawdata_id = queries.execute_insert()
         metadata_model = Metadata()
         metadata_model.init( root, self.formdef.target_namespace )
@@ -142,8 +146,8 @@ class StorageUtility(object):
         """ returns True on success and false on fail """
         f = open(xml_file_name, "r")
         # should match XMLNS
-        xmlns = self.get_xmlns(f)
-        formdef = FormDefModel.objects.all().filter(target_namespace=xmlns)
+        xmlns, version = self.get_xmlns(f)
+        formdef = FormDefModel.objects.all().filter(target_namespace=xmlns, version=version)
         
         if formdef is None or len(formdef) == 0:
             raise self.XFormError("XMLNS %s could not be matched to any registered formdef." % xmlns)
@@ -156,7 +160,6 @@ class StorageUtility(object):
         f.seek(0,0)
         status = self.save_form_data_matching_formdef(f, stripped_formdef, formdef[0], attachment)
         f.close()
-        logging.debug("Schema %s successfully registered" % xmlns)
         return status
 
     def update_models(self, formdef):
@@ -164,9 +167,10 @@ class StorageUtility(object):
         fdd = FormDefModel()
         fdd.name = str(formdef.name)
         #todo: fix this so we don't have to parse table twice
-        fdd.form_name = create_table_name(formdef.target_namespace)
+        fdd.form_name = format_table_name(formdef.target_namespace, formdef.version)
         fdd.target_namespace = formdef.target_namespace
-
+        fdd.version = formdef.version
+        
         try:
             fdd.save()
         except IntegrityError, e:
@@ -174,7 +178,8 @@ class StorageUtility(object):
                                    " Did you remember to update your version number?")
         ed = ElementDefModel()
         ed.name=str(fdd.name)
-        ed.table_name=create_table_name(formdef.target_namespace)
+        ed.xpath=formdef.root.xpath
+        ed.table_name=format_table_name(formdef.target_namespace, formdef.version)
         #ed.form_id = fdd.id
         ed.form = fdd
         ed.save()
@@ -190,8 +195,8 @@ class StorageUtility(object):
     
     # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
     # (rather than just passing around tuples of strings)
-    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='' ):
-        table_name = create_table_name( formatted_join(parent_name, elementdef.name) )
+    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
+        table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version )
         
         (next_query, fields) = self._create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
         # add this later - should never be called during unit tests
@@ -200,7 +205,7 @@ class StorageUtility(object):
         queries = ''
         if settings.DATABASE_ENGINE=='mysql' :
             queries = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, "
-        else: 
+        else:
             queries = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY, "
         
         if len(fields[0]) == 1:
@@ -215,9 +220,9 @@ class StorageUtility(object):
         if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
-                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + create_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
+                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
             else:
-                queries = queries + " parent_id REFERENCES " + create_table_name(parent_table_name) + "(id) ON DELETE SET NULL"
+                queries = queries + " parent_id REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
         else:
             queries = self._trim2chars(queries)
         queries = queries + " );"
@@ -243,18 +248,18 @@ class StorageUtility(object):
           if child.is_repeatable :
               # repeatable elements must generate a new table
               if parent_id == '':
-                  ed = ElementDefModel(name=str(child.name), form_id=self.formdata.id,
-                       table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #should parent_name be next_parent_name?
+                  ed = ElementDefModel(name=child.name, form_id=self.formdefmodel.id, xpath=child.xpath, 
+                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
-                  ed = ElementDefModel(name=str(child.name), parent_id=parent_id, form=self.formdata,
-                                  table_name = create_table_name( formatted_join(parent_name, child.name) ) ) #next_parent_name
+                  ed = ElementDefModel(name=child.name, parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
+                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #next_parent_name
               ed.save()
               next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
           else: 
             if len(child.child_elements) > 0 :
-                (q, f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name ) #next-parent-name
+                (q, f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name) #next-parent-name
             else:
                 local_fields.append( self._db_field_definition_string(child) )
                 (q,f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
@@ -262,7 +267,7 @@ class StorageUtility(object):
             local_fields = local_fields + f
       return (next_query, local_fields)
     
-    def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
+    def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0):
       if data_tree is None and not elementdef: return
       if data_tree is None and elementdef:
           # no biggie - repeatable and irrelevant fields in the schema 
@@ -273,7 +278,7 @@ class StorageUtility(object):
                      (self.formdef.target_namespace, data_tree.tag) )
           return
       
-      table_name = get_registered_table_name( formatted_join(parent_name, elementdef.name) )      
+      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version )
       if len( parent_table_name ) > 0:
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
@@ -287,11 +292,14 @@ class StorageUtility(object):
           else:
               parent_id = 1
       
-      query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, parent_name=parent_name, parent_table_name=table_name, parent_id=parent_id )
+      query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, \
+                                                        parent_name=parent_name, parent_table_name=table_name, \
+                                                        parent_id=parent_id )
       query.parent_id = parent_id
       return query
 
-    def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0 ):
+    def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', \
+                                             parent_table_name='', parent_id=0 ):
       if data_tree is None and not elementdef: return
       if data_tree is None and elementdef:
           # no biggie - repeatable and irrelevant fields in the schema 
@@ -318,7 +326,8 @@ class StorageUtility(object):
         next_parent_name = formatted_join(parent_name, elementdef.name)
         if def_child.is_repeatable :
             for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
-                query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, parent_table_name, parent_id )
+                query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
+                                                                 parent_table_name, parent_id )
                 if next_query is not None:
                     next_query.child_queries = next_query.child_queries + [ query ]
                 else:
@@ -334,7 +343,10 @@ class StorageUtility(object):
                 continue
             if( len(def_child.child_elements)>0 ):
                 # here we are propagating, not onlyt the list of fields and values, but aso the child queries
-                query = self._populate_instance_tables_inner_loop(data_tree=data_node, elementdef=def_child, parent_name=parent_name, parent_table_name=parent_table_name )
+                query = self._populate_instance_tables_inner_loop(data_tree=data_node, \
+                                                                  elementdef=def_child, \
+                                                                  parent_name=parent_name, \
+                                                                  parent_table_name=parent_table_name )
                 next_query.child_queries = next_query.child_queries + query.child_queries
                 local_field_value_dict.update( query.field_value_dict )
             else:
@@ -342,7 +354,8 @@ class StorageUtility(object):
                 if data_node.text is not None :
                     field_value_dict = self._get_formatted_fields_and_values(def_child, data_node.text)
                     local_field_value_dict.update( field_value_dict )
-                query = self._populate_instance_tables_inner_loop(data_node, def_child, next_parent_name, parent_table_name)
+                query = self._populate_instance_tables_inner_loop(data_node, def_child, \
+                                                                  next_parent_name, parent_table_name)
                 next_query.child_queries = next_query.child_queries + query.child_queries 
                 local_field_value_dict.update( query.field_value_dict )
       query = Query(parent_table_name, local_field_value_dict )
@@ -585,7 +598,7 @@ class StorageUtility(object):
         if form == '':
             fdds = FormDefModel.objects.all().filter()
         else:
-            fdds = FormDefModel.objects.all().filter(target_namespace=form.target_namespace)            
+            fdds = [form]            
         for fdd in fdds:
             if delete_xml:
                 file = fdd.xsd_file_location
@@ -655,15 +668,15 @@ class StorageUtility(object):
         r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', root.tag)
         if r is None:
             raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
-        return r.group(0).strip('{').strip('}')
+        xmlns = r.group(0).strip('{').strip('}')
+        version = root.get('version') or root.get('Version') or root.get('VERSION')
+        return (xmlns, version)
 
-def get_registered_table_name(name):
-    # this is purely for backwards compatibility
-    for func in possible_naming_functions:
-        table_name = func(name)
-        if ElementDefModel.objects.filter(table_name=table_name):
-            return table_name
-    return None
+def get_registered_table_name(xpath, target_namespace, version=None):
+    """ the correct lookup function """
+    # TODO : fix - do we need to account for UI version?
+    fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
+    return ElementDefModel.objects.get(xpath=xpath, form=fdd).table_name
 
 class Query(object):
     """ stores all the information needed to run a query """
