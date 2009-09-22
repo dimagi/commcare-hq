@@ -48,7 +48,7 @@ class ElementDefModel(models.Model):
     )
     """
 
-    name = models.CharField(max_length=255, unique=True)
+    xpath = models.CharField(max_length=255)
     table_name = models.CharField(max_length=255, unique=True)
     # For now, store all allowable values/enum definitions in one table per form
     allowable_values_table = models.CharField(max_length=255, null=True)
@@ -60,6 +60,9 @@ class ElementDefModel(models.Model):
     # Note that the following only works for models in the same models.py file
     form = models.ForeignKey('FormDefModel')
     
+    class Meta:
+        unique_together = ("xpath", "form")
+
     def __unicode__(self):
         return self.table_name
 
@@ -83,13 +86,18 @@ class FormDefModel(models.Model):
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
     form_display_name = models.CharField(_('Readable Name'),max_length=128, null=True)
     
-    target_namespace = models.CharField(max_length=255, unique=True)
+    target_namespace = models.CharField(max_length=255)
+    version = models.IntegerField(null=True)
+    uiversion = models.IntegerField(null=True)
     date_created = models.DateField(auto_now=True)
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     
     element = models.OneToOneField(ElementDefModel, null=True)
     
+    class Meta:
+        unique_together = ("target_namespace", "version")
+
     def _get_xform_file_location(self):
         loc = self.xsd_file_location + str(".xform")
         if os.path.exists(loc):
@@ -273,6 +281,9 @@ class Metadata(models.Model):
     raw_data = models.IntegerField(_('Raw Data Id'), null=True)
     # foreign key to the schema definition (so can identify table and domain)
     formdefmodel = models.ForeignKey(FormDefModel, null=True)
+
+    version = models.IntegerField(null=True)
+    uiversion = models.IntegerField(null=True)
     
     def __str__(self):
         return unicode(self).encode('utf-8')

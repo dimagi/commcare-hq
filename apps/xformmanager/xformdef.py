@@ -1,5 +1,5 @@
 from xformmanager.util import *
-from xformmanager.models import Metadata
+from xformmanager.models import Metadata, MetaDataValidationError
 from lxml import etree
 import re
 import logging
@@ -7,15 +7,14 @@ import logging
 class ElementDef(object):
     """ Stores metadata about simple and complex types """
  
-    def __init__(self, target_namespace='', is_repeatable=False):
+    def __init__(self, name='', is_repeatable=False):
+        self.name = name
+        self.xpath = ''
         self.child_elements = []
         self.allowable_values = []
-        self.name = target_namespace
         self.short_name = ''
         self.type = ''
         self.is_repeatable = is_repeatable
-        #the xpath field is deprecated (unused)
-        self.xpath = ''
         #self.attributes - not supported yet
       
     def isValid(): # to do: place restriction functions in here
@@ -26,20 +25,39 @@ class ElementDef(object):
 
     def __str__(self, depth=0, string='', ):
         indent = ' '*depth
-        string = indent + "xpath=" + str(self.name) + "\n"
+        string = indent + "xpath=" + str(self.xpath) + "\n"
         string = string + indent + "name=" + str(self.name) + ", type=" + str(self.type) + ", repeatable=" + str(self.is_repeatable)  + "\n"
         for child in self.child_elements:
             string = string + child.__str__(depth+1, string)
         return string
 
+    def populateElementFields(self, input_node, xpath, full_name):
+        if not self.name: self.name = full_name
+        self.short_name = input_node.get('name')
+        self.type = input_node.get('type')
+        self.min_occurs = input_node.get('minOccurs')
+        self.tag = input_node.tag
+        if xpath: self.xpath = xpath + "/" + self.short_name
+        else: self.xpath = self.short_name
+        
 class FormDef(ElementDef):
-    """ Stores metadata about forms """
+    """ Stores metadata about forms 
+    When this code was written, I didn't realize XML requires having
+    only one root element. Ergo, the root of this xml is accessed via
+    FormDef.root (rather than just FormDef)
+    """
 
     def __init__(self, stream_pointer=None):
         self.types = {}
+        self.version = None
+        self.uiversion = None
+        self.target_namespace = ''
         if stream_pointer is not None:
             payload = get_xml_string(stream_pointer)
             self.parseString(payload)
+        if len(self.child_elements)>1:
+            raise Exception("Poorly formed XML. Multiple root elements!")
+        self.root = self.child_elements[0]
           
     def __str__(self):
         string =  "DEFINITION OF " + str(self.name) + "\n"
@@ -54,13 +72,24 @@ class FormDef(ElementDef):
         return string + ElementDef.__str__(self)
 
     def parseString(self, string):
+        """ populates formdef with data from xml string
+        
+        Note that we currently allow 'bad form' xforms 
+        (e.g. bad metadata, bad version numbers)
+        Such errors can be caught/reported using FormDef.validate()
+        """
         root = etree.XML(string)
 
-        target_namespace = root.get('targetNamespace')
-        if not target_namespace:
+        # there must be a better way of finding case-insensitive version
+        self.version = root.get("version") or root.get("Version") or root.get("VERSION")
+        
+        # there must be a better way of finding case-insensitive version
+        self.uiversion = root.get("uiversion") or root.get("uiVersion") or root.get("UIVERSION")
+
+        self.target_namespace = root.get('targetNamespace')
+        if not self.target_namespace:
             logging.error("Target namespace is not found in xsd schema")
-        self.target_namespace = target_namespace
-        ElementDef.__init__(self, target_namespace)
+        ElementDef.__init__(self, self.target_namespace)
 
         self.xpath = ""
         self._addAttributesAndChildElements(self, root, '', '')
@@ -136,13 +165,13 @@ class FormDef(ElementDef):
                 next_name_prefix = ''
                 if input_node.get('maxOccurs') > 1:
                     child_element = ElementDef(is_repeatable=True)
-                    self._populateElementFields(child_element, input_node, element.xpath, name)
+                    child_element.populateElementFields(input_node, element.xpath, name)
                 else:
                     child_element = ElementDef()
                     #discard parent_name
                     next_name_prefix = join_if_exists( name_prefix, name )
                     full_name = next_name_prefix
-                    self._populateElementFields(child_element, input_node, element.xpath, full_name)
+                    child_element.populateElementFields(input_node, element.xpath, full_name)
                 element.addChild(child_element)
                 #theoretically, simpleType enumerations and list values can be defined inside of elements
                 #in practice, this isn't how things are currently generated in the schema generator,
@@ -164,18 +193,54 @@ class FormDef(ElementDef):
             else:
                 # Skip non-elements (e.g. <sequence>, <complex-type>
                 self._addAttributesAndChildElements(element, input_node, element.xpath, name_prefix)
-    
-    def _populateElementFields(self, element, input_node, xpath, full_name):
-        if not element.name: element.name = full_name
-        element.type = input_node.get('type')
-        if element.type is not None: element.type = element.type
-        element.min_occurs = input_node.get('minOccurs')
-        element.tag = input_node.tag
-        name = input_node.get('name')
-        element.short_name = name
-        if xpath: element.xpath = xpath + "/x:" + name
-        else: element.xpath = "x:" + name
+
+    def validate(self):
+        # check xmlns not none
+        if not self.target_namespace:
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
+
+        # all the forms in use today have a superset namespace they default to
+        # something like: http://www.w3.org/2002/xforms
+        if self.target_namespace.lower().find('www.w3.org') != -1:
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
         
+        if self.version:
+            if not self.version.strip().isdigit():
+                # should make this into a custom exception
+                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % self.target_namespace)
+
+        meta_element = self.get_meta_element()
+        if not meta_element:
+            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
+        
+        meta_issues = FormDef.get_meta_validation_issues(meta_element)
+        if meta_issues:
+            mve = MetaDataValidationError(meta_issues, self.target_namespace)
+            # until we have a clear understanding of how meta versions will work,
+            # don't fail on issues that only come back with "extra" set.  i.e.
+            # look for missing or duplicate
+            if mve.duplicate or mve.missing:
+                raise mve
+            else:
+                logging.warning("Found extra meta fields in xform %s: %s" % 
+                                (self.target_namespace, mve.extra))
+        # validated! 
+        return True
+    
+    def force_to_valid(self):
+        if self.version and self.version.strip().isdigit():
+            self.version = self.version.strip()
+        else:
+            self.version = None
+        if self.uiversion and self.uiversion.strip().isdigit():
+            self.uiversion = self.uiversion.strip()
+        else:
+            self.uiversion = None
+        
+    class FormDefError(Exception):
+        """ Error from FormDef Processing """
+        
+
 class SimpleType(object):
     """ Stores type definition for simple types """
     def __init__(self, name=''):

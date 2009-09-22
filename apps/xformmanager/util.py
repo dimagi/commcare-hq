@@ -14,15 +14,18 @@ MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
 MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
 
-def table_name(name):
+def format_table_name(name, version=None):
+    # get rid of 'http://dev.commcarehq.org/' at the start
     r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
     if r:
         tail = r.group('tail')
         if tail: 
             # table prefix is appended after sanitation because
             # sanitation truncates to MAX_LENGTH minus len(prefix)
-            return "schema_" + sanitize(tail)
-    return "schema_" + sanitize(name)
+            name = tail
+    if version:
+        name = "%s_%s" % ( name, version )
+    return "schema_%s" % sanitize(name)
 def old_table_name(name):
     return "x_" + _old_sanitize(name)
 def _old_sanitize(name):
@@ -36,11 +39,7 @@ def _old_sanitize(name):
     if sanitized_name.lower() == "where" or sanitized_name.lower() == "when":
         return "_" + sanitized_name
     return sanitized_name
-possible_naming_functions=[old_table_name,table_name]
-
-def create_table_name(name):
-    # current hack, fix later: 122 is mysql table limit, i think
-    return table_name( name )
+possible_naming_functions=[old_table_name,format_table_name]
 
 def table_exists( table_name):
     query = "select * from " + table_name + " limit 1";
