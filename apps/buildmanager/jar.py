@@ -81,32 +81,11 @@ def validate_jar(filename):
                 if not formdef:
                     raise BuildError("Could not get a valid form definition from the xml file: %s"
                                       % form_display)
-                    
-                # check xmlns not none
-                if not formdef.target_namespace:
-                    raise BuildError("No namespace found in submitted form: %s" % form_display)
+                try:
+                    formdef.validate()
+                except FormDef.FormDefError, e:
+                    raise BuildError(e.message)
 
-                # all the forms in use today have a superset namespace they default to
-                # something like: http://www.w3.org/2002/xforms
-                if formdef.target_namespace.lower().find('www.w3.org') != -1:
-                    raise BuildError("No namespace found in submitted form: %s" % form_display)
-                
-                meta_element = formdef.get_meta_element()
-                if not meta_element:
-                    raise BuildError("From %s had no meta block!" % form_display)
-                
-                meta_issues = FormDef.get_meta_validation_issues(meta_element)
-                if meta_issues:
-                    mve = MetaDataValidationError(meta_issues, form_display)
-                    # until we have a clear understanding of how meta versions will work,
-                    # don't fail on issues that only come back with "extra" set.  i.e.
-                    # look for missing or duplicate
-                    if mve.duplicate or mve.missing:
-                        raise mve
-                    else:
-                        logging.warning("Found extra meta fields in xform %s: %s" % 
-                                        (form_display, mve.extra))
-                
                 # if we made it here we're all good
             except Exception, e:
                 errors.append(e)

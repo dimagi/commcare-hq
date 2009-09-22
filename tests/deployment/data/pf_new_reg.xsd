@@ -1,4 +1,4 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2" elementFormDefault="qualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_test" elementFormDefault="qualified">
   <simpleType name="_pathfinder_registration_patient_region">
     <restriction base="string">
       <enumeration value="Dar-es-Salaam"/>

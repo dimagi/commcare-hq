@@ -1,6 +1,4 @@
 from xformmanager.manager import *
-from xformmanager.xformdef import *
-from receiver.tests.util import *
 import logging
 
 def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None, path=None):
@@ -24,7 +22,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
     f = open(xsd_file_path,"r")
     manager = XFormManager()
     formdefmodel = manager.add_schema(xsd_file_name, f)
-    f.close()    
+    f.close()
     # fake out the form submission
     formdefmodel.submit_ip = '127.0.0.1'
     formdefmodel.bytes_received =  os.path.getsize(xsd_file_path)
@@ -34,6 +32,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
     return formdefmodel
 
 def populate(xml_file_name, domain=None, path=None):
+    """ returns submission """
     if xml_file_name:
         return create_fake_submission(xml_file_name, domain, path)
         
@@ -45,4 +44,40 @@ def create_fake_submission(xml_file, domain, path=None):
     full_body_path = os.path.join(path, xml_file)
     submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path, domain)
     return submission
+
+
+""" The following is copied and pasted directly from receiver.util
+It's in here because importing receiver.util automatically causes the 
+receiver unit tests to run, which makes it hard to run xformmanager
+unit tests in isolation
+
+"""
+import os
+from receiver import submitprocessor 
+from hq.models import Domain
+
+def get_full_path(file_name):
+    '''Joins a file name with the directory of the current file
+       to get the full path'''
+    return os.path.join(os.path.dirname(__file__),file_name)
     
+def makeNewEntry(headerfile, bodyfile, domain=None):
+    
+    fin = open(headerfile,"r")
+    meta= fin.read()
+    fin.close()
+    
+    
+    fin = open(bodyfile,"rb")
+    body = fin.read()
+    fin.close()
+    
+    metahash = eval(meta)
+    if domain:
+        mockdomain = domain
+    elif Domain.objects.all().count() == 0:
+        mockdomain = Domain(name='mockdomain')
+        mockdomain.save()
+    else:
+        mockdomain = Domain.objects.all()[0]
+    return submitprocessor.do_old_submission(metahash, body, domain=mockdomain)
