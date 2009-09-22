@@ -27,8 +27,8 @@ class ProjectAdmin(admin.ModelAdmin):
 
 class ProjectBuildAdmin(admin.ModelAdmin):
     list_display = ('id','build_number','project','revision_number',
-                    'description','uploaded_by', "jar_download_count", 
-                    "jad_download_count")
+                    'description','uploaded_by', "get_jar_download_count", 
+                    "get_jad_download_count")
     list_filter = ['project','uploaded_by',]
 
 admin.site.register(Project,ProjectAdmin)
