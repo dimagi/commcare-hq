@@ -60,7 +60,7 @@ class VersionedTestCase(unittest.TestCase):
         
     def testSaveFormData_7(self):
            """ Test very deep form definition created and data saved """
-           formdefmodel = create_xsd_and_populate("7_verydeep_2.xsd", "7_verydeep_2.xml")
+           formdefmodel = create_xsd_and_populate("data/7_verydeep_2.xsd", "data/7_verydeep_2.xml")
            cursor = connection.cursor()
            cursor.execute("SELECT * FROM schema_xml_verydeep_1")
            row = cursor.fetchone()
