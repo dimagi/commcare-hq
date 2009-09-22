@@ -169,7 +169,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(len(edds),1)
         # test that that child table's parent is 'top'
         self.assertEquals(edds[0].parent,top_edm)
-        self.assertEquals(edds[0].name,"UserID")
+        self.assertEquals(edds[0].xpath,"root/UserID")
         self.assertEquals(edds[0].table_name,"schema_xml_singlerepeat_root_userid")
         
         # do it all again for a second table (to make sure counts are right)
@@ -182,5 +182,5 @@ class BasicTestCase(unittest.TestCase):
         edds = ElementDefModel.objects.filter(parent=top_edm).exclude(id=top_edm.id)
         self.assertEquals(len(edds),1)
         self.assertEquals(edds[0].parent,top_edm)
-        self.assertEquals(edds[0].name,"nested")
+        self.assertEquals(edds[0].xpath,"root/nested")
         self.assertEquals(edds[0].table_name,"schema_xml_nestedrepeats_root_nested")
