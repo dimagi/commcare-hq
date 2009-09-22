@@ -11,8 +11,7 @@ class BuildForm(forms.ModelForm):
     
     class Meta:
         model = ProjectBuild
-        exclude = ('jar_file', 'jad_file','jar_download_count',
-                   'jad_download_count','uploaded_by',
+        exclude = ('jar_file', 'jad_file','uploaded_by',
                    'package_created', 'released_by', 'released')
            
         
