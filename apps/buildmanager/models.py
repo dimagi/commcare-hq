@@ -137,17 +137,20 @@ class ProjectBuild(models.Model):
                                     max_length=255)
     
     description = models.CharField(max_length=512, null=True, blank=True)
-    jar_download_count = models.PositiveIntegerField(default=0)
-    jad_download_count = models.PositiveIntegerField(default=0)
-    
+
     # release info
     released = models.DateTimeField(null=True, blank=True)
     released_by = models.ForeignKey(User, null=True, blank=True, related_name="builds_released")
     
-    
     def __unicode__(self):
         return "%s build: %s" % (self.project, self.build_number)
 
+    def get_jar_download_count(self):
+        return len(self.downloads.filter(type="jar"))
+    
+    def get_jad_download_count(self):
+        return len(self.downloads.filter(type="jad"))
+    
     
     def save(self):
         """Override save to provide some simple enforcement of uniqueness to the build numbers
