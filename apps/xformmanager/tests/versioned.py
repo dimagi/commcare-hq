@@ -17,6 +17,7 @@ class VersionedTestCase(unittest.TestCase):
         formdef = FormDef(fin)
         fin.close()
         root = formdef.root
+        self.assertEqual(formdef.target_namespace, "xml_verydeep")
         self.assertEqual(formdef.version, "1")
         self.assertEqual(root.xpath, "root")
         self.assertEqual(root.child_elements[0].xpath, "root/Meta")

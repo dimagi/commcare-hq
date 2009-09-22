@@ -7,15 +7,14 @@ import logging
 class ElementDef(object):
     """ Stores metadata about simple and complex types """
  
-    def __init__(self, target_namespace='', is_repeatable=False):
+    def __init__(self, name='', is_repeatable=False):
+        self.name = name
+        self.xpath = ''
         self.child_elements = []
         self.allowable_values = []
-        self.name = target_namespace
         self.short_name = ''
         self.type = ''
         self.is_repeatable = is_repeatable
-        #the xpath field is deprecated (unused)
-        self.xpath = ''
         #self.attributes - not supported yet
       
     def isValid(): # to do: place restriction functions in here
@@ -32,6 +31,15 @@ class ElementDef(object):
             string = string + child.__str__(depth+1, string)
         return string
 
+    def populateElementFields(self, input_node, xpath, full_name):
+        if not self.name: self.name = full_name
+        self.short_name = input_node.get('name')
+        self.type = input_node.get('type')
+        self.min_occurs = input_node.get('minOccurs')
+        self.tag = input_node.tag
+        if xpath: self.xpath = xpath + "/" + self.short_name
+        else: self.xpath = self.short_name
+        
 class FormDef(ElementDef):
     """ Stores metadata about forms 
     When this code was written, I didn't realize XML requires having
@@ -65,15 +73,11 @@ class FormDef(ElementDef):
         root = etree.XML(string)
 
         # there must be a better way of finding case-insensitive version
-        version = root.get("version") or root.get("Version") or root.get("VERSION") 
-        if version:
-            self.version = version
-
-        target_namespace = root.get('targetNamespace')
-        if not target_namespace:
+        self.version = root.get("version") or root.get("Version") or root.get("VERSION") 
+        self.target_namespace = root.get('targetNamespace')
+        if not self.target_namespace:
             logging.error("Target namespace is not found in xsd schema")
-        self.target_namespace = target_namespace
-        ElementDef.__init__(self, target_namespace)
+        ElementDef.__init__(self, self.target_namespace)
 
         self.xpath = ""
         self._addAttributesAndChildElements(self, root, '', '')
@@ -149,13 +153,13 @@ class FormDef(ElementDef):
                 next_name_prefix = ''
                 if input_node.get('maxOccurs') > 1:
                     child_element = ElementDef(is_repeatable=True)
-                    self._populateElementFields(child_element, input_node, element.xpath, name)
+                    child_element.populateElementFields(input_node, element.xpath, name)
                 else:
                     child_element = ElementDef()
                     #discard parent_name
                     next_name_prefix = join_if_exists( name_prefix, name )
                     full_name = next_name_prefix
-                    self._populateElementFields(child_element, input_node, element.xpath, full_name)
+                    child_element.populateElementFields(input_node, element.xpath, full_name)
                 element.addChild(child_element)
                 #theoretically, simpleType enumerations and list values can be defined inside of elements
                 #in practice, this isn't how things are currently generated in the schema generator,
@@ -177,17 +181,6 @@ class FormDef(ElementDef):
             else:
                 # Skip non-elements (e.g. <sequence>, <complex-type>
                 self._addAttributesAndChildElements(element, input_node, element.xpath, name_prefix)
-    
-    def _populateElementFields(self, element, input_node, xpath, full_name):
-        if not element.name: element.name = full_name
-        element.type = input_node.get('type')
-        if element.type is not None: element.type = element.type
-        element.min_occurs = input_node.get('minOccurs')
-        element.tag = input_node.tag
-        name = input_node.get('name')
-        element.short_name = name
-        if xpath: element.xpath = xpath + "/" + name
-        else: element.xpath = name
         
 class SimpleType(object):
     """ Stores type definition for simple types """
