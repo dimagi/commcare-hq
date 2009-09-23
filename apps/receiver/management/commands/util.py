@@ -34,7 +34,7 @@ def submit_form(filename, destination_url):
         conn.request('POST', parsed_url.path, data, submit_dict)
         resp = conn.getresponse()
         results = resp.read()
-        if not "thank you" in results:
+        if not "thank" in results.lower():
             print "unexpected response for %s\n%s" % (filename, results)
     except Exception, e:
         print"problem submitting form: %s" % filename 
