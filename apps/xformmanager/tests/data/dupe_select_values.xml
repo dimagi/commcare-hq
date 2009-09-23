@@ -1,0 +1,1958 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>BRAC Form</h:title>
+    <meta jr:name="brac_chp_visit_hh_0.0.1"/>
+    <model>
+
+		<itext>
+			<translation lang="English">
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+				<text id="no">
+					<value>No</value>
+				</text>
+				<text id="condom">
+					<value>Condom</value>
+				</text>
+				<text id="pill">
+					<value>Pill</value>
+				</text>
+				
+				<text id="female">
+					<value>Female</value>
+				</text>
+				
+				<text id="male">
+					<value>Male</value>
+				</text>
+				
+				<text id="kitanzi">
+					<value>IUD</value>
+				</text>
+				
+				<text id="other_method">
+					<value>Other Method</value>
+				</text>
+				
+					<text id="village">
+					<value>Village/Street</value>
+				</text>
+				
+				<text id="other">
+					<value>Other</value>
+				</text>
+				
+				<text id="ok">
+					<value>Ok</value>
+				</text>
+				
+				<text id="continue">
+					<value>continue</value>
+				</text>
+				
+			<text id="client_name">
+					<value>Enter Client Name</value>
+				</text>
+				
+				<text id="client_available">
+					<value>Is the client available?</value>
+				</text>
+				
+				<text id="client_age">
+					<value>How old are you</value>
+				</text>
+				
+				<text id="num_of_death">
+					<value>How many people passed away in this household</value>
+				</text>
+				
+				<text id="toilet_clean">
+					<value>Is the toilet Clean?</value>
+				</text>
+			
+			<text id="marital_status">
+					<value>Marital Status?</value>
+				</text>
+				
+				<text id="name_of_partner">
+
+					<value>Name of Partner</value>
+
+				</text>
+				<text id="whether_in_microcredit">
+					<value>Are you in microcredit?</value>
+				</text>
+				
+				<text id="number_of_children">
+					<value>Number of children?</value>
+				</text>
+				
+				<text id="want_to_know_family_planning">
+					<value>Do you want to know more about family planning?</value>
+				</text>
+				
+				<text id="referral">
+					<value>Did you give any referral in this household?</value>
+				</text>
+				
+				<text id="referral_given">
+					<value>Mark any referral you  have given in this household:</value>
+				</text>
+				
+				<text id="house_id">
+					<value form="long">Please enter the household ID.</value>
+					<value form="short">House ID</value>
+				</text>
+				
+				<text id="num_ppl">
+					<value form="long">How many people are in your household?</value>
+					<value form="short">Num. ppl</value>
+				</text>
+				<text id="family_planning">
+					<value form="long">Do you use any family planning methods?</value>
+					<value form="short">Family planning?</value>
+				</text>
+				<text id="fp_method">
+					<value form="long">Which family planning method do you use?</value>
+					<value form="short">Method</value>
+				</text>
+				
+				<text id="sick">
+					<value form="long">Is anyone sick?</value>
+					<value form="short">Sick?</value>
+				</text>
+				<text id="sick_count">
+					<value form="long">How many people are sick?</value>
+					<value form="short">Number sick?</value>
+				</text>
+				
+				<text id="advice_for_mosquito_nets">
+					<value>It is important you use mosquito nets for safety of you and family.</value>
+				</text>
+				
+			
+				<text id="TB_test">
+					<value>TB_test</value>
+				</text>
+				
+				<text id="hiv_test">
+					<value>HIV test</value>
+				</text>
+				
+				<text id="malaria">
+					<value>malaria</value>
+				</text>
+				
+				<text id="preg_mother-TT">
+					<value>pregnant-TT</value>
+				</text>
+				
+				<text id="preg_mother-ante_natal">
+					<value>pregnant-ANC</value>
+				</text>
+				<text id="danger_sign_preg_mother">
+					<value>Danger sign to Pregnant woman</value>
+				</text>
+				
+		
+			<text id="TB">
+					<value>TB</value>
+				</text>
+				<text id="Malaria_dis">
+					<value>Malaria case</value>
+				</text>
+				
+				<text id="HIV_Aids">
+					<value>HIV/Aids</value>
+				</text>
+				
+				<text id="birth_registration">
+					<value>Birth registration</value>
+				</text>
+				
+				<text id="preg_problem">
+					<value>pregnant problem</value>
+				</text>
+				
+				<text id="new_born">
+					<value>Is there a new born baby in a household</value>
+				</text>
+				
+				<text id="num_of_baby">
+					<value>How many new babies in a household</value>
+				</text>
+				
+				<text id="death">
+					<value>Has anyone died in this household?</value>
+				</text>
+				
+				
+				<text id="sicka_illness">
+					<value form="long">What did sick person 1 suffering from?</value>
+					<value form="short">Suffering from:</value>
+				</text>
+				<text id="sicka_facility">
+					<value form="long">Did sick person 1 go to the health facility?</value>
+					<value form="short">Facility?</value>
+				</text>
+				<text id="sicka_when">
+					<value form="long">How many days ago did sick person 1 go to the health facility?</value>
+					<value form="short">When facility?</value>
+				</text>
+				<text id="sicka_meds">
+					<value form="long">Did sick person 1 get meds from the health facility?</value>
+					<value form="short">Meds?</value>
+				</text>
+				<text id="sicka_finish">
+					<value form="long">Did sick person 1 finish the meds from the health facility?</value>
+					<value form="short">Finish meds?</value>
+				</text>
+				<text id="sicka_goagain">
+					<value form="long">Advise person 1 to go to health facility again</value>
+					<value form="short">Go again</value>
+				</text>
+				<text id="sicka_finish_dose">
+					<value form="long">Advise person 1 to finish the full dose</value>
+					<value form="short">Finish dose</value>
+				</text>
+				<text id="sicka_go_hc">
+					<value form="long">Person 1 should go to the health facility if it is serious</value>
+					<value form="short">Go to health facility</value>
+				</text>
+				
+				<text id="sickb_illness">
+					<value form="long">What did sick person 2 suffering from?</value>
+					<value form="short">Suffering from:</value>
+				</text>
+				<text id="sickb_facility">
+					<value form="long">Did sick person 2 go to the health facility?</value>
+					<value form="short">Facility?</value>
+				</text>
+				<text id="sickb_when">
+					<value form="long">How many days ago did sick person 2 go to the health facility?</value>
+					<value form="short">When facility?</value>
+				</text>
+				<text id="sickb_meds">
+					<value form="long">Did sick person 2 get meds from the health facility?</value>
+					<value form="short">Meds?</value>
+				</text>
+				<text id="sickb_finish">
+					<value form="long">Did sick person 2 finish the meds from the health facility?</value>
+					<value form="short">Finish meds?</value>
+				</text>
+				<text id="sickb_goagain">
+					<value form="long">Advise person 2 to go to health facility again</value>
+					<value form="short">Go again</value>
+				</text>
+				<text id="sickb_finish_dose">
+					<value form="long">Advise person 2 to finish the full dose</value>
+					<value form="short">Finish dose</value>
+				</text>
+				<text id="sickb_go_hc">
+					<value form="long">person 2 should go to the health facility if it is serious</value>
+					<value form="short">Go to health facility</value>
+				</text>
+				
+				<text id="sickc_illness">
+					<value form="long">What did sick person 3 suffering from?</value>
+					<value form="short">Suffering from:</value>
+				</text>
+				<text id="sickc_facility">
+					<value form="long">Did sick person 3 go to the health facility?</value>
+					<value form="short">Facility?</value>
+				</text>
+				<text id="sickc_when">
+					<value form="long">How many days ago did sick person 3 go to the health facility?</value>
+					<value form="short">When facility?</value>
+				</text>
+				<text id="sickc_meds">
+					<value form="long">Did sick person 3 get meds from the health facility?</value>
+					<value form="short">Meds?</value>
+				</text>
+				<text id="sickc_finish">
+					<value form="long">Did sick person 3 finish the meds from the health facility?</value>
+					<value form="short">Finish meds?</value>
+				</text>
+				<text id="sickc_goagain">
+					<value form="long">Advise person 3 to go to health facility again</value>
+					<value form="short">Go again</value>
+				</text>
+				<text id="sickc_finish_dose">
+					<value form="long">Advise person 3 to finish the full dose</value>
+					<value form="short">Finish dose</value>
+				</text>
+				<text id="sickc_go_hc">
+					<value form="long">person 3 should go to the health facility if it is serious</value>
+					<value form="short">Go to health facility</value>
+				</text>
+				
+				<text id="sickd_illness">
+					<value form="long">What did sick person 4 suffering from?</value>
+					<value form="short">Suffering from:</value>
+				</text>
+				<text id="sickd_facility">
+					<value form="long">Did sick person 4 go to the health facility?</value>
+					<value form="short">Facility?</value>
+				</text>
+				<text id="sickd_when">
+					<value form="long">How many days ago did sick person 4 go to the health facility?</value>
+					<value form="short">When facility?</value>
+				</text>
+				<text id="sickd_meds">
+					<value form="long">Did sick person 4 get meds from the health facility?</value>
+					<value form="short">Meds?</value>
+				</text>
+				<text id="sickd_finish">
+					<value form="long">Did sick person 4 finish the meds from the health facility?</value>
+					<value form="short">Finish meds?</value>
+				</text>
+				<text id="sickd_goagain">
+					<value form="long">Advise person 4 to go to health facility again</value>
+					<value form="short">Go again</value>
+				</text>
+				<text id="sickd_finish_dose">
+					<value form="long">Advise person 4 to finish the full dose</value>
+					<value form="short">Finish dose</value>
+				</text>
+				<text id="sickd_go_hc">
+					<value form="long">person 4 should go to the health facility if it is serious</value>
+					<value form="short">Go to health facility</value>
+				</text>
+				
+				<text id="pregnant">
+					<value form="long">Are you pregnant?</value>
+					<value form="short">Pregnant?</value>
+				</text>
+				
+				<text id="preg_registration">
+					<value form="long">Great! Make sure she is registered on pregnancy module</value>
+					<value form="short">Make sure she is registered on pregnancy</value>
+				</text>
+				
+				<text id="under2">
+					<value form="long">Are there any children under 2 years of age?</value>
+					<value form="short">Under 2</value>
+				</text>
+				<text id="under2_count">
+					<value form="long">How many children are under 2 years of age?</value>
+					<value form="short">Num children</value>
+				</text>
+				<text id="under2_review_all">
+					<value form="long">Review the immunization card(s)</value>
+					<value form="short">Review card(s)</value>
+				</text>
+				<text id="under2_finished_vac">
+					<value form="long">Are all of the immunizations up to date?</value>
+					<value form="short">Immunizations up to date</value>
+				</text>
+				<text id="under2_encourage_clinic">
+					<value form="long">Please go to the clinic to get missing immunizations</value>
+					<value form="short">Go to the clinic</value>
+				</text>
+				
+				
+				<text id="toilet">
+					<value form="long">Do you have a toilet?</value>
+					<value form="short">Toilet	</value>
+				</text>
+				<text id="toilet_inspect">
+					<value form="long">Please inspect the toilet</value>
+					<value form="short">Inspect toilet</value>
+				</text>
+				<text id="toilet_dist">
+					<value form="long">How far away is the toilet that you use (in steps)?</value>
+					<value form="short">Toilet distance</value>
+				</text>
+				<text id="toilet_encourage">
+					<value form="long">Please encourage the household to build a toilet</value>
+					<value form="short">Build toilet</value>
+				</text>
+				
+				
+				<text id="mosquito_nets">
+					<value form="long">Do  you have mosquito nets?</value>
+					<value form="short">Mosquito nets</value>
+				</text>
+				<text id="how_many_mosquito_nets">
+					<value form="long">How many mosquito nets do you have?</value>
+					<value form="short">Mosquito nets</value>
+				</text>
+				
+				<text id="treated_mosquito_nets">
+					<value form="long">Check the appropriate box bellow whether you use treated nets or not</value>
+					<value form="short">Whether treated or not</value>
+				</text>
+				
+				<text id="long_time_treatment">
+					<value>Long time treatment</value>
+				</text>
+				
+				<text id="short_time_treatment">
+					<value>Short time treatment</value>
+				</text>
+				
+				<text id="no_treatment">
+					<value>No treatment</value>
+				</text>
+				
+				<text id="injection">
+					<value>Injection</value>
+				</text>
+				
+				<text id="married">
+
+					<value>Married</value>
+
+				</text>
+				<text id="single">
+
+					<value>Single</value>
+
+				</text>
+				<text id="divorced">
+
+					<value>Divorced</value>
+
+				</text>
+				<text id="widow">
+
+					<value>Widow or Widower</value>
+
+				</text>
+				<text id="cohabiting">
+
+					<value>Cohabiting</value>
+
+				</text>
+				<text id="minor">
+
+					<value>Minor</value>
+
+				</text>
+				
+				<text id="name_of_husband">
+					<value>Name of Husband</value>
+				</text>
+				
+				
+				<text id="diarrhea">
+					<value>Diarrhea</value>
+				</text>
+				
+				<text id="cough">
+					<value>Cough</value>
+				</text>
+				<text id="fever">
+					<value>Fever</value>
+				</text>
+				
+				<text id="BP">
+					<value>BP</value>
+				</text>
+				<text id="dont_know">
+					<value>They don't know</value>
+				</text>
+				
+				<text id="skin">
+					<value>Skin problem</value>
+				</text>
+				
+					<text id="new_borna_birth_place">
+					<value>Where was the birth of 1 Child?</value>
+				</text>
+				<text id="new_borna_who_was_present">
+					<value>Who was present when Child 1 was born?</value>
+				</text>
+				<text id="age_mother_of_new_borna">
+					<value>How old is the mother of Child 1?</value>
+				</text>
+				
+				<text id="new_bornb_birth_place">
+					<value>Where was the birth of 2 Child?</value>
+				</text>
+				<text id="new_bornb_who_was_present">
+					<value>Who was present when Child 2 was born?</value>
+				</text>
+				<text id="age_mother_of_new_bornb">
+					<value>How old is the mother of Child 1</value>
+				</text>
+				
+				
+				<text id="place_get_water">
+					<value>Where do you get your drinking water from?</value>
+				</text>
+				
+				<text id="health_facility">
+					<value>Health Facility</value>
+				</text>
+				
+				<text id="treatment">
+					<value>Treatment</value>
+				</text>
+				
+				<text id="home">
+					<value>Home</value>
+				</text>
+				<text id="doctor">
+					<value>Doctor</value>
+				</text>
+				
+				<text id="nurse">
+					<value>Nurse</value>
+				</text>
+				<text id="clinician">
+					<value>Clinician</value>
+				</text>
+				
+				<text id="midwife">
+					<value>Midwife</value>
+				</text>
+								<text id="well">
+					<value>Well</value>
+				</text>
+				
+				<text id="community_tap">
+					<value>Community Tap</value>
+				</text>
+				
+				<text id="delivery_boy">
+					<value>Buy on the street people selling</value>
+				</text>
+				
+				<text id="river">
+					<value>River</value>
+				</text>
+				
+					<text id="deatha_name">
+					<value>Name of person 1 who died</value>
+				</text>
+				
+				<text id="deatha_gender">
+					<value>Gender of person 1 who died</value>
+				</text>
+				<text id="deatha_under_2_years">
+					<value>Was the person 1 who died under 2 years?</value>
+				</text>
+				<text id="deatha_nu_months">
+					<value>How many months?</value>
+				</text>
+				<text id="deatha_nu_years">
+					<value>How many Years</value>
+				</text>
+				<text id="deatha_TB">
+					<value>Had the person 1 been diagnosed with TB recently?</value>
+				</text>
+				<text id="deatha_CTC">
+					<value> Was the person 1 visiting CTC? (the hiv treatment clinics)</value>
+				</text>
+				
+				<text id="deatha_high_fever">
+					<value> Did person 1 have a high fever?</value>
+				</text>
+				
+				<text id="deatha_go_h_facility">
+					<value> Did the person 1 go to a health facility</value>
+				</text>
+				<text id="deatha_preg_complications">
+					<value> Did person 1 die due to a pregnancy complication?</value>
+				</text>
+				
+							<text id="deathb_name">
+					<value>Name of person 2 who died</value>
+				</text>
+				
+				<text id="deathb_gender">
+					<value>Gender of person 2 who died</value>
+				</text>
+				<text id="deathb_under_2_years">
+					<value>Was the person 2 who died under 2 years?</value>
+				</text>
+				<text id="deathb_nu_months">
+					<value>How many months?</value>
+				</text>
+				<text id="deathb_nu_years">
+					<value>How many Years</value>
+				</text>
+				<text id="deathb_TB">
+					<value>Had the person 2 been diagnosed with TB recently?</value>
+				</text>
+				<text id="deathb_CTC">
+					<value> Was the person 2 visiting CTC? (the hiv treatment clinics)</value>
+				</text>
+				
+				<text id="deathb_high_fever">
+					<value> Did person 2 have a high fever?</value>
+				</text>
+				
+				<text id="deathb_go_h_facility">
+					<value> Did the person 2 go to a health facility</value>
+				</text>
+				<text id="deathb_preg_complications">
+					<value> Did person 2 die due to a pregnancy complication?</value>
+				</text>
+			
+					
+			</translation>
+
+			<translation lang="Swahili" default="true">
+				<text id="yes">
+					<value>Ndiyo</value>
+				</text>
+				<text id="no">
+					<value>Hapana</value>
+				</text>
+				<text id="condom">
+					<value>Kondom</value>
+				</text>
+				
+				<text id="female">
+					<value>KE</value>
+				</text>
+				
+				<text id="male">
+					<value>ME</value>
+				</text>
+				
+				<text id="pill">
+					<value>Dawa</value>
+				</text>
+				<text id="diarrhea">
+					<value>Kuharisha</value>
+				</text>
+				
+				<text id="cough">
+					<value>Kifua</value>
+				</text>
+				<text id="fever">
+					<value>Homa</value>
+				</text>
+				
+				<text id="BP">
+					<value>BP</value>
+				</text>
+				
+				<text id="dont_know">
+					<value>Hawajui ugonjwa gani</value>
+				</text>
+				
+				<text id="skin">
+					<value>Ugonjwa wa ngozi</value>
+				</text>
+				
+				<text id="continue">
+					<value>anaendelea</value>
+				</text>
+				
+				<text id="toilet_clean">
+					<value>Je mazingira ya choo ni masafi?</value>
+				</text>
+				
+				<text id="ok">
+					<value>Sawa</value>
+				</text>
+				<text id="village">
+					<value>Kijiji/Mtaa</value>
+				</text>
+				
+				<text id="client_name">
+					<value>Jina la Mteja</value>
+				</text>
+				
+				<text id="client_available">
+					<value>Mteja aliyetembelewa yupo?</value>
+				</text>
+				
+				<text id="client_age">
+					<value>Ana miaka mingapi?</value>
+				</text>
+				
+				<text id="whether_in_microcredit">
+					<value>Upo kwenye kikundi cha mikopo?</value>
+				</text>
+				
+				<text id="number_of_children">
+					<value>Una watoto wangapi?</value>
+				</text>
+				
+				<text id="want_to_know_family_planning">
+					<value>Ungependa kujua zaidi juu ya uzazi wa mpango?</value>
+				</text>
+				
+				<text id="referral_given">
+					<value>Chagua rufaa ulizotoa kwenye kaya hii?</value>
+				</text>
+				
+				<text id="referral">
+					<value>Je kuna rufaa uliyotoa kwenye kaya hii?</value>
+				</text>
+				
+				<text id="marital_status">
+					<value>Hali ya Ndoa?</value>
+				</text>
+				
+				<text id="married">
+
+					<value>Olewa/Oa</value>
+
+				</text>
+				<text id="single">
+
+					<value>Hajaoa/Hajaolewa</value>
+
+				</text>
+				<text id="divorced">
+
+					<value>Achika/Tengana</value>
+
+				</text>
+				<text id="widow">
+
+					<value>Mjane/Mgane</value>
+
+				</text>
+				<text id="cohabiting">
+
+					<value>Unaishi na mume bila ndoa</value>
+
+				</text>
+				<text id="minor">
+
+					<value>Mtoto</value>
+
+				</text>
+				
+				<text id="name_of_partner">
+
+					<value>Jina la mwenzi</value>
+
+				</text>
+				
+					<text id="advice_for_mosquito_nets">
+					<value>Ni muhimu sana kutumia chandarua kwa ajili ya kuikinga familia yako na malaria.</value>
+				</text>
+			
+			
+				<text id="TB_test">
+					<value>Kupima TB</value>
+				</text>
+				
+				<text id="treatment">
+					<value>Kwenda kutibiwa</value>
+				</text>
+				
+				
+				
+				<text id="hiv_test">
+					<value>Kupima VVU</value>
+				</text>
+				
+				<text id="injection">
+					<value>Sindano</value>
+				</text>
+				<text id="malaria">
+					<value>malaria</value>
+				</text>
+				
+				<text id="preg_mother-TT">
+					<value>Chanjo kwa mjamzito-TT</value>
+				</text>
+				
+				<text id="preg_mother-ante_natal">
+					<value>Huduma ya ujauzito kliniki-ANC</value>
+				</text>
+				
+				<text id="danger_sign_preg_mother">
+					<value>Vidokezo hatarishi kwa mjauzito</value>
+				</text>
+				
+		
+			<text id="TB">
+					<value>TB</value>
+				</text>
+				<text id="kitanzi">
+					<value>Kitanzi</value>
+				</text>
+				<text id="Malaria_dis">
+					<value>Ugonjwa wa Malaria</value>
+				</text>
+				
+				<text id="HIV_Aids">
+					<value>UKIMWI</value>
+				</text>
+				
+				<text id="birth_registration">
+					<value>Kumuandikisha mtoto</value>
+				</text>
+				
+				
+				<text id="preg_problem">
+					<value>Matatizo ya mimba</value>
+				</text>
+				
+				<text id="other_method">
+					<value>Njia zingine</value>
+				</text>
+				
+				<text id="new_born">
+					<value>Kuna mtoto mchanga aliyezaliwa kwenye kaya hii tangu CHP alipotembelea?</value>
+				</text>
+				
+				<text id="num_of_baby">
+					<value>Idadi ya watoto waliozaliwa kwenye kaya hii</value>
+				</text>
+				
+				<text id="death">
+					<value>Kuna tatizo lolote lililotokea mfano kifo tangu CHP alipotembelea?</value>
+				</text>
+				
+				<text id="house_id">
+					<value form="long">Tafadhali andika namba ya Kaya unayotembelea</value>
+					<value form="short">Namba ya Kaya</value>
+				</text>
+				
+				<text id="num_ppl">
+					<value form="long">Kuna watu wangapi kwenye Kaya?</value>
+					<value form="short">Idadi ya watu?</value>
+				</text>
+				<text id="family_planning">
+					<value form="long">Unatumia njia ya uzazi wa mpango?</value>
+					<value form="short">Uzazi wa mpango?</value>
+				</text>
+				<text id="fp_method">
+					<value form="long">Unatumia njia gani ya uzazi wa mpango?</value>
+					<value form="short">Njia</value>
+				</text>
+				
+				<text id="sick">
+					<value form="long">Kuna mtu anaumwa?</value>
+					<value form="short">Mgonjwa?</value>
+				</text>
+				<text id="sick_count">
+					<value form="long">Watu wangapi wagonjwa?</value>
+					<value form="short">Idadi ya wanaoumwa?</value>
+				</text>
+							
+				<text id="sicka_illness">
+					<value form="long">Je mgonjwa 1 anaumwa nini?</value>
+					<value form="short">Anaumwa:</value>
+				</text>
+				
+				<text id="sicka_facility">
+					<value form="long">Je mgonjwa 1 alikwenda kwenye kituo cha afya?</value>
+					<value form="short">Kituo cha Afya?</value>
+				</text>
+				<text id="sicka_when">
+					<value form="long">Mgonjwa 1 alikwenda kutibiwa lini?</value>
+					<value form="short">Alikwenda lini kutibiwa?</value>
+				</text>
+				<text id="sicka_meds">
+					<value form="long">Mgonjwa 1 alipata dawa alipokwenda kutibiwa?</value>
+					<value form="short">Dawa?</value>
+				</text>
+				<text id="sicka_finish">
+					<value form="long">Je mgonjwa 1 alimaliza dawa alizopewa?</value>
+					<value form="short">Alikamilisha dozi?</value>
+				</text>
+				<text id="sicka_goagain">
+					<value form="long">Mshauri mgonjwa 1 kwenda tena kituo cha afya</value>
+					<value form="short">Nenda tena</value>
+				</text>
+				<text id="sicka_finish_dose">
+					<value form="long">Mshauri mgonjwa 1 amalize dozi</value>
+					<value form="short">Maliza dozi</value>
+				</text>
+				<text id="sicka_go_hc">
+					<value form="long">Mgonjwa 1 aende kituo cha afya kama hali ni mbaya</value>
+					<value form="short">Nenda kituo cha afya</value>
+				</text>
+				
+				<text id="sickb_illness">
+					<value form="long">Je mgonjwa 2 anaumwa nini?</value>
+					<value form="short">Anaumwa:</value>
+				</text>
+				<text id="sickb_facility">
+					<value form="long">Mgonjwa 2 alikwenda kwenye kituo cha afya?</value>
+					<value form="short">Kituo cha Afya?</value>
+				</text>
+				<text id="sickb_when">
+					<value form="long">Mgonjwa 2 alikwenda lini kutibiwa?</value>
+					<value form="short">Alikwenda lini kutibiwa?</value>
+				</text>
+				<text id="sickb_meds">
+					<value form="long">Mgonjwa 2 alipata dawa alipokwenda kutibiwa?</value>
+					<value form="short">Dawa?</value>
+				</text>
+				<text id="sickb_finish">
+					<value form="long">Je mgonjwa 2 alimaliza dawa alizopewa?</value>
+					<value form="short">Alikamilisha dozi?</value>
+				</text>
+				<text id="sickb_goagain">
+					<value form="long">Mshauri mgonjwa 2 kwenda tena kituo cha afya</value>
+					<value form="short">Nenda tena</value>
+				</text>
+				<text id="sickb_finish_dose">
+					<value form="long">Mshauri mgonjwa 2 amalize dozi</value>
+					<value form="short">Maliza dozi</value>
+				</text>
+				<text id="sickb_go_hc">
+					<value form="long">Mgonjwa 2 aende kituo cha afya kama hali ni mbaya</value>
+					<value form="short">Nenda kituo cha afya</value>
+				</text>
+				
+				<text id="sickc_illness">
+					<value form="long">Je mgonjwa 3 anaumwa nini?</value>
+					<value form="short">Anaumwa:</value>
+				</text>
+				<text id="sickc_facility">
+					<value form="long">Mgonjwa 3 alikwenda kwenye kituo cha afya?</value>
+					<value form="short">Kituo cha Afya?</value>
+				</text>
+				<text id="sickc_when">
+					<value form="long">Mgonjwa 3 alikwenda lini kutibiwa?</value>
+					<value form="short">Alikwenda lini kutibiwa</value>
+				</text>
+				<text id="sickc_meds">
+					<value form="long">Mgonjwa 3 alipata dawa alipokwenda kutibiwa?</value>
+					<value form="short">Dawa?</value>
+				</text>
+				<text id="sickc_finish">
+					<value form="long">Je mgonjwa 3 alimaliza dawa alizopewa?</value>
+					<value form="short">Alikamilisha dozi?</value>
+				</text>
+				<text id="sickc_goagain">
+					<value form="long">Mshauri mgonjwa 3 kwenda tena kituo cha afya</value>
+					<value form="short">Nenda tena</value>
+				</text>
+				<text id="sickc_finish_dose">
+					<value form="long">Mshauri mgonjwa 3 amalize dozi</value>
+					<value form="short">Maliza dozi</value>
+				</text>
+				<text id="sickc_go_hc">
+					<value form="long">Mgonjwa 3 aende kituo cha afya kama hali ni mbaya</value>
+					<value form="short">Nenda kituo cha afya</value>
+				</text>
+				
+				<text id="sickd_illness">
+					<value form="long">Je mgonjwa 4 anaumwa nini?</value>
+					<value form="short">Anaumwa:</value>
+				</text>
+				
+				<text id="sickd_facility">
+					<value form="long">Mgonjwa 4 alikwenda kwenye kituo cha afya?</value>
+					<value form="short">Kituo cha Afya?</value>
+				</text>
+				<text id="sickd_when">
+					<value form="long">Mgonjwa 4 alikwenda lini kutibiwa?</value>
+					<value form="short">Alikwenda lini kutibiwa</value>
+				</text>
+				<text id="sickd_meds">
+					<value form="long">Mgonjwa 4 alipata dawa alipokwenda kutibiwa?</value>
+					<value form="short">Dawa?</value>
+				</text>
+				<text id="sickd_finish">
+					<value form="long">Je mgonjwa 4 alimaliza dawa alizopewa?</value>
+					<value form="short">Alikamilisha dozi?</value>
+				</text>
+				<text id="sickd_goagain">
+					<value form="long">Mshauri mgonjwa 4 kwenda tena kituo cha afya</value>
+					<value form="short">Nenda tena</value>
+				</text>
+				<text id="sickd_finish_dose">
+					<value form="long">Mshauri mgonjwa 4 amalize dozi</value>
+					<value form="short">Maliza dozi</value>
+				</text>
+				<text id="sickd_go_hc">
+					<value form="long">Mgonjwa 4 aende kituo cha afya kama hali ni mbaya</value>
+					<value form="short">Nenda kituo cha afya</value>
+				</text>
+				
+				<text id="pregnant">
+					<value form="long">Je unamimba?</value>
+					<value form="short">Mimba?</value>
+				</text>
+				
+				<text id="preg_registration">
+					<value form="long">Tafadhali sana kumbuka kumuandikisha mama huyu kwenye orodha ya wajawazito</value>
+					<value form="short">Aandikishwe kwa wajawazito</value>
+				</text>
+				
+				<text id="under2">
+					<value form="long">Je kuna mtoto mwenye umri chini ya miaka 2?</value>
+					<value form="short">Chini ya 2</value>
+				</text>
+				<text id="under2_count">
+					<value form="long">Ni watoto wangapi umrichini ya miaka 2?</value>
+					<value form="short">Idadi ya watoto</value>
+				</text>
+				<text id="under2_review_all">
+					<value form="long">Angalia kadi ya chanjo</value>
+					<value form="short">Angalia kadi</value>
+				</text>
+				<text id="under2_finished_vac">
+					<value form="long">Je ameshapata chanjo zote?</value>
+					<value form="short">Chanjo zimekamilika</value>
+				</text>
+				<text id="under2_encourage_clinic">
+					<value form="long">Tafadhali nenda Kliniki ukakamilishe chanjo</value>
+					<value form="short">Nenda Kliniki</value>
+				</text>
+				
+				<text id="toilet">
+					<value form="long">Una choo?</value>
+					<value form="short">Choo</value>
+				</text>
+				<text id="toilet_inspect">
+					<value form="long">Tafadhali kagua mazingira ya choo</value>
+					<value form="short">Kagua choo</value>
+				</text>
+				<text id="toilet_dist">
+					<value form="long">Kuna umbali gani kutoka kwenye choo mnachotumia(kadiria kwa hatua)?</value>
+					<value form="short">Umbali choo kilipo</value>
+				</text>
+				<text id="toilet_encourage">
+					<value form="long">Tafadhali washauri wenyenyumba wajenge choo</value>
+					<value form="short">Jengeni Choo</value>
+				</text>
+				
+								<text id="mosquito_nets">
+					<value form="long">Mnatumia vyandarua?</value>
+					<value form="short">Vyandarua</value>
+				</text>
+				<text id="how_many_mosquito_nets">
+					<value form="long">Mnavyandarua vingapi?</value>
+					<value form="short">Vyandarua</value>
+				</text>
+				
+				
+				<text id="treated_mosquito_nets">
+					<value form="long">Toa maelezo kama vyandarua vina dawa au havina?</value>
+					<value form="short">Kama vinadawa au hapana</value>
+				</text>
+				
+				<text id="long_time_treatment">
+					<value>Ngao ya muda mrefu</value>
+				</text>
+				
+				<text id="short_time_treatment">
+					<value>Ngao ya muda mfupi</value>
+				</text>
+				
+				<text id="no_treatment">
+					<value>Situmii dawa yeyote</value>
+				</text>
+				
+				<text id="new_borna_birth_place">
+					<value>Mtoto 1 alizaliwa wapi?</value>
+				</text>
+				<text id="new_borna_who_was_present">
+					<value>Mtoto 1 alipokuwa akizaliwa nani alikuwepo?</value>
+				</text>
+				<text id="age_mother_of_new_borna">
+					<value>Mama wa mtoto 1 anaumri gani?</value>
+				</text>
+				
+				<text id="new_bornb_birth_place">
+					<value>Mtoto 2 alizaliwa wapi?</value>
+				</text>
+				<text id="new_bornb_who_was_present">
+					<value>Mtoto 2 alipokuwa akizaliwa nani alikuwepo?</value>
+				</text>
+				<text id="age_mother_of_new_bornb">
+					<value>Mama wa mtoto 2 anaumri gani?</value>
+				</text>
+				
+				
+				<text id="place_get_water">
+					<value>Je mnapata wapi maji ya kunywa?</value>
+				</text>
+				
+				<text id="well">
+					<value>Kisimani</value>
+				</text>
+				
+				<text id="community_tap">
+					<value>Bombani</value>
+				</text>
+				
+				<text id="delivery_boy">
+					<value>Tuna nunua kwa wanaotembeza maji</value>
+				</text>
+				
+				<text id="river">
+					<value>Mtoni</value>
+				</text>
+				
+				<text id="other">
+					<value>Mengineyo</value>
+				</text>
+			
+			<text id="health_facility">
+					<value>Kituo cha Afya</value>
+				</text>
+				
+				<text id="home">
+					<value>Nyumbani</value>
+				</text>
+				<text id="doctor">
+					<value>Daktari</value>
+				</text>
+				
+				<text id="nurse">
+					<value>Muuguzi-Nurse</value>
+				</text>
+				<text id="clinician">
+					<value>Tabibu</value>
+				</text>
+				
+				<text id="midwife">
+					<value>Mkunga</value>
+				</text>
+		
+				<text id="num_of_death">
+					<value>Ni watu wangapi wamefariki kwenye kaya hii</value>
+				</text>
+				
+				<text id="name_of_husband">
+					<value>Jina la Mume</value>
+				</text>
+				
+							<text id="deatha_name">
+					<value>Jina la Marehemu 1</value>
+				</text>
+				
+				<text id="deatha_gender">
+					<value>Jinsia ya marehemu 1</value>
+				</text>
+				<text id="deatha_under_2_years">
+					<value>Marehemu 1 alikuwa na umri chini ya miaka 2?</value>
+				</text>
+				<text id="deatha_nu_months">
+					<value>Miezi mingapi?</value>
+				</text>
+				<text id="deatha_nu_years">
+					<value>Miaka mingapi</value>
+				</text>
+				<text id="deatha_TB">
+					<value>Marehemu 1 alikuwa kwenye matibabu ya Kifua Kikuu?</value>
+				</text>
+				<text id="deatha_CTC">
+					<value> Marehemu 1 alikuwa anahudhuria CTC (cliniki ya wenye UKIMWI)</value>
+				</text>
+				
+				<text id="deatha_high_fever">
+					<value> Marehemu 1 alikuwa na homa kali?</value>
+				</text>
+				
+				<text id="deatha_go_h_facility">
+					<value> Marehemu wa 1 alikwenda kwenye kituo cha afya?</value>
+				</text>
+				<text id="deatha_preg_complications">
+					<value> Marehemu wa 1 alikufa kutokana na matatizo ya mimba?</value>
+				</text>
+				
+							<text id="deathb_name">
+					<value>Jina la Marehemu 2</value>
+				</text>
+				
+				<text id="deathb_gender">
+					<value>Jinsia ya marehemu 2</value>
+				</text>
+				<text id="deathb_under_2_years">
+					<value>Marehemu 2 alikuwa na umri chini ya miaka 2?</value>
+				</text>
+				<text id="deathb_nu_months">
+					<value>Miezi mingapi?</value>
+				</text>
+				<text id="deathb_nu_years">
+					<value>Miaka mingapi</value>
+				</text>
+				<text id="deathb_TB">
+					<value>Marehemu 2 alikuwa kwenye matibabu ya Kifua Kikuu?</value>
+				</text>
+				<text id="deathb_CTC">
+					<value> Marehemu 2 alikuwa anahudhuria CTC (cliniki ya wenye UKIMWI)</value>
+				</text>
+				
+				<text id="deathb_high_fever">
+					<value> Marehemu 2 alikuwa na homa kali?</value>
+				</text>
+				
+				<text id="deathb_go_h_facility">
+					<value> Marehemu wa 2 alikwenda kwenye kituo cha afya?</value>
+				</text>
+				<text id="deathb_preg_complications">
+					<value> Marehemu wa 2 alikufa kutokana na matatizo ya mimba?</value>
+				</text>
+				
+				
+				
+			</translation>
+		</itext>
+
+		<instance>
+			<brac xmlns="dupe_select_values" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" version="1" uiversion="2">
+				<Meta>
+					<CommCareVersion/>
+					<DeviceID />
+					<TimeStart />
+					<TimeEnd />
+					<username />
+					<chw_id />
+					<uid />
+				</Meta>
+				
+				<case_id />
+				<house_id />
+				<client_name />
+				<village />
+				<client_age />
+				<client_available />
+				<marital_status />
+				<name_of_partner />
+				<name_of_husband />
+				<whether_in_microcredit />
+				<number_of_children />
+				<want_to_know_family_planning />
+				<referral />
+				<referral_given />
+		
+				<num_ppl />
+				<family_planning />
+				<fp_method />
+				
+				<sick />
+				<sick_count />
+				<sicka_illness />
+				<sicka_facility />
+				<sicka_when />
+				<sicka_meds />
+				<sicka_finish />
+				<sicka_goagain />
+				<sicka_finish_dose />
+				<sicka_go_hc />
+				
+				<sickb_illness />
+				<sickb_facility />
+				<sickb_when />
+				<sickb_meds />
+				<sickb_finish />
+				<sickb_goagain />
+				<sickb_finish_dose />
+				<sickb_go_hc />
+				
+				<sickc_illness />
+				<sickc_facility />
+				<sickc_when />
+				<sickc_meds />
+				<sickc_finish />
+				<sickc_goagain />
+				<sickc_finish_dose />
+				<sickc_go_hc />
+				
+				<sickd_illness />
+				<sickd_facility />
+				<sickd_when />
+				<sickd_meds />
+				<sickd_finish />
+				<sickd_goagain />
+				<sickd_finish_dose />
+				<sickd_go_hc />
+				
+				<toilet />
+				<toilet_inspect />
+				<toilet_clean />
+				<toilet_distance />
+				<toilet_encourage />
+				
+				<how_many_mosquito_nets />
+				<mosquito_nets />
+				<treated_mosquito_nets />
+				<advice_for_mosquito_nets />
+				<place_get_water />
+				
+				<pregnant />
+				<preg_registration />
+				
+				<under2 />
+				<under2_count />
+				<under2_review_all />
+				<under2_finished_vac />
+				<under2_encourage_clinic />
+				
+				<new_born />
+				<num_of_baby />
+				<new_borna_birth_place />
+				<new_borna_who_was_present />
+				<age_mother_of_new_borna />
+				
+				<new_bornb_birth_place />
+				<new_bornb_who_was_present />
+				<age_mother_of_new_bornb />
+				
+				<death />
+				<num_of_death />
+
+				<deatha_name />
+				<deatha_gender />
+				<deatha_under_2_years />
+				<deatha_nu_months />
+				<deatha_nu_years />
+				<deatha_TB />
+				<deatha_CTC />
+				<deatha_high_fever />
+				<deatha_go_h_facility />
+				<deatha_preg_complications />
+				
+				<deathb_name />
+				<deathb_gender />
+				<deathb_under_2_years />
+				<deathb_nu_months />
+				<deathb_nu_years />
+				<deathb_TB />
+				<deathb_CTC />
+				<deathb_high_fever />
+				<deathb_go_h_facility />
+				<deathb_preg_complications />
+		</brac>
+		</instance>
+		
+		<bind id="hidden1" nodeset="/brac/Meta/DeviceID" type="xsd:string" jr:preload="property" jr:preloadParams="DeviceID" />
+		<bind id="hidden2" nodeset="/brac/Meta/TimeStart" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+		<bind id="hidden3" nodeset="/brac/Meta/TimeEnd" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+		<bind id="hidden4" nodeset="/brac/Meta/username" type="xsd:string" jr:preload="meta" jr:preloadParams="UserName" />
+		<bind id="hidden5" nodeset="/brac/Meta/chw_id" type="xsd:string" jr:preload="meta" jr:preloadParams="UserID" />
+		<bind id="hidden6" nodeset="/brac/Meta/uid" type="xsd:string" jr:preload="uid" jr:preloadParams="general" />
+		<bind id="hidden7" nodeset="/brac/Meta/CommCareVersion" type="xsd:string" jr:preload="property" jr:preloadParams="cc_version" />
+		<bind id="house_id" nodeset="/brac/house_id" type="xsd:int" required="true()" constraint=" .&gt;0 and .&lt;= 200" jr:constraintMsg="Namba ya kaya hiwezi kuwa 0 au zaidi ya 200?"/>
+		<bind id="village" nodeset="/brac/village" type="xsd:string" required="true()"/>
+		<bind id="client_available" nodeset="/brac/client_available" type="xsd:string" required="true()" />
+		<bind id="num_ppl" nodeset="/brac/num_ppl" type="xsd:int" required="true()" relevant="/brac/client_available= 'y'" constraint=" .&gt;0 and .&lt; 18" jr:constraintMsg="Idadi ya watu haiwezi kuwa 0 au zaidi ya 25?"/>
+		<bind id="client_name" nodeset="/brac/client_name" type="xsd:string" required="true()" />
+		<bind id="client_age" nodeset="/brac/client_age" type="xsd:int" required="true()" relevant="/brac/client_available= 'y'" constraint=" .&gt;14 and .&lt; 110" jr:constraintMsg="Umri wa mteja hauwezi kuwa chini ya 14 au zaidi ya miaka 110?"/>
+		<bind id="marital_status" nodeset="/brac/marital_status" type="xsd:string" required="true()" relevant="/brac/client_age &gt;= 14" />
+		<bind id="name_of_partner" nodeset="/brac/name_of_partner" type="xsd:string" required="true()" relevant="/brac/marital_status= 'cohabiting'" />
+		<bind id="name_of_husband" nodeset="/brac/name_of_husband" type="xsd:string" required="true()" relevant="/brac/marital_status= 'married'" />
+		<bind id="whether_in_microcredit" nodeset="/brac/whether_in_microcredit" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="number_of_children" nodeset="/brac/number_of_children" type="xsd:int" required="true()" relevant="/brac/client_age &gt;= 14" constraint=" .&lt; 12" jr:constraintMsg="Angalia vizuri idadi ya watoto?"/>
+		<bind id="family_planning" nodeset="/brac/family_planning" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="want_to_know_family_planning" nodeset="/brac/want_to_know_family_planning" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="referral" nodeset="/brac/referral" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="referral_given" nodeset="/brac/referral_given" relevant="/brac/referral = 'y'" />
+		<bind id="advice_for_mosquito_nets" nodeset="/brac/advice_for_mosquito_nets" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="new_born" nodeset="/brac/new_born" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="num_of_baby" nodeset="/brac/num_of_baby" type="xsd:int" required="true()" relevant="/brac/new_born= 'y'" constraint=" .&gt;0 and .&lt; 10" jr:constraintMsg="Angalia idadi ya watoto ulioingiza?"/>
+		
+		<bind id="new_borna_birth_place" nodeset="/brac/new_borna_birth_place" relevant="/brac/num_of_baby &gt; 0"/>
+		<bind id="new_borna_who_was_present" nodeset="/brac/new_borna_who_was_present" relevant="/brac/num_of_baby &gt; 0"/>
+		<bind id="age_mother_of_new_borna" nodeset="/brac/age_mother_of_new_borna" type="xsd:int" required="true()" relevant="/brac/num_of_baby &gt; 0"/>
+		<bind id="new_bornb_birth_place" nodeset="/brac/new_bornb_birth_place" relevant="/brac/num_of_baby &gt; 1"/>
+		<bind id="new_bornb_who_was_present" nodeset="/brac/new_bornb_who_was_present" relevant="/brac/num_of_baby &gt; 1"/>
+		<bind id="age_mother_of_new_bornb" nodeset="/brac/age_mother_of_new_bornb" type="xsd:int" required="true()" relevant="/brac/num_of_baby &gt; 1"/>
+		<bind id="fp_method" nodeset="/brac/fp_method" relevant="/brac/family_planning = 'y'" />
+		
+		<bind id="sick" nodeset="/brac/sick" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		
+		<bind id="sick_count" nodeset="/brac/sick_count" type="xsd:int"  required="true()" relevant="/brac/sick = 'y'" constraint=" .&gt;0 and .&lt; 10" jr:constraintMsg="Angalia Idadi ya wagonjwa ulioingiza?"/>
+		
+		<bind id="sicka_illness" nodeset="/brac/sicka_illness" relevant="/brac/sick_count &gt; 0" />
+		<bind id="sicka_facility" nodeset="/brac/sicka_facility" relevant="/brac/sick_count &gt; 0" />
+		<bind id="sicka_when" nodeset="/brac/sicka_when" type="xsd:date" required="true()" relevant="/brac/sicka_facility = 'y'" constraint=" .&lt;= today()" jr:constraintMsg="Angalia tarehe ulioingiza?"/>
+		<bind id="sicka_meds" nodeset="/brac/sicka_meds" relevant="/brac/sicka_facility = 'y'" />
+		<bind id="sicka_finish" nodeset="/brac/sicka_finish" relevant="/brac/sicka_meds = 'y'" />
+		<bind id="sicka_goagain" nodeset="/brac/sicka_goagain" relevant="/brac/sicka_finish = 'y'" />
+		<bind id="sicka_finish_dose" nodeset="/brac/sicka_finish_dose" relevant="/brac/sicka_finish = 'n'" />
+		<bind id="sicka_go_hc" nodeset="/brac/sicka_go_hc" relevant="/brac/sicka_facility = 'n'" />
+				
+		<bind id="sickb_illness" nodeset="/brac/sickb_illness" relevant="/brac/sick_count &gt; 1" />
+		<bind id="sickb_facility" nodeset="/brac/sickb_facility" relevant="/brac/sick_count &gt; 1" />
+		<bind id="sickb_when" nodeset="/brac/sickb_when" type="xsd:date"  required="true()" relevant="/brac/sickb_facility = 'y'" constraint=" .&lt;= today()" jr:constraintMsg="Angalia tarehe ulioingiza?"/>
+		<bind id="sickb_meds" nodeset="/brac/sickb_meds" relevant="/brac/sickb_facility = 'y'" />
+		<bind id="sickb_finish" nodeset="/brac/sickb_finish" relevant="/brac/sickb_meds = 'y'" />
+		<bind id="sickb_goagain" nodeset="/brac/sickb_goagain" relevant="/brac/sickb_finish = 'y'" />
+		<bind id="sickb_finish_dose" nodeset="/brac/sickb_finish_dose" relevant="/brac/sickb_finish = 'n'" />
+		<bind id="sickb_go_hc" nodeset="/brac/sickb_go_hc" relevant="/brac/sickb_facility = 'n'" />
+				
+		<bind id="sickc_illness" nodeset="/brac/sickc_illness" relevant="/brac/sick_count &gt; 2" />
+		<bind id="sickc_facility" nodeset="/brac/sickc_facility" relevant="/brac/sick_count &gt; 2" />
+		<bind id="sickc_when" nodeset="/brac/sickc_when" type="xsd:date" required="true()" relevant="/brac/sickc_facility = 'y'" constraint=" .&lt;= today()" jr:constraintMsg="Angalia tarehe ulioingiza?"/>
+		<bind id="sickc_meds" nodeset="/brac/sickc_meds" relevant="/brac/sickc_facility = 'y'" />
+		<bind id="sickc_finish" nodeset="/brac/sickc_finish" relevant="/brac/sickc_meds = 'y'" />
+		<bind id="sickc_goagain" nodeset="/brac/sickc_goagain" relevant="/brac/sickc_finish = 'y'" />
+		<bind id="sickc_finish_dose" nodeset="/brac/sickc_finish_dose" relevant="/brac/sickc_finish = 'n'" />
+		<bind id="sickc_go_hc" nodeset="/brac/sickc_go_hc" relevant="/brac/sickc_facility = 'n'" />
+		
+		<bind id="sickd_illness" nodeset="/brac/sickd_illness" relevant="/brac/sick_count &gt; 3" />
+		<bind id="sickd_facility" nodeset="/brac/sickd_facility" relevant="/brac/sick_count &gt; 3" />
+		<bind id="sickd_when" nodeset="/brac/sickd_when" type="xsd:date" required="true()" relevant="/brac/sickd_facility = 'y'" constraint=" .&lt;= today()" jr:constraintMsg="Angalia tarehe ulioingiza?"/>
+		<bind id="sickd_meds" nodeset="/brac/sickd_meds" relevant="/brac/sickd_facility = 'y'" />
+		<bind id="sickd_finish" nodeset="/brac/sickd_finish" relevant="/brac/sickd_meds = 'y'" />
+		<bind id="sickd_goagain" nodeset="/brac/sickd_goagain" relevant="/brac/sickd_finish = 'y'" />
+		<bind id="sickd_finish_dose" nodeset="/brac/sickd_finish_dose" relevant="/brac/sickd_finish = 'n'" />
+		<bind id="sickd_go_hc" nodeset="/brac/sickd_go_hc" relevant="/brac/sickd_facility = 'n'" />
+		<bind id="pregnant" nodeset="/brac/pregnant" relevant="/brac/client_available = 'y'" />
+		<bind id="preg_registration" nodeset="/brac/preg_registration" relevant="/brac/pregnant = 'y'" />
+		
+		<bind id="under2" nodeset="/brac/under2" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="under2_count" nodeset="/brac/under2_count" type="xsd:int" required="true()" relevant="/brac/under2 = 'y'" constraint=" .&lt; 10" jr:constraintMsg="Angalia Idadi ya watoto chini ya miaka 2?"/>
+		<bind id="under2_review_all" nodeset="/brac/under2_review_all" relevant="/brac/under2 = 'y'" />
+		<bind id="under2_finished_vac" nodeset="/brac/under2_finished_vac" relevant="/brac/under2 = 'y'" />
+		<bind id="under2_encourage_clinic" nodeset="/brac/under2_encourage_clinic" relevant="/brac/under2_finished_vac = 'n' " />
+		<bind id="toilet" nodeset="/brac/toilet" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="toilet_inspect" nodeset="/brac/toilet_inspect" relevant="/brac/toilet='y'" />
+		<bind id="toilet_clean" nodeset="/brac/toilet_clean" relevant="/brac/toilet='y'" />
+		<bind id="toilet_dist" nodeset="/brac/toilet_distance" relevant="/brac/toilet='n'" type="xsd:int" required="true()" constraint=" .&lt;= 300" jr:constraintMsg="Mbona umbali ni mrefu sana?"/>
+		<bind id="toilet_encourage" nodeset="/brac/toilet_encourage" relevant="/brac/toilet='n'" />
+		
+		<bind id="mosquito_nets" nodeset="/brac/mosquito_nets" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+		<bind id="how_many_mosquito_nets" nodeset="/brac/how_many_mosquito_nets" required="true()" type="xsd:int" relevant="/brac/client_available= 'y' and /brac/mosquito_nets='y'" constraint=" .&gt;0 and .&lt; 15" jr:constraintMsg="Angalia idadi ya vyandarua ni sahihi?"/>
+		<bind id="treated_mosquito_nets" nodeset="/brac/treated_mosquito_nets" required="true()" relevant="/brac/mosquito_nets= 'y'" />		
+		<bind id="place_get_water" nodeset="/brac/place_get_water" relevant="/brac/client_available = 'y'" />
+		
+	    <bind id="death" nodeset="/brac/death" type="xsd:string" required="true()" relevant="/brac/client_available= 'y'" />
+	    <bind id="num_of_death" nodeset="/brac/num_of_death" type="xsd:int"  required="true()" relevant="/brac/death = 'y'" constraint=" .&gt;0 and .&lt; 10" jr:constraintMsg="Angalia Idadi ya waliokufa ulioingiza?"/>
+		<bind id="deatha_name" nodeset="/brac/deatha_name" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_gender" nodeset="/brac/deatha_gender" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_under_2_years" nodeset="/brac/deatha_under_2_years" type="xsd:string" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_nu_months" nodeset="/brac/deatha_nu_months" type="xsd:int" relevant="/brac/deatha_under_2_years = 'y'" />
+		<bind id="deatha_nu_years" nodeset="/brac/deatha_nu_years" type="xsd:int" relevant="/brac/deatha_under_2_years = 'n'" />
+		<bind id="deatha_TB" nodeset="/brac/deatha_TB" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_CTC" nodeset="/brac/deatha_CTC" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_high_fever" nodeset="/brac/deatha_high_fever" relevant="/brac/num_of_death &gt; 0" />
+    	<bind id="deatha_go_h_facility" nodeset="/brac/deatha_go_h_facility" relevant="/brac/num_of_death &gt; 0" />
+		<bind id="deatha_preg_complications" nodeset="/brac/deatha_preg_complications" relevant="/brac/deatha_gender = 'f' and /brac/num_of_death &gt; 0 and /brac/deatha_under_2_years = 'n' and /brac/deatha_nu_years &gt;14" />
+		
+		<bind id="deathb_name" nodeset="/brac/deathb_name" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_gender" nodeset="/brac/deathb_gender" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_under_2_years" nodeset="/brac/deathb_under_2_years" type="xsd:string" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_nu_months" nodeset="/brac/deathb_nu_months" type="xsd:int" relevant="/brac/deathb_under_2_years = 'y'" />
+		<bind id="deathb_nu_years" nodeset="/brac/deathb_nu_years" type="xsd:int" relevant="/brac/deathb_under_2_years = 'n'" />
+		<bind id="deathb_TB" nodeset="/brac/deathb_TB" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_CTC" nodeset="/brac/deathb_CTC" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_high_fever" nodeset="/brac/deathb_high_fever" relevant="/brac/num_of_death &gt; 1" />
+    	<bind id="deathb_go_h_facility" nodeset="/brac/deathb_go_h_facility" relevant="/brac/num_of_death &gt; 1" />
+		<bind id="deathb_preg_complications" nodeset="/brac/deathb_preg_complications" relevant="/brac/deathb_gender = 'f' and /brac/num_of_death &gt; 1 and /brac/deathb_under_2_years = 'n' and /brac/deathb_nu_years &gt;14" />
+    </model>
+</h:head>			
+<h:body>
+
+	<input bind="client_name"><label ref="jr:itext('client_name')"></label></input>
+		<input bind="house_id"><label ref="jr:itext('house_id')"></label></input>
+	<input bind="village"><label ref="jr:itext('village')"></label></input>
+	
+	<select1 ref="/brac/client_available">
+		<label ref="jr:itext('client_available')"></label>
+		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="client_age"><label ref="jr:itext('client_age')"></label></input>
+	
+	<select1 ref="/brac/marital_status">
+
+		<label ref="jr:itext('marital_status')"></label>
+
+		<item><label ref="jr:itext('married')"></label><value>married</value></item>
+		<item><label ref="jr:itext('single')"></label><value>single</value></item>
+		<item><label ref="jr:itext('divorced')"></label><value>divorced</value></item>
+		<item><label ref="jr:itext('widow')"></label><value>widow</value></item>
+		<item><label ref="jr:itext('cohabiting')"></label><value>cohabiting</value></item>
+		<item><label ref="jr:itext('minor')"></label><value>Under_7_yrs</value></item>
+
+	</select1>
+	
+	<input bind="name_of_husband"><label ref="jr:itext('name_of_husband')"></label></input>
+	<input bind="name_of_partner"><label ref="jr:itext('name_of_partner')"></label></input>
+	
+	<select1 ref="/brac/whether_in_microcredit">
+		<label ref="jr:itext('whether_in_microcredit')"></label>
+		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	
+	<input bind="number_of_children"><label ref="jr:itext('number_of_children')"></label></input>
+	
+	<input bind="num_ppl"><label ref="jr:itext('num_ppl')"></label></input>
+	   
+	<select1 ref="/brac/family_planning">
+		<label ref="jr:itext('family_planning')"></label>
+		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="fp_method">
+		<label ref="jr:itext('fp_method')"></label>
+		<item><label ref="jr:itext('condom')"></label><value>condom</value></item>
+		<item><label ref="jr:itext('pill')"></label><value>pill</value></item>
+		<item><label ref="jr:itext('injection')"></label><value>injection</value></item>
+		
+		<item><label ref="jr:itext('other_method')"></label><value>other_method</value></item>
+	</select1>
+	
+	<select1 ref="/brac/want_to_know_family_planning">
+		<label ref="jr:itext('want_to_know_family_planning')"></label>
+		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 ref="/brac/sick">
+   		<label ref="jr:itext('sick')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="sick_count"><label ref="jr:itext('sick_count')"></label></input>
+	
+	<select1 bind="sicka_illness">
+   		<label ref="jr:itext('sicka_illness')"></label>
+   		<item><label ref="jr:itext('diarrhea')"></label><value>diarrhea</value></item>
+		<item><label ref="jr:itext('cough')"></label><value>cough</value></item>
+		<item><label ref="jr:itext('fever')"></label><value>fever</value></item>
+		<item><label ref="jr:itext('malaria')"></label><value>malaria</value></item>
+		<item><label ref="jr:itext('BP')"></label><value>BP</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+		<item><label ref="jr:itext('skin')"></label><value>skin</value></item>
+	</select1>
+	
+	<select1 bind="sicka_facility">
+   		<label ref="jr:itext('sicka_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="sicka_when"><label ref="jr:itext('sicka_when')"></label></input>
+	
+	<select1 bind="sicka_meds">
+   		<label ref="jr:itext('sicka_meds')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+
+	<select1 bind="sicka_finish">
+   		<label ref="jr:itext('sicka_finish')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+		<item><label ref="jr:itext('continue')"></label><value>continue</value></item>
+	</select1>
+	
+	<select1 bind="sicka_goagain">
+		<label ref="jr:itext('sicka_goagain')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sicka_finish_dose">
+		<label ref="jr:itext('sicka_finish_dose')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sicka_go_hc">
+		<label ref="jr:itext('sicka_go_hc')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickb_illness">
+   		<label ref="jr:itext('sickb_illness')"></label>
+   		<item><label ref="jr:itext('diarrhea')"></label><value>diarrhea</value></item>
+		<item><label ref="jr:itext('cough')"></label><value>cough</value></item>
+		<item><label ref="jr:itext('fever')"></label><value>fever</value></item>
+		<item><label ref="jr:itext('malaria')"></label><value>malaria</value></item>
+		<item><label ref="jr:itext('BP')"></label><value>BP</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+		<item><label ref="jr:itext('skin')"></label><value>skin</value></item>
+	</select1>
+	
+	<select1 bind="sickb_facility">
+   		<label ref="jr:itext('sickb_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="sickb_when"><label ref="jr:itext('sickb_when')"></label></input>
+	
+	<select1 bind="sickb_meds">
+   		<label ref="jr:itext('sickb_meds')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+
+	<select1 bind="sickb_finish">
+   		<label ref="jr:itext('sickb_finish')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+		<item><label ref="jr:itext('continue')"></label><value>continue</value></item>
+	</select1>
+	
+	<select1 bind="sickb_goagain">
+		<label ref="jr:itext('sickb_goagain')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickb_finish_dose">
+		<label ref="jr:itext('sickb_finish_dose')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickb_go_hc">
+		<label ref="jr:itext('sickb_go_hc')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickc_illness">
+   		<label ref="jr:itext('sickc_illness')"></label>
+   		<item><label ref="jr:itext('diarrhea')"></label><value>diarrhea</value></item>
+		<item><label ref="jr:itext('cough')"></label><value>cough</value></item>
+		<item><label ref="jr:itext('fever')"></label><value>fever</value></item>
+		<item><label ref="jr:itext('malaria')"></label><value>malaria</value></item>
+		<item><label ref="jr:itext('BP')"></label><value>BP</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+		<item><label ref="jr:itext('skin')"></label><value>skin</value></item>
+	</select1>
+	
+	<select1 bind="sickc_facility">
+   		<label ref="jr:itext('sickc_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="sickc_when"><label ref="jr:itext('sickc_when')"></label></input>
+	
+	<select1 bind="sickc_meds">
+   		<label ref="jr:itext('sickc_meds')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+
+	<select1 bind="sickc_finish">
+   		<label ref="jr:itext('sickc_finish')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+		<item><label ref="jr:itext('continue')"></label><value>continue</value></item>
+	</select1>
+	
+	<select1 bind="sickc_goagain">
+		<label ref="jr:itext('sickc_goagain')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickc_finish_dose">
+		<label ref="jr:itext('sickc_finish_dose')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickc_go_hc">
+		<label ref="jr:itext('sickc_go_hc')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+
+<select1 bind="sickd_illness">
+   		<label ref="jr:itext('sickd_illness')"></label>
+   		<item><label ref="jr:itext('diarrhea')"></label><value>diarrhea</value></item>
+		<item><label ref="jr:itext('cough')"></label><value>cough</value></item>
+		<item><label ref="jr:itext('fever')"></label><value>fever</value></item>
+		<item><label ref="jr:itext('malaria')"></label><value>malaria</value></item>
+		<item><label ref="jr:itext('BP')"></label><value>BP</value></item>
+		<item><label ref="jr:itext('dont_know')"></label><value>dont_know</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+		<item><label ref="jr:itext('skin')"></label><value>skin</value></item>
+	</select1>
+	
+<select1 bind="sickd_facility">
+   		<label ref="jr:itext('sickd_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="sickd_when"><label ref="jr:itext('sickd_when')"></label></input>
+	
+	<select1 bind="sickd_meds">
+   		<label ref="jr:itext('sickd_meds')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+
+	<select1 bind="sickd_finish">
+   		<label ref="jr:itext('sickd_finish')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+		<item><label ref="jr:itext('continue')"></label><value>continue</value></item>
+	</select1>
+	
+	<select1 bind="sickd_goagain">
+		<label ref="jr:itext('sickd_goagain')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickd_finish_dose">
+		<label ref="jr:itext('sickd_finish_dose')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="sickd_go_hc">
+		<label ref="jr:itext('sickd_go_hc')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 ref="/brac/pregnant">
+   		<label ref="jr:itext('pregnant')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 ref="/brac/under2">
+   		<label ref="jr:itext('under2')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="under2_count"><label ref="jr:itext('under2_count')"></label></input>
+	
+	<select1 bind="under2_review_all">
+		<label ref="jr:itext('under2_review_all')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="under2_finished_vac">
+   		<label ref="jr:itext('under2_finished_vac')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="under2_encourage_clinic">
+		<label ref="jr:itext('under2_encourage_clinic')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	<select1 bind="referral">
+   		<label ref="jr:itext('referral')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+		<select ref="/brac/referral_given">
+		<label ref="jr:itext('referral_given')"></label>
+		<item><label ref="jr:itext('malaria')"></label><value>malaria</value></item>
+		<item><label ref="jr:itext('treatment')"></label><value>treatment</value></item>
+		<item><label ref="jr:itext('TB_test')"></label><value>TB_test</value></item>
+		<item><label ref="jr:itext('preg_mother-TT')"></label><value>preg_mother-TT</value></item>
+		<item><label ref="jr:itext('preg_mother-ante_natal')"></label><value>preg_mother-ante_natal</value></item>
+		<item><label ref="jr:itext('danger_sign_preg_mother')"></label><value>danger_sign_preg_mother</value></item>
+		
+		<item><label ref="jr:itext('hiv_test')"></label><value>hiv_test</value></item>
+		<item><label ref="jr:itext('birth_registration')"></label><value>birth_registration</value></item>
+		
+	</select>
+	
+   	<select1 ref="/brac/toilet">
+   		<label ref="jr:itext('toilet')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="toilet_inspect">
+		<label ref="jr:itext('toilet_inspect')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+	
+	
+	<select1 ref="/brac/toilet_clean">
+   		<label ref="jr:itext('toilet_clean')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+					
+	<input bind="toilet_dist"><label ref="jr:itext('toilet_dist')"></label></input>
+	
+	<select1 bind="toilet_encourage">
+		<label ref="jr:itext('toilet_encourage')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+   				
+    <select1 ref="/brac/mosquito_nets">
+   		<label ref="jr:itext('mosquito_nets')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+   
+    <input bind="how_many_mosquito_nets"><label ref="jr:itext('how_many_mosquito_nets')"></label></input>
+	
+		<select ref="/brac/treated_mosquito_nets">
+   		<label ref="jr:itext('treated_mosquito_nets')"></label>
+   		<item><label ref="jr:itext('long_time_treatment')"></label><value>y</value></item>
+		<item><label ref="jr:itext('short_time_treatment')"></label><value>n</value></item>
+		<item><label ref="jr:itext('no_treatment')"></label><value>n</value></item>
+	</select>
+	
+	<select1 ref="/brac/advice_for_mosquito_nets">
+
+            <label ref="jr:itext('advice_for_mosquito_nets')"></label>
+
+            <item><label>ok</label><value>1</value></item>
+
+		</select1>
+		
+	<select1 bind="place_get_water">
+   		<label ref="jr:itext('place_get_water')"></label>
+   		<item><label ref="jr:itext('well')"></label><value>well</value></item>
+		<item><label ref="jr:itext('community_tap')"></label><value>community_tap</value></item>
+		<item><label ref="jr:itext('delivery_boy')"></label><value>delivery_boy</value></item>
+		<item><label ref="jr:itext('river')"></label><value>river</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+	</select1>
+		
+		<select1 ref="/brac/new_born">
+   		<label ref="jr:itext('new_born')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="num_of_baby"><label ref="jr:itext('num_of_baby')"></label></input>
+	
+	<select1 bind="new_borna_birth_place">
+   		<label ref="jr:itext('new_borna_birth_place')"></label>
+   		<item><label ref="jr:itext('health_facility')"></label><value>health_facility</value></item>
+		<item><label ref="jr:itext('home')"></label><value>home</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+	</select1>
+	
+	
+	<select1 bind="new_borna_who_was_present">
+   		<label ref="jr:itext('new_borna_who_was_present')"></label>
+   		<item><label ref="jr:itext('doctor')"></label><value>doctor</value></item>
+		<item><label ref="jr:itext('nurse')"></label><value>nurse</value></item>
+		<item><label ref="jr:itext('clinician')"></label><value>clinician</value></item>
+		<item><label ref="jr:itext('midwife')"></label><value>midwife</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+	</select1>
+	<input bind="age_mother_of_new_borna"><label ref="jr:itext('age_mother_of_new_borna')"></label></input>
+	
+	<select1 bind="new_bornb_birth_place">
+   		<label ref="jr:itext('new_bornb_birth_place')"></label>
+   		<item><label ref="jr:itext('health_facility')"></label><value>health_facility</value></item>
+		<item><label ref="jr:itext('home')"></label><value>home</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+	</select1>
+	
+	
+	<select1 bind="new_bornb_who_was_present">
+   		<label ref="jr:itext('new_bornb_who_was_present')"></label>
+   		<item><label ref="jr:itext('doctor')"></label><value>doctor</value></item>
+		<item><label ref="jr:itext('nurse')"></label><value>nurse</value></item>
+		<item><label ref="jr:itext('clinician')"></label><value>clinician</value></item>
+		<item><label ref="jr:itext('midwife')"></label><value>midwife</value></item>
+		<item><label ref="jr:itext('other')"></label><value>other</value></item>
+	</select1>
+	<input bind="age_mother_of_new_bornb"><label ref="jr:itext('age_mother_of_new_bornb')"></label></input>
+	
+	<select1 ref="/brac/death">
+   		<label ref="jr:itext('death')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="num_of_death"><label ref="jr:itext('num_of_death')"></label></input>
+	<input bind="deatha_name"><label ref="jr:itext('deatha_name')"></label></input>
+	<select1 bind="deatha_gender">
+   		<label ref="jr:itext('deatha_gender')"></label>
+   		<item><label ref="jr:itext('female')"></label><value>f</value></item>
+		<item><label ref="jr:itext('male')"></label><value>m</value></item>
+	</select1>
+	
+	
+	<select1 bind="deatha_under_2_years">
+   		<label ref="jr:itext('deatha_under_2_years')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	<input bind="deatha_nu_months"><label ref="jr:itext('deatha_nu_months')"></label></input>
+	<input bind="deatha_nu_years"><label ref="jr:itext('deatha_nu_years')"></label></input>
+	<select1 bind="deatha_TB">
+   		<label ref="jr:itext('deatha_TB')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deatha_CTC">
+   		<label ref="jr:itext('deatha_CTC')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deatha_high_fever">
+   		<label ref="jr:itext('deatha_high_fever')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deatha_go_h_facility">
+   		<label ref="jr:itext('deatha_go_h_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deatha_preg_complications">
+   		<label ref="jr:itext('deatha_preg_complications')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+		<input bind="deathb_name"><label ref="jr:itext('deathb_name')"></label></input>
+	<select1 bind="deathb_gender">
+   		<label ref="jr:itext('deathb_gender')"></label>
+   		<item><label ref="jr:itext('female')"></label><value>f</value></item>
+		<item><label ref="jr:itext('male')"></label><value>m</value></item>
+	</select1>
+	
+	
+	<select1 bind="deathb_under_2_years">
+   		<label ref="jr:itext('deathb_under_2_years')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	<input bind="deathb_nu_months"><label ref="jr:itext('deathb_nu_months')"></label></input>
+	<input bind="deathb_nu_years"><label ref="jr:itext('deathb_nu_years')"></label></input>
+	<select1 bind="deathb_TB">
+   		<label ref="jr:itext('deathb_TB')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deathb_CTC">
+   		<label ref="jr:itext('deathb_CTC')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deathb_high_fever">
+   		<label ref="jr:itext('deathb_high_fever')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deathb_go_h_facility">
+   		<label ref="jr:itext('deathb_go_h_facility')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="deathb_preg_complications">
+   		<label ref="jr:itext('deathb_preg_complications')"></label>
+   		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<select1 bind="preg_registration">
+		<label ref="jr:itext('preg_registration')"></label>
+		<item><label ref="jr:itext('ok')"></label><value>1</value></item>
+	</select1>
+
+</h:body>
+</h:html>
+
