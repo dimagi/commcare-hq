@@ -12,8 +12,17 @@
 # 3. change uniqueness constraints
 # 4. update xpath values
 
+
+""" OPTIONAL CONFIG """
+SCHEMA_LOCATION = "C:\scratch\schemas"
+CHANGE_SCHEMA_LOCATION = False
+
+""" """""""""""""""""" """
+
 from django.db import connection
-from xformmanager.models import ElementDefModel
+from xformmanager.models import ElementDefModel, FormDefModel
+
+
 
 def run():
     print "starting update"
@@ -22,7 +31,7 @@ def run():
     
 def _perform_table_migration():
     cursor = connection.cursor()
-
+    
     # 1. ALTER elementdefmodel.name to be elementdefmodel.xpath
     cursor.execute("ALTER TABLE `xformmanager_elementdefmodel` DROP KEY `name`;")
     cursor.execute("ALTER TABLE `xformmanager_elementdefmodel` CHANGE `name` `xpath` VARCHAR(255) NOT NULL;")
@@ -83,6 +92,10 @@ def _perform_table_migration():
         count = count + 1
     print "Updated %s elementdefmodel.xpath's" % count
     
+    # the following is ONLY USEFUL for testing this script!
+    # UNCOMMENT THIS WITH CAUTION
+    # if CHANGE_SCHEMA_LOCATION: _change_schema_location()
+    
     # we don't need to update any of the metadata elements
     # since all forms prior to this upgrade we assume are unversioned
     
@@ -96,3 +109,13 @@ def _rename_xpath(table_name, new_xpath):
     # should return a unique instance of this elementdefmodel
     edm = ElementDefModel.objects.get(xpath=new_xpath, form=form)
     print "Updating elementdefmodel %s" % edm.pk
+    
+def _change_schema_location():
+    formdefs = FormDefModel.objects.all()
+    count = 0
+    for formdef in formdefs:
+        if (formdef.xsd_file_location.find("/var/django-sites/commcarehq_dev/data/schemas") != -1):
+            formdef.xsd_file_location = formdef.xsd_file_location.replace("/var/django-sites/commcarehq_dev/data/schemas",SCHEMA_LOCATION)
+            formdef.save()
+            count = count + 1
+    print "changed schema locations for %s formdefmodels" % count
