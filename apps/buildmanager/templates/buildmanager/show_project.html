@@ -7,8 +7,8 @@
 {% if latest_build %}
    <b>Latest Released Build:</b>
        <a href="{% url buildmanager.views.show_latest_build project.id %}">view</a> |   
-       <a href="{{latest_build.get_jad_downloadurl}}">download jad</a> | 
-       <a href="{{latest_build.get_jar_downloadurl}}">download jar</a>
+       <a href="{{latest_build.get_jar_downloadurl}}">download jar</a> | 
+       <a href="{{latest_build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{latest_build.get_jad_contents}}');return false">download jad</a>
    <br>        
 {% endif %}
 <br>
