@@ -55,10 +55,10 @@ def _get_submissions(request, domain_id=0):
         except Exception, e:
             logging.error("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")
             return HttpResponseBadRequest("Poorly formatted MD5 file. Expecting a bz2-compressed file of md5 values.")            
-        stack_local = Submission.objects.all().order_by('checksum').values_list('checksum', flat=True)
+        stack_local = Submission.objects.all().distinct('checksum').order_by('checksum').values_list('checksum', flat=True)
         results = util.get_stack_diff(stack_received, stack_local)
         # this could get really large.... O_O
-        submissions = Submission.objects.filter(checksum__in=results).order_by("checksum")
+        submissions = Submission.objects.filter(checksum__in=results).distinct("checksum").order_by("checksum")
     
     if submissions.count() == 0:
         logging.info("No submissions could be found.")

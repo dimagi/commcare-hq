@@ -1,6 +1,8 @@
 """ This unit test verifies that satellite server synchronization works 
 It is currently designed to be run from the commcare-hq install dir, like:
 <install-dir>/python tests/deployment/testSync.py
+
+TODO - clean this up so that we delete all submissions after each test
 """
 
 """ VARIABLES """
@@ -64,15 +66,15 @@ class TestSync(unittest.TestCase):
     def test_generate_all_submissions(self):
         """ Tests downloading all submissions from self """
         # setup
-        schema_1 = create_xsd_and_populate("pf_followup.xsd", \
-                                           "pf_followup_1.xml", path = DATA_DIR)
-        populate("pf_followup_2.xml", path = DATA_DIR)
-        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", \
-                                "pf_new_reg_1.xml", path = DATA_DIR)
-        populate("pf_new_reg_2.xml", path = DATA_DIR)
-        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", \
-                                "pf_ref_completed_1.xml", path = DATA_DIR)
-        populate("pf_ref_completed_2.xml", path = DATA_DIR)
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", path = DATA_DIR)
+        submit_1 = populate("pf_followup_1.xml", path = DATA_DIR)
+        submit_2 = populate("pf_followup_2.xml", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", path = DATA_DIR)
+        submit_3 = populate("pf_new_reg_1.xml", path = DATA_DIR)
+        submit_4 = populate("pf_new_reg_2.xml", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", path = DATA_DIR)
+        submit_5 = populate("pf_ref_completed_1.xml", path = DATA_DIR)
+        submit_6 = populate("pf_ref_completed_2.xml", path = DATA_DIR)
         
         # download and check
         submissions_file = "submissions.tar"
@@ -84,6 +86,12 @@ class TestSync(unittest.TestCase):
         finally:
             # delete all data on self
             manager = XFormManager()
+            submit_1.delete()
+            submit_2.delete()
+            submit_3.delete()
+            submit_4.delete()
+            submit_5.delete()
+            submit_6.delete()
             manager.remove_schema(schema_1.id, remove_submissions = True)
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
@@ -106,6 +114,7 @@ class TestSync(unittest.TestCase):
         
         # the 'debug' flag limits the generated MD5s to a count of 5
         submissions_file = "submissions.tar"
+        # debug means we only post 5 submissions (instead of all)
         generate_submissions(serverhost, 'brian', 'test', debug=True, download=True, to=submissions_file)
         try:
             self._assert_tar_count_equals(submissions_file, Submission.objects.all().count()-5)
@@ -118,8 +127,17 @@ class TestSync(unittest.TestCase):
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
     
+    """
+    ro - We do not want to run this unit test on every build, since it's
+    going to generate something like 200 duplicate submission errors =b.
+    To do this cleanly, we would delete all existing submissions from the db
+    before running this, but silently wiping the db on the local machine
+    is probably going to cause more headache than it saves.
+    So we comment this test case out for now (most functionality is duplicated
+    in test_generate_all_submissions anyways), but we can always add this
+    back in later
     def test_sync_all_submissions(self):
-        """ Tests synchronizing all data from self (no MD5s posted) """
+        "" Tests synchronizing all data from self (no MD5s posted) ""
         manager = XFormManager()
     
         # load data
@@ -159,7 +177,8 @@ class TestSync(unittest.TestCase):
             manager.remove_schema(schema_1.id, remove_submissions = True)
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
-    
+    """
+        
     def test_sync_some_submissions(self):
         """ Tests synchronizing some data from self (posts a few MD5s) """
         manager = XFormManager()
@@ -169,7 +188,7 @@ class TestSync(unittest.TestCase):
         schema_2 = create_xsd_and_populate("pf_new_reg.xsd", "pf_new_reg_1.xml", path = DATA_DIR)
         schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", "pf_ref_completed_1.xml", path = DATA_DIR)
         
-        # get MD5 of 3 populated files
+        # get MD5 of all current submissions
         MD5_buffer = rest_util.get_field_as_bz2(Submission, 'checksum')
         
         # populate a few more files
@@ -182,16 +201,8 @@ class TestSync(unittest.TestCase):
         
         # get the difference between the first 3 files and the current
         # set of files (i.e. the last 4 files)
-    
-        url = 'http://%s/api/submissions/' % (serverhost)
-        up = urlparse(url)
-        conn = httplib.HTTPConnection(up.netloc)
-        conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse()
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        self._POST_MD5s(MD5_buffer, submissions_file)
     
         # save checksums and delete the ones just populated (d,e,f)
         checksums = [ submit_1.checksum, submit_2.checksum, submit_3.checksum, submit_3.checksum ]
@@ -226,6 +237,61 @@ class TestSync(unittest.TestCase):
             manager.remove_schema(schema_2.id, remove_submissions = True)
             manager.remove_schema(schema_3.id, remove_submissions = True)
     
+    def test_sync_dupe_submissions(self):
+        """ Tests synchronizing duplicate data from self"""
+        manager = XFormManager()
+    
+        # populate some files
+        schema_1 = create_xsd_and_populate("pf_followup.xsd", "pf_followup_1.xml", path = DATA_DIR)
+        schema_2 = create_xsd_and_populate("pf_new_reg.xsd", "pf_new_reg_1.xml", path = DATA_DIR)
+        schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", "pf_ref_completed_1.xml", path = DATA_DIR)
+        starting_submissions_count = Submission.objects.all().count()
+        
+        # <STATE 1/>
+        # get MD5 of 3 populated files
+        MD5_buffer = rest_util.get_field_as_bz2(Submission, 'checksum')
+        
+        # add 3 dupes and 1 new file
+        submit_1 = populate("pf_followup_1.xml", path = DATA_DIR)
+        submit_2 = populate("pf_new_reg_1.xml", path = DATA_DIR)
+        submit_3 = populate("pf_ref_completed_1.xml", path = DATA_DIR)
+        
+        # <STATE 2/>
+        submissions_file = "submissions.tar"
+        self._POST_MD5s(MD5_buffer, submissions_file)
+        self._assert_tar_count_equals(submissions_file, 0)
+        
+        submit_4 = populate("pf_ref_completed_3.xml", path = DATA_DIR)
+        
+        # <STATE 3/>
+        # get the difference between state 1 and state 3
+        self._POST_MD5s(MD5_buffer, submissions_file)
+    
+        # save checksum and delete the ones just populated
+        checksum_4 = submit_4.checksum
+        submit_1.delete()
+        submit_2.delete()
+        submit_3.delete()
+        submit_4.delete()
+        
+        # should get the same 3 schemas we registered above
+        self._assert_tar_count_equals(submissions_file, 1)
+        # load data from sync file (d,e,f)
+        load_submissions(submissions_file)
+        
+        try:
+            # verify that we only have 4 submissions
+            self.assertEqual( starting_submissions_count+1, Submission.objects.all().count() )
+            Submission.objects.get(checksum=checksum_4)
+        except Submission.DoesNotExist:
+            self.fail("Incorrect submission received")
+        finally:
+            # clean up
+            manager = XFormManager()
+            manager.remove_schema(schema_1.id, remove_submissions = True)
+            manager.remove_schema(schema_2.id, remove_submissions = True)
+            manager.remove_schema(schema_3.id, remove_submissions = True)
+    
     def test_sync_weird_submissions(self):
         """ Tests synchronizing some data from self (posts a few MD5s) """
         
@@ -236,6 +302,7 @@ class TestSync(unittest.TestCase):
         schema_1 = create_xsd_and_populate("pf_followup.xsd", "pf_followup_1.xml", path = DATA_DIR)
         schema_2 = create_xsd_and_populate("pf_new_reg.xsd", "pf_new_reg_1.xml", path = DATA_DIR)
         schema_3 = create_xsd_and_populate("pf_ref_completed.xsd", "pf_ref_completed_1.xml", path = DATA_DIR)
+        submissions_count = Submission.objects.count()
 
         url = 'http://%s/api/submissions/' % (serverhost)
         up = urlparse(url)
@@ -248,16 +315,13 @@ class TestSync(unittest.TestCase):
         self.assertTrue( response.lower().find('poorly formatted') != -1 )
 
         # test posting non-existent md5s
-        md5 = "e402f026c762a6bc999f9f2703efd367"
+        md5 = "e402f026c762a6bc999f9f2703efd367\n"
         bz2_md5 = bz2.compress(md5)
-        conn.request('POST', up.path, bz2_md5, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse().read()
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'wb')
-        fout.write(response)
-        fout.close()
+        self._POST_MD5s(bz2_md5, submissions_file)
+        
         # should get the same 3 schemas we registered above
-        self._assert_tar_count_equals(submissions_file, 3)
+        self._assert_tar_count_equals(submissions_file, submissions_count)
 
         # test posting duplicate md5s
         string = cStringIO.StringIO()
@@ -265,14 +329,12 @@ class TestSync(unittest.TestCase):
         for submit in submits:
             string.write(unicode( submit.checksum ) + '\n')
             string.write(unicode( submit.checksum  ) + '\n')
-        dupe_buffer = bz2.compress(string.getvalue())
-        conn.request('POST', up.path, dupe_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse().read()
+        MD5s = string.getvalue()
+        dupe_buffer = bz2.compress(MD5s)
+        
         submissions_file = "submissions.tar"
-        fout = open(submissions_file, 'wb')
-        fout.write(response)
-        fout.close()
-        self._assert_tar_count_equals(submissions_file, 1)
+        self._POST_MD5s(dupe_buffer, submissions_file)
+        self._assert_tar_count_equals(submissions_file, submissions_count-2)
 
         manager.remove_schema(schema_1.id, remove_submissions = True)
         manager.remove_schema(schema_2.id, remove_submissions = True)
@@ -359,15 +421,8 @@ class TestSync(unittest.TestCase):
         starting_schemata_count = FormDefModel.objects.all().count()
         
         # get the difference between the first schema and current state
-        url = 'http://%s/api/xforms/?format=sync' % (serverhost)
-        up = urlparse(url)
-        conn = httplib.HTTPConnection(up.netloc)
-        conn.request('POST', up.path, xmlns_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse()
         schemata_file = "schemata.tar"
-        fout = open(schemata_file, 'w+b')
-        fout.write(response.read())
-        fout.close()
+        self._POST_XMLNS(xmlns_buffer, schemata_file)
     
         # delete the ones just populated (d,e,f)
         manager.remove_schema(schema_2.id, remove_submissions = True)
@@ -414,12 +469,9 @@ class TestSync(unittest.TestCase):
         # test posting non-existent namespaces
         namespace = "http://zilch.com"
         bz2_namespace = bz2.compress(namespace)
-        conn.request('POST', up.path, bz2_namespace, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse().read()
         schemata_file = "schemata.tar"
-        fout = open(schemata_file, 'wb')
-        fout.write(response)
-        fout.close()
+        self._POST_XMLNS(bz2_namespace, schemata_file)
+
         # should get all the schemas back
         self._assert_tar_count_equals(schemata_file, starting_schemata_count+3)
 
@@ -430,12 +482,7 @@ class TestSync(unittest.TestCase):
             string.write(unicode( formdef.target_namespace ) + '\n')
             string.write(unicode( formdef.target_namespace ) + '\n')
         dupe_buffer = bz2.compress(string.getvalue())
-        conn.request('POST', up.path, dupe_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse().read()
-        schemata_file = "schemata.tar"
-        fout = open(schemata_file, 'wb')
-        fout.write(response)
-        fout.close()
+        self._POST_XMLNS(dupe_buffer, schemata_file)
         self._assert_tar_count_equals(schemata_file, starting_schemata_count+1)
 
         manager.remove_schema(schema_1.id, remove_submissions = True)
@@ -521,7 +568,27 @@ class TestSync(unittest.TestCase):
             return
         manager = XFormManager()
         manager.remove_schema(formdef.id, remove_submissions=True)
+    
+    def _POST_MD5s(self, MD5_buffer, output_file):
+        url = 'http://%s/api/submissions/' % (serverhost)
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse()
+        fout = open(output_file, 'w+b')
+        fout.write(response.read())
+        fout.close()
 
+    def _POST_XMLNS(self, xmlns_buffer, output_file):
+        url = 'http://%s/api/xforms/?format=sync' % (serverhost)
+        up = urlparse(url)
+        conn = httplib.HTTPConnection(up.netloc)
+        conn.request('POST', up.path, xmlns_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
+        response = conn.getresponse()
+        fout = open(output_file, 'w+b')
+        fout.write(response.read())
+        fout.close()
+        
 if __name__ == "__main__":
     real_args = [sys.argv[0]]
     if len(sys.argv) > 1:
