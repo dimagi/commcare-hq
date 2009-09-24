@@ -1,3 +1,5 @@
+.. _CommCare Help Main Page: help_index
+
 .. This period is necessary. The title doesn't show up unless we have something before it.
 .. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
 .. But let's not require patches to django
@@ -32,3 +34,4 @@ Contact
 More questions and/or feedback?
 Email us at commcarehq-support@dimagi.com.
 
+Return to the `CommCare Help Main Page`_

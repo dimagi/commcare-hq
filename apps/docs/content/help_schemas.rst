@@ -1,5 +1,8 @@
 .. |schemas| image:: ../static/docs/img/schemas.jpg
-   :alt: chart
+   :alt: schema screen shot
+.. |reports| image:: ../static/docs/img/reports.jpg
+   :alt: report screen shot
+.. _CommCare Help Main Page: help_index
 
 .. This period is necessary. The title doesn't show up unless we have something before it.
 .. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
@@ -28,3 +31,10 @@ When you modify an existing XForm or create a new one:
 If the XForm parses correctly, you should see it added to the list of Registered XForms.
 If not, you will receive an error message telling you what was wrong with the XForm you submitted. 
 
+
+The following is an example of an automatically generated report.
+
+|reports|
+
+
+Return to the `CommCare Help Main Page`_
