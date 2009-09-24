@@ -132,3 +132,8 @@ def case_insensitive_iter(data_tree, tag):
     for d in data_tree: 
         for e in case_insensitive_iter(d,tag):
             yield e 
+            
+def case_insensitive_attribute(lxml_element, attribute_name):
+    for i in lxml_element.attrib:
+        if (i.lower()==attribute_name.lower()):
+            return lxml_element.attrib[i]
