@@ -81,12 +81,12 @@ class FormDef(ElementDef):
         root = etree.XML(string)
 
         # there must be a better way of finding case-insensitive version
-        self.version = root.get("version") or root.get("Version") or root.get("VERSION")
+        self.version = case_insensitive_attribute(root, "version")
         
         # there must be a better way of finding case-insensitive version
-        self.uiversion = root.get("uiversion") or root.get("uiVersion") or root.get("UIVERSION")
+        self.uiversion = case_insensitive_attribute(root, "uiversion")
 
-        self.target_namespace = root.get('targetNamespace')
+        self.target_namespace = case_insensitive_attribute(root, 'targetNamespace')
         if not self.target_namespace:
             logging.error("Target namespace is not found in xsd schema")
         ElementDef.__init__(self, self.target_namespace)

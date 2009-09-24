@@ -130,11 +130,11 @@ class StorageUtility(object):
         new_rawdata_id = queries.execute_insert()
         metadata_model = Metadata()
         
-        version = root.get("version") or root.get("Version") or root.get("VERSION")
+        version = case_insensitive_attribute(root, "version")
         if version and version.strip().isdigit():
             metadata_model.version = version.strip()
             
-        uiversion = root.get("uiversion") or root.get("uiVersion") or root.get("UIVERSION")
+        uiversion = case_insensitive_attribute(root, "uiversion")
         if uiversion and uiversion.strip().isdigit():
             metadata_model.uiversion = uiversion.strip()
         
@@ -681,7 +681,7 @@ class StorageUtility(object):
         if r is None:
             raise self.XFormError("NO XMLNS FOUND IN SUBMITTED FORM")
         xmlns = r.group(0).strip('{').strip('}')
-        version = root.get('version') or root.get('Version') or root.get('VERSION')
+        version = case_insensitive_attribute(root, "version")
         if version and version.strip().isdigit():
             return (xmlns, version.strip())
         return (xmlns, None)

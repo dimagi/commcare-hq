@@ -81,10 +81,9 @@ def validate_jar(filename):
                 if not formdef:
                     raise BuildError("Could not get a valid form definition from the xml file: %s"
                                       % form_display)
-                try:
-                    formdef.validate()
-                except FormDef.FormDefError, e:
-                    raise BuildError(e.message)
+                    
+                #formdef.validate() throws errors on poor validation
+                formdef.validate()
 
                 # if we made it here we're all good
             except Exception, e:
