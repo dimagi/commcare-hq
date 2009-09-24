@@ -23,6 +23,8 @@ from django.db import connection
 from xformmanager.models import ElementDefModel, FormDefModel
 
 
+from xformmanager.storageutility import get_registered_table_name
+from django.db import connection
 
 def run():
     print "starting update"
@@ -108,7 +110,13 @@ def _rename_xpath(table_name, new_xpath):
     edm.save()
     # should return a unique instance of this elementdefmodel
     edm = ElementDefModel.objects.get(xpath=new_xpath, form=form)
-    print "Updating elementdefmodel %s" % edm.pk
+    table_name = get_registered_table_name(edm.xpath, form.target_namespace)
+    # test that table_name points to a valid table
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM %s" % table_name)
+    # will throw a ProgrammingError if table does not exist
+    print "Updated elementdefmodel %s" % edm.pk
+    print "    %s exists" % table_name
     
 def _change_schema_location():
     formdefs = FormDefModel.objects.all()
