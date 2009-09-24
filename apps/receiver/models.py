@@ -15,8 +15,10 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
+from django.core.urlresolvers import reverse
 
 from hq.models import *
+from hq.utils import build_url
 
 _XFORM_URI = 'xform'
 _DUPLICATE_ATTACHMENT = "duplicate_attachment"
@@ -321,12 +323,18 @@ class Attachment(models.Model):
         return "%s : %s"  % (self.id, self.attachment_uri)
     
     def display_string(self):
-        return """Id: %s
+        return """Domain: %s
+                  Id: %s
                   Submission: %s
                   Submit Time: %s
                   Content Type: %s
-                  URI: %s"""  % (self.id, self.submission.id, self.submission.submit_time,
-                                 self.attachment_content_type, self.attachment_uri)
+                  URI: %s
+                  URL to view on server: %s
+                  """  % \
+                  (self.submission.domain, self.id, self.submission.id, 
+                   self.submission.submit_time, self.attachment_content_type, 
+                   self.attachment_uri, 
+                   build_url(reverse('single_submission', args=(self.submission.id,))))
     
 class SubmissionHandlingType(models.Model):
     '''A way in which a submission can be handled.  Contains a reference
@@ -364,13 +372,20 @@ def log_duplicates(sender, instance, **kwargs): #get sender, instance, created
     '''A django post-save event that logs duplicate submissions to the
        handling log.'''
     if instance.is_duplicate():
-        logging.error("Got a duplicate attachment: %s." % instance.display_string())
-        # also mark that we've handled this as a duplicate. 
         try:
-            handle_type = SubmissionHandlingType.objects.get(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
-        instance.submission.handled(handle_type)
+            error = "Got a duplicate attachment: %s." %\
+                    (instance.display_string())
+            logging.error(error)
+            
+            # also mark that we've handled this as a duplicate. 
+            try:
+                handle_type = SubmissionHandlingType.objects.get(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
+            except SubmissionHandlingType.DoesNotExist:
+                handle_type = SubmissionHandlingType.objects.create(app=_RECEIVER, method=_DUPLICATE_ATTACHMENT)
+            instance.submission.handled(handle_type)
+        except Exception, e:
+            logging.error("Problem logging a duplicate attachment: %s.  The error is: %s" %\
+                          (instance.display_string(), e))
     
 # Register to receive signals on every attachment save.
 post_save.connect(log_duplicates, sender=Attachment)

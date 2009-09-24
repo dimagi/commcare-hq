@@ -1,0 +1,13 @@
+<table>
+    <thead>
+        <th>ID</th>
+        <th>Method</th>
+        <th>URL</th>
+        <th>Date and time</th>
+        <th>IP Address</th>
+        <th>User</th>
+    </thead>
+    {% for request_log in all_requests %}
+        {% include "requestlogger/partials/single_log_row.html" %}
+    {% endfor %}
+</table>

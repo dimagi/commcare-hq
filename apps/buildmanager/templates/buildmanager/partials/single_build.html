@@ -12,3 +12,9 @@
 <li><a href="{{build.get_jad_downloadurl}}">download jad file</a></li>
 <li><a href="{{build.get_jar_downloadurl}}">download jar file</a></li>
 </ul>
+{% with build.downloads.all as downloads %}
+    {% if downloads %}
+        <h3>Download history for build files</h3>
+        {% include "buildmanager/partials/downloads.html" %}
+    {% endif %}
+{% endwith %}
