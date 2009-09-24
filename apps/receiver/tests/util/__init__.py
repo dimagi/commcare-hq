@@ -10,7 +10,8 @@ from hq.models import Domain
 def get_full_path(file_name):
     '''Joins a file name with the directory of the current file
        to get the full path'''
-    return os.path.join(os.path.dirname(__file__),file_name)
+    head, tail = os.path.split(os.path.dirname(__file__))
+    return os.path.join( head,file_name )
     
 def makeNewEntry(headerfile, bodyfile, domain=None):
     

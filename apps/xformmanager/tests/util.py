@@ -1,4 +1,6 @@
+from hq.models import Domain
 from xformmanager.manager import *
+from receiver.tests.util import *
 import logging
 
 def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None, path=None):
@@ -46,38 +48,3 @@ def create_fake_submission(xml_file, domain, path=None):
     return submission
 
 
-""" The following is copied and pasted directly from receiver.util
-It's in here because importing receiver.util automatically causes the 
-receiver unit tests to run, which makes it hard to run xformmanager
-unit tests in isolation
-
-"""
-import os
-from receiver import submitprocessor 
-from hq.models import Domain
-
-def get_full_path(file_name):
-    '''Joins a file name with the directory of the current file
-       to get the full path'''
-    return os.path.join(os.path.dirname(__file__),file_name)
-    
-def makeNewEntry(headerfile, bodyfile, domain=None):
-    
-    fin = open(headerfile,"r")
-    meta= fin.read()
-    fin.close()
-    
-    
-    fin = open(bodyfile,"rb")
-    body = fin.read()
-    fin.close()
-    
-    metahash = eval(meta)
-    if domain:
-        mockdomain = domain
-    elif Domain.objects.all().count() == 0:
-        mockdomain = Domain(name='mockdomain')
-        mockdomain.save()
-    else:
-        mockdomain = Domain.objects.all()[0]
-    return submitprocessor.do_old_submission(metahash, body, domain=mockdomain)
