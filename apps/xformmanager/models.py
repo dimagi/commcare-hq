@@ -11,10 +11,12 @@ from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
+from django.core.urlresolvers import reverse
 
+from hq.models import *
+from hq.utils import build_url
 from graphing import dbhelper
 from receiver.models import Attachment, SubmissionHandlingType
-from hq.models import *
 from xformmanager.util import case_insensitive_iter, format_field
 
 class ElementDefModel(models.Model):
@@ -411,8 +413,8 @@ def process(sender, instance, **kwargs): #get sender, instance, created
             traceback_string = '\n'.join(traceback.format_tb(tb))
             # we use 'xform_traceback' insetad of traceback since
             # dan's custom logger uses 'traceback'
-            logging.error(str(e) + ", domain: %s, attachment: %s, submission: %s" % \
-                          ( instance.submission.domain, instance.id, instance.submission.id ), \
+            logging.error(str(e) + "attachment: %s" % \
+                          instance.display_string(),
                           extra={'file_name':xml_file_name, \
                                  'xform_traceback':traceback_string} )
     else:

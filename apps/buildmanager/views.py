@@ -4,6 +4,7 @@ import logging
 
 from hq.models import ExtUser
 from hq.models import Domain
+from hq.utils import build_url
 from requestlogger.models import RequestLog
 
 from buildmanager.models import *
@@ -167,8 +168,8 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
         build.release(request.user)
         context = {}
         context["build"] = build
-        context["jad_url"] = request.build_absolute_uri(build.get_jad_downloadurl())
-        context["latest_url"] = request.build_absolute_uri(build.project.get_latest_jad_url()) 
+        context["jad_url"] =  build_url(build.get_jad_downloadurl(), request)
+        context["latest_url"] = build_url(build.project.get_latest_jad_url(), request)
          
         return render_to_response(request, template_name, context)
     except BuildError, e:
