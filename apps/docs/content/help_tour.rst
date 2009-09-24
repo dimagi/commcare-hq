@@ -1,3 +1,4 @@
+.. _CommCare Help Main Page: help_index
 .. _Guided Tour: help_tour
 .. _Charts: help_charts
 .. _Schemas and Reports: help_schemas
@@ -27,7 +28,7 @@ The first step in using this site is to become familiar with the navigation link
 
 * Dashboard is an overview of recent activity in the system.
 * Charts_ provides intuitive graphs and visualizations of data collected. 
-* Schemas_ and Reports is where you register CommCare XForms and where you can see individual submissions broken down by form type.
+* `Schemas and Reports`_ is where you register CommCare XForms and where you can see individual submissions broken down by form type.
 * Submissions is a list of all the forms submitted to this system so far.
 
 
@@ -61,7 +62,7 @@ Submissions
 -----------
 Most users interested in examining forms as they arrive should use the "Schemas and Reports" tabs. However, on the rare occasion when you need a little more information, you can navigate to the "submissions" page. This is a list of all the raw, unprocessed data submitted to the system, including a variety of technical details useful for troubleshooting. 
 
-
+Return to the `CommCare Help Main Page`_
 
 
 

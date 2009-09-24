@@ -32,6 +32,3 @@ XForms
 ------
 * XForms_: Modifying existing XForms
 
-Misc
-----
-
