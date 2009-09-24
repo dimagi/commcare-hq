@@ -1,0 +1,12 @@
+{% comment %}
+This partial template displays cells for an instance of a request log object.
+It assumes a template variable named request_log.  It is used if you want to
+attach the log to other models. 
+{% endcomment %}
+<td>{{request_log.id}}</td>
+<td>{{request_log.method}}</td>
+<td>{{request_log.url}}</td>
+<td>{{request_log.time}}</td>
+<td>{{request_log.ip}}</td>
+<td>{{request_log.user}}</td>
+
