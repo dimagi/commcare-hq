@@ -1,3 +1,5 @@
+.. _CommCare Help Main Page: help_index
+
 .. This period is necessary. The title doesn't show up unless we have something before it.
 .. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
 .. But let's not require patches to django
@@ -71,4 +73,4 @@ Changes That DO Require Re-registration
 * Changing the <bind> 'nodeset' of any element
 * Adding or removing items from any 'select' 
 
-
+Return to the `CommCare Help Main Page`_

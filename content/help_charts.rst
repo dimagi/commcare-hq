@@ -1,4 +1,7 @@
+.. _CommCare Help Main Page: help_index
 .. |chart_image| image:: ../static/docs/img/charts.jpg
+.. |chart_bar| image:: ../static/docs/img/charts_bar.jpg
+.. |chart_refer| image:: ../static/docs/img/charts_refer.jpg
    :alt: chart
 .. |chart_nav| image:: ../static/docs/img/charts_nav.jpg
    :alt: chart
@@ -27,3 +30,11 @@ Some useful features to notice include:
 * You can view data over a variety of intervals
 * The data can be exported into Excel or any other data manipulation software of your choice
 
+We can support a wide array of different chart types, including bars, graphs, and histograms. 
+
+|chart_bar|
+
+|chart_refer|
+
+
+Return to the `CommCare Help Main Page`_
