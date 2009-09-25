@@ -34,5 +34,4 @@ class ProjectBuildAdmin(admin.ModelAdmin):
 admin.site.register(Project,ProjectAdmin)
 admin.site.register(ProjectBuild,ProjectBuildAdmin)    
 admin.site.register(BuildDownload)    
-
-    
+admin.site.register(BuildForm)    
