@@ -1,7 +1,6 @@
-""" We put utility code in a separate file so that other tests 
-(such as xformmanager's) can use it without triggering 
-the receiver unit tests
-
+"""We put utility code in a separate package so that other tests 
+   (such as xformmanager's) can use it without triggering 
+   the receiver unit tests
 """
 import os
 from receiver import submitprocessor 
