@@ -185,7 +185,20 @@ class ProjectBuild(models.Model):
         for line in file:
             lines.append(line.strip())
         return "<br>".join(lines)
-        
+    
+    def get_xform_html_summary(self):
+        '''This is used by the view.  It is pretty cool, but perhaps misplaced.'''
+        to_return = []
+        for form in self.xforms.all():
+            try:
+                to_return.append(form.get_html_display())
+            except Exception, e:
+                # we don't care about this
+                pass
+        if to_return:
+            return "<br>".join(to_return)
+        else:
+            return "No X-Forms found"
     
     def get_jar_downloadurl(self):
         """do a reverse to get the urls for the given project/buildnumber for the direct download"""
@@ -290,6 +303,23 @@ class BuildForm(models.Model):
     def get_file_name(self):
         '''Get a readable file name for this xform'''
         return os.path.basename(self.file_location)
+    
+    def get_url(self):
+        '''Get the url where you can view this form'''
+        return reverse('get_build_xform', args=(self.id,))
+                       
+    def as_filestream(self):
+        '''Gets a raw handle to the form as a file stream'''
+        try:
+            fin = open(self.file_location,'r')
+            return fin
+        except Exception, e:
+            logging.error("Unable to open xform: %s" % self, 
+                          extra={"exception": e }) 
+
+    def get_html_display(self):
+        '''A clickable html displayable version of this for use in templates'''
+        return "<a href=%s>%s</a>" % (self.get_url(), self.get_file_name())
     
     def __unicode__(self):
         return "%s: %s" % (self.build, self.get_file_name())
