@@ -1,21 +1,21 @@
-from django.db import models
-from django.contrib.auth.models import User
-from hq.models import ExtUser
-from hq.models import Domain
-from requestlogger.models import RequestLog
-
-from buildmanager.jar import validate_jar, extract_xforms
-from buildmanager.exceptions import BuildError
-
 import os
 import logging
 import settings
 from datetime import datetime
+
+from django.db import models
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
+from hq.models import ExtUser
+from hq.models import Domain
+from requestlogger.models import RequestLog
+from buildmanager.jar import validate_jar, extract_xforms
+from buildmanager.exceptions import BuildError
 
+BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
 
 class Project (models.Model):
     """
@@ -246,14 +246,6 @@ class ProjectBuild(models.Model):
         '''Validates this build's jar file'''
         validate_jar(self.jarfile)
         
-    def extract_and_link_xforms(self):
-        '''Extracts all xforms from this build's jar and creates
-           references on disk and model objects for them.'''
-        xforms = extract_xforms(self.jar_file, self._get_destination())
-        for form in xforms:
-            form_model = BuildForm.objects.create(build=self, file_location=form)
-        
-        
     def release(self, user):
         '''Release a build, by setting its status as such.'''
         if self.status == "release":
@@ -263,6 +255,27 @@ class ProjectBuild(models.Model):
             self.released = datetime.now()
             self.released_by = user
             self.save()
+            
+def extract_and_link_xforms(sender, instance, created, **kwargs): 
+    '''Extracts all xforms from this build's jar and creates
+           references on disk and model objects for them.'''
+    # only do this the first time we save, not on updates
+    if not created:
+        return
+    
+    try:
+        xforms = extract_xforms(instance.jar_file, instance._get_destination())
+        for form in xforms:
+            form_model = BuildForm.objects.create(build=instance, file_location=form)
+        num_created = len(instance.xforms.all())
+        if num_created == 0:
+            logging.warn("Build %s didn't have any linked xforms!  Why not?!" % instance)
+    except Exception, e:
+        logging.error("Problem extracting xforms for build: %s, the error is: %s" %\
+                      (instance, e))
+
+post_save.connect(extract_and_link_xforms, sender=ProjectBuild)
+    
       
 class BuildForm(models.Model):
     """Class representing the location of a single build's xform on

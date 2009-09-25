@@ -15,8 +15,8 @@ class BuildTestCase(TestCase):
         self.build = build
 
     def testSaveXForms(self):
-        self.assertEqual(0, len(BuildForm.objects.all()))
-        self.build.extract_and_link_xforms()
+        # the saving of the build should have auto-created these
+        self.assertEqual(2, len(BuildForm.objects.all()))
         all_forms = BuildForm.objects.all()
         self.assertEqual(2, len(all_forms))
         for form in all_forms:
@@ -24,4 +24,10 @@ class BuildTestCase(TestCase):
             self.assertTrue(form.get_file_name() in ["brac_chw.xml", "weekly_update.xml"])
         self.assertEqual(2, len(self.build.xforms.all()))
         
-                
+        # resave and make sure they don't get replicated
+        self.build.description = "some new description"
+        self.build.save()
+        self.assertEqual(2, len(BuildForm.objects.all()))
+        self.assertEqual(2, len(self.build.xforms.all()))
+        
+        
