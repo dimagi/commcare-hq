@@ -190,7 +190,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     context = {}
     form = ProjectBuildForm()    
     if request.method == 'POST':
-        form = BuildForm(request.POST, request.FILES)                
+        form = ProjectBuildForm(request.POST, request.FILES)                
         if form.is_valid():
             # must add_schema to storage provide first since forms are dependent upon elements            
             try:                      
@@ -200,7 +200,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
                 newbuild.package_created = datetime.datetime.now()
                 newbuild.set_jadfile(request.FILES['jad_file_upload'].name, request.FILES['jad_file_upload'])
                 newbuild.set_jarfile(request.FILES['jar_file_upload'].name, request.FILES['jar_file_upload'])
-                newbuild.save()                
+                newbuild.save()
                 return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
             except Exception, e:
                 logging.error("buildmanager new ProjectBuild creation error.", 
@@ -214,7 +214,6 @@ def new_build(request, template_name="buildmanager/new_build.html"):
 
 @login_required
 def get_build_xform(request, id):
-    print BuildForm
     form = BuildForm.objects.get(id=id)
     fin = form.as_filestream()
     # unfortunately, neither of these more correct displays actually look good in firefox

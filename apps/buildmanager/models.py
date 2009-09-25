@@ -307,6 +307,7 @@ class BuildForm(models.Model):
     def get_url(self):
         '''Get the url where you can view this form'''
         return reverse('get_build_xform', args=(self.id,))
+        
                        
     def as_filestream(self):
         '''Gets a raw handle to the form as a file stream'''
@@ -319,7 +320,7 @@ class BuildForm(models.Model):
 
     def get_html_display(self):
         '''A clickable html displayable version of this for use in templates'''
-        return "<a href=%s>%s</a>" % (self.get_url(), self.get_file_name())
+        return '<a href=%s target=_blank>%s</a>' % (self.get_url(), self.get_file_name())
     
     def __unicode__(self):
         return "%s: %s" % (self.build, self.get_file_name())
