@@ -392,10 +392,14 @@ class Metadata(models.Model):
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
-def process(sender, instance, **kwargs): #get sender, instance, created
+def process(sender, instance, created, **kwargs): #get sender, instance, created
+    # only process newly created xforms, not all of them
+    if not created:
+        return
+    
     if not instance.is_xform():
         return
-
+    
     # yuck, this import is in here because they depend on each other
     from manager import XFormManager
     xml_file_name = instance.filepath
