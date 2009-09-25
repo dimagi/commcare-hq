@@ -4,6 +4,9 @@ from hq.models import ExtUser
 from hq.models import Domain
 from requestlogger.models import RequestLog
 
+from buildmanager.jar import validate_jar, extract_xforms
+from buildmanager.exceptions import BuildError
+
 import os
 import logging
 import settings
@@ -12,24 +15,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
 BUILDFILES_PATH = settings.RAPIDSMS_APPS['buildmanager']['buildpath']
-
-class BuildError(Exception):
-    """Generic error for the Build Manager to throw.  Also
-       supports wrapping a collection of other errors."""
-    
-    def __init__(self, msg, errors=[]):
-        super(BuildError, self).__init__(msg)
-        # reimplementing base message, since .message is deprecated in 2.6
-        self.msg = msg 
-        self.errors = errors
-        
-    def get_error_string(self, delim="\n"):
-        '''Get the error string associated with any passed in errors, 
-           joined by an optionally passed in delimiter''' 
-        return delim.join([unicode(error) for error in self.errors])
-    
-    def __unicode__(self):
-        return "%s\n%s" % (self.msg, self.get_error_string()) 
 
 
 class Project (models.Model):
@@ -119,11 +104,17 @@ class ProjectBuild(models.Model):
     # build server User to be able to push to multiple omains
     uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
-       
-    build_number = models.PositiveIntegerField()       
+    
+    # the teamcity build number
+    build_number = models.PositiveIntegerField()
+    # the source control revision number       
     revision_number = models.CharField(max_length=255, null=True, blank=True)
+    
+    # the "release" version.  e.g. 2.0.1
+    version = models.CharField(max_length=20, null=True, blank=True)
+    
     package_created = models.DateTimeField()    
-      
+    
     jar_file = models.FilePathField(_('JAR File Location'), 
                                     match='.*\.jar$', 
                                     recursive=True,
@@ -218,7 +209,7 @@ class ProjectBuild(models.Model):
     def set_jadfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""        
         try:
-            new_file_name = self._get_destination(filename)
+            new_file_name = os.path.join(self._get_destination(), filename)
             fout = open(new_file_name, 'w')
             fout.write( filestream.read() )
             fout.close()
@@ -230,7 +221,7 @@ class ProjectBuild(models.Model):
     def set_jarfile(self, filename, filestream):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
         try:
-            new_file_name = self._get_destination(filename)
+            new_file_name = os.path.join(self._get_destination(), filename)
             fout = open(new_file_name, 'wb')
             fout.write( filestream.read() )
             fout.close()
@@ -239,14 +230,30 @@ class ProjectBuild(models.Model):
             logging.error("Error, saving jarfile failed", extra={"exception":e, "jar_filename":filename})
         
     
-    def _get_destination(self,filename):
+    def _get_destination(self):
+        """The directory this build saves its data to.  Defined in
+           the config and then /xforms/<project_id>/<build_id>/ is 
+           appended.  If it doesn't exist, the directory is 
+           created by this method."""
         destinationpath = os.path.join(BUILDFILES_PATH,
                                            str(self.project.id),
                                            str(self.build_number))
         if not os.path.exists(destinationpath):
             os.makedirs(destinationpath)        
-        return os.path.join(destinationpath, os.path.basename(str(filename)))  
+        return destinationpath
     
+    def validate_jar(self):
+        '''Validates this build's jar file'''
+        validate_jar(self.jarfile)
+        
+    def extract_and_link_xforms(self):
+        '''Extracts all xforms from this build's jar and creates
+           references on disk and model objects for them.'''
+        xforms = extract_xforms(self.jar_file, self._get_destination())
+        for form in xforms:
+            form_model = BuildForm.objects.create(build=self, file_location=form)
+        
+        
     def release(self, user):
         '''Release a build, by setting its status as such.'''
         if self.status == "release":
@@ -256,7 +263,25 @@ class ProjectBuild(models.Model):
             self.released = datetime.now()
             self.released_by = user
             self.save()
-        
+      
+class BuildForm(models.Model):
+    """Class representing the location of a single build's xform on
+       the file system."""
+    
+    build = models.ForeignKey(ProjectBuild, related_name="xforms")
+    file_location = models.FilePathField(_('Xform Location'), 
+                                         recursive=True, 
+                                         path=BUILDFILES_PATH, 
+                                         max_length=255)
+    
+    def get_file_name(self):
+        '''Get a readable file name for this xform'''
+        return os.path.basename(self.file_location)
+    
+    def __unicode__(self):
+        return "%s: %s" % (self.build, self.get_file_name())
+    
+  
 BUILD_FILE_TYPE = (    
     ('jad', '.jad file'),    
     ('jar', '.jar file'),   

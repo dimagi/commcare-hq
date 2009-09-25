@@ -7,7 +7,7 @@ import shutil
 import logging
 from StringIO import StringIO
 
-from models import BuildError
+from buildmanager.exceptions import BuildError
 from xformmanager.models import MetaDataValidationError
 from xformmanager.manager import XFormManager, form_translate
 from xformmanager.xformdef import FormDef, ElementDef
