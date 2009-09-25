@@ -103,8 +103,8 @@ msgstr "Watoto wameandikishwa kliniki?"
 msgid "Mother survived?"
 msgstr "Mama alinusurika?"
 
-msgid "Delivery location"
-msgstr "Alifungulia wapi"
+msgid "Delivery location?"
+msgstr "Alijifungua wapi?"
 
 msgid "Closed Cases"
 msgstr "Mama ambao wamefungulia"
@@ -182,7 +182,7 @@ msgid "clinic"
 msgstr "zahanati"
 
 msgid "home"
-msgstr "byumbani"
+msgstr "nyumbani"
 
 msgid "birth"
 msgstr "alijifungua"
