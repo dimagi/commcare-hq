@@ -60,6 +60,25 @@ class ProcessingTestCase(unittest.TestCase):
         attaches = Attachment.objects.all().filter(submission=mysub)        
         self.assertEquals(1,len(attaches))        
     
+    def testCheckAttachmentSignals(self):
+        Submission.objects.all().delete()
+        Attachment.objects.all().delete()
+        self.assertEqual(0, len(Submission.objects.all()))
+        self.assertEqual(0, len(Attachment.objects.all()))
+        
+        makeNewEntry(get_full_path('simple-meta.txt'),
+                     get_full_path('simple-body.txt'))
+        
+        self.assertEquals(1, len(Submission.objects.all()))
+        mysub = Submission.objects.all()[0]
+        
+        self.assertEquals(1,len(mysub.attachments.all()))        
+        
+        # resaving the submission should NOT add a new attachment.
+        mysub.content_type="something_else"
+        mysub.save()
+        self.assertEquals(1,len(mysub.attachments.all()))        
+    
     
     def testSubmitMultipart(self):     
         Submission.objects.all().delete()
