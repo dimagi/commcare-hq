@@ -61,7 +61,6 @@ class Submission(models.Model):
         return None
         
         
-        
     class Meta:
         ordering = ('-submit_time',)
         verbose_name = _("Submission Log")        

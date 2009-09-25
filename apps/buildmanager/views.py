@@ -188,7 +188,7 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
 @login_required
 def new_build(request, template_name="buildmanager/new_build.html"): 
     context = {}
-    form = BuildForm()    
+    form = ProjectBuildForm()    
     if request.method == 'POST':
         form = BuildForm(request.POST, request.FILES)                
         if form.is_valid():
@@ -212,7 +212,20 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     context['form'] = form
     return render_to_response(request, template_name, context)
 
-
+@login_required
+def get_build_xform(request, id):
+    print BuildForm
+    form = BuildForm.objects.get(id=id)
+    fin = form.as_filestream()
+    # unfortunately, neither of these more correct displays actually look good in firefox
+    #response = HttpResponse(fin.read(), mimetype='application/xhtml+xml')
+    #response = HttpResponse(fin.read(), mimetype='text/xml')
+    response = HttpResponse(fin.read(), mimetype='text/plain')
+    fin.close()
+    return response
+        
+    
+    
 def _handle_error(request, error_message):
     """Handles an error, by logging it and returning a 500 page"""
     logging.error(error_message)
