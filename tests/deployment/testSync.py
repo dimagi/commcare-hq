@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """ This unit test verifies that satellite server synchronization works 
 It is currently designed to be run from the commcare-hq install dir, like:
 <install-dir>/python tests/deployment/testSync.py
@@ -7,35 +10,14 @@ TODO - clean this up so that we delete all submissions after each test
 
 """ VARIABLES """
 import os
-serverhost = 'localhost:8000'
+serverhost = 'test.commcarehq.org' #for the actual server
+#serverhost = 'localhost:8000'
 #serverhost = 'test.commcarehq.org' #for the actual server
-curl_command = 'c:\curl\curl.exe' #if you have curl installed on windows
-#curl_command = 'curl' #if curl is in your path/linux
+#curl_command = 'c:\curl\curl.exe' #if you have curl installed on windows
+curl_command = 'curl' #if curl is in your path/linux
 
 filedir = os.path.dirname(__file__)
 DATA_DIR = os.path.join( filedir, 'data' )
-
-""" FIXING PATH """
-projectdir = os.path.realpath( os.path.join(filedir,'..' + os.sep + '..') )
-
-import sys
-sys.path.append(os.path.join(projectdir))
-sys.path.append(os.path.join(projectdir, 'apps'))
-sys.path.append(os.path.join(projectdir, 'rapidsms'))
-sys.path.append(os.path.join(projectdir, 'rapidsms', 'apps'))
-
-#rapidsms lib stuff
-sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib'))
-sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib','rapidsms'))
-sys.path.append(os.path.join(projectdir, 'rapidsms', 'lib','rapidsms','webui'))
-
-""" ENVIRONMENT """
-import rapidsms
-os.environ["RAPIDSMS_INI"] = os.path.join(projectdir,"local.ini")
-os.environ["RAPIDSMS_HOME"] = projectdir
-from django.core.management import setup_environ
-from rapidsms.webui import settings
-setup_environ(settings)
 
 """ IMPORTS """
 import bz2
@@ -589,25 +571,9 @@ class TestSync(unittest.TestCase):
         fout.write(response.read())
         fout.close()
         
-if __name__ == "__main__":
-    real_args = [sys.argv[0]]
-    if len(sys.argv) > 1:
-        for arg in sys.argv[1:]:
-            argsplit = arg.split('=')
-            if len(argsplit) == 2:
-                if argsplit[0] == 'serverhost':
-                    serverhost = argsplit[-1]                
-                elif argsplit[0] == 'curlcommand':
-                    curl_command = argsplit[-1]
-                else:
-                    raise "Error, these arguments are wrong, it should only be\nt\tserverhost=<hostname>\n\tcurlcommand=<curl command>\n\t\tand they BOTH must be there!"
-            else:
-                #it's not an argument we want to parse, so put it into the actual args
-                real_args.append(arg)
-    
-    print curl_command
-    unittest.main(argv=real_args)
-
+def run():
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSync)
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
 
 
