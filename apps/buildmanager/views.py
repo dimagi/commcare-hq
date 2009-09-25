@@ -7,6 +7,7 @@ from hq.models import Domain
 from hq.utils import build_url
 from requestlogger.models import RequestLog
 
+from buildmanager.exceptions import BuildError
 from buildmanager.models import *
 from buildmanager.forms import *
 from buildmanager.jar import validate_jar
@@ -165,6 +166,7 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     try:
         jarfile = build.jar_file
         validate_jar(jarfile)
+        build.validate_jar()
         build.release(request.user)
         context = {}
         context["build"] = build
