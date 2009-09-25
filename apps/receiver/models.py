@@ -70,10 +70,6 @@ class Submission(models.Model):
     def __unicode__(self):
         return "Submission " + unicode(self.submit_time)
     
-    def save(self, **kwargs):        
-        super(Submission, self).save()
-        self.process_attachments()
-    
     def delete(self, **kwargs):
         if os.path.exists(self.raw_post) and os.path.isfile(self.raw_post):
             os.remove(self.raw_post)
@@ -134,49 +130,6 @@ class Submission(models.Model):
                 return True
         return False
     
-    def process_attachments(self):
-        """Process attachments for a given submission blob.
-        Will try to use the email parsing library to get all the MIME content from a given submission
-        And write to file and make new Attachment entries linked back to this Submission"""
-        fin = open(self.raw_post,'rb')
-        body = fin.read()        
-        fin.close()        
-        parsed_message = email.message_from_string(body)   
-        for part in parsed_message.walk():
-            try:
-                #print "CONTENT-TYPE: " + str(part.get_content_type())     
-                if part.get_content_type() == 'multipart/mixed':
-                    #it's a multipart message, oh yeah
-                    logging.debug("Multipart part")
-                    #print part['Content-ID']
-                    #continue
-                else:                   
-                    new_attach= Attachment()
-                    new_attach.submission = self
-                    content_type = part.get_content_type()
-                    new_attach.attachment_content_type=content_type
-                    # data submitted from the webui is always 'multipart'
-                    if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
-                        new_attach.attachment_uri = _XFORM_URI
-                        filename='-xform.xml'
-                    else:
-                        logging.debug("non XML section: %s" % part['Content-ID'])
-                        new_attach.attachment_uri = part['Content-ID']
-                        filename='-%s' % os.path.basename(new_attach.attachment_uri)
-               
-                    payload = part.get_payload().strip()
-                    new_attach.filesize = len(payload)
-                    new_attach.checksum = hashlib.md5(payload).hexdigest()
-                    fout = open(os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],self.transaction_uuid + filename),'wb')
-                    fout.write(payload)
-                    fout.close() 
-                    new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],self.transaction_uuid + filename)
-                    new_attach.save()                
-                    logging.debug("Attachment Save complete")                    
-            except Exception, e:                 
-                type, value, tb = sys.exc_info()
-                logging.error("Attachment Parsing Error!!! Traceback: " + type.__name__ +  ":" + str(value) + " " + string.join(traceback.format_tb(tb),' '))
-
     def export(self):
         """ walks through the submission and bundles it
         in an exportable format with the original submitting IP 
@@ -207,6 +160,55 @@ class Submission(models.Model):
         # <body>   
         return simplejson.dumps(headers) + "\n\n" + post_file.read()
 
+def process_attachments(sender, instance, created, **kwargs): 
+    """Process attachments for a given submission blob.
+    Will try to use the email parsing library to get all the MIME content from a given submission
+    And write to file and make new Attachment entries linked back to this Submission"""
+    
+    # only process attachments on newly created instances, not all of them
+    if not created:
+        return
+    
+    fin = open(instance.raw_post,'rb')
+    body = fin.read()        
+    fin.close()        
+    parsed_message = email.message_from_string(body)   
+    for part in parsed_message.walk():
+        try:
+            #print "CONTENT-TYPE: " + str(part.get_content_type())     
+            if part.get_content_type() == 'multipart/mixed':
+                #it's a multipart message, oh yeah
+                logging.debug("Multipart part")
+                #print part['Content-ID']
+                #continue
+            else:                   
+                new_attach= Attachment()
+                new_attach.submission = instance
+                content_type = part.get_content_type()
+                new_attach.attachment_content_type=content_type
+                # data submitted from the webui is always 'multipart'
+                if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
+                    new_attach.attachment_uri = _XFORM_URI
+                    filename='-xform.xml'
+                else:
+                    logging.debug("non XML section: %s" % part['Content-ID'])
+                    new_attach.attachment_uri = part['Content-ID']
+                    filename='-%s' % os.path.basename(new_attach.attachment_uri)
+           
+                payload = part.get_payload().strip()
+                new_attach.filesize = len(payload)
+                new_attach.checksum = hashlib.md5(payload).hexdigest()
+                fout = open(os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],instance.transaction_uuid + filename),'wb')
+                fout.write(payload)
+                fout.close() 
+                new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],instance.transaction_uuid + filename)
+                new_attach.save()                
+                logging.debug("Attachment Save complete")                    
+        except Exception, e:                 
+            type, value, tb = sys.exc_info()
+            logging.error("Attachment Parsing Error!!! Traceback: " + type.__name__ +  ":" + str(value) + " " + string.join(traceback.format_tb(tb),' '))
+
+post_save.connect(process_attachments, sender=Submission)
 
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)
