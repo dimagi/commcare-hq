@@ -368,9 +368,12 @@ class SubmissionHandlingOccurrence(models.Model):
     
 
 
-def log_duplicates(sender, instance, **kwargs): #get sender, instance, created
+def log_duplicates(sender, instance, created, **kwargs): #get sender, instance, created
     '''A django post-save event that logs duplicate submissions to the
        handling log.'''
+    # only log dupes on newly created attachments, not all of them
+    if not created:
+        return
     if instance.is_duplicate():
         try:
             error = "Got a duplicate attachment: %s." %\
