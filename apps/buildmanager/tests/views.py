@@ -2,35 +2,20 @@ import os
 
 from django.test import TestCase
 from django.test.client import Client
-from buildmanager.models import Project, ProjectBuild, BuildDownload
-from hq.models import ExtUser, Domain
 
+from hq.models import ExtUser, Domain
+from buildmanager.models import Project, ProjectBuild, BuildDownload
+from buildmanager.tests.util import setup_build_objects 
 from datetime import datetime
 
 class ViewsTestCase(TestCase):
     
     def setUp(self):
-        domain = Domain(name='mockdomain')
-        domain.save()
-        user = ExtUser()
-        user.domain = domain
-        user.username = 'brian'
-        user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
-        user.save()
-        self.project = Project.objects.create(domain=domain, name="Project", 
-                               description="Project Description")
-        self.path = os.path.dirname(__file__)
-        path_to_data = os.path.join(self.path, "data")
-        jarfile = os.path.join(path_to_data , "dummy.jar")
-        jadfile = os.path.join(path_to_data , "dummy.jad")
-        self.build = ProjectBuild(project=self.project, 
-                                  build_number=1, 
-                                  status="release",
-                                  package_created=datetime.now(),
-                                  uploaded_by = user,
-                                  jar_file=jarfile,
-                                  jad_file=jadfile)
-        self.build.save()
+        domain, user, project, build = setup_build_objects()
+        self.domain = domain
+        self.user = user
+        self.project = project
+        self.build = build
         self.client.login(username='brian',password='test')
 
     def testDownloadCount(self):
