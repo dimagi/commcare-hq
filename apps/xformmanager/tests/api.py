@@ -4,22 +4,17 @@ from xformmanager.tests.util import create_xsd_and_populate
 from xformmanager.models import *
 from xformmanager.manager import XFormManager
 from hq.models import ExtUser
+from hq.tests.util import create_user_and_domain
 
 class APITestCase(TestCase):
+    
     def setUp(self):
         # we cannot load this using django built-in fixtures
         # because django filters are model dependent
         # (and we have a whack of dynamically generated non-model db tables)
-        domain = Domain(name='mockdomain')
-        domain.save()
-        user = ExtUser()
-        user.domain = domain
-        user.username = 'jewelstaite'
-        user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
-        user.save()
+        user, domain = create_user_and_domain()
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", domain)
-        self.client.login(username='jewelstaite',password='test')
-        pass
+        self.client.login(username='brian',password='test')
 
     def test_api_calls(self):
         # test the actual URL plus the non APPEND_SLASH url

@@ -290,8 +290,8 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                         count = count + 1
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
-    inner_qs = SubmissionHandlingOccurrence.objects.all().values('pk').query
-    orphans = Submission.objects.exclude(id__in=inner_qs)
+    inner_qs = SubmissionHandlingOccurrence.objects.all().values('submission_id').query
+    orphans = Submission.objects.filter(domain=extuser.domain).exclude(id__in=inner_qs)
     # We could also put a check in here to not display duplicate data
     # using 'if not orphan.is_duplicate()'
     context['submissions'] = paginate(request, orphans )

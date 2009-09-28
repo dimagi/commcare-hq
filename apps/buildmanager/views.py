@@ -7,6 +7,7 @@ from hq.models import Domain
 from hq.utils import build_url
 from requestlogger.models import RequestLog
 
+from buildmanager.exceptions import BuildError
 from buildmanager.models import *
 from buildmanager.forms import *
 from buildmanager.jar import validate_jar
@@ -165,6 +166,7 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     try:
         jarfile = build.jar_file
         validate_jar(jarfile)
+        build.validate_jar()
         build.release(request.user)
         context = {}
         context["build"] = build
@@ -186,9 +188,9 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
 @login_required
 def new_build(request, template_name="buildmanager/new_build.html"): 
     context = {}
-    form = BuildForm()    
+    form = ProjectBuildForm()    
     if request.method == 'POST':
-        form = BuildForm(request.POST, request.FILES)                
+        form = ProjectBuildForm(request.POST, request.FILES)                
         if form.is_valid():
             # must add_schema to storage provide first since forms are dependent upon elements            
             try:                      
@@ -198,7 +200,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
                 newbuild.package_created = datetime.datetime.now()
                 newbuild.set_jadfile(request.FILES['jad_file_upload'].name, request.FILES['jad_file_upload'])
                 newbuild.set_jarfile(request.FILES['jar_file_upload'].name, request.FILES['jar_file_upload'])
-                newbuild.save()                
+                newbuild.save()
                 return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
             except Exception, e:
                 logging.error("buildmanager new ProjectBuild creation error.", 
@@ -210,7 +212,19 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     context['form'] = form
     return render_to_response(request, template_name, context)
 
-
+@login_required
+def get_build_xform(request, id):
+    form = BuildForm.objects.get(id=id)
+    fin = form.as_filestream()
+    # unfortunately, neither of these more correct displays actually look good in firefox
+    #response = HttpResponse(fin.read(), mimetype='application/xhtml+xml')
+    #response = HttpResponse(fin.read(), mimetype='text/xml')
+    response = HttpResponse(fin.read(), mimetype='text/plain')
+    fin.close()
+    return response
+        
+    
+    
 def _handle_error(request, error_message):
     """Handles an error, by logging it and returning a 500 page"""
     logging.error(error_message)
