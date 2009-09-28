@@ -106,6 +106,14 @@ class Submission(models.Model):
         # in our already-deployed servers
         return len(SubmissionHandlingOccurrence.objects.filter(submission=self)) == 0 
         
+    def is_deleted(self):
+        '''Whether this has has been explicitly marked as deleted 
+           in any handling app.
+        '''
+        all_delete_types = SubmissionHandlingType.objects.filter(method="deleted")
+        return len(self.ways_handled.filter(handled__in=all_delete_types)) > 0
+                  
+    
     def is_duplicate(self):
         """Whether the submission is a duplicate or not.  Duplicates 
            mean that at least one attachment from the submission was 
@@ -315,7 +323,7 @@ class Attachment(models.Model):
             except:
                 return None
         return None
-                            
+    
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
@@ -351,6 +359,9 @@ class SubmissionHandlingType(models.Model):
     # todo? these model names are pretty long-winded 
     app = models.CharField(max_length=50)
     method = models.CharField(max_length=100)
+    
+    def __unicode__(self):
+        return "%s: %s" % (self.app, self.method)
     
 class SubmissionHandlingOccurrence(models.Model):
     """A class linking submissions to ways of handling them.  Other apps
