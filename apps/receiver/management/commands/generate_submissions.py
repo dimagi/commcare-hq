@@ -16,7 +16,6 @@ from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from django_rest_interface import util as rest_util
-from receiver.management.commands import util
 from receiver.models import Submission
 
 class Command(LabelCommand):
@@ -61,11 +60,7 @@ def generate_submissions(remote_url, username, password, latest=True, debug=Fals
     url = 'http://%s/api/submissions/' % remote_url
     if latest:
         MD5_buffer = rest_util.get_field_as_bz2(Submission, 'checksum', debug)
-        up = urlparse(url)
-        conn = httplib.HTTPConnection(up.netloc)
-        conn.request('POST', up.path, MD5_buffer, {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-        response = conn.getresponse()
-        
+        response = rest_util.request(url, username, password, MD5_buffer)
         print "Generated latest remote submissions"
     else:
         response = urllib2.urlopen(url)
