@@ -49,7 +49,10 @@ class LogTrack(models.Model):
 # Signal registration is done here in the models instead of the views because
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
-def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created    
+def sendAlert(sender, instance, created, *args, **kwargs): #get sender, instance, created    
+    # only send emails on newly created logs, not all of them
+    if not created:
+        return 
     
     #set a global threshold to say if anything is a logging.ERROR, chances are
     #we always want an alert.
@@ -66,6 +69,6 @@ def sendAlert(sender, instance, *args, **kwargs): #get sender, instance, created
         eml.send_email(title,
                        settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
                        rendered_text)
-        
+            
 # Register to receive signals from LogTrack
 post_save.connect(sendAlert, sender=LogTrack)

@@ -1,17 +1,13 @@
 from django.test import TestCase
 from django.test.client import Client
 from hq.models import ExtUser, Domain
+from hq.tests.util import create_user_and_domain
 from receiver.tests.util import *
 
 class ViewsTestCase(TestCase):
+    
     def setUp(self):
-        domain = Domain(name='mockdomain')
-        domain.save()
-        user = ExtUser()
-        user.domain = domain
-        user.username = 'brian'
-        user.password = 'sha1$245de$137d06d752eee1885a6bbd1e40cbe9150043dd5e'
-        user.save()
+        create_user_and_domain()
         self.client.login(username='brian',password='test')
 
     def testBasicViews(self):

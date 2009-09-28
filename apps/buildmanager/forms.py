@@ -5,7 +5,7 @@ from django import forms
 from buildmanager.models import *
 import datetime
 
-class BuildForm(forms.ModelForm):
+class ProjectBuildForm(forms.ModelForm):
     jar_file_upload = forms.FileField()
     jad_file_upload = forms.FileField()    
     

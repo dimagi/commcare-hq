@@ -4,3 +4,4 @@ import unittest
 # to include them in this file for them to be included in the tests
 from jar import *
 from views import *
+from build import *
