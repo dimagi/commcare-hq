@@ -257,7 +257,7 @@ class ProjectBuild(models.Model):
     
     def validate_jar(self):
         '''Validates this build's jar file'''
-        validate_jar(self.jarfile)
+        validate_jar(self.jar_file)
         
     def release(self, user):
         '''Release a build, by setting its status as such.'''
