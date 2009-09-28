@@ -21,7 +21,17 @@ def djangouser_auth(username, password):
     except User.DoesNotExist:
         return False
 
-class NoAuthentication(object):
+class Authentication(object):
+    """
+    Authentication interface
+    """
+    def is_authenticated(self, request):
+        raise NotImplementedError
+
+    def challenge_headers(self):
+        raise NotImplementedError
+
+class NoAuthentication(Authentication):
     """
     No authentication: Permit every request.
     """
@@ -31,7 +41,7 @@ class NoAuthentication(object):
     def challenge_headers(self):
         return {}
 
-class HttpBasicAuthentication(object):
+class HttpBasicAuthentication(Authentication):
     """
     HTTP/1.0 basic authentication.
     """    
@@ -74,7 +84,7 @@ def digest_password(realm, username, password):
     """
     return md5.md5("%s:%s:%s" % (username, realm, password)).hexdigest()
 
-class HttpDigestAuthentication(object):
+class HttpDigestAuthentication(Authentication):
     """
     HTTP/1.1 digest authentication (RFC 2617).
     Uses code from the Python Paste Project (MIT Licence).
@@ -93,23 +103,6 @@ class HttpDigestAuthentication(object):
         self.realm = realm
         self.authfunc = authfunc
         self.nonce    = {} # prevention of replay attacks
-
-    def get_auth_dict(self, auth_string):
-        """
-        Splits WWW-Authenticate and HTTP_AUTHORIZATION strings
-        into a dictionaries, e.g.
-        {
-            nonce  : "951abe58eddbb49c1ed77a3a5fb5fc2e"',
-            opaque : "34de40e4f2e4f4eda2a3952fd2abab16"',
-            realm  : "realm1"',
-            qop    : "auth"'
-        }
-        """
-        amap = {}
-        for itm in auth_string.split(", "):
-            (k, v) = [s.strip() for s in itm.split("=", 1)]
-            amap[k] = v.replace('"', '')
-        return amap
 
     def get_auth_response(self, http_method, fullpath, username, nonce, realm, qop, cnonce, nc):
         """
@@ -178,7 +171,7 @@ class HttpDigestAuthentication(object):
             return False
         
         # Extract auth parameters from request
-        amap = self.get_auth_dict(auth)
+        amap = _get_auth_dict(auth)
         try:
             username = amap['username']
             authpath = amap['uri']
@@ -212,4 +205,69 @@ class HttpDigestAuthentication(object):
             return False # stale = True
         self.nonce[nonce] = nc
         return True
+
+
+class HQAuthentication(Authentication):
+    """
+    Custom CommCare Authentication
     
+    Takes HTTP headers like:
+    Authorization: CommCare username="brian",
+                            password=md5(username:password)
+    """
+    def __init__(self, authfunc=djangouser_auth, realm=_('Restricted Access')):
+        """
+        authfunc:
+            A user-defined function which takes a username and
+            password as its first and second arguments respectively
+            and returns True if the user is authenticated
+        realm:
+            An identifier for the authority that is requesting
+            authorization
+        """
+        self.realm = realm
+        self.authfunc = authfunc
+    
+    def challenge_headers(self):
+        """
+        Returns the http headers that ask for appropriate
+        authorization.
+        """
+        return {'WWW-Authenticate' : 'Basic realm="%s"' % self.realm}
+    
+    def is_authenticated(self, request):
+        """
+        Checks whether a request comes from an authorized user.
+        """
+        if not request.META.has_key('HTTP_AUTHORIZATION'):
+            return False
+        (authmeth, auth) = request.META['HTTP_AUTHORIZATION'].split(" ", 1)
+        if authmeth.lower() != 'hq':
+            return False
+        
+        # Extract auth parameters from request
+        amap = _get_auth_dict(auth)
+        try:
+            username = amap['username']
+            password = amap['password']
+        except:
+            return False
+        return self.authfunc(username=username, password=password)
+
+    
+def _get_auth_dict(auth_string):
+    """
+    Splits WWW-Authenticate and HTTP_AUTHORIZATION strings
+    into a dictionaries, e.g.
+    {
+        nonce  : "951abe58eddbb49c1ed77a3a5fb5fc2e"',
+        opaque : "34de40e4f2e4f4eda2a3952fd2abab16"',
+        realm  : "realm1"',
+        qop    : "auth"'
+    }
+    """
+    amap = {}
+    for itm in auth_string.split(", "):
+        (k, v) = [s.strip() for s in itm.split("=", 1)]
+        amap[k] = v.replace('"', '')
+    return amap
