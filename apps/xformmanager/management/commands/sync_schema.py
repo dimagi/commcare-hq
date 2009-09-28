@@ -68,11 +68,7 @@ def generate_schemata(remote_url, username, password, latest=True, download=Fals
     else:
         xmlns_buffer = ''
         print "Generating all remote submissions archive..."
-    up = urlparse(url)
-    conn = httplib.HTTPConnection(up.netloc)
-    conn.request('POST', "/api/xforms/?format=sync", xmlns_buffer, \
-                 {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'})
-    response = conn.getresponse()
+    response = rest_util.request(url, username, password, xmlns_buffer)
     print "Generated"
 
     if download:
