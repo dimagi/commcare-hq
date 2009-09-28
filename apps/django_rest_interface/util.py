@@ -1,5 +1,6 @@
 import bz2
 import sys
+#import hashlib
 import urllib, urllib2, httplib
 import logging
 import os.path
@@ -8,6 +9,16 @@ import simplejson
 from stat import S_ISDIR, S_ISREG, ST_MODE
 from urlparse import urlparse
 import tarfile
+
+def request(url, username, password, send_buffer):
+    up = urlparse(url)
+    conn = httplib.HTTPConnection(up.netloc)    
+    headers = {'Content-Type': 'application/bz2', 'User-Agent': 'CCHQ-submitfromfile-python-v0.1'}
+    # Populate 'authorization' field whenever we start to support server-server authorization
+    # headers['Authorization'] = authentication_info
+    conn.request('POST', up.path, send_buffer, headers )
+    response = conn.getresponse()
+    return response
 
 def are_you_sure():
     should_proceed = raw_input("Are you sure you want to proceed? (yes or no) ")
@@ -24,7 +35,7 @@ def login(url, username, password):
     response = conn.getresponse()
     print "Attempting login using supplied credentials"
     print "Response: ", response.status, response.reason
-    print "Response:  ", response.read()
+    print "Response: ", response.read()
     conn.close()
     # 302 (redirect) means login was successful
     if response.status == 302:
