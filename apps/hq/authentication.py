@@ -35,7 +35,7 @@ def get_username_password(request):
             return (None, None)
         
         # Extract auth parameters from request
-        amap = _get_auth_dict(auth)
+        amap = get_auth_dict(auth)  
     except Exception, e:
         # catch all errors (most likely poorly formatted POST's)
         # so we do not fail hard in the auth middleware
