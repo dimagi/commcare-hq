@@ -3,6 +3,12 @@ from xformmanager.manager import *
 from receiver.tests.util import *
 import logging
 
+def get_file(filename, path=None ):
+    """ handles relative pathing of files """
+    if not path:
+        path = os.path.dirname(__file__)
+    return os.path.join( path, filename )
+
 def create_xsd_and_populate(xsd_file_name, xml_file_name='', domain=None, path=None):
     if domain:
         mockdomain = domain
