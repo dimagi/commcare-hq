@@ -47,17 +47,34 @@ class FormDef(ElementDef):
     FormDef.root (rather than just FormDef)
     """
 
-    def __init__(self, stream_pointer=None):
+    def __init__(self, stream_pointer=None, child_element=None, **kwargs):
+        """Either a stream pointer to an XML stream to populate this form
+           or a child element to a valid element_def should be provided.
+           If neither is, this is a pretty useless form"""
+        # call the base class to initialize some more properties
+        super(FormDef, self).__init__(**kwargs) 
         self.types = {}
         self.version = None
         self.uiversion = None
         self.target_namespace = ''
+        if stream_pointer is not None and child_element is not None:
+            # log this, cause it's a bad idea
+            logging.error("""Both XML and a child element explicitly passed to
+                             create a new formdef.  The child element %s will be
+                             ignored""" % child_element) 
         if stream_pointer is not None:
             payload = get_xml_string(stream_pointer)
             self.parseString(payload)
+        elif child_element is not None:
+            self.child_elements = [child_element]
         if len(self.child_elements)>1:
+            # fail hard on too many children, since it's bad xml
             raise Exception("Poorly formed XML. Multiple root elements!")
-        self.root = self.child_elements[0]
+        if not self.child_elements:
+            logging.error("You just created a formdef %s with no children.  Why?!" % self)
+        else:
+            # safe to set a root node here
+            self.root = self.child_elements[0]
           
     def __str__(self):
         string =  "DEFINITION OF " + str(self.name) + "\n"
@@ -238,7 +255,7 @@ class FormDef(ElementDef):
             self.uiversion = None
 
     def is_compatible_with(self, otherdef):
-        return not self.get_differences(otherdef)
+        return self.get_differences(otherdef).is_empty()
 
     def get_differences(self, otherdef):
         # TODO - put comparison logic here. populate d.
@@ -246,7 +263,7 @@ class FormDef(ElementDef):
         #     d = Differences()
         #     return d
         # else
-        return None
+        return Differences()
         
     class FormDefError(Exception):
         """ Error from FormDef Processing """
@@ -265,3 +282,8 @@ class Differences(object):
         self.fields_added = []
         self.fields_removed = []
         self.fields_changed = []
+        
+    def is_empty(self):
+        '''Return whether this is meaningfully empty (i.e. representing 
+           no differences'''
+        return not (self.fields_added or self.fields_changed or self.fields_removed)
