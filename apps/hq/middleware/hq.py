@@ -35,9 +35,14 @@ class HqMiddleware(object):
             # (and request.user == anonymousUser
             username, password = get_username_password(request)
             if username and password:
-                request.extuser = authenticate(username=username, password=password)
-            if request.extuser is not None:
-                request.user = request.extuser
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    request.user = user
+                    try:
+                        extuser = ExtUser.objects.get(id=user.id)
+                        request.extuser = user
+                    except Exception, e:
+                        request.extuser = None
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  
