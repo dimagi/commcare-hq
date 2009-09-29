@@ -21,7 +21,7 @@ import mimetypes
 from receiver.models import *
 from receiver.models import _XFORM_URI as XFORM_URI
 from receiver.submitresponse import SubmitResponse
-from django.contrib.auth.models import User 
+from django.contrib.auth.models import User
 
 from hq.utils import paginate
 from hq.decorators import extuser_required
@@ -134,6 +134,10 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     try: 
         new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
                                                                   currdomain, is_resubmission=is_resubmission)
+        
+        if request.extuser:
+            new_submission.authenticated_to = request.extuser
+            new_submission.save()
         
         # the receiver creates its own set of params it cares about 
         receiver_params = {}
