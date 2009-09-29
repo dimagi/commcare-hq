@@ -9,3 +9,5 @@ from meta import *
 from api import *
 from views import *
 from versioned import *
+# todo: uncomment this when the form difference tests work
+#from differences import *
