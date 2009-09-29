@@ -47,13 +47,20 @@ class FormDef(ElementDef):
     FormDef.root (rather than just FormDef)
     """
 
-    def __init__(self, stream_pointer=None):
+    def __init__(self, input=None):
         self.types = {}
         self.version = None
         self.uiversion = None
         self.target_namespace = ''
-        if stream_pointer is not None:
-            payload = get_xml_string(stream_pointer)
+        if input is not None:
+            if isinstance(input,basestring):
+                # 'input' is a filename
+                fin = open(input,'r')
+                payload = get_xml_string( fin )
+                fin.close()
+            else:
+                # 'input' is an input stream
+                payload = get_xml_string(input)
             self.parseString(payload)
         if len(self.child_elements)>1:
             raise Exception("Poorly formed XML. Multiple root elements!")

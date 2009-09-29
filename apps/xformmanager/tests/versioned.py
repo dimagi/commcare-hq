@@ -17,7 +17,7 @@ class VersionedTestCase(unittest.TestCase):
         
     def testFormDef_7(self):
         """ Test deep form definition created and data saved """
-        fin = open( getfile("data/7_verydeep_2.xsd"), 'r' )
+        fin = open( get_file("data/7_verydeep_2.xsd"), 'r' )
         formdef = FormDef(fin)
         fin.close()
         root = formdef.root
@@ -30,7 +30,7 @@ class VersionedTestCase(unittest.TestCase):
 
     def testBadVersions(self):
         """ Test very deep form definition created and data saved """
-        fin = open( getfile("data/bad_version.xsd"), 'r' )
+        fin = open( get_file("data/bad_version.xsd"), 'r' )
         formdef = FormDef(fin)
         fin.close()
         try:
@@ -186,8 +186,3 @@ class VersionedTestCase(unittest.TestCase):
             manager.remove_schema(formdefmodel_2.id)
             manager.remove_schema(formdefmodel_3.id)
             
-def getfile(filename, path=None ):
-    if not path:
-        path = os.path.dirname(__file__)
-    return os.path.join( path, filename )
-
