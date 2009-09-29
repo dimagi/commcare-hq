@@ -9,3 +9,4 @@ from meta import *
 from api import *
 from views import *
 from versioned import *
+#from compatible import *
