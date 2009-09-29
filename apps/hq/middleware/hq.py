@@ -40,7 +40,8 @@ class HqMiddleware(object):
                     request.user = user
                     try:
                         extuser = ExtUser.objects.get(id=user.id)
-                        request.extuser = user
+                        request.user = extuser
+                        request.extuser = extuser
                     except Exception, e:
                         request.extuser = None
         # do the same for start and end dates.  at some point our views
