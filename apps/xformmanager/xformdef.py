@@ -236,10 +236,20 @@ class FormDef(ElementDef):
             self.uiversion = self.uiversion.strip()
         else:
             self.uiversion = None
+
+    def is_compatible_with(self, otherdef):
+        return not self.get_differences(otherdef)
+
+    def get_differences(self, otherdef):
+        # TODO - put comparison logic here. populate d.
+        # if differences exist:
+        #     d = Differences()
+        #     return d
+        # else
+        return None
         
     class FormDefError(Exception):
         """ Error from FormDef Processing """
-        
 
 class SimpleType(object):
     """ Stores type definition for simple types """
@@ -247,3 +257,11 @@ class SimpleType(object):
         self.allowable_values = []
         self.multiselect_values = []
         self.name = name
+
+class Differences(object):
+    """ Data structure to represent the differences between this and another formdef """
+    def __init__(self):
+        self.otherdef = None
+        self.fields_added = []
+        self.fields_removed = []
+        self.fields_changed = []
