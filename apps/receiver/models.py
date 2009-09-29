@@ -40,6 +40,11 @@ class Submission(models.Model):
     
     raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255)    
     
+    authenticated_to = models.ForeignKey(ExtUser, null=True)
+
+    class Meta:
+        get_latest_by = 'submit_time'
+    
     @property
     def num_attachments(self):
         return Attachment.objects.all().filter(submission=self).count()
