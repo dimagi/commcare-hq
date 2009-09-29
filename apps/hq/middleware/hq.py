@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
+from django.contrib.auth import authenticate
 from hq.models import ExtUser
 from hq.utils import get_dates
+from hq.authentication import get_username_password
 
 class HqMiddleware(object):
     '''Middleware for CommCare HQ.  Right now the only thing this does is
@@ -27,8 +29,13 @@ class HqMiddleware(object):
                 # fail hard in the middleware layer. 
                 request.extuser = None
         else:
-            # ditto exception block
+            # attempt our custom authentication only if regular auth fails
             request.extuser = None
+            username, password = get_username_password(request)
+            if username and password:
+                request.extuser = authenticate(username=username, password=password)
+            if request.extuser is not None:
+                request.user = extuser
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  
