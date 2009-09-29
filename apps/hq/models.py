@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
@@ -100,6 +101,10 @@ class ExtUser(User):
     # link to the rapidsms reporter 
     reporter = models.ForeignKey(Reporter, null=True, blank=True)
     
+    # the value of this field should *always* reflect the value of User.password
+    unsalted_password = models.CharField(_('password'), max_length = 128, help_text = \
+                                         _("Use '[hexdigest]' or use the <a href=\"change_password/\">change password form</a>."))
+    
     @property
     def report_identity(self):         
         if self.chw_username == None:
@@ -117,6 +122,10 @@ class ExtUser(User):
     
     class Meta:
         verbose_name = _("Extended User")
+        
+    def set_unsalted_password(self, username, password):
+        # todo - integrate this with user.password
+        self.unsalted_password = hashlib.sha1( username+":"+password ).hexdigest()
 
 class Organization(models.Model):
     # this should be renamed to "Group" if that term wasn't highly
