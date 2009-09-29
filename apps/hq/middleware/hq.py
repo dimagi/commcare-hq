@@ -13,22 +13,7 @@ class HqMiddleware(object):
     def process_request(self, request):
         # the assumption here is that we will never have an ExtUser for AnonymousUser
         if request.user and not request.user.is_anonymous():
-            try:
-                extuser = ExtUser.objects.get(id=request.user.id)
-                # override the request.user property so we can call it 
-                # easily within templates and default to the standard
-                # "user" object when this fails. 
-                request.user = extuser
-                # also duplicate it as request.extuser so we can check
-                # this property in our views. 
-                request.extuser = extuser
-            except Exception:
-                # make sure the property is set either way to avoid 
-                # having extraneous hasattr() calls.  Most likely
-                # this was an ExtUser.DoesNotExist, but it could
-                # be anything something else and we don't want to
-                # fail hard in the middleware layer. 
-                request.extuser = None
+            self._set_extuser(request, request.user)
         else:
             request.extuser = None
             # attempt our custom authentication only if regular auth fails
@@ -38,12 +23,7 @@ class HqMiddleware(object):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     request.user = user
-                    try:
-                        extuser = ExtUser.objects.get(id=user.id)
-                        request.user = extuser
-                        request.extuser = extuser
-                    except Exception, e:
-                        request.extuser = None
+                    self._set_extuser(request, user)
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  
@@ -55,7 +35,22 @@ class HqMiddleware(object):
             request.startdate = None
             request.enddate = None
         return None
-        
-       
     
+    def _set_extuser(self, request, user):
+        try:
+            extuser = ExtUser.objects.get(id=user.id)
+            # override the request.user property so we can call it 
+            # easily within templates and default to the standard
+            # "user" object when this fails. 
+            request.user = extuser
+            # also duplicate it as request.extuser so we can check
+            # this property in our views. 
+            request.extuser = extuser
+        except Exception:
+            # make sure the property is set either way to avoid 
+            # having extraneous hasattr() calls.  Most likely
+            # this was an ExtUser.DoesNotExist, but it could
+            # be anything something else and we don't want to
+            # fail hard in the middleware layer. 
+            request.extuser = None        
     
