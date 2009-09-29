@@ -11,7 +11,8 @@ class HqMiddleware(object):
     
     
     def process_request(self, request):
-        if request.user:
+        # the assumption here is that we will never have an ExtUser for AnonymousUser
+        if request.user and not request.user.is_anonymous():
             try:
                 extuser = ExtUser.objects.get(id=request.user.id)
                 # override the request.user property so we can call it 
@@ -29,13 +30,14 @@ class HqMiddleware(object):
                 # fail hard in the middleware layer. 
                 request.extuser = None
         else:
-            # attempt our custom authentication only if regular auth fails
             request.extuser = None
+            # attempt our custom authentication only if regular auth fails
+            # (and request.user == anonymousUser
             username, password = get_username_password(request)
             if username and password:
                 request.extuser = authenticate(username=username, password=password)
             if request.extuser is not None:
-                request.user = extuser
+                request.user = request.extuser
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  

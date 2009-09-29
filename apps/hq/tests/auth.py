@@ -14,17 +14,12 @@ class AuthenticationTestCase(TestCase):
         user, domain = create_user_and_domain(username = self.username,
                                               password = self.password, 
                                               domain_name=self.domain_name)
-        self.client.login(username=self.username,password=self.password)
+        # we are explicitly testing non-traditionally logged-in authentication
+        # self.client.login(username=self.username,password=self.password)
         org = Organization(name='mockorg', domain=domain)
         org.save()
 
     def testBasicAuth(self):
-        reporter = Reporter(alias="rapporteur")
-        reporter.save()
-        domain = Domain.objects.get(name=self.domain_name)
-        profile = ReporterProfile(reporter=reporter, domain=domain)
-        profile.save()
-        
         password_hash = hashlib.sha1(self.username + ":" + self.password).hexdigest()
         authorization = "HQ username=\"%s\", password=\"%s\"" % (self.username, password_hash)
         response = self.client.post('/receiver/submit/%s' % self.domain_name, {'foo':'bar'}, \
