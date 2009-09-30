@@ -364,24 +364,37 @@ class Metadata(models.Model):
                                            attachment__submission__submit_time__gte=startdate,
                                            attachment__submission__submit_time__lte=enddate))
 
+    
     def save(self, target_namespace, **kwargs):
+        # override save to support logging of bad metadata as it comes in
+        self._log_bad_metadata(target_namespace)
+        super(Metadata, self).save(**kwargs)
+
+    
+    def _log_bad_metadata(self, target_namespace):
+        # log errors when metadata not complete
+        missing_required_fields = []
+        null_required_fields = []
         for field in self.required_fields:
-            # log errors when metadata not complete
             if not hasattr(self, field):
                 # this should never, ever happen. 'field' variables are wrong.
-                logging.error( ("Metadata for form (%s) does not contain %s" % \
-                             (target_namespace, field)) )
-                # we 'break' instead of 'continue'ing because we don't want 
-                # to swamp the server with emails
-                break
-            value = getattr(self, field)
-            if value is None:
-                # raise this error if the element is not provided 
-                # or if it is provided but not populated
-                logging.error( ("Metadata %s in form (%s) should not be null!" % \
-                             (field, target_namespace)) )
-            break
-        super(Metadata, self).save(**kwargs)
+                missing_required_fields.append(field) 
+            else:
+                value = getattr(self, field)
+                if value is None:
+                    null_required_fields.append(field)
+        if missing_required_fields or null_required_fields:
+            null_msg = ""
+            missing_msg = ""
+            if null_required_fields:
+                null_msg = "null fields: %s\n" % ",".join(null_required_fields)
+            if missing_required_fields:
+                missing_msg = "missing fields:" % ",".join(missing_required_fields)
+            logging.error("""Bad metadata submission to schema %s
+                             The attachment is %s
+                             The errors are:\n%s%s""" % (target_namespace,
+                                                         self.attachment.display_string(),
+                                                         null_msg, missing_msg)) 
 
     def _strip_namespace(self, tag):
         i = tag.find('}')
