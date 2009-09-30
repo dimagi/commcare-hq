@@ -119,7 +119,7 @@ class FormDef(ElementDef):
     FormDef.root (rather than just FormDef)
     """
 
-    def __init__(self, input=None, child_element=None, **kwargs):
+    def __init__(self, input_stream=None, child_element=None, **kwargs):
         """Either a stream pointer to an XML stream to populate this form
            or a child element to a valid element_def should be provided.
            If neither is, this is a pretty useless form"""
@@ -129,20 +129,13 @@ class FormDef(ElementDef):
         self.version = None
         self.uiversion = None
         self.target_namespace = ''
-        if input is not None and child_element is not None:
+        if input_stream is not None and child_element is not None:
             # log this, cause it's a bad idea
             logging.error("""Both XML and a child element explicitly passed to
                              create a new formdef.  The child element %s will be
                              ignored""" % child_element) 
-        if input is not None:
-            if isinstance(input, basestring):
-                # 'input' is a filename
-                fin = open(input, 'r')
-                payload = get_xml_string( fin )
-                fin.close()
-            else:
-                # 'input' is an input stream
-                payload = get_xml_string(input)
+        if input_stream is not None:
+            payload = get_xml_string(input_stream)
             self.parseString(payload)
         elif child_element is not None:
             self.child_elements = [child_element]
@@ -161,6 +154,13 @@ class FormDef(ElementDef):
 
     def __str__(self):
         return unicode(self).encode('utf-8')
+
+    @classmethod
+    def from_file(cls, file):
+        fin = open(file, 'r')
+        formdef = FormDef(fin)
+        fin.close()
+        return formdef
 
     def to_str(self):
         """ Dumps the entire contents of this to a string """

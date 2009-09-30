@@ -6,7 +6,7 @@ import unittest
 
 class CompatibleTestCase(unittest.TestCase):
     def setUp(self):
-        self.f1 = FormDef( get_file("data/versioning/base.xsd") )
+        self.f1 = FormDef.from_file( get_file("data/versioning/base.xsd") )
         
     def testSame(self):
         """ testSame """
@@ -15,8 +15,8 @@ class CompatibleTestCase(unittest.TestCase):
 
     def testAddAndRemove(self):
         """ testAddAndRemove """
-        self.f1 = FormDef( get_file("data/versioning/base.xsd") )
-        f2 = FormDef( get_file("data/versioning/field_added.xsd") )
+        self.f1 = FormDef.from_file( get_file("data/versioning/base.xsd") )
+        f2 = FormDef.from_file( get_file("data/versioning/field_added.xsd") )
         diff = self.f1.get_differences(f2)
         self.assertFalse(diff.is_empty())
         self.assertTrue(len(diff.fields_added)==3)
@@ -30,7 +30,7 @@ class CompatibleTestCase(unittest.TestCase):
 
     def testChangeEnumAddAndRemove(self):
         """ testChangeEnumAddAndRemove """
-        f2 = FormDef( get_file("data/versioning/field_changed_enum.xsd") )
+        f2 = FormDef.from_file( get_file("data/versioning/field_changed_enum.xsd") )
         diff = self.f1.get_differences(f2)
         self.assertFalse(diff.is_empty())
         self.assertTrue(len(diff.fields_added)==0)
@@ -47,7 +47,7 @@ class CompatibleTestCase(unittest.TestCase):
     def testChangeLeafRepeats(self):
         """ testChangeLeafRepeats """
         # make repeatable
-        f2 = FormDef( get_file("data/versioning/field_changed_repeatable_leaf.xsd") )
+        f2 = FormDef.from_file( get_file("data/versioning/field_changed_repeatable_leaf.xsd") )
         diff = self.f1.get_differences(f2)
         self.assertFalse(diff.is_empty())
         self.assertTrue(len(diff.fields_added)==0)
@@ -63,8 +63,8 @@ class CompatibleTestCase(unittest.TestCase):
     def testChangeNodeRepeats(self):
         """ testChangeNodeRepeats """
         # make repeatable
-        f1 = FormDef( get_file("data/versioning/repeats.xsd") )
-        f2 = FormDef( get_file("data/versioning/field_changed_repeatable_node.xsd") )
+        f1 = FormDef.from_file( get_file("data/versioning/repeats.xsd") )
+        f2 = FormDef.from_file( get_file("data/versioning/field_changed_repeatable_node.xsd") )
         diff = f1.get_differences(f2)
         self.assertFalse(diff.is_empty())
         self.assertTrue(len(diff.fields_added)==0)
@@ -81,7 +81,7 @@ class CompatibleTestCase(unittest.TestCase):
 
     def testChangeType(self):
         """ testChangeType """
-        f2 = FormDef( get_file("data/versioning/field_changed_type.xsd") )
+        f2 = FormDef.from_file( get_file("data/versioning/field_changed_type.xsd") )
         diff = self.f1.get_differences(f2)
         self.assertFalse(diff.is_empty())
         self.assertTrue(len(diff.fields_added)==0)
