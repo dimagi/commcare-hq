@@ -36,25 +36,12 @@ class CompatibilityTestCase(unittest.TestCase):
                     
     def testChildAttributes(self):
         child = self._get_basic_elementdef()
+        ccopy = copy.deepcopy(child)
         filled = self._get_basic_formdef(child_elements = [child])
-        # todo: verify/modify these lists
-        version_changing_attrs = ["xpath", "name", "type", "is_repeatable" ]
-        nonversion_changing_attrs = []
-        for attr in version_changing_attrs:
-            fcopy = copy.deepcopy(filled)
-            ccopy = copy.deepcopy(child)
-            # same caveat as above applies
-            setattr(ccopy, attr, "99")
-            fcopy.child_elements = [ccopy]
-            self._do_two_way_compatibility_check(filled, fcopy, False)
-        
-        for attr in nonversion_changing_attrs:
-            fcopy = copy.deepcopy(filled)
-            ccopy = copy.deepcopy(child)
-            # same caveat as above applies
-            setattr(ccopy, attr, "99")
-            fcopy.child_elements = [ccopy]
-            self._do_two_way_compatibility_check(filled, fcopy, True)
+        fcopy = copy.deepcopy(filled)
+        fcopy.child_elements = [ccopy]
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        self._do_child_attribute_check(filled, fcopy, ccopy)
     
     def testChildOrdering(self):
         child1 = self._get_basic_elementdef(name="name1", xpath="xpath1")
@@ -78,17 +65,96 @@ class CompatibilityTestCase(unittest.TestCase):
         self._do_two_way_compatibility_check(filled, fcopy, False)
         fcopy.child_elements = [child1, child2, child3]
         self._do_two_way_compatibility_check(filled, fcopy, False)
+        # check duplicates
+        fcopy.child_elements = [child1, child2, child1]
+        self._do_two_way_compatibility_check(filled, fcopy, False)
         # make sure it was the inconsistent child elements that were failing
         fcopy.child_elements = [child1, child2]
         self._do_two_way_compatibility_check(filled, fcopy, True)
         
-         
+    def testSubChildren(self):
+        child1 = self._get_basic_elementdef(name="name1", xpath="xpath1")
+        subchild1 = self._get_basic_elementdef(name="subname1", xpath="subpath1")
+        subchild2 = self._get_basic_elementdef(name="subname2", xpath="subpath2")
+        child1.child_elements=[subchild1, subchild2]
+        child2 = self._get_basic_elementdef(name="name2", xpath="xpath2")
+        subchild3 = self._get_basic_elementdef(name="subname3", xpath="subpath3")
+        subchild4 = self._get_basic_elementdef(name="subname4", xpath="subpath4")
+        child2.child_elements = [subchild3, subchild4]
+        c1copy = copy.deepcopy(child1)
+        c2copy = copy.deepcopy(child2)
+        filled = self._get_basic_formdef(child_elements=[child1, child2])
+        fcopy = copy.deepcopy(filled)
+        # all is the same, should pass
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        # run through the standard compatibility checks on all children, 
+        # all subchildren
+        for child in [child1, child2, subchild1, subchild2, subchild3, subchild4]:
+             self._do_child_attribute_check(filled, fcopy, child)
+        
+        # test ordering of super children, and then of sub children
+        fcopy.child_elements = [child2, child1] 
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        # ordering should pass
+        c1copy.child_elements = [subchild2, subchild1]
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        # removal should not
+        c1copy.child_elements = [subchild1]
+        self._do_two_way_compatibility_check(filled, fcopy, False)
+        # additions should not
+        c1copy.child_elements = [subchild2, subchild1, subchild3]
+        self._do_two_way_compatibility_check(filled, fcopy, False)
+        c1copy.child_elements = [subchild2, subchild1, subchild1]
+        self._do_two_way_compatibility_check(filled, fcopy, False)
+        # swapping should not
+        c1copy.child_elements = [subchild1, subchild3]
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        # moving children to different elements should not
+        c2copy.child_elements = [subchild2, subchild4]
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        
+        # finally run through basic tests with a subsubchild
+        # let's get our copies back in our expected state:
+        c1copy.child_elements = [subchild1, subchild2]
+        c2copy.child_elements = [subchild3, subchild4]
+        self._do_two_way_compatibility_check(filled, fcopy, True)
+        subsubchild = self._get_basic_elementdef(name="subsubname1", xpath="subsubpath1")
+        subchild1.child_elements = [subsubchild]
+        self._do_child_attribute_check(filled, fcopy, child)
+        
+                 
+    def _do_child_attribute_check(self, filled, fcopy, ccopy):
+        """Checks all the version attributes of an element against a form.
+           Any version changing attribute should result in a compatibility
+           error, while any non-version changing attribute should not.
+           Assumes the element passed in is referenced inside one of the forms,
+           but it could be arbitrarily nested"""
+        
+        # todo: verify/modify these lists
+        version_changing_attrs = ["xpath", "name", "type", "is_repeatable" ]
+        nonversion_changing_attrs = ["tag"]
+        for attr in version_changing_attrs:
+            prev_val = getattr(ccopy, attr)
+            # same caveat as above applies
+            setattr(ccopy, attr, "99")
+            self._do_two_way_compatibility_check(filled, fcopy, False)
+            # make sure to set it back after we check
+            setattr(ccopy, attr, prev_val)
+            
+        for attr in nonversion_changing_attrs:
+            prev_val = getattr(ccopy, attr)
+            # same caveat as above applies
+            setattr(ccopy, attr, "99")
+            self._do_two_way_compatibility_check(filled, fcopy, True)
+            # make sure to set it back after we check
+            setattr(ccopy, attr, prev_val)
+            
     
     def _get_basic_elementdef(self, name="a name", xpath = "xpath", 
                               child_elements=[], allowable_values=[],
                               type="type", is_repeatable=False,
                               min_occurs=0, tag="tag"):
-        """Make a formdef, with as many or as few custom parameters as you want""" 
+        """Make an elementdef, with as many or as few custom parameters as you want""" 
         to_return = ElementDef()
         to_return.name = name
         to_return.xpath = xpath
