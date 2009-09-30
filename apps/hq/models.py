@@ -101,8 +101,9 @@ class ExtUser(User):
     # link to the rapidsms reporter 
     reporter = models.ForeignKey(Reporter, null=True, blank=True)
     
-    # the value of this field should *always* reflect the value of User.password
-    unsalted_password = models.CharField(_('password'), max_length = 128, help_text = \
+    # the value of this field should *always* reflect the value of User.password in an ideal world
+    # for now, we allow null values, until such time as we want to reset everyone's password
+    unsalted_password = models.CharField(_('password'), max_length = 128, null=True, help_text = \
                                          _("Use '[hexdigest]' or use the <a href=\"change_password/\">change password form</a>."))
     
     @property

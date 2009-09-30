@@ -1,8 +1,9 @@
 from xformmanager.util import *
 from xformmanager.models import Metadata, MetaDataValidationError
 from lxml import etree
-import re
 import logging
+
+XPATH_SEPARATOR = "/"
 
 class ElementDef(object):
     """ Stores metadata about simple and complex types """
@@ -11,35 +12,106 @@ class ElementDef(object):
         self.name = name
         self.xpath = ''
         self.child_elements = []
-        self.allowable_values = []
-        self.short_name = ''
         self.type = ''
         self.is_repeatable = is_repeatable
         #self.attributes - not supported yet
+        # this var is a device for getting diffs between defs
+        self._visited = False
       
-    def isValid(): # to do: place restriction functions in here
+    def __unicode__(self):
+        return unicode(self.xpath)
+        
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    
+    @property
+    def short_name(self):
+        """ This is the unqualified tag of the element
+        (without qualifying namespace or xpath) """
+        c = unicode(self.xpath).rsplit(XPATH_SEPARATOR, 1)
+        if len(c)==2:
+            return c[1]
+        return c[0]
+    
+    def to_str(self, depth=0, string=''):
+        """ Dumps the entire contents of this to a string """
+        indent = ' '*depth
+        string = indent + "xpath=" + str(self.xpath) + "\n"
+        string = string + indent + \
+                 "name=" + str(self.name) + \
+                 ", type=" + str(self.type) + \
+                 ", repeatable=" + str(self.is_repeatable)  + "\n"
+        for child in self.child_elements:
+            string = string + child.to_str(depth+1, string)
+        return string
+
+    def isValid(self): # to do: place restriction functions in here
         pass
 
     def addChild(self, element_def):
         self.child_elements.append(element_def)
 
-    def __str__(self, depth=0, string='', ):
-        indent = ' '*depth
-        string = indent + "xpath=" + str(self.xpath) + "\n"
-        string = string + indent + "name=" + str(self.name) + ", type=" + str(self.type) + ", repeatable=" + str(self.is_repeatable)  + "\n"
-        for child in self.child_elements:
-            string = string + child.__str__(depth+1, string)
-        return string
-
     def populateElementFields(self, input_node, xpath, full_name):
         if not self.name: self.name = full_name
-        self.short_name = input_node.get('name')
         self.type = input_node.get('type')
-        self.min_occurs = input_node.get('minOccurs')
-        self.tag = input_node.tag
-        if xpath: self.xpath = xpath + "/" + self.short_name
-        else: self.xpath = self.short_name
-        
+        if xpath: 
+            self.xpath = xpath + XPATH_SEPARATOR + input_node.get('name')
+        else: 
+            self.xpath = input_node.get('name')
+    
+    def find_child(self, child):
+        """ Looks for child among child_elements of self.
+        Equivalence is currently based on short_name. """
+        for candidate in self.child_elements:
+            if candidate.short_name == child.short_name:
+                return candidate
+        return None
+    
+    def _clear_visited(self):
+        """ _visited is a device for getting diffs between defs """
+        for child in self.child_elements:
+            child._visited = False
+            child._clear_visited()
+
+    def _get_unvisited(self, root=None):
+        """ _visited is a device for getting diffs between defs """
+        d = []
+        if root is None:
+            # hm, I guess you can't pass 'self' as a default argument...
+            root = self
+        for child in root.child_elements:
+            if not child._visited:
+                d.append( child )
+            d = d + self._get_unvisited(child)
+        return d
+
+    def _get_elementdef_diff(self, otherdef):
+        """ Determines whether two elementdef leaves are equivalent
+        (but does not check for children equivalency) We can always 
+        extend this later to provide richer diff information """
+        d = Differences()
+        if self.name != otherdef.name or \
+           self.xpath != otherdef.xpath or \
+           self.type != otherdef.type or \
+           self.is_repeatable != otherdef.is_repeatable:
+               d.fields_changed.append( otherdef )
+        otherdef._visited = True
+        return d
+    
+    def _get_children_diff(self, otherdef):
+        d = Differences()
+        for child in self.child_elements:
+            # find matching child in otherdef
+            # assumption: the schemas provided are well-formed
+            # and do not contain duplicate children
+            otherchild = otherdef.find_child( child )
+            if not otherchild:
+                d.fields_removed.append(child)
+            else:
+                d = d + child._get_elementdef_diff(otherchild)
+                d = d + child._get_children_diff(otherchild)
+        return d
+    
 class FormDef(ElementDef):
     """ Stores metadata about forms 
     When this code was written, I didn't realize XML requires having
@@ -63,9 +135,9 @@ class FormDef(ElementDef):
                              create a new formdef.  The child element %s will be
                              ignored""" % child_element) 
         if input is not None:
-            if isinstance(input,basestring):
+            if isinstance(input, basestring):
                 # 'input' is a filename
-                fin = open(input,'r')
+                fin = open(input, 'r')
                 payload = get_xml_string( fin )
                 fin.close()
             else:
@@ -78,13 +150,21 @@ class FormDef(ElementDef):
             # fail hard on too many children, since it's bad xml
             raise Exception("Poorly formed XML. Multiple root elements!")
         if not self.child_elements:
-            logging.error("You just created a formdef %s with no children.  Why?!" % self)
+            logging.info("You just created a formdef %s with no children.  Why?!" % self)
+            #logging.error("You just created a formdef %s with no children.  Why?!" % self)
         else:
             # safe to set a root node here
             self.root = self.child_elements[0]
-          
+    
+    def __unicode__(self):
+        return unicode(self.target_namespace)
+
     def __str__(self):
-        string =  "DEFINITION OF " + str(self.name) + "\n"
+        return unicode(self).encode('utf-8')
+
+    def to_str(self):
+        """ Dumps the entire contents of this to a string """
+        string =  "\nDEFINITION OF " + str(self.name) + "\n"
         string = string + "TYPES: \n"
         for t in self.types:
             string = string + self.types[t].name + "\n" 
@@ -93,8 +173,8 @@ class FormDef(ElementDef):
             for multiselect_value in self.types[t].multiselect_values:
                 string = string + " multiselect_value: " + multiselect_value + "\n"                 
         string = string + "ELEMENTS: \n"
-        return string + ElementDef.__str__(self)
-
+        return string + ElementDef.to_str(self)
+        
     def parseString(self, string):
         """ populates formdef with data from xml string
         
@@ -116,7 +196,7 @@ class FormDef(ElementDef):
         ElementDef.__init__(self, self.target_namespace)
 
         self.xpath = ""
-        self._addAttributesAndChildElements(self, root, '', '')
+        self._addAttributesAndChildElements(self, root, '')
     
     @property
     def root_element(self):
@@ -182,7 +262,7 @@ class FormDef(ElementDef):
             to_return["extra"] = extra_fields
         return to_return
 
-    def _addAttributesAndChildElements(self, element, input_tree, xpath, name_prefix):
+    def _addAttributesAndChildElements(self, element, input_tree, name_prefix):
         for input_node in etree.ElementChildIterator(input_tree):
             name = str(input_node.get('name'))
             if (str(input_node.tag)).find("element") > -1:
@@ -197,10 +277,11 @@ class FormDef(ElementDef):
                     full_name = next_name_prefix
                     child_element.populateElementFields(input_node, element.xpath, full_name)
                 element.addChild(child_element)
-                #theoretically, simpleType enumerations and list values can be defined inside of elements
-                #in practice, this isn't how things are currently generated in the schema generator,
-                #so we don't support that (yet)
-                self._addAttributesAndChildElements(child_element, input_node, element.xpath, next_name_prefix )
+                #theoretically, simpleType enumerations and list values can be
+                #defined inside of elements in practice, this isn't how things
+                #are currently generated in the schema generator, so we don't 
+                #support that (yet)
+                self._addAttributesAndChildElements(child_element, input_node, next_name_prefix )
             elif (str(input_node.tag)).find("simpleType") > -1:
                 simpleType = SimpleType( str(input_node.get('name')) )
                 child = input_node[0]
@@ -216,22 +297,25 @@ class FormDef(ElementDef):
                 self.types[simpleType.name] = simpleType
             else:
                 # Skip non-elements (e.g. <sequence>, <complex-type>
-                self._addAttributesAndChildElements(element, input_node, element.xpath, name_prefix)
+                self._addAttributesAndChildElements(element, input_node, name_prefix)
 
     def validate(self):
         # check xmlns not none
         if not self.target_namespace:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
+                                       self.target_namespace)
 
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
         if self.target_namespace.lower().find('www.w3.org') != -1:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % self.target_namespace)
+            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
+                                       self.target_namespace)
         
         if self.version:
             if not self.version.strip().isdigit():
                 # should make this into a custom exception
-                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % self.target_namespace)
+                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % \
+                                           self.target_namespace)
 
         meta_element = self.get_meta_element()
         if not meta_element:
@@ -265,13 +349,31 @@ class FormDef(ElementDef):
         return self.get_differences(otherdef).is_empty()
 
     def get_differences(self, otherdef):
-        # TODO - put comparison logic here. populate d.
-        # if differences exist:
-        #     d = Differences()
-        #     return d
-        # else
-        return Differences()
-        
+        # Not sure if it's bad form to be relying on modifying this
+        # '_visited' variable, but this seems like the most
+        # straightforward solution for now
+        otherdef._clear_visited()
+        d = self._get_formdef_diff(otherdef)
+        d = d + self._get_children_diff(otherdef)
+        d.fields_added = otherdef._get_unvisited()
+        return d
+
+    def _get_formdef_diff(self, otherdef):
+        d = self._get_elementdef_diff(otherdef)
+        # currently, the only relevant differences to check per formdef
+        # are the type definitions
+        for i in self.types:
+            if i in otherdef.types:
+                if self.types[i] != otherdef.types[i]:
+                    d.types_changed.append(otherdef.types[i])
+            # if i not in otherdef.types
+            # this is fine, as long as it's not referenced somewhere
+            # if it's references somewhere, that'll be captured as
+            # a field_changed diff
+        # we don't need to check for types added
+        # since this will be reported in the form of 'field added' or 'field changed'
+        return d
+    
     class FormDefError(Exception):
         """ Error from FormDef Processing """
 
@@ -281,6 +383,26 @@ class SimpleType(object):
         self.allowable_values = []
         self.multiselect_values = []
         self.name = name
+    
+    def __ne__(self, other):
+        """ case-insensitive comparison """
+        # we do case-sensitive comparison, since xml is case-sensitive
+        return not (self == other)
+
+    def __eq__(self, other):
+        """ case-insensitive comparison """
+        # we do case-sensitive comparison, since xml is case-sensitive
+        return (self.multiselect_values == other.multiselect_values) and \
+                (self.allowable_values == other.allowable_values) and \
+                (self.name == other.name)
+        """ we may want case-insensitive comparison later, which would be:
+        return ([i.lower() for i in self.multiselect_values] == \
+                [j.lower() for j in other.multiselect_values]) and \
+                ([i.lower() for i in self.allowable_values] == \
+                [j.lower() for j in other.allowable_values]) and \
+                (self.name.lower() == other.name.lower())
+        """
+        
 
 class Differences(object):
     """ Data structure to represent the differences between this and another formdef """
@@ -289,8 +411,20 @@ class Differences(object):
         self.fields_added = []
         self.fields_removed = []
         self.fields_changed = []
+        # types added is not required for now, since it will also 
+        # be caught by fields_changed or fields_added
+        self.types_changed = []
         
+    def __add__(self, other):
+        d = Differences()
+        d.fields_added = self.fields_added + other.fields_added
+        d.fields_removed = self.fields_removed + other.fields_removed
+        d.fields_changed = self.fields_changed + other.fields_changed
+        d.types_changed = self.types_changed + other.types_changed
+        return d
+    
     def is_empty(self):
         '''Return whether this is meaningfully empty (i.e. representing 
            no differences'''
-        return not (self.fields_added or self.fields_changed or self.fields_removed)
+        return not (self.fields_added or self.fields_changed or \
+                    self.fields_removed or self.types_changed)
