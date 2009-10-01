@@ -26,8 +26,8 @@ class XFormManager(object):
         except IndexError:
             # POSTed file has no extension
             type = "xform"
-        filename = self._save_schema_stream_to_file(stream, type)
-        return filename
+        filename_on_disk = self._save_schema_stream_to_file(stream, type)
+        return filename_on_disk
 
     def save_form_data(self, xml_file_name, attachment):
         """ return True on success and False on fail """
@@ -71,49 +71,79 @@ class XFormManager(object):
         file_name = self.save_schema_POST_to_file(input_stream, file_name)
         return self.create_schema_from_file(file_name)
     
-    def _save_schema_string_to_file(self, string, type ):
-        transaction_str = str(uuid.uuid1())
-        new_file_name = self._xsd_file_name(transaction_str)
-        if type.lower() == "xsd":
-            fout = open(new_file_name, 'w')
-            fout.write( string )
-            fout.close()
-        else:
-            #user has uploaded an xhtml/xform file
-            # save the raw xform
-            xform_filename = new_file_name + str(".xform")
-            xform_handle = open(xform_filename, 'w')
-            xform_handle.write( string )
-            xform_handle.close()
-            fin = open(xform_filename, 'r')
-            schema,err,has_error = form_translate( fin.read() )
-            fin.close()
-            if has_error:
-                raise IOError, "Could not convert xform to schema." + \
-                               " Please verify that this is a valid xform file."
-            fout = open(new_file_name, 'w')
-            fout.write( schema )
-            fout.close()
-        return new_file_name
-
     def _save_schema_stream_to_file(self, stream, type):
         return self._save_schema_string_to_file(stream.read(), type)
 
-    def _xsd_file_name(self, name):
-        return os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'], 
-                            str(name) + '-xsd.xml')
+    
+    def _save_schema_string_to_file(self, input_data, type ):
+        transaction_str = str(uuid.uuid1())
+        new_file_name = self._base_xsd_file_name(transaction_str)
+        if type.lower() != "xsd":
+            # assume this is an xhtml/xform file
+            # first save the raw xform
+            xform_filename = new_file_name + str(".xform")
+            full_name = self._save_raw_data_to_file(xform_filename, input_data)
+            schema,err,has_error = form_translate( input_data )
+            if has_error:
+                raise IOError, "Could not convert xform to schema." + \
+                               " Please verify that this is a valid xform file."
+        else:
+            schema = input_data
+        return self._save_raw_data_to_file(new_file_name, schema)
+    
+    def _save_raw_data_to_file(self, filename_base, data):
+        """Save raw data to the xform manager's storage area.
+           The filename used will be what is passed in.
+           Returns the full name of the file that was written."""
+        full_name = self._get_full_storage_location(filename_base)
+        dest_file = open(full_name, 'w')
+        dest_file.write(data)
+        dest_file.close()
+        return full_name
+        
+    def _save_raw_file_from_stream(self, filename_base, input_stream, buffer_size=1024*1024):
+        """Save a raw stream to the xform manager's storage area.
+           The filename used will be what is passed in.
+           Returns the full name of the file that was written."""
+        full_name = self._get_full_storage_location(filename_base)
+        dest_file = open(full_name, 'w')
+        while True:
+            buffer = input_stream.read(buffer_size)
+            if buffer:
+                dest_file.write(buffer)
+            else:
+                break
+        dest_file.close()
+        input_stream.close()
+        return full_name
+        
+    def _get_full_storage_location(self, filename_base):
+        # Just a convenience passthrough to os.path.join()
+        return os.path.join(self._get_storage_directory(),
+                            filename_base)
+        
+    def _get_storage_directory(self):
+        """Where this app keeps its files"""
+        return settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'] 
+        
+    def _xsd_file_name(self, base_name):
+        return self.get_full_storage_location(self._get_storage_directory(), 
+                                              self._base_xsd_file_name(base_name))
+        
+    def _base_xsd_file_name(self, base_name):
+        return str(base_name) + '-xsd.xml'
 
 class FormDefError(SyntaxError):
     """ Generic error for XFormManager.Manager """
     pass
 
-def form_translate(input_stream):
+def form_translate(input_data):
     '''Translates an xform into an xsd file'''
     logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < input file > ")
     p = subprocess.Popen(["java","-jar",os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
     
-    p.stdin.write(input_stream)
+    p.stdin.write(input_data)
     p.stdin.flush()
     p.stdin.close()
     
