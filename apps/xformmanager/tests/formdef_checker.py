@@ -65,9 +65,9 @@ class CompatibilityTestCase(unittest.TestCase):
         self._do_two_way_compatibility_check(filled, fcopy, False)
         fcopy.child_elements = [child1, child2, child3]
         self._do_two_way_compatibility_check(filled, fcopy, False)
-        # check duplicates
-        fcopy.child_elements = [child1, child2, child1]
-        self._do_two_way_compatibility_check(filled, fcopy, False)
+        # do not check duplicates, since valid xsd schema will not have duplicates
+        # fcopy.child_elements = [child1, child2, child1]
+        # self._do_two_way_compatibility_check(filled, fcopy, False)
         # make sure it was the inconsistent child elements that were failing
         fcopy.child_elements = [child1, child2]
         self._do_two_way_compatibility_check(filled, fcopy, True)
@@ -93,7 +93,7 @@ class CompatibilityTestCase(unittest.TestCase):
              self._do_child_attribute_check(filled, fcopy, child)
         
         # test ordering of super children, and then of sub children
-        fcopy.child_elements = [child2, child1] 
+        fcopy.child_elements = [c2copy, c1copy] 
         self._do_two_way_compatibility_check(filled, fcopy, True)
         # ordering should pass
         c1copy.child_elements = [subchild2, subchild1]
@@ -104,24 +104,31 @@ class CompatibilityTestCase(unittest.TestCase):
         # additions should not
         c1copy.child_elements = [subchild2, subchild1, subchild3]
         self._do_two_way_compatibility_check(filled, fcopy, False)
-        c1copy.child_elements = [subchild2, subchild1, subchild1]
-        self._do_two_way_compatibility_check(filled, fcopy, False)
+        #Forget about duplicates
+        #c1copy.child_elements = [subchild2, subchild1, subchild1]
+        #self._do_two_way_compatibility_check(filled, fcopy, False)
         # swapping should not
         c1copy.child_elements = [subchild1, subchild3]
-        self._do_two_way_compatibility_check(filled, fcopy, True)
+        self._do_two_way_compatibility_check(filled, fcopy, False)
         # moving children to different elements should not
         c2copy.child_elements = [subchild2, subchild4]
-        self._do_two_way_compatibility_check(filled, fcopy, True)
+        self._do_two_way_compatibility_check(filled, fcopy, False)
         
         # finally run through basic tests with a subsubchild
         # let's get our copies back in our expected state:
+        subchild1_copy = copy.deepcopy(subchild1)
         c1copy.child_elements = [subchild1, subchild2]
         c2copy.child_elements = [subchild3, subchild4]
         self._do_two_way_compatibility_check(filled, fcopy, True)
         subsubchild = self._get_basic_elementdef(name="subsubname1", xpath="subsubpath1")
         subchild1.child_elements = [subsubchild]
-        self._do_child_attribute_check(filled, fcopy, child)
         
+        # fcopy actually points to subchild1. so we need to make a new copy.
+        subchild1_copy = copy.deepcopy(subchild1)
+        subsubchild_copy = copy.deepcopy(subsubchild)
+        subchild1_copy.child_elements = [subsubchild_copy]
+        c1copy.child_elements = [subchild1_copy, subchild2]
+        self._do_child_attribute_check(filled, fcopy, subsubchild)
                  
     def _do_child_attribute_check(self, filled, fcopy, ccopy):
         """Checks all the version attributes of an element against a form.
