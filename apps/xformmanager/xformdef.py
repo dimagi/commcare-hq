@@ -1,5 +1,6 @@
 from xformmanager.util import *
-from xformmanager.models import Metadata, MetaDataValidationError
+# unfortunately, have to do something like this because of semi-circular dependencies
+import xformmanager as xfm
 from lxml import etree
 import logging
 
@@ -239,7 +240,7 @@ class FormDef(ElementDef):
         extra_fields = []
         duplicate_fields = []
         found_fields = []
-        missing_fields.extend(Metadata.fields)
+        missing_fields.extend(xfm.models.Metadata.fields)
         
         # hackily remove some stuff we no longer want to require
         missing_fields.remove('formname')
@@ -327,7 +328,7 @@ class FormDef(ElementDef):
         
         meta_issues = FormDef.get_meta_validation_issues(meta_element)
         if meta_issues:
-            mve = MetaDataValidationError(meta_issues, self.target_namespace)
+            mve = xfm.models.MetaDataValidationError(meta_issues, self.target_namespace)
             # until we have a clear understanding of how meta versions will work,
             # don't fail on issues that only come back with "extra" set.  i.e.
             # look for missing or duplicate

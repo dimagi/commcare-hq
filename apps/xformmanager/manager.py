@@ -127,20 +127,3 @@ def form_translate(input_stream):
     logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
     return (output,error, has_error)
 
-def get_formdef(target_namespace, version=None):
-    """ given a form and version get me that formdef
-    If formdef could not be found/parsed, returns None
-    """
-    try:
-        formdefmodel = FormDefModel.objects.get(target_namespace=target_namespace,
-                                                version=version)
-    except FormDefModel.DoesNotExist:
-        return None
-    if formdefmodel.xsd_file_location is None:
-        raise IOError("Schema for form %s could not be found on the file system." % \
-                      target_namespace)
-    formdef = FormDef.from_file(formdefmodel.xsd_file_location)
-    return formdef
-
-def is_schema_registered(self, target_namespace, version=None):
-    return is_schema_registered(target_namespace, version)
