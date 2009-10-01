@@ -10,9 +10,9 @@ import buildmanager.xformvalidator
 
 
 def validate(xform_filename):
-    '''Validates an xform from a passed in file.  Returns nothing
-       if validation succeeds.  Raises an exception if validation
-       fails.'''
+    '''Validates an xform from a passed in file.  Returns the 
+       generated FormDef object if validation succeeds.   
+       Raises an exception if validation fails.'''
     body = None
     try:
         body = open(xform_filename, "r")
@@ -32,6 +32,7 @@ def validate(xform_filename):
         formdef.validate()
         
         # if we made it here we're all good
+        return formdef
     finally:
         # cleanup
         if body:
