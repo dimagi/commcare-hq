@@ -259,11 +259,35 @@ class ProjectBuild(models.Model):
         '''Validates this build's jar file'''
         validate_jar(self.jar_file)
         
+    def validate_xforms(self):
+        '''Validates this build's xforms'''
+        # todo
+        pass
+        
+    def check_and_release_xforms(self):
+        '''Checks this build's xforms against the xformmanager and releases
+           them, if they pass compatibility tests'''
+        # todo
+        pass
+        
     def release(self, user):
-        '''Release a build, by setting its status as such.'''
+        '''Release a build.  This does a number of things:
+           1. Validates the Jar.  The specifics of this are still in flux but at the very
+              least it should be extractable, and there should be at least one xform.
+           2. Ensures all the xforms have valid xmlns, version, and uiversion attributes
+           3. Checks if xforms with the same xmlns and version are registered already
+              If so: ensures the current forms are compatible with the registered forms
+              If not: registers the forms
+           4. Updates the build status to be released, sets the released and 
+              released_by properties
+           This method will raise an exception if, for any reason above, the build cannot
+           be released.'''
         if self.status == "release":
             raise BuildError("Tried to release an already released build!")
         else:
+            self.validate_jar()
+            self.validate_xforms()
+            self.check_and_release_xforms()
             self.status = "release"
             self.released = datetime.now()
             self.released_by = user
