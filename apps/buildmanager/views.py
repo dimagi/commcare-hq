@@ -164,9 +164,6 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     except ProjectBuild.DoesNotExist:
         raise Http404
     try:
-        jarfile = build.jar_file
-        validate_jar(jarfile)
-        build.validate_jar()
         build.release(request.user)
         context = {}
         context["build"] = build

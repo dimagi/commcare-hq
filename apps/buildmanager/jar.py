@@ -7,9 +7,10 @@ import shutil
 import logging
 from StringIO import StringIO
 
+from buildmanager import xformvalidator
 from buildmanager.exceptions import BuildError
+
 from xformmanager.models import MetaDataValidationError
-from xformmanager.manager import XFormManager, form_translate
 from xformmanager.xformdef import FormDef, ElementDef
 
 def extract_xforms( filename, dir ):
@@ -54,7 +55,6 @@ def validate_jar(filename):
            the existence of a <meta> block, and that there are no missing/
            duplicate/extra tags in it.'''
     temp_directory = tempfile.mkdtemp()
-    body = None
     try: 
         xforms = extract_xforms(filename, temp_directory)
         if not xforms:
@@ -69,30 +69,13 @@ def validate_jar(filename):
         # a schema, as well as adding all kinds of validation checks
         for xform in xforms:
             try:
-                body = open(xform, "r")
-                form_display = os.path.basename(xform)
-                output, errorstream, has_error = form_translate(body.read())
-                if has_error:
-                    raise BuildError("Could not convert xform (%s) to schema.  Your error is %s" % 
-                                     (form_display, errorstream))
-                # if no errors, we should have a valid schema in the output
-                # check the meta block, by creating a formdef object and inspecting it
-                formdef = FormDef(StringIO(output))
-                if not formdef:
-                    raise BuildError("Could not get a valid form definition from the xml file: %s"
-                                      % form_display)
-                    
-                #formdef.validate() throws errors on poor validation
-                formdef.validate()
-
-                # if we made it here we're all good
+                xformvalidator.validate(xform)
             except Exception, e:
+                print e
                 errors.append(e)
         if errors:
             raise BuildError("Problem validating jar!", errors)
         
     finally:
         # clean up after ourselves
-        if body:
-            body.close()
         shutil.rmtree(temp_directory)
