@@ -1,5 +1,6 @@
 from django.db import connection, transaction, DatabaseError
 from xformmanager.tests.util import *
+from xformmanager.manager import get_formdef, is_schema_registered
 
 from decimal import Decimal
 from datetime import *
@@ -184,3 +185,31 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(edds[0].parent,top_edm)
         self.assertEquals(edds[0].xpath,"root/nested")
         self.assertEquals(edds[0].table_name,"schema_xml_nestedrepeats_root_nested")
+
+    def testGetFormDef(self):
+        """ Test get_formdef """
+        create_xsd_and_populate("5_singlerepeat.xsd")
+        create_xsd_and_populate("data/8_singlerepeat_2.xsd")
+        formdef = get_formdef("xml_singlerepeat")
+        self.assertTrue(formdef.version is None)
+        self.assertTrue(formdef.uiversion is None)
+        self.assertEqual(len(formdef.root.child_elements), 5)
+        formdef2 = get_formdef("xml_singlerepeat", "2")
+        self.assertTrue(formdef2.version == 2)
+        self.assertTrue(formdef2.uiversion == 3)
+        self.assertEqual(len(formdef2.root.child_elements), 5)
+        nonexistant = get_formdef("nonexistent", "1")
+        self.assertTrue(nonexistant is None)
+    
+    def isSchemaRegistered(self):
+        """ given a form and version is that form registered """
+        create_xsd_and_populate("5_singlerepeat.xsd")
+        create_xsd_and_populate("data/8_singlerepeat_2.xsd")
+        self.assertTrue(is_schema_registered("xml_singlerepeat"))
+        self.assertTrue(is_schema_registered("xml_singlerepeat",2))
+        self.assertFalse(is_schema_registered("nonexistent",1))
+        try:
+            fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
+            return True
+        except FormDefModel.DoesNotExist:
+            return False

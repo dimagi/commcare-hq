@@ -116,7 +116,6 @@ class CompatibilityTestCase(unittest.TestCase):
         
         # finally run through basic tests with a subsubchild
         # let's get our copies back in our expected state:
-        subchild1_copy = copy.deepcopy(subchild1)
         c1copy.child_elements = [subchild1, subchild2]
         c2copy.child_elements = [subchild3, subchild4]
         self._do_two_way_compatibility_check(filled, fcopy, True)
