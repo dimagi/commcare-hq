@@ -156,9 +156,13 @@ class FormDef(ElementDef):
         return unicode(self).encode('utf-8')
 
     @classmethod
-    def from_file(cls, file):
+    def from_file(cls, file, valid=True):
+        """ By default, schemas read off of the file system are forced to be valid
+        (for now, this just means that poorly formatted versions are forced to None)
+        """
         fin = open(file, 'r')
         formdef = FormDef(fin)
+        formdef.force_to_valid()
         fin.close()
         return formdef
 
@@ -337,15 +341,18 @@ class FormDef(ElementDef):
     
     def force_to_valid(self):
         if self.version and self.version.strip().isdigit():
-            self.version = self.version.strip()
+            self.version = int(self.version.strip())
         else:
             self.version = None
         if self.uiversion and self.uiversion.strip().isdigit():
-            self.uiversion = self.uiversion.strip()
+            self.uiversion = int(self.uiversion.strip())
         else:
             self.uiversion = None
 
     def is_compatible_with(self, otherdef):
+        """ are these two formdef's compatible 
+        i.e. can they share the same raw data tables
+        """
         return self.get_differences(otherdef).is_empty()
 
     def get_differences(self, otherdef):

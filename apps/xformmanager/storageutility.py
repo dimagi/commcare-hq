@@ -686,6 +686,14 @@ class StorageUtility(object):
             return (xmlns, version.strip())
         return (xmlns, None)
 
+def is_schema_registered(target_namespace, version=None):
+    """ given a form and version is that form registered """
+    try:
+        fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
+        return True
+    except FormDefModel.DoesNotExist:
+        return False
+
 def get_registered_table_name(xpath, target_namespace, version=None):
     """ the correct lookup function """
     # TODO : fix - do we need to account for UI version?
