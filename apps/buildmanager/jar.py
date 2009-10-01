@@ -44,11 +44,12 @@ def extract_xforms( filename, dir ):
                 logging.error("Problem extracting xform: %s, error is %s" % filename, e)
     return extracted_forms
     
-def validate_jar(filename):
+def validate_jar(filename, include_xforms=True):
     '''Validates a jar for use with CommCare HQ.  It performs the following
        steps and checks:
         1. Ensures the jar is valid and contains at least one xform in the 
            root.
+        == If include_xforms is True ==
         2. Runs every found xform through the schema conversion logic and
            ensures that there are no problems.
         3. Runs every generated schema through validation that checks for
@@ -64,15 +65,15 @@ def validate_jar(filename):
         # we'll throw a big fat exception at the end, that
         # will wrap all the other ones.
         errors = []
-        
-        # now run through each of the forms and try to convert to 
-        # a schema, as well as adding all kinds of validation checks
-        for xform in xforms:
-            try:
-                xformvalidator.validate(xform)
-            except Exception, e:
-                print e
-                errors.append(e)
+        if include_xforms:
+            # now run through each of the forms and try to convert to 
+            # a schema, as well as adding all kinds of validation checks
+            for xform in xforms:
+                try:
+                    xformvalidator.validate(xform)
+                except Exception, e:
+                    print e
+                    errors.append(e)
         if errors:
             raise BuildError("Problem validating jar!", errors)
         
