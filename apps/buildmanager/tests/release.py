@@ -5,15 +5,25 @@ from django.test import TestCase
 from xformmanager.models import FormDefModel
 from buildmanager.tests.util import setup_build_objects, create_build
 from buildmanager.models import Project, ProjectBuild, BuildDownload, BuildForm
+from xformmanager.storageutility import StorageUtility
 
 class ReleaseTestCase(TestCase):
 
     def setUp(self):
+        su = StorageUtility()
+        su.clear()
         user, domain, project, build = setup_build_objects(jar_file_name="Test.jar")
         self.domain = domain
         self.user = user
         self.project = project
         self.build = build
+    
+    def tearDown(self):
+        # clean up, in case some other tests left some straggling
+        # form data.  Do this in setup and teardown because we want
+        # to start with a clean slate and leave a clean slate.
+        su = StorageUtility()
+        su.clear()
 
     def testRelease(self):
         self.assertEqual(0, len(FormDefModel.objects.all()))
