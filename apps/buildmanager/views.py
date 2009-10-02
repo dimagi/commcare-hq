@@ -157,6 +157,13 @@ def _log_build_download(request, build, type):
     download = BuildDownload(type=type, build=build, log=log)
     download.save()
     
+def _log_build_upload(request, build):
+    '''Logs and saves a build upload.'''
+    log = RequestLog.from_request(request)
+    log.save()
+    upload = BuildUpload(build=build, log=log)
+    uploade.save()
+    
 @login_required
 def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
     try: 
@@ -198,6 +205,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
                 newbuild.set_jadfile(request.FILES['jad_file_upload'].name, request.FILES['jad_file_upload'])
                 newbuild.set_jarfile(request.FILES['jar_file_upload'].name, request.FILES['jar_file_upload'])
                 newbuild.save()
+                _log_build_upload(request, newbuild)
                 return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
             except Exception, e:
                 logging.error("buildmanager new ProjectBuild creation error.", 
