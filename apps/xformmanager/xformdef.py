@@ -436,3 +436,24 @@ class Differences(object):
            no differences'''
         return not (self.fields_added or self.fields_changed or \
                     self.fields_removed or self.types_changed)
+        
+    def __unicode__(self):
+        if self.is_empty():
+            return "No differences"
+        else:
+            attrs = ["fields_added", "fields_removed", "fields_changed", "types_changed"]
+            msgs = [self._display_string(attr) for attr in attrs]
+            return "\n".join([display for display in msgs if display])
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def _display_string(self, attr):
+        if hasattr(self, attr):
+            vals = getattr(self, attr)
+            if vals:
+                val_strs = [str(val) for val in vals]
+                return "%s %s: %s" % (len(val_strs), 
+                                      attr.replace("_", " "), 
+                                      ",".join(val_strs))
+        return ""
