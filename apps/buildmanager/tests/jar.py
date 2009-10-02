@@ -5,6 +5,7 @@ import time
 import shutil
 
 from xformmanager.models import MetaDataValidationError
+
 from buildmanager.jar import *
 from buildmanager.exceptions import BuildError
 

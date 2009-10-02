@@ -101,6 +101,7 @@ class CompatibilityTestCase(unittest.TestCase):
         # removal should not
         c1copy.child_elements = [subchild1]
         self._do_two_way_compatibility_check(filled, fcopy, False)
+        
         # additions should not
         c1copy.child_elements = [subchild2, subchild1, subchild3]
         self._do_two_way_compatibility_check(filled, fcopy, False)
