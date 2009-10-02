@@ -308,7 +308,7 @@ class FormDef(ElementDef):
         # check xmlns not none
         if not self.target_namespace:
             raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.target_namespace)
+                                       self.name)
 
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
@@ -316,12 +316,24 @@ class FormDef(ElementDef):
             raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
                                        self.target_namespace)
         
-        if self.version:
-            if not self.version.strip().isdigit():
-                # should make this into a custom exception
-                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % \
-                                           self.target_namespace)
+        if self.version is None or self.version.strip() == "":
+            raise FormDef.FormDefError("No version number found in submitted form: %s" % \
+                                       self.target_namespace)
+        if not self.version.strip().isdigit():
+            # should make this into a custom exception
+            raise FormDef.FormDefError("Version attribute must be an integer in xform %s but was %s" % \
+                                       (self.target_namespace, self.version))
 
+        # commented out because something is not working here
+#        if self.uiversion is None or self.uiversion.strip() == "":
+#            raise FormDef.FormDefError("No ui version number found in submitted form: %s" % \
+#                                       self.target_namespace)    
+#        
+#        if not self.uiversion.strip().isdigit():
+#            raise FormDef.FormDefError("UI version attribute must be an integer in xform %s but was %s" % \
+#                                       (self.target_namespace, self.uiversion))
+
+        
         meta_element = self.get_meta_element()
         if not meta_element:
             raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
