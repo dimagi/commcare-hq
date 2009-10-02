@@ -25,6 +25,12 @@ class ReleaseTestCase(TestCase):
         su = StorageUtility()
         su.clear()
 
+    def testReleaseBrac(self):
+        # for convenience
+        build = create_build(self.user, self.domain, self.project, status="build",
+                             jar_file_name="BracCHP.jar", build_number=2)
+        build.release(self.user)
+        
     def testRelease(self):
         self.assertEqual(0, len(FormDefModel.objects.all()))
         # the saving of the build should have auto-created these
@@ -47,7 +53,7 @@ class ReleaseTestCase(TestCase):
         self.assertEqual(2, len(formdefs), "Releasing a build twice registered extra xforms!")
         
         bad_jars = ["ExtraMetaField.jar","DuplicateMetaField.jar","MissingMetaField.jar",
-                    "NoXmlns.jar"]
+                    "NoXmlns.jar", "NoVersion.jar", "NoUiVersion.jar"]
         build_number = 2
         for bad_jar in bad_jars:
             bad_build = create_build(self.user, self.domain, self.project, status="build",

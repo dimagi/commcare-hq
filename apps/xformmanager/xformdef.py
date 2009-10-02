@@ -324,7 +324,7 @@ class FormDef(ElementDef):
             raise FormDef.FormDefError("Version attribute must be an integer in xform %s but was %s" % \
                                        (self.target_namespace, self.version))
 
-        # commented out because something is not working here
+        # something is wrong with this attribute, it isn't carried over from xml -> xsd
 #        if self.uiversion is None or self.uiversion.strip() == "":
 #            raise FormDef.FormDefError("No ui version number found in submitted form: %s" % \
 #                                       self.target_namespace)    
@@ -333,7 +333,6 @@ class FormDef(ElementDef):
 #            raise FormDef.FormDefError("UI version attribute must be an integer in xform %s but was %s" % \
 #                                       (self.target_namespace, self.uiversion))
 
-        
         meta_element = self.get_meta_element()
         if not meta_element:
             raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
