@@ -1,0 +1,10 @@
+{% extends "buildmanager/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Xform Summary" %}{% endblock %}
+{% block buildmanager_content %}
+{% if xform %} 
+{% include "buildmanager/partials/single_form.html" %}
+{% else %}
+    <p class="error">Sorry, we couldn't find that form for you!</p>
+{% endif %}
+{%endblock%}
