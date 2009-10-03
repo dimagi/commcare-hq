@@ -256,7 +256,7 @@
 
 		<instance>
 
-			<pathfinder_referral xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2a">
+			<pathfinder_referral xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_resolution_0.0.2a" version="1" uiVersion="1">
 
 				<Meta>
 

@@ -295,7 +295,7 @@
 		</itext>
 
 		<instance>
-			<pathfinder_followup xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2">
+			<pathfinder_followup xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_follow_0.0.2" version="1" uiVersion="1">
 				<Meta>
 					<formName>PathfinderFollowUpVisit</formName>
 					<formVersion>0.0.1</formVersion>
