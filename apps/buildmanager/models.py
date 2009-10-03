@@ -3,6 +3,15 @@ import logging
 import settings
 from datetime import datetime
 
+# make things easier so people don't have to install pygments
+try:
+    from pygments import highlight
+    from pygments.lexers import HtmlLexer
+    from pygments.formatters import HtmlFormatter
+    pygments_found=True
+except ImportError:
+    pygments_found=False
+
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
@@ -207,7 +216,7 @@ class ProjectBuild(models.Model):
         to_return = []
         for form in self.xforms.all():
             try:
-                to_return.append(form.get_html_display())
+                to_return.append(form.get_link())
             except Exception, e:
                 # we don't care about this
                 pass
@@ -428,7 +437,25 @@ class BuildForm(models.Model):
             logging.error("Unable to open xform: %s" % self, 
                           extra={"exception": e }) 
 
-    def get_html_display(self):
+    def get_text(self):
+        '''Gets the body of the xform, as text'''
+        try:
+            file = self.as_filestream()
+            text = file.read()
+            file.close()
+            return text
+        except Exception, e:
+            logging.error("Unable to open xform: %s" % self, 
+                          extra={"exception": e }) 
+
+    def to_html(self):
+        '''Gets the body of the xform, as pretty printed text'''
+        raw_body = self.get_text()
+        if pygments_found:
+            return highlight(raw_body, HtmlLexer(), HtmlFormatter())
+        return raw_body
+        
+    def get_link(self):
         '''A clickable html displayable version of this for use in templates'''
         return '<a href=%s target=_blank>%s</a>' % (self.get_url(), self.get_file_name())
     
