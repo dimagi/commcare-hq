@@ -30,7 +30,7 @@
         </div>
         </td>
         <td>{% ifequal build.status "build" %}
-           <a href="{% url buildmanager.views.release build.id %}">Promote to Release</a>
+           <button onclick="location.assign('{% url buildmanager.views.release build.id %}');">Promote to Release</button>
             {% endifequal %}
         </td>
     </tr>
