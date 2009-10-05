@@ -237,7 +237,16 @@ class StorageUtility(object):
                 queries = queries + " parent_id REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
         else:
             queries = self._trim2chars(queries)
-        queries = queries + " );"
+        # we only specify default engine and character set if it's clear that
+        # we are already doing something against the global config
+        # (i.e. we're settings database_options in settings.py)
+        if hasattr(settings,'DATABASE_OPTIONS') and \
+            'init_command' in settings.DATABASE_OPTIONS and \
+            'innodb' in settings.DATABASE_OPTIONS['init_command'].lower():
+                queries = queries + ") ENGINE=InnoDB;"
+        else:
+            # most of the time, we rely on global mysql config in my.conf/ini
+            queries = queries + ");"
         queries = queries + next_query;
         return queries
     
