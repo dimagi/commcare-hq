@@ -1,5 +1,6 @@
 from xformmanager.util import *
-from xformmanager.models import Metadata, MetaDataValidationError
+# unfortunately, have to do something like this because of semi-circular dependencies
+import xformmanager as xfm
 from lxml import etree
 import logging
 
@@ -239,7 +240,7 @@ class FormDef(ElementDef):
         extra_fields = []
         duplicate_fields = []
         found_fields = []
-        missing_fields.extend(Metadata.fields)
+        missing_fields.extend(xfm.models.Metadata.fields)
         
         # hackily remove some stuff we no longer want to require
         missing_fields.remove('formname')
@@ -307,7 +308,7 @@ class FormDef(ElementDef):
         # check xmlns not none
         if not self.target_namespace:
             raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.target_namespace)
+                                       self.name)
 
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
@@ -315,11 +316,22 @@ class FormDef(ElementDef):
             raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
                                        self.target_namespace)
         
-        if self.version:
-            if not self.version.strip().isdigit():
-                # should make this into a custom exception
-                raise FormDef.FormDefError("Version attribute must be an integer in xform %s" % \
-                                           self.target_namespace)
+        if self.version is None or self.version.strip() == "":
+            raise FormDef.FormDefError("No version number found in submitted form: %s" % \
+                                       self.target_namespace)
+        if not self.version.strip().isdigit():
+            # should make this into a custom exception
+            raise FormDef.FormDefError("Version attribute must be an integer in xform %s but was %s" % \
+                                       (self.target_namespace, self.version))
+
+        # something is wrong with this attribute, it isn't carried over from xml -> xsd
+#        if self.uiversion is None or self.uiversion.strip() == "":
+#            raise FormDef.FormDefError("No ui version number found in submitted form: %s" % \
+#                                       self.target_namespace)    
+#        
+#        if not self.uiversion.strip().isdigit():
+#            raise FormDef.FormDefError("UI version attribute must be an integer in xform %s but was %s" % \
+#                                       (self.target_namespace, self.uiversion))
 
         meta_element = self.get_meta_element()
         if not meta_element:
@@ -327,7 +339,7 @@ class FormDef(ElementDef):
         
         meta_issues = FormDef.get_meta_validation_issues(meta_element)
         if meta_issues:
-            mve = MetaDataValidationError(meta_issues, self.target_namespace)
+            mve = xfm.models.MetaDataValidationError(meta_issues, self.target_namespace)
             # until we have a clear understanding of how meta versions will work,
             # don't fail on issues that only come back with "extra" set.  i.e.
             # look for missing or duplicate
@@ -435,3 +447,24 @@ class Differences(object):
            no differences'''
         return not (self.fields_added or self.fields_changed or \
                     self.fields_removed or self.types_changed)
+        
+    def __unicode__(self):
+        if self.is_empty():
+            return "No differences"
+        else:
+            attrs = ["fields_added", "fields_removed", "fields_changed", "types_changed"]
+            msgs = [self._display_string(attr) for attr in attrs]
+            return "\n".join([display for display in msgs if display])
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def _display_string(self, attr):
+        if hasattr(self, attr):
+            vals = getattr(self, attr)
+            if vals:
+                val_strs = [str(val) for val in vals]
+                return "%s %s: %s" % (len(val_strs), 
+                                      attr.replace("_", " "), 
+                                      ",".join(val_strs))
+        return ""

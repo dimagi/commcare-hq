@@ -5,6 +5,7 @@ import time
 import shutil
 
 from xformmanager.models import MetaDataValidationError
+
 from buildmanager.jar import *
 from buildmanager.exceptions import BuildError
 
@@ -19,6 +20,8 @@ class JarTestCase(unittest.TestCase):
         self.missing_jar = os.path.join(path_to_data , "MissingMetaField.jar")
         self.duplicate_jar = os.path.join(path_to_data , "DuplicateMetaField.jar")
         self.no_xmlns_jar = os.path.join(path_to_data , "NoXmlns.jar")
+        self.no_version_jar = os.path.join(path_to_data , "NoVersion.jar")
+        self.no_uiversion_jar = os.path.join(path_to_data , "NoUiVersion.jar")
         self.output_dir = os.path.join(self.path, "jarout-%s" % time.time())
         
 
@@ -45,6 +48,8 @@ class JarTestCase(unittest.TestCase):
 
     def testValidateJar(self):
         validate_jar(self.jarfile)
+    
+    def testMissingMetaFields(self):
         try:
             validate_jar(self.missing_jar)
             self.fail("Missing meta field did not raise an exception")
@@ -55,9 +60,12 @@ class JarTestCase(unittest.TestCase):
             self.assertFalse(e.duplicate)
             self.assertFalse(e.extra)
         
+    def testExtraMetaFields(self):
         # No longer have extra meta fields fail hard.  We may 
         # want to validate this better in the future.  
         validate_jar(self.extra_jar)
+        
+    def testDuplicateMetaFields(self):
         try:
             validate_jar(self.duplicate_jar)
             self.fail("Duplicate meta field did not raise an exception")
@@ -67,12 +75,32 @@ class JarTestCase(unittest.TestCase):
             self.assertTrue(e.duplicate)
             self.assertFalse(e.missing)
             self.assertFalse(e.extra)
+
+    def testNoXmlns(self):        
         try:
             validate_jar(self.no_xmlns_jar)
             self.fail("Missing XMLNS did not raise an exception")
         except BuildError, e:
             # we expect this error to say something about a missing namespace
             self.assertTrue("namespace" in unicode(e))
+
+    def testNoVersion(self):        
+        try:
+            validate_jar(self.no_version_jar)
+            self.fail("Missing version did not raise an exception")
+        except BuildError, e:
+            # we expect this error to say something about a missing version
+            self.assertTrue("version" in unicode(e))
+    
+    def testNoUiVersion(self):        
+        # until we get the xsd converter working with this attr, bypass this test
+        return
+        try:
+            validate_jar(self.no_uiversion_jar)
+            self.fail("Missing ui version did not raise an exception")
+        except BuildError, e:
+            # we expect this error to say something about a missing ui version
+            self.assertTrue("ui version" in unicode(e))
 
         
             

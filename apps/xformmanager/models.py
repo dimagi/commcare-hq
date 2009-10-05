@@ -17,7 +17,8 @@ from hq.models import *
 from hq.utils import build_url
 from graphing import dbhelper
 from receiver.models import Attachment, SubmissionHandlingType
-from xformmanager.util import case_insensitive_iter, format_field
+from xformmanager.util import case_insensitive_iter, format_field, format_table_name
+from xformmanager.xformdef import FormDef
 
 class ElementDefModel(models.Model):
     # this class is really not used
@@ -115,6 +116,66 @@ class FormDefModel(models.Model):
         self.save()
         super(FormDefModel, self).delete()
     
+    @classmethod
+    def create_models(cls, formdef):
+        """Create FormDefModel and ElementDefModel objects for a FormDef
+           object."""
+        fdd = FormDefModel()
+        table_name = format_table_name(formdef.target_namespace, formdef.version)
+        fdd.name = str(formdef.name)
+        fdd.form_name = table_name
+        fdd.target_namespace = formdef.target_namespace
+        fdd.version = formdef.version
+        fdd.uiversion = formdef.uiversion
+        
+        try:
+            fdd.save()
+        except IntegrityError, e:
+            raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
+                                   " Did you remember to update your version number?")
+        ed = ElementDefModel()
+        ed.xpath=formdef.root.xpath
+        ed.table_name = table_name
+        ed.form = fdd
+        ed.save()
+        ed.parent = ed
+        ed.save()
+        
+        fdd.element = ed
+        fdd.save()
+        return fdd
+    
+    @classmethod
+    def get_model(cls, target_namespace, version=None):
+        """Given a form and version get me that formdef model.
+           If formdef could not be found, returns None
+        """
+        try:
+            return FormDefModel.objects.get(target_namespace=target_namespace,
+                                                    version=version)
+        except FormDefModel.DoesNotExist:
+            return None
+    
+    @classmethod    
+    def get_formdef(cls, target_namespace, version=None):
+        """Given an xmlns and version, return the FormDef object associated
+           with it, or nothing if no match is found"""
+        formdefmodel = FormDefModel.get_model(target_namespace, version)
+        if formdefmodel:
+            return formdefmodel.to_formdef()
+    
+    def to_formdef(self):
+        """Convert this FormDefModel to a FormDef object."""
+        if self.xsd_file_location is None:
+            # I wonder if we should really fail this hard...
+            raise IOError("Schema for form %s could not be found on the file system." % \
+                          target_namespace)
+        return FormDef.from_file(self.xsd_file_location)
+    
+    @classmethod
+    def is_schema_registered(cls, target_namespace, version=None):
+        """Given a form and version is that form registered """
+        return FormDefModel.get_model(target_namespace, version) is not None
     
     @property
     def db_helper(self):

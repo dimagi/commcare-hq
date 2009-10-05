@@ -110,7 +110,7 @@ class StorageUtility(object):
     @transaction.commit_on_success
     def add_schema(self, formdef):
         formdef.force_to_valid()
-        fdd = self.update_models(formdef)
+        fdd = FormDefModel.create_models(formdef)
         self.formdefmodel = fdd
         self.formdef = self._strip_meta_def( formdef )
         queries = self.queries_to_create_instance_tables( formdef, fdd.element.id, formdef.name, formdef.name)
@@ -174,37 +174,7 @@ class StorageUtility(object):
         f.close()
         return status
 
-    def update_models(self, formdef):
-        """ save element metadata """
-        fdd = FormDefModel()
-        fdd.name = str(formdef.name)
-        #todo: fix this so we don't have to parse table twice
-        fdd.form_name = format_table_name(formdef.target_namespace, formdef.version)
-        fdd.target_namespace = formdef.target_namespace
-        fdd.version = formdef.version
-        fdd.uiversion = formdef.uiversion
-        
-        try:
-            fdd.save()
-        except IntegrityError, e:
-            raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
-                                   " Did you remember to update your version number?")
-        ed = ElementDefModel()
-        ed.xpath=formdef.root.xpath
-        ed.table_name=format_table_name(formdef.target_namespace, formdef.version)
-        #ed.form_id = fdd.id
-        ed.form = fdd
-        ed.save()
-        ed.parent = ed
-        ed.save()
-        
-        fdd.element = ed
-        fdd.save()
-        
-        # kind of odd that this is created but not saved here... 
-        # not sure how to work around that, given required fields?
-        return fdd
-    
+
     # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
     # (rather than just passing around tuples of strings)
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):

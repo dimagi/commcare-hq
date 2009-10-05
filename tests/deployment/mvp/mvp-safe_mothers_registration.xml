@@ -355,7 +355,7 @@
 		</itext>
 
 		<instance>
-			<sampledata xmlns="http://www.commcare.org/MVP/safe_motherhood/registration_v0.1">
+			<sampledata xmlns="http://www.commcare.org/MVP/safe_motherhood/registration_v0.1" version="1" uiVersion="1">
 			<Meta>
 				<formName>Safe Pregnancy Registration</formName>
 				<formVersion>0.0.1</formVersion>

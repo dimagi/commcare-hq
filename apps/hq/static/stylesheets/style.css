@@ -570,9 +570,11 @@ tr.even td { background:#e5ecf9; }
 tr.even td.sorted { background:lightyellow; }
 
 /* add a little brightness while hovering */
+/* temporarily commented out
 tr:hover td {
     background: lightyellow !important;
 }
+*/
 
 table.sofT
 { 
@@ -920,6 +922,12 @@ div.inlinecomments {
 
 
 /*endregion*/
+
+.js_link {
+	cursor:pointer;
+    color:#5B80B2;
+}
+
 /* tooltip */
 
     #dhtmlgoodies_tooltip{
@@ -947,4 +955,3 @@ div.inlinecomments {
         -moz-border-radius:6px; /* Rounded edges in Firefox */
     }
                 
-    

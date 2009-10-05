@@ -24,5 +24,5 @@ class Command(BaseCommand):
 # we make these functions global so they can be reused by other scripts
 def reset_schema():
     from xformmanager.storageutility import StorageUtility
-    su = StorageUtility(remove_submissions=True)
-    su.clear()
+    su = StorageUtility()
+    su.clear(remove_submissions=True)

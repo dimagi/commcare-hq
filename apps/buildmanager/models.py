@@ -3,6 +3,15 @@ import logging
 import settings
 from datetime import datetime
 
+# make things easier so people don't have to install pygments
+try:
+    from pygments import highlight
+    from pygments.lexers import HtmlLexer
+    from pygments.formatters import HtmlFormatter
+    pygments_found=True
+except ImportError:
+    pygments_found=False
+
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
@@ -12,6 +21,10 @@ from django.core.urlresolvers import reverse
 from hq.models import ExtUser
 from hq.models import Domain
 from requestlogger.models import RequestLog
+from xformmanager.models import FormDefModel
+from xformmanager.manager import XFormManager
+
+from buildmanager import xformvalidator
 from buildmanager.jar import validate_jar, extract_xforms
 from buildmanager.exceptions import BuildError
 
@@ -33,6 +46,7 @@ class Project (models.Model):
         '''Get all the downloads associated with this project, across
            builds.'''
         return BuildDownload.objects.filter(build__project=self)
+    
     
     def get_non_released_builds(self):
         '''Get all non-released builds for this project'''
@@ -80,6 +94,7 @@ class Project (models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
+UNKNOWN_IP = "0.0.0.0"
 
 BUILD_STATUS = (    
     ('build', 'Standard Build'),    
@@ -134,7 +149,8 @@ class ProjectBuild(models.Model):
     released_by = models.ForeignKey(User, null=True, blank=True, related_name="builds_released")
     
     def __unicode__(self):
-        return "%s build: %s" % (self.project, self.build_number)
+        return "%s build: %s. jad: %s, jar: %s" %\
+                (self.project, self.build_number, self.jad_file, self.jar_file)
 
     def get_jar_download_count(self):
         return len(self.downloads.filter(type="jar"))
@@ -142,6 +158,14 @@ class ProjectBuild(models.Model):
     def get_jad_download_count(self):
         return len(self.downloads.filter(type="jad"))
     
+    @property
+    def upload_information(self):
+        '''Get the upload request information associated with this, 
+           if it is present.'''
+        try:
+            return BuildUpload.objects.get(build=self).log
+        except BuildUpload.DoesNotExist:
+            return None
     
     def save(self):
         """Override save to provide some simple enforcement of uniqueness to the build numbers
@@ -160,7 +184,6 @@ class ProjectBuild(models.Model):
         return os.path.basename(self.jad_file)
     
     def get_jar_filestream(self):
-        
         try:
             fin = open(self.jar_file,'r')
             return fin
@@ -169,6 +192,7 @@ class ProjectBuild(models.Model):
                                                            "jar_file": self.jar_file, 
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
+    
     def get_jad_filestream(self):        
         try:
             fin = open(self.jad_file,'r')
@@ -178,6 +202,7 @@ class ProjectBuild(models.Model):
                                                            "jad_file": self.jad_file, 
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
+    
     def get_jad_contents(self):
         '''Returns the contents of the jad as text.'''
         file = self.get_jad_filestream()
@@ -191,7 +216,7 @@ class ProjectBuild(models.Model):
         to_return = []
         for form in self.xforms.all():
             try:
-                to_return.append(form.get_html_display())
+                to_return.append(form.get_link())
             except Exception, e:
                 # we don't care about this
                 pass
@@ -255,15 +280,105 @@ class ProjectBuild(models.Model):
             os.makedirs(destinationpath)        
         return destinationpath
     
-    def validate_jar(self):
-        '''Validates this build's jar file'''
-        validate_jar(self.jar_file)
+    def validate_jar(self, include_xforms=False):
+        '''Validates this build's jar file.  By default, does NOT validate
+           the jar's xforms.'''
+        validate_jar(self.jar_file, include_xforms)
+        
+    def validate_xforms(self):
+        '''Validates this build's xforms.'''
+        errors = []
+        for form in self.xforms.all():
+            try:
+                xformvalidator.validate(form.file_location)
+            except Exception, e:
+                errors.append(e)
+        if errors:
+            raise BuildError("Problem validating xforms for %s!" % self, errors)
+        
+        
+    def check_and_release_xforms(self):
+        '''Checks this build's xforms against the xformmanager and releases
+           them, if they pass compatibility tests'''
+        errors = []
+        to_skip = []
+        to_register = []
+        for form in self.xforms.all():
+            try:
+                formdef = xformvalidator.validate(form.file_location)
+                modelform = FormDefModel.get_model(formdef.target_namespace, 
+                                                   formdef.version)
+                if modelform:
+                    # if the model form exists we must ensure it is compatible
+                    # with the version we are trying to release
+                    existing_formdef = modelform.to_formdef()
+                    differences = existing_formdef.get_differences(formdef)
+                    if differences.is_empty():
+                        # this is all good
+                        to_skip.append(form)
+                    else:
+                        raise BuildError("""Schema %s is not compatible with %s.  
+                                            Because of the following differences: 
+                                            %s
+                                            You must update your version number!"""
+                                         % (existing_formdef, formdef, differences))
+                else:
+                    # this must be registered
+                    to_register.append(form)
+            except Exception, e:
+                errors.append(e)
+        if errors:
+            raise BuildError("Problem validating xforms for %s!" % self, errors)
+        # finally register
+        manager = XFormManager()
+        # TODO: we need transaction management
+        for form in to_register:
+            try:
+                formdefmodel = manager.add_schema(form.get_file_name(),
+                                                  form.as_filestream()) 
+                
+                upload_info = self.upload_information
+                if upload_info:
+                    formdefmodel.submit_ip = upload_info.ip
+                    user = upload_info.user
+                else:
+                    formdefmodel.submit_ip = UNKNOWN_IP
+                    user = self.uploaded_by
+                if user:
+                    try:
+                        extuser = ExtUser.objects.get(id=user.id)
+                        formdefmodel.uploaded_by = extuser
+                    except ExtUser.DoesNotExist:
+                        # they must have just been a regular User
+                        formdefmodel.uploaded_by = None
+                formdefmodel.bytes_received =  form.size
+                formdefmodel.form_display_name = form.get_file_name()
+                formdefmodel.domain = self.project.domain
+                formdefmodel.save()                
+            except Exception, e:
+                errors.append(e)
+        if errors:
+            raise BuildError("Problem registering xforms for %s!" % self, errors)
         
     def release(self, user):
-        '''Release a build, by setting its status as such.'''
+        '''Release a build.  This does a number of things:
+           1. Validates the Jar.  The specifics of this are still in flux but at the very
+              least it should be extractable, and there should be at least one xform.
+           2. Ensures all the xforms have valid xmlns, version, and uiversion attributes
+           3. Checks if xforms with the same xmlns and version are registered already
+              If so: ensures the current forms are compatible with the registered forms
+              If not: registers the forms
+           4. Updates the build status to be released, sets the released and 
+              released_by properties
+           This method will raise an exception if, for any reason above, the build cannot
+           be released.'''
         if self.status == "release":
             raise BuildError("Tried to release an already released build!")
         else:
+            # TODO: we need transaction management.  Any of these steps can raise exceptions
+            self.validate_jar()
+            self.validate_xforms()
+            self.check_and_release_xforms()
             self.status = "release"
             self.released = datetime.now()
             self.released_by = user
@@ -304,6 +419,10 @@ class BuildForm(models.Model):
         '''Get a readable file name for this xform'''
         return os.path.basename(self.file_location)
     
+    @property
+    def size(self):
+        return os.path.getsize(self.file_location)
+    
     def get_url(self):
         '''Get the url where you can view this form'''
         return reverse('get_build_xform', args=(self.id,))
@@ -318,7 +437,25 @@ class BuildForm(models.Model):
             logging.error("Unable to open xform: %s" % self, 
                           extra={"exception": e }) 
 
-    def get_html_display(self):
+    def get_text(self):
+        '''Gets the body of the xform, as text'''
+        try:
+            file = self.as_filestream()
+            text = file.read()
+            file.close()
+            return text
+        except Exception, e:
+            logging.error("Unable to open xform: %s" % self, 
+                          extra={"exception": e }) 
+
+    def to_html(self):
+        '''Gets the body of the xform, as pretty printed text'''
+        raw_body = self.get_text()
+        if pygments_found:
+            return highlight(raw_body, HtmlLexer(), HtmlFormatter())
+        return raw_body
+        
+    def get_link(self):
         '''A clickable html displayable version of this for use in templates'''
         return '<a href=%s target=_blank>%s</a>' % (self.get_url(), self.get_file_name())
     
@@ -330,6 +467,12 @@ BUILD_FILE_TYPE = (
     ('jad', '.jad file'),    
     ('jar', '.jar file'),   
 )
+
+class BuildUpload(models.Model):    
+    """Represents an instance of the upload of a build."""
+    build = models.ForeignKey(ProjectBuild, unique=True)
+    log = models.ForeignKey(RequestLog, unique=True)
+    
 
 class BuildDownload(models.Model):    
     """Represents an instance of a download of a build file.  Included are the

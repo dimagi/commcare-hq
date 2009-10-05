@@ -157,6 +157,13 @@ def _log_build_download(request, build, type):
     download = BuildDownload(type=type, build=build, log=log)
     download.save()
     
+def _log_build_upload(request, build):
+    '''Logs and saves a build upload.'''
+    log = RequestLog.from_request(request)
+    log.save()
+    upload = BuildUpload(build=build, log=log)
+    upload.save()
+    
 @login_required
 def release(request, build_id, template_name="buildmanager/release_confirmation.html"): 
     try: 
@@ -164,9 +171,6 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     except ProjectBuild.DoesNotExist:
         raise Http404
     try:
-        jarfile = build.jar_file
-        validate_jar(jarfile)
-        build.validate_jar()
         build.release(request.user)
         context = {}
         context["build"] = build
@@ -201,6 +205,7 @@ def new_build(request, template_name="buildmanager/new_build.html"):
                 newbuild.set_jadfile(request.FILES['jad_file_upload'].name, request.FILES['jad_file_upload'])
                 newbuild.set_jarfile(request.FILES['jar_file_upload'].name, request.FILES['jar_file_upload'])
                 newbuild.save()
+                _log_build_upload(request, newbuild)
                 return HttpResponseRedirect(reverse('buildmanager.views.all_builds'))
             except Exception, e:
                 logging.error("buildmanager new ProjectBuild creation error.", 
@@ -213,17 +218,21 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     return render_to_response(request, template_name, context)
 
 @login_required
-def get_build_xform(request, id):
+def get_build_xform(request, id, template_name="buildmanager/display_xform.html"):
     form = BuildForm.objects.get(id=id)
-    fin = form.as_filestream()
-    # unfortunately, neither of these more correct displays actually look good in firefox
-    #response = HttpResponse(fin.read(), mimetype='application/xhtml+xml')
-    #response = HttpResponse(fin.read(), mimetype='text/xml')
-    response = HttpResponse(fin.read(), mimetype='text/plain')
-    fin.close()
-    return response
+    if "download" in request.GET:
+        fin = form.as_filestream()
+        # unfortunately, neither of these more correct displays actually look good in firefox
+        #response = HttpResponse(fin.read(), mimetype='application/xhtml+xml')
+        #response = HttpResponse(fin.read(), mimetype='text/xml')
+        response = HttpResponse(fin.read(), mimetype='text/xml')
+        response["content-disposition"] = 'attachment; filename=%s' % form.get_file_name()
+        fin.close()
+        return response
+    else:
+        # display it inline on HQ
+        return render_to_response(request, template_name, { "xform": form })
         
-    
     
 def _handle_error(request, error_message):
     """Handles an error, by logging it and returning a 500 page"""

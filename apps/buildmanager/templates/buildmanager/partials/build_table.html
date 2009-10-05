@@ -12,25 +12,31 @@
 	<th></th>
 </thead>
 {% for build in builds %}
+       
     <tr>
         <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>
-        <td><a href="{{build.get_jar_downloadurl}}" onmouseover="showTooltip(event,'{{build.get_xform_html_summary|safe}}');return false">
-        {{build.get_jar_filename}}</a></td>
+        <td class="bubbleInfo"><a href="{{build.get_jar_downloadurl}}">
+            {{build.get_jar_filename}}</a></td>
         <td><a href="{{build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{build.get_jad_contents}}');return false"> 
         {{build.get_jad_filename}}</a></td>
         <td>{{build.uploaded_by}}</td>
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
         <td><a href="{{build.get_buildURL}}">Build URL</a></td>
+        <td style="min-width:200px"><div class="js_link" onclick="hideShow('div.xforms-{{build.id}}')">{{build.xforms.count}} forms</div> 
+        <div class="xforms-{{build.id}}" style="display:none;">
+            --<p>{{build.get_xform_html_summary|safe}}</p>
+        </div>
+        </td>
         <td>{% ifequal build.status "build" %}
            <a href="{% url buildmanager.views.release build.id %}">Promote to Release</a>
             {% endifequal %}
         </td>
     </tr>
+
 {%endfor%}
 </table>
 {% else %}
 No builds found
 {% endif %}
-<a href="#"
