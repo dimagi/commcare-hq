@@ -668,7 +668,7 @@
 
 		<instance>
 
-			<pathfinder_registration xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2a">
+			<pathfinder_registration xmlns="http://dev.commcarehq.org/Pathfinder/pathfinder_cc_registration_0.0.2a" version="1" uiVersion="1">
 
 				<Meta>
 

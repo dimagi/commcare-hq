@@ -132,7 +132,7 @@
 		</itext>
 
 		<instance>
-			<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1">
+			<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1" version="1" uiVersion="1">
 				<Meta>
 					<formName>Safe Pregnancy Close Visit</formName>
 					<formVersion>0.0.1</formVersion>

@@ -5,3 +5,4 @@ import unittest
 from jar import *
 from views import *
 from build import *
+from release import *

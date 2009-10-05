@@ -17,3 +17,5 @@ class BuildError(Exception):
     def __unicode__(self):
         return "%s\n%s" % (self.msg, self.get_error_string()) 
 
+    def __str__(self):
+        return unicode(self).encode('utf-8')

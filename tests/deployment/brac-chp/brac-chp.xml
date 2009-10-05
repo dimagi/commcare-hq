@@ -810,7 +810,7 @@
 		</itext>
 
 		<instance>
-			<brac xmlns="http://dev.commcarehq.org/BRAC/CHP/HomeVisit_v0.0.1">
+			<brac xmlns="http://dev.commcarehq.org/BRAC/CHP/HomeVisit_v0.0.1" version="1" uiVersion="1">
 				<Meta>
 					<formName>BRACCHPHomeVisit</formName>
 					<formVersion>0.0.1</formVersion>

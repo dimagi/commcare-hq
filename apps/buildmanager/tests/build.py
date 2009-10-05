@@ -8,7 +8,7 @@ from buildmanager.models import Project, ProjectBuild, BuildDownload, BuildForm
 class BuildTestCase(TestCase):
 
     def setUp(self):
-        domain, user, project, build = setup_build_objects(jar_file_name="Test.jar")
+        user, domain, project, build = setup_build_objects(jar_file_name="Test.jar")
         self.domain = domain
         self.user = user
         self.project = project
