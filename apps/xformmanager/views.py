@@ -239,10 +239,14 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
        View data for a single xform instance submission.  
     '''
     xform = FormDefModel.objects.get(id=formdef_id)
+    # for now, the formdef version/uiversion is equivalent to 
+    # the instance version/uiversion
+    data = [('XMLNS',xform.target_namespace), ('Version',xform.version), 
+            ('uiVersion',xform.uiversion)]
     row = xform.get_row(instance_id)
     fields = xform.get_display_columns()
     # make them a list of tuples of field, value pairs for easy iteration
-    data = zip(fields, row)
+    data = data + zip(fields, row)
     return render_to_response(request, template_name, {"form" : xform,
                                                        "id": instance_id,  
                                                        "data": data })
