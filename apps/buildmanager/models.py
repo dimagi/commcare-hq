@@ -18,8 +18,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from hq.models import ExtUser
-from hq.models import Domain
+from hq.models import ExtUser, Domain
+from hq.utils import build_url
 from requestlogger.models import RequestLog
 from xformmanager.models import FormDefModel
 from xformmanager.manager import XFormManager
@@ -152,6 +152,19 @@ class ProjectBuild(models.Model):
         return "%s build: %s. jad: %s, jar: %s" %\
                 (self.project, self.build_number, self.jad_file, self.jar_file)
 
+    def __unicode__(self):
+        return "%s build: %s. jad: %s, jar: %s" %\
+                (self.project, self.build_number, self.jad_file, self.jar_file)
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def get_display_string(self):
+        '''Like calling str() but with a url attached'''
+        return "%s\nurl on server: %s" % (str(self),
+                           build_url(reverse('show_build', 
+                                             args=(self.id,)))) 
+        
     def get_jar_download_count(self):
         return len(self.downloads.filter(type="jar"))
     
@@ -383,6 +396,8 @@ class ProjectBuild(models.Model):
             self.released = datetime.now()
             self.released_by = user
             self.save()
+            logging.error("%s just released build %s!  We just thought you might want to be keeping tabs..." %
+                          (user, self.get_display_string()))
             
 def extract_and_link_xforms(sender, instance, created, **kwargs): 
     '''Extracts all xforms from this build's jar and creates
