@@ -16,7 +16,7 @@ from django.core.urlresolvers import reverse
 from hq.models import *
 from hq.utils import build_url
 from graphing import dbhelper
-from receiver.models import Attachment, SubmissionHandlingType
+from receiver.models import Submission, Attachment, SubmissionHandlingType
 from xformmanager.util import case_insensitive_iter, format_field, format_table_name
 from xformmanager.xformdef import FormDef
 
@@ -313,7 +313,13 @@ class FormDefModel(models.Model):
             payload = xsd_file.read()
             xsd_file.close() 
             return simplejson.dumps(headers) + "\n\n" + payload
-
+    
+    def time_of_last_instance(self):
+        """ returns the last time an instance was submitted to this schema """
+        submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
+        if submit is None:
+            return None
+        return submit.submit_time
 
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other
