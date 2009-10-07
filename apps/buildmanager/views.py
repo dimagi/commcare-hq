@@ -156,6 +156,13 @@ def _log_build_download(request, build, type):
     log.save()
     download = BuildDownload(type=type, build=build, log=log)
     download.save()
+    # Also add a little notifier here so we can track build downloads
+    if (hasattr(request, "user")):
+        user_display = str(request.user)
+    else:
+        user_display = "An anonymous user"
+    logging.error("Hey! %s just downloaded the %s file for build %s!  The request was a %s"\
+                   %(user_display, type, build.get_display_string(), log))
     
 def _log_build_upload(request, build):
     '''Logs and saves a build upload.'''
@@ -184,7 +191,7 @@ def release(request, build_id, template_name="buildmanager/release_confirmation.
     except Exception, e:
         # we may want to differentiate from expected (BuildError) and unexpected
         # (everything else) errors down the road, for now we treat them the same.
-        error_string = "Problem releasing build: %s, the error is: %s" % (build, unicode(e)) 
+        error_string = "Problem releasing build: %s, the error is: %s" % (build.get_display_string(), unicode(e)) 
         return _handle_error(request, error_string)
         
 
