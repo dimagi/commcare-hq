@@ -1,0 +1,10 @@
+{% extends base_template %}
+{% block title %}
+{{ report.title }}
+{% endblock %}
+{% block content %}
+<h1>{{ report.title }}</h1>
+<h3>{{ report.description }}</h3>
+<br>
+{{ table|safe }}
+{%endblock%}
