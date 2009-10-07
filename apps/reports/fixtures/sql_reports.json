@@ -1,0 +1,22 @@
+[
+  {
+    "pk": 1, 
+    "model": "reports.sqlreport", 
+    "fields": {
+      "query": "/* This could likely be significantly cleaned up or optimized */\r\nselect cases.meta_username as 'Healthcare Worker',\r\n       cases.cnt as '# of Patients',\r\n       hi_risk.cnt as '# of High Risk',\r\n       followups.cnt as '# of Follow Up'\r\nfrom (\r\n  SELECT meta_username, count(distinct sampledata_case_id) as cnt\r\n  FROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n  group by meta_username\r\n) cases left outer join\r\n(\r\n  select meta_username, count(*) as cnt\r\n  from (\r\n     select meta_username, sampledata_case_id\r\n     from schema_intel_grameen_safe_motherhood_registration_v0_3\r\n     where sampledata_hi_risk = 'yes'\r\n     group by meta_username, sampledata_case_id\r\n  ) hi_risk_cases\r\n  group by meta_username\r\n) hi_risk\r\n  on cases.meta_username = hi_risk.meta_username\r\n  left outer join\r\n(  select meta_username, count(*) as cnt\r\n   from schema_intel_grameen_safe_motherhood_followup_v0_2\r\n   group by meta_username\r\n) followups\r\non followups.meta_username = hi_risk.meta_username", 
+      "domain": 3, 
+      "description": "Summary of data by health worker", 
+      "title": "Data by Mobile Healthcare Worker"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "reports.sqlreport", 
+    "fields": {
+      "query": "/* individual chw view */\r\nSELECT sampledata_case_id as 'ID',\r\n       meta_username as 'Healthcare Worker',\r\n       sampledata_address as 'Address',\r\n       sampledata_hi_risk as 'Hi Risk?',\r\n       'No' as 'Follow up?' /* need to fix this when we actually have FU */\r\nFROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n{{whereclause}}", 
+      "domain": 3, 
+      "description": "Summary view of individual mother data by health workers", 
+      "title": "Health Worker Submission Details"
+    }
+  }
+]
