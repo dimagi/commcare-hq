@@ -35,6 +35,7 @@ on followups.meta_username = hi_risk.meta_username;
 /* individual chw view */
 SELECT sampledata_case_id as 'ID',
        meta_username as 'Healthcare Worker',
+       sampledata_mother_name as 'Mother Name', 
        sampledata_address as 'Address',
        sampledata_hi_risk as 'Hi Risk?',
        'No' as 'Follow up?' /* need to fix this when we actually have FU */
