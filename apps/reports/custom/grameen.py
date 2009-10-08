@@ -7,8 +7,9 @@ from shared import monitoring_report
 '''Report file for custom Grameen reports'''
 # see mvp.py for an explanation of how these are used.
 
-
-def monitoring(request):
+# temporarily "privatizing" the name because grameen doesn't
+# want this report to show up in the UI 
+def _monitoring(request):
     '''Safe Pregnancy Monitoring Report'''
     safe_preg_case_name = "Grameen Safe Pregnancies"
     try:
