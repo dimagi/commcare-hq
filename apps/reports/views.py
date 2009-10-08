@@ -119,7 +119,12 @@ def sql_report(request, report_id, template_name="sql_report.html"):
     extuser = request.extuser
     report = SqlReport.objects.get(id=report_id)
     whereclause = _get_whereclause(request.GET)
-    table = report.to_html_table({"whereclause": whereclause})
+    links = {}
+    # big hard coding here, because of serious time pressure.
+    # this should be in a model
+    if report.title == "Data by Mobile Healthcare Worker":
+        links = {"Healthcare Worker": "/reports/sql/2?meta_username=%s"}
+    table = report.to_html_table({"whereclause": whereclause}, links)
     return render_to_response(request, template_name, {"report": report, "table": table})
 
 @extuser_required()
