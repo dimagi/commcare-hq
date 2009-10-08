@@ -454,7 +454,7 @@ class SqlReport(models.Model):
         cursor.execute(self.get_clean_query(additional_params))
         return cursor
     
-    def to_html_table(self, additional_params={}):
+    def to_html_table(self, additional_params={}, links={}):
         """Formats this sql report as an HTML table for display in HQ"""
         cols, data = self.get_data(additional_params)
         start_tags = '<table class="sofT"><thead class="commcare-heading">'
@@ -463,12 +463,24 @@ class SqlReport(models.Model):
         head_body_sep = "</thead><tbody>"
         row_strings  = []
         for row in data:
-            # outer formatting block injects the data between rows
-            # inner format over list comp injects each value between <td> tags
-            row_string = "<tr>%s</tr>" % "".join(["<td>%s</td>" % val for val in row])
-            row_strings.append(row_string)
+            cell_strings=[]
+            for i in range(len(row)):
+                cell_string = self._get_cell_display(row[i], cols[i], links) 
+                cell_strings.append(cell_string)
+            row_strings.append("<tr>%s</tr>" % "".join(cell_strings))
         row_data = "".join(row_strings)
         end_tags = "</tbody></table"
         return "".join([start_tags, header_cols, head_body_sep, row_data, end_tags])
         
-    
+    def _get_cell_display(self, value, header, links):
+        if not header in links:
+            return "<td>%s</td>" % value
+        else:
+            try:
+                # really they should be able to pass an iformatter
+                # but this will have to do for now.  
+                # iformatter would be sweet though 
+                formatted_link = links[header] % value
+                return '<td><a href="%s">%s</a></td>' % (formatted_link, value)
+            except Exception:
+                return "<td>%s</td>" % value
