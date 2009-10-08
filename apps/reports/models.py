@@ -439,7 +439,13 @@ class SqlReport(models.Model):
         return get_column_names(self.get_cursor())
 
     def get_data(self, additional_params={}):
-        return self.get_cursor(additional_params).fetchall()
+        """Return a tuple of cols, data where cols is a list of 
+           the names of each column, and data is a list of lists, 
+           one row per line of data"""
+        cursor = self.get_cursor(additional_params)
+        cols = get_column_names(cursor)
+        data = cursor.fetchall()
+        return (cols, data)
         
     def get_cursor(self, additional_params={}):
         """Gets a cursor object that represents the result of executing
@@ -449,14 +455,13 @@ class SqlReport(models.Model):
         return cursor
     
     def to_html_table(self, additional_params={}):
-        cursor = self.get_cursor(additional_params)
-        cols = get_column_names(cursor)
+        """Formats this sql report as an HTML table for display in HQ"""
+        cols, data = self.get_data(additional_params)
         start_tags = '<table class="sofT"><thead class="commcare-heading">'
         # inject each header between <th> tags and join them
         header_cols = "".join(["<th>%s</th>" % col for col in cols])
         head_body_sep = "</thead><tbody>"
         row_strings  = []
-        data = cursor.fetchall()
         for row in data:
             # outer formatting block injects the data between rows
             # inner format over list comp injects each value between <td> tags
@@ -466,3 +471,4 @@ class SqlReport(models.Model):
         end_tags = "</tbody></table"
         return "".join([start_tags, header_cols, head_body_sep, row_data, end_tags])
         
+    

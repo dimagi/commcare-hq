@@ -7,4 +7,5 @@
 <h3>{{ report.description }}</h3>
 <br>
 {{ table|safe }}
+<p><a href="{% url reports.views.sql_report_csv report.id %}">download as csv</a></p>
 {%endblock%}
