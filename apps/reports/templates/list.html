@@ -20,11 +20,16 @@
 {% endif %}
 {% if sql_reports %}
     <h2>Table Reports for {{domain}}</h2>
-    <ul>
+    <table class="sofT">
+    <tbody>
     {% for report in sql_reports %}
-        <li><a href="{% url reports.views.sql_report report.id %}">{{ report }}</a></li>
+        <tr>
+            <td><a href="{% url reports.views.sql_report report.id %}">{{ report.title }}</td>
+            <td>{{ report.description }}</td>
+        </tr>
     {% endfor %}
-    </ul>
+    </tbody>
+    </table>
 {% endif %}
 {% endblock %}
 

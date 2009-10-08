@@ -5,6 +5,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from rapidsms.webui.utils import render_to_response
 
+from transformers.csv import format_csv 
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
 from hq.models import ExtUser
@@ -121,6 +122,15 @@ def sql_report(request, report_id, template_name="sql_report.html"):
     table = report.to_html_table({"whereclause": whereclause})
     return render_to_response(request, template_name, {"report": report, "table": table})
 
+@extuser_required()
+def sql_report_csv(request, report_id):
+    '''View a single sql report.'''
+    extuser = request.extuser
+    report = SqlReport.objects.get(id=report_id)
+    whereclause = _get_whereclause(request.GET)
+    cols, data = report.get_data({"whereclause": whereclause})
+    return format_csv(data, cols, report.title)
+    
 
 def _get_whereclause(params):
     """Given a dictionary of params {key1: val1, key2: val2 } 
