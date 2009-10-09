@@ -19,9 +19,13 @@
    {% for submission in submissions.object_list %}      
    	<tr class="{% cycle 'odd' 'even' %}">
    		<td><a href="{%url receiver.views.single_submission submission.id %}">
-           <span class="duplicate">
-		       {{submission.id}}
-	       </span>
+		    {% if submission.is_duplicate %} 
+	            <span class="duplicate">		       
+	           		{{submission.id}}
+	           	</span>
+ 		    {% else %}
+           		{{submission.id}}
+            {% endif %}
    		</a></td>
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
