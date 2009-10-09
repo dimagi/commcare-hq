@@ -1,8 +1,13 @@
-from django.db import models
+import re
+import logging
+
+from django.db import models, connection
+from django.utils.translation import ugettext_lazy as _
 
 from xformmanager.models import FormDefModel
 from hq.models import Domain
-import logging
+from hq.dbutil import get_column_names
+
 
 class FormIdentifier(models.Model):
     '''An identifier for a form.  This is a way for a case to point at
@@ -392,3 +397,90 @@ class CaseFormIdentifier(models.Model):
 
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
+
+
+class SqlReport(models.Model):
+    """A model that allows one to write a Sql Query and turn it into 
+       a report on HQ""" 
+    
+    title = models.CharField(max_length=100) 
+    description = models.CharField(max_length=511)
+    domain = models.ForeignKey(Domain, null=True, blank=True)
+    query = models.TextField(_('Database Query'), 
+                             help_text=_("""The sql query that to generate the report data.
+                                            A special tag between curly braces like 
+                                            {{something_here}} can be inserted to pass
+                                            additional sql parameters."""))
+    
+    def __unicode__(self):
+        return self.title
+    
+    def get_clean_query(self, additional_params={}):
+        """Get a clean version of the query after processing template-like
+           parameters.  Anything between curly braces {{like_this}} will be
+           replaced with the value of the key in the additional params passed
+           in, or an empty string if the key is not found."""
+        # NOTE: right now this makes us pretty vulnerable
+        # to SQL Injection.  We should make this safer at some point.
+        # Graphs likely have the same problem.
+        reg = re.compile('(\{\{.*?\}\})')
+        query = self.query
+        matches = reg.findall(query)
+        if matches:
+            for match in matches:
+                attr = match[2:len(match)-2]
+                if attr in additional_params:
+                    query = query.replace(match, additional_params[attr])
+                else:
+                    query = query.replace(match, "")
+        return query
+        
+    def get_display_cols(self):
+        return get_column_names(self.get_cursor())
+
+    def get_data(self, additional_params={}):
+        """Return a tuple of cols, data where cols is a list of 
+           the names of each column, and data is a list of lists, 
+           one row per line of data"""
+        cursor = self.get_cursor(additional_params)
+        cols = get_column_names(cursor)
+        data = cursor.fetchall()
+        return (cols, data)
+        
+    def get_cursor(self, additional_params={}):
+        """Gets a cursor object that represents the result of executing
+           this object's query."""
+        cursor = connection.cursor()
+        cursor.execute(self.get_clean_query(additional_params))
+        return cursor
+    
+    def to_html_table(self, additional_params={}, links={}):
+        """Formats this sql report as an HTML table for display in HQ"""
+        cols, data = self.get_data(additional_params)
+        start_tags = '<table class="sofT"><thead class="commcare-heading">'
+        # inject each header between <th> tags and join them
+        header_cols = "".join(["<th>%s</th>" % col for col in cols])
+        head_body_sep = "</thead><tbody>"
+        row_strings  = []
+        for row in data:
+            cell_strings=[]
+            for i in range(len(row)):
+                cell_string = self._get_cell_display(row[i], cols[i], links) 
+                cell_strings.append(cell_string)
+            row_strings.append("<tr>%s</tr>" % "".join(cell_strings))
+        row_data = "".join(row_strings)
+        end_tags = "</tbody></table"
+        return "".join([start_tags, header_cols, head_body_sep, row_data, end_tags])
+        
+    def _get_cell_display(self, value, header, links):
+        if not header in links:
+            return "<td>%s</td>" % value
+        else:
+            try:
+                # really they should be able to pass an iformatter
+                # but this will have to do for now.  
+                # iformatter would be sweet though 
+                formatted_link = links[header] % value
+                return '<td><a href="%s">%s</a></td>' % (formatted_link, value)
+            except Exception:
+                return "<td>%s</td>" % value
