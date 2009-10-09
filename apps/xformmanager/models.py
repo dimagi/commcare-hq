@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 
 from hq.models import *
 from hq.utils import build_url
+from hq.dbutil import get_column_names
 from graphing import dbhelper
 from receiver.models import Submission, Attachment, SubmissionHandlingType
 from xformmanager.util import case_insensitive_iter, format_field, format_table_name
@@ -252,9 +253,9 @@ class FormDefModel(models.Model):
         return cursor
     
     def get_column_names(self):
-        '''Get all data rows associated with this form's schema
-           (not including repeats)'''
-        return [col[0] for col in self._get_cursor().description]
+        '''Get the column names associated with this form's schema.
+        '''
+        return get_column_names(self._get_cursor())
 
     def get_display_columns(self):
         '''

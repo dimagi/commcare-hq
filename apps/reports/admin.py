@@ -12,3 +12,4 @@ class CaseAdmin(admin.ModelAdmin):
 admin.site.register(Case, CaseAdmin)
 admin.site.register(CaseFormIdentifier)
 admin.site.register(FormIdentifier)
+admin.site.register(SqlReport)
