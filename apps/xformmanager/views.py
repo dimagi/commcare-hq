@@ -347,8 +347,8 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
         context['filter_params'] = "&".join(['%s=%s' % (key, value)
                                             for key, value in request.GET.items()\
                                             if key.startswith("filter")])
-        # rather hacky way of making sure that the already-filtered field
-        # does not show up as a filter link - could be fixed with smarter template if
+        # hacky way of making sure that the first already-filtered field
+        # does not show up as a filter link - todo: clean up later
         context['filter_primary'] = column_filters[0][2]
     if use_blacklist:
         blacklist_users = request.extuser.domain.get_blacklist()

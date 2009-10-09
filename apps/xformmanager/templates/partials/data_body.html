@@ -3,15 +3,13 @@
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filter_params %}
 	<h3>FILTERED BY
-		{{filter_params}}
-	</h3>
-	<strong>
+		{{filters}}
 	{% if sort_params %}
-		<a href="{% url xformmanager.views.data xform.id %}?{{sort_params}}">Remove Filters</a>
+		<a href="{% url xformmanager.views.data xform.id %}?{{sort_params}}">(Click here to remove filters)</a>
 	{% else %}
-		<a href="{% url xformmanager.views.data xform.id %}">Remove Filters</a>
+		<a href="{% url xformmanager.views.data xform.id %}">(Click here to remove filters)</a>
 	{% endif %}
-	</strong>
+	</h3>
 
 	<br/>
 {% endif %}
@@ -19,9 +17,9 @@
 
 <a href="{% url xformmanager.views.single_xform xform.id %}">more information about this schema</a>
 <br>
-<a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
-<br>
 <a href="{% url xformmanager.views.export_xml xform.id %}">download zip file of xml submissions</a>
+<br>
+<a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
 <br>
 {% if errors %}
     <p class="error">{{ errors }}</p>
