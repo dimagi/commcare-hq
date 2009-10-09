@@ -1,6 +1,22 @@
 {% load i18n %}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
+{% if filter_params %}
+	<h3>FILTERED BY
+		{{filter_params}}
+	</h3>
+	<strong>
+	{% if sort_params %}
+		<a href="{% url xformmanager.views.data xform.id %}?{{sort_params}}">Remove Filters</a>
+	{% else %}
+		<a href="{% url xformmanager.views.data xform.id %}">Remove Filters</a>
+	{% endif %}
+	</strong>
+
+	<br/>
+{% endif %}
+<br/>
+
 <a href="{% url xformmanager.views.single_xform xform.id %}">more information about this schema</a>
 <br>
 <a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
@@ -32,11 +48,11 @@
 	   {% for col in columns %}
 	      {% ifequal forloop.counter0 sort_index %}
 		     <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
-		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}">
+		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}&{{filter_params}}">
 		         {{col}}
 		     </th>
           {% else %}
-		     <th><a href="?sort_column={{col}}">{{col}}</th>
+		     <th><a href="?sort_column={{col}}&{{filter_params}}">{{col}}</th>
           {% endifequal %}          	
 	   {% endfor%}
 	   </tr>
@@ -56,7 +72,17 @@
            {% if forloop.first %}
 	   		     <a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a>
 	   	   {% else %}
-	   		     {{field}}
+	   	   		 {% ifequal field filter_primary %}
+		   		     {{field}}
+	   	   		 {% else %}
+	   	   		 	{% if sort_params %}
+			   		     <a href="?filter_{{forloop.counter0}}={{field}}&{{sort_params}}">
+	   	   		 	{% else %}
+			   		     <a href="?filter_{{forloop.counter0}}={{field}}">
+	   	   		 	{% endif %}
+		   		     	{{field}}
+		   		     </a>
+	   	   		 {% endifequal %}
 	       {% endif %} 
 	   	   </td>
 	   {% endfor %}
