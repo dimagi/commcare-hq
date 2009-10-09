@@ -337,12 +337,12 @@ class Attachment(models.Model):
         return "%s : %s"  % (self.id, self.attachment_uri)
     
     def display_string(self):
-        return """Domain: %s
-                  Id: %s
-                  Submission: %s
-                  Submit Time: %s
-                  Content Type: %s
-                  URI: %s
+        return """Domain: %s - 
+                  Attachment: %s - 
+                  Submission: %s - 
+                  Submit Time: %s - 
+                  Content Type: %s - 
+                  URI: %s - 
                   URL to view on server: %s
                   """  % \
                   (self.submission.domain, self.id, self.submission.id, 
