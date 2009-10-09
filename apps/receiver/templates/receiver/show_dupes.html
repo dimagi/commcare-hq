@@ -9,7 +9,13 @@
 {% endblock %}
 
 {% block content %}
+
 <h2>{% trans "Duplicate Submissions" %}</h2>
+
+{% if errors %} 
+	{{errors}}
+{% else %}
+
    <table class="sofT">
    <thead class="commcare-heading">
     <tr>
@@ -44,5 +50,7 @@
    </table>
    
 	{% include 'receiver/partials/submit_pagination.html' %}
+
+{% endif %}
 
 {% endblock %}
