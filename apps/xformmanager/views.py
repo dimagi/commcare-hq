@@ -239,10 +239,14 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
        View data for a single xform instance submission.  
     '''
     xform = FormDefModel.objects.get(id=formdef_id)
+    # for now, the formdef version/uiversion is equivalent to 
+    # the instance version/uiversion
+    data = [('XMLNS',xform.target_namespace), ('Version',xform.version), 
+            ('uiVersion',xform.uiversion)]
     row = xform.get_row(instance_id)
     fields = xform.get_display_columns()
     # make them a list of tuples of field, value pairs for easy iteration
-    data = zip(fields, row)
+    data = data + zip(fields, row)
     return render_to_response(request, template_name, {"form" : xform,
                                                        "id": instance_id,  
                                                        "data": data })
@@ -292,6 +296,10 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
        sort_column: id (?) (the column to sort by)
        sort_descending: True (?) (the sort order of the column)
        ''' 
+    # clear the context
+    # (because caching on the browsers sometimes prevents this from being
+    # reset properly)
+    context = {}
     xform = get_object_or_404(FormDefModel, id=formdef_id)
     # extract params from the URL
     items = 25
@@ -318,14 +326,37 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
             sort_descending = False
         else:
             sort_descending = True
-    
-    
+        
+    column_filters = []
+    for filter in request.GET:
+        if filter.startswith('filter_'):
+            val = request.GET[filter]
+            # we convert 'filter_x' into the name of the x'th field
+            offset = filter.rsplit('_',1)[-1]
+            field = columns[int(offset)]
+            column_filters.append( [field,'=',val] )
+    if len(column_filters)>0:
+        # context['filters'] will be displayed
+        context['filters'] = "&".join(['%s=%s' % (key, value)
+                                            for key, comp, value
+                                            in column_filters])
+        # context['filter_params'] will be added to links in view
+        # todo: merge filter and filter_params
+        # currently 'filters' is used since we don't have an easy way to 
+        # query fields by name
+        context['filter_params'] = "&".join(['%s=%s' % (key, value)
+                                            for key, value in request.GET.items()\
+                                            if key.startswith("filter")])
+        # hacky way of making sure that the first already-filtered field
+        # does not show up as a filter link - todo: clean up later
+        context['filter_primary'] = column_filters[0][2]
     if use_blacklist:
         blacklist_users = request.extuser.domain.get_blacklist()
         rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
-                              blacklist=blacklist_users)
+                              blacklist=blacklist_users, column_filters=column_filters)
     else:
-        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending)
+        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+                              column_filters=column_filters)
     context["sort_index"] = columns.index(sort_column)
     context['columns'] = columns 
     context['form_name'] = xform.form_name
@@ -338,6 +369,9 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
     context['param_string_no_page'] = "&".join(['%s=%s' % (key, value)\
                                                 for key, value in request.GET.items()\
                                                 if key != "page"])
+    context['sort_params'] = "&".join(['%s=%s' % (key, value)
+                                        for key, value in request.GET.items()\
+                                        if key.startswith("sort")])
     return render_to_response(request, template_name, context)
 
 @extuser_required()
