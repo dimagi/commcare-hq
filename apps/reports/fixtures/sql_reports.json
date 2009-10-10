@@ -24,9 +24,17 @@
     "model": "reports.columnformatter", 
     "fields": {
       "report": 1, 
-      "header": "Healthcare Worker", 
-      "display_format": "<a href=\"/reports/sql/2?meta_username=%s\">%s</a>"
+      "header": "# of Patients", 
+      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s\">%(value)s</a>"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "reports.columnformatter", 
+    "fields": {
+      "report": 1, 
+      "header": "# of High Risk", 
+      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s&sampledata_hi_risk=yes\">%(value)s</a>"
     }
   }
-  
 ]

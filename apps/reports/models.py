@@ -471,8 +471,9 @@ class SqlReport(models.Model):
         row_strings  = []
         for row in data:
             cell_strings=[]
+            summary_map = dict(zip(cols, row))
             for i in range(len(row)):
-                cell_string = "<td>%s</td>" % col_formatters[i].format_cell(row[i]) 
+                cell_string = "<td>%s</td>" % col_formatters[i].format_cell(row[i], summary_map) 
                 cell_strings.append(cell_string)
             row_strings.append("<tr>%s</tr>" % "".join(cell_strings))
         row_data = "".join(row_strings)
@@ -497,12 +498,19 @@ class ColumnFormatter(models.Model):
     # A value of <a href="/reports/sql/2?meta_username=%s">user: %s</a>
     # Will display a link to the sql report with id 2 and the
     # username passed in, and display the user "bob" as "User bob".
+    # A value of <a href="/reports/sql/2?meta_username=%(user_id)s">user: %(value)s</a>
+    # Will display a link to the sql report with id 2 and the
+    # user ID passed in, and display the user "bob" as "User bob".  user_id
+    # must be a header elsewhere in the report for this to work.
     display_format = models.CharField(max_length=300, 
           help_text=\
             """If specified, this column will be used to format the
                value in the individual cells.  
                If the column contains any "%s" tags the value will
                be injected.
+               If you need access to other fields in the row, you can't use
+               $s, but should reference them by header.  In this case you MUST
+               reference the value by %(value)s.  
                See the data or code comments for an example, 
                because django does some weird formatting of html here.
                YOU ARE RESPONSIBLE FOR PUTTING VALID HTML HERE OR YOUR
@@ -512,17 +520,28 @@ class ColumnFormatter(models.Model):
     def __unicode__(self):
         return "%s - %s" % (self.report, self.header)
     
-    def format_cell(self, value):
-        """Given a cell value, return a formatted string for that cell"""
+    def format_cell(self, value, extras={}):
+        """Given a cell value, return a formatted string for that cell.
+           Extras allows you to pass in a dictionary of key value pairs
+           and will replace %(key)s with <value>."""
         format_count = self.display_format.count("%s")
-        # generate a list of [value, value] for however many times
-        # we need to pass it in
-        value_list = tuple(value for i in range(format_count))
-        return self.display_format % value_list
+        # we assume that either they ONLY used %s in which case we plug
+        # in the value, or we use the dictionary.
+        if format_count > 0:
+            # generate a list of [value, value, value...] for however many times
+            # we need to pass it in
+            return self.display_format % (format_count * (value,))
+        else:
+            extras['value'] = value
+            return self.display_format % extras
 
+    class Meta:
+        unique_together = ("report", "header")
+
+    
 class DefaultCellFormatter():
     """A really dumb value formatter"""
-    def format_cell(self, value):
+    def format_cell(self, value, extras={}):
         return value
 
 DEFAULT_FORMATTER = DefaultCellFormatter()
