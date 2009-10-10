@@ -509,8 +509,8 @@ class ColumnFormatter(models.Model):
                If the column contains any "%s" tags the value will
                be injected.
                If you need access to other fields in the row, you can't use
-               $s, but should reference them by header.  In this case you MUST
-               reference the value by %(value)s.  
+               $s, but should reference them by header as %(header)s.  
+               In this case you MUST reference the value by %(value)s.  
                See the data or code comments for an example, 
                because django does some weird formatting of html here.
                YOU ARE RESPONSIBLE FOR PUTTING VALID HTML HERE OR YOUR
