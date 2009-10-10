@@ -36,6 +36,23 @@ import submitprocessor
 
 
 @extuser_required()
+def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
+    '''
+    View duplicates of this submission.
+    '''
+    context = {}
+    extuser = request.extuser
+    submit = get_object_or_404(Submission, id=submission_id)
+    if submit.checksum is None or len(submit.checksum) == 0:
+        # this error will go away as soon as we update all submissions 
+        # to have corresponding checksums
+        context['errors'] = "No checksum found. Cannot identify duplicates."
+    else:
+        slogs = Submission.objects.filter(checksum=submit.checksum).order_by('-submit_time')
+        context['submissions'] = paginate(request, slogs)
+    return render_to_response(request, template_name, context)
+
+@extuser_required()
 def show_submits(request, template_name="receiver/show_submits.html"):
     '''
     View submissions for this domain.

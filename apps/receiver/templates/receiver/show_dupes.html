@@ -9,43 +9,35 @@
 {% endblock %}
 
 {% block content %}
-<h2>{% trans "All Submissions" %}</h2>
-<p><a href="{% url receiver.views.orphaned_data %}">View All Unrecognized Submissions Here</a></p>
-Submissions with IDs highlighted in <span class="orphan">red</span> could not be recognized. Please make sure a matching xform has been registered on this site.<br>
-Submissions with IDs highlighted in <span class="duplicate">orange</span> were duplicates of previously submitted forms.<br>
-Submissions with IDs highlighted in <span class="deleted">blue</span> were manually deleted from the xform processing tables.<br><br>
+
+<h2>{% trans "Duplicate Submissions" %}</h2>
+
+{% if errors %} 
+	{{errors}}
+{% else %}
+
    <table class="sofT">
    <thead class="commcare-heading">
     <tr>
-        <th>ID</th><th>Date Received</th><th>From</th><th>Size (bytes)</th><th>Actions</th><th>Attachments</th>
+        <th>ID</th><th>Date</th><th>From</th><th>Size (bytes)</th><th>Actions</th><th>Attachments</th>
     </tr>
    </thead>
    {% for submission in submissions.object_list %}      
    	<tr class="{% cycle 'odd' 'even' %}">
    		<td><a href="{%url receiver.views.single_submission submission.id %}">
-		    {% if submission.is_duplicate or submission.is_orphaned or submission.is_deleted %}
 		    {% if submission.is_duplicate %} 
-               <span class="duplicate">
-	        {% else %}{% if submission.is_orphaned %}
-		       <span class="orphan">
-		    {% else %}{% if submission.is_deleted %}
-		       <span class="deleted">
-		    {% endif %}{% endif %}{% endif %}
-		       {{submission.id}}
-		       </span>
-		    {% else %}
-			   {{submission.id}}
-		    {% endif %}
-
+	            <span class="duplicate">		       
+	           		{{submission.id}}
+	           	</span>
+ 		    {% else %}
+           		{{submission.id}}
+            {% endif %}
    		</a></td>
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
    		<td>{{submission.bytes_received}}</td>
    		<td>{% if submission.xform %}
    		    <a href="{% url receiver.views.single_attachment submission.xform.id %}">view xml submission</a>
-   		    {% if submission.xform.is_duplicate %}
-   		    &nbsp;&nbsp;<a href="{% url show_dupes submission.id %}">view duplicates</a>
-            {% endif %}
    		    {% if submission.xform.has_linked_schema %}
    		    &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">view form data</a>
             &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance_csv submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">download data as csv</a>
@@ -53,11 +45,12 @@ Submissions with IDs highlighted in <span class="deleted">blue</span> were manua
             {% endif %}
    		</td>
         <td>{% get_attachments_links submission %}</td>
-   	</tr>
+   	</tr>	
    {% endfor %}
    </table>
    
 	{% include 'receiver/partials/submit_pagination.html' %}
 
+{% endif %}
 
 {% endblock %}

@@ -43,9 +43,12 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
     <table class="sofT">
         <thead class="commcare-heading">
    		   <tr>
-                <th>{% trans "Display Name" %}</th>
-                <th>{% trans "Schema Definition" %}</th>
-                <th>{% trans "Added Date" %}</th>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "XMLNS" %}</th>
+                <th>{% trans "Version" %}</th>
+                <th>{% trans "uiVersion" %}</th>
+                <th>{% trans "Date Registered" %}</th>
+                <th>{% trans "Last Received" %}</th>
                 <th></th>
    		   </tr>
    		</thead>
@@ -56,7 +59,13 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
    			{{form.form_display_name}}
    			</a></td>
    			<td>
-   			{{form.target_namespace}}
+   				{{form.target_namespace}}
+   			</td>
+   			<td>
+   				{{form.version}}
+   			</td>
+   			<td>
+	   			{{form.uiversion}}
    			</td>
    			   			
    			<td>
@@ -64,8 +73,18 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
 	   				{{date_t}}, {{time_t}}
 	   			{% endblocktrans %}
    			</td>
+
+   			<td>
+   				{% if form.time_of_last_instance %}
+		   			{% blocktrans with form.time_of_last_instance|date as date_t and form.time_of_last_instance|time as time_t %}
+		   				{{date_t}}, {{time_t}}
+		   			{% endblocktrans %}
+		   		{% else %}
+		   			n/a
+		   		{% endif %}
+   			</td>
    			
-   			   			<td>
+   			<td>
 	   			<a href="{% url xformmanager.views.remove_xform form.id %}">
 	   			{% trans "Drop This Form" %}
 	   			</a>
