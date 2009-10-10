@@ -454,33 +454,75 @@ class SqlReport(models.Model):
         cursor.execute(self.get_clean_query(additional_params))
         return cursor
     
-    def to_html_table(self, additional_params={}, links={}):
+    def to_html_table(self, additional_params={}):
         """Formats this sql report as an HTML table for display in HQ"""
         cols, data = self.get_data(additional_params)
         start_tags = '<table class="sofT"><thead class="commcare-heading">'
         # inject each header between <th> tags and join them
         header_cols = "".join(["<th>%s</th>" % col for col in cols])
         head_body_sep = "</thead><tbody>"
+        # build a map of formatters, keyed by header
+        col_formatters = []
+        for header in cols:
+            try:
+                col_formatters.append(self.formatters.get(header=header))
+            except ColumnFormatter.DoesNotExist:
+                col_formatters.append(DEFAULT_FORMATTER)
         row_strings  = []
         for row in data:
             cell_strings=[]
             for i in range(len(row)):
-                cell_string = self._get_cell_display(row[i], cols[i], links) 
+                cell_string = "<td>%s</td>" % col_formatters[i].format_cell(row[i]) 
                 cell_strings.append(cell_string)
             row_strings.append("<tr>%s</tr>" % "".join(cell_strings))
         row_data = "".join(row_strings)
         end_tags = "</tbody></table"
         return "".join([start_tags, header_cols, head_body_sep, row_data, end_tags])
-        
-    def _get_cell_display(self, value, header, links):
-        if not header in links:
-            return "<td>%s</td>" % value
-        else:
-            try:
-                # really they should be able to pass an iformatter
-                # but this will have to do for now.  
-                # iformatter would be sweet though 
-                formatted_link = links[header] % value
-                return '<td><a href="%s">%s</a></td>' % (formatted_link, value)
-            except Exception:
-                return "<td>%s</td>" % value
+            
+class ColumnFormatter(models.Model):
+    """Allows one to append some additional information about how
+       a column should display in a Sql Report.""" 
+    
+    header = models.CharField(max_length=100, help_text=\
+              """This is the key to the report, by the column
+                 that shows up.  For example, 
+                 SELECT username, id FROM users would expect
+                 this to either be "username" or "id".  
+                 SELECT username as 'new username' 
+                 would expect this to be 'new username'
+                 If this is not a valid value from the linked 
+                 report's query, it will be ignored.""")
+    report = models.ForeignKey(SqlReport, related_name="formatters")
+    
+    # A value of <a href="/reports/sql/2?meta_username=%s">user: %s</a>
+    # Will display a link to the sql report with id 2 and the
+    # username passed in, and display the user "bob" as "User bob".
+    display_format = models.CharField(max_length=300, 
+          help_text=\
+            """If specified, this column will be used to format the
+               value in the individual cells.  
+               If the column contains any "%s" tags the value will
+               be injected.
+               See the data or code comments for an example, 
+               because django does some weird formatting of html here.
+               YOU ARE RESPONSIBLE FOR PUTTING VALID HTML HERE OR YOUR
+               REPORT WILL NOT DISPLAY!!
+            """)
+    
+    def __unicode__(self):
+        return "%s - %s" % (self.report, self.header)
+    
+    def format_cell(self, value):
+        """Given a cell value, return a formatted string for that cell"""
+        format_count = self.display_format.count("%s")
+        # generate a list of [value, value] for however many times
+        # we need to pass it in
+        value_list = tuple(value for i in range(format_count))
+        return self.display_format % value_list
+
+class DefaultCellFormatter():
+    """A really dumb value formatter"""
+    def format_cell(self, value):
+        return value
+
+DEFAULT_FORMATTER = DefaultCellFormatter()

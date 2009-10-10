@@ -18,5 +18,15 @@
       "description": "Summary view of individual mother data by health workers", 
       "title": "Health Worker Submission Details"
     }
+  },
+  {
+    "pk": 1, 
+    "model": "reports.columnformatter", 
+    "fields": {
+      "report": 1, 
+      "header": "Healthcare Worker", 
+      "display_format": "<a href=\"/reports/sql/2?meta_username=%s\">%s</a>"
+    }
   }
+  
 ]
