@@ -5,6 +5,7 @@ import logging
 import settings
 import traceback
 import simplejson
+from MySQLdb import IntegrityError
 
 from django.db import models, connection
 from datetime import datetime, timedelta
