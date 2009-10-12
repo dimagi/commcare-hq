@@ -66,8 +66,6 @@ class StorageUtility(object):
                 logging.info( "XForm instance validation fail. %s" % \
                               populator.errors.str('Missing') )
             elif len(populator.errors.bad_type)>0:
-                # we should really raise an exception here - but that would break
-                # a big chunk of our existing unit tests. what to do?
                 raise populator.errors
             # TODO - add handlers for errors.duplicate and errors.extra
             # once those are implemented
