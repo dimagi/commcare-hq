@@ -63,7 +63,7 @@ class StorageUtility(object):
         if not populator.errors.is_empty():
             if len(populator.errors.missing)>0:
                 # this is quite common. esp. for metadata fields
-                logging.info( "XForm instance validation fail. %s" % \
+                logging.info( "XForm instance is missing fields %s" % \
                               populator.errors.str('Missing') )
             elif len(populator.errors.bad_type)>0:
                 raise populator.errors
