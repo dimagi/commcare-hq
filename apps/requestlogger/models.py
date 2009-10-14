@@ -57,7 +57,9 @@ class RequestLog(models.Model):
             log.ip = request.META['REMOTE_ADDR']
         elif request.META.has_key('REMOTE_HOST') and request.META['REMOTE_HOST']:
             log.ip = request.META['REMOTE_HOST']
-        log.user = request.user
+        # if request.user != User, then user is anonymous
+        if isinstance(request.user, User):
+            log.user = request.user
         
         def _convert_to_dict(obj):
             # converts a django-querydict to a true python dict
