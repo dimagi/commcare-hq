@@ -71,6 +71,14 @@ class XFormManager(object):
         file_name = self.save_schema_POST_to_file(input_stream, file_name)
         return self.create_schema_from_file(file_name)
     
+    def _add_schema_from_file(self, file_name):
+        """ we keep this api open for the unit tests """
+        name = os.path.basename(file_name)
+        fin = open(file_name, 'r')
+        ret = self.add_schema(name, fin)
+        fin.close()
+        return ret
+
     def _save_schema_stream_to_file(self, stream, type):
         return self._save_schema_string_to_file(stream.read(), type)
 

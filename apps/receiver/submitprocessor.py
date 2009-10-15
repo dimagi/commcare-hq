@@ -93,7 +93,12 @@ def do_submission_processing(metadata, submit_record, domain=None, is_resubmissi
             new_submit.submit_ip = metadata['REMOTE_HOST']
         else:
             new_submit.submit_ip = '127.0.0.1'
-            
+    
+    #dmyung - split up the ip address field if it's been appended.  something we ran into depending on some gateways
+    #from our understanding the rightmost should be the originating/external IP    
+    if len(new_submit.submit_ip.split(',')) > 1:
+        new_submit.submit_ip = new_submit.submit_ip.split(',')[-1]
+    
     new_submit.raw_header = repr(metadata)    
     new_submit.bytes_received = submit_record.content_length
     new_submit.content_type = submit_record.content_type

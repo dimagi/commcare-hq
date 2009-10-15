@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xformerrors" xmlns="http://www.w3.org/2001/XMLSchema">
+     <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+				        <element name="Meta" minOccurs="0">
+				          <complexType>
+				            <sequence>
+				              <element name="formName" minOccurs="0" type="string"/>
+				              <element name="formVersion" minOccurs="0" type="string"/>
+				              <element name="chw_id" minOccurs="0" type="string"/>
+				              <element name="uid" minOccurs="0" type="string"/>
+				              <element name="DeviceID" minOccurs="0" type="string"/>
+				              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+				              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+				              <element name="username" minOccurs="0" type="string"/>
+				            </sequence>
+				          </complexType>
+				        </element>	 
+                        <element name="nested" minOccurs="0" maxOccurs="3">
+                              <complexType>
+                                    <sequence>
+                                          <element name="my_user" minOccurs="0" type="string"/>
+                                          <element name="my_device" minOccurs="0" type="string" />
+										  <element name="TimeStartRecorded" minOccurs="0" type="dateTime"/>
+                                          <element name="TimeEndRecorded" minOccurs="0" type="dateTime" />
+                                    </sequence>
+                              </complexType>
+                        </element>
+                        <element name="LocFSSCother" minOccurs="0" type="string" />
+                        <element name="LocLPSCother" minOccurs="0" type="datetime" />
+                        <element name="LocMPSCother" minOccurs="0" type="integer" />
+                        <element name="LocNCSCother" minOccurs="0" type="integer"/>
+                        <element name="missing1" minOccurs="0" type="string" />
+                        <element name="missing2" minOccurs="0" type="string"/>
+                  </sequence>
+            </complexType>
+      </element>
+</schema>
+

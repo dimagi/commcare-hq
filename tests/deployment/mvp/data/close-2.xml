@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="WINDOWS-1252"?>
-<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1">
+<safe_pregnancy xmlns="http://www.commcare.org/MVP/safe_motherhood/close_v0.1" version="1" uiVersion="1">
 <Meta>
 <formName>OMFUAVTLIKNFDILWFOEXDYWT</formName>
 <formVersion>NTQFFYCKUQYGKVKBYQBNNKNDE</formVersion>
