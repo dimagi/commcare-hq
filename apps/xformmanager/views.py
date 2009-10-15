@@ -12,7 +12,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
-from django.contrib.auth.decorators import login_required
 from rapidsms.webui.utils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
@@ -213,27 +212,41 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             return HttpResponse("Thanks for submitting!  That worked great.  Form: %s" % formdefmodel)
     return HttpResponse("Not sure what happened but either you didn't give us a schema or something went wrong...")
 
-@login_required()
+def authenticate_schema(target):
+    """ This decorator takes a function with 'request' and 'formdef_id' as the 
+    first two arguments, and verifies that the user has permissions for that schema
+    
+    Redirects to no_permissions if user is not allowed to view that schema
+    """
+    def wrapper(request, formdef_id, *args, **kwargs):
+        xform = FormDefModel.objects.get(id=formdef_id)
+        if xform.domain != request.extuser.domain:
+            return HttpResponseRedirect("/no_permissions")  
+        return target(request, formdef_id, *args, **kwargs)
+    return wrapper
+
+@extuser_required()
+@authenticate_schema
 def single_xform(request, formdef_id, template_name="single_xform.html"):
     context = {}    
     show_schema = False
     for item in request.GET.items():
         if item[0] == 'show_schema':
-            show_schema = True           
-    xform = FormDefModel.objects.all().filter(id=formdef_id)
-    
+            show_schema = True
+    xform = FormDefModel.objects.get(id=formdef_id)
     if show_schema:
         response = HttpResponse(mimetype='text/xml')
-        fin = open(xform[0].xsd_file_location ,'r')
+        fin = open(xform.xsd_file_location ,'r')
         txt = fin.read()
         fin.close()
         response.write(txt) 
         return response
     else:    
-        context['xform_item'] = xform[0]
+        context['xform_item'] = xform
         return render_to_response(request, template_name, context)
         
-@login_required()
+@extuser_required()
+@authenticate_schema
 def single_instance(request, formdef_id, instance_id, template_name="single_instance.html"):
     '''
        View data for a single xform instance submission.  
@@ -251,7 +264,8 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
                                                        "id": instance_id,  
                                                        "data": data })
         
-@login_required()
+@extuser_required()
+@authenticate_schema
 def single_instance_csv(request, formdef_id, instance_id):
     '''
        CSV dowload for data for a single xform instance submission.  
@@ -275,7 +289,8 @@ def single_instance_csv(request, formdef_id, instance_id):
     return response
 
 
-@login_required()
+@extuser_required()
+@authenticate_schema
 def export_xml(request, formdef_id):
     """
     Get a zip file containing all submissions for this schema
@@ -288,6 +303,7 @@ def export_xml(request, formdef_id):
     return get_zipfile(file_list)
 
 @extuser_required()
+@authenticate_schema
 def data(request, formdef_id, template_name="data.html", context={}, use_blacklist=True):
     '''View the xform data for a particular schema.  Accepts as
        url parameters the following (with defaults specified):
@@ -375,6 +391,7 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
     return render_to_response(request, template_name, context)
 
 @extuser_required()
+@authenticate_schema
 @transaction.commit_manually
 def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context = {}
@@ -409,6 +426,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     return render_to_response(request, template, context)
 
 @extuser_required()
+@authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
     return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)

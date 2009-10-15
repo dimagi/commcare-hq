@@ -163,7 +163,8 @@ class FormDef(ElementDef):
         """
         fin = open(file, 'r')
         formdef = FormDef(fin)
-        formdef.force_to_valid()
+        if valid:
+            formdef.force_to_valid()
         fin.close()
         return formdef
 

@@ -76,7 +76,6 @@ def _get_single_project_builds(project):
     this_project_dict["release"] = project.get_released_builds()
     return this_project_dict
         
-@login_required()
 def show_latest_build(request, project_id, template_name="buildmanager/show_build.html"):
     context = {}
     try:
