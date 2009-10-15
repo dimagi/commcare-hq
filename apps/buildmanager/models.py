@@ -41,6 +41,7 @@ class Project (models.Model):
     # the optional project id in a different server (e.g. the build server)
     project_id = models.CharField(max_length=20, null=True, blank=True)
     
+    
     @property
     def downloads(self):
         '''Get all the downloads associated with this project, across
