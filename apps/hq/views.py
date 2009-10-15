@@ -469,10 +469,11 @@ def update_reporterprofile(req, rep, chw_id, chw_username):
 def check_profile_form(req):
     errors = {}
     errors['missing'] = []
-    if req.POST.get("chw_id", "") == "":
-        errors['missing'] = errors['missing'] + ["chw_id"]
-    if req.POST.get("chw_username", "") == "":
-        errors['missing'] = errors['missing'] + ["chw_username"]
+    # we currently do not enforce the requirement for chw_id or chw_username
+    #if req.POST.get("chw_id", "") == "":
+    #    errors['missing'] = errors['missing'] + ["chw_id"]
+    #if req.POST.get("chw_username", "") == "":
+    #    errors['missing'] = errors['missing'] + ["chw_username"]
         
     rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
     errors['exists'] = []
