@@ -199,7 +199,7 @@ class TestSync(unittest.TestCase):
                             remove_submission = True)
         
         # load data from sync file (d,e,f)
-        load_submissions(submissions_file)
+        load_submissions(submissions_file, "127.0.0.1:8000")
         
         try:
             # verify that the submissions etc. count are correct (d,e,f)
@@ -259,7 +259,7 @@ class TestSync(unittest.TestCase):
         # should get the same 3 schemas we registered above
         self._assert_tar_count_equals(submissions_file, 1)
         # load data from sync file (d,e,f)
-        load_submissions(submissions_file)
+        load_submissions(submissions_file, "127.0.0.1:8000")
         
         try:
             # verify that we only have 4 submissions
@@ -346,7 +346,7 @@ class TestSync(unittest.TestCase):
         # test that the received submissions file is empty
         self._assert_tar_count_equals(submissions_file, 0)
     
-        load_submissions(submissions_file)    
+        load_submissions(submissions_file, "127.0.0.1:8000")    
         try:
             # verify that no new submissions were loaded
             self.assertEqual( starting_submissions_count, Submission.objects.all().count())
@@ -376,7 +376,7 @@ class TestSync(unittest.TestCase):
         manager.remove_schema(schema_3.id, remove_submissions = True)
 
         # load data from sync file
-        load_schemata(schemata_file)
+        load_schemata(schemata_file, "127.0.0.1:8000")
         
         try:
             # verify that the submissions etc. count are correct
@@ -411,7 +411,7 @@ class TestSync(unittest.TestCase):
         manager.remove_schema(schema_3.id, remove_submissions = True)
         
         # load data from sync file (d,e,f)
-        load_schemata(schemata_file)
+        load_schemata(schemata_file, "127.0.0.1:8000")
         
         try:
             # verify that the schematas etc. count are correct (d,e,f)
@@ -488,7 +488,7 @@ class TestSync(unittest.TestCase):
         self._assert_tar_count_equals(schemata_file, 0)
     
         starting_schemata_count = FormDefModel.objects.all().count()
-        load_schemata(schemata_file)    
+        load_schemata(schemata_file, "127.0.0.1:8000")    
         try:
             # verify that no new schemata were loaded
             self.assertEqual( starting_schemata_count, FormDefModel.objects.all().count())

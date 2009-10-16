@@ -17,24 +17,25 @@ from xformmanager.models import FormDefModel
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (
-        make_option('--localport', action='store', dest='localport', \
-                    default='8000', help='Port of local server'),
         make_option('-q','--quiet', action='store_false', dest='verbose', \
                     default=True, help='Quiet output'),
         make_option('-?','--debug', action='store_true', dest='debug', \
                     default=False, help='Generate some files'),
     )
     help = "Synchronizes CommCareHQ with a specified remote server."
-    args = "<remote_ip username password>"
+    args = "<remote_ip username password local_dns>"
     label = 'IP address of the remote server (including port), ' + \
-            'username, and password'
+            'username, password, and DNS of local server'
     
     def handle(self, *args, **options):
-        if len(args) != 3:
+        if len(args) < 3:
             raise CommandError('Please specify %s.' % self.label)
         remote_ip = args[0]
         username = args[1]
         password = args[2]
+        local_dns = None
+        if len(args) == 4:
+            local_dns = args[3]
         verbose = options.get('verbose', True)
         debug = options.get('debug', False)
         if verbose:
@@ -45,8 +46,10 @@ class Command(LabelCommand):
         file = "schemata.tar"
         generate_schemata(remote_ip, username, \
                           password, download=True, to=file, debug=False)
-        localport = options.get('localport', 8000)
-        load_schemata(file, localport)
+        if local_dns:
+            load_schemata(file, local_dns)
+        else:
+            load_schemata(file)
         
     def __del__(self):
         pass
@@ -78,13 +81,12 @@ def generate_schemata(remote_url, username, password, latest=True, download=Fals
         print "Schemata downloaded to %s" % to
     return response 
 
-def load_schemata(schemata_file, localport=8000):
+def load_schemata(schemata_file, localserver="127.0.0.1:8000"):
     """ This script loads new data into the local CommCareHQ server
     
     Arguments: 
     args[0] - tar file of exported schemata
     """
-    localserver = "127.0.0.1:%s" % localport
     if not tarfile.is_tarfile(schemata_file):
         fin = open(schemata_file)
         contents = fin.read(256)
