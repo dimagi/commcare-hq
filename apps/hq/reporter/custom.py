@@ -1,18 +1,13 @@
-from hq.models import *
 import logging
 import string
+from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.template import Template, Context
-from datetime import datetime
-from datetime import timedelta
-import logging
-import settings
+from hq.models import *
 import hq.utils as utils
 from hq.reporter import agents        
 import graphing.dbhelper as dbhelper
 from xformmanager.models import *
-from datetime import timedelta
-
 
 import metastats as metastats
 import inspector as repinspector
@@ -147,6 +142,10 @@ def _get_catch_all_email_text(domain, startdate, enddate):
 
 
 def pf_swahili_sms(report_schedule, run_frequency):
+    """ 
+    Generates an sms report of the form:
+    'Number of visits this week: DeRenzi(5), Jackson(3), Lesh(1)'
+    """
     usr = report_schedule.recipient_user
     organization = report_schedule.organization
     org_domain = organization.domain
@@ -213,11 +212,19 @@ def delinquent_alert(report_schedule, run_frequency):
     transport = report_schedule.report_delivery   
     usr = report_schedule.recipient_user    
     threshold = 14
-    
-    #dan hack.  circularly referring back to some methods in our namespace
-    from hq import reporter    
-    delinquents = []    
-    statdict = metastats.get_stats_for_domain(org.domain)        
+
+    statdict = metastats.get_stats_for_domain(org.domain)
+    context = get_delinquent_context_from_statdict(statdict, threshold)
+    rendered_text = render_to_string("hq/reports/sms_delinquent_report.txt",context)
+
+    if report_schedule.report_delivery == 'email':        
+        subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y') + " " + str(threshold) + " day threshold"
+        reporter.transport_email(rendered_text, usr, params={"email_subject":subject})
+    else:
+        reporter.transport_sms(rendered_text, usr)
+
+def get_delinquent_context_from_statdict(statdict, threshold):
+    delinquents = []
     for reporter_profile, result in statdict.items():
         if result.has_key('Time since last submission (days)'):
             lastseen = result['Time since last submission (days)']
@@ -226,17 +233,13 @@ def delinquent_alert(report_schedule, run_frequency):
         if lastseen >= threshold:        
             delinquents.append(reporter_profile)    
     
-    if len(delinquents) == 0:        
+    context = {}
+    context['threshold'] = threshold
+    context['delinquent_reporterprofiles'] = []
+    if len(delinquents) == 0:
         logging.debug("No delinquent reporters, report will not be sent")        
-        return        
+        return context
     else:
-        context = {}
         context['delinquent_reporterprofiles'] = delinquents
         context['threshold'] = threshold
-        rendered_text = render_to_string("hq/reports/sms_delinquent_report.txt",context)      
-        
-    if report_schedule.report_delivery == 'email':        
-        subject = "[CommCare HQ] Daily Idle Reporter Alert for " + datetime.datetime.now().strftime('%m/%d/%Y') + " " + str(threshold) + " day threshold"
-        reporter.transport_email(rendered_text, usr, params={"email_subject":subject})
-    else:
-        reporter.transport_sms(rendered_text, usr)
+        return context

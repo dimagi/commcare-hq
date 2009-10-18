@@ -71,6 +71,13 @@ class ReporterProfile(models.Model):
             return self.chw_username
         return str(self)
     
+    @property
+    def language(self):
+        return self.reporter.language
+    
+    def send_message(self, router, msg):
+        return self.reporter.send_message(router, msg)
+    
     def __unicode__(self):
         if self.chw_username:
             return "%s (%s)" % (self.chw_username, self.chw_id)
@@ -153,8 +160,13 @@ class Organization(models.Model):
     def __unicode__(self):
         return self.name
     
+    def get_supervisors(self):
+        reps = self.supervisors.reporters.all()
+        return ReporterProfile.objects.filter(reporter__in=reps)
     
-    
+    def get_members(self):
+        members = self.members.reporters.all()
+        return ReporterProfile.objects.filter(reporter__in=members)
 
 REPORT_CLASS = (
     ('siteadmin', 'General Site Admin'),

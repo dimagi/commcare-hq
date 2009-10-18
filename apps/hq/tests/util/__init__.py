@@ -3,12 +3,13 @@
 """
 
 import hashlib
-from hq.models import ExtUser, Domain
+from hq.models import ExtUser, Domain, ReporterProfile
+from reporters.models import Reporter, PersistantConnection
 
 def create_user_and_domain(username='brian', 
                            password='test',
                            domain_name='mockdomain'):
-    """Creates a domain 'mockdomain' and a user with name/pw 
+    """Creates a domain 'mockdomain' and a web user with name/pw 
        'brian'/'test'.  Returns these two objects in a tuple 
        as (domain, user)"""
     domain = Domain(name=domain_name)
@@ -25,3 +26,31 @@ def create_user_and_domain(username='brian',
     user.set_unsalted_password( username, password )
     user.save()
     return (user, domain)
+
+def create_reporter_with_connection(alias, 
+                                    phone_number,
+                                    backend):
+    reporter = Reporter(alias=alias)
+    reporter.save()
+    conn, c_created = PersistantConnection.objects.get_or_create(\
+                      identity=phone_number, backend=backend)
+    conn.reporter = reporter
+    conn.save()
+    return reporter
+
+def create_reporter_and_profile(backend, domain, phone_number="1234", username='username'):
+    """Creates a domain 'mockdomain' and a sms user with name/pw 
+       'brian'/'test'.  Returns these two objects in a tuple 
+       as (domain, user)"""
+    rep = create_reporter_with_connection(username, phone_number, backend)
+    # note: we set reporterprofile.chw_username to be the same as username, just for testing
+    prof = ReporterProfile(reporter=rep, domain=domain, chw_username=username)
+    prof.save()
+    return (rep, prof)
+
+def create_active_reporter_and_profile(backend, domain, phone_number="1234", username='username'):
+    rep, prof = create_reporter_and_profile(backend, domain, phone_number, username)
+    prof.active = True
+    prof.save()
+    return (rep, prof)
+

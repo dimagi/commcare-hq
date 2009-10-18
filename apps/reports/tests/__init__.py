@@ -5,3 +5,4 @@ import unittest
 from case import * 
 #TODO - fix views unit test
 #from views import *
+from brac import *
