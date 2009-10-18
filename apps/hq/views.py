@@ -322,18 +322,18 @@ def add_reporter(req):
         
         # if any fields were missing, abort.
         missing = reporter_errors["missing"] + profile_errors["missing"]
+        exists = reporter_errors["exists"] + profile_errors["exists"]
+        
         if missing:
             transaction.rollback()
             return message(req,
-                "Missing Field(s): %s" %
-                    ", ".join(missing),
+                "Missing Field(s): %s" % comma(missing),
                 link="/reporters/add")
         # if chw_id exists, abort.
-        if profile_errors["exists"]:
+        if exists:
             transaction.rollback()
             return message(req,
-                "Field(s) already exist: %s" %
-                    ", ".join(profile_errors["exists"]),
+                "Field(s) already exist: %s" % comma(exists),
                 link="/reporters/add")
         
         try:
@@ -474,13 +474,26 @@ def check_profile_form(req):
     #    errors['missing'] = errors['missing'] + ["chw_id"]
     #if req.POST.get("chw_username", "") == "":
     #    errors['missing'] = errors['missing'] + ["chw_username"]
-        
-    rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
+    
     errors['exists'] = []
-    if rps: errors['exists'] = "chw_id"
-    return errors    
+    chw_id = req.POST.get("chw_id", "")
+    if chw_id:
+        # if chw_id is set, it must be unique
+        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
+        if rps: errors['exists'] = "chw_id"
+    return errors
 
 
 def no_permissions(request):
     template_name="hq/no_permission.html"
     return render_to_response(request, template_name, {})
+
+def comma(string_or_list):
+    """ TODO - this could probably go in some sort of global util file """
+    if isinstance(string_or_list, basestring):
+        string = string_or_list
+        return string
+    else:
+        list = string_or_list
+        return ", ".join(list)
+
