@@ -1,3 +1,6 @@
+"""
+Utility functions for report framework
+"""
 import inspect
 
 def is_mod_function(mod, func):
