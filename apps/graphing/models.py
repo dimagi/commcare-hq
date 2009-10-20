@@ -6,7 +6,7 @@ import graphing.dbhelper as dbhelper
 import time
 import logging
 import datetime
-import simplejson
+from django.utils import simplejson
 
 import re
 
@@ -58,7 +58,7 @@ class RawGraph(BaseGraph):
     series_labels = models.CharField(_('Series labels'),max_length=255, help_text=_("Each subsequent column in the query will be its own series.  Enter their names separated by the | symbol."))
     display_type = models.CharField(max_length=32,choices=CHART_DISPLAY_TYPES)
                                     
-    time_bound = models.BooleanField(null=True, blank=True, default=False)
+    time_bound = models.NullBooleanField(null=True, blank=True, default=False)
     default_interval = models.IntegerField(_('Default Interval'),
                                              default=0,
                                              help_text=_("The date initial date range that will be selected in the UI, in days."))
