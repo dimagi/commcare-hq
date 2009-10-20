@@ -347,25 +347,17 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
     for filter in request.GET:
         if filter.startswith('filter_'):
             val = request.GET[filter]
-            # we convert 'filter_x' into the name of the x'th field
-            offset = filter.rsplit('_',1)[-1]
-            field = columns[int(offset)]
+            # we convert 'filter_x' into 'x' (the name of the field)
+            field = filter.split('_',1)[-1]
             column_filters.append( [field,'=',val] )
     if len(column_filters)>0:
         # context['filters'] will be displayed
         context['filters'] = "&".join(['%s=%s' % (key, value)
                                             for key, comp, value
                                             in column_filters])
-        # context['filter_params'] will be added to links in view
-        # todo: merge filter and filter_params
-        # currently 'filters' is used since we don't have an easy way to 
-        # query fields by name
-        context['filter_params'] = "&".join(['%s=%s' % (key, value)
-                                            for key, value in request.GET.items()\
-                                            if key.startswith("filter")])
         # hacky way of making sure that the first already-filtered field
         # does not show up as a filter link - todo: clean up later
-        context['filter_primary'] = column_filters[0][2]
+        context['filtered_by'] = column_filters[0][0]
     if use_blacklist:
         blacklist_users = request.extuser.domain.get_blacklist()
         rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
