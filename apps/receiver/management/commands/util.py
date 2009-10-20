@@ -1,6 +1,6 @@
 """ Utility functions used by various xformmanager.management.commands """
 import logging
-import simplejson
+from django.utils import simplejson
 from urlparse import urlparse
 import urllib, urllib2, httplib
 

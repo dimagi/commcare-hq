@@ -7,7 +7,7 @@ import hashlib
 import sys
 import os
 import traceback
-import simplejson
+from django.utils import simplejson
 from random import choice
 from datetime import datetime
 
