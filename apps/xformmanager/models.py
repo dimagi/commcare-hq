@@ -239,9 +239,14 @@ class FormDefModel(models.Model):
                 if len(filter) != 3:
                     raise TypeError("_get_cursor expects column_filters of length 3 " + \
                         "e.g.['pk','=','3'] (only %s given)" % len(filter))
-                if isinstance( filter[2],basestring ): 
-                    to_append = " AND s.%s %s '%s' " % tuple( filter )
+                if isinstance( filter[2],basestring ):
+                    # strings need to be quoted
+                    if filter[0] == 'submit_time':
+                        to_append = " AND su.%s %s '%s' " % tuple( filter )
+                    else:
+                        to_append = " AND s.%s %s '%s' " % tuple( filter )
                 else:
+                    # force non-strings to strings
                     filter[2] = unicode(filter[2]) 
                     to_append = " AND s.%s %s %s " % tuple( filter )
                 sql = sql + to_append

@@ -1,7 +1,8 @@
 {% load i18n %}
+{% load basic_tags %}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
-{% if filter_params %}
+{% if filters %}
 	<h3>FILTERED BY
 		{{filters}}
 	{% if sort_params %}
@@ -46,11 +47,11 @@
 	   {% for col in columns %}
 	      {% ifequal forloop.counter0 sort_index %}
 		     <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
-		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}&{{filter_params}}">
+		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}&{{filters}}">
 		         {{col}}
 		     </th>
           {% else %}
-		     <th><a href="?sort_column={{col}}&{{filter_params}}">{{col}}</th>
+		     <th><a href="?sort_column={{col}}&{{filters}}">{{col}}</th>
           {% endifequal %}          	
 	   {% endfor%}
 	   </tr>
@@ -70,17 +71,28 @@
            {% if forloop.first %}
 	   		     <a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a>
 	   	   {% else %}
-	   	   		 {% ifequal field filter_primary %}
-		   		     {{field}}
-	   	   		 {% else %}
-	   	   		 	{% if sort_params %}
-			   		     <a href="?filter_{{forloop.counter0}}={{field}}&{{sort_params}}">
-	   	   		 	{% else %}
-			   		     <a href="?filter_{{forloop.counter0}}={{field}}">
-	   	   		 	{% endif %}
-		   		     	{{field}}
-		   		     </a>
-	   	   		 {% endifequal %}
+	   	  		 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
+	   	  		 {% if filtered_by %} 
+		   	   		 {% ifequal filtered_by columns|get_index:forloop.counter0 %}
+			   		     {{field}}
+		   	   		 {% else %}
+		   	   		 	{% if sort_params %}
+				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+		   	   		 	{% else %}
+				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+		   	   		 	{% endif %}
+			   		     	{{field}}
+			   		     </a>
+		   	   		 {% endifequal %}
+    	   		 {% else %}
+		   	   		 	{% if sort_params %}
+				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+		   	   		 	{% else %}
+				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+		   	   		 	{% endif %}
+			   		     	{{field}}
+			   		     </a>
+	   	   		 {% endif %}
 	       {% endif %} 
 	   	   </td>
 	   {% endfor %}
