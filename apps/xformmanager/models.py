@@ -4,7 +4,7 @@ import uuid
 import logging
 import settings
 import traceback
-import simplejson
+from django.utils import simplejson
 from MySQLdb import IntegrityError
 
 from django.db import models, connection

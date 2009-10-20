@@ -4,7 +4,7 @@ None
 
 import datetime
 import os
-import simplejson
+from django.utils import simplejson
 
 
 def run():

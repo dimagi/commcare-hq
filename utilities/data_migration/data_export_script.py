@@ -6,7 +6,7 @@ import settings
 from django.core.management import setup_environ
 import os
 # simple json is a python 2.5 library you need to install
-import simplejson
+from django.utils import simplejson
 # json comes bundled with python 2.6.  use one or the other
 #import json
 

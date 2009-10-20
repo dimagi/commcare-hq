@@ -5,7 +5,7 @@ import urllib, urllib2, httplib
 import logging
 import os.path
 import cStringIO
-import simplejson
+from django.utils import simplejson
 from stat import S_ISDIR, S_ISREG, ST_MODE
 from urlparse import urlparse
 import tarfile
