@@ -161,10 +161,14 @@ class Organization(models.Model):
         return self.name
     
     def get_supervisors(self):
+        if self.supervisors is None:
+            return ReporterProfile.objects.none()
         reps = self.supervisors.reporters.all()
         return ReporterProfile.objects.filter(reporter__in=reps)
     
     def get_members(self):
+        if self.members is None:
+            return ReporterProfile.objects.none()
         members = self.members.reporters.all()
         return ReporterProfile.objects.filter(reporter__in=members)
 
