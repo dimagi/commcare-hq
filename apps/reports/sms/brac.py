@@ -1,4 +1,7 @@
 """ 
+rO - oct 25 2009 - sticking in 'sms' temporarily. feel free to move somewhere else.
+(then update reports/tests/brac.py import statement accordingly)
+
 BRAC SMS Reports
 
 Notes:
@@ -9,6 +12,7 @@ Possible Future Extension?
 * some sort of subscription model, so that users could 'opt out' on a per-alert basis
 """
 
+import logging
 from rapidsms.i18n import ugettext_from_locale as _t
 from rapidsms.i18n import ugettext_noop as _
 from hq.models import Domain, Organization, ReporterProfile
@@ -17,10 +21,14 @@ from reports.custom.util import forms_submitted
 import hq.reporter.metastats as metastats
 
 def weekly(router):
-    activity_report(router, "BRAC")
+    # todo - move 'brac' to db (eventschedule.callback_args)
+    brac = Domain.objects.get(name="BRAC")
+    activity_report(router, brac)
 
 def daily(router):
-    delinquent_report(router, "BRAC")
+    # todo - move 'brac' to db (eventschedule.callback_args)
+    brac = Domain.objects.get(name="BRAC")
+    delinquent_report(router, brac)
     
 def activity_report(router, domain, send_chv_report=True, send_super_report=True, send_summary_chv_report=True):
     """
@@ -28,6 +36,7 @@ def activity_report(router, domain, send_chv_report=True, send_super_report=True
     
     Later: we can always break this out into its own schedule at a later date
     """
+    logging.info("Running brac sms activity report")
     orgs = Organization.objects.filter(domain=domain)
     for org in orgs:
         members = org.get_members().filter(active=True)
@@ -52,6 +61,7 @@ def send_activity_to_reporter(router, recipient, context ):
     
     Messages chv with a report of her activity in the past week
     """
+    logging.debug("Running brac sms send_activity_to_reporter")
     forms_submitted = context['forms_submitted']
     if forms_submitted >= 45:
         greeting = _t( _("Congratulations for the work done %(username)s. "), 
@@ -75,6 +85,7 @@ def send_activity_to_super(router, recipient, context ):
     """ SMS document 1: second set 
     Messages supervisor with activity report for a given chv
     """
+    logging.debug("Running brac sms send_activity_to_super")
     forms_submitted = context['count']
     chv = context['chv']
     if forms_submitted >= 45:
@@ -93,6 +104,7 @@ def send_summary_activity_to_reporter(router, recipient, context ):
     """ SMS document 1: third set 
     Messages all chv's with a summary of activity from their group
     """
+    logging.debug("Running brac sms send_summary_activity_to_reporter")
     response = []
     for chv in context['group_members']:
         response.append( _t( _("%(username)s submitted %(count)s forms"), 
@@ -102,6 +114,7 @@ def send_summary_activity_to_reporter(router, recipient, context ):
     recipient.send_message(router, response)
 
 def delinquent_report(router, domain, send_delinquent_chv=True, send_summary=True):
+    logging.info("Running brac sms delinquent report")
     organizations = Organization.objects.filter(domain=domain)
     for org in organizations:
         threshold = 2 # delinquent if we have not seen them in 2 days
@@ -123,6 +136,7 @@ def alert_delinquent_reporter(router, recipient, context):
     """ SMS document 2: first set
     Send chv an alert when they haven't submitted anything in 2 days
     """
+    logging.debug("Running brac sms alert_delinquent_reporter")
     last_seen = context['last_seen']
     # do not break this string without updating the translation files
     response = _t( _("Hi %(username)s, we haven't received any forms " +
@@ -136,6 +150,7 @@ def send_summary_delinquent_to_super(router, recipient, context):
     """ SMS document 2: second set 
     Send all supervisors a summary of delinquent chv's
     """
+    logging.debug("Running brac sms send_summary_delinquent_to_super")
     usernames = [chv.chw_username for chv in context['delinquent_reporterprofiles']]
     if usernames is None or len(usernames)==0:
         recipient.send_message(router, _t(_('No delinquents found for delinquent alert'),recipient.language))
