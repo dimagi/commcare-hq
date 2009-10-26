@@ -87,6 +87,8 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     slog = Submission.objects.all().filter(id=submission_id)
     context['submission_item'] = slog[0]
     rawstring = str(slog[0].raw_header)
+    
+    #In order to display the raw header information, we need to escape the python object brackets in the output 
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
     rawstring = rawstring.replace('>}','>"}')
@@ -124,13 +126,26 @@ def domain_submit(request, domain_name, template_name="receiver/submit.html"):
     return _do_domain_submission(request, domain_name, template_name, False)
 
 def _do_domain_submission(request, domain_name, template_name="receiver/submit.html", is_resubmission=False):
-    
     if request.method != 'POST':
         return HttpResponse("You have to POST to submit data.")
 
     # first save the file to disk so we have it around before doing anything else.
     try:
-        submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
+        #Adjust how we get the payload based on the client uploading the forms
+        if len(request.raw_post_data) != 0:
+            payload = request.raw_post_data
+        elif request.FILES.has_key('xml_submission_file'):
+            #ODK Hack. because the way in which ODK handles the uploads using multipart/form data instead of the w3c xform transport
+            #we need to doubly unwrap the submissions in a funky way            
+            odkpayload = request.FILES['xml_submission_file'].read()
+            payload = submitprocessor.process_odk_multipartform(request.META, odkpayload)
+            
+        else:
+            logging.error("Submission error for domain %s, user: %s.  No data payload" % \
+                      (domain_name,str(request.user)))
+                      
+        
+        submit_record = submitprocessor.save_post(request.META, payload)
     except Exception, e:
         return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
     
@@ -138,9 +153,17 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if domain_name[-1] == '/':
         # get rid of the trailing slash if it's there
         domain_name = domain_name[0:-1]
+        
+    #ODK HACK - the ODK client appends /submission to the end of the URL.  so for testing purposes until
+    #we get the header-based authentication, we need to strip out the /submission from the end.
+    if len(domain_name.split('/')) > 1:
+        fixdomain = domain_name.split('/')[0]
+        odksuffix = domain_name.split('/')[1:]
+        if odksuffix.count('submission') == 1:
+            domain_name = fixdomain            
     
     logging.debug("begin domained raw_submit(): " + domain_name)
-    try: 
+    try:         
         currdomain = Domain.objects.get(name=domain_name)
     except Domain.DoesNotExist:
         logging.error("Submission failed! %s isn't a known domain.  The file has been saved as %s" %
@@ -208,9 +231,10 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
         currdomain = Domain.objects.filter(name=domain_name)
         if len(currdomain) != 1:
             new_submission = '[error]'
-        else:
-            new_submission = submitprocessor.do_old_submission(request.META,request.raw_post_data, domain=currdomain[0])
-                    
+        else:            
+            submit_record = submitprocessor.save_post(request.META, request.raw_post_data,domain=currdomain[0])
+            new_submission = submitprocessor.do_submission_processing(request.META, submit_record, domain=currdomain[0])
+            #new_submission = submitprocessor.do_old_submission(request.META,request.raw_post_data, domain=currdomain[0])                    
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"     
         else:

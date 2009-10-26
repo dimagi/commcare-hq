@@ -95,6 +95,7 @@ def show_build(request, build_id, template_name="buildmanager/show_build.html"):
         raise Http404
     return render_to_response(request, template_name, context)
 
+
 def get_buildfile(request, project_id, build_number, filename, template_name=None):    
     """For a given build, we now have a direct and unique download URL for it 
        within a given project. This will directly stream the file to the 
@@ -121,7 +122,9 @@ def get_latest_buildfile(request, project_id, filename, template_name=None):
     else:
         raise Http404
         
-def _get_buildfile(request, project, build, filename):
+def _get_buildfile(request, project, build, filename):    
+    returndata = None
+    
     if filename.endswith('.jar'):
         fpath = build.get_jar_filename()
         if fpath != filename:
@@ -132,6 +135,9 @@ def _get_buildfile(request, project, build, filename):
         if not fin:
             raise Http404
         _log_build_download(request, build, "jar")
+        returndata = fin.read()
+        fin.close()
+        
     elif filename.endswith('.jad'):
         fpath = build.get_jad_filename()
         mtype = mimetypes.guess_type(build.jad_file)[0]            
@@ -140,13 +146,22 @@ def _get_buildfile(request, project, build, filename):
         fin = build.get_jad_filestream()
         if not fin:
             raise Http404
-        _log_build_download(request, build, "jad")
+        _log_build_download(request, build, "jad")        
+        returndata = fin.read()     
+        fin.close()   
+        
+    elif filename.endswith('.zip'):        
+        mtype = "application/zip"
+        returndata = build.get_zip_filestream()
+        if not returndata:
+            raise Http404
+        _log_build_download(request, build, "zip")        
+    
     if mtype == None:
         response = HttpResponse(mimetype='text/plain')
     else:
         response = HttpResponse(mimetype=mtype)
-    response.write(fin.read())
-    fin.close()
+    response.write(returndata)    
     return response
 
 def _log_build_download(request, build, type):

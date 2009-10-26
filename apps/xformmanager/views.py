@@ -17,7 +17,9 @@ from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
-from receiver.submitprocessor import do_old_submission
+#from receiver.submitprocessor import do_old_submission
+from receiver.submitprocessor import do_submission_processing
+from receiver.submitprocessor import save_post
 
 from hq.models import *
 from hq.utils import paginate
@@ -142,9 +144,9 @@ def submit_data(request, formdef_id, template='submit_data.html'):
     extuser = request.extuser
     if request.method == 'POST':
         form = SubmitDataForm(request.POST, request.FILES)        
-        if form.is_valid():
-            new_submission = do_old_submission(request.META, \
-                request.FILES['file'].read(), domain=extuser.domain)
+        if form.is_valid():            
+            submit_record = save_post(request.META, request.FILES['file'].read(),domain=extuser.domain)
+            new_submission = do_submission_processing(request.META, submit_record, domain=extuser.domain)            
             if new_submission == '[error]':
                 logging.error("Domain Submit(): Submission error")
                 context['errors'] = "Problem with submitting data"
