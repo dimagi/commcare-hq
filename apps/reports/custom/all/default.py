@@ -19,7 +19,7 @@ def blacklist(request, domain=None):
     '''Report of who is submitting as blacklisted users'''
     if not domain:
         domain = request.extuser.domain
-    startdate, enddate = get_dates(request, 30)
+    startdate, enddate = get_dates(request, 7)
     if enddate < startdate:
         return '''<p><b><font color="red">The date range you selected is not valid.  
                   End date of %s must fall after start date of %s.</font></b></p>'''\
