@@ -274,9 +274,6 @@ def password_change(req):
         password_form = AdminPasswordChangeForm(user_to_edit, req.POST)
         if password_form.is_valid():
             password_form.save()
-            user_to_edit.extuser.set_password( user_to_edit.username, \
-                                               password_form.cleaned_data['password1'] )
-            user_to_edit.extuser.save()
             return HttpResponseRedirect('/')
     else:
         password_form = AdminPasswordChangeForm(user_to_edit)
