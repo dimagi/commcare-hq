@@ -5,6 +5,7 @@
 	<th>Created</th>
 	<th>Jar File</th>
 	<th>Jad File</th>
+	<th>ZIP File</th>
 	<th>Uploaded By</th>
 	<th>Build Status</th>
 	<th>Description</th>
@@ -20,6 +21,8 @@
             {{build.get_jar_filename}}</a></td>
         <td><a href="{{build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{build.get_jad_contents}}');return false"> 
         {{build.get_jad_filename}}</a></td>
+        
+        <td><a href="{{build.get_zip_downloadurl}}">Zip Archive</a></td>
         <td>{{build.uploaded_by}}</td>
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
