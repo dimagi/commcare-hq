@@ -5,7 +5,6 @@ from django.template.loader import render_to_string
 from django.template import Template, Context
 from hq.models import *
 import hq.utils as utils
-from hq.reporter import agents        
 import graphing.dbhelper as dbhelper
 from xformmanager.models import *
 

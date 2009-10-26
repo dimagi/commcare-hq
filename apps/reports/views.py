@@ -25,12 +25,7 @@ def reports(request, template_name="list.html"):
     context['domain'] = extuser.domain
     context['case_reports'] = Case.objects.filter(domain=extuser.domain)
     context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain)
-    report_module = util.get_custom_report_module(extuser.domain)
-    if report_module:
-        custom = util.get_custom_reports(report_module)
-        context['custom_reports'] = custom
-    else:
-        context['custom_reports'] = None
+    context['custom_reports'] = util.get_custom_reports(extuser.domain)
     if not context['custom_reports'] and not context['sql_reports']\
        and not context['case_reports']:
         return render_to_response(request, 
@@ -100,15 +95,20 @@ def custom_report(request, domain_id, report_name):
     context["domain"] = extuser.domain
     context["report_name"] = report_name
     report_module = util.get_custom_report_module(extuser.domain)
-    if not report_module:
+    default_module = util.get_global_report_module(extuser.domain)
+    if not report_module and not default_module:
         return render_to_response(request, 
                                   "domain_not_found.html",
                                   context)
     if not hasattr(report_module, report_name):
-        return render_to_response(request, 
-                                  "custom/report_not_found.html",
-                                  context)
-    report_method = getattr(report_module, report_name)
+        if not hasattr(default_module, report_name):
+            return render_to_response(request, 
+                                      "custom/report_not_found.html",
+                                      context)
+        else:
+            report_method = getattr(default_module, report_name)
+    else:
+        report_method = getattr(report_module, report_name)
     context["report_display"] = report_method.__doc__
     context["report_body"] = report_method(request)
     return render_to_response(request, "custom/base.html", context)

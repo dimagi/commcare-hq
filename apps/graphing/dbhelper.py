@@ -71,9 +71,10 @@ def get_date_expr(date_colname,startdate, enddate):
         
 
 def get_date_whereclause(date_colname, startdate, enddate):
-    """this is to change the date format function to use on the actual queries
-    sqlite and mysql use different methodnames to do their date arithmetic"""    
-    ret = " %s > '%s' AND %s < '%s' " % (date_colname,startdate.strftime('%Y-%m-%d'), date_colname, enddate.strftime('%Y-%m-%d'))
+    """This is to change the date format function to use on the actual queries
+       sqlite and mysql use different methodnames to do their date arithmetic"""    
+    ret = " %s > '%s' AND %s < '%s' " % (date_colname,startdate.strftime('%Y-%m-%d'), 
+                                         date_colname, enddate.strftime('%Y-%m-%d'))
     return ret
 
 
@@ -117,7 +118,7 @@ class DbHelper(object):
         else:
             if default_date != None:
                 if self.date_columns.count(default_date) == 1:
-                    self.default_date_column_id = date_columns.index(default_date)
+                    self.default_date_column_id = self.date_columns.index(default_date)
     
     @property
     def default_date_column(self):
@@ -182,10 +183,13 @@ class DbHelper(object):
         For example, if i know a username column, I want to get a daily count returns count, date
         
         Filters are a dictionary of {'colname','value} or {'colname':[value1,value2]}
-        
+
         where colname=value
-        
         or colname in (value1, value2)
+        
+        The lists ONLY WORK WITH LISTS OR TUPLES.  You can't pass in query sets.
+        Also be careful with unicode strings, they don't work properly so call str() 
+        on whatever you pass in the list.
         
         It will build a where clause  with the datetime values as criteria as well as the column filters.
         """
@@ -200,17 +204,22 @@ class DbHelper(object):
             valstring = ""            
             if isinstance(value,int):
                 valstring = "%d" % (value)
-            elif isinstance(value,list):
+            elif isinstance(value,list) or isinstance(value, tuple):
+                # this sneakily parses to valid sql for ints and strings
+                # use with care.
                 valstring += str(tuple(value))                
             else:
                 valstring = "'%s'" % (value)
-            
-            if isinstance(value,list):
+            if isinstance(value,list) or isinstance(value,tuple):
                 wherestring += "%s in %s AND " % (key,valstring)
             else:
                 wherestring += " %s=%s AND " % (key, valstring)            
         try:
-            query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) + " from " + self.tablename + wherestring + get_date_whereclause(self.default_date_column, startdate, enddate) + " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) + " order by " + self.default_date_column
+            query = "select count(*), " + get_date_expr(self.default_date_column, startdate,enddate) +\
+                    " from " + self.tablename + wherestring +\
+                    get_date_whereclause(self.default_date_column, startdate, enddate) +\
+                    " group by " + get_dategroup_expr(self.default_date_column, startdate,enddate) +\
+                    " order by " + self.default_date_column
             return self.get_query_data(query)
         except:
             return [] 
@@ -246,12 +255,6 @@ class DbHelper(object):
                 datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
             val = int(row[1])
             ret.append([datelong,val])
-        
-#        "russia": {
-#            label: "Russia",
-#            data: [[1988, 218000], [1989, 203000], [1990, 171000], [1992, 42500], [1993, 37600], [1994, 36600], [1995, 21700], [1996, 19200], [1997, 21300], [1998, 13600], [1999, 14000], [2000, 19100], [2001, 21300], [2002, 23600], [2003, 25100], [2004, 26100], [2005, 31100], [2006, 34700]]
-#        },
-        
         dset = {}
         dset["label"] = self.displayname.__str__()
         dset["data"] = ret
