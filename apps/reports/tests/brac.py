@@ -6,7 +6,7 @@ from reporters.models import ReporterGroup, PersistantBackend
 from hq.models import Organization, Domain, ReporterProfile
 from receiver.models import Submission, Attachment
 from xformmanager.tests.util import *
-from reports.custom.brac import *
+from reports.sms.brac import *
 from hq.tests.util import *
 
 class BracTestCase(TestScript):
