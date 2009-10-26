@@ -204,6 +204,14 @@ class ProjectBuild(models.Model):
         '''Returns the name (no paths) of the jad file'''
         return os.path.basename(self.jad_file)
     
+    def get_zip_filename(self):
+        '''Returns the name (no paths) of the zip file, which will include the version number infromation'''
+        fname = os.path.basename(self.jar_file)
+        basename = os.path.splitext(fname)[0]
+        zipfilename = basename + "-build" + str(self.build_number) + ".zip"
+        
+        return zipfilename
+    
     def get_jar_filestream(self):
         try:
             fin = open(self.jar_file,'r')
@@ -240,9 +248,6 @@ class ProjectBuild(models.Model):
             logging.error("Unable to open create ZipStream", extra={"exception": e,                                                           
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
-            
-            
-    
     def get_jad_contents(self):
         '''Returns the contents of the jad as text.'''
         file = self.get_jad_filestream()
@@ -264,6 +269,14 @@ class ProjectBuild(models.Model):
             return "<br>".join(to_return)
         else:
             return "No X-Forms found"
+    
+    def get_zip_downloadurl(self):
+        """do a reverse to get the urls for the given project/buildnumber for the direct zipfile download"""
+        
+        return reverse('get_buildfile',
+                       args=(self.project.id,
+                               self.build_number, 
+                                self.get_zip_filename()))
     
     def get_jar_downloadurl(self):
         """do a reverse to get the urls for the given project/buildnumber for the direct download"""
