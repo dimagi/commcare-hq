@@ -2,6 +2,7 @@
 Utility functions for report framework
 """
 import inspect
+from reports.custom.all import default
 
 def is_mod_function(mod, func):
     '''Returns whether the object is a function in the module''' 
@@ -10,17 +11,40 @@ def is_mod_function(mod, func):
 def get_custom_report_module(domain):
     '''Get the reports module for a domain, if it exists.  Otherwise
        this returns nothing'''
-    try:
-        rep_module = __import__("reports.custom.%s" % domain.name.lower(), 
-                                fromlist=[''])
-        return rep_module
-    except ImportError:
-        # this is ok, there just weren't any custom reports
-        return None
-        
-        
+    return _safe_import("reports.custom.%s" % domain.name.lower())
 
-def get_custom_reports(report_module):
+
+def get_global_report_module(domain):
+    '''Get the global reports module for a domain.'''
+    module = _safe_import("reports.custom.all.%s" % domain.name.lower()) 
+    if not module:
+        module = default
+    return module
+
+
+def _safe_import(module_name):    
+    try:
+        return __import__(module_name, 
+                                fromlist=[''])
+    except ImportError:
+        # this is ok, there just wasn't a module with custom reports
+        return None
+
+        
+        
+def get_custom_reports(domain):
+    """Gets all the custom reports for the domain (including any global 
+       default reports)"""
+    custom_report_module = get_custom_report_module(domain)
+    if custom_report_module:
+        custom = extract_custom_reports(custom_report_module)
+    else:
+        custom = []
+    default_report_module = get_global_report_module(domain)
+    custom.extend(extract_custom_reports(default_report_module))
+    return custom
+    
+def extract_custom_reports(report_module):
     '''Given a reports module , get the list of custom reports defined
        in that class.  These are returned as dictionaries of the 
        following format:

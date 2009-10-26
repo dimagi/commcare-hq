@@ -21,6 +21,7 @@ def monitoring_report(request, case):
     
     # allow a list of usernames whose submissions don't show up
     # in the report. 
+    # TODO: move this to the real blacklist now
     blacklist = ["teddy", "admin", "demo_user"]
     blacklist_columns = ["meta_username"]
     

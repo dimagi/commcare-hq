@@ -1,0 +1,27 @@
+{% load hq_shared_tags %}
+<h2>{{ domain }}</h2>
+<h2>Blacklisted User Submissions</h2>
+{% for username, device_data in all_data.items %}
+<h3>Submissions from {{ username }}</h3>
+<table class="sofT">
+    <thead class="commcare-heading">
+        <th>Device</th><th>Other Users Submitting</th>
+        {% for date in all_dates %}
+            <th>{{ date }}</th>
+        {% endfor %}
+    </thead>
+    <tbody>
+        {% for device, data in device_data.items %}
+        <tr>
+            <td>{{ device }}</td>
+            <td>{% if data.users %}{{data.users}}{% else %}No Other Users{% endif %}</td>
+            {% for date in all_dates %}
+                {% with data.date_counts|get_item:date as count %}
+                    <td>{% if count %}{{ count }}{% else %}0{% endif %}</td>
+                {% endwith %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
