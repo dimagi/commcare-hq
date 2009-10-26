@@ -68,8 +68,14 @@ def blacklist(request, domain=None):
             users = Metadata.objects.filter(deviceid=device)\
                         .exclude(username=blacklisted_user)\
                         .values_list('username', flat=True).distinct()
+            clean_users = []
+            for user in users:
+                if user:
+                    clean_users.append(user)
+                else:
+                    clean_users.append("EMPTY USERNAME")
             this_device_data = {"date_counts": dict_counts,
-                                "users": ",".join(users)}
+                                "users": ",".join(clean_users)}
             this_user_device_data[device] = this_device_data
         all_data[blacklisted_user] = this_user_device_data
             
