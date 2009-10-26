@@ -30,5 +30,9 @@ def makeNewEntry(headerfile, bodyfile, domain=None):
         mockdomain = Domain(name='mockdomain')
         mockdomain.save()
     else:
-        mockdomain = Domain.objects.all()[0]
-    return submitprocessor.do_old_submission(metahash, body, domain=mockdomain)
+        mockdomain = Domain.objects.all()[0]        
+    
+    submit_record = submitprocessor.save_post(metahash, body)
+    return submitprocessor.do_submission_processing(metahash, submit_record, domain=mockdomain)
+
+

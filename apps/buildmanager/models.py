@@ -11,7 +11,14 @@ try:
     pygments_found=True
 except ImportError:
     pygments_found=False
-
+    
+from zipstream import ZipStream
+try:
+    from cStringIO import StringIO    
+except:
+    from StringIO import StringIO
+    
+    
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
@@ -117,7 +124,7 @@ class ProjectBuild(models.Model):
     project = models.ForeignKey(Project, related_name="builds")
     
     # we have it as a User instead of ExtUser here because we want our 
-    # build server User to be able to push to multiple omains
+    # build server User to be able to push to multiple domains
     uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
     
@@ -216,6 +223,25 @@ class ProjectBuild(models.Model):
                                                            "jad_file": self.jad_file, 
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
+            
+            
+    def get_zip_filestream(self):
+        try:
+            zpath = str(os.path.dirname(self.jar_file) + "/")                        
+            buf = StringIO()            
+            zp = ZipStream(zpath)
+            for data in zp:                                
+                buf.write(data)
+                #print data
+            buf.flush()
+            buf.seek(0)
+            return buf.read()
+        except Exception, e:            
+            logging.error("Unable to open create ZipStream", extra={"exception": e,                                                           
+                                                           "build_number": self.build_number,
+                                                           "project_id": self.project.id})
+            
+            
     
     def get_jad_contents(self):
         '''Returns the contents of the jad as text.'''

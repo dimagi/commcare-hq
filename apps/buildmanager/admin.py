@@ -9,7 +9,6 @@ import sys
 import time
 import datetime
 
-
 import django
 from buildmanager.models import *
 from django.contrib import admin
