@@ -15,4 +15,5 @@ body = fin.read()
 fin.close()
 
 metahash = eval(meta)
-submitprocessor.do_old_submission(metahash, body)
+submit_record = submitprocessor.save_post(metahash, body)
+submitprocessor.do_submission_processing(metahash, submit_record)

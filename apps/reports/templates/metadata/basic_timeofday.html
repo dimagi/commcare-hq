@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<table>
+
+<tr>
+{% for item in timeofday_header %}
+	<td><strong>{{ item }}</strong></td>
+{% endfor %}
+</tr>
+{% for row_hour in timeofday_data %}
+<tr>
+	{% for item in row_hour %}
+		<td>
+		{% if forloop.first %}
+			<strong>{{ item }}</strong>
+		{% else %}
+			{{item}}
+		{% endif %}		
+		</td>	
+	{% endfor %} 
+</tr>
+{% endfor %}
+</table>

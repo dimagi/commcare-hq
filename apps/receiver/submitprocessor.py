@@ -27,8 +27,6 @@ def save_post(metadata, payload):
             guid - server generated guid
             checksum - md5 has of the submitted data
             file_name - saved file name
-            
-            
     '''
     
     if metadata.has_key('HTTP_CONTENT_TYPE'):
@@ -66,13 +64,16 @@ def save_post(metadata, payload):
         # these are HARD errors.  Don't swallow them.
         raise 
     
-def do_old_submission(metadata, payload, domain=None, is_resubmission=False):
-    '''Deprecated method to wrap save_post and do_submission_processing to behave
-       like the old API.  This is to keep unit tests happy.  The tests should
-       be fixed and this method removed.  It's better for both steps to 
-       be done and checked by the caller independently.'''
-    submit_record = save_post(metadata, payload)
-    return do_submission_processing(metadata, submit_record, domain, is_resubmission)
+
+def process_odk_multipartform(metadata, payload):
+    """This is a stub for processing the multipart/form-data that ODK submits its data as
+    Eventually HQ should receive this information as the default way to transport the xforms, as it is more intuitive
+    to the server and the developer alike.
+    """
+    pass
+    
+        
+    
 
 @transaction.commit_on_success
 def do_submission_processing(metadata, submit_record, domain=None, is_resubmission=False):
