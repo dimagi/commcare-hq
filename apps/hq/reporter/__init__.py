@@ -13,7 +13,7 @@ from hq.reporter import agents
 from hq.reporter import metadata
 import inspector as repinspector
 
-from reports.util import get_custom_report_module
+from reports.util import get_custom_report_module, get_report_method
 import base64
 import urllib2
 import urllib
@@ -122,14 +122,13 @@ def run_reports(run_frequency):
                                     % report)
                 _debug_and_print("Activating custom domain report function %s for domain %s." 
                                  % (report.report_function, report.domain))
-                report_module = get_custom_report_module(report.domain)
-                if not report_module:
-                    raise Exception("No custom reports found for %s" % report.domain)
-                if not hasattr(report_module, report.report_function):
+                
+                report_method = get_report_method(report.domain, report.report_function)
+                if not report_method:
                     raise Exception("No report named %s found for %s" % 
                                     (report.report_function, report.domain))
+                
                 # alrighty, we found the method we want to run.
-                report_method = getattr(report_module, report.report_function)
                 
                 # HACK!  For now try manually setting the language to swahili
                 # as a proof of concept.  Eventually this will come from the 

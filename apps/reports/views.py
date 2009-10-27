@@ -94,21 +94,11 @@ def custom_report(request, domain_id, report_name):
     extuser = request.extuser
     context["domain"] = extuser.domain
     context["report_name"] = report_name
-    report_module = util.get_custom_report_module(extuser.domain)
-    default_module = util.get_global_report_module(extuser.domain)
-    if not report_module and not default_module:
+    report_method = util.get_report_method(extuser.domain, report_name)
+    if not report_method:
         return render_to_response(request, 
-                                  "domain_not_found.html",
+                                  "custom/report_not_found.html",
                                   context)
-    if not hasattr(report_module, report_name):
-        if not hasattr(default_module, report_name):
-            return render_to_response(request, 
-                                      "custom/report_not_found.html",
-                                      context)
-        else:
-            report_method = getattr(default_module, report_name)
-    else:
-        report_method = getattr(report_module, report_name)
     context["report_display"] = report_method.__doc__
     context["report_body"] = report_method(request)
     return render_to_response(request, "custom/base.html", context)

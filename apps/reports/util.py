@@ -21,16 +21,18 @@ def get_global_report_module(domain):
         module = default
     return module
 
-
-def _safe_import(module_name):    
-    try:
-        return __import__(module_name, 
-                                fromlist=[''])
-    except ImportError:
-        # this is ok, there just wasn't a module with custom reports
-        return None
-
-        
+def get_report_method(domain, report_name):
+    """Gets a domained report by name, checking first the explicit
+       custom reports and then the domain defaults.  If no such
+       report is found, returns None"""
+    report_module = get_custom_report_module(domain)
+    if report_module and hasattr(report_module, report_name):
+        return getattr(report_module, report_name)
+    default_module = get_global_report_module(domain)
+    if default_module and hasattr(default_module, report_name):
+        return getattr(default_module, report_name)
+    return None
+    
         
 def get_custom_reports(domain):
     """Gets all the custom reports for the domain (including any global 
@@ -66,4 +68,12 @@ def extract_custom_reports(report_module):
             to_return.append(obj_rep)
     return to_return
 
+
+def _safe_import(module_name):    
+    try:
+        return __import__(module_name, 
+                                fromlist=[''])
+    except ImportError:
+        # this is ok, there just wasn't a module with custom reports
+        return None
 
