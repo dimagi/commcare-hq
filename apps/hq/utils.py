@@ -59,14 +59,14 @@ def get_dates(request, default_days=0):
     default_delta = timedelta(days=default_days)
     enddate = datetime.datetime.now().date()
     startdate = enddate - default_delta
-    
-    for item in request.GET.items():
-        if item[0] == 'startdate':
-            startdate_str=item[1]
-            startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y').date()            
-        if item[0] == 'enddate':
-            enddate_str=item[1]
-            enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
+    if request:
+        for item in request.GET.items():
+            if item[0] == 'startdate':
+                startdate_str=item[1]
+                startdate = datetime.datetime.strptime(startdate_str,'%m/%d/%Y').date()            
+            if item[0] == 'enddate':
+                enddate_str=item[1]
+                enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
     return (startdate, enddate)
 
 def paginate(request, data, rows_per_page=25):
