@@ -1,6 +1,7 @@
 from hq.models import *
 import logging
 import string
+import inspect
 from django.template.loader import render_to_string
 from django.template import Template, Context
 from django.utils import translation
@@ -141,7 +142,14 @@ def run_reports(run_frequency):
                 try: 
                     # TODO: not all reports may be okay with us passing in an empty
                     # request object.  For the time being we assume that they are
-                    report_body = report_method(None)
+                    
+                    # pretty moderate hackiness here - if the report takes in a domain
+                    # pass it in.
+                    if "domain" in inspect.getargspec(report_method):
+                        report_body = report_method(None, domain=report.domain)
+                    else:
+                        report_body = report_method(None, domain=report.domain)
+
                 finally:
                     # make sure we set the default back.
                     translation.activate(settings.LANGUAGE_CODE)
