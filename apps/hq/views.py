@@ -477,7 +477,7 @@ def check_profile_form(req):
     if chw_id:
         # if chw_id is set, it must be unique
         rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
-        if rps: errors['exists'] = "chw_id"
+        if rps: errors['exists'] = ["chw_id"]
     return errors
 
 
