@@ -286,6 +286,7 @@ def server_up(req):
     return HttpResponse("success")
 
 @require_http_methods(["GET", "POST"])
+@extuser_required()
 def add_reporter(req):
     def get(req):
         # pre-populate the "connections" field
@@ -454,7 +455,7 @@ def update_reporterprofile(req, rep, chw_id, chw_username):
                                   guid = str(uuid.uuid1()).replace('-',''))
         # reporters created through the webui automatically have the same
         # domain and organization as the creator
-        extuser = get_object_or_404(ExtUser, pk=req.user.id)
+        extuser = req.extuser
         profile.domain = extuser.domain
         if extuser.organization == None:
             profile.organization = Organization.objects.filter(domain=extuser.domain)[0]
@@ -475,8 +476,8 @@ def check_profile_form(req):
     errors['exists'] = []
     chw_id = req.POST.get("chw_id", "")
     if chw_id:
-        # if chw_id is set, it must be unique
-        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
+        # if chw_id is set, it must be unique for a given domain
+        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""), domain=req.extuser.domain)
         if rps: errors['exists'] = ["chw_id"]
     return errors
 
