@@ -339,8 +339,10 @@ class Metadata(models.Model):
     # these are all the fields that we accept (though do not require)
     fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid']
     
+    # CZUE: 10-29-2009 I think formname and formversion should now be removed?
     formname = models.CharField(max_length=255, null=True)
     formversion = models.CharField(max_length=255, null=True)
+    
     deviceid = models.CharField(max_length=255, null=True)
     # do not remove default values, as these are currently used to discover field type
     timestart = models.DateTimeField(_('Time start form'), default = datetime.now)
