@@ -1,0 +1,27 @@
+<h2>{{ domain }}</h2>
+<h2>All Form Submissions</h2>
+{% with all_metadata as data %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
+<table class="sofT">
+    <thead class="commcare-heading">
+        <th>Form</th>
+        <th>Device</th>
+        <th>User Id</th>
+        <th>User Name</th>
+        <th>Started</th>
+        <th>Ended</th>
+    </thead>
+    <tbody>
+        {% for metadata in all_metadata.object_list %}
+        <tr>
+            <td>{{ metadata.formdefmodel }}</td>
+            <td>{{ metadata.deviceid }}</td>
+            <td>{{ metadata.chw_id }}</td>
+            <td>{{ metadata.username }}</td>
+            <td>{{ metadata.timestart }}</td>
+            <td>{{ metadata.timeend }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
