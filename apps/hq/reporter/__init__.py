@@ -148,7 +148,7 @@ def run_reports(run_frequency):
                     if "domain" in inspect.getargspec(report_method):
                         report_body = report_method(None, domain=report.domain)
                     else:
-                        report_body = report_method(None, domain=report.domain)
+                        report_body = report_method(None)
 
                 finally:
                     # make sure we set the default back.
