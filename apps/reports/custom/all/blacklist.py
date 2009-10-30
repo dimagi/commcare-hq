@@ -76,7 +76,7 @@ def blacklist(request, domain=None):
     date_headings = [] 
     for day in range(0,totalspan.days+1):
         target_date = startdate + timedelta(days=day)
-        date_headings.append(target_date.strftime('%m/%d/%Y'))
+        date_headings.append(target_date)
     return render_to_string("custom/all/blacklist_submissions.html", 
                             {"all_dates": date_headings, 
                              "all_data": all_data, 
