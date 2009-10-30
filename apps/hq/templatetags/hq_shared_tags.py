@@ -24,7 +24,6 @@ def attribute_lookup(obj, attr):
 @register.simple_tag
 def dict_as_query_string(dict, prefix=""):
     '''Convert a dictionary to a query string, minus the initial ?'''
-    print prefix
     return "&".join(["%s%s=%s" % (prefix, key, value) for key, value in dict.items()])
 
 @register.filter

@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 <h2>{{ domain }}</h2>
 <h2>All Form Submissions</h2>
 {% with all_metadata as data %}
@@ -16,27 +17,45 @@
           {% else %}
              <th><a href="?sort_column={{column}}{% if filters %}&{% dict_as_query_string filters "filter_" %}{% endif %}">{{display}}</a></th>
           {% endifequal %}              
-       {% endfor%}        
+       {% endfor%}
+       <th>Actions</th>
     </thead>
     <tbody>
         {% for metadata in all_metadata.object_list %}
         <tr>
             {% for column, display in columns %}
-                {% ifequal column sort_column %}
-                    <td class="sorted">
-                {% else %}
-                    <td>
-                {% endifequal %}
+                {% ifequal column sort_column %}<td class="sorted">{% else %}<td>{% endifequal %}
                 {% with metadata|attribute_lookup:column as col_value %}
+            {% comment %}
+            ######### begin commented out code ###########
+            This commented out block displays a grid with clickable data that adds filters on that
+            value, just like the data view.  However I'm going to get rid of this behavior for now, 
+            I don't think this is the most intuitive way for this table to behave, so I'm just going 
+            to hard code the data and links below. 
                 {% if col_value %}
                     <a href="?filter_{{ column }}={{ col_value }}&{{sort_params}}">{{ col_value }}</a>
                 {% else %}
                     {{ col_value }}
                 {% endif %}
+                {{ col_value }}
                 </td>
+            ######### end commented out code ###########
+            {% endcomment %}
+                {% ifequal column "formdefmodel" %}
+                <a href="{% url xformmanager.views.data col_value.id %}">
+                    {{ col_value.form_display_name }}</a>
+                {% else %}
+                    {{ col_value }}
+                {% endifequal %}
                 {% endwith %}
+                </td>
             {% endfor %}
+            <td>
+            <a href="{% url receiver.views.single_attachment metadata.attachment.id %}">view xml submission</a>&nbsp;&nbsp;
+            <a href="{% url xformmanager.views.single_instance metadata.formdefmodel.id metadata.raw_data %}">view form data</a>
+            </td>
         </tr>
         {% endfor %}
+        
     </tbody>
 </table>
