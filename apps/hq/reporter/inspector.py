@@ -17,13 +17,20 @@ output_format = '%Y-%m-%d %H:%M'
 
 username_datecount_cache = {}
 
-def get_daterange_header(startdate, enddate, format_string='%m/%d/%Y'):
+def get_daterange_header(startdate, enddate, format_string='%m/%d/%Y', 
+                         add_total=False):
+    """Builds a daterange list for every day between two dates, 
+       using a format string.  If specified will add a "total" 
+       column to the end of the list""" 
     ret = []
     totalspan = enddate-startdate    
     for day in range(0,totalspan.days+1):   
         delta = timedelta(days=day)
         target_date = startdate + delta
         ret.append(target_date.strftime(format_string))
+
+    if add_total:
+        ret.append("Total")
     return ret
 
 def get_user_forms_count(domain, username, startdate=None, enddate=None, forms_to_filter = None):

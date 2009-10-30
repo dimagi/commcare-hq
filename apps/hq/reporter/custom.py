@@ -13,14 +13,10 @@ import inspector as repinspector
 
 def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
     
-    data = []
     #next, let's get all the unclaimed
     #first, let's iterate through all the data and get the usernames
     #get all the usernames in question
     configured_users = []
-    for datum in data:
-        if isinstance(datum[2], ExtUser):
-            configured_users.append(datum[2].report_identity.lower())        
     
     #next, do a query of all the forms in this domain to get an idea of all the usernames
     defs = FormDefModel.objects.all().filter(domain=domain)
@@ -81,23 +77,24 @@ def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
             usertuple.append(usr + "*")
         else:
             usertuple.append(usr)
+            
         udata = []
-        
         totalspan = enddate - startdate
+        total_count = 0
         for day in range(0,totalspan.days+1):
             delta = timedelta(days=day)
             target_date = startdate + delta
             datestr = target_date.strftime('%m/%d/%Y')
             if datehash.has_key(datestr):
                 udata.append(datehash[datestr])
+                total_count += datehash[datestr]
             else:
-                udata.append(0)            
+                udata.append(0)
+        udata.append(total_count)
         usertuple.append(udata)            
         report_tuples.append(usertuple)                  
-    #ok, so we just did all this data, let's append the data to the already existing data
     
-    data = data + report_tuples  
-    return data
+    return report_tuples
 
 def domain_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over
@@ -133,12 +130,15 @@ def _catch_all_report(report_schedule, run_frequency, domains, title):
 
 def _get_catch_all_email_text(domain, startdate, enddate):
     data = _get_flat_data_for_domain(domain, startdate, enddate)        
-    params = {}
+    context = {}
     heading = "%s report: %s - %s" % (domain, startdate.strftime('%m/%d/%Y'), enddate.strftime('%m/%d/%Y'))
-    params['heading'] = heading    
-    from hq import reporter
-    return reporter.render_direct_email(data, startdate, enddate, "hq/reports/email_hierarchy_report.txt", params)
-
+    context['report_heading'] = heading    
+    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate, add_total=True)
+    context['startdate'] = startdate
+    context['enddate'] = enddate
+    context['results'] = data
+    return render_to_string("hq/reports/email_hierarchy_report.txt", context)
+    
 
 def pf_swahili_sms(report_schedule, run_frequency):
     """ 
