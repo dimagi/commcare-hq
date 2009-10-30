@@ -13,8 +13,18 @@ def metadata(request, domain=None):
     items, sort_column, sort_descending, filters =\
          get_table_display_properties(request)
     filters["attachment__submission__domain"] = domain
-    
+    columns = [["formdefmodel", "Form"],
+               ["deviceid", "Device"],
+               ["chw_id", "User Id"],
+               ["username", "User Name"],
+               ["timestart", "Started"],
+               ["timeend", "Ended"]]
+
     all_meta = get_query_set(Metadata, sort_column, sort_descending, filters)
-    paginated_meta = paginate(request, all_meta)
+    paginated_meta = paginate(request, all_meta, items)
     return render_to_string("custom/all/metadata.html", 
-                            {"all_metadata": paginated_meta })
+                            {"columns": columns, 
+                             "all_metadata": paginated_meta,
+                             "sort_column": sort_column,
+                             "sort_descending": sort_descending,
+                             "filters": filters })

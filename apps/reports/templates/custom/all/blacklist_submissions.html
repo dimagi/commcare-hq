@@ -16,7 +16,7 @@
             <td>{{ device }}</td>
             <td>{% if data.users %}{{data.users}}{% else %}No Other Users{% endif %}</td>
             {% for date in all_dates %}
-                {% with data.date_counts|get_item:date as count %}
+                {% with data.date_counts|dict_lookup:date as count %}
                     <td>{% if count %}{{ count }}{% else %}0{% endif %}</td>
                 {% endwith %}
             {% endfor %}

@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load basic_tags %}
+{% load hq_shared_tags %}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filters %}
@@ -63,22 +63,22 @@
 	   	   {% else %}
 	   	  		 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
 	   	  		 {% if filtered_by %} 
-		   	   		 {% ifequal filtered_by columns|get_index:forloop.counter0 %}
+		   	   		 {% ifequal filtered_by columns|array_lookup:forloop.counter0 %}
 			   		     {{field}}
 		   	   		 {% else %}
 		   	   		 	{% if sort_params %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
 		   	   		 	{% else %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
 		   	   		 	{% endif %}
 			   		     	{{field}}
 			   		     </a>
 		   	   		 {% endifequal %}
     	   		 {% else %}
 		   	   		 	{% if sort_params %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
 		   	   		 	{% else %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
 		   	   		 	{% endif %}
 			   		     	{{field}}
 			   		     </a>
