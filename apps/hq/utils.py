@@ -69,6 +69,46 @@ def get_dates(request, default_days=0):
                 enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
     return (startdate, enddate)
 
+def get_table_display_properties(request, default_items=25, default_sort_column = "id", 
+                                 default_sort_descending = True, default_filters = {}):
+    """Extract some display properties from a request object.  The following 
+       parameters (with default values) are extracted.  Andy of the defaults
+       can be overridden by passing in values.
+       items: 25 (the number of items to paginate at a time)
+       sort_column: id (the column to sort by)
+       sort_descending: True (the sort order of the column)
+       filters: {} (key, value pairs of filters to apply)
+    """
+    items = default_items
+    sort_column = default_sort_column
+    sort_descending = default_sort_descending
+    # extract from request
+    if "items" in request.GET:
+        try:
+            items = int(request.GET["items"])
+        except Exception:
+            # just default to the above if we couldn't 
+            # parse it
+            pass
+    if "sort_column" in request.GET:
+        sort_column = request.GET["sort_column"]
+    if "sort_descending" in request.GET:
+        # a very dumb boolean parser
+        sort_descending_str = request.GET["sort_descending"]
+        if sort_descending_str.startswith("f"):
+            sort_descending = False
+        else:
+            sort_descending = True
+    filters = {}
+    for param in request.GET:
+        if param.startswith('filter_'):
+            # we convert 'filter_x' into 'x' (the name of the field)
+            field = param.split('_',1)[-1]
+            filters[field] = request.GET[param]
+    if not filters:
+        filters = default_filters
+    return (items, sort_column, sort_descending, filters)
+    
 def paginate(request, data, rows_per_page=25):
     '''Helper call to provide django pagination of data'''
     paginator = Paginator(data, rows_per_page) 
