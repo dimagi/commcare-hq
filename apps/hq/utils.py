@@ -82,32 +82,45 @@ def get_table_display_properties(request, default_items=25, default_sort_column 
     items = default_items
     sort_column = default_sort_column
     sort_descending = default_sort_descending
-    # extract from request
-    if "items" in request.GET:
-        try:
-            items = int(request.GET["items"])
-        except Exception:
-            # just default to the above if we couldn't 
-            # parse it
-            pass
-    if "sort_column" in request.GET:
-        sort_column = request.GET["sort_column"]
-    if "sort_descending" in request.GET:
-        # a very dumb boolean parser
-        sort_descending_str = request.GET["sort_descending"]
-        if sort_descending_str.startswith("f"):
-            sort_descending = False
-        else:
-            sort_descending = True
-    filters = {}
-    for param in request.GET:
-        if param.startswith('filter_'):
-            # we convert 'filter_x' into 'x' (the name of the field)
-            field = param.split('_',1)[-1]
-            filters[field] = request.GET[param]
-    if not filters:
-        filters = default_filters
+    filters = default_filters
+    
+    # if no request found, just resort to all the defaults, but 
+    # don't fail hard.
+    if request:
+        # extract from request
+        if "items" in request.GET:
+            try:
+                items = int(request.GET["items"])
+            except Exception:
+                # just default to the above if we couldn't 
+                # parse it
+                pass
+        if "sort_column" in request.GET:
+            sort_column = request.GET["sort_column"]
+        if "sort_descending" in request.GET:
+            # a very dumb boolean parser
+            sort_descending_str = request.GET["sort_descending"]
+            if sort_descending_str.startswith("f"):
+                sort_descending = False
+            else:
+                sort_descending = True
+        found_filters = {}
+        for param in request.GET:
+            if param.startswith('filter_'):
+                # we convert 'filter_x' into 'x' (the name of the field)
+                field = param.split('_',1)[-1]
+                found_filters[str(field)] = request.GET[param]
+        if found_filters:
+            filters = found_filters
     return (items, sort_column, sort_descending, filters)
+    
+def get_query_set(model_class, sort_column="id", sort_descending=True, filters={}):
+    """Gets a query set, based on the results of the get_table_display_properties
+       method, and a model.""" 
+    sort_modifier = ""
+    if sort_descending:
+        sort_modifier = "-"
+    return model_class.objects.filter(**filters).order_by("%s%s"% (sort_modifier, sort_column))
     
 def paginate(request, data, rows_per_page=25):
     '''Helper call to provide django pagination of data'''
