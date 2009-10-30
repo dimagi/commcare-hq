@@ -173,6 +173,14 @@ def get_data_for_organization(run_frequency, transport, org_domain):
     return repinspector.get_data_below(org_domain, startdate, enddate, 0)
     
 def render_direct_email(prepared_data, startdate, enddate, template_name, params={}):
+    
+    # CZUE: I hate this code.  This is a really bad level of encapsulation.
+    # Oh yeah, pass in a template and we'll set some magic variables involving
+    # the dates and pass them in.  This is some of the most confusing and 
+    # poor coupling I've seen. 
+    
+    # We should destroy this beast.  
+    
     context = {}
         
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
