@@ -460,13 +460,12 @@ class Metadata(models.Model):
            in their profile, and being a part of the same domain"""
         if self.domain and self.username:
             try:
-                print "hi!"
                 return ReporterProfile.objects.get(domain=self.domain, 
                                                    chw_username=self.username).reporter
             except Exception, e:
                 # any number of things could have gone wrong.  Not found, too
                 # many found, some other random error.  But just fail quietly
-                print e
+                pass
         return None
         
     def _log_bad_metadata(self, target_namespace):
