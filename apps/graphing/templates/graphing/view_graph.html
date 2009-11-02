@@ -28,19 +28,20 @@
 	{% if thegraph.has_errors %}  
 	   <h3 style="color:red; text-align: left; float: left;">Sorry, something went wrong displaying that chart.  Please tell your administrator about this!</h3>
     {% else %}
+        {% if thegraph.time_bound  %}
+            <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p><br>
+        {% endif %}
         <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?bare&{{ request.META.QUERY_STRING }}">Printable View</a>
         <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?data&{{ request.META.QUERY_STRING }}">Data View</a>
         <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?csv&{{ request.META.QUERY_STRING }}">Download Data</a>
+        <p>
         {% with thegraph as chart %}
 		   {% include "graphing/inline_rawgraph.html" %}
 	    {% endwith %}
-        {% if thegraph.time_bound  %}
-            <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
-        {% endif %}
-        
-        <p><div class="js_link" onclick="hideShow('div.graph_data')">-- show/hide data --</div></p> 
+        </p>
+        <p></p><p><br><br><div class="js_link" onclick="hideShow('div.graph_data')">-- show/hide data --</div></p> 
         <div class="graph_data" style="display:none;">
-            <br><br>{% include "graphing/view_graph_data.html" %}
+            <br>{% include "graphing/partials/graph_data_table.html" %}
         </div>
     {% endif %}
 {%endblock%}
