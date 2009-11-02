@@ -288,6 +288,10 @@ def server_up(req):
 @require_http_methods(["GET", "POST"])
 @extuser_required()
 def add_reporter(req):
+    # NOTE/TODO:
+    # this is largely a copy paste job from rapidsms/apps/reporters/views.py
+    # method of the same name, and really doesn't belong here at all. 
+    
     def get(req):
         # pre-populate the "connections" field
         # with a connection object to convert into a
