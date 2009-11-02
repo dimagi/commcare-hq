@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from django import template
 
-from hq.utils import build_url as build_url_util
 
 register = template.Library()
 
