@@ -13,13 +13,20 @@
     <tbody>
         {% for device, data in device_data.items %}
         <tr>
-            <td><a href="/reports/{{domain.id}}/custom/metadata?filter_deviceid={{ device }}">{{ device }}</a></td>
+            {# this is pretty ugly, but one way to get the URL's working in email #}
+            {% with "/reports/"|concat:domain.id|concat:"/custom/metadata?filter_deviceid="|concat:device as deviceurl %}
+            <td><a href="{% build_url deviceurl %}">{{ device }}</a></td> 
+            {% endwith %}
             <td>{% if data.users %}{{data.users}}{% else %}No Other Users{% endif %}</td>
             {% for date in all_dates %}
                 {% with date|date:"m/d/Y" as date_str %}
                 {% with data.date_counts|dict_lookup:date_str as count %}
                     <td>{% if count %}
-                        <a href="/reports/{{domain.id}}/custom/metadata?filter_deviceid={{ device }}&filter_timeend__gte={{date}}&filter_timeend__lte={{ date|add_days:1 }}">{{ count}}</a></td>
+                        {% with date|add_days:1 as days_plus_1 %}
+                        {% with "/reports/"|concat:domain.id|concat:"/custom/metadata?filter_deviceid="|concat:device|concat:"&filter_timeend__gte="|concat:date|concat:"&filter_timeend__lte="|concat:days_plus_1 as counturl %}
+                            <a href="{% build_url counturl %}">{{ count}}</a>
+                        {% endwith %}
+                        {% endwith %}
                         {% else %}0{% endif %}
                     </td>
                 {% endwith %}

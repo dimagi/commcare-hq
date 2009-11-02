@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from django import template
 
+from hq.utils import build_url as build_url_util
+
 register = template.Library()
 
 @register.filter
@@ -35,5 +37,12 @@ def add_days(date, days=1):
     except:
         return datetime.strptime(date,'%m/%d/%Y').date() + span 
     
-    
+@register.filter
+def concat(str1, str2):
+    """Concatenate two strings"""
+    return "%s%s" % (str1, str2)
 
+@register.simple_tag
+def build_url(relative_path, request=None):
+    """Attempt to build a URL from within a template"""
+    return build_url_util(relative_path, request)
