@@ -4,13 +4,7 @@
 {% endblock %}
 {% block javascripts %}
 <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/tooltip.js"></script>
-<script>
-{
-    function hideShow(id) {
-         $(id).toggle();
-    }
-}
-</script>
+<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
 {% endblock %}
 {% block content %}
 <p class="subheading">

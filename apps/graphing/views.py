@@ -97,11 +97,11 @@ def view_graph(request, graph_id, template_name="graphing/view_graph.html"):
     context['width'] = graph.width
     context['height'] = graph.height
     context['empty_dict'] = {}
+    context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     for item in request.GET.items():
         if item[0] == 'bare':
             template_name = 'graphing/view_graph_bare.html'
         elif item[0] == 'data':
-            context['datatable'] = graph.convert_data_to_table(context['chart_data'])
             template_name='graphing/view_graph_data.html'
         elif item[0] == 'csv':             
             return _get_chart_csv(graph)

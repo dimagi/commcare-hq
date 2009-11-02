@@ -2,8 +2,8 @@
 {% load i18n %}
 {% load mainreport_tags %}
 {% block javascripts %}
-    {# commenting out because these are redundant due to webapp <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.js"></script>#} 
     <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
     <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.min.js"></script><![endif]-->
     
     
@@ -37,6 +37,11 @@
         {% if thegraph.time_bound  %}
             <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
         {% endif %}
+        
+        <p><div class="js_link" onclick="hideShow('div.graph_data')">-- show/hide data --</div></p> 
+        <div class="graph_data" style="display:none;">
+            <br><br>{% include "graphing/view_graph_data.html" %}
+        </div>
     {% endif %}
 {%endblock%}
     
