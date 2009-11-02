@@ -1,5 +1,55 @@
 {% load hq_shared_tags %}
 {% load i18n %}
+<script type="text/javascript"> 
+    function show_message_box(reporter_id) { 
+        $('#reporter_id')[0].value = reporter_id;
+        $.blockUI({ message: $('#message_popup') });
+    }
+    
+    function clear_message_input() {
+        $('#message')[0].value='';
+    }
+    
+    $(document).ready(function() { 
+        $('#test').click(function() { 
+            show_message_box();
+        });
+        
+        $('#send').click(function() {
+            
+            var done = function(status) {
+                alert('message ' + status);
+                $.unblockUI();
+                clear_message_input();
+            };
+            reporter_id = $('#reporter_id')[0].value;
+            msg_area = $('#message');
+            message = msg_area[0].value;
+            
+            send_xhr = $.ajax({
+                        "type": "POST",
+                        "url":  "/ajax/messaging/send_message",
+                        "data": {
+                            "uid":  reporter_id,
+                            "text": message,
+                        },
+                        "success": function()    { done("sent"); },
+                        "error":   function() { done("error"); }
+                    });
+            
+            
+        });
+        
+        $('#cancel').click(function() { 
+            $.unblockUI();
+            clear_message_input();
+            
+        });  
+      
+    });
+    
+ </script> 
+
 <h2>{{ domain }}</h2>
 <h2>All Form Submissions</h2>
 {% with all_metadata as data %}
@@ -53,9 +103,19 @@
             <td>
             <a href="{% url receiver.views.single_attachment metadata.attachment.id %}">view xml submission</a>&nbsp;&nbsp;
             <a href="{% url xformmanager.views.single_instance metadata.formdefmodel.id metadata.raw_data %}">view form data</a>
+            {% if metadata.submitting_reporter %}
+            <div class="js_link" onclick="show_message_box({{metadata.submitting_reporter.id}});">message chw</div></p>
+            {% endif %} 
             </td>
         </tr>
         {% endfor %}
         
     </tbody>
 </table>
+
+<input id="reporter_id" type="hidden">
+<div id="message_popup" style="display:none">Enter Your Message Here
+<textarea id="message" rows="4" cols="40"></textarea>
+<input id="send" type="button" value="Send" />
+<input id="cancel" type="button" value="Cancel" />
+</div>

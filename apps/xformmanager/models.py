@@ -446,7 +446,29 @@ class Metadata(models.Model):
         self._log_bad_metadata(target_namespace)
         super(Metadata, self).save(**kwargs)
 
+    @property
+    def domain(self):
+        """Attempt to get the domain of this metadata, or return 
+           nothing"""
+        if self.formdefmodel:
+            return self.formdefmodel.domain
+        return None
     
+    @property
+    def submitting_reporter(self):
+        """Look for matching reporter, defined as someone having the same chw_id
+           in their profile, and being a part of the same domain"""
+        if self.domain and self.username:
+            try:
+                print "hi!"
+                return ReporterProfile.objects.get(domain=self.domain, 
+                                                   chw_username=self.username).reporter
+            except Exception, e:
+                # any number of things could have gone wrong.  Not found, too
+                # many found, some other random error.  But just fail quietly
+                print e
+        return None
+        
     def _log_bad_metadata(self, target_namespace):
         # log errors when metadata not complete
         missing_required_fields = []
