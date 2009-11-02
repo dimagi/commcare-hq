@@ -145,7 +145,7 @@ def run_reports(run_frequency):
                     
                     # pretty moderate hackiness here - if the report takes in a domain
                     # pass it in.
-                    if "domain" in inspect.getargspec(report_method):
+                    if "domain" in inspect.getargspec(report_method)[0]:
                         report_body = report_method(None, domain=report.domain)
                     else:
                         report_body = report_method(None)
