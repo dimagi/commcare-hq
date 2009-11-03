@@ -39,7 +39,7 @@ def chw_submission_details(request):
     form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
     report = SqlReport.objects.get(id=grameen_submission_details_id)
     whereclause = get_whereclause(request.GET)  
-    cols, data = report.get_data(whereclause)
+    cols, data = report.get_data({"whereclause": whereclause})
     new_data = []
     for row in data:
         new_row_data = dict(zip(cols, row))
