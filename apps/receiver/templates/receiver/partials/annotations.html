@@ -6,7 +6,12 @@
             message = msg_area[0].value;
             
             var done = function(status) {
-                alert(status);
+                if (status == "success") {
+                    $.blockUI({ message: "<h1>Annotation successfully added!</h1>" });
+                } else {
+                    $.blockUI({ message: "<h1>Sorry - we had a problem adding your annotation!</h1>" });
+                }
+                setTimeout($.unblockUI, 1000);
             };
             
             send_xhr = $.ajax({
@@ -16,8 +21,8 @@
                             "attach_id":  attach_id,
                             "text": message,
                         },
-                        "success": function()    { done("Success!"); },
-                        "error":   function() { done("Error!"); }
+                        "success": function()    { done("success"); },
+                        "error":   function() { done("error"); }
                     });
             
             
@@ -40,3 +45,6 @@
 <input id="add_annotation" class="jqmClose" type="button" value="Add" />
 <input id="close" class="jqmClose" type="button" value="Close" />
 
+<div id="status" style="display:none">
+<input id="status_close" type="button" value="Ok" />
+</div>
