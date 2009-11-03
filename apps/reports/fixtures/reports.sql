@@ -38,6 +38,7 @@ SELECT sampledata_case_id as 'ID',
        sampledata_mother_name as 'Mother Name', 
        sampledata_address as 'Address',
        sampledata_hi_risk as 'Hi Risk?',
+       id as 'row_id',
        'No' as 'Follow up?' /* need to fix this when we actually have FU */
 FROM schema_intel_grameen_safe_motherhood_registration_v0_3
 {{whereclause}}

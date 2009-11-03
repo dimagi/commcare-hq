@@ -329,6 +329,11 @@ class Attachment(models.Model):
                 return None
         return None
     
+    def most_recent_annotation(self):
+        """Get the most recent annotation of this attachment, if it exists"""
+        if (self.annotations.count() > 0):
+            return self.annotations.order_by("-date")[0]
+    
     class Meta:
         ordering = ('-submission',)
         verbose_name = _("Submission Attachment")        
@@ -368,7 +373,7 @@ class Annotation(models.Model):
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     
     def __unicode__(self):
-        return '%s: %s' % (self.date.date(), self.text)
+        return '"%s" by %s on %s' % (self.text, self.user, self.date.date())
  
     def to_html(self):
         return '<div class="annotation"><div class="annotation-date">%s</div><div class="annotation-body">%s</div></div>' %\

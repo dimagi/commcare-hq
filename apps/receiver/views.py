@@ -383,6 +383,9 @@ def new_annotation(request):
     # TODO: error checking
     attach_id = request.POST["attach_id"] 
     text = request.POST["text"]
-    attach = Attachment.objects.get(id=attach_id)
-    Annotation.objects.create(attachment=attach, text=text, user=request.extuser)
-    return HttpResponse("Success!")
+    if text and attach_id:
+        attach = Attachment.objects.get(id=attach_id)
+        Annotation.objects.create(attachment=attach, text=text, user=request.extuser)
+        return HttpResponse("Success!")
+    else:
+        return HttpResponse("No Data!")
