@@ -71,6 +71,7 @@
     {% for annotation in annotations %}
         <div class="annotation">
             <div class="annotation-date">{{ annotation.date|date }}</div>
+            <div class="annotation-user">{{ annotation.user }}</div>
             <div class="annotation-body">{{ annotation.text }}</div>
         </div>
     {% endfor %}
