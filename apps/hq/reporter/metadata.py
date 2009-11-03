@@ -14,7 +14,7 @@ def get_org_reportdata(organization, startdate, enddate):
     is_first = True    
     
     fdefs = get_formdefs_for_domain(organization.domain)
-    
+        
     for supervisor in supervisors:
         # leaving the hack in that everything after the first is expected
         # to have a "None" description.  This should be revisited

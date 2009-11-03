@@ -371,12 +371,13 @@ def orphaned_data_xml(request):
     return get_zipfile( xforms.values_list('filepath', flat=True) )
 
 
-def annotations(request, attachment_id):
+def annotations(request, attachment_id, allow_add=True):
     # TODO: error checking
     attach = Attachment.objects.get(id=attachment_id)
     annotes = attach.annotations.all()
     return render_to_response(request, "receiver/partials/annotations.html", {"attachment": attach, 
-                                                                              "annotations": annotes })
+                                                                              "annotations": annotes, 
+                                                                              "allow_add": allow_add})
 
 def new_annotation(request):
     # TODO: error checking

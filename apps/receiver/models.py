@@ -357,8 +357,14 @@ class Annotation(models.Model):
     # I think it will be easier to only annotate attachments.
     attachment = models.ForeignKey(Attachment, related_name="annotations")
     date = models.DateTimeField(default = datetime.now)
-    parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     text = models.CharField(max_length=255)
+
+    # eventually link to an outgoing sms message on the annotation.
+    #sms_message = models.ForeignKey(OutgoingMessage, related_name="annotations", 
+    #                                null=True, blank=True)
+        
+    # for threading these, for now this is unused
+    parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     
     def __unicode__(self):
         return '%s: %s' % (self.date.date(), self.text)

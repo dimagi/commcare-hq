@@ -1,19 +1,55 @@
 <script type="text/javascript"> 
+    // this script is totally dependant on jQuery, jQuery.blockUI, and jqModal scripts being loaded.
+    // since it is called only in ajax requests they aren't loaded here
+    
     $(document).ready(function() { 
         $('#add_annotation').click(function() {
+            // create a new annotation
+            // extract parameters from the form
             attach_id = {{ attachment.id }};
             msg_area = $('#new_annotation');
             message = msg_area[0].value;
             
-            var done = function(status) {
+            var annotation_done = function(status) {
+                // callback when an annotation is created 
+                
+                var sms_done = function(status) {
+                    // callback when an sms is sent 
+                    if (status == "success") {
+                        $.blockUI({ message: "<h1>Annotation successfully added and message was sent!</h1>" });
+                    } else {
+                        $.blockUI({ message: "<h1>Annotation successfully added but message sending failed!</h1>" });
+                    }
+                    setTimeout($.unblockUI, 1000);
+                }
+                
                 if (status == "success") {
-                    $.blockUI({ message: "<h1>Annotation successfully added!</h1>" });
+                    send_sms = $('#send_sms')[0].checked;
+                    if (send_sms) {
+                        // this sends the message via the ajax/messaging app. 
+                        reporter_id = $('#annotation_reporter_id')[0].value;
+                        send_xhr = $.ajax({
+                                "type": "POST",
+                                "url":  "/ajax/messaging/send_message",
+                                "data": {
+                                    "uid":  reporter_id,
+                                    "text": message,
+                                },
+                                "success": function() { sms_done("success"); },
+                                "error":   function() { sms_done("error"); }
+                        });
+                    } else {
+                        $.blockUI({ message: "<h1>Annotation successfully added!</h1>" });
+                        setTimeout($.unblockUI, 1000);
+                    }
                 } else {
                     $.blockUI({ message: "<h1>Sorry - we had a problem adding your annotation!</h1>" });
+                    setTimeout($.unblockUI, 1000);
                 }
-                setTimeout($.unblockUI, 1000);
-            };
-            
+            }
+
+            // this creates the annotation object, and calls back to the above method
+            // upon completion
             send_xhr = $.ajax({
                         "type": "POST",
                         "url":  "/receiver/annotations/new/",
@@ -21,8 +57,8 @@
                             "attach_id":  attach_id,
                             "text": message,
                         },
-                        "success": function()    { done("success"); },
-                        "error":   function() { done("error"); }
+                        "success": function()    { annotation_done("success"); },
+                        "error":   function() { annotation_done("error"); }
                     });
             
             
@@ -41,6 +77,12 @@
 {% else %}
     No Annotations.
 {% endif %}
-<textarea id="new_annotation" rows="4" cols="40"></textarea>
-<input id="add_annotation" class="jqmClose" type="button" value="Add" />
-<input id="close" class="jqmClose" type="button" value="Close" />
+{% if allow_add %}
+    <textarea id="new_annotation" rows="4" cols="40"></textarea>
+    {% if attachment.has_linked_schema and attachment.get_linked_metadata.submitting_reporter %}
+        <input type="hidden" id="annotation_reporter_id" value={{ attachment.get_linked_metadata.submitting_reporter.id }}> 
+        <input type="checkbox" id="send_sms">Send as SMS to {{ attachment.get_linked_metadata.submitting_reporter }}<P>
+    {% endif %}
+    <input id="add_annotation" class="jqmClose" type="button" value="Add" />
+    <input id="close" class="jqmClose" type="button" value="Close" />
+{% endif %}
