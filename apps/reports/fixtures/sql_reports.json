@@ -26,7 +26,7 @@
     "fields": {
       "report": 1, 
       "header": "# of Patients", 
-      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s\">%(value)s</a>"
+      "display_format": "<a href=\"/reports/3/custom/chw_submission_details?meta_username=%(Healthcare Worker)s\">%(value)s</a>"
     }
   }, 
   {
@@ -35,7 +35,7 @@
     "fields": {
       "report": 1, 
       "header": "# of High Risk", 
-      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s&sampledata_hi_risk=yes\">%(value)s</a>"
+      "display_format": "<a href=\"/reports/3/custom/chw_submission_details?meta_username=%(Healthcare Worker)s&sampledata_hi_risk=yes\">%(value)s</a>"
     }
   }
 ]
