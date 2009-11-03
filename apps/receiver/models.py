@@ -349,7 +349,24 @@ class Attachment(models.Model):
                    self.submission.submit_time, self.attachment_content_type, 
                    self.attachment_uri, 
                    build_url(reverse('single_submission', args=(self.submission.id,))))
+  
+
+class Annotation(models.Model):
+    """Annotate attachments."""
+    # NOTE: we could make these total generic with django content-types, but
+    # I think it will be easier to only annotate attachments.
+    attachment = models.ForeignKey(Attachment, related_name="annotations")
+    date = models.DateTimeField(default = datetime.now)
+    parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
+    text = models.CharField(max_length=255)
     
+    def __unicode__(self):
+        return '%s: %s' % (self.date.date(), self.text)
+ 
+    def to_html(self):
+        return '<div class="annotation"><div class="annotation-date">%s</div><div class="annotation-body">%s</div></div>' %\
+               (self.date.date(), self.text)
+ 
 class SubmissionHandlingType(models.Model):
     '''A way in which a submission can be handled.  Contains a reference
        to both an app, that did the handling, and a method, representing

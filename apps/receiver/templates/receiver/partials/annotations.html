@@ -1,0 +1,42 @@
+<script type="text/javascript"> 
+    $(document).ready(function() { 
+        $('#add_annotation').click(function() {
+            attach_id = {{ attachment.id }};
+            msg_area = $('#new_annotation');
+            message = msg_area[0].value;
+            
+            var done = function(status) {
+                alert(status);
+            };
+            
+            send_xhr = $.ajax({
+                        "type": "POST",
+                        "url":  "/receiver/annotations/new/",
+                        "data": {
+                            "attach_id":  attach_id,
+                            "text": message,
+                        },
+                        "success": function()    { done("Success!"); },
+                        "error":   function() { done("Error!"); }
+                    });
+            
+            
+        });
+    });
+        
+</script>
+<a href="#" class="jqmClose">Close</a><br>
+{% if annotations %}
+    {% for annotation in annotations %}
+        <div class="annotation">
+            <div class="annotation-date">{{ annotation.date|date }}</div>
+            <div class="annotation-body">{{ annotation.text }}</div>
+        </div>
+    {% endfor %}
+{% else %}
+    No Annotations.
+{% endif %}
+<textarea id="new_annotation" rows="4" cols="40"></textarea>
+<input id="add_annotation" class="jqmClose" type="button" value="Add" />
+<input id="close" class="jqmClose" type="button" value="Close" />
+
