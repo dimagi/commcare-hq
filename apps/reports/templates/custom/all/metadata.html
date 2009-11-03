@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <script type="text/javascript"> 
+    
     function show_message_box(reporter_id) { 
         $('#reporter_id')[0].value = reporter_id;
         $.blockUI({ message: $('#message_popup') });
@@ -10,13 +11,13 @@
         $('#message')[0].value='';
     }
     
+    function show_annotations(attachment_id) {
+        $('#attachment_id')[0].value = attachment_id;
+        $('#dialog').jqm({ajax: '/receiver/annotations/' + attachment_id, trigger: 'div.annotationtrigger'});
+    }
+    
     $(document).ready(function() { 
-        $('#test').click(function() { 
-            show_message_box();
-        });
-        
         $('#send').click(function() {
-            
             var done = function(status) {
                 alert('message ' + status);
                 $.unblockUI();
@@ -45,7 +46,7 @@
             clear_message_input();
             
         });  
-      
+
     });
     
  </script> 
@@ -103,6 +104,7 @@
             <td>
             <a href="{% url receiver.views.single_attachment metadata.attachment.id %}">view xml submission</a>&nbsp;&nbsp;
             <a href="{% url xformmanager.views.single_instance metadata.formdefmodel.id metadata.raw_data %}">view form data</a>
+            <div class="annotationtrigger" onclick="show_annotations({{metadata.attachment.id}});">show annotations</div></p>
             {% if metadata.submitting_reporter %}
             <div class="js_link" onclick="show_message_box({{metadata.submitting_reporter.id}});">message chw</div></p>
             {% endif %} 
@@ -118,4 +120,13 @@
 <textarea id="message" rows="4" cols="40"></textarea>
 <input id="send" type="button" value="Send" />
 <input id="cancel" type="button" value="Cancel" />
+</div>
+
+<input id="attachment_id" type="hidden">
+
+<a href="#" class="annotationtrigger">view message log</a>
+
+<div class="message_log" id="dialog">
+<a href="#" class="jqmClose">Close</a>
+Please wait... <img src="inc/busy.gif" alt="loading" />
 </div>

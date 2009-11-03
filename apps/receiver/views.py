@@ -369,3 +369,19 @@ def orphaned_data_xml(request):
     attachments = Attachment.objects.filter(submission__in=orphans)
     xforms = attachments.filter(attachment_uri=XFORM_URI)
     return get_zipfile( xforms.values_list('filepath', flat=True) )
+
+
+def annotations(request, attachment_id):
+    # TODO: error checking
+    attach = Attachment.objects.get(id=attachment_id)
+    annotes = attach.annotations.all()
+    return render_to_response(request, "receiver/partials/annotations.html", {"attachment": attach, 
+                                                                              "annotations": annotes })
+
+def new_annotation(request):
+    # TODO: error checking
+    attach_id = request.POST["attach_id"] 
+    text = request.POST["text"]
+    attach = Attachment.objects.get(id=attach_id)
+    Annotation.objects.create(attachment=attach, text=text)
+    return HttpResponse("Success!")
