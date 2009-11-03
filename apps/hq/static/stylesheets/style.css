@@ -926,6 +926,10 @@ div.inlinecomments {
 .js_link {
 	cursor:pointer;
     color:#5B80B2;
+    
+}
+.js_link:hover {
+	color: #036;
 }
 
 /* tooltip */
