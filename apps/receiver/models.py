@@ -358,7 +358,8 @@ class Annotation(models.Model):
     attachment = models.ForeignKey(Attachment, related_name="annotations")
     date = models.DateTimeField(default = datetime.now)
     text = models.CharField(max_length=255)
-
+    user = models.ForeignKey(ExtUser)
+    
     # eventually link to an outgoing sms message on the annotation.
     #sms_message = models.ForeignKey(OutgoingMessage, related_name="annotations", 
     #                                null=True, blank=True)
