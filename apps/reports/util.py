@@ -68,7 +68,22 @@ def extract_custom_reports(report_module):
             to_return.append(obj_rep)
     return to_return
 
-
+def get_whereclause(params):
+    """Given a dictionary of params {key1: val1, key2: val2 } 
+       return a partial query like:
+       WHERE key1 = val1
+       AND   key2 = val2 
+       ...
+    """
+    query_parts = []
+    first = False
+    for key, val in params.items():
+        if not first:
+            first = True
+            query_parts.append("WHERE %s = '%s'" % (key, val))
+        else:
+            query_parts.append("AND %s = '%s'" % (key, val))
+    return " ".join(query_parts)
 def _safe_import(module_name):    
     try:
         return __import__(module_name, 
