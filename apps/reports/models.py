@@ -412,6 +412,8 @@ class SqlReport(models.Model):
                                             {{something_here}} can be inserted to pass
                                             additional sql parameters."""))
     
+    is_active = models.BooleanField(default=True)
+    
     def __unicode__(self):
         return self.title
     
@@ -477,7 +479,7 @@ class SqlReport(models.Model):
                 cell_strings.append(cell_string)
             row_strings.append("<tr>%s</tr>" % "".join(cell_strings))
         row_data = "".join(row_strings)
-        end_tags = "</tbody></table"
+        end_tags = "</tbody></table>"
         return "".join([start_tags, header_cols, head_body_sep, row_data, end_tags])
             
 class ColumnFormatter(models.Model):
