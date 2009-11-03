@@ -24,7 +24,7 @@ def reports(request, template_name="list.html"):
     extuser = request.extuser
     context['domain'] = extuser.domain
     context['case_reports'] = Case.objects.filter(domain=extuser.domain)
-    context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain)
+    context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain, is_active=True)
     context['custom_reports'] = util.get_custom_reports(extuser.domain)
     if not context['custom_reports'] and not context['sql_reports']\
        and not context['case_reports']:
