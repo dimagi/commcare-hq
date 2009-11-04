@@ -82,8 +82,8 @@ def get_table_display_properties(request, default_items=25, default_sort_column 
     items = default_items
     sort_column = default_sort_column
     sort_descending = default_sort_descending
-    filters = default_filters
-    
+    # odd, for some reason pass-by-reference can confuse the default types here
+    filters = default_filters.copy()
     # if no request found, just resort to all the defaults, but 
     # don't fail hard.
     if request:

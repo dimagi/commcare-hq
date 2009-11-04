@@ -332,17 +332,23 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
         sort_column = default_sort_column
 
     column_filters = []
-    if filters:
-        column_filters = [[key, "=", value] for key, value in filters.items()]
+    
+    # pare down list of filters by only those items which are in the allowed list of 
+    # columns
+    clean_filters = {}
+    for key, value in filters.items():
+        if key in columns:
+             clean_filters[key] = value
+    if clean_filters:
+        column_filters = [[key, "=", value] for key, value in clean_filters.items()]
         # context['filters'] will be displayed
         context['filters'] = "&".join(['%s=%s' % (key, value)
                                             for key, value
-                                            in filters.items()])
+                                            in clean_filters.items()])
         
         # hacky way of making sure that the first already-filtered field
         # does not show up as a filter link - todo: clean up later
-        context['filtered_by'] = filters.keys()[0]
-    
+        context['filtered_by'] = clean_filters.keys()[0]
     
     if use_blacklist:
         blacklist_users = request.extuser.domain.get_blacklist()
