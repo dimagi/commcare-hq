@@ -13,19 +13,20 @@
     "pk": 2, 
     "model": "reports.sqlreport", 
     "fields": {
-      "query": "/* individual chw view */\r\nSELECT sampledata_case_id as 'ID',\r\n       meta_username as 'Healthcare Worker',\r\n       sampledata_mother_name as 'Mother Name',\r\n       sampledata_address as 'Address',\r\n       sampledata_hi_risk as 'Hi Risk?',\r\n       'No' as 'Follow up?' /* need to fix this when we actually have FU */\r\nFROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n{{whereclause}}", 
+      "query": "/* individual chw view */\r\nSELECT sampledata_case_id as 'ID',\r\n       meta_username as 'Healthcare Worker',\r\n       sampledata_mother_name as 'Mother Name',\r\n       sampledata_address as 'Address',\r\n       sampledata_hi_risk as 'Hi Risk?',\r\n       'No' as 'Follow up?', /* need to fix this when we actually have FU */\r\n       id as 'row_id'\r\nFROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n{{whereclause}}", 
       "domain": 3, 
+      "is_active": 0, 
       "description": "Summary view of individual mother data by health workers", 
       "title": "Health Worker Submission Details"
     }
-  },
+  }, 
   {
     "pk": 1, 
     "model": "reports.columnformatter", 
     "fields": {
       "report": 1, 
       "header": "# of Patients", 
-      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s\">%(value)s</a>"
+      "display_format": "<a href=\"/reports/3/custom/chw_submission_details?meta_username=%(Healthcare Worker)s\">%(value)s</a>"
     }
   }, 
   {
@@ -34,7 +35,7 @@
     "fields": {
       "report": 1, 
       "header": "# of High Risk", 
-      "display_format": "<a href=\"/reports/sql/2?meta_username=%(Healthcare Worker)s&sampledata_hi_risk=yes\">%(value)s</a>"
+      "display_format": "<a href=\"/reports/3/custom/chw_submission_details?meta_username=%(Healthcare Worker)s&sampledata_hi_risk=yes\">%(value)s</a>"
     }
   }
 ]

@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load basic_tags %}
+{% load hq_shared_tags %}
 
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filters %}
@@ -26,19 +26,9 @@
     <p class="error">{{ errors }}</p>
 {% endif %}
 <br>
-<div class="pagination">
-    <span class="step-links">
-        {% if data.has_previous %}
-            <a href="?{{param_string_no_page}}&page={{ data.previous_page_number }}"><< Previous</a>
-        {% endif %}
-        <span class="current">
-            Page {{ data.number }} of {{ data.paginator.num_pages }}.
-        </span>
-        {% if data.has_next %}
-            <a href="?{{param_string_no_page}}&page={{ data.next_page_number }}">Next >></a>
-        {% endif %}
-    </span>
-</div>
+{% with param_string_no_page as extra_params %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
 <form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
 <table class="sofT">
 	<thead class="commcare-heading">
@@ -47,11 +37,11 @@
 	   {% for col in columns %}
 	      {% ifequal forloop.counter0 sort_index %}
 		     <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
-		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}&filter_{{filters}}">
+		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}{% if filters %}&filter_{{filters}}{% endif %}">
 		         {{col}}
 		     </th>
           {% else %}
-		     <th><a href="?sort_column={{col}}&filter_{{filters}}">{{col}}</th>
+		     <th><a href="?sort_column={{col}}{% if filters %}&filter_{{filters}}{% endif %}">{{col}}</th>
           {% endifequal %}          	
 	   {% endfor%}
 	   </tr>
@@ -73,22 +63,22 @@
 	   	   {% else %}
 	   	  		 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
 	   	  		 {% if filtered_by %} 
-		   	   		 {% ifequal filtered_by columns|get_index:forloop.counter0 %}
+		   	   		 {% ifequal filtered_by columns|array_lookup:forloop.counter0 %}
 			   		     {{field}}
 		   	   		 {% else %}
 		   	   		 	{% if sort_params %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
 		   	   		 	{% else %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
 		   	   		 	{% endif %}
 			   		     	{{field}}
 			   		     </a>
 		   	   		 {% endifequal %}
     	   		 {% else %}
 		   	   		 	{% if sort_params %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}&{{sort_params}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
 		   	   		 	{% else %}
-				   		     <a href="?filter_{{ columns|get_index:forloop.counter0 }}={{field}}">
+				   		     <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
 		   	   		 	{% endif %}
 			   		     	{{field}}
 			   		     </a>

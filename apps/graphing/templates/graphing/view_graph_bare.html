@@ -9,5 +9,6 @@
     {% with thegraph as chart %}
 		{% include "graphing/inline_rawgraph.html" %}
 	{% endwith %}
+<p><a href="{% url graphing.views.view_graph thegraph.id %}">&lt;-- back to graphs</a></p>
 {%endblock%}
     

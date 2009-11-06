@@ -49,7 +49,9 @@
    {% endfor %}
    </table>
    
-	{% include 'receiver/partials/submit_pagination.html' %}
+{% with submissions as data %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
 
 {% endif %}
 

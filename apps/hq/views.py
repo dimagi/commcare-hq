@@ -274,9 +274,6 @@ def password_change(req):
         password_form = AdminPasswordChangeForm(user_to_edit, req.POST)
         if password_form.is_valid():
             password_form.save()
-            user_to_edit.extuser.set_password( user_to_edit.username, \
-                                               password_form.cleaned_data['password1'] )
-            user_to_edit.extuser.save()
             return HttpResponseRedirect('/')
     else:
         password_form = AdminPasswordChangeForm(user_to_edit)
@@ -289,7 +286,12 @@ def server_up(req):
     return HttpResponse("success")
 
 @require_http_methods(["GET", "POST"])
+@extuser_required()
 def add_reporter(req):
+    # NOTE/TODO:
+    # this is largely a copy paste job from rapidsms/apps/reporters/views.py
+    # method of the same name, and really doesn't belong here at all. 
+    
     def get(req):
         # pre-populate the "connections" field
         # with a connection object to convert into a
@@ -457,7 +459,7 @@ def update_reporterprofile(req, rep, chw_id, chw_username):
                                   guid = str(uuid.uuid1()).replace('-',''))
         # reporters created through the webui automatically have the same
         # domain and organization as the creator
-        extuser = get_object_or_404(ExtUser, pk=req.user.id)
+        extuser = req.extuser
         profile.domain = extuser.domain
         if extuser.organization == None:
             profile.organization = Organization.objects.filter(domain=extuser.domain)[0]
@@ -478,9 +480,9 @@ def check_profile_form(req):
     errors['exists'] = []
     chw_id = req.POST.get("chw_id", "")
     if chw_id:
-        # if chw_id is set, it must be unique
-        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""))
-        if rps: errors['exists'] = "chw_id"
+        # if chw_id is set, it must be unique for a given domain
+        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""), domain=req.extuser.domain)
+        if rps: errors['exists'] = ["chw_id"]
     return errors
 
 

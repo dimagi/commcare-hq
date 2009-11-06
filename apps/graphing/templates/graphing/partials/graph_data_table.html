@@ -1,0 +1,19 @@
+<table class="sofT">
+{% for row in datatable %}      
+    {% if forloop.first %}
+    <thead class="commcare-heading">
+        <tr>
+        {% for elem in row %}
+            <th>{{elem}}</th>   
+        {% endfor %}
+        </tr>
+    </thead>
+    {%else %}
+        <tr class="{% cycle 'odd' 'even' %}">
+        {% for elem in row %}
+            <td> {{elem}}</td>  
+        {% endfor %}
+        </tr>   
+    {%endif%}
+{%endfor%}
+</table>

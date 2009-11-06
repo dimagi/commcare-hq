@@ -21,7 +21,7 @@ from receiver import submitprocessor
 
 
 from hq.models import *
-from hq.utils import paginate
+from hq.utils import paginate, get_table_display_properties
 from hq.decorators import extuser_required
 
 from transformers.csv import UnicodeWriter
@@ -324,47 +324,37 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
     # reset properly)
     context = {}
     xform = get_object_or_404(FormDefModel, id=formdef_id)
+    
+    default_sort_column = "id"
     # extract params from the URL
-    items = 25
-    sort_column = "id" # todo: see if we can sort better by default
+    items, sort_column, sort_descending, filters =\
+         get_table_display_properties(request,default_sort_column = default_sort_column)
+
     columns = xform.get_column_names()
-    sort_descending = True
-    if "items" in request.GET:
-        try:
-            items = int(request.GET["items"])
-        except Exception:
-            # just default to the above if we couldn't 
-            # parse it
-            pass
-    if "sort_column" in request.GET:
-        if request.GET["sort_column"] in columns:
-            sort_column = request.GET["sort_column"]
-        else:
-            context["errors"] = "Sorry, we currently can't sort by the column '%s' and have sorted by the default column, '%s', instead."  %\
-                                (request.GET["sort_column"], sort_column)
-    if "sort_descending" in request.GET:
-        # a very dumb boolean parser
-        sort_descending_str = request.GET["sort_descending"]
-        if sort_descending_str.startswith("f"):
-            sort_descending = False
-        else:
-            sort_descending = True
-        
+    if not sort_column in columns:
+        context["errors"] = "Sorry, we currently can't sort by the column '%s' and have sorted by the default column, '%s', instead."  %\
+                        (sort_column, default_sort_column)
+        sort_column = default_sort_column
+
     column_filters = []
-    for filter in request.GET:
-        if filter.startswith('filter_'):
-            val = request.GET[filter]
-            # we convert 'filter_x' into 'x' (the name of the field)
-            field = filter.split('_',1)[-1]
-            column_filters.append( [field,'=',val] )
-    if len(column_filters)>0:
+    
+    # pare down list of filters by only those items which are in the allowed list of 
+    # columns
+    clean_filters = {}
+    for key, value in filters.items():
+        if key in columns:
+             clean_filters[key] = value
+    if clean_filters:
+        column_filters = [[key, "=", value] for key, value in clean_filters.items()]
         # context['filters'] will be displayed
         context['filters'] = "&".join(['%s=%s' % (key, value)
-                                            for key, comp, value
-                                            in column_filters])
+                                            for key, value
+                                            in clean_filters.items()])
+        
         # hacky way of making sure that the first already-filtered field
         # does not show up as a filter link - todo: clean up later
-        context['filtered_by'] = column_filters[0][0]
+        context['filtered_by'] = clean_filters.keys()[0]
+    
     if use_blacklist:
         blacklist_users = request.extuser.domain.get_blacklist()
         rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 

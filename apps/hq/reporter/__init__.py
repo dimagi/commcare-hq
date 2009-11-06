@@ -1,6 +1,7 @@
 from hq.models import *
 import logging
 import string
+import inspect
 from django.template.loader import render_to_string
 from django.template import Template, Context
 from django.utils import translation
@@ -13,7 +14,7 @@ from hq.reporter import agents
 from hq.reporter import metadata
 import inspector as repinspector
 
-from reports.util import get_custom_report_module
+from reports.util import get_custom_report_module, get_report_method
 import base64
 import urllib2
 import urllib
@@ -122,14 +123,13 @@ def run_reports(run_frequency):
                                     % report)
                 _debug_and_print("Activating custom domain report function %s for domain %s." 
                                  % (report.report_function, report.domain))
-                report_module = get_custom_report_module(report.domain)
-                if not report_module:
-                    raise Exception("No custom reports found for %s" % report.domain)
-                if not hasattr(report_module, report.report_function):
+                
+                report_method = get_report_method(report.domain, report.report_function)
+                if not report_method:
                     raise Exception("No report named %s found for %s" % 
                                     (report.report_function, report.domain))
+                
                 # alrighty, we found the method we want to run.
-                report_method = getattr(report_module, report.report_function)
                 
                 # HACK!  For now try manually setting the language to swahili
                 # as a proof of concept.  Eventually this will come from the 
@@ -142,7 +142,14 @@ def run_reports(run_frequency):
                 try: 
                     # TODO: not all reports may be okay with us passing in an empty
                     # request object.  For the time being we assume that they are
-                    report_body = report_method(None)
+                    
+                    # pretty moderate hackiness here - if the report takes in a domain
+                    # pass it in.
+                    if "domain" in inspect.getargspec(report_method)[0]:
+                        report_body = report_method(None, domain=report.domain)
+                    else:
+                        report_body = report_method(None)
+
                 finally:
                     # make sure we set the default back.
                     translation.activate(settings.LANGUAGE_CODE)
@@ -166,6 +173,14 @@ def get_data_for_organization(run_frequency, transport, org_domain):
     return repinspector.get_data_below(org_domain, startdate, enddate, 0)
     
 def render_direct_email(prepared_data, startdate, enddate, template_name, params={}):
+    
+    # CZUE: I hate this code.  This is a really bad level of encapsulation.
+    # Oh yeah, pass in a template and we'll set some magic variables involving
+    # the dates and pass them in.  This is some of the most confusing and 
+    # poor coupling I've seen. 
+    
+    # We should destroy this beast.  
+    
     context = {}
         
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
