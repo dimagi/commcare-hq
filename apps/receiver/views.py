@@ -91,7 +91,7 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     #In order to display the raw header information, we need to escape the python object brackets in the output 
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
-    rawstring = rawstring.replace('>}','>"}')
+    rawstring = rawstring.replace('>}','>"}') 
     processed_header = eval(rawstring)
     
     get_original = False
@@ -129,52 +129,58 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if request.method != 'POST':
         return HttpResponse("You have to POST to submit data.")
 
-    # first save the file to disk so we have it around before doing anything else.
-    try:
-        #Adjust how we get the payload based on the client uploading the forms
-        if len(request.raw_post_data) != 0:
-            payload = request.raw_post_data
-        elif request.FILES.has_key('xml_submission_file'):
-            #ODK Hack. because the way in which ODK handles the uploads using multipart/form data instead of the w3c xform transport
-            #we need to doubly unwrap the submissions in a funky way            
-            odkpayload = request.FILES['xml_submission_file'].read()
-            payload = submitprocessor.process_odk_multipartform(request.META, odkpayload)
-            
-        else:
-            logging.error("Submission error for domain %s, user: %s.  No data payload" % \
-                      (domain_name,str(request.user)))
-                      
-        
-        submit_record = submitprocessor.save_post(request.META, payload)
-    except Exception, e:
-        return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
+    is_legacy_blob = False
     
-    # alright the save worked.  now do some post processing if we can 
-    if domain_name[-1] == '/':
-        # get rid of the trailing slash if it's there
+    # get rid of the trailing slash if it's there
+    if domain_name[-1] == '/':    
         domain_name = domain_name[0:-1]
         
-    #ODK HACK - the ODK client appends /submission to the end of the URL.  so for testing purposes until
+    #ODK HACK - the ODK client appends /submission to the end of the URL.  So for testing purposes until
     #we get the header-based authentication, we need to strip out the /submission from the end.
     if len(domain_name.split('/')) > 1:
         fixdomain = domain_name.split('/')[0]
         odksuffix = domain_name.split('/')[1:]
         if odksuffix.count('submission') == 1:
-            domain_name = fixdomain            
-    
-    logging.debug("begin domained raw_submit(): " + domain_name)
-    try:         
-        currdomain = Domain.objects.get(name=domain_name)
-    except Domain.DoesNotExist:
-        logging.error("Submission failed! %s isn't a known domain.  The file has been saved as %s" %
-                       (domain_name, submit_record))
-        response = SubmitResponse(status_code=404, or_status_code=4040, 
-                                  or_status="%s isn't a known domain." % domain_name)
-        return response.to_response()
+            domain_name = fixdomain         
+
     try: 
-        new_submission = submitprocessor.do_submission_processing(request.META, submit_record, 
-                                                                  currdomain, is_resubmission=is_resubmission)
-        
+        #Verify that the domain is valid if possible
+        submit_domain = Domain.objects.get(name=domain_name)
+    except Domain.DoesNotExist:
+        logging.error("Submission error! %s isn't a known domain.  The submission has been saved with a null domain" % (domain_name))
+        submit_domain = None    
+
+    try:        
+        #print request.raw_post_data
+        #print request.FILES.keys()
+        if len(request.raw_post_data) != 0:
+            rawpayload = request.raw_post_data
+            is_legacy_blob = True            
+            checksum = hashlib.md5(rawpayload).hexdigest()                                    
+        elif request.FILES.has_key('xml_submission_file'):
+            #ODK Hack. because the way in which ODK handles the uploads using multipart/form data instead of the w3c xform transport
+            #we need to unwrap the submissions differently            
+            is_legacy_blob = False
+            xform = request.FILES['xml_submission_file'].read()            
+            request.FILES['xml_submission_file'].seek(0) #reset pointer back to the beginning            
+            checksum = hashlib.md5(xform).hexdigest()
+        else:            
+            logging.error("Submission error for domain %s, user: %s.  No data payload" % \
+                      (domain_name,str(request.user)))                    
+    except Exception, e:
+        return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
+         
+
+    try: 
+        new_submission = submitprocessor.new_submission(request.META, checksum, 
+                                                                  submit_domain, is_resubmission=is_resubmission)        
+        if is_legacy_blob and rawpayload != None:
+            submitprocessor.save_legacy_blob(new_submission, rawpayload)            
+            attachments = submitprocessor.handle_legacy_blob(new_submission)
+        elif is_legacy_blob == False:             
+            attachments = submitprocessor.handle_multipart_form(new_submission, request.FILES)
+            print attachments
+            
         if request.extuser:
             new_submission.authenticated_to = request.extuser
             new_submission.save()
@@ -215,10 +221,10 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     except Exception, e:
         type, value, tb = sys.exc_info()
         traceback_string = "\n\nTRACEBACK: " + '\n'.join(traceback.format_tb(tb))
-        logging.error("Submission error for domain %s, user: %s, data: %s" % \
-                      (domain_name,str(request.user),str(request.raw_post_data)), \
+        logging.error("Submission error for domain %s, user: %s, header: %s" % \
+                      (domain_name,str(request.user), str(request.META)), \
                       extra={'submit_exception':str(e), 'submit_traceback':traceback_string, \
-                             'submit_record':str(submit_record)})
+                             'header':str(request.META)})
         # should we return success or failure here?  I think failure, even though
         # we did save the xml successfully.
         response = SubmitResponse(status_code=500, or_status_code=5000, 
@@ -232,9 +238,10 @@ def backup(request, domain_name, template_name="receiver/backup.html"):
         if len(currdomain) != 1:
             new_submission = '[error]'
         else:            
-            submit_record = submitprocessor.save_post(request.META, request.raw_post_data,domain=currdomain[0])
-            new_submission = submitprocessor.do_submission_processing(request.META, submit_record, domain=currdomain[0])
-            #new_submission = submitprocessor.do_old_submission(request.META,request.raw_post_data, domain=currdomain[0])                    
+            checksum = hashlib.md5(request.raw_post_data).hexdigest()            
+            new_submission = submitprocessor.new_submission(request.META, checksum, currdomain[0])        
+            submitprocessor.save_legacy_blob(new_submission, request.raw_post_data)
+            attachments = submitprocessor.handle_legacy_blob(new_submission)                               
         if new_submission == '[error]':
             template_name="receiver/submit_failed.html"     
         else:
@@ -282,18 +289,6 @@ def restore(request, code_id, template_name="receiver/restore.html"):
     template_name="receiver/nobackup.html"
     return render_to_response(request, template_name, context,mimetype='text/plain')
         
-                           
-                      
-def save_post(request):
-    '''Saves the body of a post in a file.  Doesn't do any processing
-       of any kind.'''
-    if request.method != 'POST':
-        return HttpResponse("You have to POST to submit data.")
-    try:
-        submit_record = submitprocessor.save_post(request.META, request.raw_post_data)
-        return HttpResponse("Thanks for submitting!  Pick up your file at %s" % newfilename)
-    except Exception, e:
-        return HttpResponseServerError("Submission failed!  This information probably won't help you: %s" % e)
     
 @extuser_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
