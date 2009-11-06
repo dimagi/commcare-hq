@@ -151,8 +151,6 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         submit_domain = None    
 
     try:        
-        #print request.raw_post_data
-        #print request.FILES.keys()
         if len(request.raw_post_data) != 0:
             rawpayload = request.raw_post_data
             is_legacy_blob = True            
