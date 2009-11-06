@@ -24,7 +24,7 @@ def reports(request, template_name="list.html"):
     extuser = request.extuser
     context['domain'] = extuser.domain
     context['case_reports'] = Case.objects.filter(domain=extuser.domain)
-    context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain)
+    context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain, is_active=True)
     context['custom_reports'] = util.get_custom_reports(extuser.domain)
     if not context['custom_reports'] and not context['sql_reports']\
        and not context['case_reports']:
@@ -94,21 +94,11 @@ def custom_report(request, domain_id, report_name):
     extuser = request.extuser
     context["domain"] = extuser.domain
     context["report_name"] = report_name
-    report_module = util.get_custom_report_module(extuser.domain)
-    default_module = util.get_global_report_module(extuser.domain)
-    if not report_module and not default_module:
+    report_method = util.get_report_method(extuser.domain, report_name)
+    if not report_method:
         return render_to_response(request, 
-                                  "domain_not_found.html",
+                                  "custom/report_not_found.html",
                                   context)
-    if not hasattr(report_module, report_name):
-        if not hasattr(default_module, report_name):
-            return render_to_response(request, 
-                                      "custom/report_not_found.html",
-                                      context)
-        else:
-            report_method = getattr(default_module, report_name)
-    else:
-        report_method = getattr(report_module, report_name)
     context["report_display"] = report_method.__doc__
     context["report_body"] = report_method(request)
     return render_to_response(request, "custom/base.html", context)
@@ -118,7 +108,7 @@ def sql_report(request, report_id, template_name="sql_report.html"):
     '''View a single sql report.'''
     extuser = request.extuser
     report = SqlReport.objects.get(id=report_id)
-    whereclause = _get_whereclause(request.GET)
+    whereclause = util.get_whereclause(request.GET)
     table = report.to_html_table({"whereclause": whereclause})
     return render_to_response(request, template_name, {"report": report, "table": table})
 
@@ -127,24 +117,8 @@ def sql_report_csv(request, report_id):
     '''View a single sql report.'''
     extuser = request.extuser
     report = SqlReport.objects.get(id=report_id)
-    whereclause = _get_whereclause(request.GET)
+    whereclause = util.get_whereclause(request.GET)
     cols, data = report.get_data({"whereclause": whereclause})
     return format_csv(data, cols, report.title)
     
 
-def _get_whereclause(params):
-    """Given a dictionary of params {key1: val1, key2: val2 } 
-       return a partial query like:
-       WHERE key1 = val1
-       AND   key2 = val2 
-       ...
-    """
-    query_parts = []
-    first = False
-    for key, val in params.items():
-        if not first:
-            first = True
-            query_parts.append("WHERE %s = '%s'" % (key, val))
-        else:
-            query_parts.append("AND %s = '%s'" % (key, val))
-    return " ".join(query_parts)

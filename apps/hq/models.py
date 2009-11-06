@@ -121,10 +121,8 @@ class ExtUser(User):
             return self.chw_username
     
     def __unicode__(self):
-        if self.chw_username != None:
-            return self.chw_username
-        elif self.last_name != '':
-            return self.last_name
+        if self.first_name or self.last_name:
+            return "%s %s" % (self.first_name, self.last_name)
         else:
             return self.username
     

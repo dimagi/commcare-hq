@@ -1246,104 +1246,106 @@ msgstr ""
 # ####################
 # CommCareHQ Web UI #
 # ####################
-#~ msgid "bednet"
-#~ msgstr "Analala ndani ya chandalua"
 
-#~ msgid "iron_folic"
-#~ msgstr "Ameanza dawa ya Iron na Folic Acid"
+msgid "bednet"
+msgstr "Analala ndani ya chandalua"
 
-#~ msgid "start_tt"
-#~ msgstr "Ameanza chanjo ya Pepopunda"
+msgid "iron_folic"
+msgstr "Ameanza dawa ya Iron na Folic Acid"
 
-#~ msgid "finish_tt"
-#~ msgstr "Amemaliza chanjo ya Pepopunda"
+msgid "start_tt"
+msgstr "Ameanza chanjo ya Pepopunda"
 
-#~ msgid "start_ipt"
-#~ msgstr "Ameanza matibabu ya Malaria [SP]"
+msgid "finish_tt"
+msgstr "Amemaliza chanjo ya Pepopunda"
 
-#~ msgid "finish_ipt"
-#~ msgstr "Amemaliza matibabu ya Malaria [SP]"
+msgid "start_ipt"
+msgstr "Ameanza matibabu ya Malaria [SP]"
 
-#~ msgid "deworm"
-#~ msgstr "Amepata dawa ya minyoo"
+msgid "finish_ipt"
+msgstr "Amemaliza matibabu ya Malaria [SP]"
 
-#~ msgid "birth_plan"
-#~ msgstr "Ana matayarisha ya kujifungua"
+msgid "deworm"
+msgstr "Amepata dawa ya minyoo"
 
-#~ msgid "test_syphilis"
-#~ msgstr "Amepimwa Kaswende ndani ya miezi 12"
+msgid "birth_plan"
+msgstr "Ana matayarisha ya kujifungua"
 
-#~ msgid "test_hb"
-#~ msgstr "Amepimwa kiasi cha damu [HB]"
+msgid "test_syphilis"
+msgstr "Amepimwa Kaswende ndani ya miezi 12"
 
-#~ msgid "Everyone Else"
-#~ msgstr "Wajauzito wengine"
+msgid "test_hb"
+msgstr "Amepimwa kiasi cha damu [HB]"
 
-#~ msgid "feeling"
-#~ msgstr "akjisikia vibaya"
+msgid "Everyone Else"
+msgstr "Wajauzito wengine"
 
-#~ msgid "headache_or_b_vision"
-#~ msgstr "anaumwa na kichwa au kupata kizunguzungu"
+msgid "feeling"
+msgstr "akjisikia vibaya"
 
-#~ msgid "dark_urine"
-#~ msgstr "ana mkojo mweusi"
+msgid "headache_or_b_vision"
+msgstr "anaumwa na kichwa au kupata kizunguzungu"
 
-#~ msgid "swelling"
-#~ msgstr "anavimba miguu au vidole"
+msgid "dark_urine"
+msgstr "ana mkojo mweusi"
 
-#~ msgid "unusual_pain"
-#~ msgstr "ana maumivu ya tumbo"
+msgid "swelling"
+msgstr "anavimba miguu au vidole"
 
-#~ msgid "burn_urinate"
-#~ msgstr "anasikia maumivu makali wakati anapokojoa"
+msgid "unusual_pain"
+msgstr "ana maumivu ya tumbo"
 
-#~ msgid "baby_not_moving"
-#~ msgstr "mtoto tumboni ameacha kucheza"
+msgid "burn_urinate"
+msgstr "anasikia maumivu makali wakati anapokojoa"
 
-#~ msgid "fever"
-#~ msgstr "amepata homa"
+msgid "baby_not_moving"
+msgstr "mtoto tumboni ameacha kucheza"
 
-#~ msgid "other_illness"
-#~ msgstr "ameugua magonjwa mengine (INSERT 'which_illness')"
+msgid "fever"
+msgstr "amepata homa"
 
-#~ msgid "heavy_bleeding"
-#~ msgstr "ametokwa damu nyingi"
+msgid "other_illness"
+msgstr "ameugua magonjwa mengine (INSERT 'which_illness')"
 
-#~ msgid "abdominal_pain_discharge"
-#~ msgstr "ana maumivu makali ya tumbo au anatokwa na uchafu ukeni"
+msgid "heavy_bleeding"
+msgstr "ametokwa damu nyingi"
 
-#~ msgid "pain_bleeding_urination"
-#~ msgstr "anapata maumivu makali wakati wa kukojoa"
+msgid "abdominal_pain_discharge"
+msgstr "ana maumivu makali ya tumbo au anatokwa na uchafu ukeni"
 
-#~ msgid "leg_swelling"
-#~ msgstr "miguu yake imevimba"
+msgid "pain_bleeding_urination"
+msgstr "anapata maumivu makali wakati wa kukojoa"
 
-#~ msgid "breast_problems"
-#~ msgstr "kuna uvimbe kwenye maziwa"
+msgid "leg_swelling"
+msgstr "miguu yake imevimba"
 
-#~ msgid "uncontrolled_urination"
-#~ msgstr "anashindwa kuzuia mkojo wake kutoka"
+msgid "breast_problems"
+msgstr "kuna uvimbe kwenye maziwa"
 
-#~ msgid "vaginal_stool_leaking"
-#~ msgstr "kuna mkojo au kinyesi kinatokea ukeni"
+msgid "uncontrolled_urination"
+msgstr "anashindwa kuzuia mkojo wake kutoka"
 
-#~ msgid "anemia"
-#~ msgstr "dalili za kupungufuwa damu"
+msgid "vaginal_stool_leaking"
+msgstr "kuna mkojo au kinyesi kinatokea ukeni"
 
-#~ msgid "no"
-#~ msgstr "hapana"
+msgid "anemia"
+msgstr "dalili za kupungufuwa damu"
 
-#~ msgid "hospital"
-#~ msgstr "hospitali"
+msgid "no"
+msgstr "hapana"
 
-#~ msgid "clinic"
-#~ msgstr "zahanati"
+msgid "hospital"
+msgstr "hospitali"
 
-#~ msgid "home"
-#~ msgstr "nyumbani"
+msgid "clinic"
+msgstr "zahanati"
 
-#~ msgid "birth"
-#~ msgstr "alijifungua"
+msgid "home"
+msgstr "nyumbani"
 
-#~ msgid "not pregnant"
-#~ msgstr "mama hakuwa na mimba"
+msgid "birth"
+msgstr "alijifungua"
+
+msgid "not pregnant"
+msgstr "mama hakuwa na mimba"
+

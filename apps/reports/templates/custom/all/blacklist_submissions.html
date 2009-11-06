@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load blacklist_tags %}
 <h2>{{ domain }}</h2>
 <h2>Blacklisted User Submissions</h2>
 {% for username, device_data in all_data.items %}
@@ -7,17 +8,22 @@
     <thead class="commcare-heading">
         <th>Device</th><th>Other Users Submitting</th>
         {% for date in all_dates %}
-            <th>{{ date }}</th>
+            <th>{{ date|date:"m/d/Y" }}</th>
         {% endfor %}
     </thead>
     <tbody>
         {% for device, data in device_data.items %}
         <tr>
-            <td>{{ device }}</td>
+            <td><a href="{% build_device_url domain device %}">{{ device }}</a></td> 
             <td>{% if data.users %}{{data.users}}{% else %}No Other Users{% endif %}</td>
             {% for date in all_dates %}
-                {% with data.date_counts|get_item:date as count %}
-                    <td>{% if count %}{{ count }}{% else %}0{% endif %}</td>
+                {% with date|date:"m/d/Y" as date_str %}
+                {% with data.date_counts|dict_lookup:date_str as count %}
+                    <td>{% if count %}
+                        <a href="{% build_count_url domain device date %}">{{ count}}</a>
+                        {% else %}0{% endif %}
+                    </td>
+                {% endwith %}
                 {% endwith %}
             {% endfor %}
         </tr>

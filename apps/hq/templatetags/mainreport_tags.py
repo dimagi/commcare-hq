@@ -53,7 +53,7 @@ def get_daterange_links_basic(base_link, days=[0,7,30,90], args={}):
        "last n days"''' 
     #base_link = reverse(view_name,kwargs=args)
     end_date = datetime.now()
-    ret = '\n'
+    ret = ''
     ret += '<div class="daterange_tabs"><ul>\n'
     for num_days in days:
         ret += _get_formatted_date_link(base_link, end_date, num_days) + "\n"

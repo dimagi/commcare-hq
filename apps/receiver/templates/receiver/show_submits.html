@@ -56,8 +56,9 @@ Submissions with IDs highlighted in <span class="deleted">blue</span> were manua
    	</tr>
    {% endfor %}
    </table>
-   
-	{% include 'receiver/partials/submit_pagination.html' %}
 
+{% with submissions as data %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
 
 {% endblock %}
