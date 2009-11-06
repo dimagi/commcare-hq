@@ -28,18 +28,14 @@ class Submission(models.Model):
     '''A Submission object.  Represents an instance of someone POST-ing something
        to our site.'''
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now)
-    transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())
-    
-    domain = models.ForeignKey(Domain)
-    
+    transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())    
+    domain = models.ForeignKey(Domain, null=True)    
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
     bytes_received = models.IntegerField(_('Bytes Received'))
     content_type = models.CharField(_('Content Type'), max_length=100)
-    raw_header = models.TextField(_('Raw Header'))
-    
-    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255)    
-    
+    raw_header = models.TextField(_('Raw Header'))    
+    raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255, null=True)    
     authenticated_to = models.ForeignKey(ExtUser, null=True)
 
     class Meta:
@@ -62,7 +58,7 @@ class Submission(models.Model):
             # (if coming from a phone) or 'multipart/form-data'
             # (if coming from a webui)
             if attachment.attachment_uri == _XFORM_URI:
-                   return attachment
+                return attachment
         return None
         
         
@@ -172,55 +168,9 @@ class Submission(models.Model):
         # <body>   
         return simplejson.dumps(headers) + "\n\n" + post_file.read()
 
-def process_attachments(sender, instance, created, **kwargs): 
-    """Process attachments for a given submission blob.
-    Will try to use the email parsing library to get all the MIME content from a given submission
-    And write to file and make new Attachment entries linked back to this Submission"""
-    
-    # only process attachments on newly created instances, not all of them
-    if not created:
-        return
-    
-    fin = open(instance.raw_post,'rb')
-    body = fin.read()        
-    fin.close()        
-    parsed_message = email.message_from_string(body)   
-    for part in parsed_message.walk():
-        try:
-            #print "CONTENT-TYPE: " + str(part.get_content_type())     
-            if part.get_content_type() == 'multipart/mixed':
-                #it's a multipart message, oh yeah
-                logging.debug("Multipart part")
-                #print part['Content-ID']
-                #continue
-            else:                   
-                new_attach= Attachment()
-                new_attach.submission = instance
-                content_type = part.get_content_type()
-                new_attach.attachment_content_type=content_type
-                # data submitted from the webui is always 'multipart'
-                if content_type.startswith('text/') or content_type.startswith('multipart/form-data'):
-                    new_attach.attachment_uri = _XFORM_URI
-                    filename='-xform.xml'
-                else:
-                    logging.debug("non XML section: %s" % part['Content-ID'])
-                    new_attach.attachment_uri = part['Content-ID']
-                    filename='-%s' % os.path.basename(new_attach.attachment_uri)
-           
-                payload = part.get_payload().strip()
-                new_attach.filesize = len(payload)
-                new_attach.checksum = hashlib.md5(payload).hexdigest()
-                fout = open(os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],instance.transaction_uuid + filename),'wb')
-                fout.write(payload)
-                fout.close() 
-                new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'],instance.transaction_uuid + filename)
-                new_attach.save()                
-                logging.debug("Attachment Save complete")                    
-        except Exception, e:                 
-            type, value, tb = sys.exc_info()
-            logging.error("Attachment Parsing Error!!! Traceback: " + type.__name__ +  ":" + str(value) + " " + string.join(traceback.format_tb(tb),' '))
 
-post_save.connect(process_attachments, sender=Submission)
+#dmyung 11/5/2009 - removing signal and refactor attachment processing to the submit processor
+#post_save.connect(process_attachments, sender=Submission)
 
 class Backup(models.Model):
     #backup_code = models.CharField(unique=True,max_length=6)

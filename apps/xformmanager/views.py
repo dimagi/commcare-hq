@@ -17,9 +17,8 @@ from xformmanager.forms import RegisterXForm, SubmitDataForm
 from xformmanager.models import FormDefModel
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
-#from receiver.submitprocessor import do_old_submission
-from receiver.submitprocessor import do_submission_processing
-from receiver.submitprocessor import save_post
+from receiver import submitprocessor
+
 
 from hq.models import *
 from hq.utils import paginate
@@ -145,8 +144,14 @@ def submit_data(request, formdef_id, template='submit_data.html'):
     if request.method == 'POST':
         form = SubmitDataForm(request.POST, request.FILES)        
         if form.is_valid():            
-            submit_record = save_post(request.META, request.FILES['file'].read(),domain=extuser.domain)
-            new_submission = do_submission_processing(request.META, submit_record, domain=extuser.domain)            
+            
+            xmlfile = request.FILES['file'].read()            
+            checksum = hashlib.md5(xmlfile).hexdigest()
+                                    
+            new_submission = submitprocessor.new_submission(request.META, checksum, extuser.domain)        
+            submitprocessor.save_legacy_blob(new_submission, xmlfile)
+            submitprocessor.handle_legacy_blob(new_submission)
+            
             if new_submission == '[error]':
                 logging.error("Domain Submit(): Submission error")
                 context['errors'] = "Problem with submitting data"
@@ -154,8 +159,8 @@ def submit_data(request, formdef_id, template='submit_data.html'):
                 attachments = Attachment.objects.all().filter(submission=new_submission)
                 context['submission'] = new_submission
         else:
-             logging.error("Domain Submit(): Form submission error")
-             context['errors'] = form.errors
+            logging.error("Domain Submit(): Form submission error")
+            context['errors'] = form.errors
     context['upload_form'] = SubmitDataForm()
     return data(request, formdef_id, template, context)
 
