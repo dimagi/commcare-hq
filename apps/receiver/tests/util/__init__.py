@@ -34,7 +34,7 @@ def makeNewEntry(headerfile, bodyfile, domain=None):
         mockdomain = Domain.objects.all()[0]        
     
     checksum = hashlib.md5(body).hexdigest()            
-    new_submission = submitprocessor.new_submission(meta, checksum, mockdomain)        
+    new_submission = submitprocessor.new_submission(metahash, checksum, mockdomain)        
     submitprocessor.save_legacy_blob(new_submission, body)
     attachments = submitprocessor.handle_legacy_blob(new_submission)
     return new_submission
