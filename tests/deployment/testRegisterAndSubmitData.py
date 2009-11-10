@@ -20,8 +20,8 @@ from urlparse import urlparse
 #serverhost = 'localhost:8000' #for you local developers using runserver
 serverhost = 'test.commcarehq.org' #for the actual server
 
-#curl_command = 'c:\curl\curl.exe'  #if you have curl installed on windows
-curl_command = 'curl' #if curl is in your path/linux
+curl_command = 'c:\curl\curl.exe'  #if you have curl installed on windows
+#curl_command = 'curl' #if curl is in your path/linux
 
 
 #example post to a form
@@ -418,7 +418,7 @@ class TestSimpleSubmits(unittest.TestCase):
         rescount = resultstring.count("Submission received, thank you")
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
-        if rescount == 1:
+        if rescount != 1:
             msg = "Data submission failed, not successful: " + str(rescount)
             print msg
             self.fail(msg)
