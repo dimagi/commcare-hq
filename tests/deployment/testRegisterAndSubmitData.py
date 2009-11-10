@@ -19,9 +19,7 @@ from urlparse import urlparse
 #serverhost = 'localhost'  #for you local developers on apache
 #serverhost = 'localhost:8000' #for you local developers using runserver
 serverhost = 'test.commcarehq.org' #for the actual server
-
-curl_command = 'c:\curl\curl.exe'  #if you have curl installed on windows
-#curl_command = 'curl' #if curl is in your path/linux
+curl_command = 'curl' #make sure curl is in your path
 
 
 #example post to a form
