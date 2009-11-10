@@ -166,10 +166,7 @@ def handle_multipart_form(submission, request_files):
     Eventually HQ should receive this information as the default way to transport the xforms, as it is more intuitive
     to the server and the developer alike.
     """
-    parts_dict = {}
-    print "handle multipart form!!!"
-    print request_files.keys()
-    
+    parts_dict = {}    
     try:
         #special case, we parse out the xform first and foremost
         xformobj = request_files['xml_submission_file']    
@@ -181,11 +178,9 @@ def handle_multipart_form(submission, request_files):
     #next, pop out the xform we just parsed out, and walk through other attachments if need be and do the same
     otherfiles = request_files.keys()    
     otherfiles.remove('xml_submission_file')
-    print "begin walk"
     for fkey in otherfiles:
         try:
             f = request_files[fkey]
-            print "walking through request keys " + f.name
             part_filename = submission.transaction_uuid + '-' + f.name    
             parts_dict[f.name] = new_attachment(submission, f.read(), f.content_type, f.name, part_filename)    
         except Exception, e:

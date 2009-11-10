@@ -418,7 +418,7 @@ class TestSimpleSubmits(unittest.TestCase):
         rescount = resultstring.count("Submission received, thank you")
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
-        if rescount != 1:
+        if rescount == 1:
             msg = "Data submission failed, not successful: " + str(rescount)
             print msg
             self.fail(msg)
@@ -434,6 +434,8 @@ class TestSimpleSubmits(unittest.TestCase):
                 print "Data submission error:  attachment not found: " + attachment_count
                 self.assertFalse(True)                        
 
+    
+
     def testPostAndVerifyMultipart(self):       
         
         curdir = os.path.dirname(__file__)        
@@ -445,16 +447,90 @@ class TestSimpleSubmits(unittest.TestCase):
             fullpath = os.path.join(datadir,file)
             fin = open(fullpath,'rb')
             filestr= fin.read()
-            fin.close()
+            fin.close()            
             # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xforms/
-            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()                
             #self._verifySubmission(results,3)
                         
-            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
             results = p.stdout.read()
             #self._verifySubmission(results,3)
-            
+
+class TestODKSubmit(unittest.TestCase):
+    def setup(self):
+        pass    
+    
+    def testPostLegacyXForm(self):               
+        curdir = os.path.dirname(__file__)        
+        datadir = os.path.join(curdir,'odk')        
+        fin = open(os.path.join(datadir,'xform.xml'),'r')
+        filestr = fin.read()
+        fin.close()
+        
+                
+        p = subprocess.Popen([curl_command,
+                              '--header',
+                              'Content-type:text/xml', 
+                              '--header', 
+                              '"Content-length:%s' % len(filestr), 
+                              '--data-binary', 
+                              '@%s' % os.path.join(datadir,'xform.xml'), 
+                              '--request', 
+                              'POST', 
+                              'http://%s/receiver/submit/BRAC/' % serverhost],
+                              stdout=PIPE,stderr=PIPE,shell=False)
+        
+        
+        print "executing testPostLegacyXForm"        
+        results = p.stdout.read()            
+        print results    
+    
+    
+    
+    def testPostSingleXForm(self):        
+        curdir = os.path.dirname(__file__)        
+        datadir = os.path.join(curdir,'odk')
+        xformpath = os.path.join(datadir,'xform.xml')        
+        
+        command_arr = [
+                       curl_command, 
+                      '-F xml_submission_file=@%s' % xformpath,                                                                                         
+                      '--request', 'POST', 
+                      'http://%s/receiver/submit/BRAC/' % serverhost
+                      ]
+    
+        
+        p = subprocess.Popen(command_arr,
+                              stdout=PIPE,stderr=PIPE,shell=False)
+        
+        print "Executing testPostSingleXForm"
+        print ' '.join(command_arr)
+        p = subprocess.Popen(command_arr, stdout=PIPE,stderr=PIPE,shell=False)
+        results = p.stdout.read()
+        errors = p.stderr.read()        
+        print results
+        
+    def testPostMultiPart(self):
+        curdir = os.path.dirname(__file__)        
+        datadir = os.path.join(curdir,'odk')
+        xformpath = os.path.join(datadir,'xform.xml')        
+        imagepath = os.path.join(datadir,'xform.xml')
+        
+        command_arr = [
+                       curl_command, 
+                      '-F xml_submission_file=@%s' % xformpath,                                                                                         
+                      '-F file1.jpg=@%s' % imagepath,
+                      '--request', 'POST', 
+                      'http://%s/receiver/submit/BRAC/' % serverhost
+                      ]
+        print "Executing testPostMultipart"
+        print ' '.join(command_arr)
+        p = subprocess.Popen(command_arr, stdout=PIPE,stderr=PIPE,shell=False)
+        results = p.stdout.read()
+        errors = p.stderr.read()        
+        print results
+    
 
 class TestBackupRestore(unittest.TestCase):
     def setup(self):
