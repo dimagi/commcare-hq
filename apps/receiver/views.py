@@ -138,7 +138,6 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if not request.META["CONTENT_TYPE"].startswith('multipart/form-data;'):
         #request.upload_handlers.insert(0, LegacyXFormUploadParsingHandler())
         request.upload_handlers = [LegacyXFormUploadBlobHandler()]
-        
     is_legacy_blob = False
     # get rid of the trailing slash if it's there
     if domain_name[-1] == '/':    
@@ -158,7 +157,7 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     except Domain.DoesNotExist:
         logging.error("Submission error! %s isn't a known domain.  The submission has been saved with a null domain" % (domain_name))
         submit_domain = None
-    try:
+    try:        
         if request.FILES.has_key('xml_submission_file'):
             #ODK Hack. because the way in which ODK handles the uploads using multipart/form data instead of the w3c xform transport
             #we need to unwrap the submissions differently
@@ -174,19 +173,18 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
             rawpayload = request.raw_post_data
             is_legacy_blob = True
             checksum = hashlib.md5(rawpayload).hexdigest()      
-        else:
-            logging.error("Submission error for domain %s, user: %s.  No data payload found." % \
+        else:                       
+            logging.error("Submission error for domain %s, user: %s.  No data payload found. %s" % \
                       (domain_name,str(request.user)))               
             response = SubmitResponse(status_code=500, or_status_code=5000)
             return response.to_response()     
             
     except Exception, e:
         return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
-         
 
     try: 
         new_submission = submitprocessor.new_submission(request.META, checksum, 
-                                                                  submit_domain, is_resubmission=is_resubmission)        
+                                                                  submit_domain, is_resubmission=is_resubmission)    
         if is_legacy_blob and rawpayload != None:
             submitprocessor.save_legacy_blob(new_submission, rawpayload)            
             attachments = submitprocessor.handle_legacy_blob(new_submission)
