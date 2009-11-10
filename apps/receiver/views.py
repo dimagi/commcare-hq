@@ -14,6 +14,8 @@ from xformmanager.manager import XFormManager
 from xformmanager.storageutility import StorageUtility
 from transformers.zip import get_zipfile
 
+from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
+
 from datetime import timedelta, datetime
 from django.db import transaction
 import mimetypes
@@ -129,8 +131,15 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
     if request.method != 'POST':
         return HttpResponse("You have to POST to submit data.")
 
+    #ODK/legacy handling hack.
+    #on a NON standard post (ie, not multipart/mixed), we hijack the file upload handler.
+    #this is for multipart/mixed.  For text/xml, we can safely assume that it's just straight from raw_post_data.
+    #and that is the case on the last case of the parsing/checksum calculation.
+    if not request.META["CONTENT_TYPE"].startswith('multipart/form-data;'):
+        #request.upload_handlers.insert(0, LegacyXFormUploadParsingHandler())
+        request.upload_handlers = [LegacyXFormUploadBlobHandler()]
+        
     is_legacy_blob = False
-    
     # get rid of the trailing slash if it's there
     if domain_name[-1] == '/':    
         domain_name = domain_name[0:-1]
@@ -148,23 +157,29 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
         submit_domain = Domain.objects.get(name=domain_name)
     except Domain.DoesNotExist:
         logging.error("Submission error! %s isn't a known domain.  The submission has been saved with a null domain" % (domain_name))
-        submit_domain = None    
-
-    try:        
-        if len(request.raw_post_data) != 0:
-            rawpayload = request.raw_post_data
-            is_legacy_blob = True            
-            checksum = hashlib.md5(rawpayload).hexdigest()                                    
-        elif request.FILES.has_key('xml_submission_file'):
+        submit_domain = None
+    try:
+        if request.FILES.has_key('xml_submission_file'):
             #ODK Hack. because the way in which ODK handles the uploads using multipart/form data instead of the w3c xform transport
-            #we need to unwrap the submissions differently            
+            #we need to unwrap the submissions differently
             is_legacy_blob = False
             xform = request.FILES['xml_submission_file'].read()            
             request.FILES['xml_submission_file'].seek(0) #reset pointer back to the beginning            
             checksum = hashlib.md5(xform).hexdigest()
-        else:            
-            logging.error("Submission error for domain %s, user: %s.  No data payload" % \
-                      (domain_name,str(request.user)))                    
+        elif request.FILES.has_key('raw_post_data'):        
+            rawpayload = request.FILES['raw_post_data'].read()
+            is_legacy_blob = True
+            checksum = hashlib.md5(rawpayload).hexdigest()        
+        elif len(request.raw_post_data) > 0:
+            rawpayload = request.raw_post_data
+            is_legacy_blob = True
+            checksum = hashlib.md5(rawpayload).hexdigest()      
+        else:
+            logging.error("Submission error for domain %s, user: %s.  No data payload found." % \
+                      (domain_name,str(request.user)))               
+            response = SubmitResponse(status_code=500, or_status_code=5000)
+            return response.to_response()     
+            
     except Exception, e:
         return HttpResponseServerError("Saving submission failed!  This information probably won't help you: %s", e)
          
@@ -177,7 +192,6 @@ def _do_domain_submission(request, domain_name, template_name="receiver/submit.h
             attachments = submitprocessor.handle_legacy_blob(new_submission)
         elif is_legacy_blob == False:             
             attachments = submitprocessor.handle_multipart_form(new_submission, request.FILES)
-            print attachments
             
         if request.extuser:
             new_submission.authenticated_to = request.extuser
