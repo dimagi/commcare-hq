@@ -2,7 +2,7 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django.template.loader import render_to_string
-
+from django.db import connection
 import settings
 
 from xformmanager.models import Metadata, FormDefModel, ElementDefModel
@@ -38,14 +38,31 @@ def chw_submission_details(request):
     # hard coded to our schema.  bad bad!
     form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
     report = SqlReport.objects.get(id=grameen_submission_details_id)
-    whereclause = get_whereclause(request.GET)  
+    cols = ('meta_username', 'sampledata_hi_risk')
+    where_cols = dict([(key, val) for key, val in request.GET.items() if key in cols])
+    whereclause = get_whereclause(where_cols)
+    follow_filter = None
+    if "follow" in request.GET:
+        if request.GET["follow"] == "yes":
+            follow_filter = True
+        elif request.GET["follow"] == "no":
+            follow_filter = False
     cols, data = report.get_data({"whereclause": whereclause})
     new_data = []
     for row in data:
         new_row_data = dict(zip(cols, row))
         row_id = new_row_data["row_id"]
         meta = Metadata.objects.get(formdefmodel=form_def, raw_data=row_id)
-        new_row_data["Follow up?"] = meta.attachment.annotations.count() > 0
+        follow = meta.attachment.annotations.count() > 0
+        if follow_filter is not None:
+            if follow_filter and not follow:
+                # filtering on true, but none found, don't include this
+                continue
+            elif not follow_filter and follow:
+                # filtering on false, but found follows, don't include this
+                continue
+        
+        new_row_data["Follow up?"] = "yes" if follow else "no"
         new_row_data["meta"] = meta
         new_row_data["attachment"] = meta.attachment
         new_data.append(new_row_data)
@@ -55,3 +72,4 @@ def chw_submission_details(request):
                              "columns": cols,
                              "data": new_data})
     
+
