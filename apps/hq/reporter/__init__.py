@@ -205,14 +205,10 @@ def render_direct_sms(prepared_data, startdate, enddate, template_name, params={
     
     #collpase the data
     context['results'] = []
-    print prepared_data
-    print "prepared data"
     for item in prepared_data:
         sum = 0
         for num in item[-1]:sum+=num # single line, let's sum up the values            
         context['results'].append([item[2], sum])
-    print "got the context"
-    print context
     rendered = render_to_string(template_name, context)
     return rendered
 

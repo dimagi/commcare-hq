@@ -46,7 +46,7 @@ class SubmitResponse(object):
            If the value is None it does nothing.  This will override
            any previously set parameter.'''
         if value != None:
-             self._all_params[key] = value
+            self._all_params[key] = value
     
     def to_response(self):
         '''Gets this object as a django HTTP response'''

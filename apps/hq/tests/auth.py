@@ -20,9 +20,14 @@ class AuthenticationTestCase(TestCase):
         org.save()
 
     def testBasicAuth(self):
+        """This is a really junky way to submit a RAW text/xml submission via the client test API        
+        but it works to test the header based authentication"""
         password_hash = hashlib.sha1(self.username + ":" + self.password).hexdigest()
         authorization = "HQ username=\"%s\", password=\"%s\"" % (self.username, password_hash)
-        response = self.client.post('/receiver/submit/%s' % self.domain_name, {'foo':'bar'}, \
+        xformstr = '<?xml version="1.0" ?><geotagger id="geo_tagger"><timestamp>2009-10-28T13:45:07.512</timestamp><device_id>358279013739816</device_id></geotagger>'
+        response = self.client.post('/receiver/submit/%s' % self.domain_name, 
+                                    xformstr,
+                                    content_type='text/xml',
                                     HTTP_AUTHORIZATION=authorization, 
                                     )
         submit = Submission.objects.latest()

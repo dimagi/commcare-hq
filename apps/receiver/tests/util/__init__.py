@@ -5,6 +5,7 @@
 import os
 from receiver import submitprocessor 
 from hq.models import Domain
+import hashlib
 
 def get_full_path(file_name):
     '''Joins a file name with the directory of the current file
@@ -32,7 +33,12 @@ def makeNewEntry(headerfile, bodyfile, domain=None):
     else:
         mockdomain = Domain.objects.all()[0]        
     
-    submit_record = submitprocessor.save_post(metahash, body)
-    return submitprocessor.do_submission_processing(metahash, submit_record, domain=mockdomain)
+    checksum = hashlib.md5(body).hexdigest()            
+    new_submission = submitprocessor.new_submission(metahash, checksum, mockdomain)        
+    submitprocessor.save_legacy_blob(new_submission, body)
+    attachments = submitprocessor.handle_legacy_blob(new_submission)
+    return new_submission
+    
+    
 
 

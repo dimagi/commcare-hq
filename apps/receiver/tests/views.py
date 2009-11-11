@@ -27,10 +27,6 @@ class ViewsTestCase(TestCase):
         self.assertNotContains(response,"Error", status_code=200)
         self.assertNotContains(response,"Exception", status_code=200)
 
-        response = self.client.get('/receiver/submitraw/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-
         response = self.client.get('/receiver/backup/%s/' % domain.id)
         self.assertNotContains(response,"Error", status_code=200)
         self.assertNotContains(response,"Exception", status_code=200)
