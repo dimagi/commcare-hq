@@ -7,4 +7,6 @@ urlpatterns = patterns('',
         (r'^showgraph/all/$', 'graphing.views.show_multi'),
         (r'^chartgroups/$', 'graphing.views.view_groups'),
         (r'^chartgroups/(?P<group_id>\d+)/$', 'graphing.views.view_group'),
+        (r'^charts/?$', 'graphing.views.domain_charts'),
+        (r'^charts/default/?$', 'graphing.views.summary_trend'),
 )

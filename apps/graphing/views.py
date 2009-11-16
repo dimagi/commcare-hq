@@ -38,6 +38,50 @@ import os
 import string
 
 
+@extuser_required()
+def domain_charts(request):
+    context = {}
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
+    mychartgroup = utils.get_chart_group(extuser)
+    if mychartgroup == None:
+        return summary_trend(request)
+    else:  
+        return view_group(request, mychartgroup.id)
+
+@extuser_required()
+def summary_trend(request, template_name="graphing/summary_trend.html"):
+    """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
+    context = {}        
+    
+    formname = ''
+    formdef_id = -1
+    # the decorator and middleware ensure this will be set.
+    extuser = request.extuser
+    
+    for item in request.GET.items():
+        if item[0] == 'formdef_id':
+            formdef_id=item[1]    
+    if formdef_id == -1:
+        context['chart_title'] = 'All Data'
+        context['dataset'] = {}        
+        defs = FormDefModel.objects.all().filter(domain=extuser.domain)
+    
+        for fdef in defs:            
+            d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
+            context['dataset'][fdef.form_display_name.__str__()] = d.get_counts_dataset(None,None)                    
+    
+    else:
+        fdef = FormDefModel.objects.all().filter(id=formdef_id)
+        context['chart_title'] = fdef[0].form_display_name
+        d = dbhelper.DbHelper(fdef[0].element.table_name,fdef[0].form_display_name)        
+        context['dataset'] = d.get_integer_series_dataset()
+    
+    context ['maxdate'] = 0;
+    context ['mindate'] = 0;
+    return render_to_response(request, template_name, context)
+
+
 def inspector(request, table_name, template_name="graphing/table_inspector.html"):
     context = {}
     context['table_name'] = table_name
