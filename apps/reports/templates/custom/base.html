@@ -7,6 +7,9 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
 {% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css" />
+{% endblock %}
 {% block content %}
 {{ report_body|safe }}
 {%endblock%}
