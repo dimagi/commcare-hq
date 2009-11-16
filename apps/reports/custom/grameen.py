@@ -51,7 +51,7 @@ def chw_submission_details(request):
     new_data = []
     for row in data:
         new_row_data = dict(zip(cols, row))
-        row_id = new_row_data["row_id"]
+        row_id = new_row_data["Instance ID"]
         meta = Metadata.objects.get(formdefmodel=form_def, raw_data=row_id)
         follow = meta.attachment.annotations.count() > 0
         if follow_filter is not None:
