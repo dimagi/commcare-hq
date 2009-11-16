@@ -27,7 +27,7 @@
             	The following is a TEMPORARY HACK to demo anticipated sms functionality
             	for Nov 17.
             -->
-            <div class="annotationtrigger js_link" onclick="show_annotations('/receiver/annotations/{{attach.id}}?chw_name={{ row|dict_lookup:"Mother Name" }}', '#dialog');">
+            <div class="annotationtrigger js_link" onclick="show_annotations('/receiver/annotations/{{attach.id}}?chw_name={{ row|dict_lookup:"Healthcare Worker" }}', '#dialog');">
             
             {% if attach.most_recent_annotation %}view all/add{% else %}add{% endif %} 
             </div>
