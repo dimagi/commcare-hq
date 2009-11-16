@@ -32,7 +32,7 @@ def anonymize_meta():
             continue
         if meta.username in anonymous_usernames:
             continue
-        new_name = _get_and_save_replacement( meta.username, name_changes, anonymous_usernames )
+        new_name = _get_and_cache_replacement( meta.username, name_changes, anonymous_usernames )
         if meta.chw_id == meta.username:
             #print "Replacing chw_id %s with %s" % (meta.chw_id, new_name)
             meta.chw_id = new_name
@@ -71,6 +71,7 @@ def anonymize_data():
                     cursor.execute("UPDATE " + formdef.form_name + 
                                    " SET " + field + "=%s WHERE " + field + "=%s;", 
                                    [new, row[0]] )
+                    # this doesn't work because cursor.execute injects too many quotes
                     #cursor.execute("UPDATE %s SET %s=%s WHERE %s=%s;", 
                     #               [formdef.form_name, field, new, field, row[0]] )
                     total_name_change_count = total_name_change_count + 1
