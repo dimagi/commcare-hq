@@ -1,5 +1,6 @@
 from blacklist import blacklist as inner_blacklist
 from metadata import metadata as inner_metadata
+from domain_summary import domain_summary as inner_domain_summary
 
 
 """Where to put default global reports.  These behave just like custom reports
@@ -24,3 +25,7 @@ def blacklist(request, domain=None):
 def metadata(request, domain=None):
     '''Submission Summary List for All Forms'''
     return inner_metadata(request, domain)
+
+def domain_summary(request, domain=None):
+    '''Domain Summary Admin Report'''
+    return inner_domain_summary(request, domain)

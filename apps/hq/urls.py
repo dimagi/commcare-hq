@@ -15,8 +15,6 @@ urlpatterns = patterns('',
     url(r'^reporters/add/?$',         views.add_reporter,  name="add-reporter"),
     url(r'^reporters/(?P<pk>\d+)/?$', views.edit_reporter, name="view-reporter"),
        
-    (r'^charts/default/?$', 'hq.views.summary_trend'),
-    (r'^charts/?$', 'hq.views.domain_charts'),    
     (r'^stats/?$', 'hq.views.reporter_stats'),
     (r'^stats/delinquents?/?$', 'hq.views.delinquent_report'),
     
