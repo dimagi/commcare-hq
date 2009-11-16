@@ -8,7 +8,7 @@
 {% for col in columns %}
     <th>{{col}}</th>
 {% endfor %}
-<th>Notes</th>
+<th>Most Recent Follow-Up</th>
 </thead>
 <tbody>
 <tr>
@@ -20,7 +20,7 @@
         {% if attach %}
             {% if attach.most_recent_annotation %}
                 {{ attach.most_recent_annotation }}
-            {% else %}No notes{% endif %}
+            {% else %}No follow-ups{% endif %}
             
             <!-- <div class="annotationtrigger js_link" onclick="show_annotations({{attach.id}}, '#dialog');"> -->
             <!-- 
