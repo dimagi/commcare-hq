@@ -31,7 +31,6 @@ from xformmanager.models import *
 from hq.models import *
 from graphing.models import *
 from receiver.models import *
-import graphing.views as chartviews
 
 import hq.utils as utils
 import hq.reporter as reporter
