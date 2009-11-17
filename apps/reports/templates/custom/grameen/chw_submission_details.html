@@ -8,7 +8,7 @@
 {% for col in columns %}
     <th>{{col}}</th>
 {% endfor %}
-<th>Most recent follow up</th>
+<th>Most Recent Follow-Up</th>
 </thead>
 <tbody>
 <tr>
@@ -20,8 +20,15 @@
         {% if attach %}
             {% if attach.most_recent_annotation %}
                 {{ attach.most_recent_annotation }}
-            {% else %}No follow ups{% endif %}
-            <div class="annotationtrigger js_link" onclick="show_annotations({{attach.id}}, '#dialog');">
+            {% else %}No follow-ups{% endif %}
+            
+            <!-- <div class="annotationtrigger js_link" onclick="show_annotations({{attach.id}}, '#dialog');"> -->
+            <!-- 
+            	The following is a TEMPORARY HACK to demo anticipated sms functionality
+            	for Nov 17.
+            -->
+            <div class="annotationtrigger js_link" onclick="show_annotations('/receiver/annotations/{{attach.id}}?chw_name={{ row|dict_lookup:"Healthcare Worker" }}', '#dialog');">
+            
             {% if attach.most_recent_annotation %}view all/add{% else %}add{% endif %} 
             </div>
         {% endif %}

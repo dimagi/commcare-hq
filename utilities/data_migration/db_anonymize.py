@@ -1,0 +1,533 @@
+# The following script anonymizes a commcare db 
+# (11/13/2009)
+#
+# Specifically, it replaces metadata.username and any 'name' field in raw data
+# with pre-defined generic names
+#
+# NOTE: usernames as listed under /messaging are NOT anonymized yet!
+
+import random
+from MySQLdb import ProgrammingError
+from django.db import connection
+from xformmanager.models import FormDefModel, Metadata
+
+name_changes = {}
+
+def run():
+    print "starting update"
+    meta_count = anonymize_meta()
+    data_count = anonymize_data()
+    print "UNIQUE NAME CHANGES: %s" % len(name_changes)
+    print "META NAME CHANGES = %s" % meta_count
+    print "DATA NAME CHANGES: %s" % data_count
+    print "finished update"
+
+def anonymize_meta():
+    meta_name_change_count = 0
+    metadata = Metadata.objects.all()
+    for meta in metadata:
+        if meta.username is None:
+            continue
+        if meta.username=='admin' or meta.username=='demo_user':
+            continue
+        if meta.username in anonymous_usernames:
+            continue
+        new_name = _get_and_cache_replacement( meta.username, name_changes, anonymous_usernames )
+        if meta.chw_id == meta.username:
+            #print "Replacing chw_id %s with %s" % (meta.chw_id, new_name)
+            meta.chw_id = new_name
+        #print "Replacing meta.username %s with %s" % (meta.username, new_name)
+        meta.username = new_name
+        # this namespace is only used to log exceptions when exceptions are thrown
+        meta.save("dummy namespace")
+        meta_name_change_count = meta_name_change_count + 1
+    return meta_name_change_count
+
+def anonymize_data():
+    errors = 0
+    total_name_change_count = 0 
+    cursor = connection.cursor()
+    # do we need to change the username in the data tables?
+    formdefs = FormDefModel.objects.all()
+    for formdef in formdefs:
+        # what about meta_username?
+        fields = _get_matching_columns(formdef,'_name', 'meta_username')
+        for field in fields:
+            cursor.execute("SELECT DISTINCT %(field)s from `%(table_name)s`" % \
+                                  {'field':field, 'table_name':formdef.form_name} )
+            rows = cursor.fetchall()
+            for row in rows:
+                if row[0] is None:
+                    continue
+                if row[0] in anonymous_usernames:
+                    continue
+                if '"' in row[0] or "'" in row[0]:
+                    # junk data - we don't need to anonymize
+                    continue
+                new = _get_and_cache_replacement( row[0], name_changes, anonymous_usernames )
+                #print "UPDATE %s SET %s='%s' WHERE %s='%s';" % \
+                #               (formdef.form_name, field, new, field, row[0])
+                try:
+                    cursor.execute("UPDATE " + formdef.form_name + 
+                                   " SET " + field + "=%s WHERE " + field + "=%s;", 
+                                   [new, row[0]] )
+                    # this doesn't work because cursor.execute injects too many quotes
+                    #cursor.execute("UPDATE %s SET %s=%s WHERE %s=%s;", 
+                    #               [formdef.form_name, field, new, field, row[0]] )
+                    total_name_change_count = total_name_change_count + 1
+                except ProgrammingError, e:
+                    print str(e)
+                    errors = errors + 1
+                    continue
+    # a little too verbose
+    #for old, new in name_changes.items():
+        #print "Name '%s' changed to '%s'" % (old,new)
+    print "ERRORS: %s" % errors
+    return total_name_change_count
+
+def _get_random_name(name_list):
+    randint = random.randint( 0, len(name_list)-1 )
+    return name_list[randint]
+
+def _get_and_cache_replacement(name, known_name_list, new_name_list):
+    if name not in known_name_list:
+        known_name_list[name] = _get_random_name(new_name_list)
+    return known_name_list[name]
+
+def _get_matching_columns(formdef, matchword1, matchword2):
+    # formdef._get_cursor().description
+    matching_columns = []
+    names = formdef.get_column_names()
+    for name in names:
+        if matchword1 in name or matchword2 in name:
+            matching_columns.append( name )
+    return matching_columns
+
+anonymous_usernames = [
+    'SMITH',
+    'JOHNSON',
+    'WILLIAMS',
+    'JONES',
+    'BROWN',
+    'DAVIS',
+    'MILLER',
+    'WILSON',
+    'MOORE',
+    'TAYLOR',
+    'ANDERSON',
+    'THOMAS',
+    'JACKSON',
+    'WHITE',
+    'HARRIS',
+    'MARTIN',
+    'THOMPSON',
+    'GARCIA',
+    'MARTINEZ',
+    'ROBINSON',
+    'CLARK',
+    'RODRIGUEZ',
+    'LEWIS',
+    'LEE',
+    'WALKER',
+    'HALL',
+    'ALLEN',
+    'YOUNG',
+    'HERNANDEZ',
+    'KING',
+    'WRIGHT',
+    'LOPEZ',
+    'HILL',
+    'SCOTT',
+    'GREEN',
+    'ADAMS',
+    'BAKER',
+    'GONZALEZ',
+    'NELSON',
+    'CARTER',
+    'MITCHELL',
+    'PEREZ',
+    'ROBERTS',
+    'TURNER',
+    'PHILLIPS',
+    'CAMPBELL',
+    'PARKER',
+    'EVANS',
+    'EDWARDS',
+    'COLLINS',
+    'STEWART',
+    'SANCHEZ',
+    'MORRIS',
+    'ROGERS',
+    'REED',
+    'COOK',
+    'MORGAN',
+    'BELL',
+    'MURPHY',
+    'BAILEY',
+    'RIVERA',
+    'COOPER',
+    'RICHARDSON',
+    'COX',
+    'HOWARD',
+    'WARD',
+    'TORRES',
+    'PETERSON',
+    'GRAY',
+    'RAMIREZ',
+    'JAMES',
+    'WATSON',
+    'BROOKS',
+    'KELLY',
+    'SANDERS',
+    'PRICE',
+    'BENNETT',
+    'WOOD',
+    'BARNES',
+    'ROSS',
+    'HENDERSON',
+    'COLEMAN',
+    'JENKINS',
+    'PERRY',
+    'POWELL',
+    'LONG',
+    'PATTERSON',
+    'HUGHES',
+    'FLORES',
+    'WASHINGTON',
+    'BUTLER',
+    'SIMMONS',
+    'FOSTER',
+    'GONZALES',
+    'BRYANT',
+    'ALEXANDER',
+    'RUSSELL',
+    'GRIFFIN',
+    'DIAZ',
+    'HAYES',
+    'MYERS',
+    'FORD',
+    'HAMILTON',
+    'GRAHAM',
+    'SULLIVAN',
+    'WALLACE',
+    'WOODS',
+    'COLE',
+    'WEST',
+    'JORDAN',
+    'OWENS',
+    'REYNOLDS',
+    'FISHER',
+    'ELLIS',
+    'HARRISON',
+    'GIBSON',
+    'MCDONALD',
+    'CRUZ',
+    'MARSHALL',
+    'ORTIZ',
+    'GOMEZ',
+    'MURRAY',
+    'FREEMAN',
+    'WELLS',
+    'WEBB',
+    'SIMPSON',
+    'STEVENS',
+    'TUCKER',
+    'PORTER',
+    'HUNTER',
+    'HICKS',
+    'CRAWFORD',
+    'HENRY',
+    'BOYD',
+    'MASON',
+    'MORALES',
+    'KENNEDY',
+    'WARREN',
+    'DIXON',
+    'RAMOS',
+    'REYES',
+    'BURNS',
+    'GORDON',
+    'SHAW',
+    'HOLMES',
+    'RICE',
+    'ROBERTSON',
+    'HUNT',
+    'BLACK',
+    'DANIELS',
+    'PALMER',
+    'MILLS',
+    'NICHOLS',
+    'GRANT',
+    'KNIGHT',
+    'FERGUSON',
+    'ROSE',
+    'STONE',
+    'HAWKINS',
+    'DUNN',
+    'PERKINS',
+    'HUDSON',
+    'SPENCER',
+    'GARDNER',
+    'STEPHENS',
+    'PAYNE',
+    'PIERCE',
+    'BERRY',
+    'MATTHEWS',
+    'ARNOLD',
+    'WAGNER',
+    'WILLIS',
+    'RAY',
+    'WATKINS',
+    'OLSON',
+    'CARROLL',
+    'DUNCAN',
+    'SNYDER',
+    'HART',
+    'CUNNINGHAM',
+    'BRADLEY',
+    'LANE',
+    'ANDREWS',
+    'RUIZ',
+    'HARPER',
+    'FOX',
+    'RILEY',
+    'ARMSTRONG',
+    'CARPENTER',
+    'WEAVER',
+    'GREENE',
+    'LAWRENCE',
+    'ELLIOTT',
+    'CHAVEZ',
+    'SIMS',
+    'AUSTIN',
+    'PETERS',
+    'KELLEY',
+    'FRANKLIN',
+    'LAWSON',
+    'FIELDS',
+    'GUTIERREZ',
+    'RYAN',
+    'SCHMIDT',
+    'CARR',
+    'VASQUEZ',
+    'CASTILLO',
+    'WHEELER',
+    'CHAPMAN',
+    'OLIVER',
+    'MONTGOMERY',
+    'RICHARDS',
+    'WILLIAMSON',
+    'JOHNSTON',
+    'BANKS',
+    'MEYER',
+    'BISHOP',
+    'MCCOY',
+    'HOWELL',
+    'ALVAREZ',
+    'MORRISON',
+    'HANSEN',
+    'FERNANDEZ',
+    'GARZA',
+    'HARVEY',
+    'LITTLE',
+    'BURTON',
+    'STANLEY',
+    'NGUYEN',
+    'GEORGE',
+    'JACOBS',
+    'REID',
+    'KIM',
+    'FULLER',
+    'LYNCH',
+    'DEAN',
+    'GILBERT',
+    'GARRETT',
+    'ROMERO',
+    'WELCH',
+    'LARSON',
+    'FRAZIER',
+    'BURKE',
+    'HANSON',
+    'DAY',
+    'MENDOZA',
+    'MORENO',
+    'BOWMAN',
+    'MEDINA',
+    'FOWLER',
+    'BREWER',
+    'HOFFMAN',
+    'CARLSON',
+    'SILVA',
+    'PEARSON',
+    'HOLLAND',
+    'DOUGLAS',
+    'FLEMING',
+    'JENSEN',
+    'VARGAS',
+    'BYRD',
+    'DAVIDSON',
+    'HOPKINS',
+    'MAY',
+    'TERRY',
+    'HERRERA',
+    'WADE',
+    'SOTO',
+    'WALTERS',
+    'CURTIS',
+    'NEAL',
+    'CALDWELL',
+    'LOWE',
+    'JENNINGS',
+    'BARNETT',
+    'GRAVES',
+    'JIMENEZ',
+    'HORTON',
+    'SHELTON',
+    'BARRETT',
+    'OBRIEN',
+    'CASTRO',
+    'SUTTON',
+    'GREGORY',
+    'MCKINNEY',
+    'LUCAS',
+    'MILES',
+    'CRAIG',
+    'RODRIQUEZ',
+    'CHAMBERS',
+    'HOLT',
+    'LAMBERT',
+    'FLETCHER',
+    'WATTS',
+    'BATES',
+    'HALE',
+    'RHODES',
+    'PENA',
+    'BECK',
+    'NEWMAN',
+    'HAYNES',
+    'MCDANIEL',
+    'MENDEZ',
+    'BUSH',
+    'VAUGHN',
+    'PARKS',
+    'DAWSON',
+    'SANTIAGO',
+    'NORRIS',
+    'HARDY',
+    'LOVE',
+    'STEELE',
+    'CURRY',
+    'POWERS',
+    'SCHULTZ',
+    'BARKER',
+    'GUZMAN',
+    'PAGE',
+    'MUNOZ',
+    'BALL',
+    'KELLER',
+    'CHANDLER',
+    'WEBER',
+    'LEONARD',
+    'WALSH',
+    'LYONS',
+    'RAMSEY',
+    'WOLFE',
+    'SCHNEIDER',
+    'MULLINS',
+    'BENSON',
+    'SHARP',
+    'BOWEN',
+    'DANIEL',
+    'BARBER',
+    'CUMMINGS',
+    'HINES',
+    'BALDWIN',
+    'GRIFFITH',
+    'VALDEZ',
+    'HUBBARD',
+    'SALAZAR',
+    'REEVES',
+    'WARNER',
+    'STEVENSON',
+    'BURGESS',
+    'SANTOS',
+    'TATE',
+    'CROSS',
+    'GARNER',
+    'MANN',
+    'MACK',
+    'MOSS',
+    'THORNTON',
+    'DENNIS',
+    'MCGEE',
+    'FARMER',
+    'DELGADO',
+    'AGUILAR',
+    'VEGA',
+    'GLOVER',
+    'MANNING',
+    'COHEN',
+    'HARMON',
+    'RODGERS',
+    'ROBBINS',
+    'NEWTON',
+    'TODD',
+    'BLAIR',
+    'HIGGINS',
+    'INGRAM',
+    'REESE',
+    'CANNON',
+    'STRICKLAND',
+    'TOWNSEND',
+    'POTTER',
+    'GOODWIN',
+    'WALTON',
+    'ROWE',
+    'HAMPTON',
+    'ORTEGA',
+    'PATTON',
+    'SWANSON',
+    'JOSEPH',
+    'FRANCIS',
+    'GOODMAN',
+    'MALDONADO',
+    'YATES',
+    'BECKER',
+    'ERICKSON',
+    'HODGES',
+    'RIOS',
+    'CONNER',
+    'ADKINS',
+    'WEBSTER',
+    'NORMAN',
+    'MALONE',
+    'HAMMOND',
+    'FLOWERS',
+    'COBB',
+    'MOODY',
+    'QUINN',
+    'BLAKE',
+    'MAXWELL',
+    'POPE',
+    'FLOYD',
+    'OSBORNE',
+    'PAUL',
+    'MCCARTHY',
+    'GUERRERO',
+    'LINDSEY',
+    'ESTRADA',
+    'SANDOVAL',
+    'GIBBS',
+    'TYLER',
+    'GROSS',
+    'FITZGERALD',
+    'STOKES',
+    'DOYLE',
+    'SHERMAN',
+    'SAUNDERS',
+    'WISE',
+    'COLON',
+    'GILL',
+    'ALVARADO',
+    'GREER',
+]
