@@ -1,0 +1,10 @@
+
+.summary-value {
+    font-weight: bold;
+}
+
+.blacklisted {
+    color: red;
+    font-weight: bold;
+}
+

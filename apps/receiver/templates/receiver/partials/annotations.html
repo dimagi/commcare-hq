@@ -83,7 +83,11 @@
     });
         
 </script>
-<a href="#" class="jqmClose">Close</a><br>
+Enter a message about this follow-up.<br/>
+<!--
+	rO - this seems unnecessary. we always have 'add/close' buttons at the bottom, no?
+	<a href="#" class="jqmClose">Close</a><br>
+-->
 {% if annotations %}
     {% for annotation in annotations %}
         <div class="annotation">
@@ -93,7 +97,11 @@
         </div>
     {% endfor %}
 {% else %}
+    <!--
+    rO - is this necessary?
     No Annotations.
+    
+    -->
 {% endif %}
 {% if allow_add %}
     <textarea id="new_annotation" rows="4" cols="40"></textarea>
@@ -104,6 +112,12 @@
         {# we still need the input on the page, so just add a hidden one #}
         <input type="hidden" id="send_sms">
     {% endif %}
+    
+	{% if chw_name %}
+		<input type="checkbox"/>
+		Text this message to {{chw_name}} at {{chw_number}}?<br />
+	{% endif %}
+
     <input id="add_annotation" class="jqmClose" type="button" value="Add" />
     <input id="close" class="jqmClose" type="button" value="Close" />
 {% endif %}

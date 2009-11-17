@@ -21,7 +21,7 @@ import time
 
 @register.simple_tag
 def get_form_links(user):
-    base_link = reverse('hq.views.summary_trend',kwargs={})
+    base_link = reverse('graphing.views.summary_trend',kwargs={})
     #<a href="%s?content_type=%s&content_id=%s">%s</a>
     extuser = ExtUser.objects.all().get(id=user.id)    
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)

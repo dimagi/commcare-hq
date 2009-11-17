@@ -31,7 +31,6 @@ from xformmanager.models import *
 from hq.models import *
 from graphing.models import *
 from receiver.models import *
-import graphing.views as chartviews
 
 import hq.utils as utils
 import hq.reporter as reporter
@@ -224,48 +223,7 @@ def org_sms_report(request, template_name="hq/org_single_report.html"):
     return render_to_response(request, template_name, context)
 
 
-@extuser_required()
-def domain_charts(request):
-    context = {}
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    mychartgroup = utils.get_chart_group(extuser)
-    if mychartgroup == None:
-        return summary_trend(request)
-    else:  
-        return chartviews.view_group(request, mychartgroup.id)
 
-@extuser_required()
-def summary_trend(request, template_name="graphing/summary_trend.html"):
-    """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
-    context = {}        
-    
-    formname = ''
-    formdef_id = -1
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    
-    for item in request.GET.items():
-        if item[0] == 'formdef_id':
-            formdef_id=item[1]    
-    if formdef_id == -1:
-        context['chart_title'] = 'All Data'
-        context['dataset'] = {}        
-        defs = FormDefModel.objects.all().filter(domain=extuser.domain)
-    
-        for fdef in defs:            
-            d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
-            context['dataset'][fdef.form_display_name.__str__()] = d.get_counts_dataset(None,None)                    
-    
-    else:
-        fdef = FormDefModel.objects.all().filter(id=formdef_id)
-        context['chart_title'] = fdef[0].form_display_name
-        d = dbhelper.DbHelper(fdef[0].element.table_name,fdef[0].form_display_name)        
-        context['dataset'] = d.get_integer_series_dataset()
-    
-    context ['maxdate'] = 0;
-    context ['mindate'] = 0;
-    return render_to_response(request, template_name, context)
 
 @login_required()
 def password_change(req):
