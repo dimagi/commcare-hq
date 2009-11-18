@@ -380,14 +380,9 @@ def annotations(request, attachment_id, allow_add=True):
     # TODO: error checking
     attach = Attachment.objects.get(id=attachment_id)
     annotes = attach.annotations.all()
-    context = {"attachment": attach, "annotations": annotes, "allow_add": allow_add}
-    # rO - NOV 17 HACK
-    if 'chw_name' in request.GET:
-        context['chw_name'] = request.GET['chw_name']
-        context['chw_number'] = "+2547173314"
-    # </hack>
-    return render_to_response(request, "receiver/partials/annotations.html", context)
-
+    return render_to_response(request, "receiver/partials/annotations.html", {"attachment": attach, 
+                                                                              "annotations": annotes, 
+                                                                              "allow_add": allow_add})
 @extuser_required()
 def new_annotation(request):
     # TODO: error checking
