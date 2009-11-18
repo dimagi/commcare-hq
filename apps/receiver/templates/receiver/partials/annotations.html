@@ -83,7 +83,7 @@
     });
         
 </script>
-Enter a message about this follow-up.<br/>
+Enter a note about this case.<br/>
 <!--
 	rO - this seems unnecessary. we always have 'add/close' buttons at the bottom, no?
 	<a href="#" class="jqmClose">Close</a><br>
@@ -113,10 +113,8 @@ Enter a message about this follow-up.<br/>
         <input type="hidden" id="send_sms">
     {% endif %}
     
-	{% if chw_name %}
-		<input type="checkbox"/>
-		Text this message to {{chw_name}} at {{chw_number}}?<br />
-	{% endif %}
+	<input type="checkbox"/>
+	Text this message to {{chw_name}} at {{chw_number}}?<br />
 
     <input id="add_annotation" class="jqmClose" type="button" value="Add" />
     <input id="close" class="jqmClose" type="button" value="Close" />
