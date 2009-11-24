@@ -71,7 +71,7 @@ class Submission(models.Model):
         return "Submission " + unicode(self.submit_time)
     
     def delete(self, **kwargs):
-        if os.path.exists(self.raw_post) and os.path.isfile(self.raw_post):
+        if self.raw_post is not None and os.path.exists(self.raw_post) and os.path.isfile(self.raw_post):
             os.remove(self.raw_post)
         else:
             logging.warn("Raw post not found on file system.")
@@ -145,7 +145,7 @@ class Submission(models.Model):
         
         """
         #print "processing %s (%s)" % (self,self.raw_post)
-        if not os.path.exists(self.raw_post):
+        if self.raw_post is None or not os.path.exists(self.raw_post):
             raise Submission.DoesNotExist("%s could not be found" % self.raw_post)
         post_file = open(self.raw_post, "r")
         submit_time = str(self.submit_time)
