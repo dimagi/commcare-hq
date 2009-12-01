@@ -26,9 +26,22 @@ def _monitoring(request):
                   depends on have been uploaded.'''
     
     return monitoring_report(request, case)
+
+def hi_risk_pregnancies(request):
+    '''Hi-Risk Pregnancy Summary'''
+    # just pass on to the helper view, but ensure that hi-risk is set to yes
+    params = request.GET.copy()
+    params["sampledata_hi_risk"]="yes"
+    return _chw_submission_summary(request, params)
     
 def chw_submission_details(request):
     '''Health Worker Submission Details'''
+    return _chw_submission_summary(request, request.GET)
+
+def _chw_submission_summary(request, params):
+    # this was made a private method so that we can call it from multiple reports
+    # with an extra parameter.
+    
     # had to move this form a sql report to get in the custom annotations
     # this is a pretty ugly/hacky hybrid approach, and should certainly
     # be cleaned up
@@ -39,13 +52,13 @@ def chw_submission_details(request):
     form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
     report = SqlReport.objects.get(id=grameen_submission_details_id)
     cols = ('meta_username', 'sampledata_hi_risk')
-    where_cols = dict([(key, val) for key, val in request.GET.items() if key in cols])
+    where_cols = dict([(key, val) for key, val in params.items() if key in cols])
     whereclause = get_whereclause(where_cols)
     follow_filter = None
-    if "follow" in request.GET:
-        if request.GET["follow"] == "yes":
+    if "follow" in params:
+        if params["follow"] == "yes":
             follow_filter = True
-        elif request.GET["follow"] == "no":
+        elif params["follow"] == "no":
             follow_filter = False
     cols, data = report.get_data({"whereclause": whereclause})
     new_data = []
