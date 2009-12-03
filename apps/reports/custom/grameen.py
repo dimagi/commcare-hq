@@ -8,7 +8,7 @@ import settings
 from xformmanager.models import Metadata, FormDefModel, ElementDefModel
 from reports.models import Case, SqlReport
 from reports.util import get_whereclause
-from shared import monitoring_report
+from shared import monitoring_report, Mother
 
 
 '''Report file for custom Grameen reports'''
@@ -26,6 +26,29 @@ def _monitoring(request):
                   depends on have been uploaded.'''
     
     return monitoring_report(request, case)
+
+def _mother_summary(request):
+    '''Individual Mother Summary'''
+    # this is intentionally private, as it's only accessed from within other
+    # reports that explicitly know about it.  We don't want to list it because
+    # we don't know what id to use.
+    safe_preg_case_name = "Grameen Safe Pregnancies"
+    try:
+        case = Case.objects.get(name=safe_preg_case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    if not "case_id" in request.GET:
+        return '''Sorry, you have to specify a mother using the case id
+                  in the URL.'''
+    case_id = request.GET["case_id"]
+    data = case.get_data_map_for_case(case_id)
+    mom = Mother(case, case_id, data)
+    
+    return render_to_string("custom/grameen/mother_details.html", 
+                            {"mother": mom})
+    
+
 
 def hi_risk_pregnancies(request):
     '''Hi-Risk Pregnancy Summary'''

@@ -8,6 +8,7 @@
     font-weight: bold;
 }
 
+
 #customreports ul {
     list-style: none;
     margin-left: 0px;
@@ -21,6 +22,42 @@
     padding: 4px;
 }
 
-#customreports li a {
 
-} 
+#mother-summary {
+    font-size: 120%;
+}
+
+#mother-summary .problem {
+    color: red;
+    font-weight: bold;
+}
+
+
+#mother-summary h3 {
+    text-align: center;
+    border:2px #6699CC solid;
+    margin-top: 20px;
+    padding: 2px;
+    background-color: #eeeeee;
+}
+
+#mother-summary ul {
+    list-style: none;
+    margin-left: 0px;
+    padding-left: 0px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+#mother-summary li {
+	display: inline;
+    margin-left: 10px;   
+    margin-right: 10px;   
+    margin-top: 2px;
+    padding: 4px;
+}
+
+#mother-summary .value {
+    font-weight: bold;
+}
+
