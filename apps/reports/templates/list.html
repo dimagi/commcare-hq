@@ -1,14 +1,19 @@
-{% extends "xformmanager_base.html" %}
+{% extends base_template %}
 {% load i18n %}
 {% block title %}Reports for {{domain}}{% endblock %}
-{% block mgr_content %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css" />
+{% endblock %}
+{% block content %}
 {% if custom_reports %}
     <h2>Custom Reports for {{domain}}</h2>
+    <div id="customreports">
     <ul>
     {% for report in custom_reports %}
         <li><a href="{% url reports.views.custom_report domain.id report.name %}">{{ report.display_name }}</a></li>
     {% endfor %}
     </ul>
+    </div>
 {% endif %}
 {% if case_reports %}
     <h2>Data Export Reports for {{domain}}</h2>
