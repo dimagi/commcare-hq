@@ -1,7 +1,7 @@
-{% extends "xformmanager_base.html" %}
+{% extends base_template %}
 {% load i18n %}
 {% block title %}Data for Report: {{case}}{% endblock %}
-{%block mgr_content%}
+{% block content %}
 
 <h2>{% trans "Data for Report: " %}{{case}}</h2>
 <a href="{% url reports.views.case_export_csv case.id %}">download csv file</a>

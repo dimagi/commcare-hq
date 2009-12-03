@@ -1,7 +1,7 @@
-{% extends "xformmanager_base.html" %}
+{% extends base_template %}
 {% load i18n %}
 {% block title %}Data for Report: {{case}}{% endblock %}
-{% block mgr_content %}
+{% block content %}
 
 <h2>{% trans "Data for Report: " %}{{case}} id {{ case_instance_id }}</h2>
 <br>
