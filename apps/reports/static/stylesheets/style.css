@@ -8,3 +8,19 @@
     font-weight: bold;
 }
 
+#customreports ul {
+    list-style: none;
+    margin-left: 0px;
+    padding-left: 0px;
+}
+
+#customreports li {
+	border:2px #6699CC solid;
+    margin-left: 0px;   
+    margin-top: 10px;
+    padding: 4px;
+}
+
+#customreports li a {
+
+} 
