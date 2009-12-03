@@ -14,7 +14,7 @@
 <tr>
 {% for row in data %}
     {% for col in columns %}
-        <td>{% ifequal col 'Mother Name' %}<a href="/reports/3/custom/_mother_summary?case_id={{row|dict_lookup:'Case ID'}}">{{ row|dict_lookup:col }}</a>
+        <td>{% ifequal col "Mother Name" %}<a href="/reports/3/custom/_mother_summary?case_id={{row|dict_lookup:"Case ID"}}">{{ row|dict_lookup:col }}</a>
             {% else %}{{ row|dict_lookup:col }}{% endifequal %}
         </td>
     {% endfor %}

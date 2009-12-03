@@ -1,0 +1,46 @@
+{% load hq_shared_tags %}
+<h2>Mother Summary for {{ mother.mother_name }}</h2>
+<div id="mother-summary">
+<h3>General Information</h3>
+<ul>
+    <li><span class="prompt">Name:</span> <span class="value">{{ mother.mother_name }}</span></li>
+    <li><span class="prompt">Address:</span> <span class="value">{{ mother.address }}</span></li>
+    <li><span class="prompt">Phone:</span> <span class="value">{{ mother.phone }}</span></li>
+    <li><span class="prompt">Attending CHW:</span> <span class="value">{{ mother.chw }}</span></li>
+</ul>
+<ul>
+    <li><span class="prompt">Age:</span> <span class="value">{{ mother.mother_age}}</span></li>
+    <li><span class="prompt">Height:</span> <span class="value">{{ mother.mother_height}}</span></li>
+    <li><span class="prompt">Partner Name:</span> <span class="value">{{ mother.partner_name }}</span></li>
+    <li><span class="prompt">Partner Occupation:</span> <span class="value">{{ mother.partner_occupation }}</span></li>
+</ul>
+<h3>This Pregnancy</h3>
+<ul>
+    <li><span class="prompt">Date Registered:</span> <span class="value">{{ mother.date_of_reg|date }}</span></li>
+    <li><span class="prompt">Months Pregnant:</span> <span class="value">{{ mother.months_pregnant }}</span></li>
+    <li><span class="prompt">Hi Risk:</span> <span class="value{% ifequal mother.hi_risk 'yes' %} problem{% endifequal %}">{{ mother.hi_risk }}</span></li>
+</ul>
+<ul>
+    <li><span class="prompt">Heart Problems:</span> <span class="value">{{ mother.heart_problems }}</span></li>
+    <li><span class="prompt">Diabetes:</span> <span class="value">{{ mother.diabetes }}</span></li>
+    <li><span class="prompt">Hip Problems:</span> <span class="value">{{ mother.hip_problems }}</span></li>
+</ul>
+<h3>Pregnancy History</h3>
+<ul>
+    <li><span class="prompt">Previous Pregnancies:</span> <span class="value">{{ mother.previous_pregnancies }}</span></li>
+    <li><span class="prompt">Previous Deliveries:</span> <span class="value">{{ mother.previous_deliveries }}</span></li>
+    <li><span class="prompt">Previous Terminations:</span> <span class="value">{{ mother.previous_terminations }}</span></li>
+</ul>
+<ul>
+    <li><span class="prompt">Previous Newborn Death:</span> <span class="value">{{ mother.previous_newborn_death }}</span></li>
+    <li><span class="prompt">Previous C-Section:</span> <span class="value">{{ mother.previous_csection }}</span></li>
+    <li><span class="prompt">Previous Bleeding:</span> <span class="value">{{ mother.previous_bleeding }}</span></li>
+</ul>
+<h3>Problems</h3>
+<ul>
+    <li><span class="prompt">Danger Signs:</span> <span class="value">{{ mother.danger_signs }}</span></li>
+    <li><span class="prompt">High Risk Factors:</span> <span class="value">{{ mother.high_risk_factors }}</span></li>
+    <li><span class="prompt">Incomplete Checklist Items:</span> <span class="value">{{ mother.incomplete_checklist_items }}</span></li>
+    
+<ul>
+
