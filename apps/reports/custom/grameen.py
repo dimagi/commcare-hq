@@ -78,7 +78,7 @@ def _get_hi_risk_reason(mom):
     if (mom.card_results_blood_group == 'anegative'): reasons.append("a-negative blood group")
     if (mom.card_results_blood_group == 'abnegative'): reasons.append("ab-negative blood group")
     if (mom.card_results_blood_group == 'bnegative'): reasons.append("b-negative blood group")
-    return ",".join(reasons)
+    return ", ".join(reasons)
     
 def hi_risk_pregnancies(request):
     '''Hi-Risk Pregnancy Summary'''
