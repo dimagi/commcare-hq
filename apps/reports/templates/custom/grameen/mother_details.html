@@ -21,9 +21,6 @@
     <tr><td class="prompt">Diabetes:</td> <td class="value">{{ mother.diabetes }}</td></tr>
     <tr><td class="prompt">Hip Problems:</td> <td class="value">{{ mother.hip_problems }}</td></tr>
     <tr><td class="prompt">Hi Risk:</td> <td class="value{% ifequal mother.hi_risk 'yes' %} problem{% endifequal %}">{{ mother.hi_risk }}</td></tr>
-    {% ifequal mother.hi_risk 'yes' %}
-    <tr><td class="prompt">Hi Risk Reasons:</td> {{ mother.high_risk_factors }}</td></tr>
-    {% endifequal %}
 </table>
 <h3>Pregnancy History</h3>
 <table class="sofT">
@@ -36,7 +33,6 @@
 </table>
 <h3>Problems</h3>
 <table class="sofT">
-    <tr><td class="prompt">Danger Signs:</td> <td class="value">{{ mother.danger_signs }}</td></tr>
     <tr><td class="prompt">High Risk Factors:</td> <td class="value">{{ mother.high_risk_factors }}</td></tr>
     <tr><td class="prompt">Incomplete Checklist Items:</td> <td class="value">{{ mother.incomplete_checklist_items }}</td></tr>
 </table>
