@@ -151,11 +151,16 @@ class Mother(object):
             # high risk factors
             hi_risk_cols = ["sampledata_hi_risk_info_old",
                             "sampledata_hi_risk_info_young",
+                            "sampledata_hi_risk_info",
                             "sampledata_hi_risk_info_education",
                             "sampledata_hi_risk_info_small",
                             "sampledata_hi_risk_info_10_years",
+                            "sampledata_hi_risk_info_5_years",
                             "sampledata_hi_risk_info_complications",
+                            "sampledata_hi_risk_info_blood_group",
                             "sampledata_hi_risk_info_many",
+                            "sampledata_hi_risk_info_hepb",
+                            "sampledata_hi_risk_info_anemia",
                             "sampledata_hi_risk_info_health",
                             "sampledata_hi_risk_info_hiv",
                             "sampledata_hi_risk_info_syphilis"]
