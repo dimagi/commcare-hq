@@ -51,7 +51,6 @@ def _mother_summary(request):
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
     mom.hi_risk_reasons = _get_hi_risk_reason(mom)
-    print mom.hi_risk_reasons
     return render_to_string("custom/grameen/mother_details.html", 
                             {"mother": mom, "attrs": all_attrs,
                              "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
@@ -61,7 +60,6 @@ def _mother_summary(request):
 def _get_hi_risk_reason(mom):
     reasons = []
     if (mom.mother_age >= 35): reasons.append("35 or older") 
-    else: print mom.mother_age
     if (mom.mother_age <= 18): reasons.append("18 or younger")
     if (mom.mother_height == 'under_150'): reasons.append("mother height under 150cm")
     if (mom.previous_csection == 'yes'): reasons.append("previous c-section")
@@ -80,7 +78,6 @@ def _get_hi_risk_reason(mom):
     if (mom.card_results_blood_group == 'anegative'): reasons.append("a-negative blood group")
     if (mom.card_results_blood_group == 'abnegative'): reasons.append("ab-negative blood group")
     if (mom.card_results_blood_group == 'bnegative'): reasons.append("b-negative blood group")
-    print "hi risk reasons: %s" % reasons
     return ",".join(reasons)
     
 def hi_risk_pregnancies(request):
