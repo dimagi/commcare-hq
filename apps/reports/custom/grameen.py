@@ -46,6 +46,13 @@ def _mother_summary(request):
     case_id = request.GET["case_id"]
     data = case.get_data_map_for_case(case_id)
     mom = Mother(case, case_id, data)
+    mother_name = request.GET["mother_name"]
+    if mom.mother_name != mother_name:
+        return '''<p class="error">Sorry it appears that this id has been used by the CHW for
+                  more than one mother.  Unfortunately, this means we can't 
+                  yet show you her data here.  Please remind your CHW's to 
+                  use unique case Ids!</p> 
+               '''
     attrs = [name for name in dir(mom) if not name.startswith("_")]
     attrs.remove("data_map")
     display_attrs = [attr.replace("_", " ") for attr in attrs]
