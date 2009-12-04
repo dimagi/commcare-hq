@@ -50,14 +50,39 @@ def _mother_summary(request):
     attrs.remove("data_map")
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
+    mom.hi_risk_reasons = _get_hi_risk_reason(mom)
+    print mom.hi_risk_reasons
     return render_to_string("custom/grameen/mother_details.html", 
                             {"mother": mom, "attrs": all_attrs,
                              "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
                              }) 
                              
+
+def _get_hi_risk_reason(mom):
+    reasons = []
+    if (mom.mother_age >= 35): reasons.append("35 or older") 
+    else: print mom.mother_age
+    if (mom.mother_age <= 18): reasons.append("18 or younger")
+    if (mom.mother_height == 'under_150'): reasons.append("mother height under 150cm")
+    if (mom.previous_csection == 'yes'): reasons.append("previous c-section")
+    if (mom.previous_newborn_death == 'yes'): reasons.append("previous newborn death")
+    if (mom.previous_bleeding == 'yes'): reasons.append("previous bleeding")
+    if (mom.previous_terminations >= 3): reasons.append("%s previous terminations" % mom.previous_terminations)
+    if (mom.previous_pregnancies >= 5): reasons.append("%s previous pregnancies" % mom.previous_pregnancies)
+    if (mom.heart_problems == 'yes'): reasons.append("heart problems")
+    if (mom.diabetes == 'yes'): reasons.append("diabetes")
+    if (mom.hip_problems == 'yes'): reasons.append("hip problems")
+    if (mom.card_results_syphilis_result == 'positive'): reasons.append("positive for syphilis")
+    if (mom.card_results_hepb_result == 'positive'): reasons.append("positive for hepb")
+    if (mom.over_5_years == 'yes'): reasons.append("over 5 years since last pregnancy")
+    if (mom.card_results_hb_test == 'below_normal'): reasons.append("low hb test")
+    if (mom.card_results_blood_group == 'onegative'): reasons.append("o-negative blood group")
+    if (mom.card_results_blood_group == 'anegative'): reasons.append("a-negative blood group")
+    if (mom.card_results_blood_group == 'abnegative'): reasons.append("ab-negative blood group")
+    if (mom.card_results_blood_group == 'bnegative'): reasons.append("b-negative blood group")
+    print "hi risk reasons: %s" % reasons
+    return ",".join(reasons)
     
-
-
 def hi_risk_pregnancies(request):
     '''Hi-Risk Pregnancy Summary'''
     # just pass on to the helper view, but ensure that hi-risk is set to yes
