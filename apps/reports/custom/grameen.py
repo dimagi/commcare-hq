@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
+import inspect 
+
 from django.template.loader import render_to_string
 from django.db import connection
 import settings
@@ -44,9 +46,15 @@ def _mother_summary(request):
     case_id = request.GET["case_id"]
     data = case.get_data_map_for_case(case_id)
     mom = Mother(case, case_id, data)
-    
+    attrs = [name for name in dir(mom) if not name.startswith("_")]
+    attrs.remove("data_map")
+    display_attrs = [attr.replace("_", " ") for attr in attrs]
+    all_attrs = zip(attrs, display_attrs)
     return render_to_string("custom/grameen/mother_details.html", 
-                            {"mother": mom})
+                            {"mother": mom, "attrs": all_attrs,
+                             "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
+                             }) 
+                             
     
 
 

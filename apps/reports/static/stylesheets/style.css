@@ -57,6 +57,16 @@
     padding: 4px;
 }
 
+#mother-summary .prompt {
+    width: 200px;
+    text-align: right;
+}
+
+#mother-summary .value {
+    font-weight: bold;
+}
+
+
 #mother-summary .value {
     font-weight: bold;
 }
