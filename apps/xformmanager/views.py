@@ -263,13 +263,15 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
     # the instance version/uiversion
     data = [('XMLNS',xform.target_namespace), ('Version',xform.version), 
             ('uiVersion',xform.uiversion)]
+    attach = xform.get_attachment(instance_id)
     row = xform.get_row(instance_id)
     fields = xform.get_display_columns()
     # make them a list of tuples of field, value pairs for easy iteration
     data = data + zip(fields, row)
     return render_to_response(request, template_name, {"form" : xform,
                                                        "id": instance_id,  
-                                                       "data": data })
+                                                       "data": data,
+                                                       "attachment": attach })
         
 @extuser_required()
 @authenticate_schema
