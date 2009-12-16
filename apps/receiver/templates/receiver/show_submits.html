@@ -41,16 +41,9 @@ Submissions with IDs highlighted in <span class="deleted">blue</span> were manua
    		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
    		<td>{{submission.submit_ip}}</td>
    		<td>{{submission.bytes_received}}</td>
-   		<td>{% if submission.xform %}
-   		    <a href="{% url receiver.views.single_attachment submission.xform.id %}">view xml submission</a>
-   		    {% if submission.xform.is_duplicate %}
-   		    &nbsp;&nbsp;<a href="{% url show_dupes submission.id %}">view duplicates</a>
-            {% endif %}
-   		    {% if submission.xform.has_linked_schema %}
-   		    &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">view form data</a>
-            &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance_csv submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">download data as csv</a>
-            {% endif %}
-            {% endif %}
+   		<td><div class="table-list">
+   		    <ul>{% include "receiver/partials/submission_actions.html" %}</ul>
+   		    </div>
    		</td>
         <td>{% get_attachments_links submission %}</td>
    	</tr>

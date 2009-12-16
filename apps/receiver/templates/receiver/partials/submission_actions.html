@@ -1,0 +1,11 @@
+{% if submission.xform %}
+    <li><a href="{% url receiver.views.single_attachment submission.xform.id %}">view xml submission</a></li>
+    {% if submission.xform.is_duplicate %}
+        <li><a href="{% url show_dupes submission.id %}">view duplicates</a></li>
+    {% endif %}
+    {% if submission.xform.has_linked_schema %}
+        <li><a href="{% url xformmanager.views.single_instance submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">view form data</a></li>
+        <li><a href="{% url xformmanager.views.single_instance_csv submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">download data as csv</a></li>
+    {% endif %}
+{% endif %}
+        
