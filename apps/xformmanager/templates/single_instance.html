@@ -2,12 +2,16 @@
 {% block title %}Instance Data for {{ form.form_display_name }}{% endblock %}
 {% block mgr_content %}
 <h2>Instance Data for {{ form.form_display_name }}</h2>
-<p align="right"><a href="{% url xformmanager.views.single_instance_csv form.id id %}">download as csv</a></p>
+{% if attachment %}
+<p><a href="{%url receiver.views.single_submission attachment.submission.id %}">Submission Summary</a></p>
+{% endif %}
 <table class="sofT">
     <thead class="commcare-heading">
        <tr>
           <th>Field</th>
-          <th>Value</th>
+          <th>Value
+          <div style="float:right; font-weight:normal;"><a href="{% url xformmanager.views.single_instance_csv form.id id %}">download as csv</a></div>
+          </th>
        </tr>
     </thead>
     <tbody>

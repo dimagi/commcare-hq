@@ -108,8 +108,21 @@ class FormDefModel(models.Model):
         if os.path.exists(loc):
             return loc
         return None
+    
     xform_file_location = property(_get_xform_file_location)
     
+    def get_attachment(self, instance_id):
+        """Attempt to get the attachment object from the instance
+           ID.  Note that this is not always possible as some instances
+           may come from sources other than submissions, and some might
+           not be properly processed.  In these cases this method returns
+           nothing."""
+        try:
+            meta = Metadata.objects.get(formdefmodel=self, raw_data=instance_id)
+            return meta.attachment
+        except Metadata.DoesNotExist:
+            return None
+        
     # formdefs have a one-to-one relationship with elementdefs
     # yet elementdefs have a form_id which points to formdef
     # without this fix, delete is deadlocked
@@ -351,7 +364,7 @@ class Metadata(models.Model):
     chw_id = models.CharField(max_length=255, null=True)
     #unique id
     uid = models.CharField(max_length=32, null=True)
-    # foreign key to the associated submission (from receiver app)
+    # foreign key to the associated attachment (from receiver app)
     # this is currently required. if we decide to decouple this from receiver,
     # then remember to link metadata.delete() to submission.unhandled() 
     attachment = models.ForeignKey(Attachment, related_name="form_metadata")
