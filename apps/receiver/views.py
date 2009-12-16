@@ -87,7 +87,7 @@ def single_attachment(request, attachment_id):
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
-    context['submission_item'] = slog[0]
+    context['submission'] = slog[0]
     rawstring = str(slog[0].raw_header)
     
     #In order to display the raw header information, we need to escape the python object brackets in the output 
