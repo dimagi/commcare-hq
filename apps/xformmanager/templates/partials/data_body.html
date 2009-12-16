@@ -58,8 +58,11 @@
            {% else %}
                 <td>
            {% endifequal %}
-           {% if forloop.first %}
-	   		     <a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a>
+           {% ifequal forloop.counter0 0 %}
+                 <b><a href="{%url receiver.views.single_submission field %}">{{ field }}</a></b>
+           {% else %}
+           {% ifequal forloop.counter0 2 %}
+	   		     <b><a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a></b>
 	   	   {% else %}
 	   	  		 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
 	   	  		 {% if filtered_by %} 
@@ -83,7 +86,8 @@
 			   		     	{{field}}
 			   		     </a>
 	   	   		 {% endif %}
-	       {% endif %} 
+	   	   {% endifequal %}
+           {% endifequal %} 
 	   	   </td>
 	   {% endfor %}
 	</tr>
