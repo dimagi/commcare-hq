@@ -11,6 +11,7 @@ def domain_summary(request, domain=None):
     summary = DomainSummary(domain)
     return render_to_string("custom/all/domain_summary.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
+                             "detail_view": True,
                              "domain": domain,
                              "summary": summary})
 
@@ -21,6 +22,8 @@ class DomainSummary(object):
         self.chw_data = []
         self.domain = domain
         domain_meta = Metadata.objects.filter(formdefmodel__domain=domain)
+        self.first_submission = _get_first_object(domain_meta, "timeend", True)
+        self.last_submission = _get_first_object(domain_meta, "timeend", False)
         self.full_count = domain_meta.count()
         chws = domain_meta.values_list('username', flat=True).distinct()
         forms = FormDefModel.objects.filter(domain=domain)
