@@ -264,7 +264,6 @@ def validator(req, template_name="buildmanager/validator.html"):
     def post(req, template_name="buildmanager/validation_result.html"):
         xform_body = req.POST["xform"]
         try:
-            print "validating!"
             xformvalidator.validate_xml(xform_body)
             return render_to_response(req, template_name, {"success": True, 
                                                            "message": "Your form was successfully validated!"
