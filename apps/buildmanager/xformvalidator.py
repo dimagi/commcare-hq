@@ -5,7 +5,7 @@ from xformmanager.xformdef import FormDef
 from xformmanager.manager import form_translate
 
 import buildmanager.xformvalidator
-
+from buildmanager.exceptions import BuildError
 
 
 
