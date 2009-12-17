@@ -679,13 +679,6 @@ table.reporttable {
 }
 
 
-div.reports {
-	padding: 10px;
-	margin: 8px;
-	border: 1px solid black;
-	overflow:auto;	
-}
-
 
 table.reporttable td {
 	text-align:right;
@@ -716,11 +709,18 @@ table.reporttable td.item_row {
 }
 
 
+div.reports {
+	padding:0px;
+	margin:0px;
+    overflow:auto;  
+}
+
+
 div.reports ul {
+	padding:0px;
 	list-style-type:None;
 	font-size: 14px;
 	width:auto;	
-	
 }
 
 ul.spacer {
