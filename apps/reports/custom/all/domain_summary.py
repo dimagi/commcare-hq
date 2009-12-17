@@ -3,15 +3,16 @@ from django.template.loader import render_to_string
 import settings 
 
 from xformmanager.models import FormDefModel, Metadata
+from receiver.models import Submission, Attachment
 
-def domain_summary(request, domain=None):
+def domain_summary(request, domain=None, detail_view=True):
     '''Domain Admin Summary Data'''
     if not domain:
         domain = request.extuser.domain
     summary = DomainSummary(domain)
     return render_to_string("custom/all/domain_summary.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
-                             "detail_view": True,
+                             "detail_view": detail_view,
                              "domain": domain,
                              "summary": summary})
 
@@ -22,8 +23,14 @@ class DomainSummary(object):
         self.chw_data = []
         self.domain = domain
         domain_meta = Metadata.objects.filter(formdefmodel__domain=domain)
-        self.first_submission = _get_first_object(domain_meta, "timeend", True)
-        self.last_submission = _get_first_object(domain_meta, "timeend", False)
+        domain_submits = Submission.objects.filter(domain=domain)
+        
+        self.name = domain.name
+        self.submissions = domain_submits.count()
+        self.attachments = Attachment.objects.filter(submission__domain=domain).count()
+        self.first_submission = domain_submits.order_by("submit_time")[0].submit_time
+        self.last_submission = domain_submits.order_by("-submit_time")[0].submit_time
+        
         self.full_count = domain_meta.count()
         chws = domain_meta.values_list('username', flat=True).distinct()
         forms = FormDefModel.objects.filter(domain=domain)
