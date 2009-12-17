@@ -1,0 +1,13 @@
+{% extends "buildmanager/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "All Projects" %}{% endblock %}
+{% block buildmanager_content %}
+<h2>{% if success %}Great Success!{% else %}Epic Fail!{% endif %}</h2>
+<p>{{message}}</p>
+<h2>{% trans "Validate an X-Form" %}</h2>
+<h3>{% trans "Copy and paste the body of your X-Form below." %}</h3>
+<form name="mainform" method="post">
+<textarea name="xform" rows="30" cols="100" style="background-color:#FDFEDE" wrap="off"></textarea>
+<input type="submit" value="Validate!" style="margin-top:10px"></input>
+</form>
+{%endblock%}

@@ -11,6 +11,7 @@ from buildmanager.exceptions import BuildError
 from buildmanager.models import *
 from buildmanager.forms import *
 from buildmanager.jar import validate_jar
+from buildmanager import xformvalidator
 
 
 from rapidsms.webui.utils import render_to_response
@@ -253,7 +254,31 @@ def get_build_xform(request, id, template_name="buildmanager/display_xform.html"
     else:
         # display it inline on HQ
         return render_to_response(request, template_name, { "xform": form })
+
+def validator(req, template_name="buildmanager/validator.html"):
+    """Validate an xform"""
+    
+    def get(req, template_name):
+        return render_to_response(req, template_name, {})
+    
+    def post(req, template_name="buildmanager/validation_result.html"):
+        xform_body = req.POST["xform"]
+        try:
+            print "validating!"
+            xformvalidator.validate_xml(xform_body)
+            return render_to_response(req, template_name, {"success": True, 
+                                                           "message": "Your form was successfully validated!"
+                                                           })
+        except Exception, e:
+            return render_to_response(req, template_name, {"success": False, 
+                                                           "message": "Validation Fail! %s" % e
+                                                           })
         
+    
+    # invoke the correct function...
+    # this should be abstracted away
+    if   req.method == "GET":  return get(req, template_name)
+    elif req.method == "POST": return post(req)        
     
 def _handle_error(request, error_message):
     """Handles an error, by logging it and returning a 500 page"""

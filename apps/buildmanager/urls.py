@@ -1,7 +1,8 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',                       
-    (r'^projects/$', 'buildmanager.views.all_projects'),
+    (r'^projects/?$', 'buildmanager.views.all_projects'),
+    (r'^validator/?$', 'buildmanager.views.validator'),
     (r'^projects/(?P<project_id>\d+)/?$', 'buildmanager.views.show_project'),
     (r'^projects/(?P<project_id>\d+)/latest/?$', 'buildmanager.views.show_latest_build'),
     url(r'^projects/(?P<project_id>\d+)/latest/(?P<filename>.*)$', 'buildmanager.views.get_latest_buildfile',name='get_latest_buildfile'),
