@@ -24,7 +24,7 @@ def validate(xform_filename):
         if body:
             body.close()
 
-def validate_xml(xml_body, display_name="your xform"):
+def validate_xml(xml_body, display_name="your xform", do_hq_validation=True):
     """Validates an xform from the raw text, and takes in a display
        name to use in throwing erros. Returns the generated FormDef
        or thows an exception on failure."""
@@ -38,9 +38,10 @@ def validate_xml(xml_body, display_name="your xform"):
     if not formdef:
         raise BuildError("Could not get a valid form definition from the xml file: %s"
                           % form_display)
-        
-    #formdef.validate() throws errors on poor validation
-    formdef.validate()
+    
+    if do_hq_validation:    
+        #formdef.validate() throws errors on poor validation
+        formdef.validate()
     
     # if we made it here we're all good
     return formdef
