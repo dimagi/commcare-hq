@@ -2,9 +2,13 @@
 {% load i18n %}
 {% block title %}{% trans "All Projects" %}{% endblock %}
 {% block buildmanager_content %}
-<h2>{% if success %}Great Success!{% else %}Epic Fail!{% endif %}</h2>
-<p>{{message}}</p>
-<h2>{% trans "Validate an X-Form" %}</h2>
+{% if success %}
+<h2>Hooray! Your form passed validation!</h2>
+{% else %}
+<h2 class="error">Sorry, that Didn't pass! Your error is:</h2>
+<p class="error">{{message}}</p>
+{% endif %}
+<h2>{% trans "Try Again?" %}</h2>
 <h3>{% trans "Copy and paste the body of your X-Form below." %}</h3>
 <form name="mainform" method="post">
 <textarea name="xform" rows="30" cols="100" style="background-color:#FDFEDE" wrap="off"></textarea>
