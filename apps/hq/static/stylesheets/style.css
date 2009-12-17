@@ -481,9 +481,43 @@ p.error {
     color: red;
 }
 
-p.subheading {
-    font-size: 14px;
-    margin: 8px;
+#subheading ul
+{
+    list-style-type: none;
+    margin-top: 10px;
+    padding: 0px;
+    padding-bottom: 7px;
+    border-bottom-width: 1px; 
+    border-bottom-color: #DADFF9;
+    border-bottom-style: solid;
+}
+
+/* some page-level tab styling that's used in the build manager */
+
+#subheading li 
+{
+    display: inline;
+    margin: 0px;
+}
+
+#subheading li a
+{
+	background-color: #DADFF9;
+	margin-left: 0px;
+	margin-right: 0px;
+	border-right-width: 1px; 
+    border-right-color: #555555;
+    border-right-style: solid;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+#subheading li a:hover
+{
+    background-color: #E9EDFF;
+    border-right-color: #999999;
 }
 
 #government-report th {
