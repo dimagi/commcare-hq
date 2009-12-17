@@ -264,7 +264,6 @@ def validator(req, template_name="buildmanager/validator.html"):
     def post(req, template_name="buildmanager/validation_result.html"):
         xform_body = req.POST["xform"]
         hq_validation = True if "hq-validate" in req.POST else False
-        print "hq validation: %s" % hq_validation
         try:
             xformvalidator.validate_xml(xform_body, do_hq_validation=hq_validation)
             return render_to_response(req, template_name, {"success": True, 
