@@ -1,8 +1,8 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    (r'^xforms/$', 'xformmanager.views.register_xform'),
-    (r'^xforms/register/$', 'xformmanager.views.register_xform'),
+    (r'^xforms/$', 'xformmanager.views.home'),
+    (r'^xforms/register/$', 'xformmanager.views.home'),
     (r'^xforms/reregister/(?P<domain_name>.*)/?$', 'xformmanager.views.reregister_xform'),
     (r'^xforms/remove/(?P<form_id>\d+)/?$', 'xformmanager.views.remove_xform'),
     (r'^xforms/show/(?P<formdef_id>\d+)/?$', 'xformmanager.views.single_xform'),
