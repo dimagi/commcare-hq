@@ -102,6 +102,7 @@ def admin_stats_summary(report_schedule, run_frequency):
     """The domain summary, total counts of forms/chws and and 
        breakdowns by form type and CHW"""
     all_data = []
+    
     global_stats = {}
     global_stats["name"] = "Global Total"
     global_stats["submissions"] = Submission.objects.count()

@@ -12,21 +12,33 @@ def create_user_and_domain(username='brian',
     """Creates a domain 'mockdomain' and a web user with name/pw 
        'brian'/'test'.  Returns these two objects in a tuple 
        as (domain, user)"""
-    domain = Domain(name=domain_name)
-    domain.save()
-    user = ExtUser()
-    user.domain = domain
-    user.username = username
-    # here, we mimic what the django auth system does
-    # only we specify the salt to be 12345
-    salt = '12345'
-    hashed_pass = hashlib.sha1(salt+password).hexdigest()
-    user.password = 'sha1$%s$%s' % (salt, hashed_pass)
+    try:
+        domain = Domain.objects.get(name=domain_name)
+        print "WARNING: tried to create domain %s but it already exists!" % domain_name
+        print "Are all your tests cleaning up properly?"
+    except Domain.DoesNotExist:
+        # this is the normal case
+        domain = Domain(name=domain_name)
+        domain.save()
     
-    user.set_unsalted_password( username, password )
-    user.save()
+    try:
+        user = ExtUser.objects.get(username=username)
+        print "WARNING: tried to create user %s but it already exists!" % username
+        print "Are all your tests cleaning up properly?"
+    except ExtUser.DoesNotExist:
+        user = ExtUser()
+        user.domain = domain
+        user.username = username
+        # here, we mimic what the django auth system does
+        # only we specify the salt to be 12345
+        salt = '12345'
+        hashed_pass = hashlib.sha1(salt+password).hexdigest()
+        user.password = 'sha1$%s$%s' % (salt, hashed_pass)
+        
+        user.set_unsalted_password( username, password )
+        user.save()
     return (user, domain)
-
+                                
 def create_reporter_with_connection(alias, 
                                     phone_number,
                                     backend):
