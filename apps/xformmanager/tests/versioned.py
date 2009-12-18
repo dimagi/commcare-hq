@@ -10,10 +10,7 @@ import unittest
 
 class VersionedTestCase(unittest.TestCase):
     def setUp(self):
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
+        clear_data()
         
     def testFormDef_7(self):
         """ Test deep form definition created and data saved """

@@ -13,10 +13,7 @@ class CaseTestCase(unittest.TestCase):
     def setUp(self):
         # clean up, in case some other tests left some straggling
         # form data.
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
+        clear_data()
         
         path = os.path.dirname(__file__)
         # register some schemas

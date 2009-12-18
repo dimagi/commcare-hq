@@ -13,11 +13,8 @@ class BracTestCase(TestScript):
     apps = [ reporters_app.App ]
     
     def setUp(self):
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
-
+        clear_data()
+        
         TestScript.setUp(self, default_lang='sw')
         self.domain = Domain(name='mockdomain')
         self.domain.save()
