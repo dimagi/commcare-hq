@@ -5,7 +5,6 @@ from django.template import RequestContext
 from django.core.exceptions import *
 
 from rapidsms.webui.utils import render_to_response
-#from django.shortcuts import render_to_response, get_object_or_404
 from django.shortcuts import get_object_or_404
 
 from django.contrib.auth.decorators import login_required
@@ -51,9 +50,9 @@ def domain_charts(request):
 
 @extuser_required()
 def summary_trend(request, template_name="graphing/summary_trend.html"):
-    """This is just a really really basic trend of total counts for a given set of forms under this domain/organization"""    
+    """This is just a really really basic trend of total counts for a given set 
+       of forms under this domain/organization"""    
     context = {}        
-    
     formname = ''
     formdef_id = -1
     # the decorator and middleware ensure this will be set.
