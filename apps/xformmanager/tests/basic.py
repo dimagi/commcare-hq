@@ -7,10 +7,10 @@ from datetime import *
 import unittest
 
 class BasicTestCase(unittest.TestCase):
-    def setUp(self):
-        su = StorageUtility()
-        su.clear()
     
+    def setUp(self):
+        clear_data()
+        
     def testSaveFormData_1(self):
         """ Test basic form definition created and data saved """
         create_xsd_and_populate("1_basic.xsd", "1_basic.xml")

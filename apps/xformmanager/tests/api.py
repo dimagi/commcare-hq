@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.test.client import Client
-from xformmanager.tests.util import create_xsd_and_populate
+from xformmanager.tests.util import create_xsd_and_populate, clear_data
 from xformmanager.models import *
 from xformmanager.manager import XFormManager
 from hq.models import ExtUser
@@ -12,6 +12,7 @@ class APITestCase(TestCase):
         # we cannot load this using django built-in fixtures
         # because django filters are model dependent
         # (and we have a whack of dynamically generated non-model db tables)
+        clear_data()
         user, domain = create_user_and_domain()
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", domain)
         self.client.login(username='brian',password='test')
