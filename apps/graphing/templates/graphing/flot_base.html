@@ -6,7 +6,7 @@
     <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.min.js"></script><![endif]--> 
     {{ form.media }}
 {% endblock %} 
-{%block content%}
+{% block content %}
 
 <h1>{{chart_title}}</h1>
 <div id="placeholder" style="width:950px;height:600px;"></div>
@@ -14,9 +14,9 @@
 {% block chart_extras %}
 <!-- navigational elements go here -->
 
-{%endblock%}
+{% endblock %}
 {% block chart_script %}
 <!-- your actual script info for the flot chart. -->
-{%endblock%}
+{% endblock %}
 
-{%endblock%}
+{% endblock %}
