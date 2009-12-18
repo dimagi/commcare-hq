@@ -50,7 +50,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
 
 @extuser_required()
 @transaction.commit_manually
-def register_xform(request, template='register_and_list_xforms.html'):
+def home(request, template='register_and_list_xforms.html'):
     context = {}
     extuser = request.extuser
     if request.method == 'POST':
