@@ -10,7 +10,10 @@ def clear_data():
        submissions, and attachments.  Useful in the 
        setup and teardown methods of tests.
     """
-    clear_data()
+    su = StorageUtility()
+    su.clear()
+    Submission.objects.all().delete()
+    Attachment.objects.all().delete()
     
 def get_file(filename, path=None ):
     """ handles relative pathing of files """
