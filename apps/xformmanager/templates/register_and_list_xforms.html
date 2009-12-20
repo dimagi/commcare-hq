@@ -5,14 +5,8 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/xformmanager/javascripts/form_group.js"></script>
-    <script type="text/javascript">
-    alert('hello!');
-    $('#formlist').jqm({ajax: '/receiver/annotations/', trigger: 'div.annotationtrigger'},
-                        ajaxText: 'Please wait while we load that for you'}););
-    </script>
 {% endblock %}
 {% block mgr_content %}
-
 <div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
     {% if form.message.errors %}
         <ol>
