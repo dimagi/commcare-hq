@@ -5,6 +5,11 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/xformmanager/javascripts/form_group.js"></script>
+    <script type="text/javascript">
+    alert('hello!');
+    $('#formlist').jqm({ajax: '/receiver/annotations/', trigger: 'div.annotationtrigger'},
+                        ajaxText: 'Please wait while we load that for you'}););
+    </script>
 {% endblock %}
 {% block mgr_content %}
 
@@ -65,13 +70,13 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
    			<div class="formtrigger js_link" onclick="show_forms('{{group.xmlns}}', '#formlist');">{{ group.forms|length }}</div>
    			</td>
    			<td>{{ group.version_string }}</td>
-   			<td>{% blocktrans with group.first_date_registered|date as date_t and group.first_date_registered|time as time_t %}
-	   				{{date_t}}, {{time_t}}
+   			<td>{% blocktrans with group.first_date_registered|date as date_t %}
+	   				{{date_t}}
 	   			{% endblocktrans %}
    			</td>
             <td>{% if group.last_received %}
-		   			{% blocktrans with group.last_received|date as date_t and group.last_received|time as time_t %}
-		   				{{date_t}}, {{time_t}}
+		   			{% blocktrans with group.last_received|date as date_t %}
+		   				{{date_t}}
 		   			{% endblocktrans %}
 		   		{% else %}
 		   			n/a
