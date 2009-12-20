@@ -201,7 +201,6 @@ class FormDefModel(models.Model):
     @classmethod
     def get_group_for_namespace(cls, domain, xmlns):
         """Get a single group of forms by domain and xmlns"""
-        print "getting forms for %s in %s" % (xmlns, domain)
         forms = cls.objects.filter(domain=domain, target_namespace=xmlns)
         return FormGroup(forms)
         
