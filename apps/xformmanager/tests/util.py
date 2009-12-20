@@ -8,7 +8,7 @@ import logging
 def clear_data():
     """Clear most of the data in the system: schemas,
        submissions, and attachments.  Useful in the 
-       setup and teardown methods of tests.
+       setup and/or teardown methods of tests.
     """
     su = StorageUtility()
     su.clear()

@@ -1,0 +1,23 @@
+{% load i18n %}
+<h3>Forms for {{ group.xmlns }}</h3>
+<table>
+<thead>
+    <th>Version</th>
+    <th>Uploaded</th>
+    <th>Submissions</th>
+    <th>Last Seen</th>
+    <th colspan=2>Actions</th>
+</thead>
+<tbody>
+    {% for form in group.forms %}
+    <tr>
+        <td>{{ form.version }}</td>
+        <td>{{ form.date_created }}</td>
+        <td>{{ form.submission_count }}</td>
+        <td>{{ form.time_of_last_instance|date }}</td>
+        <td><a href="{% url xformmanager.views.data form.id %}">view data</a></td>
+        <td><a href="{% url xformmanager.views.remove_xform form.id %}">{% trans "drop this form" %}</a></td>
+    </tr>
+    {% endfor %}
+</tbody>       
+<input id="close" class="jqmClose" type="button" value="Close" />
