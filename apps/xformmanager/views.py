@@ -117,9 +117,19 @@ def home(request, template='register_and_list_xforms.html'):
             else:
                 transaction.rollback()
                 context['errors'] = form.errors
+    
     context['upload_form'] = RegisterXForm()
+    # group the formdefs by names
     context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
+    context['form_groups'] = FormDefModel.get_groups(extuser.domain)
     return render_to_response(request, template, context)
+
+@extuser_required()
+def xform_group(request):
+    xmlns = request.GET["xmlns"]
+    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
+    return render_to_response(request, "xformmanager/partials/form_group_popup.html", 
+                              {"group": group})
 
 def _register_xform(request, file_name, display_name, remote_addr, file_size):
     """ does the actual creation and saving of the formdef model """

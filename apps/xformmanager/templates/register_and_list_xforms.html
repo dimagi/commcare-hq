@@ -1,6 +1,11 @@
 {% extends "xformmanager_base.html" %}
 {% load i18n %}
 {% block title %}Upload your xforms here{% endblock %}
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/xformmanager/javascripts/form_group.js"></script>
+{% endblock %}
 {% block mgr_content %}
 
 <div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
@@ -45,38 +50,27 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
    		   <tr>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "XMLNS" %}</th>
-                <th>{% trans "Version" %}</th>
-                <th>{% trans "uiVersion" %}</th>
-                <th>{% trans "Date Registered" %}</th>
+                <th>{% trans "Forms" %}</th>
+                <th>{% trans "Versions" %}</th>
+                <th>{% trans "First Registered" %}</th>
                 <th>{% trans "Last Received" %}</th>
                 <th></th>
    		   </tr>
    		</thead>
-   		{% for form in registered_forms %}   
+   		{% for group in form_groups %}   
    		<tr class="{% cycle "odd" "even" %}">
-   			<td><a href="{% url xformmanager.views.data form.id %}">
-   			
-   			{{form.form_display_name}}
-   			</a></td>
+   			<td>{{ group.display_name }}</td>
+   			<td>{{ group.xmlns }}</td>
    			<td>
-   				{{form.target_namespace}}
+   			<div class="formtrigger js_link" onclick="show_forms('{{group.xmlns}}', '#formlist');">{{ group.forms|length }}</div>
    			</td>
-   			<td>
-   				{{form.version}}
-   			</td>
-   			<td>
-	   			{{form.uiversion}}
-   			</td>
-   			   			
-   			<td>
-	   			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
+   			<td>{{ group.version_string }}</td>
+   			<td>{% blocktrans with group.first_date_registered|date as date_t and group.first_date_registered|time as time_t %}
 	   				{{date_t}}, {{time_t}}
 	   			{% endblocktrans %}
    			</td>
-
-   			<td>
-   				{% if form.time_of_last_instance %}
-		   			{% blocktrans with form.time_of_last_instance|date as date_t and form.time_of_last_instance|time as time_t %}
+            <td>{% if group.last_received %}
+		   			{% blocktrans with group.last_received|date as date_t and group.last_received|time as time_t %}
 		   				{{date_t}}, {{time_t}}
 		   			{% endblocktrans %}
 		   		{% else %}
@@ -84,11 +78,7 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
 		   		{% endif %}
    			</td>
    			
-   			<td>
-	   			<a href="{% url xformmanager.views.remove_xform form.id %}">
-	   			{% trans "Drop This Form" %}
-	   			</a>
-   			</td>
+   			
    		</tr>
    		{% endfor %}   		
    </table>
@@ -98,5 +88,9 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
 </strong>
 
 *Note that files are processed as <a href="http://code.javarosa.org/wiki/xform">XForms</a>, unless they have a ".xsd" extension, in which case they are processed as <a href="http://www.w3schools.com/Schema/default.asp">XML Schema</a>.
+
+<div class="message_log" id="formlist">
+Hello World
+</div>
 {% endblock %}
 

@@ -79,6 +79,7 @@ class FormDefModel(models.Model):
     # the domain this form is associated with, if any
     domain = models.ForeignKey(Domain, null=True, blank=True)
     
+    # CZUE: why are these fields here???
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now)
     submit_ip = models.IPAddressField(_('Submitting IP Address'), null=True)
     bytes_received = models.IntegerField(_('Bytes Received'), null=True)
@@ -187,6 +188,23 @@ class FormDefModel(models.Model):
                           target_namespace)
         return FormDef.from_file(self.xsd_file_location)
     
+    @classmethod
+    def get_groups(cls, domain):
+        """Get the form groups in this domain"""
+        all_groups = []
+        xmlns_list = cls.objects.filter(domain=domain).values_list('target_namespace', flat=True).distinct()
+        for xmlns in xmlns_list:
+            all_groups.append(cls.get_group_for_namespace(domain, xmlns))
+        return all_groups
+    
+    
+    @classmethod
+    def get_group_for_namespace(cls, domain, xmlns):
+        """Get a single group of forms by domain and xmlns"""
+        print "getting forms for %s in %s" % (xmlns, domain)
+        forms = cls.objects.filter(domain=domain, target_namespace=xmlns)
+        return FormGroup(forms)
+        
     @classmethod
     def is_schema_registered(cls, target_namespace, version=None):
         """Given a form and version is that form registered """
@@ -333,7 +351,11 @@ class FormDefModel(models.Model):
             payload = xsd_file.read()
             xsd_file.close() 
             return simplejson.dumps(headers) + "\n\n" + payload
-    
+
+    def submission_count(self):
+        """Returns the total number of submission to this form."""
+        return Submission.objects.filter(attachments__form_metadata__formdefmodel=self).count()
+
     def time_of_last_instance(self):
         """ returns the last time an instance was submitted to this schema """
         submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
@@ -571,3 +593,37 @@ class MetaDataValidationError(Exception):
         
     def __unicode__(self):
         return "Errors for %s:\n%s" % (self.form_display, self.error_string) 
+
+class FormGroup():
+    """A group of forms associated together."""
+    # note that this is _not_ currently a model class, just 
+    # a data class used by other models.
+    
+    def __init__(self, forms):
+        if not forms:
+            raise Exception("Sorry you can't make an empty group of forms!")
+        self.forms = forms
+        # make sure they all have the same xmlns
+        self.xmlns = forms[0].target_namespace
+        self.versions = []
+        self.latest_version = 0
+        self.first_date_registered = datetime.max.date()
+        self.most_recently_registered = datetime.min.date()
+        self.display_name = ""
+        self.last_received = None
+        for form in forms:
+            if form.target_namespace != self.xmlns:
+                raise Exception("All forms have to have the same you can't make an empty group of forms!")
+            self.versions.append(form.version)
+            if form.version > self.latest_version:
+                self.latest_version = form.version
+            if form.date_created > self.most_recently_registered:
+                self.most_recently_registered = form.date_created
+                self.display_name = form.form_display_name
+            if form.date_created < self.first_date_registered:
+                self.first_date_registered = form.date_created
+            last_seen = form.time_of_last_instance
+            if last_seen and (not self.last_received or last_seen > self.last_received):
+                self.last_received = last_seen
+        
+        self.version_string = ",".join(["%s" % version for version in self.versions])
