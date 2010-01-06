@@ -30,8 +30,8 @@
 {% include "hq/partials/pagination.html" %}
 {% endwith %}
 <form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
-<table class="sofT">
-	<thead class="commcare-heading">
+<table>
+	<thead>
 	   <tr>
 	      <th></th>
 	   {% for col in columns %}

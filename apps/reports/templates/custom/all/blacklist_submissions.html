@@ -4,8 +4,8 @@
 <h2>Blacklisted User Submissions</h2>
 {% for username, device_data in all_data.items %}
 <h3>Submissions from {{ username }}</h3>
-<table class="sofT">
-    <thead class="commcare-heading">
+<table>
+    <thead>
         <th>Device</th><th>Other Users Submitting</th>
         {% for date in all_dates %}
             <th>{{ date|date:"m/d/Y" }}</th>
