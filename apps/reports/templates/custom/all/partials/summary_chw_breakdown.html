@@ -9,7 +9,7 @@
     </thead>
     <tbody>
     {% for chw in summary.chw_data %}
-    <tr{% if chw.in_blacklist %} class="blacklisted"{% endif %}>
+    <tr class="{% cycle "odd" "even" %}{% if chw.in_blacklist %} blacklisted{% endif %}">
         <td>{{ chw.name }}</td>
         <td>{{ chw.count }}</td>
         <td>{{ chw.first.timeend.date }}</td>

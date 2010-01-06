@@ -22,7 +22,7 @@
     </thead>
     <tbody>
         {% for metadata in all_metadata.object_list %}
-        <tr>
+        <tr class="{% cycle "odd" "even" %}">
             {% for column, display in columns %}
                 {% ifequal column sort_column %}<td class="sorted">{% else %}<td>{% endifequal %}
                 {% with metadata|attribute_lookup:column as col_value %}
