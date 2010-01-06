@@ -7,17 +7,17 @@ body {
 }
 
 #inner {
-    padding-top: 10px;  
+    padding-top: 10px;
     padding-bottom: 10px;  
+    /* make it not look ridiculous if there's no content there */
+    min-height: 300px;
 }
 
 #wrapper {
     width: 83em;
     margin: 0 auto;
     background: #fff;
-    /* make it not look ridiculous if there's no content there */
-    min-height: 500px;
-
+    
     /* a little pretty for the 10/dec demo */
     -moz-box-shadow: 4px 4px 8px #aaa;
     box-shadow: 4px 4px 8px #aaa;
