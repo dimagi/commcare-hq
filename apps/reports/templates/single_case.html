@@ -8,8 +8,8 @@
 {% for form, form_data in case_data.items %}
 {% if form_data %} 
     <h3>Data for form: {{ form.form.form_display_name }}</h3>
-    <table class="sofT">
-	   <thead class="commcare-heading">
+    <table>
+	   <thead>
 	       <tr>
 	       {% for heading in form.get_column_names %}
 	           <th>{% trans heading %}</th>	

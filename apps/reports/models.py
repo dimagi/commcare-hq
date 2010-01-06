@@ -478,7 +478,7 @@ class SqlReport(models.Model):
     def to_html_table(self, additional_params={}):
         """Formats this sql report as an HTML table for display in HQ"""
         cols, data = self.get_data(additional_params)
-        start_tags = '<table class="sofT"><thead class="commcare-heading">'
+        start_tags = '<table><thead>'
         # inject each header between <th> tags and join them
         header_cols = "".join(["<th>%s</th>" % col for col in cols])
         head_body_sep = "</thead><tbody>"

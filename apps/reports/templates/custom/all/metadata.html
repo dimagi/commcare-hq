@@ -5,8 +5,8 @@
 {% with all_metadata as data %}
 {% include "hq/partials/pagination.html" %}
 {% endwith %}
-<table class="sofT">
-    <thead class="commcare-heading">
+<table>
+    <thead>
         {% for column, display in columns %}
           {% ifequal column sort_column %}
              <th class="sorted{% if sort_descending %} descending{% else %} ascending{% endif %}">

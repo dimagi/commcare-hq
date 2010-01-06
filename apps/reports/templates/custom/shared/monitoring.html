@@ -2,8 +2,8 @@
 {% load i18n %}
 <h2>{{ domain }} Safe Pregnancy Monitoring Report</h2>
 <h2>{% trans "Open Referrals" %}</h2>
-<table class="sofT" width="100%"> 
-    <thead class="commcare-heading">
+<table width="100%"> 
+    <thead>
         <tr>
             <th>{% trans "Mother Name" %}</th>
             <th>{% trans "Name of CHW" %}</th>
@@ -34,8 +34,8 @@
 <h2>{% trans "Other Active Cases (No Actions Required)" %}</h2>
 {% get_monitoring_table healthy_moms %} 
 <h2>{% trans "Closed Cases" %}</h2>
-<table class="sofT" width="100%"> 
-    <thead class="commcare-heading">
+<table width="100%"> 
+    <thead>
         <tr>
             <th>{% trans "Mother Name" %}</th>
             <th>{% trans "Name of CHW" %}</th>
