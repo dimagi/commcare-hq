@@ -6,6 +6,11 @@ body {
     background-color: #eeeeee;
 }
 
+#inner {
+    padding-top: 10px;  
+    padding-bottom: 10px;  
+}
+
 #wrapper {
     width: 83em;
     margin: 0 auto;
@@ -89,8 +94,14 @@ td.sorted {
     background-color: #e5fbff;
 }
 
+/*******************************************
+ ** Lists
+ *******************************************/
 
-
+ul {
+    list-style: none;
+}
+    
 /*******************************************
  ** Header / login block
  *******************************************/
