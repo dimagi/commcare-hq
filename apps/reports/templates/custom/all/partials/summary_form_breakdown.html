@@ -9,7 +9,7 @@
     </thead>
     <tbody>
     {% for form in summary.form_data %}
-    <tr>
+    <tr class="{% cycle "odd" "even" %}">
         <td>{{ form.form }}</td>
         <td>{{ form.count}}</td>
         <td>{{ form.first.timeend.date }}</td>
