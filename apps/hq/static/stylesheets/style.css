@@ -58,10 +58,15 @@ a {
  ** Tables
  *******************************************/
 
+/* give our tables a little border */
+table {
+    border: 1px solid #bbbbbb; 
+}
+	
 /* this makes the data table that spans off the edge of the screen 
    not look transparent */
-   
-#data-table tr.odd {
+  
+.big-table tr.odd {
     background-color: white;
 }
 
