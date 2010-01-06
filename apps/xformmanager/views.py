@@ -124,6 +124,7 @@ def home(request, template='register_and_list_xforms.html'):
     context['form_groups'] = FormDefModel.get_groups(extuser.domain)
     return render_to_response(request, template, context)
 
+
 @extuser_required()
 def xform_group(request):
     xmlns = request.GET["xmlns"]

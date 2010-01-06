@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-
+<div id="data-table">
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filters %}
 	<h3>FILTERED BY
@@ -36,7 +36,7 @@
 	      <th></th>
 	   {% for col in columns %}
 	      {% ifequal forloop.counter0 sort_index %}
-		     <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
+		     <th class="sorted{% if sort_descending %} descending{% else %} ascending{% endif %}">
 		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}{% if filters %}&filter_{{filters}}{% endif %}">
 		         {{col}}
 		     </th>
@@ -93,6 +93,8 @@
 	</tr>
    {% endfor %}
 </table>
+
+</div>
 
 {% if data.object_list %}   	
 <input type="submit" value="Delete" />
