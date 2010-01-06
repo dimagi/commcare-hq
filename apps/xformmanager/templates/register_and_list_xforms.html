@@ -29,26 +29,11 @@
     {% endif %}
 </div>
 
-<div id="xform-register-block">
-<h1>Register a New XForm*</h1>
-Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
-If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
-<form action="" method="POST" enctype="multipart/form-data">
-<table>
-{{ upload_form.as_ul}}
-</table>
-<input type="submit" value="Submit" />
-</form>
-{% if newsubmit %}
-	<p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
-{% endif %}
-</div>
-
 <h2>{% trans "Registered XForms" %}</h2>
 
 <strong>
-    <table class="sofT">
-        <thead class="commcare-heading">
+    <table>
+        <thead>
    		   <tr>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "XMLNS" %}</th>
@@ -86,8 +71,27 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
    
 
 </strong>
+<div class="span-14">
+<br>
+</div>  
+<div id="xform-register-block" class="span-10 last">
+<h2>Register a New XForm*</h2>
+Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
+If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
+<form action="" method="POST" enctype="multipart/form-data">
+<br>
+<ul>
+{{ upload_form.as_ul }}
+<li><input type="submit" value="Submit" /></li>
+</ul>
+
+</form>
+{% if newsubmit %}
+    <p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
+{% endif %}
 
 *Note that files are processed as <a href="http://code.javarosa.org/wiki/xform">XForms</a>, unless they have a ".xsd" extension, in which case they are processed as <a href="http://www.w3schools.com/Schema/default.asp">XML Schema</a>.
+</div>
 
 <div class="modal_dialog" id="formlist">
 Hello World
