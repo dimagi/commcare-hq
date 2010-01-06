@@ -8,6 +8,8 @@
         <th>User</th>
     </thead>
     {% for request_log in all_requests %}
-        {% include "requestlogger/partials/single_log_row.html" %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        {% include "requestlogger/partials/single_log_cells.html" %}
+    </tr>
     {% endfor %}
 </table>
