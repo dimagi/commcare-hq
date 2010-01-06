@@ -70,7 +70,7 @@ class RawGraph(BaseGraph):
     
     additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
                                       help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))
-    width=models.IntegerField(_('Pixel width of the chart (default is 970)'),default=970)
+    width=models.IntegerField(_('Pixel width of the chart (default is 950)'),default=950)
     height=models.IntegerField(_('Pixel height of the chart (default is 300 for small form factor screens)'), default=300)
     
     #Non Django

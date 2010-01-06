@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js"></script>
 <h2>{{ domain }}</h2>
 <h2>All Form Submissions</h2>
 {% with all_metadata as data %}
@@ -10,7 +9,7 @@
     <thead class="commcare-heading">
         {% for column, display in columns %}
           {% ifequal column sort_column %}
-             <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
+             <th class="sorted{% if sort_descending %} descending{% else %} ascending{% endif %}">
                <a href="?sort_column={{column}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}{% if filters %}&{% dict_as_query_string filters "filter_" %}{% endif %}">
                  {{ display }}
                </a>
@@ -63,7 +62,7 @@
 </table>
 
 
-<div class="message_log" id="dialog">
+<div class="modal_dialog" id="dialog">
 <a href="#" class="jqmClose">Close</a>
 Please wait while that loads... 
 </div>

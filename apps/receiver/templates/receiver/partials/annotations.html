@@ -97,33 +97,34 @@ Enter a message about this follow-up.<br/>
 {% endif %}
 {% if allow_add %}
     <textarea id="new_annotation" rows="4" cols="40"></textarea>
-    <input type="hidden" id="annotation_reporter_id" value={{ attachment.get_linked_metadata.submitting_reporter.id }}> 
+    <input type="hidden" id="annotation_reporter_id" value={{ attachment.get_linked_metadata.submitting_reporter.id }} /> 
     {% if attachment.has_linked_schema and attachment.get_linked_metadata.submitting_reporter %}
-        <input type="checkbox" id="send_sms">Send as SMS to {{ attachment.get_linked_metadata.submitting_reporter }}<P>
+        <input type="checkbox" id="send_sms">Send as SMS to {{ attachment.get_linked_metadata.submitting_reporter }}</input>
     {% else %}
         {# we still need the input on the page, so just add a hidden one #}
-        <input type="hidden" id="send_sms">
+        <input type="hidden" id="send_sms" />
     {% endif %}
+    <br>
     <input id="add_annotation" class="jqmClose" type="button" value="Add" />
     <input id="close" class="jqmClose" type="button" value="Close" />
 {% endif %}
 
 <div id="success" style="display:none; cursor: default"> 
-        <h1>Annotation successfully added!<br>You might have to refresh the page to see it.</h1>
+        <h2>Annotation successfully added!<br>You might have to refresh the page to see it.</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
 
 <div id="fail" style="display:none; cursor: default"> 
-        <h1>Sorry - we had a problem adding your annotation!</h1>
+        <h2>Sorry - we had a problem adding your annotation!</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
 
 <div id="success_msg" style="display:none; cursor: default"> 
-        <h1>Annotation successfully added and message was sent!<br>You might have to refresh the page to see it.</h1>
+        <h2>Annotation successfully added and message was sent!<br>You might have to refresh the page to see it.</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
 
 <div id="fail_msg" style="display:none; cursor: default"> 
-        <h1>Annotation successfully added but message sending failed!<br>You might have to refresh the page to see it.</h1>
+        <h2>Annotation successfully added but message sending failed!<br>You might have to refresh the page to see it.</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 

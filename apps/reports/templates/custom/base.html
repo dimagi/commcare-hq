@@ -6,9 +6,12 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jquery.blockUI.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js"></script>
 {% endblock %}
 {% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modal_dialog.css" />
     <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css" />
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css" />    
 {% endblock %}
 {% block content %}
 {{ report_body|safe }}
