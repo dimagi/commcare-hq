@@ -30,5 +30,23 @@
 {% block branding %}
 <h1 id="site-name">{%trans "CommCare HQ" %}</h1>
 {% endblock %}
-    
-{% block footer %}{% block hq-footer %}{% endblock %}{% endblock %}
+{% block footer %}
+            <div id="footer">
+                <div class="container">
+                    <div class="span-12">
+                        <p class="rights">
+                            Copyright &copy; 2009
+                            <a href="http://www.dimagi.com">Dimagi</a>
+                        </p>
+                    </div>
+                    <div class="span-12 last">
+                        <p style="text-align:right;">
+                        CommCare HQ is available as a 
+                        <a href="http://www.github.com/dimagi/commcare-hq">free download</a>
+                        from GitHub.
+                        </p>
+                    </div>
+                </div><!-- End Container Class -->
+            </div>
+            
+{% endblock %}
