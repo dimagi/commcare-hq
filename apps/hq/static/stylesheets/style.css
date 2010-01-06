@@ -102,24 +102,43 @@ ul {
     list-style: none;
 }
     
+    
+/*******************************************
+ ** Forms
+ *******************************************/
+
+textarea {}
+
 /*******************************************
  ** Header / login block
  *******************************************/
 
 
-#header {
+#header, #footer {
     background: #940025;
-    color: #ffc;
     overflow: hidden;
     padding-bottom: 0px;
-    position: relative;    
+    position: relative;
+    color:white;    
+}
+
+#footer {
+	padding-top:10px;
+    -moz-border-radius-bottomright: 1em;
+    -moz-border-radius-bottomleft: 1em;
+}
+
+
+#footer a:link, #footer a:visited {
+    color: white;
+    font-weight: bold;
 }
 
 #header a:link, #header a:visited {
     color: white;
 }
 
-#header a:hover {
+#header a:hover, #footer a:hover {
     text-decoration: underline;
 }
 
