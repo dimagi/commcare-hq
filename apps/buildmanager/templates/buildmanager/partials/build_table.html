@@ -3,13 +3,12 @@
 <thead>
 	<th>Build Number</th>
 	<th>Created</th>
-	<th>Jar File</th>
-	<th>Jad File</th>
-	<th>ZIP File</th>
+	<th>Downloads</th>
 	<th>Uploaded By</th>
 	<th>Build Status</th>
 	<th>Description</th>
 	<th>Build Server URL</th>
+	<th></th>
 	<th></th>
 </thead>
 {% for build in builds %}
@@ -17,12 +16,12 @@
     <tr>
         <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>
-        <td class="bubbleInfo"><a href="{{build.get_jar_downloadurl}}">
-            {{build.get_jar_filename}}</a></td>
-        <td><a href="{{build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{build.get_jad_contents}}');return false"> 
-        {{build.get_jad_filename}}</a></td>
-        
-        <td><a href="{{build.get_zip_downloadurl}}">Zip Archive</a></td>
+        <td><a href="{{build.get_jar_downloadurl}}">
+            {{build.get_jar_filename}}</a><br />
+            <a href="{{build.get_jad_downloadurl}}" onmouseout="hideTooltip()" onmouseover="showTooltip(event,'{{build.get_jad_contents}}');return false"> 
+            {{build.get_jad_filename}}</a><br />
+            <a href="{{build.get_zip_downloadurl}}">Zip Archive</a>
+        </td>
         <td>{{build.uploaded_by}}</td>
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
