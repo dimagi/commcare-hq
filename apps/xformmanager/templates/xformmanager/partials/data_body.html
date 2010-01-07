@@ -1,6 +1,5 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-<div class="big-table">
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filters %}
 	<h3>FILTERED BY
@@ -26,10 +25,17 @@
     <p class="error">{{ errors }}</p>
 {% endif %}
 <br>
+<div class="span-12">
 {% with param_string_no_page as extra_params %}
 {% include "hq/partials/pagination.html" %}
 {% endwith %}
+</div>
+<div class="span-12 last" style="text-align:right;">
+<a href="{%url xformmanager.views.plain_data xform.id %}">view fullscreen</a>
+</div>
+<br>
 <form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
+<div class="big-table">
 <table>
 	<thead>
 	   <tr>
@@ -93,12 +99,11 @@
 	</tr>
    {% endfor %}
 </table>
-
+{% if data.object_list %}       
+Select items and: <input type="submit" value="Delete" />
+{% endif %}     
 </div>
 
-{% if data.object_list %}   	
-<input type="submit" value="Delete" />
-{% endif %}   	
 
 </form>
 

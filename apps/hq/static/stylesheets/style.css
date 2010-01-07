@@ -63,12 +63,16 @@ table {
     border: 1px solid #bbbbbb; 
 }
 	
-/* this makes the data table that spans off the edge of the screen 
-   not look transparent */
-  
-.big-table tr.odd {
-    background-color: white;
+/* this puts a scrollable area around a big table, gives it some padding
+   and a slightly different background color so it stands out a little
+*/
+
+.big-table {
+    padding: 5px;
+    overflow:auto;
+    background-color: #f8f8f8;
 }
+
 
 /* 
    Table/column sort stuff.   
