@@ -324,6 +324,13 @@ def export_xml(request, formdef_id):
 
 @extuser_required()
 @authenticate_schema
+def plain_data(request, formdef_id, context={}, use_blacklist=True):
+    '''Same as viewing the data, but pass it to a plain template.'''
+    return data(request, formdef_id,'xformmanager/plain_data.html', context, use_blacklist)
+
+    
+@extuser_required()
+@authenticate_schema
 def data(request, formdef_id, template_name="data.html", context={}, use_blacklist=True):
     '''View the xform data for a particular schema.  Accepts as
        url parameters the following (with defaults specified):
