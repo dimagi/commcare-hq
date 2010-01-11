@@ -533,6 +533,76 @@ class Metadata(models.Model):
         return tag
 
 
+class FormDataPointer(models.Model):
+    """Stores a single reference to a pointer of data inside a form.
+       This is just a reference to a form itself and a particular
+       column within that form.  For now this can only reference the
+       root columns inside the form and is not compatible with child
+       tables.
+       
+       Pointers are used inside FormDataColumns to reference the 
+       individual place in each form where data is stored.
+    """
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    form = models.ForeignKey(FormDefModel)
+    # 64 is the mysql implicit limit on these columns
+    column_name = models.CharField(max_length=64)
+    
+    def __unicode__(self):
+        return "%s: %s" % (self.form, self.column_name)
+    
+class FormDataColumn(models.Model):
+    """Stores a column of data.  A column is a collection of data across
+       forms that all corresponds to the same logical element.  For 
+       example, you might have a column called "name" in 5 different forms
+       and you want to easily define a view of the data that looks across
+       these five columns."""
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    name = models.CharField(max_length=100)
+    fields = models.ManyToManyField(FormDataPointer)
+
+    def __unicode__(self):
+        return "%s - (%s forms)" % (self.name, self.fields.count())
+    
+class FormDataGroup(models.Model):
+    """Stores a collection of form data.  Data is a mapping of forms 
+       to particular columns which can be combined.  The primary use
+       case for this class is providing a reconciled view of similar
+       forms with different versions (typically with the same xmlns)
+       however it could also be used to create a custom data view on
+       top of existing forms.  
+       
+       It's neat that the columns of this doc string lined up perfectly.  
+       
+       D'oh. 
+    """
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    name = models.CharField(max_length=255)
+    created = models.DateTimeField(auto_now=True)
+    
+    # A group (usually) references multiple forms and a form can be
+    # in multiple groups.
+    forms = models.ManyToManyField(FormDefModel)
+    
+    # A reference to the individual columns defined by this form.  A
+    # column could theoretically be used in many forms.  I'm not sure
+    # if this is actually a valid use case, but we may as well be 
+    # flexible for now.
+    # There is a non-enforced constraint that each column should only
+    # contain pointers to forms that are referenced within this group.
+    # TODO: add the constraint for real.
+    columns = models.ManyToManyField(FormDataColumn)
+    
+    def __unicode__(self):
+        return "%s - (%s forms, %s columns)" % \
+                (self.name, self.forms.count(), self.columns.count())
+
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
