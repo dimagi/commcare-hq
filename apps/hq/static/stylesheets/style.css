@@ -160,10 +160,10 @@ textarea {}
     color: white;
 }
 
-#loginblock {   
+#loginblock {
     border:2px solid lightgray;        
     width:400px;
-    background-color:#f8f8f8
+    background-color:#f8f8f8;
     margin-left:auto;
     margin-right:auto;
     text-align:center;
