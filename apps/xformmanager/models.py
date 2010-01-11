@@ -16,7 +16,7 @@ from django.core.urlresolvers import reverse
 
 from hq.models import *
 from hq.utils import build_url
-from hq.dbutil import get_column_names
+from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
 from graphing import dbhelper
 from receiver.models import Submission, Attachment, SubmissionHandlingType
 from xformmanager.util import case_insensitive_iter, format_field, format_table_name
@@ -289,9 +289,18 @@ class FormDefModel(models.Model):
         return cursor
     
     def get_column_names(self):
-        '''Get the column names associated with this form's schema.
-        '''
+        '''Get the column names associated with this form's schema.'''
         return get_column_names(self._get_cursor())
+
+    def get_data_column_names(self):
+        '''Get the column names associated with this form's schema and
+           ONLY the schema, no attachment/receiver/anything else.'''
+        return get_column_names_from_table(self.table_name)
+
+    def get_data_column_types(self):
+        '''Get the column types associated with this form's schema and
+           ONLY the schema.'''
+        return get_column_types_from_table(self.table_name)
 
     def get_display_columns(self):
         '''
@@ -550,6 +559,9 @@ class FormDataPointer(models.Model):
     # 64 is the mysql implicit limit on these columns
     column_name = models.CharField(max_length=64)
     
+    class Meta:
+        unique_together = ("form", "column_name")
+
     def __unicode__(self):
         return "%s: %s" % (self.form, self.column_name)
     
@@ -563,10 +575,14 @@ class FormDataColumn(models.Model):
     # Sigh.
     
     name = models.CharField(max_length=100)
+    # The data type is defined at the column level.  Currently you cannot
+    # mix strings, ints, etc. at the column level.  This is intentional.
+    data_type = models.CharField(max_length=20)
     fields = models.ManyToManyField(FormDataPointer)
+    
 
     def __unicode__(self):
-        return "%s - (%s forms)" % (self.name, self.fields.count())
+        return "%s - (a %s spanning %s forms)" % (self.name, self.data_type, self.fields.count())
     
 class FormDataGroup(models.Model):
     """Stores a collection of form data.  Data is a mapping of forms 
@@ -598,6 +614,55 @@ class FormDataGroup(models.Model):
     # contain pointers to forms that are referenced within this group.
     # TODO: add the constraint for real.
     columns = models.ManyToManyField(FormDataColumn)
+    
+    
+    @classmethod
+    def from_forms(cls, forms):
+        """Create a group from a set of forms.  Walks through all of 
+           the forms' root tables and creates columns for each column
+           in the form's table.  If the column name and data type match
+           a previously seen data column then the column is remapped to 
+           that column, otherwise a new column is created.  Like many 
+           elements of CommCare HQ, the views and queries that are used
+           by these models will pretty much exclusively work in mysql.
+        """
+        if not forms:
+            raise Exception("You can't create a group of empty forms!")
+        # the name will just be the xmlns of the first form.  We assume
+        # that the majority of times (if not all times) this method will 
+        # be called is to harmonize a set of data across verisons of 
+        # forms with the same xmlns.
+        name = forms[0].target_namespace
+        now = datetime.utcnow()
+        group = cls.objects.create(name=name, created=now)
+        group.forms = forms
+        group.save()
+        for form in forms:
+            table_name = form.table_name
+            column_names = form.get_data_column_names()
+            column_types = form.get_data_column_types()
+            for name, type in zip(column_names, column_types):
+                # Get the pointer object for this form, or create it if 
+                # this is the first time we've used this form/column
+                pointer = FormDataPointer.objects.get_or_create\
+                            (form=form, column_name=name)[0]
+                
+                # Get or create the group.  If any other column had this
+                # name they will be used with this.
+                try:
+                    column_group = group.columns.get(name=name, data_type=type)
+                    
+                except FormDataColumn.DoesNotExist:
+                    column_group = FormDataColumn.objects.create(name=name, 
+                                                                 data_type=type)
+                    # don't forget to add the newly created column to this
+                    # group of forms as well.
+                    group.columns.add(column_group)
+                    group.save()
+                
+                column_group.fields.add(pointer)
+                column_group.save()
+        return group
     
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \

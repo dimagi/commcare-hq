@@ -11,3 +11,4 @@ from views import *
 from versioned import *
 from formdef_checker import *
 from xsd_checker import *
+from data_versioning import *
