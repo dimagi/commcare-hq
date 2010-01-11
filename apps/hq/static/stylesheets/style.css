@@ -110,7 +110,7 @@ td.sorted {
 ul {
     list-style: none;
 }
-    
+
     
 /*******************************************
  ** Forms
@@ -163,7 +163,7 @@ textarea {}
 #loginblock {   
     border:2px solid lightgray;        
     width:400px;
-    background-color:#f8f8f8;
+    background-color:#f8f8f8
     margin-left:auto;
     margin-right:auto;
     text-align:center;
@@ -260,6 +260,8 @@ textarea {}
 
 /* these do some generic stylings of "good" and "bad" things happening */
 
+/* commented out for now, blueprint does a decent job with these
+ 
 .success {
     font-weight: bold;
     color: green;
@@ -269,6 +271,8 @@ textarea {}
     font-weight: bold;
     color: red;
 }
+
+*/
 
 
 /*******************************************
