@@ -70,7 +70,7 @@ class DataVersioningTestCase(unittest.TestCase):
         # this is added by form 3
         columns.append("meta_added_field")
         # a second one of these is added by form 5
-        columns.append("meta_username")
+        columns.append("meta_username_2")
         self.assertEqual(len(columns), len(group.columns.all()))
         
         for form in original_list:
@@ -83,7 +83,18 @@ class DataVersioningTestCase(unittest.TestCase):
         group_columns = group.columns.filter(fields__form=form)
         self.assertEqual(len(columns), len(group_columns))
         for column in group_columns:
-            self.assertTrue(column.name in column_map)
-            self.assertEqual(column.data_type, column_map[column.name])
+            # this is a hacky way of allowing the test that duplicates a field
+            # (which intentionally appends a _2 to the column name) to call this 
+            # shared method.
+            if column.name in column_map:
+                # this is correct
+                found_name = column.name 
+            elif (column.name.replace("_2", "") in column_map):
+                # this is the duplicate column, also good
+                found_name = column.name.replace("_2", "") 
+            else:
+                self.fail("No match for %s found in %s columns!" %\
+                          (column.name, form))
+            self.assertEqual(column.data_type, column_map[found_name])
             
             
