@@ -14,7 +14,7 @@ from django.db import transaction, connection
 from django.core.urlresolvers import reverse
 from rapidsms.webui.utils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm
-from xformmanager.models import FormDefModel
+from xformmanager.models import FormDefModel, FormDataGroup
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from receiver import submitprocessor
@@ -129,7 +129,43 @@ def home(request, template='register_and_list_xforms.html'):
 def xform_group(request):
     xmlns = request.GET["xmlns"]
     group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
-    return render_to_response(request, "xformmanager/partials/form_group_popup.html", 
+    data_groups = FormDataGroup.objects.filter(name=xmlns)
+    return render_to_response(request, "xformmanager/form_group.html", 
+                                  {"group": group,
+                                   "data_groups": data_groups
+                                   })
+    
+@extuser_required()
+def form_data_group(req, group_id):
+    group = get_object_or_404(FormDataGroup, id=group_id)
+    return render_to_response(req, "xformmanager/form_data_group.html",
+                              {"group": group })
+        
+@extuser_required()
+def create_form_data_group(req):
+    xmlns = req.GET["xmlns"]
+    try:
+        FormDataGroup.objects.get(name=xmlns)
+        # if this works, we already think we have a group.  Perhaps we should
+        # ask for confirmation and allow them to recreate, but for now we'll
+        # just claim this is an error.  This can be significantly UI-improved.
+        error_message = "Sorry, there's already a data group created for that xmlns."
+        return render_to_response(req, "500.html", {"error_message" : error_message})
+    except FormDataGroup.DoesNotExist:
+        # this is the correct workflow.
+        forms = FormDefModel.objects.filter(domain=req.extuser.domain, 
+                                            target_namespace=xmlns)
+        group = FormDataGroup.from_forms(forms)
+        return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
+                                            **{"group_id": group.id }))
+                                   
+
+
+@extuser_required()
+def xform_group_popup(request):
+    xmlns = request.GET["xmlns"]
+    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
+    return render_to_response(request, "xformmanager/form_group_popup.html", 
                               {"group": group})
 
 def _register_xform(request, file_name, display_name, remote_addr, file_size):
