@@ -1,7 +1,9 @@
 {% extends base_template %}
+{% block title %}Form data for {{ group.display_name }}{% endblock %}
 {% block content %}
 <h2>{{ group.display_name }}</h2>
+<a href="{% url xformmanager.views.edit_form_data_group group.id %}">edit this form group</a>
 <div class="big-table">
-{% include "xformmanager/partials/form_data_group_table.html" %}
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
 </div>
 {% endblock %}
