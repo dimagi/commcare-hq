@@ -656,6 +656,14 @@ class FormDataGroup(models.Model):
                     column_group = group.columns.get(name=name, data_type=type)
                     
                 except FormDataColumn.DoesNotExist:
+                    # add a second check for the name, so we don't have duplicate 
+                    # names inside a single form definition which will make queries
+                    # pretty challenging
+                    column_count = group.columns.filter(name=name).count()
+                    while column_count != 0:
+                        name = "%s_%s" % (name, column_count + 1)
+                        column_count = group.columns.filter(name=name).count()
+                    
                     column_group = FormDataColumn.objects.create(name=name, 
                                                                  data_type=type)
                     # don't forget to add the newly created column to this
