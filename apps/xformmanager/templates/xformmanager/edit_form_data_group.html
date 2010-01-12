@@ -16,7 +16,9 @@ $(document).ready(function(){
 {% include "xformmanager/partials/form_data_group_table_transposed.html" %}
 </div>
 <br>
-{# NOT YET IMPLEMENTED: Delete this entire object? <input type="checkbox" name="delete" /> #}
+<a href="{% url xformmanager.views.delete_form_data_group group.id %}" class="error">delete this data group</a>
+<div style="float:right">
 <input type="submit" value="Submit" />
+</div>
 </form>
 {% endblock %}
