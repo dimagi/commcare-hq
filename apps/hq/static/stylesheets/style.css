@@ -99,9 +99,14 @@ th.ascending {
     background-image: url("../../webapp/icons/silk/arrow_down.png");
 }
 
-td.sorted {
-    background-color: #e5fbff;
+td.sorted, tr.even td.sorted, tr.odd td.sorted  {
+    background: #e5fbff;
 }
+
+tr.highlight td {
+    background-color: #FFFFCC;
+}
+
 
 /*******************************************
  ** Lists
