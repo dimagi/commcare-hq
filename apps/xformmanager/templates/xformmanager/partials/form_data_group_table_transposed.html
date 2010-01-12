@@ -1,0 +1,44 @@
+{% load i18n %}
+{% load xform_tags %}
+<table id="form-group">
+<thead>
+    {% if editing %}
+    <th>Delete Column?</th>
+    {% endif %}
+    <th>Column</th>
+    {% for form in group.forms.all %}
+        <th>{{ form.target_namespace }}: {{ form.version }}</th>
+    {% endfor %}
+</thead>
+<tbody>
+    <tr class="odd">
+        {% if editing %}
+            <td></td>
+        {% endif %}
+        <td>Uploaded</td>
+    {% for form in group.forms.all %}
+        <td>{{ form.date_created }}</td>
+    {% endfor %}
+    </tr>
+    <tr class="even">
+        {% if editing %}
+            <td></td>
+        {% endif %}
+        <td>Submissions</td>
+        {% for form in group.forms.all %}
+            <td>{{ form.submission_count }}</td>
+        {% endfor %}
+    </tr>
+    {% for column in group.columns.all %}
+        <tr class="{% cycle 'odd' 'even' %}"> 
+        {% if editing %}
+            <td><input type="checkbox" name="checked_{{column.name}}"/></td>
+        {% endif %}
+        <td>{{ column.name }}</td>
+        {% for form in group.forms.all %}
+            <td>{% form_data_lookup column form editing %}</td>
+        {% endfor %}
+        </tr>
+    {% endfor %}
+</tbody>
+</table>

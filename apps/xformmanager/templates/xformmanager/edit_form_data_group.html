@@ -1,0 +1,22 @@
+{% extends base_template %}
+{% block title %}Form data for {{ group.display_name }}{% endblock %}
+{% block javascripts %}
+<script language="javascript" type="text/javascript">
+$(document).ready(function(){
+    $('#form-group INPUT').click(function() {
+        $(this).parent().parent().toggleClass('highlight');
+    });
+});
+</script>
+{% endblock %}
+{% block content %}
+<form method="POST">
+<h2>{{ group.display_name }}</h2>
+<div class="big-table" style="max-height:600px">
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
+</div>
+<br>
+{# NOT YET IMPLEMENTED: Delete this entire object? <input type="checkbox" name="delete" /> #}
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}

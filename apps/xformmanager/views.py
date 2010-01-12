@@ -139,7 +139,25 @@ def xform_group(request):
 def form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     return render_to_response(req, "xformmanager/form_data_group.html",
-                              {"group": group })
+                              {"group": group,
+                               "editing": False })
+        
+@extuser_required()
+def edit_form_data_group(req, group_id):
+    group = get_object_or_404(FormDataGroup, id=group_id)
+    if req.method == 'POST':
+        for key in req.POST:
+            if key.startswith("checked_"):
+                to_delete = key.replace("checked_", "")
+                column = group.columns.get(name=to_delete)
+                column.delete()
+            else:
+                print "Uknown kvp: %s, %s" % (key, req.POST[key])
+                
+            
+    return render_to_response(req, "xformmanager/edit_form_data_group.html",
+                              {"group": group,
+                               "editing": True })
         
 @extuser_required()
 def create_form_data_group(req):
