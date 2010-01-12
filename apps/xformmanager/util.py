@@ -14,7 +14,7 @@ MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
 MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
 
-def format_table_name(name, version=None):
+def format_table_name(name, version=None, prefix="schema_"):
     # get rid of 'http://dev.commcarehq.org/' at the start
     r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
     if r:
@@ -25,9 +25,11 @@ def format_table_name(name, version=None):
             name = tail
     if version:
         name = "%s_%s" % ( name, version )
-    return "schema_%s" % sanitize(name)
+    return "%s%s" % (prefix, sanitize(name))
+
 def old_table_name(name):
     return "x_" + _old_sanitize(name)
+
 def _old_sanitize(name):
     _TABLE_PREFIX = "x_"
     _MAX_LENGTH = 64 - len(_TABLE_PREFIX)
