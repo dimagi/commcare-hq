@@ -599,7 +599,10 @@ class FormDataGroup(models.Model):
     # I don't love these model names.  In fact I rather dislike them.  
     # Sigh.
     
+    # Name is the internal name.  when generated from a collection of
+    # forms it is the xmlns.  This should generally not be changed
     name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now=True)
     
     # A group (usually) references multiple forms and a form can be
@@ -634,7 +637,7 @@ class FormDataGroup(models.Model):
         # forms with the same xmlns.
         name = forms[0].target_namespace
         now = datetime.utcnow()
-        group = cls.objects.create(name=name, created=now)
+        group = cls.objects.create(name=name, display_name=name, created=now)
         group.forms = forms
         group.save()
         for form in forms:

@@ -1,0 +1,7 @@
+{% extends base_template %}
+{% block content %}
+<h2>{{ group.display_name }}</h2>
+<div class="big-table">
+{% include "xformmanager/partials/form_data_group_table.html" %}
+</div>
+{% endblock %}
