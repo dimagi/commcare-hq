@@ -151,9 +151,14 @@ def edit_form_data_group(req, group_id):
                 to_delete = key.replace("checked_", "")
                 column = group.columns.get(name=to_delete)
                 column.delete()
+            elif key == "display_name":
+                group.display_name = req.POST[key]
+                group.save()
             else:
                 pass
-                
+                #print "Unknown kvp: %s, %s" % (key, req.POST[key])
+        return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
+                                            kwargs={"group_id": group.id }))
             
     return render_to_response(req, "xformmanager/edit_form_data_group.html",
                               {"group": group,
