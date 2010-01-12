@@ -152,12 +152,28 @@ def edit_form_data_group(req, group_id):
                 column = group.columns.get(name=to_delete)
                 column.delete()
             else:
-                print "Uknown kvp: %s, %s" % (key, req.POST[key])
+                pass
                 
             
     return render_to_response(req, "xformmanager/edit_form_data_group.html",
                               {"group": group,
                                "editing": True })
+        
+@extuser_required()
+def delete_form_data_group(req, group_id):
+    group = get_object_or_404(FormDataGroup, id=group_id)
+    if req.method == 'POST':
+        group.delete()
+        # TODO: should we also consider deleting all the columns
+        # attached to the form?  Currently columns can be shared
+        # except there's no UI (or use case?) for actually doing
+        # that.  Left open for now.
+        return HttpResponseRedirect(reverse('xformmanager.views.home')) 
+                
+            
+    return render_to_response(req, "xformmanager/delete_form_data_group.html",
+                              {"group": group, "editing": False })
+                               
         
 @extuser_required()
 def create_form_data_group(req):
@@ -175,7 +191,7 @@ def create_form_data_group(req):
                                             target_namespace=xmlns)
         group = FormDataGroup.from_forms(forms)
         return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
-                                            **{"group_id": group.id }))
+                                            kwargs={"group_id": group.id }))
                                    
 
 
