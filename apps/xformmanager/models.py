@@ -7,7 +7,7 @@ import traceback
 from django.utils import simplejson
 from MySQLdb import IntegrityError
 
-from django.db import models, connection
+from django.db import models, connection, transaction
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
@@ -574,7 +574,9 @@ class FormDataColumn(models.Model):
     # I don't love these model names.  In fact I rather dislike them.  
     # Sigh.
     
-    name = models.CharField(max_length=100)
+    # the 64 character max_length is enforced by sql server
+    name = models.CharField(max_length=64)
+    
     # The data type is defined at the column level.  Currently you cannot
     # mix strings, ints, etc. at the column level.  This is intentional.
     data_type = models.CharField(max_length=20)
@@ -622,6 +624,82 @@ class FormDataGroup(models.Model):
     # TODO: add the constraint for real.
     columns = models.ManyToManyField(FormDataColumn)
     
+    
+    def update_view(self):
+        """Update the sql view object associated with this.  This will
+           create (or replace) the existing view and rebuild it based
+           off of the forms and columns set.  
+        """
+        # From the mysql docs:
+        #   CREATE
+        #     [OR REPLACE]
+        #     VIEW view_name [(column_list)]
+        #     AS select_statement
+        
+        full_template_string = """CREATE OR REPLACE VIEW %(view_name)s
+                                    (%(column_list)s)
+                                  AS 
+                                    %(select_statement)s;"""
+        
+        
+        # Note that we are also going to include a foregin key to each
+        # form that created the view.  Why?  Because we're likely going to
+        # want unique ID's for everything (a combined key with form ID and
+        # data ID - assuming it's present) and because through that link we
+        # can get back to the version, table, etc. that originally created
+        # the data.
+        
+        
+        # First things first - generate the column list.
+        defined_columns = self.columns.all()
+        full_columns = ["form_id"]
+        full_columns.extend([column.name for column in defined_columns])
+        column_list_str = "%s" % ", ".join(full_columns)
+        
+        # For each form in the group we'll generate the SELECT statement
+        # independently.  Note
+        # that order is important here so we have to preserve the original 
+        # order of the columns.
+        
+        # So for each form we want to generate something that looks like:
+        # SELECT form1_id, form1_col1, form1_col2, form1_col3 ... 
+        # FROM   form1_table_name
+        
+        form_select_statements = []
+        for form in self.forms.all():
+            # first the form id.  This is hard-coded at view creation time
+            # as we assume the form id's won't change
+            form_columns = [str(form.id)]
+            for column in defined_columns:
+                # If the form has a field in that column we use that,
+                # otherwise we just select an empty string into that 
+                # column.
+                try:
+                    column_name = column.fields.get(form=form).column_name
+                except FormDataPointer.DoesNotExist:
+                    column_name = "''" # in sql this will look like ''
+                form_columns.append(column_name)
+            select_statement = "SELECT %s FROM %s" % \
+                                 (", ".join(form_columns), form.table_name)
+            form_select_statements.append(select_statement)
+        
+        # For all forms we want
+        # <form1_select_statement>
+        # UNION ALL
+        # <form2_select_statement>
+        # UNION ALL
+        # ...
+        full_select_statement = "\nUNION ALL\n".join(form_select_statements)
+        
+        view_creation_statement = full_template_string % \
+                                    {"view_name": self.view_name,
+                                     "column_list": column_list_str,
+                                     "select_statement": full_select_statement }
+        
+        cursor = connection.cursor()
+        cursor.execute(view_creation_statement)
+        transaction.commit_unless_managed()
+        
     
     @classmethod
     def from_forms(cls, forms):
