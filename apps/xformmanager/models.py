@@ -19,7 +19,7 @@ from hq.utils import build_url
 from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
 from graphing import dbhelper
 from receiver.models import Submission, Attachment, SubmissionHandlingType
-from xformmanager.util import case_insensitive_iter, format_field, format_table_name
+from xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value
 from xformmanager.xformdef import FormDef
 
 class ElementDefModel(models.Model):
@@ -558,6 +558,7 @@ class FormDataPointer(models.Model):
     form = models.ForeignKey(FormDefModel)
     # 64 is the mysql implicit limit on these columns
     column_name = models.CharField(max_length=64)
+    data_type = models.CharField(max_length=20)
     
     class Meta:
         unique_together = ("form", "column_name")
@@ -719,7 +720,9 @@ class FormDataGroup(models.Model):
         # forms with the same xmlns.
         name = forms[0].target_namespace
         now = datetime.utcnow()
-        view_name = format_table_name(name, prefix="view_")
+        view_name = get_unique_value(FormDataGroup.objects, "view_name", 
+                                format_table_name(name, prefix="view_"))
+                    
         group = cls.objects.create(name=name, display_name=name, created=now,
                                    view_name=view_name)
         group.forms = forms
@@ -732,7 +735,7 @@ class FormDataGroup(models.Model):
                 # Get the pointer object for this form, or create it if 
                 # this is the first time we've used this form/column
                 pointer = FormDataPointer.objects.get_or_create\
-                            (form=form, column_name=name)[0]
+                            (form=form, column_name=name, data_type=type)[0]
                 
                 # Get or create the group.  If any other column had this
                 # name they will be used with this.
@@ -743,11 +746,7 @@ class FormDataGroup(models.Model):
                     # add a second check for the name, so we don't have duplicate 
                     # names inside a single form definition which will make queries
                     # pretty challenging
-                    column_count = group.columns.filter(name=name).count()
-                    while column_count != 0:
-                        name = "%s_%s" % (name, column_count + 1)
-                        column_count = group.columns.filter(name=name).count()
-                    
+                    name = get_unique_value(group.columns, "name", name)
                     column_group = FormDataColumn.objects.create(name=name, 
                                                                  data_type=type)
                     # don't forget to add the newly created column to this
