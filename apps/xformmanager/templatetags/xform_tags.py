@@ -22,7 +22,8 @@ def form_data_lookup(column, form, editing=False):
         # TODO: this is lots of querying, so look into optimizing /
         # caching as soon as this starts to get slow
         choices = [col_name for col_name in \
-                   FormDataPointer.objects.filter(form=form)\
+                   FormDataPointer.objects.filter \
+                        (form=form, data_type=column.data_type)\
                     .values_list('column_name', flat=True)]
         choices.insert(0, NOT_SET)
         select_name = "select_%s_%s" % (form.id, column.name)
