@@ -13,10 +13,11 @@ from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
 from rapidsms.webui.utils import render_to_response
-from xformmanager.forms import RegisterXForm, SubmitDataForm
-from xformmanager.models import FormDefModel, FormDataGroup
+from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
+from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
+from xformmanager.templatetags.xform_tags import NOT_SET
 from receiver import submitprocessor
 
 
@@ -138,6 +139,7 @@ def xform_group(request):
 @extuser_required()
 def form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
+    group.update_view()
     return render_to_response(req, "xformmanager/form_data_group.html",
                               {"group": group,
                                "editing": False })
@@ -146,22 +148,60 @@ def form_data_group(req, group_id):
 def edit_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     if req.method == 'POST':
-        for key in req.POST:
-            if key.startswith("checked_"):
-                to_delete = key.replace("checked_", "")
-                column = group.columns.get(name=to_delete)
-                column.delete()
-            elif key == "display_name":
-                group.display_name = req.POST[key]
-                group.save()
-            else:
-                pass
-                #print "Unknown kvp: %s, %s" % (key, req.POST[key])
-        return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
+        group_form = FormDataGroupForm(req.POST, instance=group) 
+        if group_form.is_valid():
+            group_form.save()
+            for key, value in req.POST.items():
+                if key.startswith("checked_"):
+                    to_delete = key.replace("checked_", "")
+                    column = group.columns.get(name=to_delete)
+                    column.delete()
+                elif key.startswith("select_"):
+                    truncated_name = key.replace("select_", "")
+                    form_id, column = truncated_name.split("_", 1)
+                    form = FormDefModel.objects.get(id=form_id)
+                    column_obj = group.columns.get(name=column)
+                    if value == NOT_SET:
+                        # the only time we have to do anything here is if
+                        # it was previously set.  
+                        try:
+                            old_field = column_obj.fields.get(form=form)
+                            # we found something, better get rid of it
+                            column_obj.fields.remove(old_field)
+                            column_obj.save()
+                        except FormDataPointer.DoesNotExist:
+                            # we weren't expecting anything so nothing to do
+                            pass
+                    else:
+                        # we code these as select_<formid>_<column_name>
+                        new_column = value
+                        new_field = FormDataPointer.objects.get(form=form, 
+                                                                column_name=new_column)
+                        try:
+                            old_field = column_obj.fields.get(form=form)
+                            if old_field == new_field:
+                                # we didn't change anything, leave it
+                                pass
+                            else:
+                                # remove the old field from the column
+                                # and add the new one
+                                column_obj.fields.remove(old_field)
+                                column_obj.fields.add(new_field)
+                                column_obj.save()
+                        except FormDataPointer.DoesNotExist:
+                            # there was no previous mapping for this.  Just 
+                            # add the new one
+                            column_obj.fields.add(new_field)
+                            column_obj.save()
+                else:
+                    print "Unknown kvp: %s, %s" % (key, req.POST[key])
+            return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
                                             kwargs={"group_id": group.id }))
-            
+    else:
+        group_form =  FormDataGroupForm(instance=group)
+        
     return render_to_response(req, "xformmanager/edit_form_data_group.html",
-                              {"group": group,
+                              {"group": group, "form": group_form,
                                "editing": True })
         
 @extuser_required()

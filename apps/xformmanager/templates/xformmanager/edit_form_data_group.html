@@ -11,9 +11,9 @@ $(document).ready(function(){
 {% endblock %}
 {% block content %}
 <form method="POST">
-<p><b>Group display name: </b>
-<input type="text" name="display_name" value="{{ group.display_name }}" size="100" style="margin-left:10px"/>
-</p>
+<table style="border:none;">
+{{ form.as_table }}
+</table>
 <div class="big-table" style="max-height:600px">
 {% include "xformmanager/partials/form_data_group_table_transposed.html" %}
 </div>
