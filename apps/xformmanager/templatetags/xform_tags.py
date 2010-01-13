@@ -25,7 +25,7 @@ def form_data_lookup(column, form, editing=False):
                    FormDataPointer.objects.filter(form=form)\
                     .values_list('column_name', flat=True)]
         choices.insert(0, NOT_SET)
-        select_name = "%s_%s" % (column.name, form.id)
+        select_name = "select_%s_%s" % (form.id, column.name)
         # something tells me this really doesn't belong on a single line
         expanded_choices = \
             ['<option value="%(choice)s" %(selected)s>%(choice)s</option>' %\
