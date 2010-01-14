@@ -13,6 +13,7 @@ from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
 from rapidsms.webui.utils import render_to_response
+from xformmanager.util import get_unique_value
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
 from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer
 from xformmanager.xformdef import FormDef
@@ -153,6 +154,48 @@ def manage_groups(request):
     return render_to_response(request, "xformmanager/list_form_data_groups.html", 
                                   {"groups": data_groups})
                                    
+@extuser_required()
+def new_form_data_group(req):
+    """Create a new model-defined group of forms"""
+    form_validation = None
+    if req.method == "POST":
+        form = FormDataGroupForm(req.POST) 
+        if form.is_valid():
+            if "formdefs" in req.POST:
+                form_ids = req.POST.getlist("formdefs")
+                if not form_ids:
+                    form_validation = "You must choose at least one form!"
+                else:
+                    new_group = form.save(commit=False)
+                    # TODO: better handling of the name attribute.  
+                    new_group.name = get_unique_value(FormDataGroup.objects, "name", new_group.display_name)
+                    forms = [FormDefModel.objects.get(id=form_id) for form_id in form_ids]
+                    new_group.save()
+                    new_group.forms = forms
+                    new_group.save()
+                    # don't forget to do all the default column updates as well.
+                    for form in forms:
+                        new_group.add_form_columns(form)
+                    
+                    # finally update the sql view
+                    new_group.update_view()
+                    
+                    # when done, take them to the edit page for further tweaking
+                    return HttpResponseRedirect(reverse('xformmanager.views.edit_form_data_group', 
+                                            kwargs={"group_id": new_group.id }))
+                    
+                        
+            else: 
+                form_validation = "You must choose at least one form!"
+    else:
+        form = FormDataGroupForm()
+        
+    all_forms = FormDefModel.objects.order_by("target_namespace", "version")
+    return render_to_response(req, "xformmanager/new_form_data_group.html", 
+                                  {"form": form,
+                                   "all_forms": all_forms,
+                                   "form_validation": form_validation })
+                                   
     
 @extuser_required()
 def form_data_group(req, group_id):
@@ -239,7 +282,8 @@ def delete_form_data_group(req, group_id):
                                
         
 @extuser_required()
-def create_form_data_group(req):
+def create_form_data_group_from_xmlns(req):
+    """Create a form data group from a set of forms matching an xmlns"""
     xmlns = req.GET["xmlns"]
     try:
         FormDataGroup.objects.get(name=xmlns)
