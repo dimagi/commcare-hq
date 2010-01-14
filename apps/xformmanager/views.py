@@ -151,7 +151,7 @@ def manage_groups(request):
     """List and work with model-defined groups of forms."""
     data_groups = FormDataGroup.objects.all()
     return render_to_response(request, "xformmanager/list_form_data_groups.html", 
-                                  {"data_groups": data_groups})
+                                  {"groups": data_groups})
                                    
     
 @extuser_required()
