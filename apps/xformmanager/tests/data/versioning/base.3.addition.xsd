@@ -19,13 +19,13 @@ version="3" uiVersion="1">
 		              <element name="TimeStart" minOccurs="0" type="dateTime"/>
 		              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
 		              <element name="username" minOccurs="0" type="string"/>
-		              <element name="added_field" minOccurs="0" type="string"/>
 		            </sequence>
 		          </complexType>
 		        </element>
 		        <element name="ChpName" minOccurs="0" type="string"/>
 		        <element name="ChpId" minOccurs="0" type="integer"/>
 		        <element name="availability" minOccurs="0" type="_brac_availability"/>
+                <element name="added_field" minOccurs="0" type="string"/>
               </sequence>
         </complexType>
   </element>
