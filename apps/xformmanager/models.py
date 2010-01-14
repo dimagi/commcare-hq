@@ -320,6 +320,14 @@ class FormDefModel(models.Model):
     def __unicode__(self):
         return self.form_name
     
+    def display_string(self):
+        """A longer string, for use in UI components."""
+        to_return = "%s | %s (Uploaded: %s, Submissions: %s, Last Submission: %s" % \
+                (self.target_namespace, self.version, 
+                 self.submit_time, self.submission_count(),
+                 self.time_of_last_instance())
+        return to_return
+        
     @property
     def get_domain(self):
         # this is left to make domains backwards compatible (?)
@@ -365,11 +373,13 @@ class FormDefModel(models.Model):
         return Submission.objects.filter(attachments__form_metadata__formdefmodel=self).count()
 
     def time_of_last_instance(self):
-        """ returns the last time an instance was submitted to this schema """
-        submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
-        if submit is None:
+        """The last time an instance was submitted to this schema """
+        try:
+            submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
+            return submit.submit_time
+        except Submission.DoesNotExist:
             return None
-        return submit.submit_time
+        
 
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other
@@ -741,37 +751,44 @@ class FormDataGroup(models.Model):
         group.forms = forms
         group.save()
         for form in forms:
-            table_name = form.table_name
-            column_names = form.get_data_column_names()
-            column_types = form.get_data_column_types()
-            for name, type in zip(column_names, column_types):
-                # Get the pointer object for this form, or create it if 
-                # this is the first time we've used this form/column
-                pointer = FormDataPointer.objects.get_or_create\
-                                (form=form, column_name=name, data_type=type)[0]
-                
-                # Get or create the group.  If any other column had this
-                # name they will be used with this.
-                try:
-                    column_group = group.columns.get(name=name, data_type=type)
-                    
-                except FormDataColumn.DoesNotExist:
-                    # add a second check for the name, so we don't have duplicate 
-                    # names inside a single form definition which will make queries
-                    # pretty challenging
-                    name = get_unique_value(group.columns, "name", name)
-                    column_group = FormDataColumn.objects.create(name=name, 
-                                                                 data_type=type)
-                    # don't forget to add the newly created column to this
-                    # group of forms as well.
-                    group.columns.add(column_group)
-                    group.save()
-                
-                column_group.fields.add(pointer)
-                column_group.save()
+            group.add_form_columns(form)
         group.update_view()
         return group
     
+    def add_form_columns(self, form):
+        """Given a group and a form, create the DB objects for each column
+           in the form (if necessary) and add the form's columns to the 
+           group"""
+        table_name = form.table_name
+        column_names = form.get_data_column_names()
+        column_types = form.get_data_column_types()
+        for name, type in zip(column_names, column_types):
+            # Get the pointer object for this form, or create it if 
+            # this is the first time we've used this form/column
+            pointer = FormDataPointer.objects.get_or_create\
+                            (form=form, column_name=name, data_type=type)[0]
+            
+            # Get or create the column group.  If any other column had this
+            # name and data type it will be used with this.
+            try:
+                column_group = self.columns.get(name=name, data_type=type)
+                
+            except FormDataColumn.DoesNotExist:
+                # add a second check for the name, so we don't have duplicate 
+                # names inside a single form definition which will make queries
+                # pretty challenging
+                name = get_unique_value(self.columns, "name", name)
+                column_group = FormDataColumn.objects.create(name=name, 
+                                                             data_type=type)
+                # don't forget to add the newly created column to this
+                # group of forms as well.
+                self.columns.add(column_group)
+                self.save()
+            
+            column_group.fields.add(pointer)
+            column_group.save()
+            
+            
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \
                 (self.name, self.forms.count(), self.columns.count())

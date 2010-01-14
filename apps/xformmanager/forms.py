@@ -17,11 +17,11 @@ class FormDataGroupForm(forms.ModelForm):
     display_name = forms.CharField(widget=forms.TextInput(attrs={'size':'80'}))
     view_name = forms.CharField(widget=forms.TextInput(attrs={'size':'40'}))
     def clean_view_name(self):
-        if not re.match(r"^\w+$", self.cleaned_data["view_name"]):
-            print "%s is invalid" % self.cleaned_data["view_name"]
+        view_name = self.cleaned_data["view_name"]
+        if not re.match(r"^\w+$", view_name):
             raise forms.ValidationError("View name can only contain numbers, letters, and underscores!")
-        else: 
-            print "%s is valid!!" % self.cleaned_data["view_name"]
+        elif FormDataGroup.objects.filter(view_name=view_name).count() > 0:
+            raise forms.ValidationError("Sorry, view name %s is already in use!  Please pick a new one." % view_name)
         return self.cleaned_data["view_name"]
         
     class Meta:
