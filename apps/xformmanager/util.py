@@ -142,10 +142,11 @@ def get_unique_value(query_set, field_name, value):
        <value> and then goes to <value>_2, <value>_3, ... until 
        it finds the first unique entry. Assumes <value> is a string"""
     
+    original_value = value
     column_count = query_set.filter(**{field_name: value}).count()
     to_append = 2
     while column_count != 0:
-        value = "%s_%s" % (value, to_append)
+        value = "%s_%s" % (original_value, to_append)
         column_count = query_set.filter(**{field_name: value}).count()
         to_append = to_append + 1
     return value
