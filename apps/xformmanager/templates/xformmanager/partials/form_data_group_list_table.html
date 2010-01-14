@@ -1,0 +1,20 @@
+<table>
+<thead>
+    <th>Display Name</th>
+    <th>View Name</th>
+    <th>Created</th>
+    <th>Forms</th>
+    <th>Columns</th>
+</thead>
+<tbody>
+    {% for group in groups %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        <td><a href="{% url xformmanager.views.form_data_group group.id %}">{{ group.display_name }}</td>
+        <td>{{ group.view_name }}</td>
+        <td>{{ group.created|date }}</td>
+        <td>{{ group.forms.count }}</td>
+        <td>{{ group.columns.count }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
