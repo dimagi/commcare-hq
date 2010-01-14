@@ -127,7 +127,8 @@ def home(request, template='register_and_list_xforms.html'):
 
 
 @extuser_required()
-def xform_group(request):
+def xmlns_group(request):
+    """View a group of forms for a particular xmlns."""
     xmlns = request.GET["xmlns"]
     group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
     data_groups = FormDataGroup.objects.filter(name=xmlns)
@@ -135,6 +136,23 @@ def xform_group(request):
                                   {"group": group,
                                    "data_groups": data_groups
                                    })
+    
+@extuser_required()
+def xmlns_group_popup(request):
+    """Popup (compact) view a group of forms for a particular xmlns.
+       Used in modal dialogs."""
+    xmlns = request.GET["xmlns"]
+    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
+    return render_to_response(request, "xformmanager/form_group_popup.html", 
+                              {"group": group})
+
+@extuser_required()
+def manage_groups(request):
+    """List and work with model-defined groups of forms."""
+    data_groups = FormDataGroup.objects.all()
+    return render_to_response(request, "xformmanager/form_group.html", 
+                                  {"data_groups": data_groups})
+                                   
     
 @extuser_required()
 def form_data_group(req, group_id):
@@ -240,12 +258,6 @@ def create_form_data_group(req):
                                    
 
 
-@extuser_required()
-def xform_group_popup(request):
-    xmlns = request.GET["xmlns"]
-    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
-    return render_to_response(request, "xformmanager/form_group_popup.html", 
-                              {"group": group})
 
 def _register_xform(request, file_name, display_name, remote_addr, file_size):
     """ does the actual creation and saving of the formdef model """
