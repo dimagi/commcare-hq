@@ -1,9 +1,13 @@
+import unittest
+from decimal import Decimal
+from datetime import *
+
+from django.db import connection
+
+from hq.dbutil import get_column_names
 from xformmanager.tests.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.models import FormDataGroup
-from decimal import Decimal
-from datetime import *
-import unittest
 
 class DataVersioningTestCase(unittest.TestCase):
     """This class tests the creating of the form data management objects
@@ -68,13 +72,30 @@ class DataVersioningTestCase(unittest.TestCase):
         
         columns = self.original_formdef.get_data_column_names()
         # this is added by form 3
-        columns.append("meta_added_field")
+        columns.append("root_added_field")
         # a second one of these is added by form 5
         columns.append("meta_username_2")
         self.assertEqual(len(columns), len(group.columns.all()))
+
+        for group_column in group.columns.all():
+            self.assertTrue(group_column.name in columns, 
+                            "%s was found in the list of columns: %s" % \
+                            (group_column.name, columns))
         
         for form in original_list:
             self._check_columns(form, group)
+            
+        # also make sure the view was created.
+        query = "SELECT * from %s" % group.view_name
+        cursor = connection.cursor()
+        cursor.execute(query)
+        view_cols_expected = ["form_id"]
+        view_cols_expected.extend(columns)
+        view_column_names = get_column_names(cursor)
+        for view_column in view_column_names:   
+            self.assertTrue(view_column in view_cols_expected,
+                            "%s was found in the list of view columns" % \
+                            view_column)
             
     def _check_columns(self, form, group):
         columns = form.get_data_column_names()

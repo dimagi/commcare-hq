@@ -625,7 +625,20 @@ class FormDataGroup(models.Model):
     # TODO: add the constraint for real.
     columns = models.ManyToManyField(FormDataColumn)
     
-    
+    # CZUE: nevermind, don't do this.  It'll be way to slow for 
+    # operations that save the group a lot (like creating it).
+    # Let's just make it called manually.
+#    def save(self):
+#        """Override save to make sure the sql view is updated any time 
+#           this changes.  Note that this does not cover every case of
+#           edits, as changes to the underlying columns independently 
+#           can also cause the view to change.  For now we'll leave it 
+#           up to devs to be sure they call update_view() when they do
+#           this, although we could readily take care of the whole thing 
+#           with signals/overrides.""" 
+#        super(FormDataGroup, self).save()
+#        self.update_view()
+
     def update_view(self):
         """Update the sql view object associated with this.  This will
            create (or replace) the existing view and rebuild it based
@@ -735,7 +748,7 @@ class FormDataGroup(models.Model):
                 # Get the pointer object for this form, or create it if 
                 # this is the first time we've used this form/column
                 pointer = FormDataPointer.objects.get_or_create\
-                            (form=form, column_name=name, data_type=type)[0]
+                                (form=form, column_name=name, data_type=type)[0]
                 
                 # Get or create the group.  If any other column had this
                 # name they will be used with this.
@@ -756,6 +769,7 @@ class FormDataGroup(models.Model):
                 
                 column_group.fields.add(pointer)
                 column_group.save()
+        group.update_view()
         return group
     
     def __unicode__(self):
