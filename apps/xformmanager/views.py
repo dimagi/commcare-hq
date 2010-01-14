@@ -132,7 +132,7 @@ def xmlns_group(request):
     xmlns = request.GET["xmlns"]
     group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
     data_groups = FormDataGroup.objects.filter(name=xmlns)
-    return render_to_response(request, "xformmanager/form_group.html", 
+    return render_to_response(request, "xformmanager/xmlns_group.html", 
                                   {"group": group,
                                    "data_groups": data_groups
                                    })
@@ -143,14 +143,14 @@ def xmlns_group_popup(request):
        Used in modal dialogs."""
     xmlns = request.GET["xmlns"]
     group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
-    return render_to_response(request, "xformmanager/form_group_popup.html", 
+    return render_to_response(request, "xformmanager/xmlns_group_popup.html", 
                               {"group": group})
 
 @extuser_required()
 def manage_groups(request):
     """List and work with model-defined groups of forms."""
     data_groups = FormDataGroup.objects.all()
-    return render_to_response(request, "xformmanager/form_group.html", 
+    return render_to_response(request, "xformmanager/list_form_data_groups.html", 
                                   {"data_groups": data_groups})
                                    
     
