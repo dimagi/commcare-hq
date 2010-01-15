@@ -788,6 +788,27 @@ class FormDataGroup(models.Model):
             column_group.fields.add(pointer)
             column_group.save()
             
+    def remove_form(self, form):
+        """Remove a form from this group, updating the columns and removing
+           it from the group list."""
+        self.delete_form_columns(form)
+        self.forms.remove(form)
+        self.save()
+        
+    def delete_form_columns(self, form):
+        """Given a group and a form, remove the form's columns from the 
+           group and if necessary delete the column objects entirely."""
+        form_columns = self.columns.filter(fields__form=form)
+        for column in form_columns:
+            column.fields.remove(column.fields.get(form=form))
+            # if there are now no longer any fields in the column, delete
+            # it entirely.
+            if column.fields.count() == 0:
+                self.columns.remove(column)
+                self.save()
+                column.delete()
+            else:
+                column.save()
             
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \

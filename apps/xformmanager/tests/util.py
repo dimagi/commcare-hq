@@ -1,4 +1,5 @@
 from hq.models import Domain
+from xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
 from xformmanager.manager import *
 from xformmanager.storageutility import StorageUtility
 from receiver.models import Submission, Attachment
@@ -14,6 +15,12 @@ def clear_data():
     su.clear()
     Submission.objects.all().delete()
     Attachment.objects.all().delete()
+    
+def clear_group_data():
+    """Clear out the form group objects"""
+    FormDataGroup.objects.all().delete()
+    FormDataColumn.objects.all().delete()
+    FormDataPointer.objects.all().delete()
     
 def get_file(filename, path=None ):
     """ handles relative pathing of files """

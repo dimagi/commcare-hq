@@ -7,7 +7,7 @@ from django.db import connection
 from hq.dbutil import get_column_names
 from xformmanager.tests.util import *
 from xformmanager.xformdef import FormDef
-from xformmanager.models import FormDataGroup
+from xformmanager.models import FormDataGroup, FormDataColumn
 
 class DataVersioningTestCase(unittest.TestCase):
     """This class tests the creating of the form data management objects
@@ -19,10 +19,14 @@ class DataVersioningTestCase(unittest.TestCase):
         
     def tearDown(self):
         clear_data()
+        clear_group_data()
+        
     
     def testFromSingle(self):
         """Tests the creation of a form group from a single form."""
+        self.assertEqual(0, FormDataColumn.objects.count())
         group = FormDataGroup.from_forms([self.original_formdef])
+        self.assertEqual(group.columns.count(), FormDataColumn.objects.count())
         self.assertEqual(1, len(group.forms.all()))
         self.assertEqual(self.original_formdef, group.forms.all()[0])
         columns = self.original_formdef.get_data_column_names()
@@ -36,6 +40,14 @@ class DataVersioningTestCase(unittest.TestCase):
             self.assertEqual(self.original_formdef, field.form)
             self.assertEqual(column, field.column_name)
     
+        # now remove the form.  This should be the equivalent of
+        # removing every single column
+        group.remove_form(self.original_formdef)
+        group = FormDataGroup.objects.get(id=group.id)
+        self.assertEqual(0, group.columns.count())
+        self.assertEqual(0, FormDataColumn.objects.count())
+        
+        
     def testFromIdentical(self):
         """Tests the creation of a form group from two identical forms
            (with different version numbers)."""
@@ -96,6 +108,19 @@ class DataVersioningTestCase(unittest.TestCase):
             self.assertTrue(view_column in view_cols_expected,
                             "%s was found in the list of view columns" % \
                             view_column)
+            
+        # test deletion.  
+        col_count = group.columns.count()
+        group.remove_form(fd3_add)
+        group = FormDataGroup.objects.get(id=group.id)
+        self.assertEqual(group.columns.count(), col_count - 1)
+        columns.remove("root_added_field")
+        for group_column in group.columns.all():
+            self.assertTrue(group_column.name in columns, 
+                            "%s was found in the list of columns: %s" % \
+                            (group_column.name, columns))
+        
+        
             
     def _check_columns(self, form, group):
         columns = form.get_data_column_names()
