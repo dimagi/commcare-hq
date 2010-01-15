@@ -16,12 +16,16 @@ class FormDataGroupForm(forms.ModelForm):
     """Form for basic form group data""" 
     display_name = forms.CharField(widget=forms.TextInput(attrs={'size':'80'}))
     view_name = forms.CharField(widget=forms.TextInput(attrs={'size':'40'}))
+
     def clean_view_name(self):
         view_name = self.cleaned_data["view_name"]
         if not re.match(r"^\w+$", view_name):
             raise forms.ValidationError("View name can only contain numbers, letters, and underscores!")
-        elif FormDataGroup.objects.filter(view_name=view_name).count() > 0:
-            raise forms.ValidationError("Sorry, view name %s is already in use!  Please pick a new one." % view_name)
+        # check that the view name is unique... if it was changed.
+        if self.instance.id:
+            if FormDataGroup.objects.get(id=self.instance.id).view_name != view_name and \
+               FormDataGroup.objects.filter(view_name=view_name).count() > 0:
+                raise forms.ValidationError("Sorry, view name %s is already in use!  Please pick a new one." % view_name)
         return self.cleaned_data["view_name"]
         
     class Meta:
