@@ -8,7 +8,7 @@
     <th colspan=2>Actions</th>
 </thead>
 <tbody>
-    {% for form in group.forms %}
+    {% for form in forms %}
     <tr class="{% cycle 'odd' 'even' %}">
         <td>{{ form.version }}</td>
         <td>{{ form.date_created }}</td>

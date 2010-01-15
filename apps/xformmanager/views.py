@@ -190,80 +190,126 @@ def new_form_data_group(req):
     else:
         form = FormDataGroupForm()
         
-    all_forms = FormDefModel.objects.order_by("target_namespace", "version")
-    return render_to_response(req, "xformmanager/new_form_data_group.html", 
-                                  {"form": form,
+    all_forms = FormDefModel.objects.filter(domain=req.extuser.domain)\
+                            .order_by("target_namespace", "version")
+    return render_to_response(req, "xformmanager/edit_form_data_group.html", 
+                                  {"group_form": form,
                                    "all_forms": all_forms,
+                                   "selected_forms": [],
                                    "form_validation": form_validation })
                                    
     
 @extuser_required()
 def form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
-    group.update_view()
     return render_to_response(req, "xformmanager/form_data_group.html",
                               {"group": group,
                                "editing": False })
         
 @extuser_required()
 def edit_form_data_group(req, group_id):
+    """Edit a model-defined group of forms"""
     group = get_object_or_404(FormDataGroup, id=group_id)
-    if req.method == 'POST':
+    form_validation = None
+    if req.method == "POST":
         group_form = FormDataGroupForm(req.POST, instance=group) 
         if group_form.is_valid():
-            group_form.save()
-            for key, value in req.POST.items():
-                if key.startswith("checked_"):
-                    to_delete = key.replace("checked_", "")
-                    column = group.columns.get(name=to_delete)
-                    column.delete()
-                elif key.startswith("select_"):
-                    truncated_name = key.replace("select_", "")
-                    form_id, column = truncated_name.split("_", 1)
-                    form = FormDefModel.objects.get(id=form_id)
-                    column_obj = group.columns.get(name=column)
-                    if value == NOT_SET:
-                        # the only time we have to do anything here is if
-                        # it was previously set.  
-                        try:
-                            old_field = column_obj.fields.get(form=form)
-                            # we found something, better get rid of it
-                            column_obj.fields.remove(old_field)
-                            column_obj.save()
-                        except FormDataPointer.DoesNotExist:
-                            # we weren't expecting anything so nothing to do
+            if "formdefs" in req.POST:
+                form_ids = req.POST.getlist("formdefs")
+                if not form_ids:
+                    form_validation = "You must choose at least one form!"
+                else:
+                    group = group_form.save()
+                    set_forms = [FormDefModel.objects.get(id=form_id) for form_id in form_ids]
+                    previous_forms = group.forms.all()
+                    new_forms = [form for form in set_forms if form not in previous_forms]
+                    deleted_forms = [form for form in previous_forms if form not in set_forms]
+                    # don't forget to do all the default column updates as well.
+                    for form in new_forms:
+                        group.add_form(form)
+                    for form in deleted_forms:
+                        group.remove_form(form)
+                    
+                    if new_forms or deleted_forms:
+                        # finally, if anything changed update the sql view
+                        group.update_view()
+                    
+                    # and take them back to the viewing page
+                    return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
+                                                        kwargs={"group_id": group.id }))
+            else: 
+                form_validation = "You must choose at least one form!"
+    else:
+        group_form = FormDataGroupForm(instance=group)
+        
+    all_forms = FormDefModel.objects.filter(domain=req.extuser.domain)\
+                            .order_by("target_namespace", "version")
+    selected_forms = group.forms.all()
+    unused_forms = [form for form in all_forms if form not in selected_forms]
+    return render_to_response(req, "xformmanager/edit_form_data_group.html", 
+                                  {"group_form": group_form,
+                                   "group": group,
+                                   "selected_forms": selected_forms,
+                                   "all_forms": unused_forms,
+                                   "form_validation": form_validation })
+                                   
+@extuser_required()
+def edit_form_data_group_columns(req, group_id):
+    """Edit the individual columns of a form data group"""
+    group = get_object_or_404(FormDataGroup, id=group_id)
+    if req.method == 'POST':
+        for key, value in req.POST.items():
+            if key.startswith("checked_"):
+                to_delete = key.replace("checked_", "")
+                column = group.columns.get(name=to_delete)
+                column.delete()
+            elif key.startswith("select_"):
+                truncated_name = key.replace("select_", "")
+                form_id, column = truncated_name.split("_", 1)
+                form = FormDefModel.objects.get(id=form_id)
+                column_obj = group.columns.get(name=column)
+                if value == NOT_SET:
+                    # the only time we have to do anything here is if
+                    # it was previously set.  
+                    try:
+                        old_field = column_obj.fields.get(form=form)
+                        # we found something, better get rid of it
+                        column_obj.fields.remove(old_field)
+                        column_obj.save()
+                    except FormDataPointer.DoesNotExist:
+                        # we weren't expecting anything so nothing to do
+                        pass
+                else:
+                    # we code these as select_<formid>_<column_name>
+                    new_column = value
+                    new_field = FormDataPointer.objects.get(form=form, 
+                                                            column_name=new_column)
+                    try:
+                        old_field = column_obj.fields.get(form=form)
+                        if old_field == new_field:
+                            # we didn't change anything, leave it
                             pass
-                    else:
-                        # we code these as select_<formid>_<column_name>
-                        new_column = value
-                        new_field = FormDataPointer.objects.get(form=form, 
-                                                                column_name=new_column)
-                        try:
-                            old_field = column_obj.fields.get(form=form)
-                            if old_field == new_field:
-                                # we didn't change anything, leave it
-                                pass
-                            else:
-                                # remove the old field from the column
-                                # and add the new one
-                                column_obj.fields.remove(old_field)
-                                column_obj.fields.add(new_field)
-                                column_obj.save()
-                        except FormDataPointer.DoesNotExist:
-                            # there was no previous mapping for this.  Just 
-                            # add the new one
+                        else:
+                            # remove the old field from the column
+                            # and add the new one
+                            column_obj.fields.remove(old_field)
                             column_obj.fields.add(new_field)
                             column_obj.save()
-                else:
-                    print "Unknown kvp: %s, %s" % (key, req.POST[key])
-            return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
-                                            kwargs={"group_id": group.id }))
-    else:
-        group_form =  FormDataGroupForm(instance=group)
-        
-    return render_to_response(req, "xformmanager/edit_form_data_group.html",
-                              {"group": group, "form": group_form,
-                               "editing": True })
+                    except FormDataPointer.DoesNotExist:
+                        # there was no previous mapping for this.  Just 
+                        # add the new one
+                        column_obj.fields.add(new_field)
+                        column_obj.save()
+            else:
+                pass 
+                # print "Unknown kvp: %s, %s" % (key, req.POST[key])
+        # take them back to the viewing page
+        return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
+                                        kwargs={"group_id": group.id }))
+    
+    return render_to_response(req, "xformmanager/edit_form_data_group_columns.html",
+                              {"group": group, "editing": True }) 
+                               
         
 @extuser_required()
 def delete_form_data_group(req, group_id):
