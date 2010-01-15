@@ -1,7 +1,9 @@
 {% extends base_template %}
 {% block content %}
 <h3>Forms for {{ group.xmlns }}</h3>
+{% with group.forms as forms %}
 {% include "xformmanager/partials/xform_group_table.html" %}
+{% endwith %}
 {% if data_groups %}
 {% else %}
 <h4>You haven't yet created any data views for this namespace.  Would you like to create one now?  
