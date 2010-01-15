@@ -110,16 +110,18 @@ class DataVersioningTestCase(unittest.TestCase):
                             view_column)
             
         # test deletion.  
-        col_count = group.columns.count()
+        orig_col_count = group.columns.count()
         group.remove_form(fd3_add)
         group = FormDataGroup.objects.get(id=group.id)
-        self.assertEqual(group.columns.count(), col_count - 1)
-        columns.remove("root_added_field")
-        for group_column in group.columns.all():
-            self.assertTrue(group_column.name in columns, 
-                            "%s was found in the list of columns: %s" % \
-                            (group_column.name, columns))
+        self.assertEqual(group.columns.count(), orig_col_count - 1)
+        self.assertFalse("root_added_field" in group.columns.values_list("name", flat=True))
         
+        # test adding it back
+        group.add_form(fd3_add)
+        group = FormDataGroup.objects.get(id=group.id)
+        self.assertEqual(group.columns.count(), orig_col_count)
+        columns.append("root_added_field")
+        self.assertTrue("root_added_field" in group.columns.values_list("name", flat=True))
         
             
     def _check_columns(self, form, group):
