@@ -755,6 +755,14 @@ class FormDataGroup(models.Model):
         group.update_view()
         return group
     
+    def add_form(self, form):
+        """Add a form from this group, updating the columns and adding 
+           it to the group list."""
+        self.add_form_columns(form)
+        self.forms.add(form)
+        self.save()
+        
+
     def add_form_columns(self, form):
         """Given a group and a form, create the DB objects for each column
            in the form (if necessary) and add the form's columns to the 
@@ -791,11 +799,11 @@ class FormDataGroup(models.Model):
     def remove_form(self, form):
         """Remove a form from this group, updating the columns and removing
            it from the group list."""
-        self.delete_form_columns(form)
+        self.remove_form_columns(form)
         self.forms.remove(form)
         self.save()
         
-    def delete_form_columns(self, form):
+    def remove_form_columns(self, form):
         """Given a group and a form, remove the form's columns from the 
            group and if necessary delete the column objects entirely."""
         form_columns = self.columns.filter(fields__form=form)
