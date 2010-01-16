@@ -151,7 +151,15 @@ def get_unique_value(query_set, field_name, value):
         to_append = to_append + 1
     return value
                     
-                    
+def get_sort_string(sort_column, sort_descending):
+    """From a sort column and descending boolean, construct 
+       a string that can be used in sql queries, e.g:
+         ORDER BY <sort_column> <descending?>
+       if sort_column is empty this returns an empty string"""
+    if sort_column:
+        sort_descending_string = "desc" if sort_descending else ""
+        return " ORDER BY %s %s" % (sort_column, sort_descending_string) 
+    return ""
 
 def case_insensitive_attribute(lxml_element, attribute_name):
     for i in lxml_element.attrib:

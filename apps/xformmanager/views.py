@@ -21,7 +21,7 @@ from xformmanager.manager import *
 from xformmanager.templatetags.xform_tags import NOT_SET
 from receiver import submitprocessor
 
-
+from hq.dbutil import get_column_names
 from hq.models import *
 from hq.utils import paginate, get_table_display_properties
 from hq.decorators import extuser_required
@@ -202,8 +202,25 @@ def new_form_data_group(req):
 @extuser_required()
 def form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
+    items, sort_column, sort_descending, filters =\
+         get_table_display_properties(req,default_sort_column = None,
+                                      default_sort_descending = False)
+    cursor = group.get_data(sort_column, sort_descending)
+    columns = get_column_names(cursor)
+    if sort_column:
+        sort_index = columns.index(sort_column)
+    else:
+        sort_index = -1
+    data = paginate(req, cursor.fetchall())
+    extra_params = "&".join(['%s=%s' % (key, value)\
+                             for key, value in req.GET.items()\
+                             if key != "page"])
     return render_to_response(req, "xformmanager/form_data_group.html",
-                              {"group": group,
+                              {"group": group, "columns": columns, 
+                               "data": data, "sort_column": sort_column,
+                               "sort_descending": sort_descending,
+                               "sort_index": sort_index, 
+                               "extra_params": extra_params, 
                                "editing": False })
         
 @extuser_required()
@@ -310,7 +327,6 @@ def edit_form_data_group_columns(req, group_id):
     return render_to_response(req, "xformmanager/edit_form_data_group_columns.html",
                               {"group": group, "editing": True }) 
                                
-        
 @extuser_required()
 def delete_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
