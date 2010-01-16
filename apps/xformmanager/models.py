@@ -19,7 +19,7 @@ from hq.utils import build_url
 from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
 from graphing import dbhelper
 from receiver.models import Submission, Attachment, SubmissionHandlingType
-from xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value
+from xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
 from xformmanager.xformdef import FormDef
 
 class ElementDefModel(models.Model):
@@ -280,10 +280,8 @@ class FormDefModel(models.Model):
                     filter[2] = unicode(filter[2]) 
                     to_append = " AND s.%s %s %s " % tuple( filter )
                 sql = sql + to_append
-        desc = ""
-        if sort_descending:
-            desc = "desc"
-        sql = sql + (" ORDER BY %s %s " % (sort_column, desc))
+        
+        sql = sql + get_sort_string(sort_column, sort_descending)
         cursor = connection.cursor()
         cursor.execute(sql)
         return cursor
@@ -817,7 +815,15 @@ class FormDataGroup(models.Model):
                 column.delete()
             else:
                 column.save()
-            
+    
+    def get_data(self, sort_column=None, sort_descending=False):
+        """Gets a cursor of the data associated with this group"""
+        sort_string = get_sort_string(sort_column, sort_descending)
+        sql = "SELECT * FROM %s %s" % (self.view_name, sort_string)
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        return cursor
+    
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \
                 (self.name, self.forms.count(), self.columns.count())
