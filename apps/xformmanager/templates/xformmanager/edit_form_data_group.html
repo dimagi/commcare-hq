@@ -1,0 +1,26 @@
+{% extends base_template %}
+{% block title %}Form data for {{ group.display_name }}{% endblock %}
+{% block javascripts %}
+<script language="javascript" type="text/javascript">
+$(document).ready(function(){
+    $('#form-group INPUT').click(function() {
+        $(this).parent().parent().toggleClass('highlight');
+    });
+});
+</script>
+{% endblock %}
+{% block content %}
+<form method="POST">
+<table style="border:none;">
+{{ form.as_table }}
+</table>
+<div class="big-table" style="max-height:600px">
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
+</div>
+<br>
+<a href="{% url xformmanager.views.delete_form_data_group group.id %}" class="error">delete this data group</a>
+<div style="float:right">
+<input type="submit" value="Submit" />
+</div>
+</form>
+{% endblock %}

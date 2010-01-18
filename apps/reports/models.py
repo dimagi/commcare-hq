@@ -158,6 +158,12 @@ class FormIdentifier(models.Model):
             return to_return
         return data
     
+    def get_data_map_for_case(self, case_id):
+        '''Gets the list of entries for a single case.'''
+        list = self.get_data_for_case(case_id)
+        columns = self.get_column_names()
+        return [dict(zip(columns, sub_list)) for sub_list in list]
+        
     def get_data_maps(self):
         '''Gets one row per unique identifier, sorted by the default
            sorting column.  What is returned is a dictionary of 
@@ -336,6 +342,19 @@ class Case(models.Model):
         return to_return
     
     
+    def get_data_map_for_case(self, case_id):
+        '''Same as above but with the the same map/list difference in many
+           other methods.'''
+        to_return = {}
+        for form_id in self.form_identifiers:
+            # same ugliness as above.
+            try: 
+                to_return[form_id] = form_id.get_data_map_for_case(case_id)
+            except Exception, e:
+                logging.warn("Couldn't get data from form %s for case %s.  Error is: %s" % (form_id, case_id, e))
+                to_return[form_id] = []
+        return to_return
+    
     def get_all_data(self):
         '''Get the full data set of data for all the forms.  This  
            Will be a dictionary of the id column to a dictionary 
@@ -467,7 +486,7 @@ class SqlReport(models.Model):
     def to_html_table(self, additional_params={}):
         """Formats this sql report as an HTML table for display in HQ"""
         cols, data = self.get_data(additional_params)
-        start_tags = '<table class="sofT"><thead class="commcare-heading">'
+        start_tags = '<table><thead>'
         # inject each header between <th> tags and join them
         header_cols = "".join(["<th>%s</th>" % col for col in cols])
         head_body_sep = "</thead><tbody>"

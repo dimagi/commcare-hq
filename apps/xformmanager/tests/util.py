@@ -1,8 +1,20 @@
 from hq.models import Domain
 from xformmanager.manager import *
+from xformmanager.storageutility import StorageUtility
+from receiver.models import Submission, Attachment
 from receiver.tests.util import *
 import logging
 
+def clear_data():
+    """Clear most of the data in the system: schemas,
+       submissions, and attachments.  Useful in the 
+       setup and/or teardown methods of tests.
+    """
+    su = StorageUtility()
+    su.clear()
+    Submission.objects.all().delete()
+    Attachment.objects.all().delete()
+    
 def get_file(filename, path=None ):
     """ handles relative pathing of files """
     if not path:

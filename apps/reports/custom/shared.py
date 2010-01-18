@@ -141,7 +141,7 @@ class Mother(object):
             else:
                 weeks_pregnant =  reg_form_data["sampledata_weeks_pregnant"]
                 self.months_preg_at_reg = weeks_pregnant / 4 
-                
+            
             if self.date_of_reg and self.months_preg_at_reg:
                 days_pregnant_at_reg = self.months_preg_at_reg * 30
                 self.months_pregnant = ((datetime.now() - self.date_of_reg) + 
@@ -151,11 +151,16 @@ class Mother(object):
             # high risk factors
             hi_risk_cols = ["sampledata_hi_risk_info_old",
                             "sampledata_hi_risk_info_young",
+                            "sampledata_hi_risk_info",
                             "sampledata_hi_risk_info_education",
                             "sampledata_hi_risk_info_small",
                             "sampledata_hi_risk_info_10_years",
+                            "sampledata_hi_risk_info_5_years",
                             "sampledata_hi_risk_info_complications",
+                            "sampledata_hi_risk_info_blood_group",
                             "sampledata_hi_risk_info_many",
+                            "sampledata_hi_risk_info_hepb",
+                            "sampledata_hi_risk_info_anemia",
                             "sampledata_hi_risk_info_health",
                             "sampledata_hi_risk_info_hiv",
                             "sampledata_hi_risk_info_syphilis"]
@@ -167,6 +172,13 @@ class Mother(object):
                     risk_factor = self._clean_and_translate(col, "sampledata_hi_risk_info_", "")
                     hi_risk_values.append(risk_factor)
             self.high_risk_factors = ",".join(hi_risk_values)
+            
+            # for the rest of the properties, just add them as top level properties
+            # available in the model, unless they've already been set
+            for col, value in reg_form_data.items():
+                prop_name = col.replace("sampledata_", "")
+                if not hasattr(self, prop_name):
+                    setattr(self, prop_name, value)
         else:
             self.months_pregnant = None
         chw_col = "meta_username"

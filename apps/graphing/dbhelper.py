@@ -252,7 +252,12 @@ class DbHelper(object):
                 datelong = time.mktime(row[0].timetuple()) * 1000
                 pass
             else:
-                datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
+                # czue - I don't know what this line is doing, all i know is that sometimes
+                # row[0] is null, which makes this unhappy.
+                if row[0] is not None:
+                    datelong= time.mktime(time.strptime(str(row[0][0:-4]),XMLDATE_FORMAT))
+                else: 
+                    datelong="empty date"
             val = int(row[1])
             ret.append([datelong,val])
         dset = {}

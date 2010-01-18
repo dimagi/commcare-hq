@@ -1,0 +1,7 @@
+{% extends base_template %}
+{% block title %}Form Data Groups{% endblock %}
+{% block content %}
+<h2>All Form Groups</h2>
+<p><a href="{% url xformmanager.views.new_form_data_group %}">new group</td></a></p>
+{% include "xformmanager/partials/form_data_group_list_table.html" %}
+{% endblock %}

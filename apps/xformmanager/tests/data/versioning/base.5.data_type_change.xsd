@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<schema 
+targetNamespace="http://www.commcarehq.org/xml_basic" 
+xmlns="http://www.w3.org/2001/XMLSchema"
+version="5" uiVersion="1">
+  <simpleType name="_brac_availability">
+    <restriction base="string">
+      <enumeration value="y"/>
+      <enumeration value="n"/>
+    </restriction>
+  </simpleType>
+  <element name="root" minOccurs="0">
+        <complexType>
+              <sequence>
+		        <element name="Meta" minOccurs="0">
+		          <complexType>
+		            <sequence>
+		              <element name="DeviceID" minOccurs="0" type="string"/>
+		              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+		              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+		              <element name="username" minOccurs="0" type="integer"/>
+		            </sequence>
+		          </complexType>
+		        </element>
+		        <element name="ChpName" minOccurs="0" type="string"/>
+		        <element name="ChpId" minOccurs="0" type="integer"/>
+		        <element name="availability" minOccurs="0" type="_brac_availability"/>
+              </sequence>
+        </complexType>
+  </element>
+</schema>
+

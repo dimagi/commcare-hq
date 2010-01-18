@@ -84,7 +84,7 @@ def get_dashboard_user_counts(user, startdate=None, enddate=None, use_blacklist=
             logging.error("problem in dashboard display: %s" % e)
             ret += '<p style="font-weight:bold; color:red;">problem in dashboard display.  Not all data will be visible.  Your error message is: %s</p>' % e
             
-    ret += '''<table class="sofT">\n<thead class="commcare-heading"><tr>
+    ret += '''<table>\n<thead><tr>
                 <th>Date</th>
                 <th>Grand Total</th>'''
     

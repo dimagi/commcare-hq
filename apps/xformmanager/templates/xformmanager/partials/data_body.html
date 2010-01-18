@@ -1,6 +1,5 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-
 <h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
 {% if filters %}
 	<h3>FILTERED BY
@@ -26,17 +25,24 @@
     <p class="error">{{ errors }}</p>
 {% endif %}
 <br>
+<div class="span-12">
 {% with param_string_no_page as extra_params %}
 {% include "hq/partials/pagination.html" %}
 {% endwith %}
+</div>
+<div class="span-12 last" style="text-align:right;">
+<a href="{%url xformmanager.views.plain_data xform.id %}">view fullscreen</a>
+</div>
+<br>
 <form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
-<table class="sofT">
-	<thead class="commcare-heading">
+<div class="big-table">
+<table>
+	<thead>
 	   <tr>
 	      <th></th>
 	   {% for col in columns %}
 	      {% ifequal forloop.counter0 sort_index %}
-		     <th class="sorted" id="{% if sort_descending %}descending{% else %}ascending{% endif %}">
+		     <th class="sorted{% if sort_descending %} descending{% else %} ascending{% endif %}">
 		       <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}{% if filters %}&filter_{{filters}}{% endif %}">
 		         {{col}}
 		     </th>
@@ -58,8 +64,11 @@
            {% else %}
                 <td>
            {% endifequal %}
-           {% if forloop.first %}
-	   		     <a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a>
+           {% ifequal forloop.counter0 0 %}
+                 <b><a href="{%url receiver.views.single_submission field %}">{{ field }}</a></b>
+           {% else %}
+           {% ifequal forloop.counter0 2 %}
+	   		     <b><a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a></b>
 	   	   {% else %}
 	   	  		 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
 	   	  		 {% if filtered_by %} 
@@ -83,16 +92,18 @@
 			   		     	{{field}}
 			   		     </a>
 	   	   		 {% endif %}
-	       {% endif %} 
+	   	   {% endifequal %}
+           {% endifequal %} 
 	   	   </td>
 	   {% endfor %}
 	</tr>
    {% endfor %}
 </table>
+{% if data.object_list %}       
+Select items and: <input type="submit" value="Delete" />
+{% endif %}     
+</div>
 
-{% if data.object_list %}   	
-<input type="submit" value="Delete" />
-{% endif %}   	
 
 </form>
 

@@ -2,6 +2,9 @@
 {% load i18n %}
 {% block title_suffix %} - Commcare HQ{% endblock %}
 {% block stylesheets %}
+<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/print.css" type="text/css" media="print">
+<!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
 <link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
 <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/style.css" />
 <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modules.css" />
@@ -27,5 +30,23 @@
 {% block branding %}
 <h1 id="site-name">{%trans "CommCare HQ" %}</h1>
 {% endblock %}
-    
-{% block footer %}{% block hq-footer %}{% endblock %}{% endblock %}
+{% block footer %}
+            <div id="footer">
+                <div class="container">
+                    <div class="span-12">
+                        <p class="rights">
+                            Copyright &copy; 2010
+                            <a href="http://www.dimagi.com">Dimagi</a>
+                        </p>
+                    </div>
+                    <div class="span-12 last">
+                        <p style="text-align:right;">
+                        CommCare HQ is available as a 
+                        <a href="http://www.github.com/dimagi/commcare-hq">free download</a>
+                        from GitHub.
+                        </p>
+                    </div>
+                </div><!-- End Container Class -->
+            </div>
+            
+{% endblock %}

@@ -72,7 +72,6 @@ def validate_jar(filename, include_xforms=True):
                 try:
                     xformvalidator.validate(xform)
                 except Exception, e:
-                    print e
                     errors.append(e)
         if errors:
             raise BuildError("Problem validating jar!", errors)

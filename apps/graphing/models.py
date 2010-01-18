@@ -70,7 +70,7 @@ class RawGraph(BaseGraph):
     
     additional_options = models.CharField(_('Additional display options'),max_length=255, blank=True, null=True,
                                       help_text=_('Any additional options for the charts.  These should be specified as JSON-style entries in a dictionary.  E.g.: {"legend": { "show": false }}'))
-    width=models.IntegerField(_('Pixel width of the chart (default is 970)'),default=970)
+    width=models.IntegerField(_('Pixel width of the chart (default is 950)'),default=950)
     height=models.IntegerField(_('Pixel height of the chart (default is 300 for small form factor screens)'), default=300)
     
     #Non Django
@@ -161,6 +161,8 @@ class RawGraph(BaseGraph):
         cols = self.cursor.description
         if len(cols) < 2:
             raise Exception("Error, query did not return enough columns.  You need at least 2")
+        elif self.display_type=='histogram-multifield':
+            return len(cols)
         else:
             return len(cols)-1        
         
@@ -261,9 +263,9 @@ class RawGraph(BaseGraph):
         self.helper_cache['ticks'] = []
         num_series = self.check_series()
         for i in range(0,num_series):            
-            item = self.__clean_xcol(row[0][i])
+            item = self.__clean_xcol(rows[0][i])
             self.helper_cache['ticks'].append(item)            
-            count = int(row[0][i])
+            count = int(rows[0][i])
             
             ret[item] = {}
             ret[item]['label'] = item
@@ -361,6 +363,8 @@ class RawGraph(BaseGraph):
         try:  
             if self.display_type == 'histogram-overall':
                 to_return = self.__overall_histogram()
+            elif self.display_type == 'histogram-multifield':
+                to_return = self.__multifield_histogram()
             elif self.display_type.startswith('compare'):
                 to_return = self.__compare_trends()
             else:

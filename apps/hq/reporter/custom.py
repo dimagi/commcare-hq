@@ -7,7 +7,9 @@ from hq.models import *
 import hq.utils as utils
 import graphing.dbhelper as dbhelper
 from xformmanager.models import *
+from receiver.models import Submission, Attachment
 
+from reports.custom.all.domain_summary import DomainSummary
 import metastats as metastats
 import inspector as repinspector
 
@@ -96,6 +98,34 @@ def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
     
     return report_tuples
 
+def admin_stats_summary(report_schedule, run_frequency):
+    """The domain summary, total counts of forms/chws and and 
+       breakdowns by form type and CHW"""
+    all_data = []
+    
+    global_stats = {}
+    global_stats["name"] = "Global Total"
+    global_stats["submissions"] = Submission.objects.count()
+    global_stats["attachments"] = Attachment.objects.count()
+    global_stats["form_count"] = FormDefModel.objects.count()
+    global_stats["count"] = Metadata.objects.count()
+    global_stats["chw_count"] = Metadata.objects.values_list('username', flat=True).distinct().count()
+    global_stats["first_submission"] = Submission.objects.order_by("submit_time")[0].submit_time
+    global_stats["last_submission"] = Submission.objects.order_by("-submit_time")[0].submit_time
+    all_data.append(global_stats)
+    for domain in Domain.objects.all():
+        summary = DomainSummary(domain)
+        all_data.append(summary)
+    body = render_to_string("hq/reports/global_stats.html", {"global_stats": all_data })
+    # annoying import cause of circular dependencies.
+    
+    from hq import reporter
+    reporter.transport_email(body, report_schedule.recipient_user, 
+                    params={"email_subject": "CommCareHQ Global Stats Report %s" %\
+                            datetime.now().date() })
+
+                    
+ 
 def domain_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over
        time, for a single domain (the domain of the associated user)'''

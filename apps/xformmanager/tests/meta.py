@@ -12,10 +12,7 @@ class MetaTestCase(unittest.TestCase):
         # clean up, in case some other tests left some straggling
         # form data, we want to start with a clean test environment
         # each time.
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
+        clear_data()
 
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml")
@@ -252,7 +249,4 @@ class MetaTestCase(unittest.TestCase):
     
     def tearDown(self):
         # duplicates setUp, but at least we know we're being clean
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
+        clear_data()

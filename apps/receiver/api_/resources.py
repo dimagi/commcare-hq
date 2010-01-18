@@ -72,9 +72,18 @@ def _get_submissions(request, domain_id=0):
         # Revisit if xforms get super long
         try:
             export = submission.export()
+            # the following error types shouldn't halt submission export
         except Submission.DoesNotExist:
             logging.error("%s could not be found. Data export failed." \
-                          % submission.raw_post)
+                          % submission.pk)
+            continue
+        except TypeError, e:
+            logging.error("Poorly formatted submission: %s. Data export failed." \
+                          % submission.pk)
+            continue
+        except UnicodeEncodeError, UnicodeDecodeError:
+            logging.error("Unicode error for submission: %s. Data export failed." \
+                          % submission.pk)
             continue
         file_added = True
         # not efficient

@@ -25,34 +25,8 @@
 	{% include "graphing/inline_graphgroup.html" %}	
 </ul>
  
-{%comment %}
-<h2>Charts for {{group.name}}</h2>
-<div style="float:top;">
-<ul class="sf-menu">
-{% for group in child_groups %}
-<li>
-   	<a href="{%url graphing.views.view_group group.id %}">{{group.name}}</a>
-   	<ul>
-   		<li><a>wassup1</a>
-   			<ul>
-   				<li><a>wassup3</a>
-   					<ul>
-   						<li><a>wassup5</a></li>
-   						<li><a>wassu6</a></li>
-   					</ul>
-   				</li>
-   				<li><a>wassup4</a></li>
-   			</ul>
-   		</li>
-   		<li><a>wassup2</a></li>
-   	</ul>
-</li>
-{% endfor %}
-</ul>
-{%endcomment%}
-</div>
-	{% for chart in group_charts %}
+    {% for chart in group_charts %}
 		{% include "graphing/inline_rawgraph.html" %}
 	{%endfor %}
-	
+
 {%endblock%}
