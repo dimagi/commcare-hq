@@ -1,0 +1,28 @@
+<h2>Global Stats Report</h2>
+<br>
+<table>
+<thead>
+    <th>Domain</th>
+    <th>Submissions</th>
+    <th>Attachments</th>
+    <th>Unique Forms</th>
+    <th>CHW's</th>
+    <th>Parsed X-Forms</th>
+    <th>First Submission</th>
+    <th>Last Submission</th>
+</thead>
+<tbody>
+{% for domain_info in global_stats %}
+<tr>
+    <td>{{ domain_info.name }}</td>
+    <td>{{ domain_info.submissions }}</td>
+    <td>{{ domain_info.attachments }}</td>
+    <td>{{ domain_info.form_count }}</td>
+    <td>{{ domain_info.chw_count }}</td>
+    <td>{{ domain_info.count }}</td>
+    <td>{{ domain_info.first_submission|date }}</td>
+    <td>{{ domain_info.last_submission|date }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>

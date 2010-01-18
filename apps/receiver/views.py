@@ -87,7 +87,7 @@ def single_attachment(request, attachment_id):
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
-    context['submission_item'] = slog[0]
+    context['submission'] = slog[0]
     rawstring = str(slog[0].raw_header)
     
     #In order to display the raw header information, we need to escape the python object brackets in the output 
@@ -114,20 +114,20 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     context['attachments'] = attachments
     return render_to_response(request, template_name, context)
 
-def raw_submit(request, template_name="receiver/submit.html"):
+def raw_submit(request):
     context = {}            
     # since this is not a real domain the following call will always
     # fail to the end-user, but at least we'll have saved the post
     # data and can have a record of the event.
-    return _do_domain_submission(request, "NO_DOMAIN_SPECIFIED", template_name, is_resubmission=False)
+    return _do_domain_submission(request, "NO_DOMAIN_SPECIFIED", is_resubmission=False)
 
-def domain_resubmit(request, domain_name, template_name="receiver/submit.html"):
-    return _do_domain_submission(request, domain_name, template_name, True)
+def domain_resubmit(request, domain_name):
+    return _do_domain_submission(request, domain_name, True)
 
-def domain_submit(request, domain_name, template_name="receiver/submit.html"):
-    return _do_domain_submission(request, domain_name, template_name, False)
+def domain_submit(request, domain_name):
+    return _do_domain_submission(request, domain_name, False)
 
-def _do_domain_submission(request, domain_name, template_name="receiver/submit.html", is_resubmission=False):
+def _do_domain_submission(request, domain_name, is_resubmission=False):
     if request.method != 'POST':
         return HttpResponse("You have to POST to submit data.")
 

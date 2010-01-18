@@ -1,0 +1,22 @@
+<div id="chw_data">
+<h3>Summary of Submissions by CHW</h3>
+<table>
+    <thead>
+        <th>CHW</th>
+        <th>Forms Submitted</th>
+        <th>First Submission</th>
+        <th>Most Recent Submission</th>
+    </thead>
+    <tbody>
+    {% for chw in summary.chw_data %}
+    <tr class="{% cycle "odd" "even" %}{% if chw.in_blacklist %} blacklisted{% endif %}">
+        <td>{{ chw.name }}</td>
+        <td>{{ chw.count }}</td>
+        <td>{{ chw.first.timeend.date }}</td>
+        <td>{{ chw.last.timeend.date }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if summary.blacklist_count %}<div class="blacklisted">*denotes blacklisted users</div>{% endif %}    
+</div>

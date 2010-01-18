@@ -1,8 +1,17 @@
 {% extends "xformmanager_base.html" %}
 {% load i18n %}
 {% block title %}Upload your xforms here{% endblock %}
-{% block mgr_content %}
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/xformmanager/javascripts/form_group.js"></script>
+{% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modal_dialog.css" />
+{% endblock %}
 
+
+{% block mgr_content %}
 <div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
     {% if form.message.errors %}
         <ol>
@@ -20,83 +29,79 @@
     {% endif %}
 </div>
 
-<div id="xform-register-block">
-<h1>Register a New XForm*</h1>
-Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
-If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
-<form action="" method="POST" enctype="multipart/form-data">
-<table>
-{{ upload_form.as_ul}}
-</table>
-<input type="submit" value="Submit" />
-</form>
-{% if newsubmit %}
-	<p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
-{% endif %}
-</div>
-
 <h2>{% trans "Registered XForms" %}</h2>
 
 <strong>
-<ol>
-      
-    <table class="sofT">
-        <thead class="commcare-heading">
+    <table>
+        <thead>
    		   <tr>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "XMLNS" %}</th>
-                <th>{% trans "Version" %}</th>
-                <th>{% trans "uiVersion" %}</th>
-                <th>{% trans "Date Registered" %}</th>
+                <th>{% trans "Forms" %}</th>
+                <th>{% trans "Versions" %}</th>
+                <th>{% trans "First Registered" %}</th>
                 <th>{% trans "Last Received" %}</th>
-                <th></th>
    		   </tr>
    		</thead>
-   		{% for form in registered_forms %}   
+   		{% for group in form_groups %}   
    		<tr class="{% cycle "odd" "even" %}">
-   			<td><a href="{% url xformmanager.views.data form.id %}">
-   			
-   			{{form.form_display_name}}
-   			</a></td>
+   			<td>{{ group.display_name }}</td>
+   			<td>{{ group.xmlns }}</td>
    			<td>
-   				{{form.target_namespace}}
+   			<div class="formtrigger js_link" onclick="show_forms('{{group.xmlns}}', '#formlist');">{{ group.forms|length }}</div>
    			</td>
-   			<td>
-   				{{form.version}}
-   			</td>
-   			<td>
-	   			{{form.uiversion}}
-   			</td>
-   			   			
-   			<td>
-	   			{% blocktrans with form.submit_time|date as date_t and form.submit_time|time as time_t %}
-	   				{{date_t}}, {{time_t}}
+   			<td>{{ group.version_string }}</td>
+   			<td>{% blocktrans with group.first_date_registered|date as date_t %}
+	   				{{date_t}}
 	   			{% endblocktrans %}
    			</td>
-
-   			<td>
-   				{% if form.time_of_last_instance %}
-		   			{% blocktrans with form.time_of_last_instance|date as date_t and form.time_of_last_instance|time as time_t %}
-		   				{{date_t}}, {{time_t}}
+            <td>{% if group.last_received %}
+		   			{% blocktrans with group.last_received|date as date_t %}
+		   				{{date_t}}
 		   			{% endblocktrans %}
 		   		{% else %}
 		   			n/a
 		   		{% endif %}
    			</td>
    			
-   			<td>
-	   			<a href="{% url xformmanager.views.remove_xform form.id %}">
-	   			{% trans "Drop This Form" %}
-	   			</a>
-   			</td>
+   			
    		</tr>
    		{% endfor %}   		
    </table>
    
 
-</ol>
 </strong>
+<div id="xform-register-block" class="span-12">
+<h2>Register a New XForm*</h2>
+Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
+If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
+<form action="" method="POST" enctype="multipart/form-data">
+<br>
+<ul style="margin-left:-30px"><!-- I don't know why this is getting indented, so just hack it backwards -->
+{{ upload_form.as_ul }}
+<li><input type="submit" value="Submit" /></li>
+</ul>
+
+</form>
+{% if newsubmit %}
+    <p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
+{% endif %}
 
 *Note that files are processed as <a href="http://code.javarosa.org/wiki/xform">XForms</a>, unless they have a ".xsd" extension, in which case they are processed as <a href="http://www.w3schools.com/Schema/default.asp">XML Schema</a>.
+</div>
+<div class="span-12 last">
+<h2>You can also...</h2>
+<h3><a href="{% url xformmanager.views.manage_groups %}">Manage XForm Groups</a></h3>
+<p>Group several XForms together for a unified view of data across forms or form versions.</p>
+<h3><a href="{% url buildmanager.views.validator %}">Validate an XForm</a></h3>
+<p>Instantly check any XForm for validity without registering it.  We can validate against both regular
+and CommCare HQ compliant forms.</p>
+<h3><a href="{% url buildmanager.views.readable_xform %}">Get a Readable XForm</a></h3>
+<p>Paste an XForm - get a human-friendly readable view of that form.</p>
+</div>  
+
+<div class="modal_dialog" id="formlist">
+Hello World
+</div>
 {% endblock %}
 

@@ -15,3 +15,6 @@ admin.site.register(FormDefModel,FormDefModelAdmin)
 admin.site.register(ElementDefModel)
 admin.site.register(Metadata, MetaDataModelAdmin)
 
+admin.site.register(FormDataPointer)
+admin.site.register(FormDataColumn)
+admin.site.register(FormDataGroup)

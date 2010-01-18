@@ -1,0 +1,21 @@
+<div id="form_data">
+<h3>Summary of Submissions by Form Type</h3>
+<table>
+    <thead>
+        <th>Form</th>
+        <th>Number Received</th>
+        <th>First Submission</th>
+        <th>Most Recent Submission</th>
+    </thead>
+    <tbody>
+    {% for form in summary.form_data %}
+    <tr class="{% cycle "odd" "even" %}">
+        <td>{{ form.form }}</td>
+        <td>{{ form.count}}</td>
+        <td>{{ form.first.timeend.date }}</td>
+        <td>{{ form.last.timeend.date }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>

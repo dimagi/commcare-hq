@@ -147,9 +147,24 @@ class FormDefError(SyntaxError):
 
 def form_translate(input_data):
     '''Translates an xform into an xsd file'''
-    logging.debug ("XFORMMANAGER.VIEWS: begin subprocess - java -jar form_translate.jar schema < input file > ")
-    p = subprocess.Popen(["java","-jar",os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],"form_translate.jar"),'schema'], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-    logging.debug ("XFORMMANAGER.VIEWS: begin communicate with subprocess")
+    return _form_translate(input_data, "schema")
+
+def readable_form(input_data):
+    '''Gets a readable display of an xform'''
+    return _form_translate(input_data, "summary")
+
+def _form_translate(input_data, operation):
+    """Utility for interacting with the form_translate jar"""
+    logging.debug ("form_translate %s: begin subprocess - java -jar form_translate.jar schema < input file > " \
+                   % operation)
+    p = subprocess.Popen(["java","-jar",
+                          os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],
+                                       "form_translate.jar"),
+                          operation], 
+                          shell=False, 
+                          stdout=subprocess.PIPE,stdin=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+    logging.debug ("form_translate %s: begin communicate with subprocess" % operation)
     
     p.stdin.write(input_data)
     p.stdin.flush()
@@ -162,6 +177,5 @@ def form_translate(input_data):
     # the full stream and a boolean indicating whether there was an
     # error.  This should be fixed in a cleaner way.
     has_error = "exception" in error.lower() 
-    logging.debug ("XFORMMANAGER.VIEWS: finish communicate with subprocess")
+    logging.debug ("form_translate %s: finish communicate with subprocess" % operation)
     return (output,error, has_error)
-

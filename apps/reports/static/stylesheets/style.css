@@ -8,3 +8,78 @@
     font-weight: bold;
 }
 
+
+#customreports ul {
+    list-style: none;
+    margin-left: 0px;
+    padding-left: 0px;
+}
+
+#customreports li {
+	border:2px #6699CC solid;
+    margin-left: 0px;   
+    margin-top: 10px;
+    padding: 4px;
+}
+
+
+#mother-summary {
+    font-size: 120%;
+}
+
+#mother-summary .problem {
+    color: red;
+    font-weight: bold;
+}
+
+
+#mother-summary h3 {
+    text-align: center;
+    border:2px #6699CC solid;
+    margin-top: 20px;
+    padding: 2px;
+    background-color: #eeeeee;
+}
+
+#mother-summary ul {
+    list-style: none;
+    margin-left: 0px;
+    padding-left: 0px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+#mother-summary li {
+	display: inline;
+    margin-left: 10px;   
+    margin-right: 10px;   
+    margin-top: 2px;
+    padding: 4px;
+}
+
+#mother-summary .prompt {
+    width: 200px;
+    text-align: right;
+}
+
+#mother-summary .value {
+    font-weight: bold;
+}
+
+
+#mother-summary .value {
+    font-weight: bold;
+}
+
+
+#government-report th {
+    text-align: center;
+    border:  2px #404040 solid;
+    background-color: #BEC8D1;
+    text-align: center;
+    text-indent: 0px;
+    font-family: Verdana;
+    font-weight: bold;
+    font-size: 11px;
+    color: #404040;
+}

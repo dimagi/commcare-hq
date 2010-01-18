@@ -1,0 +1,26 @@
+{% extends "buildmanager/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "XForm Validator" %}{% endblock %}
+{% block buildmanager_content %}
+{% if xform %}{# this is a proxy for it being a post #}
+{% if success %}
+<h2 class="success">Hooray! That worked!</h2>
+<h3>Here's your form:</h3>
+{{ readable_form|linebreaks }}
+<h2>{% trans "Try Another One?" %}</h2>
+{% else %}
+<h2 class="error">Sorry, that Didn't pass! Your error is:</h2>
+<p>{{message}}</p>
+<h2>{% trans "Try Again?" %}</h2>
+{% endif %}
+{% else %}
+<h2>{% trans "Get a Readable an XForm" %}</h2>
+{% endif %}
+<h3>{% trans "Copy and paste the body of your X-Form below." %}</h3>
+<form name="mainform" method="post">
+<textarea name="xform" rows="30" cols="100" style="background-color:#FDFEDE; width:100%; height:500px;" wrap="off">{{ xform|safe }}</textarea>
+<div style="margin-top:10px;">
+<input type="submit" value="Generate!" style="float:right;"></input>
+</div>
+</form>
+{%endblock%}

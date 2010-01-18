@@ -21,7 +21,11 @@ import time
 
 @register.simple_tag
 def get_form_links(user):
-    base_link = reverse('hq.views.summary_trend',kwargs={})
+    """Get a link to each form in the system"""
+    # this is apparently broken, as of 12/2009.  Leaving here
+    # in case it should be revived.
+    base_link = reverse('graphing.views.summary_trend',kwargs={})
+    
     #<a href="%s?content_type=%s&content_id=%s">%s</a>
     extuser = ExtUser.objects.all().get(id=user.id)    
     defs = FormDefModel.objects.all().filter(domain=extuser.domain)

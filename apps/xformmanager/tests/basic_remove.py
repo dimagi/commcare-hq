@@ -8,10 +8,7 @@ import unittest
 class RemoveTestCase(unittest.TestCase):
     
     def setUp(self):
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
+        clear_data()
         SubmissionHandlingOccurrence.objects.all().delete()
         
     def test1ClearFormData(self):

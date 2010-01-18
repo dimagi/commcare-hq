@@ -1,0 +1,49 @@
+{% load hq_shared_tags %}
+<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
+<h2>Mother Summary for {{ mother.mother_name }}</h2>
+<div id="mother-summary">
+<h3>General Information</h3>
+<table>
+    <tr><td class="prompt">Name:</td> <td class="value">{{ mother.mother_name }}</td></tr>
+    <tr><td class="prompt">Address:</td> <td class="value">{{ mother.address }}</td></tr>
+    <tr><td class="prompt">Phone:</td> <td class="value">{{ mother.phone }}</td></tr>
+    <tr><td class="prompt">Attending CHW:</td> <td class="value">{{ mother.chw }}</td></tr>
+    <tr><td class="prompt">Age:</td> <td class="value">{{ mother.mother_age}}</td></tr>
+    <tr><td class="prompt">Height:</td> <td class="value">{{ mother.mother_height}}</td></tr>
+    <tr><td class="prompt">Partner Name:</td> <td class="value">{{ mother.partner_name }}</td></tr>
+    <tr><td class="prompt">Partner Occupation:</td> <td class="value">{{ mother.partner_occupation }}</td></tr>
+</table>
+<h3>This Pregnancy</h3>
+<table>
+    <tr><td class="prompt">Date Registered:</td> <td class="value">{{ mother.date_of_reg|date }}</td></tr>
+    <tr><td class="prompt">Months Pregnant:</td> <td class="value">{{ mother.months_pregnant }}</td></tr>
+    <tr><td class="prompt">Heart Problems:</td> <td class="value">{{ mother.heart_problems }}</td></tr>
+    <tr><td class="prompt">Diabetes:</td> <td class="value">{{ mother.diabetes }}</td></tr>
+    <tr><td class="prompt">Hip Problems:</td> <td class="value">{{ mother.hip_problems }}</td></tr>
+    <tr><td class="prompt">Hi Risk:</td> <td class="value{% ifequal mother.hi_risk 'yes' %} problem{% endifequal %}">{{ mother.hi_risk }}</td></tr>
+</table>
+<h3>Pregnancy History</h3>
+<table>
+    <tr><td class="prompt">Previous Pregnancies:</td> <td class="value">{{ mother.previous_pregnancies }}</td></tr>
+    <tr><td class="prompt">Previous Deliveries:</td> <td class="value">{{ mother.previous_deliveries }}</td></tr>
+    <tr><td class="prompt">Previous Terminations:</td> <td class="value">{{ mother.previous_terminations }}</td></tr>
+    <tr><td class="prompt">Previous Newborn Death:</td> <td class="value">{{ mother.previous_newborn_death }}</td></tr>
+    <tr><td class="prompt">Previous C-Section:</td> <td class="value">{{ mother.previous_csection }}</td></tr>
+    <tr><td class="prompt">Previous Bleeding:</td> <td class="value">{{ mother.previous_bleeding }}</td></tr>
+</table>
+<h3>Problems</h3>
+<table>
+    <tr><td class="prompt">High Risk Factors:</td> <td class="value">{{ mother.hi_risk_reasons }}</td></tr>
+    <tr><td class="prompt">Incomplete Checklist Items:</td> <td class="value">{{ mother.incomplete_checklist_items }}</td></tr>
+</table>
+<p><div class="js_link" onclick="hideShow('div.all_data')">-- show/hide full data list --</div></p>
+<div class="all_data" style="display:none;">
+<h3>All Data</h3>
+<table>
+    <thead><th>Name</th><th>Value</th></thead>
+{% for attr, display in attrs %}
+<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
+{% endfor %}
+</table>
+</div>
+</div>

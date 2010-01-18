@@ -3,8 +3,8 @@
 <h1>Health Worker Submission Details</h1>
 <h3>Summary view of individual mother data by health workers</h3>
 <br>
-<table class="sofT">
-<thead class="commcare-heading">
+<table>
+<thead>
 {% for col in columns %}
     <th>{{col}}</th>
 {% endfor %}
@@ -14,7 +14,9 @@
 <tr>
 {% for row in data %}
     {% for col in columns %}
-        <td>{{ row|dict_lookup:col }}</td>
+        <td>{% ifequal col "Mother Name" %}<a href="/reports/3/custom/_mother_summary?case_id={{row|dict_lookup:"Healthcare Worker"}}|{{row|dict_lookup:"Case ID"}}&mother_name={{ row|dict_lookup:col }}">{{ row|dict_lookup:col }}</a>
+            {% else %}{{ row|dict_lookup:col }}{% endifequal %}
+        </td>
     {% endfor %}
     <td style="min-width:200px">{% with row|dict_lookup:"attachment" as attach %}
         {% if attach %}
@@ -29,9 +31,11 @@
     </td>
 </tr>
 {% endfor %}
+</tbody>
+</table>
 <p><a href="/reports/sql/2/csv">download as csv</a></p>
 
-<div class="message_log" id="dialog">
+<div class="modal_dialog" id="dialog">
 <a href="#" class="jqmClose">Close</a>
 Please wait while that loads... 
 </div>

@@ -1,127 +1,184 @@
+/*******************************************
+ ** Main wrapper/body stylings
+ *******************************************/
 
-body {
-    margin: 0;
-    padding: 0;
-    font-size: 12px;
-    font-family: "Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
-    color: #333;
+body {  
+    background-color: #eeeeee;
+}
+
+#inner {
+    padding-top: 10px;
+    padding-bottom: 10px;  
+    /* make it not look ridiculous if there's no content there */
+    min-height: 300px;
+}
+
+#wrapper {
+    width: 83em;
+    margin: 0 auto;
     background: #fff;
+    
+    /* a little pretty for the 10/dec demo */
+    -moz-box-shadow: 4px 4px 8px #aaa;
+    box-shadow: 4px 4px 8px #aaa;
+    margin-top: 0.5em;
+    -moz-border-radius-bottomright: 1em;
+    -moz-border-radius-bottomleft: 1em;
 }
 
-p, ol, ul, dl {
-    margin: .2em 0 .8em 0;
-}
+    /* no scaling for ie6 */
+    * html #wrapper {
+        width: 960px; }
 
-p {
-    padding: 0;
-    line-height: 140%;
-}
+/*******************************************
+ ** Links
+ *******************************************/
 
-h1,h2,h3,h4,h5 {
-    font-weight: bold;
-}
-
-h1 {
-    font-size: 18px;
-    color: #666;
-    padding: 0 6px 0 0;
-    margin: 0 0 .2em 0;
-}
-
-h2 {
-    font-size: 16px;
-    margin: 1em 0 .5em 0;
-}
-
-h2.subhead {
-    font-weight: normal;
-    margin-top: 0;
-}
-
-h3 {
-    font-size: 14px;
-    margin: .8em 0 .3em 0;
-    color: #666;
-    font-weight: bold;
-}
-
-h4 {
-    font-size: 12px;
-    margin: 1em 0 .8em 0;
-    padding-bottom: 3px;
-}
-
-h5 {
-    font-size: 10px;
-    margin: 1.5em 0 .5em 0;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-
-
-ul, ol {
-	
-}
-
-a:link, a:visited {
-    color: #5b80b2;
+a {  
     text-decoration: none;
+    
 }
 
-a:hover {
-    color: #036;
+/* this is how you make something with a javascript action 
+   look like our links */
+   
+.js_link {
+	background:transparent;
+	color: #000099;
+    cursor:pointer;
 }
 
-a img {
-    border: none;
+.js_link:hover {
+    color: #000000;
 }
-a:hover {
-	background: none;
-}
-/* Header */
 
-#header {
+
+
+/*******************************************
+ ** Tables
+ *******************************************/
+
+/* give our tables a little border */
+table {
+    border: 1px solid #bbbbbb; 
+}
+	
+/* this puts a scrollable area around a big table, gives it some padding
+   and a slightly different background color so it stands out a little
+*/
+
+.big-table {
+    padding: 5px;
+    overflow:auto;
+    background-color: #f8f8f8;
+}
+
+
+/* 
+   Table/column sort stuff.   
+   The class "sorted" defines the color, the position
+   of the image, and the padding for the image.  The
+   class "ascending" or "descending" defines which image 
+   is used.
+   So the way to get this to show up in html would be
+   <th class="sorted descending">
+*/
+
+th.sorted {
+    background-color: #b2c8ee;
+    background-repeat: no-repeat;
+    background-position: right;
+    padding-right:15px;
+}
+
+th.descending {
+    background-image: url("../../webapp/icons/silk/arrow_up.png");
+}
+
+th.ascending {
+    background-image: url("../../webapp/icons/silk/arrow_down.png");
+}
+
+td.sorted, tr.even td.sorted, tr.odd td.sorted  {
+    background: #e5fbff;
+}
+
+tr.highlight td {
+    background-color: #FFFFCC;
+}
+
+
+/*******************************************
+ ** Lists
+ *******************************************/
+
+ul {
+    list-style: none;
+}
+
+    
+/*******************************************
+ ** Forms
+ *******************************************/
+
+
+
+/*******************************************
+ ** Header / login block
+ *******************************************/
+
+
+#header, #footer {
     background: #940025;
-    color: #ffc;
     overflow: hidden;
-    padding-bottom: 20px;
-    position: relative;    
+    padding-bottom: 0px;
+    position: relative;
+    color:white;    
+}
+
+#footer {
+	padding-top:10px;
+    -moz-border-radius-bottomright: 1em;
+    -moz-border-radius-bottomleft: 1em;
+}
+
+
+#footer a:link, #footer a:visited {
+    color: white;
+    font-weight: bold;
 }
 
 #header a:link, #header a:visited {
     color: white;
 }
 
-#header a:hover {
+#header a:hover, #footer a:hover {
     text-decoration: underline;
 }
 
 #branding h1 {
     background: #940025; 
-    padding: 0 10px;
-    font-size: 18px;
-    margin: 8px 0;
+    padding-left: .5em;
+    font-size: 28px;
+    margin: 18px 0;
     font-weight: normal;
     color: white;
-    float:left;
-    
 }
 
-#loginblock {   
-    border:4px solid lightgray;        
-	width:400px;
+#loginblock {
+    border:2px solid lightgray;        
+    width:400px;
+    background-color:#f8f8f8;
     margin-left:auto;
     margin-right:auto;
     text-align:center;
 }
-#loginblock table{
-        
+
+#loginblock table {
     margin:auto;
+    border:none;
     text-align:center;
 }
-
 
 #currentlogin-block {
     position: absolute;
@@ -133,733 +190,14 @@ a:hover {
     color: white;    
 }
 
-div.buildinfoblock {
-    position: absolute;
-    top: 38px;
-    right: 0;
-    padding: 0px 8px;
-    font-size: 11px;
-    text-align: right;
-    font-family: monospace;
-    background: darkgreen;
-    color:cornsilk;
-    
-}
 
 
-/* Search */
-
-#search {
-	float: right;
-	width: 200px;
-	padding-top: 16px;
-}
-
-#search form {
-	width: 230px;
-	height: 41px;
-	margin: 0;
-	padding: 15px 0 0 10px;
-}
-
-#search fieldset {
-	margin: 0;
-	padding: 0;
-	border: none;
-}
-
-#search-text {
-	border: none;
-	text-transform: lowercase;
-	border: 1px #8DBC4A solid;
-	font: bold 1.2em Arial, Helvetica, sans-serif;
-	color: #FFFFFF;
-}
-
-#search-submit {
-	display: none;
-}
-
-
-
-/* Menu */
-
-#menu {
-	margin-top:10px;
-	margin-left: 30px;
-	width: 100%;
-	height: 25px;
-}
-
-#menu ul {
-	margin: 0;
-	margin-right: 30px;
-	padding: 0;
-	list-style: none;
-	line-height: normal;
-}
-
-#menu li {
-	float: left;
-}
-
-#menu a {
-	float:left;
-	width:8em;
-	text-decoration:none;
-	color:white;
-	background-color:#940025;
-	padding:0.2em 0.6em;
-    border-right:1px solid white;
-    
-}
-
-/* Menu */
-
-div.daterange_tabs {
-	text-align: center;
-	margin-left: 30px;
-	height: 25px;		
-}
-
-div.daterange_tabs ul {
-	margin: 0;
-	margin-right: 30px;
-	padding: 0;
-	list-style: none;
-	line-height: normal;	
-	width:auto;	 
-}
-
-div.submenu {
-	margin-left: 0px;
-	height: 25px;
-}
-
-
-
-
-ul.nobullets {
-	list-style: none;
-	margin:0;
-}
-
-div.daterange_tabs  li {
-	float: left;
-	border:4px solid gray;
-	margin-left: 4px;	
-	margin-right: 4px;
-}
-
-div.daterange_tabs  a {
-	float:left;
-	width:8em;
-	text-decoration:none;	
-	padding:0.2em 0.6em;      
-}
-
-
-#menu a:hover, #menu .current_page_item a {
-	background-color:#036	
-}
-
-#menu a:hover {
-	text-decoration: underline;
-}
-
-#xform-register-block {
-	text-align:left;			
-	color: #787878;
-	border: 1px solid black;
-	padding:12px;
-}
-/* Page */
-
-#page {
-	width: 1000px;
-	margin: 0 auto;
-	padding-top: 15px;
-}
-
-
-
-/* Sidebar */
-
-#sidebar {
-	float: right;
-	width: 260px;
-	height:25px;	
-	color: #787878;
-}
-
-#sidebar ul {
-	margin: 0;
-	padding: 0;
-	/*list-style: none;*/
-}
-
-#sidebar li {
-}
-
-#sidebar li ul {
-	padding: 20px;
-}
-
-#sidebar li li {
-	line-height: 35px;
-	background: url(styleimages/img05.jpg) no-repeat left center;
-	border-bottom: 1px dashed #D2D4C9;
-	padding-left: 15px;
-}
-
-#sidebar h2 {
-	padding: 5px 10px;
-	background: #79A73B url(images/img04.jpg) repeat-x left top;
-	letter-spacing: -.5px;
-	font-size: 1.2em;
-	color: #FFFFFF;
-}
-
-#sidebar p {
-	padding: 20px;
-}
-
-#sidebar a {
-	color: #787878;
-}
-
-/* Calendar */
-
-#calendar {
-}
-
-#calendar_wrap {
-	padding: 20px;
-}
-
-#calendar table {
-	width: 100%;
-}
-
-#calendar tbody td {
-	text-align: center;
-}
-
-#calendar #next {
-	text-align: right;
-}
-
-/* Footer */
-
-#footer {
-	width: 100%;
-	height: 50px;
-	margin: 0 auto;
-	padding: 40px 0;
-	background: #90BF4D url(images/img02.jpg) left top;
-	font-family: Arial, Helvetica, sans-serif;
-	color: #416110;
-}
-
-#footer p {
-	margin: 0;
-	line-height: normal;
-	font-size: 9px;
-	text-transform: uppercase;
-	text-align: center;
-}
-
-#footer a {
-	color: #FFFFFF;
-}
-
-
-#wrapper {
-	width: 100%;
-}
-* html #wrapper {
-        width: 100%;
-         }
-
-
-/*dmyung additions from pinax and other sources */
-table.subTable
-{ text-align: center;
-font-family: Verdana;
-font-weight: normal;
-font-size: 10px;
-color: #404040;
-width: 100%;
-background-color: #fafafa;
-border: 1px #6699CC solid;
-border-collapse: collapse;
-border-spacing: 0px; }
-
-td {
-    text-align:left;        
-}
-
-td ul {
-    float: left;
-    width:48em;
-    margin:0;
-    padding:0;
-    list-style:none;
-}
-
-.post .entry ul {
-   
-
-}
-td li {
-	line-height: 180%;
-    float:left;
-    width:24em;
-    margin:0;
-    padding:0;
-}
-
-
-
-
-
-
-td.subanswer {
-    text-align:left;
-}
-
-thead.commcare-heading
-{ 
-    border-bottom: 2px solid #6699CC;
-    border-left: 1px solid #6699CC;
-    background-color: #BEC8D1;
-    text-align: left;
-    text-indent: 5px;
-    font-family: Verdana;
-    font-weight: bold;
-    font-size: 11px;
-    color: #404040;
-
-     
-}
-
-/* 
-   Sort stuff.  This could be done really poorly 
-   but the author (Cory) is a css noob. 
-   The class "sorted" defines the color, the position
-   of the image, and the padding for the image.  The
-   id "ascending" or "descending" defines which image 
-   is used.
-   So the way to get this to show up in html would be
-   <th class="sorted" id="descending">
-   This works well and allows inheritance of all the
-   relevant attributes, but I'm not sure if it's a 
-   mangling of the definitions of "id" and "class" 
-*/
-
-th.sorted {
-	background-color: lightyellow;
-    background-repeat: no-repeat;
-    background-position: right;
-    padding-right:15px;
-}
-
-th#descending {
-    background-image: url("../../webapp/icons/silk/arrow_up.png");
-}
-
-th#ascending {
-    background-image: url("../../webapp/icons/silk/arrow_down.png");
-}
-
-td.sorted {
-    background-color: lightyellow;
-}
-
-p.error {
-    font-weight: bold;
-    color: red;
-}
-
-p.subheading {
-    font-size: 14px;
-    margin: 8px;
-}
-
-#government-report th {
-	text-align: center;
-    border:  2px #404040 solid;
-    background-color: #BEC8D1;
-    text-align: center;
-    text-indent: 0px;
-    font-family: Verdana;
-    font-weight: bold;
-    font-size: 11px;
-    color: #404040;
-}
-
-td.subhead
-{
-border-right: 2px solid #6699CC;
-background-color: #D0CFBD;
-text-align: left;
-text-indent: 5px;
-font-family: Verdana;
-font-weight: bold;
-font-size: 11px;
-color: #404040;
-vertical-align:top;
-}
-
-tr.dbodyroweven
-{ 
-border-bottom: 1px solid #9CF;
-border-top: 0px;
-border-right: 1px solid #9CF;
-text-align: left;
-
-font-family: Verdana, sans-serif, Arial;
-
-font-size: 11px;
-color: #404040;
-list-style: none;
-background-color: lightgrey;
-vertical-align:top;
-padding:8px;
-
-}
-
-tr.dbodyrowodd
-{ 
-border-bottom: 1px solid #9CF;
-border-top: 0px;
-border-right: 1px solid #9CF;
-text-align: left;
-
-font-family: Verdana, sans-serif, Arial;
-font-size: 11px;
-color: #404040;
-list-style: none;
-background-color: #fafafa;
-vertical-align:top;
-padding:8px;
-
-}
-
-
-td.dbody
-{ 
-border-bottom: 1px solid #9CF;
-border-top: 0px;
-/*border-left: 1px solid #9CF;*/
-border-right: 0px;
-text-align: left;
-
-font-family: Verdana, sans-serif, Arial;
-font-weight: normal;
-font-size: 11px;
-color: #404040;
-list-style: none;
-background-color: #fafafa;
-vertical-align:top;
-padding:8px;
-
-}
-
-tr.even td { background:#e5ecf9; }
-tr.even td.sorted { background:lightyellow; }
-
-/* add a little brightness while hovering */
-/* temporarily commented out
-tr:hover td {
-    background: lightyellow !important;
-}
-*/
-
-table.sofT
-{ 
-    text-align: center;
-    font-family: Verdana;
-    font-weight: normal;
-    font-size: 12px;
-    color: #404040;
-    width: 100%;
-    background-color: #fafafa;
-    border: 2px #6699CC solid;
-    border-collapse: collapse;
-    border-spacing: 0px;
-}
-
-/*region comments */
-
-#id_comment, #id_title, textarea {
-                                   font-size: 1em;
-                                   background: #fff;
-                                   color:#000;
-                                   border: 1px solid #ccc;
-                                   width: 100%;
-}
-
-div.attachmentsblock {				
-	color: #787878;
-	border: 1px solid black;
-	padding:12px;
-	float:right;
-}
-
-div.parents {
-	width: 350px;
-	padding: 10px;
-	margin: 5px;
-	border: 1px solid black;
-	float:left;
-}
-
-div.parents ul {
-	list-style-image: url(/media/parentarrow.png);
-}
-
-div.reportitem {
-	
-	background-color: #fafafa;	
-	float:right;
-}
-
-div.reportheading {	
-	float:right;	
-	background-color: #fafafa;
-	font-weight: bold;
-}
-div.reportheading table {	
-	font-weight:bold;	
-}
-
-
-table.reporttable {
-	font-size: 12px;		
-}
-
-
-div.reports {
-	padding: 10px;
-	margin: 8px;
-	border: 1px solid black;
-	overflow:auto;	
-}
-
-
-table.reporttable td {
-	text-align:right;
-	margin:8px;	
-	padding-right:12px;	
-}
-
-td.headercol {
-	text-align:right;
-	margin:8px;	
-	padding-right:12px;
-	font-weight:bold;
-}
-
-table.reporttable tr {
-	border-bottom:1px gray solid;
-}
-
-
-table.reporttable td.rel_row {
-	text-align:left;
-	font-weight:bold;
-}
-
-table.reporttable td.item_row {
-	width:200px;
-	text-align:left;	
-}
-
-
-div.reports ul {
-	list-style-type:None;
-	font-size: 14px;
-	width:auto;	
-	
-}
-
-ul.spacer {
-	display:inline;
-}
-li.spacer {
-	display:inline;
-	width:20px;
-}
-
-div.descendants {
-	width: 400px;
-	padding: 10px;
-	margin: 5px;
-	border: 1px solid black;
-	float:left;
-}
-
-div.descendants ul {
-	list-style-image: url(/media/childarrow.png);
-	list-style-type:None;
-}
-
-div.pagination 
-{
-	float:none;
-	clear:both;
-}
-
-div.container
-{
-	width:100%;
-	margin:4px;
-}
-
-.responses .even, .topics .even {
-    background-color: #FAFAFA;
-}
-.responses .odd, .topics .odd {
-    background-color: #F3F3F3;
-}
-.responses {
-    margin-left: 0px;
-    padding-left: 0px;
-}
-.responses li { 
-    list-style-type: none; 
-}
-
-
-div.comment-meta {    
-	float:left;
-    width: 100px;    
-    padding: 5px;
-}
-div.comment-bulk {    
-    margin-left: 110px;  
-    padding:5px; 
-    border: 1px #000 solid;    
-}
-
-div.comment-body {    
-	width:100%;
-    margin: 5px;
-    
-}
-div.post-operators {
-	width:100%;
-	margin:4px;
-	clear:left;
-}
-
-div.deletepost {    
-}
-
-div.replypost {	    
-    width:100%;
-}
-div.chartblock {
-/*	border:4px solid gray;
-	padding:8px;
-	margin:8px;*/
-}
-
-div.chartblock ul {
-	list-style:none;
-}
-
-div.chartblock h1 {
-	font-style:bold;
-	font-size:13px;
-}
-
-div.chartblock h3 {
-	font-style:bold;
-	font-size:11px;
-}
-
-
-div.chartblock h4{
-	float:left;
-}
-
-div.chartblock li {
-	float:left;
-	padding-left:5px;
-}
-
-.hidden { display: none; }
-.thread-0 { margin-left: 0px; }
-.thread-1 { margin-left: 20px; }
-.thread-2 { margin-left: 40px; }
-.thread-3 { margin-left: 60px; }
-.thread-4 { margin-left: 80px; }
-.thread-5 { margin-left: 100px; }
-.thread-6 { margin-left: 120px; }
-.thread-7 { margin-left: 140px; }
-.thread-8 { margin-left: 160px; }
-
-/*endregion comments */
-
-/*region base style */
-#inner{
-    width: 1000px;
-    padding:5px;
-}
-
-#pt-breadcrumbs {
-    float:left;	
-}
-
-/*endregion*/
-
-/*region patient recents */
-
-#patient-recent-table
-
-/*endregion*/
-
-/*region inline comments and photos */
-
-div.inlinephoto {
-    width:100%;
-    padding:0.4em;
-    border: 1px #fff solid;
-}
-div.inlinephoto img {
-	float:left;
-}
-
-div.inlinecomments {
-	margin-left:100px;
-    height: 200px;	
-    overflow:auto;
-    padding:.4em;
-}
-
-/*endregion*/
-
-/* interaction view */
-
-
-
-/*endregion*/
-
-/* RapidSMS overrides */
-
-
-        #branding h1 b {
-            height: 65px;
-            display: block;
-            text-indent: -9999px;
-        }
-    
-
+/*******************************************
+ ** Region for RapidSMS tab rendering
+ *******************************************/
     #tabs,
     #page-tabs {
-        position: absolute;
+        position: relative;
         font-size: 13px;
         height: 28px;
         bottom: 0;
@@ -883,8 +221,8 @@ div.inlinecomments {
         /* 5px spacing between each tab, to match
          * the top gap, since we're using pixel-
          * positioned backgrounds */
-        #tabs li      { margin-right: 5px; }
-        #page-tabs li { margin-left: 5px; }
+        #tabs li      { }
+        #page-tabs li { }
     
             #tabs li a,
             #page-tabs li a {
@@ -921,85 +259,101 @@ div.inlinecomments {
             }
 
 
-/*endregion*/
+/*******************************************
+ ** Custom Properties
+ *******************************************/
 
-.js_link {
-	cursor:pointer;
-    color:#5B80B2;
-    
-}
-.js_link:hover {
-	color: #036;
-}
+/* these do some generic stylings of "good" and "bad" things happening */
 
-/* tooltip */
-
-    #dhtmlgoodies_tooltip{
-        background-color:#EEE;
-        border:1px solid #000;
-        position:absolute;
-        display:none;
-        width: 45em;
-        z-index:20000;
-        padding:2px;
-        font-size:0.9em;
-        -moz-border-radius:6px; /* Rounded edges in Firefox */
-        font-family: "Trebuchet MS", "Lucida Sans Unicode", Arial, sans-serif;
-        
-    }
-    #dhtmlgoodies_tooltipShadow{
-        position:absolute;
-        background-color:#555;
-        display:none;
-        z-index:10000;
-        opacity:0.7;
-        filter:alpha(opacity=70);
-        -khtml-opacity: 0.7;
-        -moz-opacity: 0.7;
-        -moz-border-radius:6px; /* Rounded edges in Firefox */
-    }
-                
-/* modal dialogs */
-/* jqModal base Styling courtesy of;
-  Brice Burgess <bhb@iceburg.net> */
-
-/* The Window's CSS z-index value is respected (takes priority). If none is supplied,
-  the Window's z-index value will be set to 3000 by default (in jqModal.js). You
-  can change this value by either;
-    a) supplying one via CSS
-    b) passing the "zIndex" parameter. E.g.  (window).jqm({zIndex: 500}); */
-
-.message_log {
-    display: none;
-    position: fixed;
-    top: 17%;
-    left: 50%;
-    margin-left: -300px;
-    width: 600px;
-    background-color: #EEE;
-    color: #333;
-    border: 1px solid black;
-    padding: 12px;
-}
-
-.jqmOverlay { background-color: #000; }
-
-/* Fixed posistioning emulation for IE6
-     Star selector used to hide definition from browsers other than IE6
-     For valid CSS, use a conditional include instead */
-* html .message_log {
-     position: absolute;
-     top: expression((document.documentElement.scrollTop || document.body.scrollTop) + Math.round(17 * (document.documentElement.offsetHeight || document.body.clientHeight) / 100) + 'px');
-}
-
-.annotation {
-    padding: 4px;
-}
-
-.annotation-date {
+/* commented out for now, blueprint does a decent job with these
+ 
+.success {
     font-weight: bold;
+    color: green;
 }
 
-.annotation-user {
-    font-style: italic;
+.error {
+    font-weight: bold;
+    color: red;
 }
+
+*/
+
+
+/*******************************************
+ ** Daterange link boxes
+ *******************************************/
+
+div.daterange_tabs {
+    text-align: center;
+    height: 25px;       
+}
+
+div.daterange_tabs ul {
+    margin: 0;
+    margin-right: 30px;
+    padding: 0;
+    list-style: none;
+    line-height: normal;    
+    width:auto;  
+}
+
+div.daterange_tabs  li {
+    float: left;
+    border:2px solid gray;
+    margin-left: 4px;   
+    margin-right: 4px;
+}
+
+div.daterange_tabs  a {
+    float:left;
+    width:8em;
+    text-decoration:none;   
+    padding:0.2em 0.6em;      
+}
+
+
+/*******************************************
+ ** Sub-headings (only used in build manager)
+ *******************************************/
+
+/* TODO: (re)move these if they are not globally useful */
+
+#subheading ul
+{
+    list-style-type: none;
+    margin-top: 10px;
+    padding: 0px;
+    padding-bottom: 7px;
+    border-bottom-width: 1px; 
+    border-bottom-color: #DADFF9;
+    border-bottom-style: solid;
+}
+
+#subheading li 
+{
+    display: inline;
+    margin: 0px;
+}
+
+#subheading li a
+{
+    background-color: #DADFF9;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-right-width: 1px; 
+    border-right-color: #555555;
+    border-right-style: solid;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+#subheading li a:hover
+{
+    background-color: #E9EDFF;
+    border-right-color: #999999;
+}
+
+
