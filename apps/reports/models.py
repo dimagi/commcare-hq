@@ -416,7 +416,7 @@ class CaseFormIdentifier(models.Model):
     # (whitney:) add a type for the form being an open form or a close form
     # this will be checked when running reports on the status of each case
     # perhaps just ints (0=open, 1=closed, 2=follow ?)
-    form_type = models.PositiveIntegerField()
+    form_type = models.PositiveIntegerField(null=True)
 
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
