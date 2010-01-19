@@ -413,10 +413,18 @@ class CaseFormIdentifier(models.Model):
     form_identifier = models.ForeignKey(FormIdentifier)
     case = models.ForeignKey(Case, related_name="form_data")
     sequence_id = models.PositiveIntegerField()
+    # (whitney:) add a type for the form being an open form or a close form
+    # this will be checked when running reports on the status of each case
+    # perhaps just ints (0=open, 1=closed, 2=follow ?)
+    form_type = models.PositiveIntegerField(null=True)
 
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
 
+    @property
+    def get_form_type(self):
+        '''Get the form type for this case'''
+        return self.form_type
 
 class SqlReport(models.Model):
     """A model that allows one to write a Sql Query and turn it into 

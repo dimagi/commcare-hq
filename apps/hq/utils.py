@@ -69,6 +69,32 @@ def get_dates(request, default_days=0):
                 enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
     return (startdate, enddate)
 
+def get_dates_reports(request, default_days_active=0, default_days_late=0, default_days_very_late=0):
+    default_delta_active = timedelta(days=default_days_active)
+    default_delta_late = timedelta(days=default_days_late)
+    default_delta_very_late = timedelta(days=default_days_very_late)
+    enddate = datetime.datetime.now().date()
+    startdate_active = enddate - default_delta_active
+    startdate_late = enddate - default_delta_late
+    startdate_very_late = enddate - default_delta_very_late
+    if request:
+        for item in request.GET.items():
+            if item[0] == 'startdate_active':
+                startdate_active_str=item[1]
+                startdate_active = datetime.datetime.strptime(startdate_active_str,'%m/%d/%Y').date()
+            if item[0] == 'startdate_late':
+                startdate_late_str=item[1]
+                startdate_late = datetime.datetime.strptime(startdate_late_str,'%m/%d/%Y').date()
+            if item[0] == 'startdate_very_late':
+                startdate_very_late_str=item[1]
+                startdate_very_late = datetime.datetime.strptime(startdate_very_late_str,'%m/%d/%Y').date()
+            if item[0] == 'enddate':
+                enddate_str=item[1]
+                enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
+    return (startdate_active, startdate_late, startdate_very_late, enddate)
+            
+    
+
 def get_table_display_properties(request, default_items=25, default_sort_column = "id", 
                                  default_sort_descending = True, default_filters = {}):
     """Extract some display properties from a request object.  The following 

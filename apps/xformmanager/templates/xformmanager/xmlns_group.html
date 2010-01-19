@@ -1,0 +1,14 @@
+{% extends base_template %}
+{% block content %}
+<h3>Forms for {{ group.xmlns }}</h3>
+{% include "xformmanager/partials/xform_group_table.html" %}
+{% if data_groups %}
+{% else %}
+<h4>You haven't yet created any data views for this namespace.  Would you like to create one now?  
+These will allow you to look at your data across form versions.  It's super easy to do, just go 
+ahead and click this button:</h4>
+<button onclick="location.assign('{% url xformmanager.views.create_form_data_group_from_xmlns %}?xmlns={{ group.xmlns }}');">Create!</button>
+</div>
+</form>
+{% endif %}
+{% endblock %}

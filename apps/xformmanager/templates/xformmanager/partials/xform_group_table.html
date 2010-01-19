@@ -1,5 +1,4 @@
 {% load i18n %}
-<h3>Forms for {{ group.xmlns }}</h3>
 <table>
 <thead>
     <th>Version</th>
@@ -10,7 +9,7 @@
 </thead>
 <tbody>
     {% for form in group.forms %}
-    <tr>
+    <tr class="{% cycle 'odd' 'even' %}">
         <td>{{ form.version }}</td>
         <td>{{ form.date_created }}</td>
         <td>{{ form.submission_count }}</td>
@@ -19,5 +18,5 @@
         <td><a href="{% url xformmanager.views.remove_xform form.id %}">{% trans "drop this form" %}</a></td>
     </tr>
     {% endfor %}
-</tbody>       
-<input id="close" class="jqmClose" type="button" value="Close" />
+</tbody>
+</table>

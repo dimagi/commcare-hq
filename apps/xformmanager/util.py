@@ -14,7 +14,7 @@ MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
 MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
 
-def format_table_name(name, version=None):
+def format_table_name(name, version=None, prefix="schema_"):
     # get rid of 'http://dev.commcarehq.org/' at the start
     r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
     if r:
@@ -25,9 +25,11 @@ def format_table_name(name, version=None):
             name = tail
     if version:
         name = "%s_%s" % ( name, version )
-    return "schema_%s" % sanitize(name)
+    return "%s%s" % (prefix, sanitize(name))
+
 def old_table_name(name):
     return "x_" + _old_sanitize(name)
+
 def _old_sanitize(name):
     _TABLE_PREFIX = "x_"
     _MAX_LENGTH = 64 - len(_TABLE_PREFIX)
@@ -132,7 +134,25 @@ def case_insensitive_iter(data_tree, tag):
     for d in data_tree: 
         for e in case_insensitive_iter(d,tag):
             yield e 
-            
+
+def get_unique_value(query_set, field_name, value):
+    """Gets a unique name for an object corresponding to a particular
+       django query.  Useful if you've defined your field as unique
+       but are system-generating the values.  Starts by checking
+       <value> and then goes to <value>_2, <value>_3, ... until 
+       it finds the first unique entry. Assumes <value> is a string"""
+    
+    original_value = value
+    column_count = query_set.filter(**{field_name: value}).count()
+    to_append = 2
+    while column_count != 0:
+        value = "%s_%s" % (original_value, to_append)
+        column_count = query_set.filter(**{field_name: value}).count()
+        to_append = to_append + 1
+    return value
+                    
+                    
+
 def case_insensitive_attribute(lxml_element, attribute_name):
     for i in lxml_element.attrib:
         if (i.lower()==attribute_name.lower()):

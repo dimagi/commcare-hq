@@ -7,7 +7,7 @@ import traceback
 from django.utils import simplejson
 from MySQLdb import IntegrityError
 
-from django.db import models, connection
+from django.db import models, connection, transaction
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
@@ -16,10 +16,10 @@ from django.core.urlresolvers import reverse
 
 from hq.models import *
 from hq.utils import build_url
-from hq.dbutil import get_column_names
+from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
 from graphing import dbhelper
 from receiver.models import Submission, Attachment, SubmissionHandlingType
-from xformmanager.util import case_insensitive_iter, format_field, format_table_name
+from xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value
 from xformmanager.xformdef import FormDef
 
 class ElementDefModel(models.Model):
@@ -289,9 +289,18 @@ class FormDefModel(models.Model):
         return cursor
     
     def get_column_names(self):
-        '''Get the column names associated with this form's schema.
-        '''
+        '''Get the column names associated with this form's schema.'''
         return get_column_names(self._get_cursor())
+
+    def get_data_column_names(self):
+        '''Get the column names associated with this form's schema and
+           ONLY the schema, no attachment/receiver/anything else.'''
+        return get_column_names_from_table(self.table_name)
+
+    def get_data_column_types(self):
+        '''Get the column types associated with this form's schema and
+           ONLY the schema.'''
+        return get_column_types_from_table(self.table_name)
 
     def get_display_columns(self):
         '''
@@ -311,6 +320,14 @@ class FormDefModel(models.Model):
     def __unicode__(self):
         return self.form_name
     
+    def display_string(self):
+        """A longer string, for use in UI components."""
+        to_return = "%s | %s (Uploaded: %s, Submissions: %s, Last Submission: %s" % \
+                (self.target_namespace, self.version, 
+                 self.submit_time, self.submission_count(),
+                 self.time_of_last_instance())
+        return to_return
+        
     @property
     def get_domain(self):
         # this is left to make domains backwards compatible (?)
@@ -356,11 +373,13 @@ class FormDefModel(models.Model):
         return Submission.objects.filter(attachments__form_metadata__formdefmodel=self).count()
 
     def time_of_last_instance(self):
-        """ returns the last time an instance was submitted to this schema """
-        submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
-        if submit is None:
+        """The last time an instance was submitted to this schema """
+        try:
+            submit = Submission.objects.filter(attachments__form_metadata__formdefmodel=self).latest()
+            return submit.submit_time
+        except Submission.DoesNotExist:
             return None
-        return submit.submit_time
+        
 
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other
@@ -532,6 +551,247 @@ class Metadata(models.Model):
         tag = tag[i+1:len(tag)]
         return tag
 
+
+class FormDataPointer(models.Model):
+    """Stores a single reference to a pointer of data inside a form.
+       This is just a reference to a form itself and a particular
+       column within that form.  For now this can only reference the
+       root columns inside the form and is not compatible with child
+       tables.
+       
+       Pointers are used inside FormDataColumns to reference the 
+       individual place in each form where data is stored.
+    """
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    form = models.ForeignKey(FormDefModel)
+    # 64 is the mysql implicit limit on these columns
+    column_name = models.CharField(max_length=64)
+    data_type = models.CharField(max_length=20)
+    
+    class Meta:
+        unique_together = ("form", "column_name")
+
+    def __unicode__(self):
+        return "%s: %s" % (self.form, self.column_name)
+    
+class FormDataColumn(models.Model):
+    """Stores a column of data.  A column is a collection of data across
+       forms that all corresponds to the same logical element.  For 
+       example, you might have a column called "name" in 5 different forms
+       and you want to easily define a view of the data that looks across
+       these five columns."""
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    # the 64 character max_length is enforced by sql server
+    name = models.CharField(max_length=64)
+    
+    # The data type is defined at the column level.  Currently you cannot
+    # mix strings, ints, etc. at the column level.  This is intentional.
+    data_type = models.CharField(max_length=20)
+    fields = models.ManyToManyField(FormDataPointer)
+    
+
+    def __unicode__(self):
+        return "%s - (a %s spanning %s forms)" % (self.name, self.data_type, self.fields.count())
+    
+class FormDataGroup(models.Model):
+    """Stores a collection of form data.  Data is a mapping of forms 
+       to particular columns which can be combined.  The primary use
+       case for this class is providing a reconciled view of similar
+       forms with different versions (typically with the same xmlns)
+       however it could also be used to create a custom data view on
+       top of existing forms.  
+       
+       It's neat that the columns of this doc string lined up perfectly.  
+       
+       D'oh. 
+    """
+    # I don't love these model names.  In fact I rather dislike them.  
+    # Sigh.
+    
+    # Name is the internal name.  when generated from a collection of
+    # forms it is the xmlns.  This should generally not be changed
+    name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255)
+    
+    created = models.DateTimeField(auto_now=True)
+    
+    # the name of the sql view that gets created by this object
+    view_name = models.CharField(max_length=64, unique=True)
+    
+    # A group (usually) references multiple forms and a form can be
+    # in multiple groups.
+    forms = models.ManyToManyField(FormDefModel)
+    
+    # A reference to the individual columns defined by this form.  A
+    # column could theoretically be used in many forms.  I'm not sure
+    # if this is actually a valid use case, but we may as well be 
+    # flexible for now.
+    # There is a non-enforced constraint that each column should only
+    # contain pointers to forms that are referenced within this group.
+    # TODO: add the constraint for real.
+    columns = models.ManyToManyField(FormDataColumn)
+    
+    # CZUE: nevermind, don't do this.  It'll be way to slow for 
+    # operations that save the group a lot (like creating it).
+    # Let's just make it called manually.
+#    def save(self):
+#        """Override save to make sure the sql view is updated any time 
+#           this changes.  Note that this does not cover every case of
+#           edits, as changes to the underlying columns independently 
+#           can also cause the view to change.  For now we'll leave it 
+#           up to devs to be sure they call update_view() when they do
+#           this, although we could readily take care of the whole thing 
+#           with signals/overrides.""" 
+#        super(FormDataGroup, self).save()
+#        self.update_view()
+
+    def update_view(self):
+        """Update the sql view object associated with this.  This will
+           create (or replace) the existing view and rebuild it based
+           off of the forms and columns set.  
+        """
+        # From the mysql docs:
+        #   CREATE
+        #     [OR REPLACE]
+        #     VIEW view_name [(column_list)]
+        #     AS select_statement
+        
+        full_template_string = """CREATE OR REPLACE VIEW %(view_name)s
+                                    (%(column_list)s)
+                                  AS 
+                                    %(select_statement)s;"""
+        
+        
+        # Note that we are also going to include a foregin key to each
+        # form that created the view.  Why?  Because we're likely going to
+        # want unique ID's for everything (a combined key with form ID and
+        # data ID - assuming it's present) and because through that link we
+        # can get back to the version, table, etc. that originally created
+        # the data.
+        
+        
+        # First things first - generate the column list.
+        defined_columns = self.columns.all()
+        full_columns = ["form_id"]
+        full_columns.extend([column.name for column in defined_columns])
+        column_list_str = "%s" % ", ".join(full_columns)
+        
+        # For each form in the group we'll generate the SELECT statement
+        # independently.  Note
+        # that order is important here so we have to preserve the original 
+        # order of the columns.
+        
+        # So for each form we want to generate something that looks like:
+        # SELECT form1_id, form1_col1, form1_col2, form1_col3 ... 
+        # FROM   form1_table_name
+        
+        form_select_statements = []
+        for form in self.forms.all():
+            # first the form id.  This is hard-coded at view creation time
+            # as we assume the form id's won't change
+            form_columns = [str(form.id)]
+            for column in defined_columns:
+                # If the form has a field in that column we use that,
+                # otherwise we just select an empty string into that 
+                # column.
+                try:
+                    column_name = column.fields.get(form=form).column_name
+                except FormDataPointer.DoesNotExist:
+                    column_name = "''" # in sql this will look like ''
+                form_columns.append(column_name)
+            select_statement = "SELECT %s FROM %s" % \
+                                 (", ".join(form_columns), form.table_name)
+            form_select_statements.append(select_statement)
+        
+        # For all forms we want
+        # <form1_select_statement>
+        # UNION ALL
+        # <form2_select_statement>
+        # UNION ALL
+        # ...
+        full_select_statement = "\nUNION ALL\n".join(form_select_statements)
+        
+        view_creation_statement = full_template_string % \
+                                    {"view_name": self.view_name,
+                                     "column_list": column_list_str,
+                                     "select_statement": full_select_statement }
+        
+        cursor = connection.cursor()
+        cursor.execute(view_creation_statement)
+        transaction.commit_unless_managed()
+        
+    
+    @classmethod
+    def from_forms(cls, forms):
+        """Create a group from a set of forms.  Walks through all of 
+           the forms' root tables and creates columns for each column
+           in the form's table.  If the column name and data type match
+           a previously seen data column then the column is remapped to 
+           that column, otherwise a new column is created.  Like many 
+           elements of CommCare HQ, the views and queries that are used
+           by these models will pretty much exclusively work in mysql.
+        """
+        if not forms:
+            raise Exception("You can't create a group of empty forms!")
+        # the name will just be the xmlns of the first form.  We assume
+        # that the majority of times (if not all times) this method will 
+        # be called is to harmonize a set of data across verisons of 
+        # forms with the same xmlns.
+        name = forms[0].target_namespace
+        now = datetime.utcnow()
+        view_name = get_unique_value(FormDataGroup.objects, "view_name", 
+                                format_table_name(name, prefix="view_"))
+                    
+        group = cls.objects.create(name=name, display_name=name, created=now,
+                                   view_name=view_name)
+        group.forms = forms
+        group.save()
+        for form in forms:
+            group.add_form_columns(form)
+        group.update_view()
+        return group
+    
+    def add_form_columns(self, form):
+        """Given a group and a form, create the DB objects for each column
+           in the form (if necessary) and add the form's columns to the 
+           group"""
+        table_name = form.table_name
+        column_names = form.get_data_column_names()
+        column_types = form.get_data_column_types()
+        for name, type in zip(column_names, column_types):
+            # Get the pointer object for this form, or create it if 
+            # this is the first time we've used this form/column
+            pointer = FormDataPointer.objects.get_or_create\
+                            (form=form, column_name=name, data_type=type)[0]
+            
+            # Get or create the column group.  If any other column had this
+            # name and data type it will be used with this.
+            try:
+                column_group = self.columns.get(name=name, data_type=type)
+                
+            except FormDataColumn.DoesNotExist:
+                # add a second check for the name, so we don't have duplicate 
+                # names inside a single form definition which will make queries
+                # pretty challenging
+                name = get_unique_value(self.columns, "name", name)
+                column_group = FormDataColumn.objects.create(name=name, 
+                                                             data_type=type)
+                # don't forget to add the newly created column to this
+                # group of forms as well.
+                self.columns.add(column_group)
+                self.save()
+            
+            column_group.fields.add(pointer)
+            column_group.save()
+            
+            
+    def __unicode__(self):
+        return "%s - (%s forms, %s columns)" % \
+                (self.name, self.forms.count(), self.columns.count())
 
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration

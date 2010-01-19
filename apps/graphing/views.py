@@ -5,13 +5,11 @@ from django.template import RequestContext
 from django.core.exceptions import *
 
 from rapidsms.webui.utils import render_to_response
-from django.shortcuts import get_object_or_404
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
-from django.core.urlresolvers import reverse
 from xformmanager.models import *
 from graphing import dbhelper
 from django.utils.encoding import *
