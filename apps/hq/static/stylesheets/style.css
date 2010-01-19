@@ -99,9 +99,14 @@ th.ascending {
     background-image: url("../../webapp/icons/silk/arrow_down.png");
 }
 
-td.sorted {
-    background-color: #e5fbff;
+td.sorted, tr.even td.sorted, tr.odd td.sorted  {
+    background: #e5fbff;
 }
+
+tr.highlight td {
+    background-color: #FFFFCC;
+}
+
 
 /*******************************************
  ** Lists
@@ -116,7 +121,7 @@ ul {
  ** Forms
  *******************************************/
 
-textarea {}
+
 
 /*******************************************
  ** Header / login block
@@ -160,10 +165,10 @@ textarea {}
     color: white;
 }
 
-#loginblock {   
+#loginblock {
     border:2px solid lightgray;        
     width:400px;
-    background-color:#f8f8f8
+    background-color:#f8f8f8;
     margin-left:auto;
     margin-right:auto;
     text-align:center;
