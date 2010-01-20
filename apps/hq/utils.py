@@ -69,7 +69,8 @@ def get_dates(request, default_days=0):
                 enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
     return (startdate, enddate)
 
-def get_dates_reports(request, default_days_active=0, default_days_late=0, default_days_very_late=0):
+def get_dates_reports(request, default_days_active=0, default_days_late=0, 
+                      default_days_very_late=0):
     default_delta_active = timedelta(days=default_days_active)
     default_delta_late = timedelta(days=default_days_late)
     default_delta_very_late = timedelta(days=default_days_very_late)
@@ -81,16 +82,20 @@ def get_dates_reports(request, default_days_active=0, default_days_late=0, defau
         for item in request.GET.items():
             if item[0] == 'startdate_active':
                 startdate_active_str=item[1]
-                startdate_active = datetime.datetime.strptime(startdate_active_str,'%m/%d/%Y').date()
+                startdate_active = datetime.datetime.strptime(
+                    startdate_active_str,'%m/%d/%Y').date()
             if item[0] == 'startdate_late':
                 startdate_late_str=item[1]
-                startdate_late = datetime.datetime.strptime(startdate_late_str,'%m/%d/%Y').date()
+                startdate_late = datetime.datetime.strptime(
+                    startdate_late_str,'%m/%d/%Y').date()
             if item[0] == 'startdate_very_late':
                 startdate_very_late_str=item[1]
-                startdate_very_late = datetime.datetime.strptime(startdate_very_late_str,'%m/%d/%Y').date()
+                startdate_very_late = datetime.datetime.strptime(
+                    startdate_very_late_str,'%m/%d/%Y').date()
             if item[0] == 'enddate':
                 enddate_str=item[1]
-                enddate = datetime.datetime.strptime(enddate_str,'%m/%d/%Y').date()
+                enddate = datetime.datetime.strptime(enddate_str,
+                                                     '%m/%d/%Y').date()
     return (startdate_active, startdate_late, startdate_very_late, enddate)
             
     
