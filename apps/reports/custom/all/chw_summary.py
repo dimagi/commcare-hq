@@ -10,12 +10,14 @@ from hq.models import Domain, Organization, ReporterProfile
 from reports.custom.util import forms_submitted
 from apps.reports.models import Case, CaseFormIdentifier
 
-'''The chw_summary report'''
 def chw_summary(request, domain=None):
+    '''The chw_summary report'''
     if not domain:
         domain = request.extuser.domain
-    # to configure these numbers use 'startdate_active', 'startdate_late', 'startdate_very_late', and 'enddate' in the url
-    startdate_active, startdate_late, startdate_very_late, enddate = get_dates_reports(request, 30, 60, 90)
+    # to configure these numbers use 'startdate_active', 'startdate_late', 
+    # 'startdate_very_late', and 'enddate' in the url
+    startdate_active, startdate_late, startdate_very_late, enddate = \
+        get_dates_reports(request, 30, 60, 90)
     
     try:
         case = Case.objects.get(domain=domain)
@@ -45,23 +47,29 @@ def get_active_open_by_chw(data_by_chw, startdate_active):
         count_of_active = 0
         chw_name = ""
         for id, map in chw_data.items():
-            form_type_to_date = {0: datetime(2000, 1, 1), 1: datetime(2000, 1, 1), 2: datetime(2000, 1, 1)}
+            form_type_to_date = {'open': datetime(2000, 1, 1), 'close': 
+                                 datetime(2000, 1, 1), 'follow': datetime(2000, 1, 1)}
             for form_id, form_info in map.items():
                 cfi = CaseFormIdentifier.objects.get(form_identifier=form_id.id)
                 form_type = cfi.form_type
                 if len(form_info) > 0:
-                    # I'm assuming here that the first form in the list is the most recently submitted form
-                    # I'm also assuming that all the forms in this case will have the same chw name (since they all have the same chw id)
+                    # I'm assuming here that the first form in the list is the 
+                    # most recently submitted form. I'm also assuming that all 
+                    # the forms in this case will have the same chw name 
+                    # (since they all have the same chw id)
                     form = form_info[0]
                     chw_name = form["meta_username"]
                     timeend = form["meta_timeend"]
-                    # for each form type get the date of the most recently submitted form
+                    # for each form type get the date of the most recently 
+                    # submitted form
                     if timeend > form_type_to_date[form_type]:
                         form_type_to_date[form_type] = timeend
-            # if the most recent open form was submitted more recently than the most recent close form then this case is open
-            if form_type_to_date[0] > form_type_to_date[1]:
+            # if the most recent open form was submitted more recently than the 
+            # most recent close form then this case is open
+            if form_type_to_date['open'] > form_type_to_date['close']:
                 count_of_open += 1
-                if datetime.date(form_type_to_date[0]) > startdate_active or datetime.date(form_type_to_date[1]) > startdate_active or datetime.date(form_type_to_date[2]) > startdate_active:
+                if datetime.date(form_type_to_date['open']) > startdate_active or \
+                    datetime.date(form_type_to_date['follow']) > startdate_active:
                     count_of_active += 1
         data_to_display = {}
         data_to_display["chw"]=chw_id

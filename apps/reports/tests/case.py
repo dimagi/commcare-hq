@@ -47,13 +47,13 @@ class CaseTestCase(unittest.TestCase):
         self.pf_case = Case.objects.create(name="pathfinder cases", domain=pf_domain)
         self.complex_case = Case.objects.create(name="pathfinder complex cases", domain=pf_domain)
         
-        self.reg_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_fid, case=self.pf_case, sequence_id=1)
-        self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2)
-        self.close_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_fid, case=self.pf_case, sequence_id=3)
+        self.reg_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_fid, case=self.pf_case, sequence_id=1, form_type="open")
+        self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2, form_type="follow")
+        self.close_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_fid, case=self.pf_case, sequence_id=3, form_type="close")
         
-        self.reg_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_complex_fid, case=self.complex_case, sequence_id=1)
-        self.follow_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_complex_fid, case=self.complex_case, sequence_id=2)
-        self.close_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_complex_fid, case=self.complex_case, sequence_id=3)
+        self.reg_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_complex_fid, case=self.complex_case, sequence_id=1, form_type="open")
+        self.follow_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_complex_fid, case=self.complex_case, sequence_id=2, form_type="follow")
+        self.close_complex_cfi = CaseFormIdentifier.objects.create(form_identifier=self.close_complex_fid, case=self.complex_case, sequence_id=3, form_type="close")
         
         
     def tearDown(self):
