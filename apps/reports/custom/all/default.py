@@ -1,6 +1,7 @@
 from blacklist import blacklist as inner_blacklist
 from metadata import metadata as inner_metadata
 from domain_summary import domain_summary as inner_domain_summary
+from chw_summary import chw_summary as inner_chw_summary
 
 
 """Where to put default global reports.  These behave just like custom reports
@@ -20,6 +21,10 @@ from domain_summary import domain_summary as inner_domain_summary
 def blacklist(request, domain=None):
     '''Report of Who is Submitting as Blacklisted Users'''
     return inner_blacklist(request, domain)
+
+def chw_summary(request, domain=None):
+    '''CHW Summary Report'''
+    return inner_chw_summary(request, domain)
 
 
 def metadata(request, domain=None):

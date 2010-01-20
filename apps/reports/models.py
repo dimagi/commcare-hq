@@ -403,6 +403,12 @@ class Case(models.Model):
                     to_return[id][form_id] = []
         return to_return
         
+FORM_TYPE = (
+    ('open', 'Open'),
+    ('close', 'Close'),
+    ('follow', 'Follow'),
+)
+
 class CaseFormIdentifier(models.Model):
     # yuck.  todo: come up with a better name.
     '''A representation of a FormIdentifier as a part of a case.  This 
@@ -413,10 +419,10 @@ class CaseFormIdentifier(models.Model):
     form_identifier = models.ForeignKey(FormIdentifier)
     case = models.ForeignKey(Case, related_name="form_data")
     sequence_id = models.PositiveIntegerField()
+    form_type = models.CharField(_('Form Type'), max_length=32, choices=FORM_TYPE)
 
     def __unicode__(self):
         return "%s %s: %s" % (self.case, self.sequence_id, self.form_identifier)
-
 
 class SqlReport(models.Model):
     """A model that allows one to write a Sql Query and turn it into 

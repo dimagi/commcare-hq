@@ -1,0 +1,33 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>Conditions Test</h:title>
+    <model>
+
+	<instance>
+		<brac xmlns="http://dev.commcarehq.org/BRAC/CHP/coakley">
+	
+		<Num1 />
+		<Num2 />
+		<Num3 />
+		
+		</brac>
+	</instance>
+	
+	<bind nodeset="Num1" type="xsd:int" />
+	<bind nodeset="Num2" type="xsd:int" />
+	<bind nodeset="Num3" type="xsd:int" />
+						
+    </model>
+</h:head>			
+<h:body>
+
+<input ref="Num1"><label>Num1</label></input>
+<input ref="Num2"><label>Num2</label></input>
+<input ref="Num3"><label>Num3</label></input>
+
+</h:body>
+</h:html>

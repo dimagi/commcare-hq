@@ -558,7 +558,8 @@ class XFormDBTableCreator(XFormProcessor):
                   ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
                                   table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #next_parent_name
               ed.save()
-              next_query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
+              query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
+              next_query = next_query + query
           else: 
             if len(child.child_elements) > 0 :
                 (q, f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name) #next-parent-name
