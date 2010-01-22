@@ -1,0 +1,32 @@
+{% load i18n %}
+{% comment %}
+Ugh.  I can't figure out the best way to share these tables which need to display slightly different versions
+of the forms.  I'm sure there's a smart and generic way to do this well, but for now I'm just creating a second
+(and horribly named) version of this template to display what I want.  This one is used from within a form 
+group, where you might have forms that span different namespaces, and therefore want to show the namespace
+in the table.
+{% endcomment %}
+<table>
+<thead>
+    <th>Name</th>
+    <th>Xmlns</th>
+    <th>Version</th>    
+    <th>Uploaded</th>
+    <th>Submissions</th>
+    <th>Uploaded</th>
+    <th>Last Seen</th>
+</thead>
+<tbody>
+    {% for form in forms %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        <td><a href="{% url xformmanager.views.data form.id %}">{{ form.form_display_name }}</td>
+        <td>{{ form.target_namespace }}</td>
+        <td>{{ form.version }}</td>
+        <td>{{ form.date_created }}</td>
+        <td>{{ form.submission_count }}</td>
+        <td>{{ form.submit_time|date }}</td>
+        <td>{{ form.time_of_last_instance|date }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>

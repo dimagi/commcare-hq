@@ -36,7 +36,6 @@ body {
 
 a {  
     text-decoration: none;
-    
 }
 
 /* this is how you make something with a javascript action 
@@ -262,6 +261,12 @@ ul {
 /*******************************************
  ** Custom Properties
  *******************************************/
+
+/* We're using notice for links/buttons. Blueprint makes them yellow, but we prefer a 
+   more tasteful grey/blue */
+
+.notice {background:#DDEDEE;color:#374445;border-color:#A4B9B9;}
+.notice a {color:#374445;}
 
 /* these do some generic stylings of "good" and "bad" things happening */
 

@@ -1,0 +1,27 @@
+{% extends base_template %}
+{% block title %}Form data for {{ group.display_name }}{% endblock %}
+{% block javascripts %}
+<script language="javascript" type="text/javascript">
+$(document).ready(function(){
+    $('#form-group INPUT').click(function() {
+        $(this).parent().parent().toggleClass('highlight');
+    });
+});
+</script>
+{% endblock %}
+{% block content %}
+<h1>{{ group.display_name }}</h1>
+<h3>View Name: {{ group.view_name }}</h3>
+<form method="POST">
+<h4>Below you can modify and delete the mapped columns for the individual forms.  Use the boxes 
+to select which column should be used in each form for the shared view.  You can also delete any
+columns you don't want to see.</h4>
+<div class="big-table" style="max-height:600px">
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
+</div>
+<br>
+<div style="float:right">
+<input type="submit" value="Submit" />
+</div>
+</form>
+{% endblock %}
