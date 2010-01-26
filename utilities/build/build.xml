@@ -12,7 +12,7 @@
 	
 	<property name="antdepends.dir" value="../../utilities/build" />
 	<property name="postdeploy.dir" value="../../tests/deployment" />
-	<property name="selenium.dir" value="../../tests/selenium" />
+	<property name="selenium.dir" value="../../tests/deployment/selenium" />
 	
 	<taskdef resource="pyAntTasks.properties" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
 	<taskdef name="py-run" classname="org.pyant.tasks.PythonRunTask" classpath="${antdepends.dir}/pyAntTasks-1.3.jar"/>
