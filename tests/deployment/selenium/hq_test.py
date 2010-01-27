@@ -43,6 +43,7 @@ class testingPost(unittest.TestCase):
         submission_number = post(serverhost, domain)
         sel.click("link=Submissions")
         sel.wait_for_page_to_load("30000")
+        time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         sel.click("link=view full raw submission")
