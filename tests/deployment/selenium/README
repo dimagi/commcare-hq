@@ -1,6 +1,6 @@
 README
 
-To conduct test, check if you have in the same server:
+To conduct test, check if you have in the same directory:
 * hq_test.py
 * post.py
 * sample_form.xhtml
@@ -11,6 +11,8 @@ Also, check if selenium is installed/configured:
     * in cmdline, easy_install selenium
     * download selenium rc using wget or google
     * run the server (jar file)
+
+*to run headless, set up a VNC server
 
 * Run the tests by executing the script hq_test.py
 

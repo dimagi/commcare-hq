@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import time
 import uuid
-import json
+import simplejson
 import subprocess
 import sys
 from subprocess import PIPE
@@ -15,16 +15,16 @@ import urllib
 from cookielib import *
 from urlparse import urlparse
 
-#serverhost = 'dev.commcarehq.org'
+serverhost = 'dev.commcarehq.org'
 #serverhost = 'localhost'
-serverhost = 'localhost:8000'
+#serverhost = 'localhost:8000'
 
-curl_command = 'c:\curl\curl.exe'
+#curl_command = 'c:\curl\curl.exe'
 #curl_command = 'curl'
 
 
 
-filename = r'C:\Source\hq\data\debug\1727.xml'
+filename = r'/Users/james/Desktop/dimagi/workspace/commcare-hq/tests/deployment/xforms/bad-mvp-sanitation.xml'
 domain_name = "Pathfinder"
 up = urlparse('http://%s/receiver/submit/%s' % (serverhost, domain_name))
 dict = {}
