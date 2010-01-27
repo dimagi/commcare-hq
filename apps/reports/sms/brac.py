@@ -17,7 +17,7 @@ from rapidsms.i18n import ugettext_from_locale as _t
 from rapidsms.i18n import ugettext_noop as _
 from hq.models import Domain, Organization, ReporterProfile
 from hq.reporter.custom import get_delinquent_context_from_statdict
-from reports.custom.util import forms_submitted
+from reports.sms.util import forms_submitted
 import hq.reporter.metastats as metastats
 
 def weekly(router):
@@ -30,7 +30,8 @@ def daily(router):
     brac = Domain.objects.get(name="BRAC")
     delinquent_report(router, brac)
     
-def activity_report(router, domain, send_chv_report=True, send_super_report=True, send_summary_chv_report=True):
+def activity_report(router, domain, send_chv_report=True, 
+                    send_super_report=True, send_summary_chv_report=True):
     """
     Sends weekly activity reports to CHV's and CHW's
     
@@ -58,8 +59,7 @@ def activity_report(router, domain, send_chv_report=True, send_super_report=True
 
 def send_activity_to_reporter(router, recipient, context ):
     """ SMS document 1: first set 
-    
-    Messages chv with a report of her activity in the past week
+        Messages chv with a report of her activity in the past week
     """
     logging.debug("Running brac sms send_activity_to_reporter")
     forms_submitted = context['forms_submitted']
@@ -83,7 +83,7 @@ def send_activity_to_reporter(router, recipient, context ):
     
 def send_activity_to_super(router, recipient, context ):
     """ SMS document 1: second set 
-    Messages supervisor with activity report for a given chv
+        Messages supervisor with activity report for a given chv
     """
     logging.debug("Running brac sms send_activity_to_super")
     forms_submitted = context['count']

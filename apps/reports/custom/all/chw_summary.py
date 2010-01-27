@@ -7,7 +7,6 @@ from graphing.dbhelper import DbHelper
 from hq.utils import get_dates_reports
 
 from hq.models import Domain, Organization, ReporterProfile
-from reports.custom.util import forms_submitted
 from apps.reports.models import Case, CaseFormIdentifier
 
 def chw_summary(request, domain=None):
