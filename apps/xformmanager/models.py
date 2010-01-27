@@ -509,10 +509,11 @@ class Metadata(models.Model):
     def submitting_reporter(self):
         """Look for matching reporter, defined as someone having the same chw_id
            in their profile, and being a part of the same domain"""
+        
         if self.domain and self.username:
             try:
                 return ReporterProfile.objects.get(domain=self.domain, 
-                                                   chw_username=self.username).reporter
+                                                   chw_username__iexact=self.username).reporter
             except Exception, e:
                 # any number of things could have gone wrong.  Not found, too
                 # many found, some other random error.  But just fail quietly
