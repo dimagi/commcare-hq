@@ -56,7 +56,9 @@ class BracTestCase(TestScript):
     def test_send_activity_to_reporter(self):
         context = {'forms_submitted':5 }
         send_activity_to_reporter(self.router, self.sub_profile, context)
-        # Sorry for the trouble lucy. You have submitted 5 forms this week. Please remember to fill and send the complete reports every week. If the number is incorrect, call Gayo 0786151272.
+        # Sorry for the trouble lucy. You have submitted 5 forms this week. 
+        # Please remember to fill and send the complete reports every week. 
+        # If the number is incorrect, call Gayo 0786151272.
         script = """
             306 < Pole kwa kazi ngumu dada lucy. umetuma fomu 5 wiki hii. Tafadhali kumbuka kujaza fomu na kutuma kila wiki. Kama namba ya SMS si sahihi tafadhili bip 0786151272.
         """
