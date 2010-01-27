@@ -487,7 +487,7 @@ class Metadata(models.Model):
            fall within the specified date range.  "Matching" is 
            currently defined by having the same chw_id.'''
         # the matching criteria may need to be revised.
-        return len(Metadata.objects.filter(chw_id=self.chw_id, 
+        return len(Metadata.objects.filter(chw_id=self.chw_id, deviceid=self.deviceid,
                                            attachment__submission__submit_time__gte=startdate,
                                            attachment__submission__submit_time__lte=enddate))
 
