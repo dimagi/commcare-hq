@@ -46,7 +46,9 @@ class testingPost(unittest.TestCase):
         time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
+        time.sleep(2)
         sel.click("link=view full raw submission")
+        time.sleep(2)
         try:
             file = open('testupload.xml', 'r')
             xml_present = file.read()
@@ -56,6 +58,7 @@ class testingPost(unittest.TestCase):
         #test to see if form has been processed
         sel.open("/receiver/review")
         sel.wait_for_page_to_load("30000")
+        time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(sel.is_text_present("view form data"))
