@@ -121,13 +121,8 @@
 	<target name="post-deploy-tests" depends="compile,django-tests-all,deploy-to-server">
 			<py-run script="${postdeploy.dir}/testRegisterAndSubmitData.py" pythonpath="${postdeploy.dir}">			
 			</py-run>
-		<!--
-		Removing test for now. Not robust enough to handle server invariance.
-		-->	
-		<!--
 			<py-run script="${selenium.dir}/hq_test.py" pythonpath="${selenium.dir}">			
 			</py-run>
-		-->
 	</target>
 	
 	
