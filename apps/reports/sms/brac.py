@@ -22,25 +22,10 @@ from hq.reporter.custom import get_delinquent_context_from_statdict
 from reports.sms.util import forms_submitted
 import hq.reporter.metastats as metastats
 
-def brac_hack_attack(router):
-    """Send to three hard-coded nubmers, data about 3 specific CHWs:
-       Gayo => Sada
-       Ken => Eva
-       Irene => Rukia
-       Gayo => Helena
-       Ken => Fatuma
-       Irene => Soplata
+def brac_sms_report(router, reporter_map = {}):
+    """Send to manually-coded numbers, set via the args in the 
+       scheduler app.  If nothing is set, nothign will be sent.
     """
-    # keep track of who we need to send to here.  First column is the
-    # chw id, and the second is the reporter to go to.  like I said,
-    # this is a hack.
-    reporter_map = {"sada": "gayo", 
-                    "eva": "ken",
-                    "rukia": "irene",
-                    "helena": "gayo", 
-                    "fatuma": "ken", 
-                    "soplata": "irene"}
-
     for chw_name, reporter_name in reporter_map.items():
         count = forms_submitted(chw_name, weeks=1)
         rep = Reporter.objects.get(alias__iexact=reporter_name)
