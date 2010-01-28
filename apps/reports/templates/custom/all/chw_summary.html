@@ -1,10 +1,17 @@
 <h2>Community Health Worker Summary Report</h2>
 <table>
-<tr><td>Community Health Worker ID</td><td>Community Health Worker Name</td><td>Total active/Total open</td></tr>
-{% for chw_data in all_data %}
-<tr>
-<td>{{ chw_data.chw }}</td><td>{{ chw_data.chw_name }}</td>
-<td>{{ chw_data.active }}/{{ chw_data.open }}</td>
-</tr>
-{% endfor %}
+	<thead>
+	<tr>
+		<th>Community Health Worker ID</th>
+		<th>Community Health Worker Name</th>
+		<th>Total active/Total open</th>
+	</tr>
+	</thead>
+	{% for chw_data in all_data %}
+	<tr class="{% cycle 'odd' 'even' %}">
+		<td>{{ chw_data.chw }}</td>
+		<td>{{ chw_data.chw_name }}</td>
+		<td>{{ chw_data.active }}/{{ chw_data.open }}</td>
+	</tr>
+	{% endfor %}
 </table>
