@@ -487,7 +487,7 @@ class Metadata(models.Model):
            fall within the specified date range.  "Matching" is 
            currently defined by having the same chw_id.'''
         # the matching criteria may need to be revised.
-        return len(Metadata.objects.filter(chw_id=self.chw_id, 
+        return len(Metadata.objects.filter(chw_id=self.chw_id, deviceid=self.deviceid,
                                            attachment__submission__submit_time__gte=startdate,
                                            attachment__submission__submit_time__lte=enddate))
 
@@ -509,10 +509,11 @@ class Metadata(models.Model):
     def submitting_reporter(self):
         """Look for matching reporter, defined as someone having the same chw_id
            in their profile, and being a part of the same domain"""
+        
         if self.domain and self.username:
             try:
                 return ReporterProfile.objects.get(domain=self.domain, 
-                                                   chw_username=self.username).reporter
+                                                   chw_username__iexact=self.username).reporter
             except Exception, e:
                 # any number of things could have gone wrong.  Not found, too
                 # many found, some other random error.  But just fail quietly
