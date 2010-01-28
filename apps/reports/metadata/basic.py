@@ -17,9 +17,6 @@ from datetime import datetime, timedelta
 from xformmanager.models import Metadata
 
 
-#from reports.custom.util import forms_submitted #dmyung - should we refactor all these forms_submitted stuff into this?
-
-
 def build_filtered_metadataquery(intervalstart, intervalend, domain=None, reportergroup=None, reporterprofile=None, formdefs=[]):
     """
     Simple report function to prepare the metadata query for the eventual magic you will do to it.
