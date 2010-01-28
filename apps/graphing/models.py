@@ -164,7 +164,6 @@ class RawGraph(BaseGraph):
                 labels.append(str(labelarr[i]))
             else:
                 labels.append(str(query_cols[i][0]))
-        print labels
         return labels
         
     
@@ -284,7 +283,6 @@ class RawGraph(BaseGraph):
             ret[item]['data'] = [[num,count]]
             ret[item]['bars'] = {'show':'true'}
             num = num + 1
-        print ret
         return ret
 
     
@@ -395,7 +393,7 @@ class RawGraph(BaseGraph):
             return to_return
         except Exception, e:                
             extra = {'exception':e, 'graphobject':self, 'display_type':self.display_type, 'table_name':self.table_name, 'db_query':self.db_query}
-            logging.error("Error rendering flot data",extra=extra)
+            logging.error("Error rendering flot data: %s" % e.message,extra=extra)
             return {}
         
         
