@@ -482,12 +482,18 @@ class Metadata(models.Model):
     def xml_file_location(self):
         return self.attachment.filepath
     
-    def get_submission_count(self, startdate, enddate):
+    def get_submission_count(self, startdate, enddate, include_deviceid=True):
         '''Gets the number of submissions matching this one that 
            fall within the specified date range.  "Matching" is 
-           currently defined by having the same chw_id.'''
+           currently defined by having the same chw_id and optionally
+           (via param) same device id.'''
         # the matching criteria may need to be revised.
-        return len(Metadata.objects.filter(chw_id=self.chw_id, deviceid=self.deviceid,
+        if include_deviceid:
+            return len(Metadata.objects.filter(chw_id=self.chw_id, deviceid=self.deviceid,
+                                           attachment__submission__submit_time__gte=startdate,
+                                           attachment__submission__submit_time__lte=enddate))
+        else: 
+            return len(Metadata.objects.filter(chw_id=self.chw_id, 
                                            attachment__submission__submit_time__gte=startdate,
                                            attachment__submission__submit_time__lte=enddate))
 
