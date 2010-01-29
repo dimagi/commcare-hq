@@ -153,10 +153,16 @@ def readable_form(input_data):
     '''Gets a readable display of an xform'''
     return _form_translate(input_data, "summary")
 
+
+def csv_dump(input_data):
+    '''Get the csv translation file from an xform'''
+    return _form_translate(input_data, "csvdump")
+
 def _form_translate(input_data, operation):
     """Utility for interacting with the form_translate jar"""
-    logging.debug ("form_translate %s: begin subprocess - java -jar form_translate.jar schema < input file > " \
-                   % operation)
+    # java -jar form_translate.jar csvdump < form.xml > output
+    logging.debug ("form_translate %s: begin subprocess - java -jar form_translate.jar %s < input file > " \
+                   % (operation, operation))
     p = subprocess.Popen(["java","-jar",
                           os.path.join(settings.RAPIDSMS_APPS['xformmanager']['xform_translate_path'],
                                        "form_translate.jar"),
