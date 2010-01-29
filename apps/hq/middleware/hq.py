@@ -5,6 +5,24 @@ from hq.models import ExtUser
 from hq.utils import get_dates
 from hq.authentication import get_username_password
 
+try:
+    from threading import local
+except ImportError:
+    from django.utils._threading_local import local
+ 
+# this keeps a thread-local cache of stuff.  we're gonna stick some HQ
+# stuff inside so that we have access to the user and domain from things
+# that don't have a handle to the request object
+_thread_locals = local()
+
+def get_current_user():
+    """Get the current (thread-specific) user"""
+    return getattr(_thread_locals, 'user', None)
+
+def get_current_domain():
+    """Get the current (thread-specific) user"""
+    return getattr(_thread_locals, 'domain', None)
+
 class HqMiddleware(object):
     '''Middleware for CommCare HQ.  Right now the only thing this does is
        convert the request.user property into an ExtUser, if they exist.'''
@@ -12,6 +30,7 @@ class HqMiddleware(object):
     
     def process_request(self, request):
         # the assumption here is that we will never have an ExtUser for AnonymousUser
+        _thread_locals.user = getattr(request, 'user', None)
         if request.user and not request.user.is_anonymous():
             self._set_extuser(request, request.user)
         else:
@@ -46,6 +65,7 @@ class HqMiddleware(object):
             # also duplicate it as request.extuser so we can check
             # this property in our views. 
             request.extuser = extuser
+            _thread_locals.domain = extuser.domain
         except Exception:
             # make sure the property is set either way to avoid 
             # having extraneous hasattr() calls.  Most likely
