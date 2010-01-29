@@ -54,8 +54,7 @@ class BracTestCase(TestScript):
         self.router.stop()
     
     def test_send_activity_to_reporter(self):
-        context = {'forms_submitted':5 }
-        send_activity_to_reporter(self.router, self.sub_profile, context)
+        send_activity_to_reporter(self.router, self.sub_profile, "lucy", 5 )
         # Sorry for the trouble lucy. You have submitted 5 forms this week. 
         # Please remember to fill and send the complete reports every week. 
         # If the number is incorrect, call Gayo 0786151272.

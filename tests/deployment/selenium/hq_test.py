@@ -1,6 +1,7 @@
 from selenium import selenium
 import unittest, time, re, urllib2
 from post import *
+import os
 import sys
 import time
 
@@ -27,7 +28,7 @@ class testingPost(unittest.TestCase):
         if sel.is_text_present("Sample Form 1"):
             self.delete_xform(sel)
         time.sleep(3)
-        path = sys.path[0] + "/sample_form.xhtml"
+        path = os.path.join(sys.path[0], "sample_form.xhtml")
         sel.type("id_file", path)
         sel.type("id_form_display_name", "Sample Form 1")
         sel.click("//div[@id='xform-register-block']/form/ul/li[3]/input")

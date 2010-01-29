@@ -3,7 +3,6 @@ from datetime import datetime
 import os
 import time
 import uuid
-import simplejson
 import subprocess
 import sys
 from subprocess import PIPE
