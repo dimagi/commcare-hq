@@ -507,11 +507,12 @@ msgstr "Hongera kwa kazi nzuri dada %(username)s. "
 
 #: .\apps\custom\brac.py:62
 msgid "You have submitted %(count)s forms this week! "
-msgstr "umetuma fomu %(count)s wiki hii. "
+msgstr "Umetuma fomu %(count)s wiki hii. "
 
 #: .\apps\custom\brac.py:63 .\apps\custom\brac.py:68
 msgid "If the number is incorrect, call Gayo 0786151272."
-msgstr "Kama namba ya SMS si sahihi tafadhili bip 0786151272."
+msgstr "Kama namba ya fomu si sahihi bip 0786151272."
+
 
 #: .\apps\custom\brac.py:65
 #, python-format
@@ -520,7 +521,7 @@ msgstr "Asante dada %(username)s. "
 
 #: .\apps\custom\brac.py:66 .\apps\custom\brac.py:71
 msgid "You have submitted %(count)s forms this week. "
-msgstr "umetuma fomu %(count)s wiki hii. "
+msgstr "Umetuma fomu %(count)s wiki hii. "
 
 #: .\apps\custom\brac.py:67
 msgid "Please do your best to complete and send all the forms. "
@@ -529,7 +530,8 @@ msgstr "tunaomba ujutahidi kukamilisha nyengine. "
 #: .\apps\custom\brac.py:70
 #, python-format
 msgid "Sorry for the trouble %(username)s. "
-msgstr "Pole kwa kazi ngumu dada %(username)s. "
+msgstr "Pole kwa kazi %(username)s. "
+
 
 #: .\apps\custom\brac.py:72
 msgid "Please remember to fill and send the complete reports every week. "

@@ -59,7 +59,7 @@ class BracTestCase(TestScript):
         # Please remember to fill and send the complete reports every week. 
         # If the number is incorrect, call Gayo 0786151272.
         script = """
-            306 < Pole kwa kazi ngumu dada lucy. umetuma fomu 5 wiki hii. Tafadhali kumbuka kujaza fomu na kutuma kila wiki. Kama namba ya SMS si sahihi tafadhili bip 0786151272.
+            306 < Pole kwa kazi lucy. umetuma fomu 5 wiki hii. Tafadhali kumbuka kujaza fomu na kutuma kila wiki. Kama namba ya fomu si sahihi bip 0786151272.
         """
         self.runScript(script)
 
