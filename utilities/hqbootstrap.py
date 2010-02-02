@@ -102,9 +102,6 @@ def run():
     from receiver.models import Submission
 
 
-    from receiver.models import Backup
-
-
     from receiver.models import Attachment
 
 
