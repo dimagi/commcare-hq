@@ -840,11 +840,8 @@ class FormDataGroup(models.Model):
 # whereas models is loaded once
 def process(sender, instance, created, **kwargs): #get sender, instance, created
     # only process newly created xforms, not all of them
-    if not created:
-        return
-    
-    if not instance.is_xform():
-        return
+    if not created:             return
+    if not instance.is_xform(): return
     
     # yuck, this import is in here because they depend on each other
     from manager import XFormManager
