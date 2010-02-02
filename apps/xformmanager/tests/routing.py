@@ -27,7 +27,6 @@ def decrement(filename, attachment):
 class XmlRoutingTestCase(unittest.TestCase):
     """This class tests the xmlrouter functionality."""
        
-
     def setUp(self):
         global counter
         counter = 0
@@ -35,7 +34,6 @@ class XmlRoutingTestCase(unittest.TestCase):
                 
     def tearDown(self):
         pass
-
 
     def testRegistry(self):
         """Tests the registration functionality."""
@@ -55,7 +53,6 @@ class XmlRoutingTestCase(unittest.TestCase):
         self.assertTrue(xmlrouter.is_registered(inc_xmlns, noop))
         # but others still shouldn't
         self.assertFalse(xmlrouter.is_registered(inc_xmlns, decrement))
-        
         
     def testRouting(self):
         """Tests the creation of a form group from a single form."""
@@ -96,8 +93,7 @@ class XmlRoutingTestCase(unittest.TestCase):
         xmlrouter.process(filename, attachment, dec_xmlns, 0)
         self.assertEqual(1, counter)
         
-        
-        # but registering twice should 
+        # but registering with a second method should 
         xmlrouter.register(inc_xmlns, increment_again)
         xmlrouter.process(filename, attachment, inc_xmlns, 0)
         self.assertEqual(3, counter)
