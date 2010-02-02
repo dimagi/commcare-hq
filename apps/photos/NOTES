@@ -1,0 +1,17 @@
+
+HACKS
+=====
+This app required some more or less kludgy changes, as follows:
+
+1. rapidsms.ini defines media_root=file:///tmp - this confused Django which simply appends media_root to project root. 
+I commented out media_root to fix this.
+
+2 rapidsms/lib/rapidsms/webui/urls.py maps all apps/<name>/static dirs to static/<name> URLs, serving via django.views.static.serve. This breaks ImageField 'url' property. 
+A special mapping in apps/photos/urls.py now handles that: 
+	(r'^data/photos/(?P<path>.*)$',  'django.views.static.serve', {"document_root": 'data/photos/'}),
+	
+	
+QUESTIONS
+=========
+
+1. Do we really need ImageKit? Why not just display the photos in the list view using IMG's width/height attributes?
