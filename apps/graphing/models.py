@@ -421,16 +421,22 @@ class RawGraph(BaseGraph):
         '''An alteration of the data, we want to return all the data 
            in this chart as a pretty little table.'''
         data_dict = flot_data
-        #we are gonna make a hash, keyed by the x values
-        #within each value of that it's a hash by series
-        if self.display_type == 'histogram-overall':
+        # we are gonna make a hash, keyed by the x values
+        # within each value of that it's a hash by series
+        if self.display_type.startswith('histogram-overall'):
             retarr = []
             retarr.append(['Item','Count'])
             series = data_dict.keys()
             for item in series:
                 retarr.append([item,data_dict[item]['data'][0][1]])
             return retarr
-        
+        elif "histogram-multifield" in self.display_type:
+            labels = []
+            data = []
+            for key, graph_data in flot_data.items():
+                labels.append(graph_data['label'])
+                data.append(graph_data['data'][0][1])
+            return [labels, data]
         series = data_dict.keys()        
         xvalue_dict = {}        
         xlabel_dict = {}
