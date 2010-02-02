@@ -1,0 +1,9 @@
+{% extends base_template %}
+{% load i18n %} 
+{% block content %}
+
+<h5><a href="/photos/">&laquo; All Photos</a></h5>
+
+<img src="{{ photo.display.url }}" alt="{{ photo.name }}">
+
+{% endblock %}
