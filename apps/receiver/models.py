@@ -47,10 +47,9 @@ class Submission(models.Model):
     
     @property
     def xform(self):
-        '''
-        Returns the xform associated with this, defined by being the
-        first attachment that has a content type of text/xml.  If no such
-        attachments are found this will return nothing.
+        '''Returns the xform associated with this, defined by being the
+           first attachment that has a content type of text/xml.  If no such
+           attachments are found this will return nothing.
         '''
         attachments = self.attachments.order_by("id")
         for attachment in attachments:
@@ -174,25 +173,6 @@ class Submission(models.Model):
 #dmyung 11/5/2009 - removing signal and refactor attachment processing to the submit processor
 #post_save.connect(process_attachments, sender=Submission)
 
-class Backup(models.Model):
-    #backup_code = models.CharField(unique=True,max_length=6)
-    backup_code = models.IntegerField(unique=True)
-    password = models.CharField(_('backup password'), max_length=128)
-    submission = models.ForeignKey(Submission)    
-    #other fields?
-    
-    def __new_code(self):
-        """Generate and verify that the backup code is unique"""
-        nums = '0123456789'
-        new_code = int(''.join([choice(nums) for i in range(6)]))
-        while Backup.objects.all().filter(backup_code=new_code).count() != 0:
-            new_code = int(''.join([choice(nums) for i in range(6)]))
-        return new_code
-    
-    def save(self, **kwargs):
-        self.backup_code = self.__new_code()       
-        #todo:  process password using similar method from the User model for password salt and hashing
-        super(Backup, self).save()
             
     
 class Attachment(models.Model):
