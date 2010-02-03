@@ -10,10 +10,10 @@
 {% block content %}
 
 <h5><a href="/photos">&laquo; All Photos</a></h5>
-<a href="{{ photo.fullsize.url }}">
-	<img class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
-</a>
-<br />
+<div id="photo-single" style="text-align:center">
+	<img id="photo" class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
+	<a href="#" onclick='$("#photo").attr("src", "{{ photo.fullsize.url }}");'>view full size</a>
+</div>
 
 {% get_comment_list for photo as comments %}
 
