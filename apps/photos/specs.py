@@ -1,28 +1,31 @@
 from imagekit.specs import ImageSpec 
 from imagekit import processors 
 
-# first we define our thumbnail resize processor 
 class ResizeThumb(processors.Resize): 
-    width = 100 
-    height = 75 
-    crop = True
+    width = 120 
+    # crop = True
 
-# now we define a display size resize processor
 class ResizeDisplay(processors.Resize):
-    width = 600 
+    width = 640 
 
-# now lets create an adjustment processor to enhance the image at small sizes 
-class EnchanceThumb(processors.Adjustment): 
-    contrast = 1.2 
-    sharpness = 1.1 
+# class EnchanceThumb(processors.Adjustment): 
+#     contrast = 1.2 
+#     sharpness = 1.1 
 
-# now we can define our thumbnail spec 
+
+
 class Thumbnail(ImageSpec): 
-    access_as = 'thumbnail_image' 
+    access_as = 'thumbnail' 
     pre_cache = True 
-    processors = [ResizeThumb, EnchanceThumb] 
+    processors = [ResizeThumb] #, EnchanceThumb] 
 
-# and our display spec
 class Display(ImageSpec):
     increment_count = True
     processors = [ResizeDisplay]
+
+class Fullsize(ImageSpec):
+    increment_count = True
+    access_as = 'fullsize' 
+    pre_cache = True
+        
+    

@@ -15,7 +15,7 @@
 		{% get_comment_count for photo as comment_count %}
 		<a href="/photo/{{ photo.id }}">
 			<div class="photo-thumb">
-				<img src="{{ photo.thumbnail_image.url }}" alt="{{ photo.name }}"><br/>
+				<img src="{{ photo.thumbnail.url }}" alt="{{ photo.name }}"><br/>
 				{{ comment_count }} comments
 			</div>
 		</a>
