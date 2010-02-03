@@ -1,9 +1,14 @@
 {% extends base_template %}
 {% load i18n %} 
+
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/photos/stylesheets/photos.css" />
+{% endblock %}
+
 {% block content %}
 
-<h5><a href="/photos/">&laquo; All Photos</a></h5>
+<h5><a href="/photos">&laquo; All Photos</a></h5>
 
-<img src="{{ photo.display.url }}" alt="{{ photo.name }}">
+<img class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
 
 {% endblock %}
