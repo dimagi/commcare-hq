@@ -7,4 +7,5 @@ urlpatterns = patterns('',
     (r'^photos/?$', 'photos.views.recent'),
     (r'^photo/(?P<photo_id>\d+)/?$', 'photos.views.show'),
     (r'^%s/(?P<path>.*)$' % image_path,  'django.views.static.serve', {"document_root": '%s/' % image_path}),
+    (r'^photo/comments/', include('django.contrib.comments.urls')),
 )
