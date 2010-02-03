@@ -1,12 +1,18 @@
 {% extends base_template %}
 {% load i18n %} 
+
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/photos/stylesheets/photos.css" />
+{% endblock %}
+
 {% block content %}
 
+<div id="photos" id="photos-list">
 {% if photos %}
 	<h3>Recent Photos</h3>
 	{% for photo in photos %}
-		<a href="/photo/{{ photo.id }}"><img src="{{ photo.thumbnail_image.url }}" alt="{{ photo.name }}"></a>
+		<a href="/photo/{{ photo.id }}"><img src="{{ photo.thumbnail_image.url }}" alt="{{ photo.name }}" class="photo-thumb"></a>
 	{% endfor %}
 {% endif %}
-
+</div>
 {% endblock %}
