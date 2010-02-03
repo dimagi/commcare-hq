@@ -10,8 +10,9 @@
 {% block content %}
 
 <h5><a href="/photos">&laquo; All Photos</a></h5>
-
-<img class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
+<a href="{{ photo.fullsize.url }}">
+	<img class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
+</a>
 <br />
 
 {% get_comment_list for photo as comments %}
