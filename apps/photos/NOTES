@@ -15,3 +15,9 @@ QUESTIONS
 =========
 
 1. Do we really need ImageKit? Why not just display the photos in the list view using IMG's width/height attributes?
+
+TODO
+====
+
+* lightbox for thumbnails
+* 

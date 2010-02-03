@@ -1,7 +1,10 @@
 from django.conf.urls.defaults import *
+import settings
+
+image_path = settings.RAPIDSMS_APPS['photos']['image_path']
 
 urlpatterns = patterns('',                       
     (r'^photos/?$', 'photos.views.recent'),
     (r'^photo/(?P<photo_id>\d+)/?$', 'photos.views.show'),
-    (r'^data/photos/(?P<path>.*)$',  'django.views.static.serve', {"document_root": 'data/photos/'}),
+    (r'^%s/(?P<path>.*)$' % image_path,  'django.views.static.serve', {"document_root": '%s/' % image_path}),
 )
