@@ -1,8 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-#from django.core.files.base import ContentFile
-
 from rapidsms.webui.utils import render_to_response
 
 from photos.models import Photo
@@ -25,11 +23,14 @@ from photos.models import Photo
     200
 '''
 
+# default page - show all thumbnails by date
 @login_required()
-def recent(request, template_name="photos/list.html"):  # default page
+def recent(request, template_name="photos/list.html"):
     photos = Photo.objects.all()
     return render_to_response(request, template_name, {'photos' : photos})
-    
+
+# show a single photo + comments
+@login_required()    
 def show(request, photo_id, template_name="photos/single.html"):
     p = Photo.objects.get(id=photo_id)
     return render_to_response(request, template_name, {'photo' : p})
