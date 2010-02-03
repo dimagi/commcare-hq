@@ -1,5 +1,7 @@
 {% extends base_template %}
 {% load i18n %} 
+{% load comments %}
+
 
 {% block page_stylesheets %}
     <link type="text/css" rel="stylesheet" href="/static/photos/stylesheets/photos.css" />
@@ -10,5 +12,31 @@
 <h5><a href="/photos">&laquo; All Photos</a></h5>
 
 <img class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
+<br />
+
+{% get_comment_list for photo as comments %}
+
+<u>{{ comments|length}} Comments</u>
+<ul>
+{% for comment in comments %}
+	<li>
+		Posted by <i>{{comment.user_name}}</i> at <i>{{ comment.submit_date|time }}, {{ comment.submit_date|date }}</i>:
+		<p>{{ comment.comment }}</p>
+	</li>
+{% endfor %}
+</ul>
+
+{% get_comment_form for photo as form %}
+<form action="{% comment_form_target %}" method="POST"> 
+	Add comment:<br />
+	{{ form.comment }} 
+	{{ form.content_type }} 
+	{{ form.object_pk }} 
+	{{ form.timestamp }} 
+	{{ form.security_hash }}
+	<input type="hidden" name="next" value="{% url photos.views.show photo.id %}" />
+	<br />
+	<input type="submit" value="Publish" id="id_submit" />
+</form> 
 
 {% endblock %}
