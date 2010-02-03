@@ -6,10 +6,24 @@ from django.http import HttpResponse
 from rapidsms.webui.utils import render_to_response
 
 from photos.models import Photo
+'''
+    This isn't really supposed to work as a test right now, it's more to describe how to use the system
 
-
-# p = Photo(name="test-no_medroot", original_image="data/photos/hoover.jpg")
-# p.save()
+    >>> p = Photo(name="test image", original_image="apps/photos/tests/test.jpg")
+    >>> p.save()
+    >>> n = p.name
+    >>> i = Photo.objects.get(name=n)
+    >>> i.display.url
+    u'/data/photos/test_display.jpg'
+    >>> from django.test.client import Client
+    >>> c = Client()
+    >>> resp = c.get('/data/photos/test_display.jpg')
+    >>> resp.status_code
+    200
+    >>> resp = c.get('/photo/%s' % i.id)
+    >>> resp.status_code
+    200
+'''
 
 @login_required()
 def recent(request, template_name="photos/list.html"):  # default page
