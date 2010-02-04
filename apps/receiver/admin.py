@@ -9,17 +9,12 @@ class AttachmentAdmin(admin.ModelAdmin):
     list_display = ('id','submission','filesize','attachment_content_type')
     list_filter = ['attachment_content_type',]    
     
-class BackupAdmin(admin.ModelAdmin):
-    list_display = ('id','submission','password','backup_code',)
-    list_filter = []
-
 class SubmissionHandlingAdmin(admin.ModelAdmin):
     list_display = ('id','submission','handled')
     list_filter = ['handled']  
 
 admin.site.register(Submission,SubmissionAdmin)
 admin.site.register(Attachment,AttachmentAdmin)
-admin.site.register(Backup,BackupAdmin)
 admin.site.register(SubmissionHandlingOccurrence, SubmissionHandlingAdmin)
 admin.site.register(SubmissionHandlingType)
 admin.site.register(Annotation)
