@@ -34,10 +34,10 @@ class XFormManager(object):
         return self.su.save_form_data(xml_file_name, attachment)
     
     def validate_schema(self, file_name):
-        """ validate schema 
-        Returns a tuple (is_valid, error)
-        is_valid - True if valid, False if not
-        error - Relevant validation error
+        """validate schema 
+           Returns a tuple (is_valid, error)
+           is_valid - True if valid, False if not
+           error - Relevant validation error
         """
         #process xsd file to FormDef object
         fout = open(file_name, 'r')
