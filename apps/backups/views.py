@@ -1,31 +1,13 @@
-# Create your webui views here.
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
+from backups.models import Backup
 
-# czue: moved from receiver app.  This is likely mostly useles  
-def restore(request, code_id, template_name="receiver/restore.html"):
-    context = {}            
-    logging.debug("begin restore()")
-    # need to somehow validate password, presmuably via the header objects.
-    restore = Backup.objects.all().filter(backup_code=code_id)
-    if len(restore) != 1:
-        template_name="receiver/nobackup.html"
-        return render_to_response(request, template_name, context,mimetype='text/plain')
-    original_submission = restore[0].submission
-    attaches = Attachment.objects.all().filter(submission=original_submission)
-    for attach in attaches:
-        if attach.attachment_content_type == "text/xml":
-            response = HttpResponse(mimetype='text/xml')
-            fin = open(attach.filepath,'r')
-            txt = fin.read()
-            fin.close()
-            response.write(txt)
-            
-            verify_checksum = hashlib.md5(txt).hexdigest()
-            if verify_checksum == attach.checksum:                
-                return response
-            else:               
-                continue
+def restore(request, backup_id):
+    """Get a backup file by id"""
+    backup = get_object_or_404(Backup,id=backup_id)
+    response = HttpResponse(mimetype='text/xml')
+    response.write(backup.attachment.get_contents()) 
+    return response
+                               
     
-    template_name="receiver/nobackup.html"
-    return render_to_response(request, template_name, context,mimetype='text/plain')
-        
