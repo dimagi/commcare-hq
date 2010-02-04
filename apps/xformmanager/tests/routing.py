@@ -3,24 +3,23 @@ import unittest
 import xformmanager.xmlrouter as xmlrouter
 
 counter = 0
-filename = "dummy_filename"
 attachment = "dummy_attach"
 inc_xmlns = "test_xmlns_inc"
 dec_xmlns = "test_xmlns_dec"
 unused_xmlns = "unused_xmlns"
 
-def noop(filename, attachment):
+def noop(attachment):
     pass
 
-def increment(filename, attachment):
+def increment(attachment):
     global counter
     counter += 1
 
-def increment_again(filename, attachment):
+def increment_again(attachment):
     global counter
     counter += 1
 
-def decrement(filename, attachment):
+def decrement(attachment):
     global counter
     counter -= 1
 
@@ -58,11 +57,11 @@ class XmlRoutingTestCase(unittest.TestCase):
         """Tests the creation of a form group from a single form."""
         # nothing registered.  assure that nothing happens
         self.assertEqual(0, counter)
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(0, counter)
-        xmlrouter.process(filename, attachment, dec_xmlns, 0)
+        xmlrouter.process(attachment, dec_xmlns, 0)
         self.assertEqual(0, counter)
-        xmlrouter.process(filename, attachment, unused_xmlns, 0)
+        xmlrouter.process(attachment, unused_xmlns, 0)
         self.assertEqual(0, counter)
         
         # register the incrementer and the decrementer
@@ -70,17 +69,17 @@ class XmlRoutingTestCase(unittest.TestCase):
         xmlrouter.register(dec_xmlns, decrement)
         
         # make sure we are incrementing correctly
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(1, counter)
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(2, counter)
         
         # and decrementing correctly
-        xmlrouter.process(filename, attachment, dec_xmlns, 0)
+        xmlrouter.process(attachment, dec_xmlns, 0)
         self.assertEqual(1, counter)
         
         # and ignoring what should be ignored
-        xmlrouter.process(filename, attachment, unused_xmlns, 0)
+        xmlrouter.process(attachment, unused_xmlns, 0)
         self.assertEqual(1, counter)
         
         # reregistering should not "double up"
@@ -88,18 +87,18 @@ class XmlRoutingTestCase(unittest.TestCase):
         xmlrouter.register(inc_xmlns, increment)
         xmlrouter.register(inc_xmlns, increment)
         xmlrouter.register(dec_xmlns, decrement)
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(2, counter)
-        xmlrouter.process(filename, attachment, dec_xmlns, 0)
+        xmlrouter.process(attachment, dec_xmlns, 0)
         self.assertEqual(1, counter)
         
         # but registering with a second method should 
         xmlrouter.register(inc_xmlns, increment_again)
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(3, counter)
-        xmlrouter.process(filename, attachment, inc_xmlns, 0)
+        xmlrouter.process(attachment, inc_xmlns, 0)
         self.assertEqual(5, counter)
-        xmlrouter.process(filename, attachment, dec_xmlns, 0)
+        xmlrouter.process(attachment, dec_xmlns, 0)
         self.assertEqual(4, counter)
         
         
