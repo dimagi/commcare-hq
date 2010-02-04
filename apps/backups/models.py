@@ -27,6 +27,9 @@ class Backup(models.Model):
     device_id = models.CharField(max_length="32")
     users = models.ManyToManyField(BackupUser, null=True, blank=True)
     
+    def __unicode__(self):
+        return "Id: %s, Device: %s, Users: %s" % (self.id, self.device_id,
+                                                  self.users.count())
     
 # register our backup method, like a signal, in the models file
 # to make sure this always gets bootstrapped.
