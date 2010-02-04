@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from django.http import HttpResponse
 
-from backups.models import Backup
 from receiver.submitresponse import SubmitResponse
 
 def backup_response(way_handled, additional_params):
@@ -11,6 +10,7 @@ def backup_response(way_handled, additional_params):
        of the xform, in this case as a valid backup file.
     '''
     try:
+        from backups.models import Backup
         # Backups should only ever be posting as a single file
         # We don't know what it means if they're not
         if way_handled.submission.attachments.count() == 1:
