@@ -2,8 +2,9 @@ from imagekit.specs import ImageSpec
 from imagekit import processors 
 
 class ResizeThumb(processors.Resize): 
-    width = 120 
-    # crop = True
+    width   = 120 
+    height  = 100
+    crop = True
 
 class ResizeDisplay(processors.Resize):
     width = 640 
