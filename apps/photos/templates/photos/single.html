@@ -10,6 +10,7 @@
 {% block content %}
 
 <h5><a href="/photos">&laquo; All Photos</a></h5>
+
 <div id="photo-single" style="text-align:center">
 	<img id="photo" class="photo-fullsize" src="{{ photo.display.url }}" alt="{{ photo.name }}">
 	<a href="#" onclick='$("#photo").attr("src", "{{ photo.fullsize.url }}");'>view full size</a>
@@ -39,5 +40,8 @@
 	<br />
 	<input type="submit" value="Publish" id="id_submit" />
 </form> 
+
+<br />
+<h5><a href="/photos">&laquo; All Photos</a></h5>
 
 {% endblock %}
