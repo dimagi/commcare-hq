@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-
+from django.http import HttpResponseRedirect
 from rapidsms.webui.utils import render_to_response
 
 from photos.models import Photo
@@ -34,3 +34,13 @@ def recent(request, template_name="photos/list.html"):
 def show(request, photo_id, template_name="photos/single.html"):
     p = Photo.objects.get(id=photo_id)
     return render_to_response(request, template_name, {'photo' : p})
+    
+@login_required()
+def populate(request):
+    for i in (1,2,3):
+        p = Photo(name="test image #%s" % i, original_image="apps/photos/tests/test%s.jpg" % i)
+        p.save()
+        
+    return HttpResponseRedirect("/photos")
+    
+    
