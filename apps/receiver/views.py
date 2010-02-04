@@ -39,9 +39,7 @@ import submitprocessor
 
 @extuser_required()
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
-    '''
-    View duplicates of this submission.
-    '''
+    '''View duplicates of this submission.'''
     context = {}
     extuser = request.extuser
     submit = get_object_or_404(Submission, id=submission_id)
@@ -56,9 +54,7 @@ def show_dupes(request, submission_id, template_name="receiver/show_dupes.html")
 
 @extuser_required()
 def show_submits(request, template_name="receiver/show_submits.html"):
-    '''
-    View submissions for this domain.
-    '''
+    '''View submissions for this domain.'''
     context = {}
     extuser = request.extuser
     slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
@@ -75,10 +71,7 @@ def single_attachment(request, attachment_id):
             response = HttpResponse(mimetype='text/plain')
         else:
             response = HttpResponse(mimetype=mtype)
-        fin = open(attachment.filepath ,'r')
-        txt = fin.read()
-        fin.close()
-        response.write(txt) 
+        response.write(attachment.get_contents()) 
         return response
     except:
         return ""
@@ -90,7 +83,8 @@ def single_submission(request, submission_id, template_name="receiver/single_sub
     context['submission'] = slog[0]
     rawstring = str(slog[0].raw_header)
     
-    #In order to display the raw header information, we need to escape the python object brackets in the output 
+    # In order to display the raw header information, we need to 
+    # escape the python object brackets in the output 
     rawstring = rawstring.replace(': <',': "<')
     rawstring = rawstring.replace('>,','>",')
     rawstring = rawstring.replace('>}','>"}') 
@@ -131,12 +125,13 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
     if request.method != 'POST':
         return HttpResponse("You have to POST to submit data.")
 
-    #ODK/legacy handling hack.
-    #on a NON standard post (ie, not multipart/mixed), we hijack the file upload handler.
-    #this is for multipart/mixed.  For text/xml, we can safely assume that it's just straight from raw_post_data.
-    #and that is the case on the last case of the parsing/checksum calculation.
+    # ODK/legacy handling hack.
+    # on a NON standard post (ie, not multipart/mixed), we hijack the file 
+    # upload handler.
+    # This is for multipart/mixed.  For text/xml, we can safely assume that 
+    # it's just straight from raw_post_data.
+    # and that is the case on the last case of the parsing/checksum calculation.
     if not request.META["CONTENT_TYPE"].startswith('multipart/form-data;'):
-        #request.upload_handlers.insert(0, LegacyXFormUploadParsingHandler())
         request.upload_handlers = [LegacyXFormUploadBlobHandler()]
     is_legacy_blob = False
     # get rid of the trailing slash if it's there
@@ -184,7 +179,8 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
 
     try: 
         new_submission = submitprocessor.new_submission(request.META, checksum, 
-                                                                  submit_domain, is_resubmission=is_resubmission)    
+                                                        submit_domain, 
+                                                        is_resubmission=is_resubmission)    
         if is_legacy_blob and rawpayload != None:
             submitprocessor.save_legacy_blob(new_submission, rawpayload)            
             attachments = submitprocessor.handle_legacy_blob(new_submission)
@@ -241,64 +237,6 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
                                   or_status="FAIL. %s" % e)
         return response.to_response()
 
-def backup(request, domain_name, template_name="receiver/backup.html"):
-    context = {}    
-    if request.method == 'POST':
-        currdomain = Domain.objects.filter(name=domain_name)
-        if len(currdomain) != 1:
-            new_submission = '[error]'
-        else:            
-            checksum = hashlib.md5(request.raw_post_data).hexdigest()            
-            new_submission = submitprocessor.new_submission(request.META, checksum, currdomain[0])        
-            submitprocessor.save_legacy_blob(new_submission, request.raw_post_data)
-            attachments = submitprocessor.handle_legacy_blob(new_submission)                               
-        if new_submission == '[error]':
-            template_name="receiver/submit_failed.html"     
-        else:
-            #todo: get password presumably from the HTTP header            
-            new_backup = Backup(submission=new_submission, password='password')
-            new_backup.save()
-            response = HttpResponse(mimetype='text/plain')          
-                                      
-            context['backup_id'] = new_backup.backup_code                        
-            template_name="receiver/backup_complete.html"            
-            from django.template.loader import render_to_string
-            rendering = render_to_string('receiver/backup_complete.html', { 'backup_id': new_backup.backup_code })
-            
-            response.write(rendering)
-            response['Content-length'] = len(rendering)
-            return response                                         
-            
-    return render_to_response(request, template_name, context,mimetype='text/plain')
-
-
-def restore(request, code_id, template_name="receiver/restore.html"):
-    context = {}            
-    logging.debug("begin restore()")
-    # need to somehow validate password, presmuably via the header objects.
-    restore = Backup.objects.all().filter(backup_code=code_id)
-    if len(restore) != 1:
-        template_name="receiver/nobackup.html"
-        return render_to_response(request, template_name, context,mimetype='text/plain')
-    original_submission = restore[0].submission
-    attaches = Attachment.objects.all().filter(submission=original_submission)
-    for attach in attaches:
-        if attach.attachment_content_type == "text/xml":
-            response = HttpResponse(mimetype='text/xml')
-            fin = open(attach.filepath,'r')
-            txt = fin.read()
-            fin.close()
-            response.write(txt)
-            
-            verify_checksum = hashlib.md5(txt).hexdigest()
-            if verify_checksum == attach.checksum:                
-                return response
-            else:               
-                continue
-    
-    template_name="receiver/nobackup.html"
-    return render_to_response(request, template_name, context,mimetype='text/plain')
-        
     
 @extuser_required()
 def orphaned_data(request, template_name="receiver/show_orphans.html"):

@@ -29,6 +29,7 @@ CHART_DISPLAY_TYPES = (
         
     ('histogram-overall', 'Overall Histogram'),
     ('histogram-multifield', 'Multifield Histogram'),
+    ('histogram-multifield-sorted', 'Multifield Histogram (sorted)'),
     
     ('compare-trend', 'Field Compare'),
     ('compare-cumulative', 'Field Compare Cumulative'),    
@@ -171,7 +172,7 @@ class RawGraph(BaseGraph):
         cols = self.cursor.description
         if len(cols) < 2:
             raise Exception("Error, query did not return enough columns.  You need at least 2")
-        elif self.display_type=='histogram-multifield':
+        elif 'histogram-multifield' in self.display_type:
             return len(cols)
         else:
             return len(cols)-1        
@@ -266,22 +267,34 @@ class RawGraph(BaseGraph):
         
         return ret
     
-    def _multifield_histogram(self):
+    def _multifield_histogram(self, sorted):
+        """The multifield histogram expects to get back a dataset
+           with a single row of counts specified.  It gets the 
+           labels from either the dataset or what is specified in 
+           the graphing object.  If sorted is true it will sort 
+           the data by count, descending."""
         rows = self.get_dataset()
+        if len(rows) != 1:
+            raise Exception("Multifield histogram returned the wrong number rows!  Expects 1 but was %s" % len(rows))
+        data = rows[0]
         ret = {}        
         num = 0
         self.helper_cache['ticks'] = []
         labels = self.labels
-        num_series = self.check_series()
-        for i in range(0,num_series):            
-            item = self._clean_xcol(rows[0][i])
-            self.helper_cache['ticks'].append(labels[i])            
-            count = int(rows[0][i])
-            
-            ret[item] = {}
-            ret[item]['label'] = labels[i]
-            ret[item]['data'] = [[num,count]]
-            ret[item]['bars'] = {'show':'true'}
+        combined_data = zip(data, labels)
+        if sorted:
+            # sort by count descending
+            combined_data.sort(lambda x, y: int(y[0]) - int(x[0]))
+        num_series = len(combined_data)
+        for i in range(0,num_series):
+            item, label = combined_data[i]
+            item = str(item)
+            self.helper_cache['ticks'].append(label)            
+            count = int(item)
+            ret[i] = {}
+            ret[i]['label'] = label
+            ret[i]['data'] = [[num,count]]
+            ret[i]['bars'] = {'show':'true'}
             num = num + 1
         return ret
 
@@ -375,7 +388,9 @@ class RawGraph(BaseGraph):
             if self.display_type == 'histogram-overall':
                 to_return = self._overall_histogram()
             elif self.display_type == 'histogram-multifield':
-                to_return = self._multifield_histogram()
+                to_return = self._multifield_histogram(False)
+            elif self.display_type == 'histogram-multifield-sorted':
+                to_return = self._multifield_histogram(True)
             elif self.display_type.startswith('compare'):
                 to_return = self._compare_trends()
             else:
@@ -406,16 +421,22 @@ class RawGraph(BaseGraph):
         '''An alteration of the data, we want to return all the data 
            in this chart as a pretty little table.'''
         data_dict = flot_data
-        #we are gonna make a hash, keyed by the x values
-        #within each value of that it's a hash by series
-        if self.display_type == 'histogram-overall':
+        # we are gonna make a hash, keyed by the x values
+        # within each value of that it's a hash by series
+        if self.display_type.startswith('histogram-overall'):
             retarr = []
             retarr.append(['Item','Count'])
             series = data_dict.keys()
             for item in series:
                 retarr.append([item,data_dict[item]['data'][0][1]])
             return retarr
-        
+        elif "histogram-multifield" in self.display_type:
+            labels = []
+            data = []
+            for key, graph_data in flot_data.items():
+                labels.append(graph_data['label'])
+                data.append(graph_data['data'][0][1])
+            return [labels, data]
         series = data_dict.keys()        
         xvalue_dict = {}        
         xlabel_dict = {}

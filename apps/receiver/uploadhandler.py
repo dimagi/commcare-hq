@@ -98,20 +98,22 @@ class LegacyXFormUploadParsingHandler(FileUploadHandler):
     
     
 class LegacyXFormUploadBlobHandler(FileUploadHandler):
-    """
-    HQ's version of an upload handler that takes the raw_post_data of a text or multipar/mixed blob and populates
-    the request.FILES variable.
+    """HQ's version of an upload handler that takes the raw_post_data of a text 
+       or multipart/mixed blob and populates the request.FILES variable.
     
-    This is still a little hacky in how it uses the request.FILES, but the gist is is, that it'll split out
-    the multipart submission into key/value pairs in the request.FILES.
+       This is still a little hacky in how it uses the request.FILES, but the 
+       gist is, that it'll split out the multipart submission into key/value 
+       pairs in the request.FILES.
     
-    When you access request.FILES, django will loop through the available upload handlers to see which one returns something
-    interesting.  Prior to this, we would try to access the raw_post_data and parse it by hand.  However with trying
-    to support a legacy + multipart/form based system, checking the request.FILES would destroy raw_post_data which was
-    helpful for our control flow.
+       When you access request.FILES, django will loop through the available 
+       upload handlers to see which one returns something interesting.  Prior 
+       to this, we would try to access the raw_post_data and parse it by hand.  
+       However with trying to support a legacy + multipart/form based system, 
+       checking the request.FILES would destroy raw_post_data which was helpful 
+       for our control flow.
     
-    This version of the upload handler just turns around the raw input_data and puts it in request.FILES, and does no processing. 
-    
+       This version of the upload handler just turns around the raw input_data 
+       and puts it in request.FILES, and does no processing. 
     """
 
     def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):

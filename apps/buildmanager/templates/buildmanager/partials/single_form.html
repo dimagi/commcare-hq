@@ -1,5 +1,6 @@
 <h2>{{ xform.get_file_name }}</h2>
-<a href="{% url buildmanager.views.get_build_xform xform.id %}?download=True">download this form</a>
+<a href="{% url buildmanager.views.get_build_xform xform.id %}?download=True">download this form</a> &nbsp&nbsp|&nbsp&nbsp 
+<a href="{% url buildmanager.views.translation_csv xform.id %}">get translation csv file</a>
 <pre><code>
 {{ xform.to_html|safe }}
 </code></pre>

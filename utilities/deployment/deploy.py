@@ -20,7 +20,9 @@ import shutil
 try:
     import paramiko
 except:
-    logging.error("Paramiko not installed - you need it for remote ssh deployment")
+    #commenting out this log because we don't actually use it and it's confusing to see on the build server.
+    pass
+    #logging.error("Paramiko not installed - you need it for remote ssh deployment")
 import socket
 
 import subprocess

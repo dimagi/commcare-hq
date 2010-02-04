@@ -533,7 +533,8 @@ class TestODKSubmit(unittest.TestCase):
 class TestBackupRestore(unittest.TestCase):
     def setup(self):
         pass    
-    def _postSimpleData(self, datafiles, domain_name):            
+    
+    def _postSimpleData(self, datafiles, domain_name):        
         for file in datafiles:
             #time.sleep(.1)
             if file == ".svn":
@@ -563,6 +564,8 @@ class TestBackupRestore(unittest.TestCase):
             
     def testPostFilesAsBackups(self):
         return
+        # CZUE: was going to comment this out but i see it's already been hijacked
+        # TODO: add/fix test with new backup and restore workflow.
         files = getFiles('brac-chw', '.xml')
         self._postSimpleData(files, 'BRAC')
 

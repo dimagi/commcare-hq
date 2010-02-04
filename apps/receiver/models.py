@@ -47,10 +47,9 @@ class Submission(models.Model):
     
     @property
     def xform(self):
-        '''
-        Returns the xform associated with this, defined by being the
-        first attachment that has a content type of text/xml.  If no such
-        attachments are found this will return nothing.
+        '''Returns the xform associated with this, defined by being the
+           first attachment that has a content type of text/xml.  If no such
+           attachments are found this will return nothing.
         '''
         attachments = self.attachments.order_by("id")
         for attachment in attachments:
@@ -113,7 +112,6 @@ class Submission(models.Model):
         '''
         all_delete_types = SubmissionHandlingType.objects.filter(method="deleted")
         return len(self.ways_handled.filter(handled__in=all_delete_types)) > 0
-                  
     
     def is_duplicate(self):
         """Whether the submission is a duplicate or not.  Duplicates 
@@ -174,25 +172,6 @@ class Submission(models.Model):
 #dmyung 11/5/2009 - removing signal and refactor attachment processing to the submit processor
 #post_save.connect(process_attachments, sender=Submission)
 
-class Backup(models.Model):
-    #backup_code = models.CharField(unique=True,max_length=6)
-    backup_code = models.IntegerField(unique=True)
-    password = models.CharField(_('backup password'), max_length=128)
-    submission = models.ForeignKey(Submission)    
-    #other fields?
-    
-    def __new_code(self):
-        """Generate and verify that the backup code is unique"""
-        nums = '0123456789'
-        new_code = int(''.join([choice(nums) for i in range(6)]))
-        while Backup.objects.all().filter(backup_code=new_code).count() != 0:
-            new_code = int(''.join([choice(nums) for i in range(6)]))
-        return new_code
-    
-    def save(self, **kwargs):
-        self.backup_code = self.__new_code()       
-        #todo:  process password using similar method from the User model for password salt and hashing
-        super(Backup, self).save()
             
     
 class Attachment(models.Model):
@@ -226,6 +205,19 @@ class Attachment(models.Model):
         basename = os.path.basename(self.filepath)
         return settings.MEDIA_URL + "attachment/" + basename
 
+    def get_contents(self):
+        """Get the contents for an attachment object, by reading (fully) the
+           underlying file."""
+        fin = None
+        try:
+            fin = open(self.filepath ,'r')
+            return fin.read()
+        except Exception, e:
+            logging.error("Unable to open attachment %s. %s" % (self, e.message),
+                          extra={"exception": e})
+        finally:
+            if fin:   fin.close()
+        
     
     def delete(self, **kwargs):
         try:
