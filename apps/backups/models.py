@@ -4,9 +4,7 @@ from django.db import models
 from hq.models import Domain
 from receiver.models import Attachment
 import xformmanager.xmlrouter as xmlrouter
-from backups.processor import create_backup
-
-BACKUP_XMLNS = "http://commcarehq.org/backup"
+from backups.processor import create_backup, BACKUP_XMLNS
 
 class BackupUser(models.Model):
     """Someone who backs things up.  They have a string identifier 
