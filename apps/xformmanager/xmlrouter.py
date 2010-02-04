@@ -5,13 +5,13 @@
 
 registered_methods = {}
     
-def process(filename, attachment, xmlns, version=0):
+def process(attachment, xmlns, version=0):
     """Process an xml document, by sending it to any known registered methods.
        If no methods are registered this does nothing."""
     global registered_methods
     if xmlns in registered_methods:
         for method in registered_methods[xmlns]:
-            method(filename, attachment)
+            method(attachment)
         return True
     
 def register(xmlns, method):

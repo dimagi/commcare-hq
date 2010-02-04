@@ -118,7 +118,7 @@ class StorageUtility(object):
         # then do so here. 
         # czue: this is probably not the most appropriate place for this logic
         # but it keeps us from having to parse the xml multiple times.
-        process(xml_file_name, attachment, xmlns, version)
+        process(attachment, xmlns, version)
         try:
             formdefmodel = FormDefModel.objects.get(target_namespace=xmlns, version=version)
         except FormDefModel.DoesNotExist:
