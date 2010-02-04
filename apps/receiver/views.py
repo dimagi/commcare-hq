@@ -71,10 +71,7 @@ def single_attachment(request, attachment_id):
             response = HttpResponse(mimetype='text/plain')
         else:
             response = HttpResponse(mimetype=mtype)
-        fin = open(attachment.filepath ,'r')
-        txt = fin.read()
-        fin.close()
-        response.write(txt) 
+        response.write(attachment.get_contents()) 
         return response
     except:
         return ""
