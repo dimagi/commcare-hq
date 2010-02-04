@@ -15,3 +15,8 @@
   border-width:15px;
   border-color:#f0f0f0;
 }
+
+#id_comment {
+  width: 600px;
+  height: 100px;
+}
