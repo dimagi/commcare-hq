@@ -15,10 +15,23 @@ Possible Future Extension?
 import logging
 from rapidsms.i18n import ugettext_from_locale as _t
 from rapidsms.i18n import ugettext_noop as _
+from reporters.models import Reporter
+
 from hq.models import Domain, Organization, ReporterProfile
 from hq.reporter.custom import get_delinquent_context_from_statdict
 from reports.sms.util import forms_submitted
 import hq.reporter.metastats as metastats
+
+def brac_sms_report(router, reporter_map = {}):
+    
+    """Send to manually-coded numbers, set via the args in the 
+       scheduler app.  If nothing is set, nothign will be sent.
+    """
+    for chw_name, reporter_name in reporter_map.items():
+        count = forms_submitted(chw_name, weeks=1)
+        rep = Reporter.objects.get(alias__iexact=reporter_name)
+        send_activity_to_reporter(router, rep, chw_name, count)
+    
 
 def weekly(router):
     # todo - move 'brac' to db (eventschedule.callback_args)
@@ -33,19 +46,18 @@ def daily(router):
 def activity_report(router, domain, send_chv_report=True, 
                     send_super_report=True, send_summary_chv_report=True):
     """
-    Sends weekly activity reports to CHV's and CHW's
-    
-    Later: we can always break this out into its own schedule at a later date
+       Sends weekly activity reports to CHV's and CHW's
+       Later: we can always break this out into its own schedule at a later date
     """
     logging.info("Running brac sms activity report")
     orgs = Organization.objects.filter(domain=domain)
     for org in orgs:
         members = org.get_members().filter(active=True)
         for member in members:
-            form_count = forms_submitted(member, weeks=1)
+            form_count = forms_submitted(member.chw_username, weeks=1)
             if send_chv_report:
                 # tell individual chv's of their usage this past week
-                send_activity_to_reporter(router, member, {'forms_submitted':form_count} )
+                send_activity_to_reporter(router, member, member.chw_username, form_count)
             if send_super_report:
                 supervisors = org.get_supervisors().filter(active=True)
                 for supe in supervisors:
@@ -57,12 +69,11 @@ def activity_report(router, domain, send_chv_report=True,
                 # each chv receives a summary of activity within their branch
                 send_summary_activity_to_reporter(router, member, {'group_members':members} )
 
-def send_activity_to_reporter(router, recipient, context ):
+def send_activity_to_reporter(router, recipient, username, forms_submitted ):
     """ SMS document 1: first set 
         Messages chv with a report of her activity in the past week
     """
     logging.debug("Running brac sms send_activity_to_reporter")
-    forms_submitted = context['forms_submitted']
     if forms_submitted >= 45:
         greeting = _t( _("Congratulations for the work done %(username)s. "), 
                        recipient.language)
@@ -78,7 +89,7 @@ def send_activity_to_reporter(router, recipient, context ):
     info = _t(_("You have submitted %(count)s forms this week. "), recipient.language)
     response = greeting + info + instructions + \
                _t(_("If the number is incorrect, call Gayo 0786151272."), recipient.language)
-    response = response % { 'username':recipient.chw_username, 'count':forms_submitted }
+    response = response % { 'username':username, 'count':forms_submitted }
     recipient.send_message(router, response)
     
 def send_activity_to_super(router, recipient, context ):
