@@ -112,7 +112,6 @@ class Submission(models.Model):
         '''
         all_delete_types = SubmissionHandlingType.objects.filter(method="deleted")
         return len(self.ways_handled.filter(handled__in=all_delete_types)) > 0
-                  
     
     def is_duplicate(self):
         """Whether the submission is a duplicate or not.  Duplicates 
@@ -206,6 +205,19 @@ class Attachment(models.Model):
         basename = os.path.basename(self.filepath)
         return settings.MEDIA_URL + "attachment/" + basename
 
+    def get_contents(self):
+        """Get the contents for an attachment object, by reading (fully) the
+           underlying file."""
+        fin = None
+        try:
+            fin = open(self.filepath ,'r')
+            return fin.read()
+        except Exception, e:
+            logging.error("Unable to open attachment %s. %s" % (self, e.message),
+                          extra={"exception": e})
+        finally:
+            if fin:   fin.close()
+        
     
     def delete(self, **kwargs):
         try:
