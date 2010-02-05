@@ -11,7 +11,11 @@ def reporter():
        domain, we're not gonna let you see any reporters."""
     domain = get_current_domain()
     if domain:
-        return Reporter.objects.filter(profile__domain=domain)
+        # CZUE: because of recursion we reference hte objects
+        # through a custom initialized manager
+        manager = models.Manager()
+        manager.contribute_to_class(Reporter, "Reporter")
+        return manager.filter(profile__domain=domain)
     else:
         # although I would prefer that this return nothing
         # because the sms apps will never have domain knowledge
