@@ -2,8 +2,10 @@ import hashlib
 from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
-from reporters.models import Reporter, ReporterGroup
 
+from reporters.models import Reporter, ReporterGroup
+from hq.processor import REGISTRATION_XMLNS, create_phone_user
+import xformmanager.xmlrouter as xmlrouter
 
 class Domain(models.Model):
     '''Domain is the highest level collection of people/stuff
@@ -236,3 +238,10 @@ class BlacklistedUser(models.Model):
         return "%s in %s" %\
                   (self.username, 
                    ",".join([domain.name for domain in self.domains.all()]))
+                  
+                  
+# register our registration method, like a signal, in the models file
+# to make sure this always gets bootstrapped.  
+# TODO: it's unclear what app reg should belong to, for now stick it in
+# the blanket "hq"
+xmlrouter.register(REGISTRATION_XMLNS, create_phone_user)
