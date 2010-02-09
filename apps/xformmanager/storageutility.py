@@ -580,6 +580,11 @@ class XFormDBTableCreator(XFormProcessor):
     def _db_field_definition_string(self, elementdef):
         """ generates the sql string to conform to the expected data type """
         label = self._hack_to_get_cchq_working( sanitize( elementdef.name ) )
+        if elementdef.type == None:
+            # This is an issue.  For now just log it as an error and default
+            # it to a string
+            logging.error("No data type found in element: %s! will use a string data type" % elementdef)
+            elementdef.type = "string"
         if elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]
