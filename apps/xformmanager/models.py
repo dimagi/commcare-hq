@@ -185,7 +185,7 @@ class FormDefModel(models.Model):
         if self.xsd_file_location is None:
             # I wonder if we should really fail this hard...
             raise IOError("Schema for form %s could not be found on the file system." % \
-                          target_namespace)
+                          self.target_namespace)
         return FormDef.from_file(self.xsd_file_location)
     
     @classmethod
