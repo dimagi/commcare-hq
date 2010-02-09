@@ -26,7 +26,7 @@ def save_legacy_blob(submission, rawpayload):
     try:
         newfilename = os.path.join(get_submission_path(), submit_guid + '.postdata')
         logging.debug("Begin write of legacy blob file")
-        fout = open(newfilename, 'w')
+        fout = open(newfilename, 'wb')
         fout.write('Content-type: %s\n' % submission.content_type.replace("'newdivider'","newdivider"))
         fout.write('Content-length: %s\n\n' % submission.bytes_received)                
         fout.write(rawpayload)
@@ -148,7 +148,7 @@ def handle_legacy_blob(submission):
                     #the URIs in the j2me submissions are local file URIs to the phone.  we will get the filename from the end of the string
                     filename='%s-%s' % (submission.transaction_uuid, os.path.basename(uri))
                       
-                payload = part.get_payload().strip()                
+                payload = part.get_payload().strip()
                 attachment = new_attachment(submission, payload, content_type, uri, filename)
                 parts_dict[uri] = attachment
                 logging.debug("Attachment Save complete")                    
