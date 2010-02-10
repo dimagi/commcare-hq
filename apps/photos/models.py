@@ -18,4 +18,23 @@ class Photo(ImageModel):
     
     class Meta:
         ordering = ['-created_at']
-        
+
+
+'''
+    This isn't really supposed to work as a test right now, it's more to describe how to use the system
+
+    >>> p = Photo(name="test image", original_image="apps/photos/tests/test.jpg")
+    >>> p.save()
+    >>> n = p.name
+    >>> i = Photo.objects.get(name=n)
+    >>> i.display.url
+    u'/data/photos/test_display.jpg'
+    >>> from django.test.client import Client
+    >>> c = Client()
+    >>> resp = c.get('/data/photos/test_display.jpg')
+    >>> resp.status_code
+    200
+    >>> resp = c.get('/photo/%s' % i.id)
+    >>> resp.status_code
+    200
+'''

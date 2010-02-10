@@ -4,24 +4,9 @@ from django.http import HttpResponseRedirect
 from rapidsms.webui.utils import render_to_response
 
 from photos.models import Photo
-'''
-    This isn't really supposed to work as a test right now, it's more to describe how to use the system
 
-    >>> p = Photo(name="test image", original_image="apps/photos/tests/test.jpg")
-    >>> p.save()
-    >>> n = p.name
-    >>> i = Photo.objects.get(name=n)
-    >>> i.display.url
-    u'/data/photos/test_display.jpg'
-    >>> from django.test.client import Client
-    >>> c = Client()
-    >>> resp = c.get('/data/photos/test_display.jpg')
-    >>> resp.status_code
-    200
-    >>> resp = c.get('/photo/%s' % i.id)
-    >>> resp.status_code
-    200
-'''
+import os
+import settings
 
 # default page - show all thumbnails by date
 @login_required()
@@ -29,11 +14,42 @@ def recent(request, template_name="photos/list.html"):
     photos = Photo.objects.all()
     return render_to_response(request, template_name, {'photos' : photos})
 
+
 # show a single photo + comments
 @login_required()    
 def show(request, photo_id, template_name="photos/single.html"):
     p = Photo.objects.get(id=photo_id)
     return render_to_response(request, template_name, {'photo' : p})
+
+
+@login_required()
+def import_photos(request):
+    path = 'data/attachments' #settings.RAPIDSMS_APPS['receiver']['attachments_path']
+
+    def is_img(filename):
+        return filename.endswith('.jpg')
+    
+    def not_in_db_already(filename):
+        # Note that there's a query for each file here - another way would be to load all existing files to a list in one operation and work with that
+        # but, that might generate huge list when there are a lot of photos in the DB, and might cause data freshness issues in some edge cases
+        # so, we just do n queries each time (where n is probably not too big) instead
+        return (Photo.objects.filter(original_image="%s/%s" % (path, filename)).count() == 0)
+    
+    files = os.listdir(path)
+    img_files = filter(is_img, files)
+    new_img_files = filter(not_in_db_already, img_files)
+    
+    out = ''
+    for f in new_img_files:
+        out += "%s/%s <br/> " % (path, f)
+        p = Photo(name=f, original_image="%s/%s" % (path, f))
+        p.save()
+    
+    return HttpResponseRedirect("/photos")
+    # return HttpResponse(out)
+
+
+    
     
 @login_required()
 def populate(request):
