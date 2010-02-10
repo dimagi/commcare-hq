@@ -1,0 +1,12 @@
+
+* This app required some more or less kludgy changes, as follows:
+
+1. rapidsms.ini defines media_root=file:///tmp - this confused Django which simply appends media_root to project root. 
+media_root was commented out in the ini file to fix this.
+
+2. rapidsms/lib/rapidsms/webui/urls.py maps all apps/<name>/static dirs to static/<name> URLs, serving via django.views.static.serve. This breaks ImageField 'url' property. 
+A special mapping in apps/photos/urls.py now handles that: 
+	(r'^data/photos/(?P<path>.*)$',  'django.views.static.serve', {"document_root": 'data/photos/'}),
+
+
+* In order to test the UI, there's a /photos/populate URL that will add 3 images to the DB. This will be removed once the code is mature.

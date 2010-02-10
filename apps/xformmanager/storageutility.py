@@ -8,6 +8,7 @@ and it only knows about the data structures in xformdef.py
 
 import re
 import os
+import sys
 import logging
 import settings
 import string
@@ -15,15 +16,16 @@ from datetime import datetime, timedelta
 
 from lxml import etree
 from MySQLdb import IntegrityError
+
 from django.db import connection, transaction, DatabaseError
 
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
+from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 
 from stat import S_ISREG, ST_MODE
-import sys
 
 _MAX_FIELD_NAME_LENTH = 64
 
@@ -112,6 +114,11 @@ class StorageUtility(object):
         f = open(xml_file_name, "r")
         # should match XMLNS
         xmlns, version = self.get_xmlns_from_instance(f)
+        # If there is a special way to route this form, based on the xmlns
+        # then do so here. 
+        # czue: this is probably not the most appropriate place for this logic
+        # but it keeps us from having to parse the xml multiple times.
+        process(attachment, xmlns, version)
         try:
             formdefmodel = FormDefModel.objects.get(target_namespace=xmlns, version=version)
         except FormDefModel.DoesNotExist:
@@ -573,6 +580,11 @@ class XFormDBTableCreator(XFormProcessor):
     def _db_field_definition_string(self, elementdef):
         """ generates the sql string to conform to the expected data type """
         label = self._hack_to_get_cchq_working( sanitize( elementdef.name ) )
+        if elementdef.type == None:
+            # This is an issue.  For now just log it as an error and default
+            # it to a string
+            logging.error("No data type found in element: %s! will use a string data type" % elementdef)
+            elementdef.type = "string"
         if elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]

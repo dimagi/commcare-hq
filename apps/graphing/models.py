@@ -29,6 +29,7 @@ CHART_DISPLAY_TYPES = (
         
     ('histogram-overall', 'Overall Histogram'),
     ('histogram-multifield', 'Multifield Histogram'),
+    ('histogram-multifield-sorted', 'Multifield Histogram (sorted)'),
     
     ('compare-trend', 'Field Compare'),
     ('compare-cumulative', 'Field Compare Cumulative'),    
@@ -153,20 +154,30 @@ class RawGraph(BaseGraph):
     @property
     def labels(self):
         labelarr = self.series_labels.split('|')
-        if len(labelarr) != self.check_series():
-            raise Exception("Error, improperly configured graph labels. They must match exactly with the number of columns returned from the query")
-        return labelarr
+        query_cols = self.cursor.description
+        labels = []
+        # If the label is explicitly specified in the string, use that,
+        # otherwise back it out from the query description.  Assumes that
+        # if not all labels are explicitly set in the string, the ones that
+        # are set are the first N
+        for i in range(len(query_cols)):
+            if i < len(labelarr):
+                labels.append(str(labelarr[i]))
+            else:
+                labels.append(str(query_cols[i][0]))
+        return labels
+        
     
     def check_series(self):
         cols = self.cursor.description
         if len(cols) < 2:
             raise Exception("Error, query did not return enough columns.  You need at least 2")
-        elif self.display_type=='histogram-multifield':
+        elif 'histogram-multifield' in self.display_type:
             return len(cols)
         else:
             return len(cols)-1        
         
-    def __clean_xcol(self, xval):
+    def _clean_xcol(self, xval):
         #ugly hack to just clean the columns.
         #right now the dates are being stored as strings in the db, 
         #hence the necessity to do this type of conversinos
@@ -182,7 +193,7 @@ class RawGraph(BaseGraph):
         else:
             return xval.__str__()
   
-    def __clean_ycol(self, yval):
+    def _clean_ycol(self, yval):
         if yval == None:
             return 0
         else:
@@ -218,7 +229,7 @@ class RawGraph(BaseGraph):
                 
         
 
-    def __get_display_type(self):
+    def _get_display_type(self):
         if self.display_type.endswith('line'):
             return "lines"
         elif self.display_type.endswith('bar'):
@@ -226,7 +237,7 @@ class RawGraph(BaseGraph):
         elif self.display_type.startswith('histogram'):
             return "bars"
 
-    def __numeric_dataseries(self,rows):
+    def _numeric_dataseries(self,rows):
         ret ={}
         is_cumulative = False
         if self.display_type == 'cumulative-line':
@@ -241,48 +252,61 @@ class RawGraph(BaseGraph):
             series_values[i] = 0
         
         for row in rows:
-            xcol = self.__clean_xcol(row[0])
+            xcol = self._clean_xcol(row[0])
             series_count = 0            
             for ycol in row[1:]:
                 
                 if is_cumulative:
-                    ycleaned = self.__clean_ycol(ycol)
+                    ycleaned = self._clean_ycol(ycol)
                     series_values[series_count] = series_values[series_count] + ycleaned 
                     newvalue = series_values[series_count]
                     ret[series_count].append([xcol,newvalue])                    
                 else:
-                    ret[series_count].append([xcol,self.__clean_ycol(ycol)])
+                    ret[series_count].append([xcol,self._clean_ycol(ycol)])
                 series_count= series_count+1 
         
         return ret
     
-    def __multifield_histogram(self):
+    def _multifield_histogram(self, sorted):
+        """The multifield histogram expects to get back a dataset
+           with a single row of counts specified.  It gets the 
+           labels from either the dataset or what is specified in 
+           the graphing object.  If sorted is true it will sort 
+           the data by count, descending."""
         rows = self.get_dataset()
+        if len(rows) != 1:
+            raise Exception("Multifield histogram returned the wrong number rows!  Expects 1 but was %s" % len(rows))
+        data = rows[0]
         ret = {}        
         num = 0
         self.helper_cache['ticks'] = []
-        num_series = self.check_series()
-        for i in range(0,num_series):            
-            item = self.__clean_xcol(rows[0][i])
-            self.helper_cache['ticks'].append(item)            
-            count = int(rows[0][i])
-            
-            ret[item] = {}
-            ret[item]['label'] = item
-            ret[item]['data'] = [[num,count]]
-            ret[item]['bars'] = {'show':'true'}
-            num = num + 1         
+        labels = self.labels
+        combined_data = zip(data, labels)
+        if sorted:
+            # sort by count descending
+            combined_data.sort(lambda x, y: int(y[0]) - int(x[0]))
+        num_series = len(combined_data)
+        for i in range(0,num_series):
+            item, label = combined_data[i]
+            item = str(item)
+            self.helper_cache['ticks'].append(label)            
+            count = int(item)
+            ret[i] = {}
+            ret[i]['label'] = label
+            ret[i]['data'] = [[num,count]]
+            ret[i]['bars'] = {'show':'true'}
+            num = num + 1
         return ret
 
     
-    def __overall_histogram(self):
+    def _overall_histogram(self):
         
         rows = self.get_dataset()
         ret = {}        
         num = 0
         self.helper_cache['ticks'] = []
         for row in rows:
-            item = self.__clean_xcol(row[0])
+            item = self._clean_xcol(row[0])
             self.helper_cache['ticks'].append(item)
             
             count = int(row[1])
@@ -294,7 +318,7 @@ class RawGraph(BaseGraph):
             num = num + 1         
         return ret
     
-    def __compare_trends(self):        
+    def _compare_trends(self):        
         rows = self.get_dataset()        
         ret = {}        
         num = 0
@@ -306,7 +330,7 @@ class RawGraph(BaseGraph):
             total_hash = {}
         
         for row in rows:            
-            xval = self.__clean_xcol(row[0])
+            xval = self._clean_xcol(row[0])
             indicator = row[1].__str__()
             count = int(row[2])            
             if not ret.has_key(indicator):
@@ -353,7 +377,7 @@ class RawGraph(BaseGraph):
     
     def get_dataseries(self):
         rows = self.get_dataset()
-        return self.__numeric_dataseries(rows)
+        return self._numeric_dataseries(rows)
 
     
     def get_flot_data(self):
@@ -362,11 +386,13 @@ class RawGraph(BaseGraph):
            object that will allow the chart to be plotted by flot.'''
         try:  
             if self.display_type == 'histogram-overall':
-                to_return = self.__overall_histogram()
+                to_return = self._overall_histogram()
             elif self.display_type == 'histogram-multifield':
-                to_return = self.__multifield_histogram()
+                to_return = self._multifield_histogram(False)
+            elif self.display_type == 'histogram-multifield-sorted':
+                to_return = self._multifield_histogram(True)
             elif self.display_type.startswith('compare'):
-                to_return = self.__compare_trends()
+                to_return = self._compare_trends()
             else:
                 flot_dict = {}
                 labels = self.labels
@@ -375,14 +401,14 @@ class RawGraph(BaseGraph):
                     currseries = {}            
                     currseries["label"] = label.__str__()
                     currseries["data"] = data[labels.index(label)]
-                    currseries[self.__get_display_type()] = {'show': 'true'}                           
+                    currseries[self._get_display_type()] = {'show': 'true'}                           
                     flot_dict[label.__str__()] = currseries
                 
                 to_return = flot_dict
             return to_return
         except Exception, e:                
             extra = {'exception':e, 'graphobject':self, 'display_type':self.display_type, 'table_name':self.table_name, 'db_query':self.db_query}
-            logging.error("Error rendering flot data",extra=extra)
+            logging.error("Error rendering flot data: %s" % e.message,extra=extra)
             return {}
         
         
@@ -395,16 +421,22 @@ class RawGraph(BaseGraph):
         '''An alteration of the data, we want to return all the data 
            in this chart as a pretty little table.'''
         data_dict = flot_data
-        #we are gonna make a hash, keyed by the x values
-        #within each value of that it's a hash by series
-        if self.display_type == 'histogram-overall':
+        # we are gonna make a hash, keyed by the x values
+        # within each value of that it's a hash by series
+        if self.display_type.startswith('histogram-overall'):
             retarr = []
             retarr.append(['Item','Count'])
             series = data_dict.keys()
             for item in series:
                 retarr.append([item,data_dict[item]['data'][0][1]])
             return retarr
-        
+        elif "histogram-multifield" in self.display_type:
+            labels = []
+            data = []
+            for key, graph_data in flot_data.items():
+                labels.append(graph_data['label'])
+                data.append(graph_data['data'][0][1])
+            return [labels, data]
         series = data_dict.keys()        
         xvalue_dict = {}        
         xlabel_dict = {}

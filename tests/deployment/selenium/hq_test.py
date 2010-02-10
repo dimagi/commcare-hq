@@ -1,6 +1,7 @@
 from selenium import selenium
 import unittest, time, re, urllib2
 from post import *
+import os
 import sys
 import time
 
@@ -27,7 +28,7 @@ class testingPost(unittest.TestCase):
         if sel.is_text_present("Sample Form 1"):
             self.delete_xform(sel)
         time.sleep(3)
-        path = sys.path[0] + "/sample_form.xhtml"
+        path = os.path.join(sys.path[0], "sample_form.xhtml")
         sel.type("id_file", path)
         sel.type("id_form_display_name", "Sample Form 1")
         sel.click("//div[@id='xform-register-block']/form/ul/li[3]/input")
@@ -46,7 +47,9 @@ class testingPost(unittest.TestCase):
         time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
+        time.sleep(2)
         sel.click("link=view full raw submission")
+        time.sleep(2)
         try:
             file = open('testupload.xml', 'r')
             xml_present = file.read()
@@ -56,6 +59,7 @@ class testingPost(unittest.TestCase):
         #test to see if form has been processed
         sel.open("/receiver/review")
         sel.wait_for_page_to_load("30000")
+        time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(sel.is_text_present("view form data"))

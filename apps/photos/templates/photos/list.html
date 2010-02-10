@@ -1,0 +1,27 @@
+{% extends base_template %}
+{% load i18n %} 
+{% load comments %}
+
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/photos/stylesheets/photos.css" />
+{% endblock %}
+
+{% block content %}
+
+<div id="photos" id="photos-list">
+{% if photos %}
+	<h3>Recent Photos</h3>
+	{% for photo in photos %}
+		{% get_comment_count for photo as comment_count %}
+		<a href="/photo/{{ photo.id }}">
+			<div class="photo-thumb">
+				<img src="{{ photo.thumbnail.url }}" alt="{{ photo.name }}"><br/>
+				{{ comment_count }} comments
+			</div>
+		</a>
+	{% endfor %}
+{% else %}
+	No photos currently in the system. To add some, click <a href="/photos/populate">here</a> (<i> &lt;- This is for testing only, and will be removed</i>) 
+{% endif %}
+</div>
+{% endblock %}
