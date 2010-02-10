@@ -6,7 +6,7 @@ from hq.models import ExtUser
 from hq.models import Domain
 from hq.utils import build_url
 from requestlogger.models import RequestLog
-from xformmanager.manager import readable_form
+from xformmanager.manager import readable_form, csv_dump
 
 from buildmanager.exceptions import BuildError
 from buildmanager.models import *
@@ -254,6 +254,22 @@ def get_build_xform(request, id, template_name="buildmanager/display_xform.html"
     else:
         # display it inline on HQ
         return render_to_response(request, template_name, { "xform": form })
+
+@login_required
+def translation_csv(req, id):
+    """Get csv of the translation file for an xform"""
+    form = BuildForm.objects.get(id=id)
+    xform_body = form.get_text()
+    try:
+        result, errors, has_error = csv_dump(xform_body)
+        response = HttpResponse(result,
+                        mimetype='application/ms-excel')
+        response["content-disposition"] = 'attachment; filename="%s-translations.csv"' % ( form.get_file_name())
+        return response
+    except Exception, e:
+        return _handle_error(req, e.message)
+    
+    
 
 def readable_xform(req, template_name="buildmanager/readable_form_creator.html"):
     """Get a readable xform"""

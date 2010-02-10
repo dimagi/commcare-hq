@@ -40,3 +40,7 @@ div.submenu {
     width: inherit;
 }
 
+/* This can be used to change the size of the x-axis labels, but this 
+   really needs to be done on a chart-by-chart basis, so right now it
+   does nothing */
+.tickLabel { font-size: 100% }

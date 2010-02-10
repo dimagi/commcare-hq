@@ -1,5 +1,29 @@
 [
   {
+    "pk": 26,
+    "model": "graphing.basegraph",
+    "fields": {
+      "shortname": "High Risk Indicators",
+      "title": "High Risk Indicators"
+    }
+  },
+  {
+    "pk": 25,
+    "model": "graphing.basegraph",
+    "fields": {
+      "shortname": "Percent High Risk Overall",
+      "title": "Percent High Risk Overall"
+    }
+  },
+  {
+    "pk": 24,
+    "model": "graphing.basegraph",
+    "fields": {
+      "shortname": "Percent High Risk Over Time",
+      "title": "Percent High Risk Over Time"
+    }
+  },
+  {
     "pk": 23, 
     "model": "graphing.basegraph", 
     "fields": {
@@ -176,6 +200,66 @@
     }
   }, 
   {
+    "pk": 26, 
+    "model": "graphing.rawgraph", 
+    "fields": {
+      "default_interval": 1000, 
+      "series_labels": "Total | < 150 cm | Prev C-Sect | Prev Death | Prev Bleed | Heart Probs | Diabetes | Hip Probs | Syphilis | Hep B | Long Time | Low Hemoglb | Rare Blood ", 
+      "data_source": "", 
+      "y_axis_label": "Number of Registrations", 
+      "x_type": "string", 
+      "additional_options": "{\"legend\": { \"show\": false }}", 
+      "time_bound": 0, 
+      "x_axis_label": "High Risk Indicators", 
+      "width": 950, 
+      "interval_ranges": "", 
+      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
+      "display_type": "histogram-multifield-sorted", 
+      "height": 300, 
+      "db_query": "select \r\ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\r\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\r\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\r\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\r\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\r\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\r\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\r\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\r\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\r\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\r\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\r\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\r\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\r\n\r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3\r\n\r\nwhere meta_username <> 'admin';"
+    }
+  }, 
+  {
+    "pk": 25,
+    "model": "graphing.rawgraph",
+    "fields": {
+      "default_interval": 0,
+      "series_labels": "% High Risk",
+      "data_source": "",
+      "y_axis_label": "Percent of Registrations which are High Risk",
+      "x_type": "MM/DD/YYYY",
+      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}, \"xaxis\": {\"minTickSize\": [1, \"day\"]}, \"legend\" : { \"position\": \"sw\" }}",
+      "time_bound": 0,
+      "x_axis_label": "Date of Registration",
+      "width": 970,
+      "interval_ranges": "",
+      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3  ",
+      "display_type": "absolute-line",
+      "height": 300,
+      "db_query": "select DATE_FORMAT(a.meta_timeend,'%%m/%%d/%%Y'),\r\n(\r\n(100 * (select count(nullif(sampledata_hi_risk,'no')) from schema_intel_grameen_safe_motherhood_registration_v0_3 where meta_timeend <=a.meta_timeend)) /\r\n(select count(sampledata_hi_risk) from schema_intel_grameen_safe_motherhood_registration_v0_3 where meta_timeend <=a.meta_timeend)) as percent_hi_risk\r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3 as a\r\n\r\nwhere a.meta_username <> 'admin'\r\n\r\ngroup by DATE_FORMAT(a.meta_timeend,'%%m/%%d/%%Y');"
+    }
+  },
+  {
+    "pk": 24,
+    "model": "graphing.rawgraph",
+    "fields": {
+      "default_interval": 0,
+      "series_labels": "% High Risk",
+      "data_source": "",
+      "y_axis_label": "% Registrations which are High Risk",
+      "x_type": "MM/DD/YYYY",
+      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}, \"xaxis\": {\"minTickSize\": [1, \"day\"]}}",
+      "time_bound": 0,
+      "x_axis_label": "Date of Registration",
+      "width": 970,
+      "interval_ranges": "",
+      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3",
+      "display_type": "absolute-line",
+      "height": 300,
+      "db_query": "select   DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\n((100 * count(nullif(sampledata_hi_risk,'no'))) / count(sampledata_hi_risk)) as hi_risk\r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3  \r\n\r\nwhere meta_username <> 'admin'\r\n\r\ngroup by DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y');"
+    }
+  },
+  {
     "pk": 23, 
     "model": "graphing.rawgraph", 
     "fields": {
@@ -190,7 +274,7 @@
       "display_type": "cumulative-line", 
       "db_query": "select   DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y'),\r\ncount(nullif(sampledata_hi_risk,'no')) as hi_risk, \r\ncount(nullif(sampledata_hi_risk,'yes')) as low_risk \r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3  \r\n\r\ngroup by DATE_FORMAT(meta_timeend,'%%m/%%d/%%Y');"
     }
-  }, 
+  },  
   {
     "pk": 22, 
     "model": "graphing.rawgraph", 

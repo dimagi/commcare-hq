@@ -109,10 +109,12 @@ class MetaTestCase(unittest.TestCase):
         for i in range(1, 6):
             submission = populate("data/pf_followup_%s.xml" % i)
             meta = Metadata.objects.get(attachment=submission.xform)
-            self.assertEqual(i, meta.get_submission_count(today, tomorrow))
-            self.assertEqual(0, meta.get_submission_count(yesterday, today))
-            self.assertEqual(0, meta.get_submission_count(tomorrow, day_after_tomorrow))
-            self.assertEqual(i, meta.get_submission_count(yesterday, day_after_tomorrow))
+            self.assertEqual(i, meta.get_submission_count(today, tomorrow, False))
+            self.assertEqual(1, meta.get_submission_count(today, tomorrow, True))
+            self.assertEqual(0, meta.get_submission_count(yesterday, today, False))
+            self.assertEqual(0, meta.get_submission_count(tomorrow, day_after_tomorrow, False))
+            self.assertEqual(i, meta.get_submission_count(yesterday, day_after_tomorrow, False))
+            self.assertEqual(1, meta.get_submission_count(yesterday, day_after_tomorrow, True))
             
     def testDuplicates(self):
         create_xsd_and_populate("data/pf_followup.xsd")

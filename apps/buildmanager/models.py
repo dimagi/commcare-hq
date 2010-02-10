@@ -1,5 +1,6 @@
-import os
+import os, sys
 import logging
+import traceback
 import settings
 from datetime import datetime
 
@@ -409,6 +410,10 @@ class ProjectBuild(models.Model):
                 formdefmodel.domain = self.project.domain
                 formdefmodel.save()                
             except Exception, e:
+                # log the error with the stack, otherwise this is hard to track down
+                info = sys.exc_info()
+                logging.error("Error registering form in build manager: %s\n%s" % \
+                              (e, traceback.print_tb(info[2])))
                 errors.append(e)
         if errors:
             raise BuildError("Problem registering xforms for %s!" % self, errors)
