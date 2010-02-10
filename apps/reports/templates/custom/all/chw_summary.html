@@ -5,6 +5,7 @@
 		<th>Community Health Worker ID</th>
 		<th>Community Health Worker Name</th>
 		<th>Total active/Total open</th>
+		<th>Percentage active</th>
 	</tr>
 	</thead>
 	{% for chw_data in all_data %}
@@ -12,6 +13,7 @@
 		<td>{{ chw_data.chw }}</td>
 		<td>{{ chw_data.chw_name }}</td>
 		<td>{{ chw_data.active }}/{{ chw_data.open }}</td>
+		<td>{{ chw_data.percentage }}%</td>
 	</tr>
 	{% endfor %}
 </table>
