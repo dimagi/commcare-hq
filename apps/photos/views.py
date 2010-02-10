@@ -24,10 +24,10 @@ def show(request, photo_id, template_name="photos/single.html"):
 
 @login_required()
 def import_photos(request):
-    path = 'data/attachments' #settings.RAPIDSMS_APPS['receiver']['attachments_path']
+    path = settings.RAPIDSMS_APPS['receiver']['attachments_path'] # -> data/attachments
 
     def is_img(filename):
-        return filename.endswith('.jpg')
+        return (filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png'))
     
     def not_in_db_already(filename):
         # Note that there's a query for each file here - another way would be to load all existing files to a list in one operation and work with that
@@ -39,14 +39,11 @@ def import_photos(request):
     img_files = filter(is_img, files)
     new_img_files = filter(not_in_db_already, img_files)
     
-    out = ''
     for f in new_img_files:
-        out += "%s/%s <br/> " % (path, f)
         p = Photo(name=f, original_image="%s/%s" % (path, f))
         p.save()
     
     return HttpResponseRedirect("/photos")
-    # return HttpResponse(out)
 
 
     
