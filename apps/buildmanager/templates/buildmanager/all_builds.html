@@ -8,6 +8,6 @@
 {% include "buildmanager/partials/project_builds.html" %}
 {% endfor %}
 {% else %}
-Sorry, we couldn't find any projects for {{ domain }}
+Sorry, we couldn't find any projects for {{ user.selected_domain }}
 {% endif %}
 {%endblock%}
