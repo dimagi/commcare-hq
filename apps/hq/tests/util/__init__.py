@@ -4,7 +4,8 @@
 
 import hashlib
 from domain.models import Domain
-from hq.models import ExtUser, ReporterProfile
+from django.contrib.auth.models import User
+from hq.models import ReporterProfile
 from reporters.models import Reporter, PersistantConnection
 
 def create_user_and_domain(username='brian', 
@@ -23,11 +24,11 @@ def create_user_and_domain(username='brian',
         domain.save()
     
     try:
-        user = ExtUser.objects.get(username=username)
+        user = User.objects.get(username=username)
         print "WARNING: tried to create user %s but it already exists!" % username
         print "Are all your tests cleaning up properly?"
-    except ExtUser.DoesNotExist:
-        user = ExtUser()
+    except User.DoesNotExist:
+        user = User()
         user.domain = domain
         user.username = username
         # here, we mimic what the django auth system does

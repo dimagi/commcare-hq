@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 
 from domain.models import Domain
-from hq.models import ExtUser
+from django.contrib.auth.models import User
 from buildmanager.models import Project, ProjectBuild, BuildDownload
 from buildmanager.tests.util import setup_build_objects 
 from datetime import datetime
@@ -76,7 +76,7 @@ class ViewsTestCase(TestCase):
 
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = tUser.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()
