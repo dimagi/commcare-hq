@@ -1,5 +1,7 @@
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
+from django.core.urlresolvers import reverse
+import settings
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -11,7 +13,6 @@ from django.views.generic.simple import direct_to_template
 
 urlpatterns = patterns( 
         'domain.views',        
-        url(r'^domain/home/$', 'homepage', name='homepage'),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
                         
         url(r'^domain/select/$', 'select', name='domain_select'),

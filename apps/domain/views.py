@@ -26,12 +26,6 @@ except ImportError, e:
     raise e
 
 
-@login_and_domain_required
-def homepage(request):
-    vals = dict()
-    return render_to_response('homepage.html',  vals, context_instance = RequestContext(request))                              
-
-
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required_late_eval_of_LOGIN_URL
