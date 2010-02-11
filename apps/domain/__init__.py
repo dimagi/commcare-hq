@@ -1,4 +1,4 @@
-#from django.contrib.auth.models import User
+from django.contrib.auth.models import User
 from utilities.debug_client import console_msg as cm
 
 # Class containing strings for use in django_granular_permissions for Domain
@@ -13,4 +13,4 @@ def _admin_p (self):
     else:
         return False
     
-#User.is_selected_dom_admin = _admin_p 
+User.is_selected_dom_admin = _admin_p 
