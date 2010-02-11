@@ -16,7 +16,7 @@
 {% block auth %}
   <div id="currentlogin-block">
      {% if user.is_authenticated %}        
-         Logged in as <strong>{{user}}</strong>{% if request.user.domain %} in domain <strong>{{request.user.domain}}</strong>{% endif %}&nbsp;&nbsp;|  
+         Logged in as <strong>{{user}}</strong>{% if user.selected_domain %} in domain <strong>{{ user.selected_domain}}</strong>{% endif %}&nbsp;&nbsp;|  
          {%if user.is_superuser and user.is_staff %} 
                 &nbsp;&nbsp; <a href="/admin/">Admin Site</a>&nbsp;&nbsp; | 
          {% endif %}
