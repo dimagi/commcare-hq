@@ -12,19 +12,20 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
+
 from rapidsms.webui.utils import render_to_response
+
 from xformmanager.util import get_unique_value
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
 from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from xformmanager.templatetags.xform_tags import NOT_SET
+from domain.decorators import login_and_domain_required
 from receiver import submitprocessor
-
 from hq.dbutil import get_column_names
 from hq.models import *
 from hq.utils import paginate, get_table_display_properties
-from hq.decorators import extuser_required
 
 from transformers.csv import UnicodeWriter
 from transformers.zip import get_zipfile
@@ -32,14 +33,11 @@ from transformers.zip import get_zipfile
 from receiver.models import Attachment
 from django.db.models import signals
 
-@extuser_required()
+@login_and_domain_required
 @transaction.commit_manually
 def remove_xform(request, form_id=None, template='confirm_delete.html'):
     context = {}
-    extuser = request.extuser
-    
     form = get_object_or_404(FormDefModel, pk=form_id)
-    
     if request.method == "POST":
         if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
             xformmanager = XFormManager()
@@ -50,11 +48,10 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
     context['form_name'] = form.form_display_name
     return render_to_response(request, template, context)
 
-@extuser_required()
+@login_and_domain_required
 @transaction.commit_manually
 def home(request, template='register_and_list_xforms.html'):
     context = {}
-    extuser = request.extuser
     if request.method == 'POST':
         if 'confirm_register' in request.POST:
             # user has already confirmed registration 
@@ -122,39 +119,39 @@ def home(request, template='register_and_list_xforms.html'):
     
     context['upload_form'] = RegisterXForm()
     # group the formdefs by names
-    context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
-    context['form_groups'] = FormDefModel.get_groups(extuser.domain)
+    context['registered_forms'] = FormDefModel.objects.all().filter(domain=request.user.selected_domain)
+    context['form_groups'] = FormDefModel.get_groups(request.user.selected_domain)
     return render_to_response(request, template, context)
 
 
-@extuser_required()
+@login_and_domain_required
 def xmlns_group(request):
     """View a group of forms for a particular xmlns."""
     xmlns = request.GET["xmlns"]
-    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
+    group = FormDefModel.get_group_for_namespace(request.user.selected_domain, xmlns)
     data_groups = FormDataGroup.objects.filter(name=xmlns)
     return render_to_response(request, "xformmanager/xmlns_group.html", 
                                   {"group": group,
                                    "data_groups": data_groups
                                    })
     
-@extuser_required()
+@login_and_domain_required
 def xmlns_group_popup(request):
     """Popup (compact) view a group of forms for a particular xmlns.
        Used in modal dialogs."""
     xmlns = request.GET["xmlns"]
-    group = FormDefModel.get_group_for_namespace(request.extuser.domain, xmlns)
+    group = FormDefModel.get_group_for_namespace(request.user.selected_domain, xmlns)
     return render_to_response(request, "xformmanager/xmlns_group_popup.html", 
                               {"group": group})
 
-@extuser_required()
+@login_and_domain_required
 def manage_groups(request):
     """List and work with model-defined groups of forms."""
     data_groups = FormDataGroup.objects.all()
     return render_to_response(request, "xformmanager/list_form_data_groups.html", 
                                   {"groups": data_groups})
                                    
-@extuser_required()
+@login_and_domain_required
 def new_form_data_group(req):
     """Create a new model-defined group of forms"""
     form_validation = None
@@ -190,7 +187,7 @@ def new_form_data_group(req):
     else:
         form = FormDataGroupForm()
         
-    all_forms = FormDefModel.objects.filter(domain=req.extuser.domain)\
+    all_forms = FormDefModel.objects.filter(domain=req.user.selected_domain)\
                             .order_by("target_namespace", "version")
     return render_to_response(req, "xformmanager/edit_form_data_group.html", 
                                   {"group_form": form,
@@ -199,7 +196,7 @@ def new_form_data_group(req):
                                    "form_validation": form_validation })
                                    
     
-@extuser_required()
+@login_and_domain_required
 def form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     items, sort_column, sort_descending, filters =\
@@ -223,7 +220,7 @@ def form_data_group(req, group_id):
                                "extra_params": extra_params, 
                                "editing": False })
         
-@extuser_required()
+@login_and_domain_required
 def edit_form_data_group(req, group_id):
     """Edit a model-defined group of forms"""
     group = get_object_or_404(FormDataGroup, id=group_id)
@@ -259,7 +256,7 @@ def edit_form_data_group(req, group_id):
     else:
         group_form = FormDataGroupForm(instance=group)
         
-    all_forms = FormDefModel.objects.filter(domain=req.extuser.domain)\
+    all_forms = FormDefModel.objects.filter(domain=req.user.selected_domain)\
                             .order_by("target_namespace", "version")
     selected_forms = group.forms.all()
     unused_forms = [form for form in all_forms if form not in selected_forms]
@@ -270,7 +267,7 @@ def edit_form_data_group(req, group_id):
                                    "all_forms": unused_forms,
                                    "form_validation": form_validation })
                                    
-@extuser_required()
+@login_and_domain_required
 def edit_form_data_group_columns(req, group_id):
     """Edit the individual columns of a form data group"""
     group = get_object_or_404(FormDataGroup, id=group_id)
@@ -284,7 +281,13 @@ def edit_form_data_group_columns(req, group_id):
                 truncated_name = key.replace("select_", "")
                 form_id, column = truncated_name.split("_", 1)
                 form = FormDefModel.objects.get(id=form_id)
-                column_obj = group.columns.get(name=column)
+                try:
+                    column_obj = group.columns.get(name=column)
+                except FormDataColumn.DoesNotExist:
+                    # this likely just got deleted above or came from
+                    # an out of date request.  For now just quietly 
+                    # ignore it.
+                    continue
                 if value == NOT_SET:
                     # the only time we have to do anything here is if
                     # it was previously set.  
@@ -327,7 +330,7 @@ def edit_form_data_group_columns(req, group_id):
     return render_to_response(req, "xformmanager/edit_form_data_group_columns.html",
                               {"group": group, "editing": True }) 
                                
-@extuser_required()
+@login_and_domain_required
 def delete_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     if req.method == 'POST':
@@ -343,7 +346,7 @@ def delete_form_data_group(req, group_id):
                               {"group": group, "editing": False })
                                
         
-@extuser_required()
+@login_and_domain_required
 def create_form_data_group_from_xmlns(req):
     """Create a form data group from a set of forms matching an xmlns"""
     xmlns = req.GET["xmlns"]
@@ -356,7 +359,7 @@ def create_form_data_group_from_xmlns(req):
         return render_to_response(req, "500.html", {"error_message" : error_message})
     except FormDataGroup.DoesNotExist:
         # this is the correct workflow.
-        forms = FormDefModel.objects.filter(domain=req.extuser.domain, 
+        forms = FormDefModel.objects.filter(domain=req.user.selected_domain, 
                                             target_namespace=xmlns)
         group = FormDataGroup.from_forms(forms)
         return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
@@ -372,19 +375,17 @@ def _register_xform(request, file_name, display_name, remote_addr, file_size):
     formdefmodel.submit_ip = remote_addr
     formdefmodel.bytes_received =  file_size
     formdefmodel.form_display_name = display_name                
-    formdefmodel.uploaded_by = request.extuser
-    if request.extuser:
-        formdefmodel.domain = request.extuser.domain
+    formdefmodel.uploaded_by = request.user
+    formdefmodel.domain = request.user.selected_domain
     formdefmodel.save()
     logging.debug("xform registered")
     return formdefmodel
 
-@extuser_required()
+@login_and_domain_required
 @transaction.commit_manually
 def submit_data(request, formdef_id, template='submit_data.html'):
     """ A debug utility for admins to submit xml directly to a schema """ 
     context = {}
-    extuser = request.extuser
     if request.method == 'POST':
         form = SubmitDataForm(request.POST, request.FILES)        
         if form.is_valid():            
@@ -392,7 +393,7 @@ def submit_data(request, formdef_id, template='submit_data.html'):
             xmlfile = request.FILES['file'].read()            
             checksum = hashlib.md5(xmlfile).hexdigest()
                                     
-            new_submission = submitprocessor.new_submission(request.META, checksum, extuser.domain)        
+            new_submission = submitprocessor.new_submission(request.META, checksum, request.user.selected_domain)        
             submitprocessor.save_legacy_blob(new_submission, xmlfile)
             submitprocessor.handle_legacy_blob(new_submission)
             
@@ -413,14 +414,6 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
     # registers an xform without having a user context, for 
     # server-generated submissions
     context = {}
-    extuser = None
-    if request.user:
-        try:
-            extuser = ExtUser.objects.all().get(id=request.user.id)
-        except ExtUser.DoesNotExist:
-            # we don't really care about this.
-            # czue: then why is this whole check here?
-            pass
     if request.method == 'POST':        
         # must add_schema to storage provide first since forms are dependent upon elements 
         try:
@@ -434,7 +427,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             logging.error("xformmanager.manager: " + unicode(e) )
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
             context['upload_form'] = RegisterXForm()
-            context['registered_forms'] = FormDefModel.objects.all().filter(domain= extuser.domain)
+            context['registered_forms'] = FormDefModel.objects.all().filter(domain__name=domain_name)
             return render_to_response(request, template, context)
         except Exception, e:
             logging.error(e)
@@ -451,7 +444,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             formdefmodel.submit_ip = metadata['HTTP_ORIGINAL_SUBMIT_IP']
             formdefmodel.bytes_received =  metadata['CONTENT_LENGTH']
             formdefmodel.form_display_name = metadata['HTTP_FORM_DISPLAY_NAME']                
-            formdefmodel.uploaded_by = extuser
+            formdefmodel.uploaded_by = request.user
             formdefmodel.domain = domain
             # we have the rest of the info in the metadata, but for now we
             # won't use it
@@ -471,12 +464,12 @@ def authenticate_schema(target):
     """
     def wrapper(request, formdef_id, *args, **kwargs):
         xform = FormDefModel.objects.get(id=formdef_id)
-        if xform.domain != request.extuser.domain:
+        if xform.domain != request.user.selected_domain:
             return HttpResponseRedirect("/no_permissions")  
         return target(request, formdef_id, *args, **kwargs)
     return wrapper
 
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def single_xform(request, formdef_id, template_name="single_xform.html"):
     context = {}    
@@ -496,7 +489,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         context['xform_item'] = xform
         return render_to_response(request, template_name, context)
         
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def single_instance(request, formdef_id, instance_id, template_name="single_instance.html"):
     '''
@@ -517,7 +510,7 @@ def single_instance(request, formdef_id, instance_id, template_name="single_inst
                                                        "data": data,
                                                        "attachment": attach })
         
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def single_instance_csv(request, formdef_id, instance_id):
     '''
@@ -542,7 +535,7 @@ def single_instance_csv(request, formdef_id, instance_id):
     return response
 
 
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def export_xml(request, formdef_id):
     """
@@ -555,14 +548,14 @@ def export_xml(request, formdef_id):
         file_list.append( datum.attachment.filepath )
     return get_zipfile(file_list)
 
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def plain_data(request, formdef_id, context={}, use_blacklist=True):
     '''Same as viewing the data, but pass it to a plain template.'''
     return data(request, formdef_id,'xformmanager/plain_data.html', context, use_blacklist)
 
     
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def data(request, formdef_id, template_name="data.html", context={}, use_blacklist=True):
     '''View the xform data for a particular schema.  Accepts as
@@ -609,7 +602,7 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
         context['filtered_by'] = clean_filters.keys()[0]
     
     if use_blacklist:
-        blacklist_users = request.extuser.domain.get_blacklist()
+        blacklist_users = request.user.selected_domain.get_blacklist()
         rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
                               blacklist=blacklist_users, column_filters=column_filters)
     else:
@@ -632,12 +625,11 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
                                         if key.startswith("sort")])
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 @transaction.commit_manually
 def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context = {}
-    extuser = request.extuser
     form = get_object_or_404(FormDefModel, pk=formdef_id)
     if request.method == "POST":
         if 'instance' in request.POST:
@@ -667,7 +659,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context['formdef_id'] = formdef_id
     return render_to_response(request, template, context)
 
-@extuser_required()
+@login_and_domain_required
 @authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
