@@ -112,3 +112,12 @@ User.add_to_class('domain_membership',
 ##############################################################################################################
     
 
+# Monkeypatch a function onto User to tell if user is administrator of selected domain
+def _admin_p (self):
+    dom = getattr(self, 'selected_domain', None)    
+    if dom is not None:
+        return self.has_row_perm(dom, Permissions.ADMINISTRATOR)
+    else:
+        return False
+    
+User.is_selected_dom_admin = _admin_p 
