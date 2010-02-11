@@ -8,7 +8,6 @@ from rapidsms.webui.utils import render_to_response
 from transformers.csv import format_csv 
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
-from hq.models import ExtUser
 from hq.utils import paginate
 from hq.decorators import extuser_required
 
