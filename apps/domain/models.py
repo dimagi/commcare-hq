@@ -2,11 +2,12 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
+from domain import Permissions
 
 ##############################################################################################################
 #
 # Originally had my own hacky global storage of content type, but it turns out that contenttype.models
-# wisely caches content types! No hit to the db beyodn the first call - no need for us to do our own 
+# wisely caches content types! No hit to the db beyond the first call - no need for us to do our own 
 # custom caching.
 #
 # See ContentType.get_for_model() code for details.
