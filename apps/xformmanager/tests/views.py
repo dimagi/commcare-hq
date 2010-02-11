@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.test.client import Client
 from xformmanager.tests.util import create_xsd_and_populate, populate
 from xformmanager.manager import XFormManager
-from hq.models import ExtUser, Domain
+from domain.models import Domain
+from hq.models import ExtUser
 from hq.tests.util import create_user_and_domain
 
 class ViewsTestCase(TestCase):

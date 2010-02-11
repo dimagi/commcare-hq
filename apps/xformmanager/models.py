@@ -14,6 +14,7 @@ from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 
+from domain.models import Domain
 from hq.models import *
 from hq.utils import build_url
 from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table

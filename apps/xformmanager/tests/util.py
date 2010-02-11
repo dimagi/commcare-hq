@@ -1,4 +1,4 @@
-from hq.models import Domain
+from domain.models import Domain
 from xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
 from xformmanager.manager import *
 from xformmanager.storageutility import StorageUtility

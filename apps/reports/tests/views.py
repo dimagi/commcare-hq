@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.client import Client
-from hq.models import ExtUser, Domain
+from domain.models import Domain
+from hq.models import Domain
 from hq.tests.util import create_user_and_domain
 
 class ViewsTestCase(TestCase):

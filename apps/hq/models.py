@@ -3,34 +3,11 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 
+from domain.models import Domain 
 from reporters.models import Reporter, ReporterGroup
 from hq.processor import REGISTRATION_XMLNS, create_phone_user
 import xformmanager.xmlrouter as xmlrouter
 
-class Domain(models.Model):
-    '''Domain is the highest level collection of people/stuff
-       in the system.  Pretty much everything happens at the 
-       domain-level, including permission to see data, reports,
-       charts, etc.'''
-    name = models.CharField(max_length=128, unique=True)
-    description = models.CharField(max_length=255, null=True, blank=True)
-    timezone = models.CharField(max_length=64,null=True)
-    
-    def get_blacklist(self):
-        '''Get the list of names on the active blacklist.'''
-        # NOTE: using this as a blacklist check implies a list lookup for each 
-        # user which could eventually get inefficient.  We could make this a 
-        # hashset if desired to make this O(1)
-        return self.blacklisteduser_set.filter(active=True)\
-                        .values_list('username', flat=True)
-        
-        
-        
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = _("Domain Account")
 
 class OrganizationType(models.Model):
     name = models.CharField(max_length=64, unique=True)

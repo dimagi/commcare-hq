@@ -3,11 +3,6 @@ from hq.models import *
 from django.contrib.auth.models import Group, User
 from reporters.models import Reporter
 
-class DomainAdmin(admin.ModelAdmin):
-    list_display = ('id','name','description')
-    list_filter = []  
-
-
 class OrganizationTypeAdmin(admin.ModelAdmin):
     list_display = ('id','name','description','domain')
     list_filter = []  
@@ -37,6 +32,5 @@ admin.site.register(ReportSchedule, ReportScheduleAdmin)
 admin.site.register(ExtUser,ExtUserAdmin)
 
 admin.site.register(Organization,OrganizationAdmin)
-admin.site.register(Domain,DomainAdmin)
 admin.site.register(ReporterProfile, ReporterProfileAdmin)
 admin.site.register(BlacklistedUser)

@@ -26,7 +26,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from hq.models import ExtUser, Domain
+from domain.models import Domain
+from hq.models import ExtUser
 from hq.utils import build_url
 from requestlogger.models import RequestLog
 from xformmanager.models import FormDefModel

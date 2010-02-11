@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from rapidsms.tests.scripted import TestScript
 import reporters.app as reporters_app
 from reporters.models import ReporterGroup, PersistantBackend
-from hq.models import Organization, Domain, ReporterProfile
+from domain.models import Domain
+from hq.models import Organization, ReporterProfile
 from receiver.models import Submission, Attachment
 from xformmanager.tests.util import *
 from reports.sms.brac import *

@@ -6,7 +6,8 @@ from xformmanager.models import Metadata
 from graphing.dbhelper import DbHelper
 from hq.utils import get_dates_reports
 
-from hq.models import Domain, Organization, ReporterProfile
+from domain.models import Domain
+from hq.models import Organization, ReporterProfile
 from apps.reports.models import Case, CaseFormIdentifier
 
 def chw_summary(request, domain=None):

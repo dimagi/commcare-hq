@@ -30,7 +30,7 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from hq.models import Domain
+    from domain.models import Domain
 
     hq_domain_1 = Domain()
     hq_domain_1.name = u'Pathfinder'

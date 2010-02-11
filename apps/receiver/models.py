@@ -18,6 +18,7 @@ from django.core import serializers
 from django.core.urlresolvers import reverse
 
 from hq.models import *
+from domain.models import Domain
 from hq.utils import build_url
 
 _XFORM_URI = 'xform'

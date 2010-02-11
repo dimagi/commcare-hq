@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.client import Client
-from hq.models import ExtUser, Domain, Organization, ReporterProfile
+from domain.models import Domain
+from hq.models import ExtUser, Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from reporters.models import Reporter
 

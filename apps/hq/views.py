@@ -7,7 +7,6 @@ import os
 import uuid
 import string
 from datetime import timedelta
-from graphing import dbhelper
 
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
@@ -28,9 +27,11 @@ from rapidsms.webui.utils import render_to_response, paginated
 
 from xformmanager.models import *
 from hq.models import *
+from graphing import dbhelper
 from graphing.models import *
 from receiver.models import *
-
+from domain.decorators import login_and_domain_required, domain_admin_required
+    
 import hq.utils as utils
 import hq.reporter as reporter
 import hq.reporter.custom as custom
@@ -47,11 +48,11 @@ from reporters.models import Reporter, PersistantBackend, PersistantConnection
 
 logger_set = False
 
-@extuser_required()
+@login_and_domain_required
 def dashboard(request, template_name="hq/dashboard.html"):
     context = {}
+    print "selected domain is: %s" % request.user.selected_domain
     startdate, enddate = utils.get_dates(request, 7)
-    
     context['startdate'] = startdate
     context['enddate'] = enddate
     context['view_name'] = 'hq.views.dashboard'

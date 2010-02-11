@@ -3,7 +3,8 @@
 """
 
 import hashlib
-from hq.models import ExtUser, Domain, ReporterProfile
+from domain.models import Domain
+from hq.models import ExtUser, ReporterProfile
 from reporters.models import Reporter, PersistantConnection
 
 def create_user_and_domain(username='brian', 

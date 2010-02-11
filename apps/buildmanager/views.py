@@ -3,8 +3,8 @@ import os
 import logging
 
 from hq.models import ExtUser
-from hq.models import Domain
 from hq.utils import build_url
+from domain.models import Domain
 from requestlogger.models import RequestLog
 from xformmanager.manager import readable_form, csv_dump
 

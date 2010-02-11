@@ -12,8 +12,16 @@ from django.db import models
 # See ContentType.get_for_model() code for details.
 
 class Domain(models.Model):
+    '''Domain is the highest level collection of people/stuff
+       in the system.  Pretty much everything happens at the 
+       domain-level, including user membership, permission to 
+       see data, reports, charts, etc.'''
+       
+    
     name  = models.CharField(max_length = 64, unique=True)
     is_active = models.BooleanField(default=False)
+    #description = models.CharField(max_length=255, null=True, blank=True)
+    #timezone = models.CharField(max_length=64,null=True)
     
     # Utility function - gets active domains in which user has an active membership 
     # Note that User.is_active is not checked here - we're only concerned about usable
