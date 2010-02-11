@@ -11,6 +11,34 @@ import settings
 # what is matched in urlpatterns.
 #
 
+# All of these auth functions have custom templates in registration/, with the default names they expect.
+#
+# Django docs on password reset are weak. See these links instead:
+#
+# http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
+# http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
+# http://blog.montylounge.com/2009/jul/12/django-forgot-password/
+#
+# Note that the provided password reset function raises SMTP errors if there's any
+# problem with the mailserver. Catch that more elegantly with a simple wrapper.
+
+def exception_safe_password_reset(request, *args, **kwargs):
+    try:
+        return password_reset(request, *args, **kwargs)                
+    except: 
+        vals = {'error_msg':'There was a problem with your request',
+                'error_details':sys.exc_info(),
+                'show_homepage_link': 1 }
+        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+
+
+# auth templates are normally in 'registration,'but that's too confusing a name, given that this app has
+# both user and domain registration. Move them somewhere more descriptive.
+
+def auth_pages_path(page):
+    return {'template_name':'login_and_password/' + page}
+
+
 urlpatterns = patterns( 
         'domain.views',        
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
@@ -31,7 +59,14 @@ urlpatterns = patterns(
         # domain admin functions
         url(r'^domain/admin/$', 'admin_main', name='domain_admin_main'),
         url(r'^domain/admin/user_list/$', 'user_list', name='domain_user_list'),
-        url(r'^domain/admin/edit_user/(?P<user_id>\d{1,10})/$', 'edit_user', name='domain_edit_user'),        
+        url(r'^domain/admin/edit_user/(?P<user_id>\d{1,10})/$', 'edit_user', name='domain_edit_user')) \
+        + patterns('django.contrib.auth.views',
+        url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
+        url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html') ),                                                
+        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, auth_pages_path('password_reset_form.html'), name='password_reset_email'),
+        url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
+        url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm', auth_pages_path('password_reset_confirm.html') ),
+        url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
         )
 
 
