@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{#################################################################################################################}p
+
+{% block local_stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}site_media/table.css?version=1"/>
+{% endblock local_stylesheets %}
+
+{#################################################################################################################}
+
+{% block window_title %}
+<title>address book user list</title>
+{% endblock window_title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<table class="table_base clear" cellspacing="0">
+<caption>Users in domain {{user.selected_domain}}</caption>
+<tr>
+  {% for column in columns %}
+  <th class="hed" scope="col">
+    {% if column.sortable %}
+      <a href="?sort={{ column.name_toggled }}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}">
+        {{ column }}
+      </a>
+      {% if column.is_ordered_reverse %}
+        <img src="{{MEDIA_URL}}site_media/arrow_up.gif" />
+      {% else %}
+        <img src="{{MEDIA_URL}}site_media/arrow_down.gif" />
+      {% endif %}
+    {% else %}
+      {{ column }}
+    {% endif %}
+  </th>
+  {% endfor %}
+  <th class="hed">Edit</th>
+</tr>
+
+{% for row in rows.object_list %}
+  <tr>
+  {% for value in row %}
+    <td>{{ value }}</td>
+  {% endfor %}
+    <td>
+    <a href="{% url domain_edit_user user_id=row.id %}">Go</a>
+    {# Two a's, identical, because otherwise Firefox puts an annoying line under the image with the link #}
+    <a href="{% url domain_edit_user user_id=row.id %}">
+    <img src="{{MEDIA_URL}}site_media/arrow_right.gif" style="border:none" alt="Details for patient {{row.first_name}} {{row.last_name}}"/>
+    </a></td>
+  </tr>
+{% endfor %}
+
+</table>
+
+{# pagination code taken right from Django dev docs #}
+<div class="pagination">
+	{% if rows.has_previous %}
+	    <a href="?page={{ rows.previous_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_left.gif" style="border:0" /></a>
+	    <!--   <a href="?page={{ rows.previous_page_number }}">previous</a>a  -->
+	{% endif %}
+	
+	<span class="current">
+	    {{ rows.number }} of {{ rows.paginator.num_pages }}
+	</span>
+	
+	{% if rows.has_next %}
+	     <!-- <a href="?page={{ rows.next_page_number }}">next</a> -->
+	    <a href="?page={{ rows.next_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_right.gif" style="border:0" /></a>
+	{% endif %}
+</div>
+
+
+{% endblock content %}
+
+{#################################################################################################################}      
