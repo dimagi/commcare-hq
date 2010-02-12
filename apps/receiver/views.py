@@ -187,7 +187,8 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
         elif is_legacy_blob == False:             
             attachments = submitprocessor.handle_multipart_form(new_submission, request.FILES)
             
-        if request.user:
+        if request.user and request.user.is_authenticated():
+            # set the user info if necessary
             new_submission.authenticated_to = request.user
             new_submission.save()
         
