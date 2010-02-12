@@ -4,7 +4,7 @@
 {% block title %}{% trans "Reporter Statistics" %}{% endblock %}
 {% block org_report_content %}
 <h2>Reporter Statistics</h2>	
-	<h3>Domain: {{domain}}</h3>
+	<h3>Domain: {{user.selected_domain}}</h3>
 	<ul>
 	{% for prof, statdict in reporterstats.items %}
 		<li>{{prof}}

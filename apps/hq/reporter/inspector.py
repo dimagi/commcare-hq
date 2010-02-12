@@ -102,8 +102,11 @@ def get_aggregate_count(content_obj, startdate, enddate,forms_to_filter=None):
             except ReporterProfile.DoesNotExist:
                 # this is an okay error - just don't include them
                 pass
-    elif isinstance(content_obj, ExtUser):        
-        domain  = content_obj.domain
+    elif isinstance(content_obj, User):        
+        # CZUE: this could very likely blow up on us.  There is no
+        # guarantee that this object exists
+        domain  = content_obj.domain_membership.filter(is_active=True)[0]
+        
         supervising_orgs = utils.get_supervisor_roles(content_obj)
         usernames_to_filter.append(content_obj.report_identity)
         is_member = True        

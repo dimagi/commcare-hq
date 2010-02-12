@@ -25,16 +25,15 @@ def get_current_domain():
 
 class HqMiddleware(object):
     '''Middleware for CommCare HQ.  Right now the only thing this does is
-       convert the request.user property into an ExtUser, if they exist.'''
-    
+       set some stuff in the thread locals (user and domain) if they exist
+       as well as do some custom authentication for unsalted passwords and
+       set convenience accessors for passed in dates in urlparams.'''
     
     def process_request(self, request):
-        # the assumption here is that we will never have an ExtUser for AnonymousUser
         _thread_locals.user = getattr(request, 'user', None)
         if request.user and not request.user.is_anonymous():
             self._set_local_vars(request, request.user)
         else:
-            request.extuser = None
             # attempt our custom authentication only if regular auth fails
             # (and request.user == anonymousUser
             username, password = get_username_password(request)

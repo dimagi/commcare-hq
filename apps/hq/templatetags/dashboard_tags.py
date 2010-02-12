@@ -28,7 +28,7 @@ output_format = '%Y-%m-%d %H:%M'
 def get_dashboard_user_counts(domain, startdate=None, enddate=None, use_blacklist=True):
     
     # todo:  query the global meta tables to get all the users
-    # and/or query the ExtUser table to get all the registered users.
+    # and/or query the User table to get all the registered users.
     totalspan = enddate-startdate
     report_hash = {}
     

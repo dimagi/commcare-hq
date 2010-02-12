@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.test.client import Client
+from django.contrib.auth.models import User
 from domain.models import Domain
-from hq.models import ExtUser, Organization, ReporterProfile
+from hq.models import Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from reporters.models import Reporter
 
@@ -73,7 +74,7 @@ class ViewsTestCase(TestCase):
         # response = self.client.get('/api/xforms/',{'format':'json'})
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()

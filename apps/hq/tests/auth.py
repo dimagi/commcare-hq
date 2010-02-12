@@ -2,7 +2,7 @@ import hashlib
 from django.test import TestCase
 from django.test.client import Client
 from domain.models import Domain
-from hq.models import ExtUser, Organization, ReporterProfile
+from hq.models import Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from receiver.models import Submission
 from reporters.models import Reporter
@@ -35,7 +35,7 @@ class AuthenticationTestCase(TestCase):
         self.assertTrue(submit.authenticated_to!=None)
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name=self.domain_name)
         domain.delete()

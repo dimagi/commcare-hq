@@ -24,16 +24,10 @@ class ReporterProfile(models.Model):
     '''The profile for a reporter object.  For attaching some of our
        own metadata-type information to RapidSMS reporters.  This is 
        loosely modeled on how django user profiles work.'''    
-    # The rationale for moving most of this information from ExtUser
-    # is that most reporters shouldn't actually have django logins
            
     reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")    
-    # these fields are duplicates from ExtUser, and will replace
-    # those when we sort out data migration
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
-    
-    # these fields are also duplicated in ExtUser, but ExtUsers need them too.
     domain = models.ForeignKey(Domain)
     
     #dmyung - we will probably need to get rid of this unless there's a really compelling reason
@@ -66,51 +60,54 @@ class ReporterProfile(models.Model):
     def __str__(self):
         return unicode(self).encode('utf-8')
 
-class ExtUser(User):
-    '''Extended users, which have some additional metadata associated with them'''
-    
-    # these have been moved to the ReporterProfile object and
-    # should be removed when data migration gets sorted out  
-    chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
-    chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
+###### 02-11-2010 CZUE: Killing ExtUser but temporarily leaving around  ####### 
+###### In commented form for reference                                  ####### 
 
-    # this should be squashed by the reporter foreign key.  
-    # unfortunately a lot of things currently like pointing at this
-    # so it'll stick around temporarily
-    primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
-    
-    domain = models.ForeignKey(Domain)
-    
-    # also provide org-level granularity
-    organization = models.ForeignKey("Organization", null=True, blank=True)
-    
-    # link to the rapidsms reporter 
-    reporter = models.ForeignKey(Reporter, null=True, blank=True)
-    
-    # the value of this field should *always* reflect the value of User.password in an ideal world
-    # for now, we allow null values, until such time as we want to reset everyone's password
-    unsalted_password = models.CharField(_('password'), max_length = 128, null=True, help_text = \
-                                         _("Use '[hexdigest]' or use the <a href=\"change_password/\">change password form</a>."))
-    
-    @property
-    def report_identity(self):         
-        if self.chw_username == None:
-            return self.__str__()
-        else:
-            return self.chw_username
-    
-    def __unicode__(self):
-        if self.first_name or self.last_name:
-            return "%s %s" % (self.first_name, self.last_name)
-        else:
-            return self.username
-    
-    class Meta:
-        verbose_name = _("Extended User")
-        
-    def set_unsalted_password(self, username, password):
-        # todo - integrate this with user.password
-        self.unsalted_password = hashlib.sha1( username+":"+password ).hexdigest()
+#class ExtUser(User):
+#    '''Extended users, which have some additional metadata associated with them'''
+#    
+#    # these have been moved to the ReporterProfile object and
+#    # should be removed when data migration gets sorted out  
+#    chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
+#    chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
+#
+#    # this should be squashed by the reporter foreign key.  
+#    # unfortunately a lot of things currently like pointing at this
+#    # so it'll stick around temporarily
+#    primary_phone = models.CharField(max_length=30, null=True, blank=True, help_text="e.g., +251912555555")
+#    
+#    domain = models.ForeignKey(Domain)
+#    
+#    # also provide org-level granularity
+#    organization = models.ForeignKey("Organization", null=True, blank=True)
+#    
+#    # link to the rapidsms reporter 
+#    reporter = models.ForeignKey(Reporter, null=True, blank=True)
+#    
+#    # the value of this field should *always* reflect the value of User.password in an ideal world
+#    # for now, we allow null values, until such time as we want to reset everyone's password
+#    unsalted_password = models.CharField(_('password'), max_length = 128, null=True, help_text = \
+#                                         _("Use '[hexdigest]' or use the <a href=\"change_password/\">change password form</a>."))
+#    
+#    @property
+#    def report_identity(self):         
+#        if self.chw_username == None:
+#            return self.__str__()
+#        else:
+#            return self.chw_username
+#    
+#    def __unicode__(self):
+#        if self.first_name or self.last_name:
+#            return "%s %s" % (self.first_name, self.last_name)
+#        else:
+#            return self.username
+#    
+#    class Meta:
+#        verbose_name = _("Extended User")
+#        
+#    def set_unsalted_password(self, username, password):
+#        # todo - integrate this with user.password
+#        self.unsalted_password = hashlib.sha1( username+":"+password ).hexdigest()
 
 class Organization(models.Model):
     # this should be renamed to "Group" if that term wasn't highly
@@ -176,7 +173,7 @@ class ReportSchedule(models.Model):
     report_frequency =  models.CharField(_('Delivery Frequency'), max_length=32, choices=REPORT_FREQUENCY)
     report_delivery =   models.CharField(_('Delivery Transport/Method'), max_length=32, choices=REPORT_DELIVERY)
     
-    recipient_user =    models.ForeignKey(ExtUser, null=True, blank=True, 
+    recipient_user =    models.ForeignKey(User, null=True, blank=True, 
                                           help_text=_("If this is a General Site Admin report, enter the user you want to receive this report."))    
     organization =      models.ForeignKey(Organization, null=True, blank=True, 
                                           help_text=_("If this is an Organizational supervisor or member report, indicate the exact organization you want to report on."))
