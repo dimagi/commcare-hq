@@ -1,6 +1,11 @@
 from imagekit.specs import ImageSpec 
 from imagekit import processors 
 
+# allocate more memory to PIL to avoid "encoder error -2" : http://mail.python.org/pipermail/image-sig/1999-August/000816.html
+import ImageFile
+ImageFile.MAXBLOCK = 1000000
+
+
 class ResizeThumb(processors.Resize): 
     width   = 120 
     height  = 100
@@ -28,5 +33,4 @@ class Fullsize(ImageSpec):
     increment_count = True
     access_as = 'fullsize' 
     pre_cache = True
-        
     
