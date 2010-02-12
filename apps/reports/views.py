@@ -9,22 +9,20 @@ from transformers.csv import format_csv
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
 from hq.utils import paginate
-from hq.decorators import extuser_required
+from domain.decorators import login_and_domain_required
 
 import util
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
 
-@extuser_required()
+@login_and_domain_required
 def reports(request, template_name="list.html"):
     # not sure where this view will live in the UI yet
     context = {}
-    extuser = request.extuser
-    context['domain'] = extuser.domain
-    context['case_reports'] = Case.objects.filter(domain=extuser.domain)
-    context['sql_reports'] = SqlReport.objects.filter(domain=extuser.domain, is_active=True)
-    context['custom_reports'] = util.get_custom_reports(extuser.domain)
+    context['case_reports'] = Case.objects.filter(domain=request.user.selected_domain)
+    context['sql_reports'] = SqlReport.objects.filter(domain=request.user.selected_domain, is_active=True)
+    context['custom_reports'] = util.get_custom_reports(request.user.selected_domain)
     if not context['custom_reports'] and not context['sql_reports']\
        and not context['case_reports']:
         return render_to_response(request, 
@@ -32,11 +30,10 @@ def reports(request, template_name="list.html"):
                                   context)
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 def case_flat(request, case_id, template_name="case_flat.html"):
     '''A flat view of the topmost data for all cases'''
     context = {}
-    extuser = request.extuser
     case = Case.objects.get(id=case_id)
     
     context['cols'] = case.get_column_names()
@@ -55,12 +52,10 @@ def case_flat(request, case_id, template_name="case_flat.html"):
     return render_to_response(request, template_name, context)
 
     
-@extuser_required()
+@login_and_domain_required
 def single_case_view(request, case_id, case_instance_id, template_name="single_case.html"):
     '''View for all of a single case's data, broken down by form.'''
     context = {}
-    extuser = request.extuser
-    
     case = Case.objects.get(id=case_id)
     data = case.get_data_for_case(case_instance_id)
     
@@ -70,7 +65,7 @@ def single_case_view(request, case_id, case_instance_id, template_name="single_c
     
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 def case_export_csv(request, case_id):
     case = Case.objects.get(id=case_id)
     cols = case.get_column_names()
@@ -87,13 +82,11 @@ def case_export_csv(request, case_id):
     return response
 
 
-@extuser_required()
+@login_and_domain_required
 def custom_report(request, domain_id, report_name):
     context = {}
-    extuser = request.extuser
-    context["domain"] = extuser.domain
     context["report_name"] = report_name
-    report_method = util.get_report_method(extuser.domain, report_name)
+    report_method = util.get_report_method(request.user.selected_domain, report_name)
     if not report_method:
         return render_to_response(request, 
                                   "custom/report_not_found.html",
@@ -102,19 +95,17 @@ def custom_report(request, domain_id, report_name):
     context["report_body"] = report_method(request)
     return render_to_response(request, "custom/base.html", context)
 
-@extuser_required()
+@login_and_domain_required
 def sql_report(request, report_id, template_name="sql_report.html"):
     '''View a single sql report.'''
-    extuser = request.extuser
     report = SqlReport.objects.get(id=report_id)
     whereclause = util.get_whereclause(request.GET)
     table = report.to_html_table({"whereclause": whereclause})
     return render_to_response(request, template_name, {"report": report, "table": table})
 
-@extuser_required()
+@login_and_domain_required
 def sql_report_csv(request, report_id):
     '''View a single sql report.'''
-    extuser = request.extuser
     report = SqlReport.objects.get(id=report_id)
     whereclause = util.get_whereclause(request.GET)
     cols, data = report.get_data({"whereclause": whereclause})
