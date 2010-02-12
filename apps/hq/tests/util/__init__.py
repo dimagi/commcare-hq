@@ -3,7 +3,8 @@
 """
 
 import hashlib
-from domain.models import Domain
+from domain.models import Domain, Membership
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from hq.models import ReporterProfile
 from reporters.models import Reporter, PersistantConnection
@@ -20,7 +21,7 @@ def create_user_and_domain(username='brian',
         print "Are all your tests cleaning up properly?"
     except Domain.DoesNotExist:
         # this is the normal case
-        domain = Domain(name=domain_name)
+        domain = Domain(name=domain_name, is_active=True)
         domain.save()
     
     try:
@@ -29,7 +30,6 @@ def create_user_and_domain(username='brian',
         print "Are all your tests cleaning up properly?"
     except User.DoesNotExist:
         user = User()
-        user.domain = domain
         user.username = username
         # here, we mimic what the django auth system does
         # only we specify the salt to be 12345
@@ -37,8 +37,16 @@ def create_user_and_domain(username='brian',
         hashed_pass = hashlib.sha1(salt+password).hexdigest()
         user.password = 'sha1$%s$%s' % (salt, hashed_pass)
         
-        user.set_unsalted_password( username, password )
         user.save()
+        
+        # update the domain mapping using the Membership object
+        mem = Membership()
+        mem.domain = domain         
+        mem.member_type = ContentType.objects.get_for_model(User)
+        mem.member_id = user.id
+        mem.is_active = True
+        mem.save()
+                
     return (user, domain)
                                 
 def create_reporter_with_connection(alias, 
