@@ -9,9 +9,6 @@ urlpatterns = patterns('',
     
     (r'^no_permissions/?$', 'hq.views.no_permissions'),
     
-    (r'^report/email/?$', 'hq.views.org_email_report'),    
-    (r'^report/sms/?$', 'hq.views.org_sms_report'),    
-    
     url(r'^reporters/add/?$',         views.add_reporter,  name="add-reporter"),
     url(r'^reporters/(?P<pk>\d+)/?$', views.edit_reporter, name="view-reporter"),
        

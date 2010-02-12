@@ -50,7 +50,6 @@ logger_set = False
 @login_and_domain_required
 def dashboard(request, template_name="hq/dashboard.html"):
     context = {}
-    print "selected domain is: %s" % request.user.selected_domain
     startdate, enddate = utils.get_dates(request, 7)
     context['startdate'] = startdate
     context['enddate'] = enddate
@@ -66,75 +65,6 @@ def reporter_stats(request, template_name="hq/reporter_stats.html"):
     context['reporterstats'] = statdict    
     
     return render_to_response(request, template_name, context)
-
-@login_and_domain_required
-def org_email_report(request, template_name="hq/org_single_report.html"):
-    context = {}
-    # the decorator and middleware ensure this will be set.
-    startdate, enddate = utils.get_dates(request)
-    context['startdate'] = startdate
-    context['enddate'] = enddate    
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'hq.views.org_email_report'
-    #context['view_args'] = {"id" : id}
-    
-    # get the domain from the user, the root organization from the domain,
-    # and then the report from the root organization
-    #reporter.
-    root_orgs = Organization.objects.filter(parent=None, domain=request.user.selected_domain)
-    # note: this pretty sneakily decides for you that you only care
-    # about one root organization per domain.  should we lift this 
-    # restriction?  otherwise this may hide data from you 
-    root_org = root_orgs[0]
-    
-    # this call makes the meat of the report.
-    data = repinspector.get_data_below(Organization.objects.all()[0], startdate, enddate, 0)
-    
-    # we add one to the enddate because the db query is not inclusive.
-    if startdate == enddate:
-        heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
-    else: 
-        heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-    rendered = reporter.render_direct_email(data, startdate, enddate, 
-                                          "hq/reports/email_hierarchy_report.txt", 
-                                          {"heading" : heading })
-    context['report_display'] = rendered
-    context['report_title'] = "Submissions per day for all CHWs"
-    return render_to_response(request, template_name, context)
-
-
-@login_and_domain_required
-def org_sms_report(request, template_name="hq/org_single_report.html"):
-    context = {}
-    # the decorator and middleware ensure this will be set.
-    startdate, enddate = utils.get_dates(request)
-    context['startdate'] = startdate
-    context['enddate'] = enddate    
-    
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'hq.views.org_sms_report'
-    
-    # commented out because these reports aren't actually different reports
-    # report = ReportSchedule.objects.get(id=id)
-    # context["report"] = report
-    # get the domain from the user, the root organization from the domain,
-    # and then the report from the root organization
-    #reporter.
-    root_orgs = Organization.objects.filter(parent=None, domain=request.user.selected_domain)
-    # note: this pretty sneakily decides for you that you only care
-    # about one root organization per domain.  should we lift this 
-    # restriction?  otherwise this may hide data from you 
-    root_org = root_orgs[0]
-    
-    data = custom._get_flat_data_for_domain(request.user.selected_domain, startdate, enddate + timedelta(days=1))
-    heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-    rendered = reporter.render_direct_sms(data, startdate, enddate, 
-                                          "hq/reports/sms_organization.txt", 
-                                          {"heading" : heading })
-    context['report_display'] = rendered
-    return render_to_response(request, template_name, context)
-
-
 
 
 @login_required()

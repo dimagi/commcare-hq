@@ -32,18 +32,6 @@ class ViewsTestCase(TestCase):
         self.assertNotContains(response,"Error", status_code=200)
         self.assertNotContains(response,"Exception", status_code=200)
 
-        response = self.client.get('/report/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-
-        response = self.client.get('/report/email/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-        
-        response = self.client.get('/report/sms/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-
         response = self.client.get('/reporters/add/')
         self.assertNotContains(response,"Error", status_code=200)
         self.assertNotContains(response,"Exception", status_code=200)
