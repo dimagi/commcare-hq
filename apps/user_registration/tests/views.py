@@ -6,7 +6,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from registration import forms
+from user_registration import forms
 from user_registration.models import RegistrationProfile
 
 
