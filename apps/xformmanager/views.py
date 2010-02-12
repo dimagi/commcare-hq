@@ -322,7 +322,6 @@ def edit_form_data_group_columns(req, group_id):
                         column_obj.save()
             else:
                 pass 
-                # print "Unknown kvp: %s, %s" % (key, req.POST[key])
         # take them back to the viewing page
         return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
                                         kwargs={"group_id": group.id }))
@@ -602,7 +601,7 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
         context['filtered_by'] = clean_filters.keys()[0]
     
     if use_blacklist:
-        blacklist_users = request.user.selected_domain.get_blacklist()
+        blacklist_users = BlacklistedUser.for_domain(request.user.selected_domain)
         rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
                               blacklist=blacklist_users, column_filters=column_filters)
     else:

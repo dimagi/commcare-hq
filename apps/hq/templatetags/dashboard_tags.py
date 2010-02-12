@@ -43,8 +43,7 @@ def get_dashboard_user_counts(domain, startdate=None, enddate=None, use_blacklis
     
     username_to_count_hash = { }
     if use_blacklist:
-        # domain_blacklist = domain.get_blacklist()
-        pass # FIX TODO put this back
+        domain_blacklist = BlacklistedUser.for_domain(domain)
     for fdef in defs:
         try: 
             # don't do anything if we can't find a username column

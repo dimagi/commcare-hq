@@ -201,12 +201,22 @@ class BlacklistedUser(models.Model):
        submission logs(?), data/tabular views, etc.'''
     # this is a temporary solution until we get real reporters for everyone 
     # we care about.
-    domains = models.ManyToManyField(Domain)
+    domains = models.ManyToManyField(Domain, related_name="blacklist")
     # could use reporters here, but this will keep things simple, which is 
     # desirable for a short-term solution
     username = models.CharField(max_length=64)
     # allow temporary enabling/disabling of blacklist at a global level.
     active = models.BooleanField(default=True)
+    
+    @classmethod
+    def for_domain(cls, domain):
+        """Get a flat blacklist of names for a domain, useful for doing 
+           'in' queries or simple loops."""
+        # NOTE: using this as a blacklist check implies a list lookup for each
+        # user which could eventually get inefficient. We could make this a
+        # hashset if desired to make this O(1)
+        return domain.blacklist.filter(active=True)\
+                        .values_list('username', flat=True)        
 
     def __unicode__(self):
         return "%s in %s" %\
@@ -219,3 +229,4 @@ class BlacklistedUser(models.Model):
 # TODO: it's unclear what app reg should belong to, for now stick it in
 # the blanket "hq"
 xmlrouter.register(REGISTRATION_XMLNS, create_phone_user)
+

@@ -35,7 +35,7 @@ def blacklist(request, domain=None):
     # yikes.  we'll build it from the outside in, starting with the blacklist
     
     all_data = {}
-    domain_blacklist = domain.get_blacklist()
+    domain_blacklist = BlacklistedUser.for_domain(domain)
     
     # we need this dbhelper to do our inner queries, but might as well only
     # initialize it once. 

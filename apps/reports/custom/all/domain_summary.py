@@ -34,7 +34,7 @@ class DomainSummary(object):
         self.full_count = domain_meta.count()
         chws = domain_meta.values_list('username', flat=True).distinct()
         forms = FormDefModel.objects.filter(domain=domain)
-        blacklist = domain.get_blacklist()
+        blacklist = BlacklistedUser.for_domain(domain)
         for form in forms:
             form_metas = domain_meta.filter(formdefmodel=form)
             self.form_data.append({"form": form,
