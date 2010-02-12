@@ -76,7 +76,7 @@ class ViewsTestCase(TestCase):
 
 
     def tearDown(self):
-        user = tUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()
