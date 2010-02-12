@@ -39,7 +39,6 @@ import hq.reporter.metastats as metastats
 
 import hq.reporter.inspector as repinspector
 import hq.reporter.metadata as metadata
-from hq.decorators import extuser_required
 
 from reporters.utils import *
 from reporters.views import message, check_reporter_form, update_reporter
@@ -58,103 +57,23 @@ def dashboard(request, template_name="hq/dashboard.html"):
     context['view_name'] = 'hq.views.dashboard'
     return render_to_response(request, template_name, context)
 
-@extuser_required()
-def org_report(request, template_name="hq/org_single_report.html"):
-    context = {}
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    if extuser.organization == None:
-        orgs = Organization.objects.filter(domain=extuser.domain)
-    else:
-        orgs = [extuser.organization]
-    
-    # set some default parameters for start and end if they aren't passed in
-    # the request
-    startdate, enddate = utils.get_dates(request)
-    context['startdate'] = startdate
-    context['enddate'] = enddate        
-            
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
-    context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
-    context['view_name'] = 'hq.views.org_report'
-    
-    context['organization_data'] = {}    
-    
-    do_sms = False
-    for item in request.GET.items():
-        if item[0] == 'sms':
-            do_sms = True    
-    
-    rendered = ''
-    if startdate == enddate:
-        heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
-    else: 
-        heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
-    
-    if do_sms:
-        rendering_template = "hq/reports/sms_organization.txt"
-        renderfunc = reporter.render_direct_sms
-    else:
-        rendering_template = "hq/reports/email_hierarchy_report.txt"
-        renderfunc = reporter.render_direct_email 
-        
-        
-    for org in orgs:
-        context['organization_data'][org] = metadata.get_org_reportdata(org, startdate, enddate)
-        data = metadata.get_org_reportdata(org, startdate, enddate)
-        rendered =  rendered + "<br>" + renderfunc(data, startdate, enddate,     
-                                          rendering_template, 
-                                          {"heading" : heading })
-    context['report_display'] = rendered
-    context['report_title'] = "Submissions per day for all CHWs"
-        
-    ## this call makes the meat of the report.
-    #context['results'] = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    
-    #return render_to_response(template_name, context, context_instance=RequestContext(request))
-    return render_to_response(request, template_name, context)
 
-
-@extuser_required()
+@login_and_domain_required
 def reporter_stats(request, template_name="hq/reporter_stats.html"):
     context = {}       
     # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
-    
-    statdict = metastats.get_stats_for_domain(context['domain'])        
+    statdict = metastats.get_stats_for_domain(request.user.selected_domain)        
     context['reporterstats'] = statdict    
     
     return render_to_response(request, template_name, context)
 
-@extuser_required()
-def delinquent_report(request, template_name="hq/reports/sms_delinquent_report.txt"):
-    context = {}       
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
-    context['delinquent_reporterprofiles'] = []    
-    statdict = metastats.get_stats_for_domain(context['domain'])    
-    for reporter_profile, result in statdict.items():
-        lastseen = result['Time since last submission (days)']
-        if lastseen > 3:
-            context['delinquent_reporterprofiles'].append(reporter_profile)    
-    return render_to_response(request, template_name, context)
-
-
-@extuser_required()
+@login_and_domain_required
 def org_email_report(request, template_name="hq/org_single_report.html"):
     context = {}
     # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['view_name'] = 'hq.views.org_email_report'
     #context['view_args'] = {"id" : id}
@@ -162,7 +81,7 @@ def org_email_report(request, template_name="hq/org_single_report.html"):
     # get the domain from the user, the root organization from the domain,
     # and then the report from the root organization
     #reporter.
-    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    root_orgs = Organization.objects.filter(parent=None, domain=request.user.selected_domain)
     # note: this pretty sneakily decides for you that you only care
     # about one root organization per domain.  should we lift this 
     # restriction?  otherwise this may hide data from you 
@@ -172,7 +91,6 @@ def org_email_report(request, template_name="hq/org_single_report.html"):
     data = repinspector.get_data_below(Organization.objects.all()[0], startdate, enddate, 0)
     
     # we add one to the enddate because the db query is not inclusive.
-    #data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
     if startdate == enddate:
         heading = "Report for %s" % startdate.strftime('%m/%d/%Y') 
     else: 
@@ -185,17 +103,14 @@ def org_email_report(request, template_name="hq/org_single_report.html"):
     return render_to_response(request, template_name, context)
 
 
-@extuser_required()
+@login_and_domain_required
 def org_sms_report(request, template_name="hq/org_single_report.html"):
     context = {}
     # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
     startdate, enddate = utils.get_dates(request)
     context['startdate'] = startdate
     context['enddate'] = enddate    
     
-    context['extuser'] = extuser
-    context['domain'] = extuser.domain
     context['daterange_header'] = repinspector.get_daterange_header(startdate, enddate)
     context['view_name'] = 'hq.views.org_sms_report'
     
@@ -205,16 +120,13 @@ def org_sms_report(request, template_name="hq/org_single_report.html"):
     # get the domain from the user, the root organization from the domain,
     # and then the report from the root organization
     #reporter.
-    root_orgs = Organization.objects.filter(parent=None, domain=extuser.domain)
+    root_orgs = Organization.objects.filter(parent=None, domain=request.user.selected_domain)
     # note: this pretty sneakily decides for you that you only care
     # about one root organization per domain.  should we lift this 
     # restriction?  otherwise this may hide data from you 
     root_org = root_orgs[0]
     
-    # this call makes the meat of the report.
-    #data = repinspector.get_data_below(root_org, startdate, enddate, 0)
-    #data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
-    data = custom._get_flat_data_for_domain(extuser.domain, startdate, enddate + timedelta(days=1))
+    data = custom._get_flat_data_for_domain(request.user.selected_domain, startdate, enddate + timedelta(days=1))
     heading = "Report for period: " + startdate.strftime('%m/%d/%Y') + " - " + enddate.strftime('%m/%d/%Y')
     rendered = reporter.render_direct_sms(data, startdate, enddate, 
                                           "hq/reports/sms_organization.txt", 
@@ -244,7 +156,7 @@ def server_up(req):
     return HttpResponse("success")
 
 @require_http_methods(["GET", "POST"])
-@extuser_required()
+@login_and_domain_required
 def add_reporter(req):
     # NOTE/TODO:
     # this is largely a copy paste job from rapidsms/apps/reporters/views.py
@@ -417,11 +329,8 @@ def update_reporterprofile(req, rep, chw_id, chw_username):
                                   guid = str(uuid.uuid1()).replace('-',''))
         # reporters created through the webui automatically have the same
         # domain and organization as the creator
-        extuser = req.extuser
-        profile.domain = extuser.domain
-        if extuser.organization == None:
-            profile.organization = Organization.objects.filter(domain=extuser.domain)[0]
-        else: profile.organization = extuser.organization 
+        profile.domain = request.user.selected_domain
+         
     profile.chw_id = chw_id
     profile.chw_username = chw_username
     profile.save()
@@ -439,7 +348,7 @@ def check_profile_form(req):
     chw_id = req.POST.get("chw_id", "")
     if chw_id:
         # if chw_id is set, it must be unique for a given domain
-        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""), domain=req.extuser.domain)
+        rps = ReporterProfile.objects.filter(chw_id=req.POST.get("chw_id", ""), domain=req.user.selected_domain)
         if rps: errors['exists'] = ["chw_id"]
     return errors
 

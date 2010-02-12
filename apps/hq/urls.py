@@ -7,7 +7,6 @@ urlpatterns = patterns('',
     (r'^serverup.txt$', 'hq.views.server_up'),
     (r'^change_password/?$', 'hq.views.password_change'),
     
-    url(r'^report/?$', 'hq.views.org_report', name='org_report'),    
     (r'^no_permissions/?$', 'hq.views.no_permissions'),
     
     (r'^report/email/?$', 'hq.views.org_email_report'),    
@@ -17,7 +16,6 @@ urlpatterns = patterns('',
     url(r'^reporters/(?P<pk>\d+)/?$', views.edit_reporter, name="view-reporter"),
        
     (r'^stats/?$', 'hq.views.reporter_stats'),
-    (r'^stats/delinquents?/?$', 'hq.views.delinquent_report'),
     
     (r'', include('hq.reporter.api_.urls')),    
 )
