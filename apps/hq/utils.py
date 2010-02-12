@@ -25,11 +25,11 @@ def get_members(organization):
     """return an array of members in an organization"""
     raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
 
-def get_chart_group(extuser):
+def get_chart_group(user):
     # todo this makes a mean assumption there's only one
     # group 
     try:
-        prefs = GraphPref.objects.get(user=extuser)
+        prefs = GraphPref.objects.get(user=user)
         return  prefs.root_graphs.all()[0]
     except GraphPref.DoesNotExist:
         return None
