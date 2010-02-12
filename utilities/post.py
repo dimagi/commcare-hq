@@ -29,7 +29,7 @@ use_curl = True
 #filename = r"C:\Documents and Settings\Cory Zue\Desktop\reg.xml"
 #filename = r'C:\Source\hq\commcare-hq\tests\deployment\multipart\multipart-3.txt'
 #filename = r'C:\Source\hq\commcare-hq\tests\deployment\multipart\multipart-1.post'
-filename = r'C:\Source\hq\commcare-hq\tests\deployment\brac-chw\data\2009-05-04_073635.xml'
+filename = os.path.join(os.getcwd(), 'test-data', 'multipart-1.post')
 
 domain_name = "BRAC"
 #content_type = "text/xml"
