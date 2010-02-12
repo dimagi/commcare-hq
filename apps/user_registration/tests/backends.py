@@ -74,7 +74,7 @@ class BackendRetrievalTests(TestCase):
         passed a valid backend.
 
         """
-        self.failUnless(isinstance(get_backend('registration.backends.default.DefaultBackend'),
+        self.failUnless(isinstance(get_backend('user_registration.backends.default.DefaultBackend'),
                                    DefaultBackend))
 
     def test_backend_error_invalid(self):
@@ -84,7 +84,7 @@ class BackendRetrievalTests(TestCase):
 
         """
         self.assertRaises(ImproperlyConfigured, get_backend,
-                          'registration.backends.doesnotexist.NonExistentBackend')
+                          'user_registration.backends.doesnotexist.NonExistentBackend')
 
     def test_backend_attribute_error(self):
         """
@@ -93,7 +93,7 @@ class BackendRetrievalTests(TestCase):
         
         """
         self.assertRaises(ImproperlyConfigured, get_backend,
-                          'registration.backends.default.NonexistentBackend')
+                          'user_registration.backends.default.NonexistentBackend')
 
 
 class DefaultRegistrationBackendTests(TestCase):
@@ -237,7 +237,7 @@ class DefaultRegistrationBackendTests(TestCase):
     def test_form_class(self):
         """
         Test that the default form class returned is
-        ``registration.forms.RegistrationForm``.
+        ``user_registration.forms.RegistrationForm``.
 
         """
         self.failUnless(self.backend.get_form_class(_mock_request()) is forms.RegistrationForm)
