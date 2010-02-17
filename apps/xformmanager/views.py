@@ -613,9 +613,9 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
     context['xform'] = xform
     context['sort_descending'] = sort_descending
     context['data'] = paginate(request, rows, rows_per_page=items)
+
     # python! rebuild the query string, removing the "page" argument so it can
     # be passed on when paginating.
-    
     context['param_string_no_page'] = "&".join(['%s=%s' % (key, value)\
                                                 for key, value in request.GET.items()\
                                                 if key != "page"])
