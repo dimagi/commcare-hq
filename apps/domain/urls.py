@@ -1,6 +1,10 @@
+import sys
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from django.core.urlresolvers import reverse
+from django.contrib.auth.views import password_reset
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 import settings
 
 #
