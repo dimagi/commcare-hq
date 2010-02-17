@@ -2,6 +2,8 @@ import re
 from django import forms
 from django.contrib.auth.models import User
 
+import django_tables as tables
+
 from domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from domain.models import Domain
 from utilities.debug_client import console_msg as cm
@@ -143,3 +145,15 @@ class ResendConfirmEmailForm(_BaseForm, forms.Form):
         return data    
 
 ########################################################################################################
+
+class UpdateSelfForm(_BaseForm, forms.Form):
+    first_name  =  forms.CharField(label='First name', max_length=User._meta.get_field('first_name').max_length)
+    last_name   =  forms.CharField(label='Last (family) name', max_length=User._meta.get_field('last_name').max_length)
+    email       =  forms.EmailField(label ='Email address', max_length=User._meta.get_field('email').max_length)
+
+########################################################################################################                                   
+
+class UpdateSelfTable(tables.Table):
+    property = tables.Column(verbose_name="Property")
+    old_val= tables.Column(verbose_name="Old value")
+    new_val= tables.Column(verbose_name="New value")
