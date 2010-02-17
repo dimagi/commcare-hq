@@ -14,7 +14,7 @@ from shared import get_data_by_chw
 def chw_summary(request, domain=None):
     '''The chw_summary report'''
     if not domain:
-        domain = request.extuser.domain
+        domain = request.user.selected_domain
     # to configure these numbers use 'startdate_active', 'startdate_late', 
     # and 'enddate' in the url
     active, late, enddate = get_dates_reports(request, 30, 90)

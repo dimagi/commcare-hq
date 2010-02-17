@@ -8,7 +8,7 @@ from receiver.models import Submission, Attachment
 def domain_summary(request, domain=None, detail_view=True):
     '''Domain Admin Summary Data'''
     if not domain:
-        domain = request.extuser.domain
+        domain = request.user.selected_domain
     summary = DomainSummary(domain)
     return render_to_string("custom/all/domain_summary.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this

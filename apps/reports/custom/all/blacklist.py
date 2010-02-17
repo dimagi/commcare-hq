@@ -11,7 +11,7 @@ from hq.utils import get_dates
 def blacklist(request, domain=None):
     '''Report of who is submitting as blacklisted users'''
     if not domain:
-        domain = request.extuser.domain
+        domain = request.user.selected_domain
     startdate, enddate = get_dates(request, 7)
     if enddate < startdate:
         return '''<p><b><font color="red">The date range you selected is not valid.  
