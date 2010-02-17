@@ -1,29 +1,26 @@
-try:
-    import sys, datetime, uuid
-    from django import forms
-    from django.conf import settings
-    #from django.contrib.auth.decorators import login_required
-    from django.contrib.auth.models import User
-    from django.contrib.contenttypes.models import ContentType
-    from django.contrib.sites.models import Site
-    from django.core.urlresolvers import reverse
-    from django.core.mail import EmailMultiAlternatives, SMTPConnection
-    from django.core.paginator import Paginator, InvalidPage, EmptyPage
-    from django.db import transaction
-    from django.http import HttpResponseRedirect
-    from django.shortcuts import render_to_response
-    from django.template import RequestContext
-    
-    import django_tables as tables
-    from domain import Permissions
-    from domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-    from domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password
-    from domain.models import Domain, Membership, RegistrationRequest
-    from domain.user_registration_backend.forms import AdminRegistersUserForm
-    from user_registration.models import RegistrationProfile
-except ImportError, e:
-    print "import error: %s" % e
-    raise e
+import sys, datetime, uuid
+from django import forms
+from django.conf import settings
+#from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
+from django.core.mail import EmailMultiAlternatives, SMTPConnection
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+
+import django_tables as tables
+
+from domain import Permissions
+from domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
+from domain.models import Domain, Membership, RegistrationRequest
+from domain.user_registration_backend.forms import AdminRegistersUserForm
+from user_registration.models import RegistrationProfile
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -559,5 +556,39 @@ def edit_user(request, user_id):
    
     vals = dict(form=form, title='address book edit user in domain',form_title='Edit user - leave passwords blank if no change required')
     return render_to_response('domain/user_registration/registration_admin_does_all_form.html', vals, context_instance = RequestContext(request))
+
+########################################################################################################
+
+########################################################################################################
+
+@login_and_domain_required
+def admin_own_account_main(request):
+    return render_to_response('admin_own_account_main.html',  {}, context_instance = RequestContext(request))
+
+########################################################################################################
+
+@login_and_domain_required
+def admin_own_account_update(request):
+    if request.method == 'POST': # If the form has been submitted...
+        form = UpdateSelfForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+            user_from_db = User.objects.get(id = request.user.id)            
+            table_vals = [ {'property':form.base_fields[x].label,
+                            'old_val':user_from_db.__dict__[x],
+                            'new_val':form.cleaned_data[x]} for x in form.cleaned_data.keys() ]
+
+            table = UpdateSelfTable(table_vals, order_by=('Property',))              
+                    
+            user_from_db.__dict__.update(form.cleaned_data)
+            user_from_db.save()
+            return render_to_response('admin_own_account_update_done.html', dict(table=table), context_instance = RequestContext(request))
+    else:
+        initial_vals = {}
+        for x in UpdateSelfForm.base_fields.keys():            
+            initial_vals[x] = request.user.__dict__[x]
+        form = UpdateSelfForm(initial=initial_vals) # An unbound form - can render, but it can't validate
+
+    vals = dict(form=form)
+    return render_to_response('admin_own_account_update_form.html', vals, context_instance = RequestContext(request))
 
 ########################################################################################################
