@@ -20,8 +20,13 @@
          {%if user.is_superuser and user.is_staff %} 
                 &nbsp;&nbsp; <a href="/admin/">Admin Site</a>&nbsp;&nbsp; | 
          {% endif %}
-         &nbsp;&nbsp;<a href="{% url hq.views.password_change %}">Change Password</a>&nbsp;&nbsp; |          
+         {% if user.is_selected_dom_admin %}
+            &nbsp;&nbsp; <a href="{% url domain_admin_main %}">Domain Settings</a>&nbsp;&nbsp; | 
+         {% endif %}
+         &nbsp;&nbsp;<a href="{% url admin_own_account_main %}">Account Settings</a>&nbsp;&nbsp; |          
+         &nbsp;&nbsp;<a href="{% url docs.views.index 'help_index' %}">Help</a>&nbsp;&nbsp; |          
          &nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>          
+         
      {%else%}
          <a href="{% url webapp.views.login %}">{% trans "Log in" %}</a>
      {%endif%}
