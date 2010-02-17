@@ -1,16 +1,15 @@
-{% extends 'base.html' %}
+{% extends base_template %}
 
 {#################################################################################################################}p
 
-{% block local_stylesheets %}
+{% block hq-stylesheets %}
 <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
-{% endblock local_stylesheets %}
+{% endblock hq-stylesheets %}
 
 {#################################################################################################################}
 
-{% block window_title %}
-<title>address book user list</title>
-{% endblock window_title %}
+{% block title %}
+ user list{% endblock title %}
 
 {#################################################################################################################}
 
@@ -45,10 +44,7 @@
   {% endfor %}
     <td>
     <a href="{% url domain_edit_user user_id=row.id %}">Go</a>
-    {# Two a's, identical, because otherwise Firefox puts an annoying line under the image with the link #}
-    <a href="{% url domain_edit_user user_id=row.id %}">
-    <img src="{{MEDIA_URL}}site_media/arrow_right.gif" style="border:none" alt="Details for patient {{row.first_name}} {{row.last_name}}"/>
-    </a></td>
+    </td>
   </tr>
 {% endfor %}
 

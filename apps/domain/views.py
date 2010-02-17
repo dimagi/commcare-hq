@@ -554,7 +554,7 @@ def edit_user(request, user_id):
                        is_domain_admin=user.has_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR, do_active_test=False) )
         form = AdminEditsUserForm(user.username, editing_self, initial=initial) # An unbound form
    
-    vals = dict(form=form, title='address book edit user in domain',form_title='Edit user - leave passwords blank if no change required')
+    vals = dict(form=form, title=' edit user in domain',form_title='Edit user - leave passwords blank if no change required')
     return render_to_response('domain/user_registration/registration_admin_does_all_form.html', vals, context_instance = RequestContext(request))
 
 ########################################################################################################

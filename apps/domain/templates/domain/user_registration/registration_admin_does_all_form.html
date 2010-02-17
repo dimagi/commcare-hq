@@ -1,22 +1,21 @@
-{% extends "base.html" %}
+{% extends base_template %}
 
 {#################################################################################################################}
 
-{% block window_title %}
-<title>
+{% block title %}
+
 {% if title %}
 {{title}}
 {% else %}
-address book add user to domain</title>
+ add user to domain
 {% endif %}
-</title>
-{% endblock window_title %}
+{% endblock title %}
 
 {#################################################################################################################}
 
-{% block local_stylesheets %}
+{% block hq-stylesheets %}
 <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
-{% endblock local_stylesheets %}
+{% endblock hq-stylesheets %}
 
 {#################################################################################################################}           
 {% block content %}
