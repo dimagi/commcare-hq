@@ -4,6 +4,7 @@ import settings
 
 from xformmanager.models import FormDefModel, Metadata
 from receiver.models import Submission, Attachment
+from hq.models import BlacklistedUser
 
 def domain_summary(request, domain=None, detail_view=True):
     '''Domain Admin Summary Data'''
@@ -28,8 +29,12 @@ class DomainSummary(object):
         self.name = domain.name
         self.submissions = domain_submits.count()
         self.attachments = Attachment.objects.filter(submission__domain=domain).count()
-        self.first_submission = domain_submits.order_by("submit_time")[0].submit_time
-        self.last_submission = domain_submits.order_by("-submit_time")[0].submit_time
+        if self.submissions:
+            self.first_submission = domain_submits.order_by("submit_time")[0].submit_time
+            self.last_submission = domain_submits.order_by("-submit_time")[0].submit_time
+        else:
+            self.first_submission = None
+            self.last_submission = None
         
         self.full_count = domain_meta.count()
         chws = domain_meta.values_list('username', flat=True).distinct()

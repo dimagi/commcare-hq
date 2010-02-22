@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from xformmanager.models import Metadata
 from graphing.dbhelper import DbHelper
 from hq.utils import get_dates
+from hq.models import BlacklistedUser
 
 '''Report of Who is Submitting as Blacklisted Users'''
 
