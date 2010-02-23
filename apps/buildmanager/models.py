@@ -3,6 +3,7 @@ import logging
 import traceback
 import settings
 from datetime import datetime
+import time
 
 # make things easier so people don't have to install pygments
 try:
@@ -223,9 +224,9 @@ class ProjectBuild(models.Model):
                                                            "build_number": self.build_number,
                                                            "project_id": self.project.id})
     
-    def get_jad_filestream(self):        
+    def get_jad_filestream(self, mode='r'):        
         try:
-            fin = open(self.jad_file,'r')
+            fin = open(self.jad_file, mode)
             return fin
         except Exception, e:
             logging.error("Unable to open jadfile", extra={"exception": e, 
@@ -256,6 +257,43 @@ class ProjectBuild(models.Model):
         for line in file:
             lines.append(line.strip())
         return "<br>".join(lines)
+    
+    def get_jad_properties(self):
+        '''Reads the properties of the jad file and returns a dict'''
+        file = self.get_jad_filestream()
+        sep = ': '
+        proplines = [line.strip() for line in file.readlines() if line.strip()]
+        
+        jad_properties = {}
+        for propln in proplines:
+          i = propln.find(sep)
+          if i == -1:
+            pass #log error?
+          (propname, propvalue) = (propln[:i], propln[i+len(sep):])
+          jad_properties[propname] = propvalue
+        return jad_properties
+    
+    def write_jad(self, properties):
+        '''Write a property dictionary back to the jad file'''
+        ordered = ['MIDlet-Name', 'MIDlet-Version', 'MIDlet-Vendor', 'MIDlet-Jar-URL', 
+                   'MIDlet-Jar-Size', 'MIDlet-Info-URL', 'MIDlet-1']
+        for po in ordered:
+          if po not in properties.keys():
+            pass #log error -- required property is missing?
+        unordered = [propname for propname in properties.keys() if propname not in ordered]
+      
+        ordered.extend(sorted(unordered))
+        proplines = ['%s: %s\n' % (propname, properties[propname]) for propname in ordered]
+      
+        file = self.get_jad_filestream('w')
+        file.write(''.join(proplines))
+        file.close()
+    
+    def add_jad_properties(self, propdict):
+        '''Add properties to the jad file'''
+        props = self.get_jad_properties()
+        props.update(propdict)
+        self.write_jad(props)
     
     def get_xform_html_summary(self):
         '''This is used by the view.  It is pretty cool, but perhaps misplaced.'''
@@ -418,6 +456,19 @@ class ProjectBuild(models.Model):
         if errors:
             raise BuildError("Problem registering xforms for %s!" % self, errors)
         
+    def set_jad_released(self):
+        '''Set the appropriate 'release' properties in the jad'''
+        self.add_jad_properties({
+          'Build-Number': '*' + str(self.get_release_number()), #remove * once we get a real build number
+          'Released-on': time.strftime('%Y-%b-%d %H:%M', time.gmtime())
+        })
+        
+    #FIXME!
+    def get_release_number(self):
+        '''return an incrementing build number per released build, unique across all builds for a given commcare project'''
+        import random
+        return random.randint(1000, 9999) #return a high random number until we get the incrementing plugged in
+        
     def release(self, user):
         '''Release a build.  This does a number of things:
            1. Validates the Jar.  The specifics of this are still in flux but at the very
@@ -437,6 +488,7 @@ class ProjectBuild(models.Model):
             self.validate_jar()
             self.validate_xforms()
             self.check_and_release_xforms()
+            self.set_jad_released()
             self.status = "release"
             self.released = datetime.now()
             self.released_by = user
