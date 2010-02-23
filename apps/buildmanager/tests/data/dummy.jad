@@ -1,1 +1,13 @@
-this is a fake jar file.
+MIDlet-Name: BracCHP
+MIDlet-Version: 0.4.0
+MIDlet-Vendor: Dimagi,Inc/D-Tree Int.
+MIDlet-Jar-URL: BracCHP.jar
+MIDlet-Jar-Size: 517902
+MIDlet-Info-URL: http://commcare.cs.washington.edu
+MIDlet-1: BracCHP,,org.commcare.brac.chp.midlet.BracCHPMidlet
+CommCare-Release: false
+CommCare-ShowReminders: true
+CommCare-Version: 0.4.0
+hash-commcare-brac: 5b70aec7d694
+hash-commcare-core: 4776a96e7f62
+hash-javarosa: d67db14474ea
