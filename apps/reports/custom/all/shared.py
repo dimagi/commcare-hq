@@ -60,15 +60,10 @@ def get_form_type_to_date(map, enddate, mintime):
             chw_name = form["meta_username"]
             if form_type == 'follow':
                 available = get_value(form, '_available')
-                why_missing = get_value(form, '_why_missing')
                 if available == '1':
                     form_type = 'follow_current'
-                elif available == '0' and why_missing == 'not_home':
+                else:
                     form_type = 'follow_excused'
-            # at this point all 'follow' cases that aren't handled here default to just 'follow'
-            # ie: if the client isn't available for another reason or forms that don't have 
-            # entries for available and why_missing
-            # i need to ask Cory/Neal how to handle this (esp. client isn't available for another reason)
             if timeend > form_type_to_date[form_type] and enddate > \
                 datetime.date(timeend):
                 form_type_to_date[form_type] = timeend
@@ -94,3 +89,23 @@ def get_value(form, search_term):
         if key.endswith(search_term):
             return form[key]
     return ''
+
+def get_first(form_dates):
+    ''' Given a list of dates return the first one'''
+    if len(form_dates) == 0:
+        return ""
+    first = form_dates[0]
+    for date in form_dates:
+        if date < first:
+            first = date
+    return first
+
+def get_last(form_dates):
+    ''' Given a list of dates return the last one'''
+    if len(form_dates) == 0:
+        return ""
+    last = form_dates[0]
+    for date in form_dates:
+        if date > last:
+            last = date
+    return last

@@ -13,6 +13,7 @@ from hq.utils import paginate
 from hq.decorators import extuser_required
 
 import util
+from custom.all.shared import get_data_by_chw, get_first, get_last
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
@@ -122,3 +123,30 @@ def sql_report_csv(request, report_id):
     return format_csv(data, cols, report.title)
     
 
+@extuser_required()
+def individual_chw(request, domain_id, chw_id, enddate):
+    '''View the cases of a single chw'''
+    context = {}
+    enddate = datetime.strptime(enddate, '%m/%d/%Y').date()
+    context['chw_id'] = chw_id
+    domain = request.extuser.domain
+    case = Case.objects.get(domain=domain)
+    data_by_chw = get_data_by_chw(case)
+    chw_data = data_by_chw[chw_id]
+    all_data = []
+    for id, map in chw_data.items():
+        form_dates = []
+        for form_info in map.values():
+            for form in form_info:
+                context['chw_name'] = form["meta_username"]
+                timeend = form["meta_timeend"]
+                if datetime.date(timeend) < enddate:
+                    form_dates.append(timeend)
+        if not len(form_dates) == 0:
+            all_data.append({'case_id': id.split("|")[1], 'total_visits': 
+                             len(form_dates), 'start_date': 
+                             get_first(form_dates), 'last_visit': 
+                             get_last(form_dates)})
+    context['all_data'] = all_data
+    return render_to_response(request, "custom/all/individual_chw.html", 
+                                  context)
