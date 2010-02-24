@@ -525,7 +525,7 @@ msgstr "Umetuma fomu %(count)s wiki hii. "
 
 #: .\apps\custom\brac.py:67
 msgid "Please do your best to complete and send all the forms. "
-msgstr "tunaomba ujutahidi kukamilisha nyengine. "
+msgstr "Tunaomba ujitahidi kukamilisha nyengine. "
 
 #: .\apps\custom\brac.py:70
 #, python-format
