@@ -24,7 +24,11 @@ def chw_summary(request, domain=None):
                   depends on have been uploaded.'''
     
     data_by_chw = get_data_by_chw(case)
-    all_data=get_active_open_by_chw(data_by_chw, active, enddate)
+    all_data = {}
+    all_data['domain'] = domain.id
+    all_data['enddate'] = str(enddate.month) + "/" + str(enddate.day) + "/" +\
+         str(enddate.year)
+    all_data['data'] = get_active_open_by_chw(data_by_chw, active, enddate)
     return render_to_string("custom/all/chw_summary.html", 
                             {
                              "all_data": all_data})
@@ -53,12 +57,11 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
                     days_late = get_days_late(form_type_to_date, active)
                     days_late_list.append(days_late)
         percentage = get_percentage(count_of_open, count_of_active)
-        avg_late = get_avg_late(days_late_list)
-        data_to_display = {'chw': chw_id, 'chw_name': chw_name, 'active': 
+        avg_late = get_avg_late(days_late_list) 
+        all_data.append({'chw': chw_id, 'chw_name': chw_name, 'active': 
                            count_of_active, 'open': count_of_open, 
                            'percentage': percentage, 'last_week': 
-                           count_last_week, 'avg_late': avg_late}
-        all_data.append(data_to_display.copy()) 
+                           count_last_week, 'avg_late': avg_late}) 
     return all_data
 
 def get_form_type_to_date(map, enddate):
