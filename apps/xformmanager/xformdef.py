@@ -114,12 +114,12 @@ class ElementDef(object):
         return d
     
 class FormDef(ElementDef):
-    """ Stores metadata about forms 
-    When this code was written, I didn't realize XML requires having
-    only one root element. Ergo, the root of this xml is accessed via
-    FormDef.root (rather than just FormDef)
-    """
-
+    """Stores metadata about forms""" 
+    
+    # When this code was written, I didn't realize XML requires having
+    # only one root element. Ergo, the root of this xml is accessed via
+    # FormDef.root (rather than just FormDef)
+    
     def __init__(self, input_stream=None, child_element=None, **kwargs):
         """Either a stream pointer to an XML stream to populate this form
            or a child element to a valid element_def should be provided.
