@@ -1,9 +1,9 @@
-""" Given an xform definition, storageutility generates dynamic data tables.
+"""
+Given an xform definition, storageutility generates dynamic data tables.
 Given an xml instance, storeagutility populates the data tables.
 
 Basically, storageutility abstracts away all interaction with the database,
 and it only knows about the data structures in xformdef.py
-
 """
 
 import re
@@ -14,6 +14,7 @@ import settings
 import string
 from datetime import datetime, timedelta
 
+from stat import S_ISREG, ST_MODE
 from lxml import etree
 from MySQLdb import IntegrityError
 
@@ -25,13 +26,16 @@ from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 
-from stat import S_ISREG, ST_MODE
 
+# The maximum length a field is allowed to be.  Column names will get truncated
+# to this length if they are longer than it.
 _MAX_FIELD_NAME_LENTH = 64
 
 class StorageUtility(object):
-    """ This class handles everything that touches the database - both form and instance data."""
-    # should pull this out into a rsc file...
+    """This class handles everything that touches the database - both form and
+       instance data."""
+    
+    # should pull this out into a rsc file...  (CZUE: huh?)
     
     def __init__(self):
         # our own, transient data structure
@@ -41,10 +45,12 @@ class StorageUtility(object):
     
     @transaction.commit_on_success
     def add_schema(self, formdef):
+        """Given a xsd schema, create the django models and database
+           tables reqiured to submit data to that form."""
         formdef.force_to_valid()
         formdefmodel = FormDefModel.create_models(formdef)
         self.formdefmodel = formdefmodel
-        self.formdef = self._strip_meta_def( formdef )
+        self.formdef = formdef 
         queries = XFormDBTableCreator( self.formdef, self.formdefmodel ).create()
         self._execute_queries(queries)
         return formdefmodel
@@ -136,10 +142,9 @@ class StorageUtility(object):
         g = open( xsd_file_location ,"r")
         formdef = FormDef(g)
         formdef.force_to_valid()
-        stripped_formdef = self._strip_meta_def( formdef )
         g.close()
         self.formdef = formdef
-        return stripped_formdef
+        return formdef
     
     # note that this does not remove the file from the filesystem 
     # (by design, for security)
@@ -250,28 +255,6 @@ class StorageUtility(object):
         else:
             cursor.execute(queries)            
     
-    #TODO: commcare-specific functionality - should pull out into separate file
-    def _strip_meta_def(self, formdef):
-        """ TODO: currently, we do not strip the duplicate meta information in the xformdata
-            so as not to break dan's code (reporting/graphing). Should fix dan's code to
-            use metadata tables now.
-            
-            root_node = formdef.child_elements[0]
-            # this requires that 'meta' be the first child element within root node
-            if len( root_node.child_elements ) > 0:
-                meta_node = root_node.child_elements[0]
-                new_meta_children = []
-                if meta_node.name.lower().endswith('meta'):
-                    # this rather tedious construction is so that we can support metadata with missing fields but not lose metadata with wrong fields
-                    for element in meta_node.child_elements:
-                        field = self._data_name(meta_node.name,element.name)
-                        if field.lower() not in Metadata.fields:
-                            new_meta_children = new_meta_children + [ element ]
-                    if len(new_meta_children) > 0:
-                        meta_node.child_elements = new_meta_children
-        """
-        return formdef
-        
     def _remove_form_models(self,form='', remove_submissions=False, delete_xml=True):
         """Drop all schemas, associated tables, and files"""
         if form == '':
@@ -423,10 +406,10 @@ class XFormProcessor(object):
         return name
 
 class XFormDBTableCreator(XFormProcessor):
-    """ This class is responsible for parsing a schema and generating the corresponding
-    db tables dynamically
+    """This class is responsible for parsing a schema and generating the corresponding
+       db tables dynamically.
     
-    If there are errors, these errors will be stored in self.errors
+       If there are errors, these errors will be stored in self.errors
     """
 
     # Data types taken from mysql. 
@@ -476,9 +459,8 @@ class XFormDBTableCreator(XFormProcessor):
     } 
 
     def __init__(self, formdef, formdefmodel):
-        """
-        formdef - in memory transition object
-        formdefmodel - django model which exists for each schema registered
+        """formdef - in memory transition object
+           formdefmodel - django model which exists for each schema registered
         """
         self.formdef = formdef
         self.formdefmodel = formdefmodel
@@ -492,6 +474,7 @@ class XFormDBTableCreator(XFormProcessor):
     # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
     # (rather than just passing around tuples of strings)
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
+        
         table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version )
         
         (next_query, fields) = self._create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
@@ -609,9 +592,11 @@ class XFormDBTableCreator(XFormProcessor):
             return self.XSD_TO_DEFAULT_TYPES['default']
         
     def _truncate(self, field_name):
-        '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which is the max length allowed
-           by mysql.  This is NOT smart enough to check for conflicts, so there could
-           be issues if an xform has two very similar, very long, fields'''
+        '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which 
+           is the max length allowed by mysql.  This is NOT smart enough to 
+           check for conflicts, so there could be issues if an xform has two 
+           very similar, very long, fields.'''
+        # TODO: fix the above
         if len(field_name) > _MAX_FIELD_NAME_LENTH:
             return field_name[:_MAX_FIELD_NAME_LENTH]
         return field_name
