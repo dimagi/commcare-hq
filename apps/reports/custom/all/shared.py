@@ -15,6 +15,32 @@ def get_data_by_chw(case):
             data_by_chw[chw_id][id] = map
     return data_by_chw
 
+def get_case_info(context, chw_data, enddate, active):
+    ''' Gives information about each case of a chw'''
+    all_data = []
+    for id, map in chw_data.items():
+        form_dates = []
+        mindate = datetime(2000, 1, 1)
+        fttd = {'open': mindate, 'close': mindate, 'follow': mindate}
+        for form_id, form_info in map.items():
+            form_type = CaseFormIdentifier.objects.get(form_identifier=
+                                                       form_id.id).form_type
+            for form in form_info:
+                context['chw_name'] = form["meta_username"]
+                timeend = form["meta_timeend"]
+                if datetime.date(timeend) < enddate:
+                    form_dates.append(timeend)
+                if timeend > fttd[form_type] and enddate > datetime.date(
+                                                                    timeend):
+                    fttd[form_type] = timeend
+        status = get_status(fttd, active)
+        if not len(form_dates) == 0:
+            all_data.append({'case_id': id.split("|")[1], 'total_visits': 
+                             len(form_dates), 'start_date': 
+                             get_first(form_dates), 'last_visit': 
+                             get_last(form_dates), 'status': status})
+    context['all_data'] = all_data
+
 def get_counts(current_count, excused_count, late_count, verylate_count,
                 open_count, closed_count, chw_data, active, late, enddate):
     ''' Returns the counts of clients in different states (active, late,
@@ -109,3 +135,22 @@ def get_last(form_dates):
         if date > last:
             last = date
     return last
+
+def get_status(fttd, active):
+    ''' Returns whether active, late, or closed'''
+    if fttd['open'] > fttd['close'] or only_follow(fttd):
+        if datetime.date(fttd['open']) >= active or datetime.date(
+                                                    fttd['follow']) >= active:
+            return 'active'
+        else:
+            return 'late'
+    else:
+        return 'closed'
+
+def only_follow(fttd):
+    ''' for cases where there was no open form but there was a follow form'''
+    mindate = datetime(2000, 1, 1)
+    if fttd['open'] == mindate and fttd['follow'] > mindate:
+        return True
+    else:
+        return False
