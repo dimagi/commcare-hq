@@ -5,6 +5,15 @@ import os
 import sys
 import time
 
+
+local = False # semi convenient flip-flop for local versus remote testing
+if local:
+    sites = {"http://localhost:8000": ["brian", "test",
+                                   "localhost:8000", "Pathfinder"]}
+else: 
+    sites = {"http://staging.commcarehq.org": ["brian", "test",
+                                        "staging.commcarehq.org", "BRAC"]}
+
 class testingPost(unittest.TestCase):
 
     def setUp(self):
@@ -14,13 +23,18 @@ class testingPost(unittest.TestCase):
     
     def test_testingPost(self):
         sel = self.selenium
+        # get to the login page
         sel.open("/no_permissions?next=/")
         sel.click("link=Log in to CommcareHQ")
         sel.wait_for_page_to_load("30000")
         sel.type("id_username", user)
         sel.type("id_password", passw)
-        sel.click("//input[@value='Login']")
-     
+        sel.click("//button[@type='submit']")
+        
+        # redirects to domain selection, so just click through
+        sel.wait_for_page_to_load("30000")
+        sel.click("//button[@type='submit']")
+        
         # testing creation of xform
         sel.wait_for_page_to_load("30000")
         sel.click("link=XForms")
@@ -84,9 +98,6 @@ class testingPost(unittest.TestCase):
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(not sel.is_text_present("Sample Form 1"))
         except AssertionError, e: self.verificationErrors.append(str(e))
- 
-sites = {"http://staging.commcarehq.org": ["brian", "test",
-    "staging.commcarehq.org", "BRAC"]}
  
 if __name__ == "__main__":
     for key, value in sites.items():
