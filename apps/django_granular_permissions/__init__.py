@@ -1,5 +1,3 @@
-from django.contrib.auth.models import User, Group
-from models import Permission
 import new
 import inspect
 
@@ -33,6 +31,7 @@ class User(MetaObject):
         if self.has_row_perm(instance, perm, True, False):
             return False
         
+        from models import Permission
         permission = Permission()
         permission.content_object = instance
         permission.user = self
@@ -45,6 +44,7 @@ class User(MetaObject):
             return False
         
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         content_type = ContentType.objects.get_for_model(instance)
         objects = Permission.objects.filter(user=self, content_type__pk=content_type.id, object_id=instance.id, name=perm)
         objects.delete()
@@ -59,6 +59,7 @@ class User(MetaObject):
                 return False
 
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         content_type = ContentType.objects.get_for_model(instance)
         objects = Permission.objects.filter(user=self, content_type__pk=content_type.id, object_id=instance.id, name=perm)
         if objects.count()>0:
@@ -73,6 +74,7 @@ class User(MetaObject):
         
     def get_rows_with_permission(self, instance, perm):
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         from django.db.models import Q
         content_type = ContentType.objects.get_for_model(instance)
         objects = Permission.objects.filter(Q(user=self) | Q(group__in=self.groups.all()), content_type__pk=content_type.id, name=perm)
@@ -83,6 +85,8 @@ class Group(MetaObject):
     def add_row_perm(self, instance, perm):
         if self.has_row_perm(instance, perm):
             return False
+        
+        from models import Permission
         permission = Permission()
         permission.content_object = instance
         permission.group = self
@@ -95,6 +99,7 @@ class Group(MetaObject):
             return False
         
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         content_type = ContentType.objects.get_for_model(instance)
 # Change to this row prompted by bug report at:
 # http://github.com/ryates/django-granular-permissions-redux/issues#issue/4
@@ -104,6 +109,7 @@ class Group(MetaObject):
         
     def has_row_perm(self, instance, perm):
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         content_type = ContentType.objects.get_for_model(instance)
         objects = Permission.objects.filter(group=self, content_type__pk=content_type.id, object_id=instance.id, name=perm)
         if objects.count()>0:
@@ -113,6 +119,7 @@ class Group(MetaObject):
             
     def get_rows_with_permission(self, instance, perm):
         from django.contrib.contenttypes.models import ContentType
+        from models import Permission
         content_type = ContentType.objects.get_for_model(instance)
         objects = Permission.objects.filter(group=self, content_type__pk=contet_type.id, name=perm)
         return objects
