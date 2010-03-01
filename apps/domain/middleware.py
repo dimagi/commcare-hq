@@ -2,7 +2,6 @@ from django.conf import settings
 import django.core.exceptions
 
 from domain.models import Domain
-#from utilities.debug_client import console_msg as cm
 
 _SESSION_KEY_SELECTED_DOMAIN = '_domain_selected_domain'
 

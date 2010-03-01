@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from domain import Permissions
 from domain.forms import RegistrationRequestForm # Reuse to capture new user info
 
-from utilities.debug_client import console_msg as cm
 
 ########################################################################################################
 #

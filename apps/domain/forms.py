@@ -6,7 +6,6 @@ import django_tables as tables
 
 from domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from domain.models import Domain
-from utilities.debug_client import console_msg as cm
 
 ########################################################################################################
 #
