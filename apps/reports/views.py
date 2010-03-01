@@ -113,7 +113,7 @@ def sql_report_csv(request, report_id):
     return format_csv(data, cols, report.title)
     
 
-@extuser_required()
+@login_and_domain_required
 def individual_chw(request, domain_id, chw_id, enddate, active):
     '''View the cases of a single chw'''
     context = {}
