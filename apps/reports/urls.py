@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
     (r'^reports/$', 'reports.views.reports'),
+    (r'^reports/(?P<domain_id>\d+)/chws/(?P<chw_id>[a-zA-Z0-9\s\/\.]+)?enddate=(?P<enddate>[0-9\/]+)&startdate_active=(?P<active>[0-9\/]+)?$', 'reports.views.individual_chw'),
     (r'^reports/(?P<domain_id>\d+)/custom/(?P<report_name>.*)/?$', 'reports.views.custom_report'),
     (r'^reports/(?P<case_id>\d+)/flat/?$', 'reports.views.case_flat'),
     (r'^reports/sql/(?P<report_id>\d+)/?$', 'reports.views.sql_report'),

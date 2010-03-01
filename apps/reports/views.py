@@ -12,6 +12,7 @@ from hq.utils import paginate
 from domain.decorators import login_and_domain_required
 
 import util
+from custom.all.shared import get_data_by_chw, get_case_info
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
@@ -112,3 +113,16 @@ def sql_report_csv(request, report_id):
     return format_csv(data, cols, report.title)
     
 
+@extuser_required()
+def individual_chw(request, domain_id, chw_id, enddate, active):
+    '''View the cases of a single chw'''
+    context = {}
+    enddate = datetime.strptime(enddate, '%m/%d/%Y').date()
+    active = datetime.strptime(active, '%m/%d/%Y').date()
+    context['chw_id'] = chw_id
+    domain = request.extuser.domain
+    case = Case.objects.get(domain=domain)
+    data_by_chw = get_data_by_chw(case)
+    get_case_info(context, data_by_chw[chw_id], enddate, active)
+    return render_to_response(request, "custom/all/individual_chw.html", 
+                              context)

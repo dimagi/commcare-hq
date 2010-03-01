@@ -5,17 +5,16 @@
 		<th>Community Health Worker ID</th>
 		<th>Community Health Worker Name</th>
 		<th>Total active/Total open</th>
-		<th>Percentage active</th>
 		<th>Visits last week</th>
 		<th>Average days late</th>
 	</tr>
 	</thead>
-	{% for chw_data in all_data %}
-	<tr class="{% cycle 'odd' 'even' %}">
-		<td>{{ chw_data.chw }}</td>
+	{% for chw_data in all_data.data %}
+	
+	<tr class="{% cycle 'odd' 'even' %}" {% if not chw_data.over_ninety %} style="color:red" {% endif %}>
+		<td><a href="{% url reports.views.individual_chw all_data.domain chw_data.chw all_data.enddate all_data.startdate_active %}">{{ chw_data.chw }}</a></td>
 		<td>{{ chw_data.chw_name }}</td>
-		<td>{{ chw_data.active }}/{{ chw_data.open }}</td>
-		<td>{{ chw_data.percentage }}%</td>
+		<td>{{ chw_data.active }}/{{ chw_data.open }} ({{ chw_data.percentage }}%)</td>
 		<td>{{ chw_data.last_week }}</td>
 		<td>{{ chw_data.avg_late }}</td>
 	</tr>

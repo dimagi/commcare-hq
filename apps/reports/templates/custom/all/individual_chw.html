@@ -1,0 +1,27 @@
+{% extends base_template %}
+{% block title %}Community Health Worker Cases{% endblock %}
+{% block content %}
+<h2>Community Health Worker Cases</h2>
+<h3>CHW ID: {{chw_id}}</h3>
+<h3>CHW Name: {{ chw_name }}</h3>
+<table>
+	<thead>
+	<tr>
+		<th>Case ID</th>
+		<th>Total Visits</th>
+		<th>First Submission</th>
+		<th>Most Recent Submission</th>
+		<th>Case Status</th>
+	</tr>
+	</thead>
+	{% for case_data in all_data %}
+	<tr class="{% cycle 'odd' 'even' %}">
+		<td>{{ case_data.case_id }}</td>
+		<td>{{ case_data.total_visits }}</td>
+		<td>{{ case_data.start_date }}</td>
+		<td>{{ case_data.last_visit }}</td>
+		<td>{{ case_data.status }}</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
