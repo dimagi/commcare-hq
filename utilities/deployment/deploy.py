@@ -108,7 +108,7 @@ def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_
 
     shutil.move(archive_to_deploy, target_abs_path + archive_filename)
     
-    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-b%s-rev%s' % (build_number, revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-rev%s' % (revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
         
     p.stdin.flush()
     p.stdin.close()
