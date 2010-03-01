@@ -71,20 +71,21 @@ def _send_domain_registration_email(recipient, domain_name, guid, username):
     link = 'http://' + DNS_name + reverse('domain_registration_confirm') + guid + '/'    
     
     text_content = """
-You requested a new HQ domain - \"{0}\". To activate this domain, navigate to the following link
-{1}
-Thereafter, you'll be able to log on to your new domain with username "{2}".
+You requested a new HQ domain - \"%(domain)s\". To activate this domain, navigate to the following link
+%(link)s
+Thereafter, you'll be able to log on to your new domain with username "%(user)s".
 """
 
     html_content = """
-<p>You requested a new HQ domain - \"{0}\".</p> 
-<p>To activate this domain, click on <a href="{1}">this link</a>.</p>
+<p>You requested a new HQ domain - \"%(domain)s\".</p> 
+<p>To activate this domain, click on <a href="%(link)s">this link</a>.</p>
 <p>If your email viewer won't permit you to click on that link, cut and paste the following link into your web browser:</p>
-<p>{1}</p>
-<p>Thereafter, you'll be able to log on to your new domain with username "{2}".</p>
+<p>%(link)s</p>
+<p>Thereafter, you'll be able to log on to your new domain with username "%(user)s".</p>
 """
-    text_content = text_content.format(domain_name, link, username)
-    html_content = html_content.format(domain_name, link, username)
+    params = {"domain": domain_name, "link": link, "user": username}
+    text_content = text_content % params
+    html_content = html_content % params
      
     # http://blog.elsdoerfer.name/2009/11/09/properly-sending-contact-form-emails-and-how-to-do-it-in-django/
     #

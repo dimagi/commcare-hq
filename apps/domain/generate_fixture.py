@@ -14,10 +14,10 @@ PK_OFFSET = 2 # will vary depending on how many users are set up
 
 def gen_membership(domain, member_id, pk):
     s ="""
-- fields: {{domain: {0}, is_active: 1, member_id: {1}, member_type: 15}}
+- fields: {{domain: %s, is_active: 1, member_id: %s, member_type: 15}}
   model: domain.membership
-  pk: {2}"""
-    output = s.format(domain, member_id, pk)
+  pk: %s"""
+    output = s % (domain, member_id, pk)
     return output
 
 ###############################################################

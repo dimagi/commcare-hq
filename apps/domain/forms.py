@@ -60,9 +60,9 @@ pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}'
 
 def clean_password(txt):
     if len(txt) < min_pwd:
-        raise forms.ValidationError('Password is too short; must be at least {0:d} characters'.format(min_pwd) )
+        raise forms.ValidationError('Password is too short; must be at least %s characters' % min_pwd )
     if len(txt) > max_pwd:
-        raise forms.ValidationError('Password is too long; must be less than {0:d} characters'.format(max_pwd) )
+        raise forms.ValidationError('Password is too long; must be less than %s characters' % max_pwd )
     if not pwd_pattern.match(txt):
         raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
     return txt
