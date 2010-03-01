@@ -11,7 +11,7 @@ REDIRECT_FIELD_NAME = 'next'
 
 def _redirect_for_login_or_domain(request, redirect_field_name, where):
     path = urlquote(request.get_full_path())
-    nextURL = '{0}?{1}={2}'.format(where, redirect_field_name, path)
+    nextURL = '%s?%s=%s' % (where, redirect_field_name, path)
     return HttpResponseRedirect(nextURL)
 
 ########################################################################################################
