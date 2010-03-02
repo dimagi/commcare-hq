@@ -4,7 +4,7 @@ from receiver.tests.util import *
 
 class DeletionTestCase(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         Submission.objects.all().delete()
         Attachment.objects.all().delete()
 
