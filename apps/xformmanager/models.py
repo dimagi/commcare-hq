@@ -97,7 +97,7 @@ class FormDefModel(models.Model):
     target_namespace = models.CharField(max_length=255)
     version = models.IntegerField(null=True)
     uiversion = models.IntegerField(null=True)
-    date_created = models.DateField(auto_now=True)
+    date_created = models.DateField(default = datetime.today)
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     

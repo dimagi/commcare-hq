@@ -30,6 +30,9 @@ def submit_schema(filename, destination_url):
         conn = httplib.HTTPConnection(parsed_url.netloc)
         conn.request('POST', parsed_url.path, data, schema_dict)
         resp = conn.getresponse()
+        if resp.status != httplib.OK:
+            print "problem submitting form: %s. Code is %s." % (filename, resp.status)
+            # print "Response is: \n%s" % resp.read()  
         #results = resp.read()
     except Exception, e:
         print"problem submitting form: %s" % filename 

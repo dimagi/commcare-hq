@@ -421,7 +421,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             type = metadata["HTTP_SCHEMA_TYPE"]
             schema = request.raw_post_data
             xformmanager = XFormManager()
-            formdefmodel = xformmanager.add_schema_manually(schema, type)
+            formdefmodel = xformmanager.add_schema_manually(schema, type, domain)
         except IOError, e:
             logging.error("xformmanager.manager: " + unicode(e) )
             context['errors'] = "Could not convert xform to schema. Please verify correct xform format."
@@ -441,9 +441,12 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             transaction.rollback()                            
         else:
             formdefmodel.submit_ip = metadata['HTTP_ORIGINAL_SUBMIT_IP']
+            formdefmodel.submit_time = metadata["HTTP_ORIGINAL_SUBMIT_TIME"]
+            formdefmodel.date_created = metadata["HTTP_DATE_CREATED"]
             formdefmodel.bytes_received =  metadata['CONTENT_LENGTH']
             formdefmodel.form_display_name = metadata['HTTP_FORM_DISPLAY_NAME']                
-            formdefmodel.uploaded_by = request.user
+            if not request.user.is_anonymous():
+                formdefmodel.uploaded_by = request.user
             formdefmodel.domain = domain
             # we have the rest of the info in the metadata, but for now we
             # won't use it
