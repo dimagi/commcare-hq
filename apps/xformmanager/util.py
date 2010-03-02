@@ -14,9 +14,9 @@ MAX_MYSQL_TABLE_NAME_LENGTH = 64
 MAX_PREFIX_LENGTH= 7
 MAX_LENGTH = MAX_MYSQL_TABLE_NAME_LENGTH - MAX_PREFIX_LENGTH
 
-def format_table_name(name, version=None, prefix="schema_"):
-    """Get rid of 'http://dev.commcarehq.org/' or whatever host 
-       at the start of the xmlns."""
+def format_table_name(name, version=None, domain_name=None, prefix="schema_"):
+    """Get rid of the leading 'http://dev.commcarehq.org/' or whatever host 
+       at the start of the xmlns, to generate a table."""
     # NOTE: we may actually want these namespaces to make it to our table 
     # names eventually, though they are too long at the moment.
     r = re.match('http://[a-zA-Z\.]+/(?P<tail>.*)', name)
@@ -28,6 +28,8 @@ def format_table_name(name, version=None, prefix="schema_"):
             name = tail
     if version:
         name = "%s_%s" % ( name, version )
+    if domain_name:
+        prefix = "%s%s_" % (prefix, domain_name)
     return "%s%s" % (prefix, sanitize(name))
 
 def table_exists( table_name):
@@ -150,6 +152,7 @@ def get_sort_string(sort_column, sort_descending):
     return ""
 
 def case_insensitive_attribute(lxml_element, attribute_name):
+    # there must be a better way of finding case-insensitive attribute
     for i in lxml_element.attrib:
         if (i.lower()==attribute_name.lower()):
             return lxml_element.attrib[i]

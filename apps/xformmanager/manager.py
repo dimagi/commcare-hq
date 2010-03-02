@@ -63,33 +63,33 @@ class XFormManager(object):
             return False, e
         return True, None
 
-    def create_schema_from_file(self, new_file_name):
+    def create_schema_from_file(self, new_file_name, domain=None):
         """Given a xsd schema, create the django models and database
            tables reqiured to submit data to that form."""
         # process xsd file to FormDef object
         fout = open(new_file_name, 'r')
-        formdef = FormDef(fout)
+        formdef = FormDef(fout, domain=domain)
         fout.close()
         formdefmodel = self.su.add_schema(formdef)
         formdefmodel.xsd_file_location = new_file_name
         formdefmodel.save()
         return formdefmodel
 
-    def add_schema_manually(self, schema, type):
+    def add_schema_manually(self, schema, type, domain=None):
         """Manually register a schema."""
         file_name = self._save_schema_string_to_file(schema, type)
-        return self.create_schema_from_file(file_name)
+        return self.create_schema_from_file(file_name, domain)
 
-    def add_schema(self, file_name, input_stream):
+    def add_schema(self, file_name, input_stream, domain=None):
         """ we keep this api open for the unit tests """
         file_name = self.save_schema_POST_to_file(input_stream, file_name)
-        return self.create_schema_from_file(file_name)
+        return self.create_schema_from_file(file_name, domain)
     
-    def _add_schema_from_file(self, file_name):
+    def _add_schema_from_file(self, file_name, domain=None):
         """ we keep this api open for the unit tests """
         name = os.path.basename(file_name)
         fin = open(file_name, 'r')
-        ret = self.add_schema(name, fin)
+        ret = self.add_schema(name, fin, domain)
         fin.close()
         return ret
 

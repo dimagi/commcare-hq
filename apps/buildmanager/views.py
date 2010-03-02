@@ -213,7 +213,6 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     if request.method == 'POST':
         form = ProjectBuildForm(request.POST, request.FILES)                
         if form.is_valid():
-            # must add_schema to storage provide first since forms are dependent upon elements            
             try:                      
                 newbuild = form.save(commit=False)
                 newbuild.uploaded_by=request.user

@@ -13,8 +13,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
+from django.contrib.contenttypes import generic
 
-from domain.models import Domain
+from domain.models import Domain, Membership
 from hq.models import *
 from hq.utils import build_url
 from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
@@ -138,12 +139,13 @@ class FormDefModel(models.Model):
         """Create FormDefModel and ElementDefModel objects for a FormDef
            object."""
         fdd = FormDefModel()
-        table_name = format_table_name(formdef.target_namespace, formdef.version)
+        table_name = format_table_name(formdef.target_namespace, formdef.version, formdef.domain_name)
         fdd.name = str(formdef.name)
         fdd.form_name = table_name
         fdd.target_namespace = formdef.target_namespace
         fdd.version = formdef.version
         fdd.uiversion = formdef.uiversion
+        fdd.domain = formdef.domain
         
         try:
             fdd.save()
@@ -618,6 +620,8 @@ class FormDataGroup(models.Model):
     # I don't love these model names.  In fact I rather dislike them.  
     # Sigh.
     
+    domain = models.ForeignKey(Domain)
+        
     # Name is the internal name.  when generated from a collection of
     # forms it is the xmlns.  This should generally not be changed
     name = models.CharField(max_length=255)
@@ -732,7 +736,7 @@ class FormDataGroup(models.Model):
         
     
     @classmethod
-    def from_forms(cls, forms):
+    def from_forms(cls, forms, domain):
         """Create a group from a set of forms.  Walks through all of 
            the forms' root tables and creates columns for each column
            in the form's table.  If the column name and data type match
@@ -749,11 +753,13 @@ class FormDataGroup(models.Model):
         # forms with the same xmlns.
         name = forms[0].target_namespace
         now = datetime.utcnow()
+        
         view_name = get_unique_value(FormDataGroup.objects, "view_name", 
-                                format_table_name(name, prefix="view_"))
+                                format_table_name(name, prefix="view_", 
+                                                  domain_name=domain.name))
                     
         group = cls.objects.create(name=name, display_name=name, created=now,
-                                   view_name=view_name)
+                                   view_name=view_name, domain=domain)
         group.forms = forms
         group.save()
         for form in forms:

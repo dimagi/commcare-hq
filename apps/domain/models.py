@@ -56,7 +56,7 @@ class Domain(models.Model):
 #       (as Domain is a FK of Member)
 #
 
-member_limits = {'model__in':('user', 'patient')}
+member_limits = {'model__in':('user', 'formdatagroup')}
                                          
 class Membership(models.Model):
     domain = models.ForeignKey(Domain)

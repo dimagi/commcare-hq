@@ -426,7 +426,8 @@ class ProjectBuild(models.Model):
         for form in to_register:
             try:
                 formdefmodel = manager.add_schema(form.get_file_name(),
-                                                  form.as_filestream()) 
+                                                  form.as_filestream(),
+                                                  self.project.domain)
                 
                 upload_info = self.upload_information
                 if upload_info:
@@ -438,7 +439,6 @@ class ProjectBuild(models.Model):
                 formdefmodel.uploaded_by = user
                 formdefmodel.bytes_received =  form.size
                 formdefmodel.form_display_name = form.get_file_name()
-                formdefmodel.domain = self.project.domain
                 formdefmodel.save()                
             except Exception, e:
                 # log the error with the stack, otherwise this is hard to track down

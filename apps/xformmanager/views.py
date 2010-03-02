@@ -360,7 +360,7 @@ def create_form_data_group_from_xmlns(req):
         # this is the correct workflow.
         forms = FormDefModel.objects.filter(domain=req.user.selected_domain, 
                                             target_namespace=xmlns)
-        group = FormDataGroup.from_forms(forms)
+        group = FormDataGroup.from_forms(forms, req.user.selected_domain)
         return HttpResponseRedirect(reverse('xformmanager.views.form_data_group', 
                                             kwargs={"group_id": group.id }))
                                    
@@ -370,7 +370,7 @@ def create_form_data_group_from_xmlns(req):
 def _register_xform(request, file_name, display_name, remote_addr, file_size):
     """ does the actual creation and saving of the formdef model """
     xformmanager = XFormManager()
-    formdefmodel = xformmanager.create_schema_from_file(file_name)
+    formdefmodel = xformmanager.create_schema_from_file(file_name, request.user.selected_domain)
     formdefmodel.submit_ip = remote_addr
     formdefmodel.bytes_received =  file_size
     formdefmodel.form_display_name = display_name                

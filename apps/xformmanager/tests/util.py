@@ -48,7 +48,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
         return None
     f = open(xsd_file_path,"r")
     manager = XFormManager()
-    formdefmodel = manager.add_schema(xsd_file_name, f)
+    formdefmodel = manager.add_schema(xsd_file_name, f, domain)
     f.close()
     # fake out the form submission
     formdefmodel.submit_ip = '127.0.0.1'

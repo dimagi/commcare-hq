@@ -251,7 +251,11 @@ class StorageUtility(object):
             simple_queries = queries.split(';')
             for query in simple_queries: 
                 if len(query)>0:
-                    cursor.execute(query)
+                    try: 
+                        cursor.execute(query)
+                    except Exception, e:
+                        logging.error("problem executing query: %s.  %s" % (query, e))
+                        raise
         else:
             cursor.execute(queries)            
     
@@ -475,7 +479,7 @@ class XFormDBTableCreator(XFormProcessor):
     # (rather than just passing around tuples of strings)
     def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
         
-        table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version )
+        table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version, self.formdef.domain_name )
         
         (next_query, fields) = self._create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
         # add this later - should never be called during unit tests
@@ -499,9 +503,13 @@ class XFormDBTableCreator(XFormProcessor):
         if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
-                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
+                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + \
+                                    format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
+                                    "(id) ON DELETE SET NULL" 
             else:
-                queries = queries + " parent_id REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
+                queries = queries + " parent_id REFERENCES " + \
+                                    format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
+                                    "(id) ON DELETE SET NULL"
         else:
             queries = self._trim2chars(queries)
 
@@ -541,12 +549,12 @@ class XFormDBTableCreator(XFormProcessor):
               # repeatable elements must generate a new table
               if parent_id == '':
                   ed = ElementDefModel(form_id=self.formdefmodel.id, xpath=child.xpath, 
-                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #should parent_name be next_parent_name?
+                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
                   ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
-                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #next_parent_name
+                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name ) ) #next_parent_name
               ed.save()
               query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
               next_query = next_query + query
@@ -821,7 +829,6 @@ def is_schema_registered(target_namespace, version=None):
         return False
 
 def get_registered_table_name(xpath, target_namespace, version=None):
-    """ the correct lookup function """
-    # TODO : fix - do we need to account for UI version?
+    """From an xpath, namespace and version, get a tablename"""
     fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
     return ElementDefModel.objects.get(xpath=xpath, form=fdd).table_name
