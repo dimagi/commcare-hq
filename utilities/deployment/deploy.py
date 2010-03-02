@@ -83,7 +83,7 @@ def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_
     #chdir to where this deploy is    
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     #create the archive in the root directory where both rapidsms and commcarehq reside
-    archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
+    archive_to_deploy = os.path.join('../../../','deploy-rev%s.tar.gz' % (revision_number))
     
     #get the basedir that these reside in.  this could be arbitrary
     basedir = os.path.basename(os.path.abspath('../../')) #49120312421 or commcare-/hq   
@@ -108,7 +108,7 @@ def do_local_deploy(target_abs_path, target_deploy_path, build_number, revision_
 
     shutil.move(archive_to_deploy, target_abs_path + archive_filename)
     
-    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-b%s-rev%s' % (build_number, revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(['/var/django-sites/builds/rsdeploy.sh', 'deploy-rev%s' % (revision_number), basedir, target_deploy_path], shell=False, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
         
     p.stdin.flush()
     p.stdin.close()
@@ -132,7 +132,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     #create the archive in the root directory where both rapidsms and commcarehq reside
-    archive_to_deploy = os.path.join('../../../','deploy-b%s-rev%s.tar.gz' % (build_number, revision_number))
+    archive_to_deploy = os.path.join('../../../','deploy-rev%s.tar.gz' % (revision_number))
     
     #get the basedir that these reside in.  this could be arbitrary
     basedir = os.path.basename(os.path.abspath('../../')) #49120312421 or commcare-/hq   
@@ -167,7 +167,7 @@ def do_deploy(hostname, username, password, target_abs_path, target_deploy_path,
     
     print "sftp file transferred, remoting in to deploy archive"    
     
-    print run(transport,'/var/django-sites/builds/rsdeploy.sh  deploy-b%s-rev%s %s %s' % (build_number, revision_number,basedir, target_deploy_path))
+    print run(transport,'/var/django-sites/builds/rsdeploy.sh  deploy-rev%s %s %s' % (revision_number,basedir, target_deploy_path))
     
 #    #print run(transport, 'cd %s' %(target_abs_path))
 #    print run(transport,'sudo /etc/init.d/apache2 stop')
