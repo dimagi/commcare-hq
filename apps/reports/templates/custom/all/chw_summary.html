@@ -7,6 +7,7 @@
 		<th>Total active/Total open</th>
 		<th>Visits last week</th>
 		<th>Average days late</th>
+		<th>Late (Routine)/Late (Referral)</th>
 	</tr>
 	</thead>
 	{% for chw_data in all_data.data %}
@@ -17,6 +18,7 @@
 		<td>{{ chw_data.active }}/{{ chw_data.open }} ({{ chw_data.percentage }}%)</td>
 		<td>{{ chw_data.last_week }}</td>
 		<td>{{ chw_data.avg_late }}</td>
+		<td>{{ chw_data.reg_late }}/{{ chw_data.ref_late }}</td>
 	</tr>
 	{% endfor %}
 </table>

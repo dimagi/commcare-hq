@@ -407,6 +407,7 @@ FORM_TYPE = (
     ('open', 'Open'),
     ('close', 'Close'),
     ('follow', 'Follow'),
+    ('referral', 'Referral'),
 )
 
 class CaseFormIdentifier(models.Model):
