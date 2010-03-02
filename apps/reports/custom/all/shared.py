@@ -21,7 +21,8 @@ def get_case_info(context, chw_data, enddate, active):
     for id, map in chw_data.items():
         form_dates = []
         mindate = datetime(2000, 1, 1)
-        fttd = {'open': mindate, 'close': mindate, 'follow': mindate}
+        fttd = {'open': mindate, 'close': mindate, 'follow': mindate, 
+                'referral': mindate}
         for form_id, form_info in map.items():
             form_type = CaseFormIdentifier.objects.get(form_identifier=
                                                        form_id.id).form_type
@@ -33,7 +34,7 @@ def get_case_info(context, chw_data, enddate, active):
                 if timeend > fttd[form_type] and enddate > datetime.date(
                                                                     timeend):
                     fttd[form_type] = timeend
-        status = get_status(fttd, active)
+        status = get_status(fttd, active, enddate)
         if not len(form_dates) == 0:
             all_data.append({'case_id': id.split("|")[1], 'total_visits': 
                              len(form_dates), 'start_date': 
@@ -136,16 +137,39 @@ def get_last(form_dates):
             last = date
     return last
 
-def get_status(fttd, active):
+def get_status(fttd, active, enddate):
     ''' Returns whether active, late, or closed'''
     if fttd['open'] > fttd['close'] or only_follow(fttd):
         if datetime.date(fttd['open']) >= active or datetime.date(
                                                     fttd['follow']) >= active:
-            return 'active'
+            if referral_late(fttd, enddate, 3):
+                return 'Late (Referral)'
+            else:
+                return 'Active'
         else:
-            return 'late'
+            if referral_late(fttd, enddate, 3):
+                return 'Late (Referral)'
+            else:
+                return 'Late (Routine)'
     else:
-        return 'closed'
+        return 'Closed'
+    
+def referral_late(form_type_to_date, enddate, days_late):
+    ''' Was the last form submitted a referral form and has it 
+    been more than 3 days since that submission'''
+    referral = form_type_to_date['referral']
+    if form_type_to_date['open'] > referral:
+        return False
+    elif form_type_to_date['follow'] > referral:
+        return False
+    elif form_type_to_date['close'] > referral:
+        return False
+    else:
+        time_diff = enddate - datetime.date(referral)
+        if time_diff.days > days_late:
+            return True
+        else:
+            return False
 
 def only_follow(fttd):
     ''' for cases where there was no open form but there was a follow form'''
