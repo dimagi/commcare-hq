@@ -30,7 +30,7 @@ def format_table_name(name, version=None, domain_name=None, prefix="schema_"):
         name = "%s_%s" % ( name, version )
     if domain_name:
         prefix = "%s%s_" % (prefix, domain_name)
-    return "%s%s" % (prefix, sanitize(name))
+    return ("%s%s" % (prefix, sanitize(name))).lower()
 
 def table_exists( table_name):
     """Returns whether a table exists."""
