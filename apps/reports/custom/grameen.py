@@ -122,23 +122,31 @@ def _chw_submission_summary(request, params):
             follow_filter = False
     cols, data = report.get_data({"whereclause": whereclause})
     new_data = []
+    print form_def
     for row in data:
         new_row_data = dict(zip(cols, row))
         row_id = new_row_data["Instance ID"]
-        meta = Metadata.objects.get(formdefmodel=form_def, raw_data=row_id)
-        follow = meta.attachment.annotations.count() > 0
-        if follow_filter is not None:
-            if follow_filter and not follow:
-                # filtering on true, but none found, don't include this
-                continue
-            elif not follow_filter and follow:
-                # filtering on false, but found follows, don't include this
-                continue
+        try: 
+            meta = Metadata.objects.get(formdefmodel=form_def, raw_data=row_id)
+        except Metadata.DoesNotExist:
+            # TODO handle this better
+            pass
+        try:
+            follow = meta.attachment.annotations.count() > 0
+            if follow_filter is not None:
+                if follow_filter and not follow:
+                    # filtering on true, but none found, don't include this
+                    continue
+                elif not follow_filter and follow:
+                    # filtering on false, but found follows, don't include this
+                    continue
         
-        new_row_data["Follow up?"] = "yes" if follow else "no"
-        new_row_data["meta"] = meta
-        new_row_data["attachment"] = meta.attachment
-        new_data.append(new_row_data)
+            new_row_data["Follow up?"] = "yes" if follow else "no"
+            new_row_data["meta"] = meta
+            new_row_data["attachment"] = meta.attachment
+            new_data.append(new_row_data)
+        except Exception:
+            print "no atachment for %s" % meta
     cols = cols[:6]
     return render_to_string("custom/grameen/chw_submission_details.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
