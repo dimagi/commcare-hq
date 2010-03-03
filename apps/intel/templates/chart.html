@@ -1,6 +1,13 @@
 {% extends base_template %}
 {% load i18n %}
 {% load mainreport_tags %}
+
+{% load intel_tags %}
+
+{% block tabs %}
+	{% tabs page  %}
+{% endblock %}
+
 {% block javascripts %}
     <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>

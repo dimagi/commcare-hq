@@ -58,6 +58,8 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['chart_title'] = graph.title
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
+    
+    context['page'] = "chart"
 
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = get_graphgroup_children(rootgroup)    
