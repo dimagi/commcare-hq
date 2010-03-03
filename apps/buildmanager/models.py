@@ -108,21 +108,15 @@ UNKNOWN_IP = "0.0.0.0"
 
 BUILD_STATUS = (    
     ('build', 'Standard Build'),    
-    # CZUE: removed extraneous build types to make this as simple as possible
-    # we may want to reintroduce these down the road when we really sort
-    # out our processes
-    # ('alpha', 'Alpha'),
-    # ('beta', 'Beta'),
-    # ('rc', 'Release Candidate'),    
     ('release', 'Release'),   
 )
 
 
 class ProjectBuild(models.Model):
     '''When a jad/jar is built, it should correspond to a unique ReleasePackage
-    With all corresponding meta information on release info and build 
-    information such that it can be traced back to a url/build info in source 
-    control.'''    
+       With all corresponding meta information on release info and build 
+       information such that it can be traced back to a url/build info in source 
+       control.'''    
     project = models.ForeignKey(Project, related_name="builds")
     
     # we have it as a User instead of ExtUser here because we want our 
@@ -161,10 +155,6 @@ class ProjectBuild(models.Model):
     def __unicode__(self):
         return "%s build: %s. jad: %s, jar: %s" %\
                 (self.project, self.build_number, self.jad_file, self.jar_file)
-
-    def __unicode__(self):
-        return "%s build: %s. jad: %s, jar: %s" %\
-                (self.project, self.build_number, self.jad_file, self.jar_file)
     
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -197,6 +187,12 @@ class ProjectBuild(models.Model):
                 raise Exception ("Error, the build number must be unique for this project build: " + str(self.build_number) + " project: " + str(self.project.id))
         else:            
             super(ProjectBuild, self).save()
+    
+    def get_jar_size(self):
+        return os.path.getsize(self.jar_file)
+    
+    def get_jad_size(self):
+        return os.path.getsize(self.jad_file)
     
     def get_jar_filename(self):
         '''Returns the name (no paths) of the jar file'''

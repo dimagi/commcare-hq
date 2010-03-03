@@ -24,7 +24,7 @@ def get_zipfile(file_list):
     temp.seek(0)    
     return response
 
-def get_tarfile(file_list, output_file):
+def build_tarfile(file_list, output_file):
     """
     Creates a tarfile on disk, given a list of input files
     """
@@ -35,6 +35,14 @@ def get_tarfile(file_list, output_file):
     for file in file_list:
         tar.add(file, os.path.basename(file) )
     tar.close()
+    return tar
+
+def get_tarfile(file_list, output_file):
+    """
+    Creates a tarfile on disk, given a list of input files, 
+    and returns it as an http response.
+    """
+    tar = build_tarfile(file_list, output_file)
     fin = open(output_file, 'rb')
     wrapper = FileWrapper(fin)
     response = HttpResponse(wrapper, content_type='application/tar')
@@ -69,6 +77,9 @@ class TarCompressor(Compressor):
         tar_info = tarfile.TarInfo( name=name )
         tar_info.size = size
         self._tar.addfile(tar_info, fileobj=stream)
+    
+    def add_file(self, file):
+        self._tar.add(file, os.path.basename(file))
     
     def close(self):
         self._tar.close()
