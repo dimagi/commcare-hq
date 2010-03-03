@@ -131,6 +131,8 @@ class Mother(object):
             reg_form_data = None
             
         # set the registration data, if present
+        print data_map
+        self.mother_name = ""
         if reg_form_data: 
             self.mother_name = reg_form_data["sampledata_mother_name"]
             self.date_of_reg = reg_form_data["meta_timestart"]

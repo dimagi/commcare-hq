@@ -33,6 +33,9 @@ def hi_risk_report(request):
     '''View a single sql report.'''
     return custom_report(request, 3, "hi_risk_pregnancies", "risk")
 
+def mother_details(request):
+    pass
+    
 
 
 @login_and_domain_required
