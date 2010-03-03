@@ -10,12 +10,12 @@
 {% endblock %}
 {% block org_content %}
 
-<h2>{%trans "Activity Dashboard"%} :: {% ifequal startdate enddate %}
+<h2>{% trans "Activity Dashboard" %} :: {% ifequal startdate enddate %}
                                         {{startdate|date}}
                                       {% else %}
                                         {{startdate|date}} - {{enddate|date}}
                                       {% endifequal%}</h2>
-{% get_daterange_links view_name %}	
+{% get_daterange_links view_name %} 	
 <br>
 <h3>{%trans "Forms Submitted" %}</h3>	
 {% get_dashboard_user_counts user.selected_domain startdate enddate %}
