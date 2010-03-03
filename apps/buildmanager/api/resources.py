@@ -93,7 +93,6 @@ def _get_builds(request, domain_id=None):
             compressor.add_file(summary_tar.name)
         except Exception, e:
             logging.error("Unable to export build: %s.  Error is %s." % (build, e))
-            print "Unable to export build: %s.  Error is %s." % (build, e)
             raise
         
     compressor.close()
@@ -132,7 +131,6 @@ def _add_to_compressor(compressor, data, filename):
     
 def _add_stream_to_compressor(compressor, data, length, filename):
     """Add some data to the (assumed to be open) tar archive"""
-    print length
     compressor.add_stream(data, length, name=filename)
     
     
