@@ -10,6 +10,7 @@ from transformers.zip import get_zipfile, get_tarfile
 from xformmanager.xformdef import FormDef
 from xformmanager.models import *
 from hq.models import *
+from domain.decorators import login_and_domain_required
 
 """ changes to the API need to occur in 
 * api/urls.py (redirection)
@@ -19,9 +20,6 @@ from hq.models import *
 
 # TODO - come back and clean this up to use more of the django-rest-interface
 # goodness (i.e. reduce duplicate 'serialize' calls by using Collections)
-# TODO - pull out authentication stuff into some generic wrapper
-# if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-#    return HttpResponse("You do not have permissions to use this API.")
 
 # api/
 class XFormApi(Resource):
@@ -32,16 +30,19 @@ class XFormApi(Resource):
 
 # api/xforms
 class XFormSchemata(Resource):
+    
+    # TODO: figure out how to get the decorator to work on class methods
+    # @login_and_domain_required
     def read(self, request, template= 'api_/xforms.xml'):
         xforms = FormDefModel.objects.order_by('id')
         if not request.REQUEST.has_key('format') or request.GET['format'].lower() != 'sync':
             # temporary measure until we get server-server authentication working
             # TODO - remove
             try:
-                extuser = ExtUser.objects.get(id=request.user.id)
-            except ExtUser.DoesNotExist:
+                domain = request.user.selected_domain
+            except Exception:
                 return HttpResponseBadRequest("You do not have permission to use this API.")
-            xforms = xforms.filter(domain=extuser.domain)
+            xforms = xforms.filter(domain=domain)
         # using django's lazy queryset evaluation awesomeness
         if request.REQUEST.has_key('start-id'):
             xforms = xforms.filter(pk__gte=request.GET['start-id'])

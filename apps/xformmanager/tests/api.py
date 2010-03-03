@@ -3,7 +3,6 @@ from django.test.client import Client
 from xformmanager.tests.util import create_xsd_and_populate, clear_data
 from xformmanager.models import *
 from xformmanager.manager import XFormManager
-from hq.models import ExtUser
 from hq.tests.util import create_user_and_domain
 
 class APITestCase(TestCase):
@@ -16,6 +15,7 @@ class APITestCase(TestCase):
         user, domain = create_user_and_domain()
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", domain)
         self.client.login(username='brian',password='test')
+        self.domain = domain
 
     def test_api_calls(self):
         # test the actual URL plus the non APPEND_SLASH url
@@ -83,7 +83,7 @@ class APITestCase(TestCase):
     # TODO - flesh this out properly once we've solidified our data format
     def test_api_contents_INCOMPLETE(self):
         response = self.client.get('/api/xforms/')
-        self.assertContains(response,"schema_brac_chw_chwvisit_v0_0_1,", status_code=200)
+        self.assertContains(response,"schema_%s_brac_chw_chwvisit_v0_0_1," % self.domain.name, status_code=200)
         response = self.client.get('/api/xforms/',{'format':'json'})
         self.assertContains(response,"\"pk\": 1", status_code=200)
 

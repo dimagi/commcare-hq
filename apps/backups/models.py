@@ -1,7 +1,7 @@
 from django.db import models
 
 
-from hq.models import Domain
+from domain.models import Domain
 from receiver.models import Attachment
 import xformmanager.xmlrouter as xmlrouter
 from backups.processor import create_backup, BACKUP_XMLNS

@@ -1,0 +1,92 @@
+{% extends base_template %}
+
+{% block title %}login{% endblock title %}
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}
+      
+{% block content %}
+
+{% if next %}
+<div style="text-align:center">      
+<h4>You will be transferred to your original destination after you log in</h4>
+</div>
+{% endif %}
+<hr class="space"/>
+
+<!-- Login form -->  
+<div class="span-9 clear" style="margin-left:auto; margin-right:auto; float:none">
+<form class="sfb" name="form" method="post" action="{% url login %}">
+<h3>Login</h3>
+{% if form.non_field_errors %}
+  <div class="non_field_errors">
+  {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+{% if next %}
+<input name="next" type="hidden" value="{{next}}" />
+{% endif %}
+
+<!-- See: http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html for
+  example of multiline text associated with each input field -->
+
+{% for field in form.visible_fields %}
+  {% if field.errors %}
+    <div class="field_errors">
+    {{field.errors}}
+    </div>
+  {% endif %}
+  <div class="span-2 clear"> <div style="float:right;">
+  {{ field.label_tag }}
+  </div></div>
+  <div class="span-2">
+  {{ field }}
+  </div>
+{% endfor %}
+
+<div class="prepend-5 span-3 clear" style="margin-bottom:20px; margin-top:-18px">
+<a href="{% url password_reset_email %}">Forgot password?</a>
+</div>
+<div style="text-align: center"><button type="submit">Submit</button></div>
+</form>
+
+</div> 
+<!-- Login form -->  
+
+<hr class="space"/>
+<hr class="space"/>
+<hr class="space"/>
+<div class="span-9" style="height:1px;"></div>
+<div class="span-2"  style="border-bottom:solid 1px; margin-top:1.3em;"></div>
+<div class="span-2" style="font-size:1.5em; text-align:center;">or</div>
+<div class="span-2 last" style="border-bottom:solid 1px; margin-top:1.3em;"></div>
+
+
+<style>
+#newdom_text{     
+    border: solid 2px;
+    border-color: #a7cce2;
+    color: black;
+    display: block;
+    font-size: 1.5em;
+    margin-top: 100px;
+    padding: 15px 15px;
+    text-align: center;
+    text-decoration: none;    
+    width: 200px;
+}
+#newdom_text:hover {
+    background: steelblue;
+    border-color: #a7cce2;
+    color: white;
+}
+</style>
+
+<div style="margin:0 auto;width:230px">
+<a id="newdom_text" class="clear light_button_color light_border_color" href="{% url domain_registration_request %}">Request a new domain</a>
+<a href="{% url domain_registration_resend_confirm_email %}" style="float:right; margin-top:2px;">Resend confirm email?</a>
+</div>
+{% endblock content %}     

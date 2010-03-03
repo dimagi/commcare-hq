@@ -27,7 +27,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from hq.models import ExtUser, Domain
+from domain.models import Domain
+from django.contrib.auth.models import User
 from hq.utils import build_url
 from requestlogger.models import RequestLog
 from xformmanager.models import FormDefModel
@@ -125,18 +126,16 @@ class ProjectBuild(models.Model):
     control.'''    
     project = models.ForeignKey(Project, related_name="builds")
     
-    # we have it as a User instead of ExtUser here because we want our 
-    # build server User to be able to push to multiple domains
     uploaded_by = models.ForeignKey(User, related_name="builds_uploaded") 
     status = models.CharField(max_length=64, choices=BUILD_STATUS, default="build")
     
-    # the teamcity build number
-    build_number = models.PositiveIntegerField()
-    # the source control revision number       
-    revision_number = models.CharField(max_length=255, null=True, blank=True)
+    build_number = models.PositiveIntegerField(help_text="the teamcity build number")
     
-    # the "release" version.  e.g. 2.0.1
-    version = models.CharField(max_length=20, null=True, blank=True)
+    revision_number = models.CharField(max_length=255, null=True, blank=True, 
+                                       help_text="the source control revision number")
+    
+    version = models.CharField(max_length=20, null=True, blank=True,
+                               help_text = 'the "release" version.  e.g. 2.0.1')
     
     package_created = models.DateTimeField()    
     
@@ -427,7 +426,8 @@ class ProjectBuild(models.Model):
         for form in to_register:
             try:
                 formdefmodel = manager.add_schema(form.get_file_name(),
-                                                  form.as_filestream()) 
+                                                  form.as_filestream(),
+                                                  self.project.domain)
                 
                 upload_info = self.upload_information
                 if upload_info:
@@ -436,16 +436,9 @@ class ProjectBuild(models.Model):
                 else:
                     formdefmodel.submit_ip = UNKNOWN_IP
                     user = self.uploaded_by
-                if user:
-                    try:
-                        extuser = ExtUser.objects.get(id=user.id)
-                        formdefmodel.uploaded_by = extuser
-                    except ExtUser.DoesNotExist:
-                        # they must have just been a regular User
-                        formdefmodel.uploaded_by = None
+                formdefmodel.uploaded_by = user
                 formdefmodel.bytes_received =  form.size
                 formdefmodel.form_display_name = form.get_file_name()
-                formdefmodel.domain = self.project.domain
                 formdefmodel.save()                
             except Exception, e:
                 # log the error with the stack, otherwise this is hard to track down

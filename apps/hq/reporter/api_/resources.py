@@ -7,16 +7,10 @@ from xformmanager.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
 from hq.reporter.api_.reports import Report, DataSet, Values
 from hq.reporter.metadata import get_username_count, get_timespan
+from domain.decorators import login_and_domain_required
 
 # TODO - clean up index/value once we hash out this spec more properly
 # TODO - pull out authentication stuff into some generic wrapper
-# if ExtUser.objects.all().filter(id=request.user.id).count() == 0:
-#    return HttpResponseBadRequest("You do not have permissions to use this API.")
-
-# <HACK>
-# temporary hack for august 6 - TODO: remove
-from hq.models import Domain
-# </HACK>
 
 def report(request, ids=[], index='', value=[]):
     """ Parses GET values, calls the appropriate report, formats it, and returns """
@@ -54,6 +48,7 @@ def report(request, ids=[], index='', value=[]):
     response = responsify('xml', xml)
     return response
 
+@login_and_domain_required
 def get_report(request, ids, index, value, start_date, end_date, stats):
     """ There's probably a more generic way of hanlding this, 
     but we do need to support fairly custom titles and names for
@@ -67,6 +62,7 @@ def get_report(request, ids, index, value, start_date, end_date, stats):
         return get_daily_activity_report(request, ids, index, value, start_date, end_date, stats)
     raise Exception("Your request does not match any known reports.")
 
+@login_and_domain_required
 def get_user_activity_report(request, ids, index, value, start_date, end_date, stats):
     """ CHW Group Total Activity Report - submissions per user over time
 
@@ -79,21 +75,8 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     Returns a Report object populated with requested data. 
     
     """    
-    # TODO - filter returned data by user's domain
-    # <HACK>
-    # temporary hack to get pf api working. TODO - remove once 
-    # we figure out user authentication/login from the mobile phone
-    domain = Domain.objects.get(name='Pathfinder')
 
-    # </HACK>
-    # this is the correct way to do it. use this in the long term.
-    # try:
-    #    extuser = ExtUser.objects.get(id=request.user.id)
-    # except ExtUser.DoesNotExist:
-    #    return HttpResponseBadRequest( \
-    #        "You do not have permission to use this API.")
-    # domain = extuser.domain
-    
+    domain = request.user.selected_domain
     if not ids: raise Exception("The requested form was not found")
     
     _report = Report("CHW Group Total Activity Report")
@@ -141,6 +124,7 @@ def get_user_activity_report(request, ids, index, value, start_date, end_date, s
     _report.datasets.append(dataset)
     return _report
 
+@login_and_domain_required
 def get_daily_activity_report(request, ids, index, value, start_date, end_date, stats):
     """ CHW Daily Activity Report - submissions per day by user
 
@@ -154,21 +138,8 @@ def get_daily_activity_report(request, ids, index, value, start_date, end_date, 
     
     """
     
-    # TODO - filter returned data by user's domain
-    # <HACK>
-    # temporary hack to get pf api working. TODO - remove once 
-    # we figure out user authentication/login from the mobile phone
-    domain = Domain.objects.get(name='Pathfinder')
-
-    # </HACK>
-    # this is the correct way to do it. use this in the long term.
-    # try:
-    #    extuser = ExtUser.objects.get(id=request.user.id)
-    # except ExtUser.DoesNotExist:
-    #    return HttpResponseBadRequest( \
-    #        "You do not have permission to use this API.")
-    # domain = extuser.domain
-
+    domain = request.user.selected_domain
+    
     if request.GET.has_key('chw'): chw = request.GET['chw']
     else: raise Exception("This reports requires a CHW parameter")
 

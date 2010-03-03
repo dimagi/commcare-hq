@@ -28,7 +28,7 @@
             <li><strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong></li>
     {% endif %}
 </div>
-
+{% if form_groups %}
 <h2>{% trans "Registered XForms" %}</h2>
 
 <strong>
@@ -71,6 +71,10 @@
    
 
 </strong>
+{% else %}
+<h3 class="error">{% trans "No Forms Registered.  Upload forms below." %}</h3>
+{% endif %}
+
 <div id="xform-register-block" class="span-12">
 <h2>Register a New XForm*</h2>
 Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.

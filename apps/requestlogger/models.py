@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from hq.models import ExtUser
-from hq.models import Domain
+from domain.models import Domain
+
 
 import os
 import logging

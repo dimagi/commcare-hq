@@ -10,7 +10,8 @@ This is somewhat redundant with functionality already existent in the apps/repor
 a basic metadata query.
 """
 
-from hq.models import Domain, Organization, ReporterProfile, BlacklistedUser
+from domain.models import Domain
+from hq.models import Organization, ReporterProfile, BlacklistedUser
 from receiver.models import Submission
 from reporters.models import Reporter, ReporterGroup
 from datetime import datetime, timedelta

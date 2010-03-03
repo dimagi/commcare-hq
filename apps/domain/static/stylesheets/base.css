@@ -1,0 +1,25 @@
+.active_screen_color {background-color:#FFFFFF;}
+.bckgrnd_color       {background-color:#CCCCCC;}
+.dark_blue           {background-color:#70A7CA;}
+.light_button_color  {background-color:#EBF4FB;}
+
+.light_border_color  {border-color: #A7CCE2;}
+
+
+/* 100% container height solution taken from http://www.dave-woods.co.uk/?p=144 */ 
+
+html, body {height: 100%;}
+#main_container {min-height:100%;}
+* html #main_container {height: 100%;} /* Needed for IE6 */   
+
+body {
+    color: black; /* Make sure fonts are default black */ 
+    font-family: Calibri,"Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
+    margin: 0px;
+}
+
+div.container {
+	border-left-style:solid; 
+	border-right-style:solid; 
+	border-width:3px;
+}

@@ -1,0 +1,19 @@
+{% load i18n %}
+<div id="currentlogin-block">
+  {% if user.is_authenticated %}        
+      Logged in as <strong>{{user}}</strong>{% if user.selected_domain %} in domain <strong>{{ user.selected_domain}}</strong>{% endif %}&nbsp;&nbsp;|  
+      {% ifnotequal user.active_domains|length  1 %}
+         &nbsp;&nbsp; <a href="{%url domain_select%}">Change Domain</a>&nbsp;&nbsp; |
+      {% endifnotequal %}
+      
+      {% if user.is_selected_dom_admin %}
+         &nbsp;&nbsp; <a href="{% url domain_admin_main %}">Domain Settings</a>&nbsp;&nbsp; | 
+      {% endif %}
+      &nbsp;&nbsp;<a href="{% url admin_own_account_main %}">Account Settings</a>&nbsp;&nbsp; |          
+      &nbsp;&nbsp;<a href="{% url docs.views.index 'help_index' %}">Help</a>&nbsp;&nbsp; |          
+      &nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>          
+      
+  {%else%}
+      <a href="{% url webapp.views.login %}">{% trans "Log in" %}</a>
+  {%endif%}
+</div>

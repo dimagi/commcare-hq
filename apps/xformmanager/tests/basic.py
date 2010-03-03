@@ -10,12 +10,17 @@ class BasicTestCase(unittest.TestCase):
     
     def setUp(self):
         clear_data()
+        mockdomain = Domain.objects.get_or_create(name='basicdomain')[0]
+        self.domain = mockdomain
+    
         
     def testSaveFormData_1(self):
         """ Test basic form definition created and data saved """
-        create_xsd_and_populate("1_basic.xsd", "1_basic.xml")
+        form = create_xsd_and_populate("1_basic.xsd", "1_basic.xml", self.domain)
+        self.assertEqual(self.domain, form.domain)
+        self.assertTrue(self.domain.name in form.table_name)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_basic")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_basic")
         row = cursor.fetchone()
         self.assertEquals(row[0],1)
         self.assertEquals(row[9],"userid0")
@@ -30,7 +35,7 @@ class BasicTestCase(unittest.TestCase):
         cursor = connection.cursor()
         create_xsd_and_populate("2_types.xsd", "2_types.xml")
         if settings.DATABASE_ENGINE=='mysql' :
-            cursor.execute("DESCRIBE schema_xml_types")
+            cursor.execute("DESCRIBE schema_basicdomain_xml_types")
             row = cursor.fetchall()
             self.assertEquals(row[9][1],"varchar(255)")
             self.assertEquals(row[10][1],"int(11)")
@@ -44,7 +49,7 @@ class BasicTestCase(unittest.TestCase):
             self.assertEquals(row[18][1],"tinyint(1)")
         else:
             pass
-        cursor.execute("SELECT * FROM schema_xml_types")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_types")
         row = cursor.fetchone()
         self.assertEquals(row[9],"userid0")
         self.assertEquals(row[10],111)
@@ -83,7 +88,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test deep form definition created and data saved """
         create_xsd_and_populate("3_deep.xsd", "3_deep.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_deep")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_deep")
         row = cursor.fetchone()
         self.assertEquals(row[9],"userid0")
         self.assertEquals(row[10],"abc")
@@ -95,7 +100,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test very deep form definition created and data saved """
         create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_verydeep")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_verydeep")
         row = cursor.fetchone()
         self.assertEquals(row[9],"userid0")
         self.assertEquals(row[10],"great_grand1")
@@ -107,12 +112,12 @@ class BasicTestCase(unittest.TestCase):
         """ Test repeated form definition created and data saved """
         create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_singlerepeat")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_singlerepeat")
         row = cursor.fetchone()
         self.assertEquals(row[9],"deviceid0")
         self.assertEquals(row[10],"starttime")
         self.assertEquals(row[11],"endtime")
-        cursor.execute("SELECT * FROM schema_xml_singlerepeat_root_userid")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_singlerepeat_root_userid")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[1][1],"userid2")
@@ -125,13 +130,13 @@ class BasicTestCase(unittest.TestCase):
         """ Test nested repeated form definition created and data saved """
         create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_nestedrepeats")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_nestedrepeats")
         row = cursor.fetchone()
         self.assertEquals(row[9],"foo")
         self.assertEquals(row[10],"bar")
         self.assertEquals(row[11],"yes")
         self.assertEquals(row[12],"no")
-        cursor.execute("SELECT * FROM schema_xml_nestedrepeats_root_nested")
+        cursor.execute("SELECT * FROM schema_basicdomain_xml_nestedrepeats_root_nested")
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")
@@ -156,7 +161,7 @@ class BasicTestCase(unittest.TestCase):
         """ Test that the correct child/parent ids and tables are created """
         create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
         create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
-        fd = FormDefModel.objects.get(form_name="schema_xml_singlerepeat")
+        fd = FormDefModel.objects.get(form_name="schema_basicdomain_xml_singlerepeat")
         # test the children tables are generated with the correct parent
         edds = ElementDefModel.objects.filter(form=fd)
         self.assertEquals(len(edds),2)
@@ -164,27 +169,27 @@ class BasicTestCase(unittest.TestCase):
         top_edm = ElementDefModel.objects.get(id=fd.element.id)
         self.assertEquals(top_edm.parent, top_edm)
         # test that table name is correct
-        self.assertEquals(top_edm.table_name, "schema_xml_singlerepeat")
+        self.assertEquals(top_edm.table_name, "schema_basicdomain_xml_singlerepeat")
         # test for only one child table
         edds = ElementDefModel.objects.filter(parent=top_edm).exclude(id=top_edm.id)
         self.assertEquals(len(edds),1)
         # test that that child table's parent is 'top'
         self.assertEquals(edds[0].parent,top_edm)
         self.assertEquals(edds[0].xpath,"root/UserID")
-        self.assertEquals(edds[0].table_name,"schema_xml_singlerepeat_root_userid")
+        self.assertEquals(edds[0].table_name,"schema_basicdomain_xml_singlerepeat_root_userid")
         
         # do it all again for a second table (to make sure counts are right)
-        fd = FormDefModel.objects.get(form_name="schema_xml_nestedrepeats")
+        fd = FormDefModel.objects.get(form_name="schema_basicdomain_xml_nestedrepeats")
         edds = ElementDefModel.objects.filter(form=fd)
         self.assertEquals(len(edds),2)
         top_edm = ElementDefModel.objects.get(id=fd.element.id)
         self.assertEquals(top_edm.parent, top_edm)
-        self.assertEquals(top_edm.table_name, "schema_xml_nestedrepeats")
+        self.assertEquals(top_edm.table_name, "schema_basicdomain_xml_nestedrepeats")
         edds = ElementDefModel.objects.filter(parent=top_edm).exclude(id=top_edm.id)
         self.assertEquals(len(edds),1)
         self.assertEquals(edds[0].parent,top_edm)
         self.assertEquals(edds[0].xpath,"root/nested")
-        self.assertEquals(edds[0].table_name,"schema_xml_nestedrepeats_root_nested")
+        self.assertEquals(edds[0].table_name,"schema_basicdomain_xml_nestedrepeats_root_nested")
 
     def testGetFormDef(self):
         """ Test get_formdef """

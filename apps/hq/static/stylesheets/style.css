@@ -228,7 +228,7 @@ ul {
                 color: #fff;
                 display: block;
                 padding: 0 1em;
-                border-right: 1px solid #ffffff;
+                border-right: 1px solid #FFF;
             }
             
             #tabs li.active a,
@@ -238,13 +238,11 @@ ul {
                 
                 /* border the same color as the
                  * strip in the header-bg.png */
-                background: #c70025;
+                background: #fff;
                 border-bottom: 0;
-            
-                /* nudge the active tab
-                 * north by one pixel */
-                margin-top: -1px;
-            
+                color: #940025;
+                font-weight: bold;
+                
                 /* don't underline links, even when hovering,
                  * so we don't highlight the fact that this
                  * is a link (it's already active)  */
@@ -254,7 +252,8 @@ ul {
             /* brighten up inactive tabs when hovering */
             #tabs li a:hover,
             #page-tabs li a:hover {
-                background: #c70025;
+                background: #FFF;
+                color: #940025;
             }
 
 

@@ -17,13 +17,15 @@ import re
 import random
 
 
-def post(serverhost, domain_name):
-    create_xml()
-    filename = r'testupload.xml'
+def post(serverhost, domain_name, filename = r'testupload_tmp.xml'):
+    
+    create_temporary_xml(filename)
+    
     up = urlparse('http://%s/receiver/submit/%s' % (serverhost, domain_name))
     dict = {}
     dict['User-Agent'] = 'CCHQ-submitfromfile-python-v0.1'
     number = 0
+    file = None
     try:
         file = open(filename, "rb")
         data = file.read()
@@ -39,10 +41,15 @@ def post(serverhost, domain_name):
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e
+    finally:
+        if file:
+            file.close()
     return number
 
-def create_xml():
-    f = open("testupload.xml", "w")
+def create_temporary_xml(filename):
+    """Creates a temporary XML file in this directory to submit.  This 
+       is done to avoid duplicates"""
+    f = open(filename, "w")
     xml_to_write = "<?xml version='1.0' ?><brac xmlns=\"http://dev.commcarehq.org/BRAC/CHP/coakley\">"
     i = 1
     while i < 4:
@@ -55,3 +62,4 @@ def create_xml():
     f.write(xml_to_write)
     f.close()  
 
+    

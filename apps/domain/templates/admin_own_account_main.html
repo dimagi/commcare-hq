@@ -1,0 +1,24 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+ account administration{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2">
+<h3><strong>Administer your account</strong></h3>
+<div class="prepend-1">
+<h4><li><a href="{% url admin_own_account_update %}">Change account information (name and email)</a></li></h4>
+<h4><li><a href="{% url password_change %}">Change password</a></li></h4>
+</div>
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</a></h4>
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    
