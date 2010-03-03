@@ -4,7 +4,7 @@
 """
 import os
 from receiver import submitprocessor 
-from hq.models import Domain
+from domain.models import Domain
 import hashlib
 
 def get_full_path(file_name):

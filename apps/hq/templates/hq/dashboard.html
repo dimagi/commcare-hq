@@ -18,5 +18,5 @@
 {% get_daterange_links view_name %}	
 <br>
 <h3>{%trans "Forms Submitted" %}</h3>	
-{% get_dashboard_user_counts user startdate enddate %}
+{% get_dashboard_user_counts user.selected_domain startdate enddate %}
 {% endblock %}

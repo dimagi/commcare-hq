@@ -25,10 +25,12 @@ class DataVersioningTestCase(unittest.TestCase):
     def testFromSingle(self):
         """Tests the creation of a form group from a single form."""
         self.assertEqual(0, FormDataColumn.objects.count())
-        group = FormDataGroup.from_forms([self.original_formdef])
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
         self.assertEqual(group.columns.count(), FormDataColumn.objects.count())
         self.assertEqual(1, len(group.forms.all()))
         self.assertEqual(self.original_formdef, group.forms.all()[0])
+        self.assertEqual(dom, group.domain)
         columns = self.original_formdef.get_data_column_names()
         self.assertEqual(len(columns), len(group.columns.all()))
         for column in columns:
@@ -53,7 +55,8 @@ class DataVersioningTestCase(unittest.TestCase):
            (with different version numbers)."""
         duplicate_formdef = create_xsd_and_populate("data/versioning/base.2.xsd")
         forms = [self.original_formdef, duplicate_formdef]
-        group = FormDataGroup.from_forms(forms)
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms(forms, dom)
         self.assertEqual(2, len(group.forms.all()))
         for form in group.forms.all():
             self.assertTrue(form in forms)
@@ -77,7 +80,8 @@ class DataVersioningTestCase(unittest.TestCase):
         
         original_list = [self.original_formdef, fd2_dup, fd3_add, fd4_del, fd5_mod] 
                                           
-        group = FormDataGroup.from_forms(original_list)
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms(original_list, dom)
         self.assertEqual(5, len(group.forms.all()))
         for form in group.forms.all():
             self.assertTrue(form in original_list)

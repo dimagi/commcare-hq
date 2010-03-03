@@ -42,7 +42,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
             
             if use_blacklist:
                 if fdef.domain:
-                    blacklist = fdef.domain.get_blacklist()
+                    blacklist = BlacklistedUser.for_domain(fdef.domain)
                 else:
                     blacklist = []
             #now that we've got ALL users, we can now the count query of their occurences in the formdef tables

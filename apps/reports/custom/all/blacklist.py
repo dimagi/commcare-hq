@@ -5,13 +5,14 @@ from django.template.loader import render_to_string
 from xformmanager.models import Metadata
 from graphing.dbhelper import DbHelper
 from hq.utils import get_dates
+from hq.models import BlacklistedUser
 
 '''Report of Who is Submitting as Blacklisted Users'''
 
 def blacklist(request, domain=None):
     '''Report of who is submitting as blacklisted users'''
     if not domain:
-        domain = request.extuser.domain
+        domain = request.user.selected_domain
     startdate, enddate = get_dates(request, 7)
     if enddate < startdate:
         return '''<p><b><font color="red">The date range you selected is not valid.  
@@ -35,7 +36,7 @@ def blacklist(request, domain=None):
     # yikes.  we'll build it from the outside in, starting with the blacklist
     
     all_data = {}
-    domain_blacklist = domain.get_blacklist()
+    domain_blacklist = BlacklistedUser.for_domain(domain)
     
     # we need this dbhelper to do our inner queries, but might as well only
     # initialize it once. 

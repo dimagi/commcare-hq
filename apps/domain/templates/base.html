@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+{#################################################################################################################}      
+
+{% block base_stylesheets %}
+<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/print.css" type="text/css" media="print">
+<!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+<link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
+<script type="text/javascript" src="/static/webapp/javascripts/jquery-1.3.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/base.css?version=4" media="screen, projection">
+
+{% endblock base_stylesheets %}
+
+{#################################################################################################################}      
+
+{% block hq-stylesheets %}
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}      
+
+{% block title %}
+<title> generic title{% endblock title %}
+
+{#################################################################################################################}      
+
+</head>
+<body class="bckgrnd_color">
+<div id="main_container" class="container active_screen_color light_border_color">
+<div id="min_height_spacer" style="min-height:600px">
+
+{#################################################################################################################}
+  
+{% block header %}
+{% include "header.html" %}
+{% endblock header %}
+
+{#################################################################################################################}      
+  
+{% block content %}
+
+{% endblock content %}
+
+{#################################################################################################################}      
+</div> <!--  600px min height  -->
+<div id="footer_spacer" style="height:90px"></div> <!-- guaranteed space for the footer -->
+</div> <!-- main container -->
+
+{% block footer %}
+<div id="footer" class="clear container light_border_color" style="height:80px; padding-top:10px; margin-top:-90px;">
+{% include "footer.html" %}
+</div>
+{% endblock footer %}
+
+{#################################################################################################################}      
+
+</body> 
+</html>

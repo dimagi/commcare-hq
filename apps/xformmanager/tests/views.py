@@ -1,8 +1,9 @@
 from django.test import TestCase
 from django.test.client import Client
+from django.contrib.auth.models import User
 from xformmanager.tests.util import create_xsd_and_populate, populate
 from xformmanager.manager import XFormManager
-from hq.models import ExtUser, Domain
+from domain.models import Domain
 from hq.tests.util import create_user_and_domain
 
 class ViewsTestCase(TestCase):
@@ -61,7 +62,7 @@ class ViewsTestCase(TestCase):
         manager.remove_schema(formdef.id)
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()

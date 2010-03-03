@@ -105,7 +105,7 @@ def _chw_submission_summary(request, params):
     # had to move this form a sql report to get in the custom annotations
     # this is a pretty ugly/hacky hybrid approach, and should certainly
     # be cleaned up
-    extuser = request.extuser
+    
     # hard coded to our fixture.  bad bad!
     grameen_submission_details_id = 2
     # hard coded to our schema.  bad bad!

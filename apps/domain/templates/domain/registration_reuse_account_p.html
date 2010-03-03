@@ -1,0 +1,30 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+registration request received{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2">
+
+<h3><strong>When creating a new domain while logged in, you have two choices</strong></h3>
+<hr class="space"/>
+<div class="prepend-1">
+<h4><li><a href ="{% url domain_registration_request kind='existing_user'%}">Use your current login ({{user}}) as the initial adminstrator account in the new domain</a></li></h4>
+<h4><li><a href="{% url domain_registration_request kind='new_user'%}">Create a new administrator account in the new domain</a></li></h4>
+</div>
+<hr class="space"/>
+<h4>To continue your domain registration, please select one of the above options</h4>
+<h4>If you have not received a confirmation email for a domain you're requested with a new administrator account, <a href="{% url domain_registration_resend_confirm_email %}">you can have the mail resent.</a></h4>
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</h4>
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    

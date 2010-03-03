@@ -93,10 +93,6 @@ def _get_builds(request, domain_id=None):
             compressor.add_file(summary_tar.name)
         except Exception, e:
             logging.error("Unable to export build: %s.  Error is %s." % (build, e))
-<<<<<<< HEAD:apps/buildmanager/api/resources.py
-=======
-            print "Unable to export build: %s.  Error is %s." % (build, e)
->>>>>>> 1dff88e4f73e4eb225da6cf0d45f8cd1c6ed9e22:apps/buildmanager/api/resources.py
             raise
         
     compressor.close()

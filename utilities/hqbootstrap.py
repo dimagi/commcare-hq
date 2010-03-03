@@ -30,7 +30,7 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from hq.models import Domain
+    from domain.models import Domain
 
     hq_domain_1 = Domain()
     hq_domain_1.name = u'Pathfinder'
@@ -388,9 +388,9 @@ def run():
     hq_reporterprofile_4.active = True
     hq_reporterprofile_4.save()
 
-    from hq.models import ExtUser
+    from django.contrib.auth.models import User
 
-    hq_extuser_1 = ExtUser()
+    hq_extuser_1 = User()
     hq_extuser_1.username = u'bracadmin'
     hq_extuser_1.first_name = u''
     hq_extuser_1.last_name = u''
@@ -409,7 +409,7 @@ def run():
     hq_extuser_1.reporter = None
     hq_extuser_1.save()
 
-    hq_extuser_2 = ExtUser()
+    hq_extuser_2 = User()
     hq_extuser_2.username = u'pfadmin'
     hq_extuser_2.first_name = u''
     hq_extuser_2.last_name = u''
@@ -428,7 +428,7 @@ def run():
     hq_extuser_2.reporter = None
     hq_extuser_2.save()
 
-    hq_extuser_3 = ExtUser()
+    hq_extuser_3 = User()
     hq_extuser_3.username = u'gradmin'
     hq_extuser_3.first_name = u''
     hq_extuser_3.last_name = u''
@@ -447,7 +447,7 @@ def run():
     hq_extuser_3.reporter = None
     hq_extuser_3.save()
 
-    hq_extuser_4 = ExtUser()
+    hq_extuser_4 = User()
     hq_extuser_4.username = u'brian'
     hq_extuser_4.first_name = u''
     hq_extuser_4.last_name = u''
@@ -466,7 +466,7 @@ def run():
     hq_extuser_4.reporter = None
     hq_extuser_4.save()
 
-    hq_extuser_5 = ExtUser()
+    hq_extuser_5 = User()
     hq_extuser_5.username = u'gayo'
     hq_extuser_5.first_name = u''
     hq_extuser_5.last_name = u''
@@ -485,7 +485,7 @@ def run():
     hq_extuser_5.reporter = None
     hq_extuser_5.save()
 
-    hq_extuser_6 = ExtUser()
+    hq_extuser_6 = User()
     hq_extuser_6.username = u'pf1'
     hq_extuser_6.first_name = u''
     hq_extuser_6.last_name = u''
@@ -504,7 +504,7 @@ def run():
     hq_extuser_6.reporter = None
     hq_extuser_6.save()
 
-    hq_extuser_7 = ExtUser()
+    hq_extuser_7 = User()
     hq_extuser_7.username = u'pf2'
     hq_extuser_7.first_name = u''
     hq_extuser_7.last_name = u''
@@ -523,7 +523,7 @@ def run():
     hq_extuser_7.reporter = None
     hq_extuser_7.save()
 
-    hq_extuser_8 = ExtUser()
+    hq_extuser_8 = User()
     hq_extuser_8.username = u'br1'
     hq_extuser_8.first_name = u''
     hq_extuser_8.last_name = u''
@@ -542,7 +542,7 @@ def run():
     hq_extuser_8.reporter = None
     hq_extuser_8.save()
 
-    hq_extuser_9 = ExtUser()
+    hq_extuser_9 = User()
     hq_extuser_9.username = u'br2'
     hq_extuser_9.first_name = u''
     hq_extuser_9.last_name = u''
@@ -561,7 +561,7 @@ def run():
     hq_extuser_9.reporter = None
     hq_extuser_9.save()
 
-    hq_extuser_10 = ExtUser()
+    hq_extuser_10 = User()
     hq_extuser_10.username = u'grdoc'
     hq_extuser_10.first_name = u''
     hq_extuser_10.last_name = u''
@@ -580,7 +580,7 @@ def run():
     hq_extuser_10.reporter = None
     hq_extuser_10.save()
 
-    hq_extuser_11 = ExtUser()
+    hq_extuser_11 = User()
     hq_extuser_11.username = u'grsupervisor'
     hq_extuser_11.first_name = u''
     hq_extuser_11.last_name = u''
@@ -599,7 +599,7 @@ def run():
     hq_extuser_11.reporter = None
     hq_extuser_11.save()
 
-    hq_extuser_12 = ExtUser()
+    hq_extuser_12 = User()
     hq_extuser_12.username = u'grmobile1'
     hq_extuser_12.first_name = u''
     hq_extuser_12.last_name = u''
@@ -618,7 +618,7 @@ def run():
     hq_extuser_12.reporter = None
     hq_extuser_12.save()
 
-    hq_extuser_13 = ExtUser()
+    hq_extuser_13 = User()
     hq_extuser_13.username = u'grmobile2'
     hq_extuser_13.first_name = u''
     hq_extuser_13.last_name = u''
@@ -637,7 +637,7 @@ def run():
     hq_extuser_13.reporter = None
     hq_extuser_13.save()
 
-    hq_extuser_14 = ExtUser()
+    hq_extuser_14 = User()
     hq_extuser_14.username = u'mvpadmin'
     hq_extuser_14.first_name = u''
     hq_extuser_14.last_name = u''
@@ -656,7 +656,7 @@ def run():
     hq_extuser_14.reporter = None
     hq_extuser_14.save()
 
-    hq_extuser_15 = ExtUser()
+    hq_extuser_15 = User()
     hq_extuser_15.username = u'mvpuser1'
     hq_extuser_15.first_name = u''
     hq_extuser_15.last_name = u''

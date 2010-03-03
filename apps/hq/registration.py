@@ -13,11 +13,9 @@ import string
 import time
 from datetime import timedelta
 
-
-
-
 def autoregister_reporters(domain):
-    """Scan the metadata to see all submissions and autoregister Reporter and ReporterProfile for pending approval for the domain"""
+    """Scan the metadata to see all submissions and autoregister Reporter 
+       and ReporterProfile for pending approval for the domain"""
 
     #for a given domain, get all the formdefs
     fdefs = FormDefModel.objects.filter(domain=domain)

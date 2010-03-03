@@ -6,21 +6,32 @@ import subprocess
 from subprocess import PIPE
 
 class XFormManager(object):
-    """ This class makes the process of handling formdefs (our 
-    representation of schemas) and formdefmodels (db interaction layer),
-    completely transparent to the programmers
+    """A central location for managing xforms.  This object includes 
+       functionality to upload, insert into, and delete XForms.  The forms
+       are translated into database tables where submission data is flattened
+       out and saved for easy reporting access.
+
+       This class makes the process of handling formdefs (our representation 
+       of xform schemas) and formdefmodels (db interaction layer), completely 
+       transparent to the programmers.
     """
+    
     def __init__(self):
         self.su  = StorageUtility()
 
     def remove_schema(self, id, remove_submissions=False):
+        """Remove a schema entirely, dropping its database tables and optionally
+           deleting all submission to it as well.""" 
         self.su.remove_schema(id, remove_submissions)    
 
     def remove_data(self, formdef_id, id, remove_submission=False):
+        """Deletes a single row of data from the table, optionally 
+           deleting the original submission to it as well.""" 
         self.su.remove_instance_matching_schema(formdef_id, id, remove_submission)
         
     def save_schema_POST_to_file(self, stream, file_name):
-        """ save POST to file """
+        """Given a form post (instance) saves that form to disk, without
+           doing any additional processing."""
         try:
             type = file_name.rsplit('.',1)[1]
         except IndexError:
@@ -30,7 +41,11 @@ class XFormManager(object):
         return filename_on_disk
 
     def save_form_data(self, xml_file_name, attachment):
-        """ return True on success and False on fail """
+        """Given an attachment attempt to match it to a known (registered)
+           XForm and parse out its data, saving to the flattened tables and
+           creating metadata for it.
+           
+           Returns True on success and False on failure"""
         return self.su.save_form_data(xml_file_name, attachment)
     
     def validate_schema(self, file_name):
@@ -39,43 +54,42 @@ class XFormManager(object):
            is_valid - True if valid, False if not
            error - Relevant validation error
         """
-        #process xsd file to FormDef object
         fout = open(file_name, 'r')
         formdef = FormDef(fout)
         fout.close()
-        
         try:
             formdef.validate()
         except Exception, e:
             return False, e
         return True, None
 
-    def create_schema_from_file(self, new_file_name):
-        """ process schema """
-        #process xsd file to FormDef object
+    def create_schema_from_file(self, new_file_name, domain=None):
+        """Given a xsd schema, create the django models and database
+           tables reqiured to submit data to that form."""
+        # process xsd file to FormDef object
         fout = open(new_file_name, 'r')
-        formdef = FormDef(fout)
+        formdef = FormDef(fout, domain=domain)
         fout.close()
-        formdefmodel = self.su.add_schema (formdef)
+        formdefmodel = self.su.add_schema(formdef)
         formdefmodel.xsd_file_location = new_file_name
         formdefmodel.save()
         return formdefmodel
 
-    def add_schema_manually(self, schema, type):
-        """ manually register a schema """
+    def add_schema_manually(self, schema, type, domain=None):
+        """Manually register a schema."""
         file_name = self._save_schema_string_to_file(schema, type)
-        return self.create_schema_from_file(file_name)
+        return self.create_schema_from_file(file_name, domain)
 
-    def add_schema(self, file_name, input_stream):
+    def add_schema(self, file_name, input_stream, domain=None):
         """ we keep this api open for the unit tests """
         file_name = self.save_schema_POST_to_file(input_stream, file_name)
-        return self.create_schema_from_file(file_name)
+        return self.create_schema_from_file(file_name, domain)
     
-    def _add_schema_from_file(self, file_name):
+    def _add_schema_from_file(self, file_name, domain=None):
         """ we keep this api open for the unit tests """
         name = os.path.basename(file_name)
         fin = open(file_name, 'r')
-        ret = self.add_schema(name, fin)
+        ret = self.add_schema(name, fin, domain)
         fin.close()
         return ret
 
@@ -84,6 +98,13 @@ class XFormManager(object):
 
     
     def _save_schema_string_to_file(self, input_data, type ):
+        """Most of the 'new xform' functionality eventually ends up at this 
+           method.  Given a string of xml and a type.  If the type is an
+           XForm first saves the form to disk, then converts it to an .xsd
+           file and also saves that.  If the type is already xsd, just saves
+           it directly to disk.
+           
+           Returns the path to the newly created file."""
         transaction_str = str(uuid.uuid1())
         new_file_name = self._base_xsd_file_name(transaction_str)
         if type.lower() != "xsd":
@@ -131,7 +152,8 @@ class XFormManager(object):
                             filename_base)
         
     def _get_storage_directory(self):
-        """Where this app keeps its files"""
+        """Where this app keeps its files, which is specified in the config
+           local.ini as 'xsd_repository_path'"""
         return settings.RAPIDSMS_APPS['xformmanager']['xsd_repository_path'] 
         
     def _xsd_file_name(self, base_name):
@@ -159,8 +181,17 @@ def csv_dump(input_data):
     return _form_translate(input_data, "csvdump")
 
 def _form_translate(input_data, operation):
-    """Utility for interacting with the form_translate jar"""
-    # java -jar form_translate.jar csvdump < form.xml > output
+    """Utility for interacting with the form_translate jar, which provides 
+       functionality for a number of different useful form tools including 
+       converting a form to an xsd file, turning a form into a more readable
+       format, and generating a list of translations as an exportable .csv
+       file."""
+    
+    # In case you're trying to produce this behavior on the command line for
+    # rapid testing, the command that eventually gets called is: 
+    # java -jar form_translate.jar <operation> < form.xml > output
+    #
+    # You can pass in a filename or a full string/stream of xml data
     logging.debug ("form_translate %s: begin subprocess - java -jar form_translate.jar %s < input file > " \
                    % (operation, operation))
     p = subprocess.Popen(["java","-jar",
