@@ -14,4 +14,5 @@ urlpatterns = patterns('',
     url(r'^builds/(?P<project_id>\d+)/(?P<build_number>\d+)/(?P<filename>.*)', 'buildmanager.views.get_buildfile',name='get_buildfile'),
     url(r'^builds/show/(?P<build_id>\d+)', 'buildmanager.views.show_build', name="show_build"),   
     (r'^builds/new$', 'buildmanager.views.new_build'),
+    (r'', include('buildmanager.api.urls')),
 )
