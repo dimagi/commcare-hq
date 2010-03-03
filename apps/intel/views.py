@@ -27,12 +27,18 @@ def home(request, template_name="home.html"):
 @login_and_domain_required    
 def default_report(request):
     '''View a single sql report.'''
-    return custom_report(request, 3, "chw_submission_details")
+    return custom_report(request, 3, "chw_submission_details", "all")
+
+def hi_risk_report(request):
+    '''View a single sql report.'''
+    return custom_report(request, 3, "hi_risk_pregnancies", "risk")
+
 
 
 @login_and_domain_required
-def custom_report(request, domain_id, report_name):
+def custom_report(request, domain_id, report_name, page):
     context = {}
+    context['page'] = page
     context["report_name"] = report_name
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     # return HttpResponse(report_method(request))
