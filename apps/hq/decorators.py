@@ -13,4 +13,5 @@ def extuser_required():
             return True
         except ExtUser.DoesNotExist:
             return False
+    
     return user_passes_test(is_extuser, "/no_permissions")
