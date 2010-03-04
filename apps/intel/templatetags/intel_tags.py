@@ -19,7 +19,7 @@ def tabs(current_page):
     
     t += '''
         <li>
-            <form action="all" method="get" style="padding-left: 15px">
+            <form action="/intel/all" method="get" style="padding-left: 15px">
                 <input type="text" size="20" name="search" />&nbsp;
                 <input type="submit" value="Search by Mother Name"/>
             </form>
