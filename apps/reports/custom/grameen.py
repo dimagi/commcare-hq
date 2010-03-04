@@ -129,6 +129,14 @@ def _chw_submission_summary(request, params, format_to_str=True):
             follow_filter = True
         elif params["follow"] == "no":
             follow_filter = False
+
+    if "search" in params:
+        search = "sampledata_mother_name LIKE '%%" + params['search'] + "%%'" 
+        if whereclause.strip() == '':
+            whereclause = " WHERE %s" % search
+        else:
+            whereclause += " AND %s" % search
+
     cols, data = report.get_data({"whereclause": whereclause})
     new_data = []
     print form_def
