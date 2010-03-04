@@ -323,27 +323,33 @@ class FormDef(ElementDef):
 
     def validate(self):
         # check xmlns not none
+        namespace_help_text = "You should find the block in your xform labeled <instance> and " + \
+                              "add an xmlns attribute to the first element so it looks like: " + \
+                              '<instance><node xmlns="http://your.xmlns.goes/here">.  An xmlns ' + \
+                              "is a unique attribute that helps identify the form"
+                                       
         if not self.target_namespace:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.name)
+            raise FormDef.FormDefError("No namespace (xmlns) found in submitted form: %s" % \
+                                       self.name, FormDef.FormDefError.ERROR, namespace_help_text)
 
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
         if self.target_namespace.lower().find('www.w3.org') != -1:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.target_namespace)
+            raise FormDef.FormDefError("No unique namespace (xmlns) found in submitted form: %s" % \
+                                       self.target_namespace, FormDef.FormDefError.ERROR,
+                                       namespace_help_text)
         
         if self.version is None or self.version.strip() == "":
             raise FormDef.FormDefError("No version number found in submitted form: %s" % \
-                                       self.target_namespace)
+                                       self.target_namespace, FormDef.FormDefError.WARNING)
         if not self.version.strip().isdigit():
             # should make this into a custom exception
             raise FormDef.FormDefError("Version attribute must be an integer in xform %s but was %s" % \
-                                       (self.target_namespace, self.version))
+                                       (self.target_namespace, self.version), FormDef.FormDefError.WARNING)
 
         meta_element = self.get_meta_element()
         if not meta_element:
-            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
+            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace, FormDef.FormDefError.WARNING)
         
         meta_issues = FormDef.get_meta_validation_issues(meta_element)
         if meta_issues:
@@ -402,7 +408,19 @@ class FormDef(ElementDef):
         return d
     
     class FormDefError(Exception):
-        """ Error from FormDef Processing """
+        """Error from FormDef Processing.  Allows for specification
+           of an additional 'category' which can separate true errors
+           from warning-type errors."""
+        
+        ERROR = 1
+        WARNING = 2
+        
+        def __init__(self, message, category, help_text=""):
+            super(FormDef.FormDefError, self).__init__(message)
+            self.category = category
+            self.help_text = help_text
+            
+        
 
 class SimpleType(object):
     """ Stores type definition for simple types """

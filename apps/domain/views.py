@@ -10,7 +10,6 @@ from django.core.mail import EmailMultiAlternatives, SMTPConnection
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 import django_tables as tables
@@ -22,6 +21,7 @@ from domain.models import Domain, Membership, RegistrationRequest
 from domain.user_registration_backend.forms import AdminRegistersUserForm
 from user_registration.models import RegistrationProfile
 
+from rapidsms.webui.utils import render_to_response
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -34,7 +34,7 @@ def select( request,
     if len(domains_for_user) == 0:       
         vals = dict( error_msg = "You are not a member of any existing domains - please contact your system administrator",
                      show_homepage_link = False   )
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))
+        return render_to_response(request, 'error.html', vals)
     
     redirect_to = request.REQUEST.get(redirect_field_name, '')    
     if request.method == 'POST': # If the form has been submitted...        
@@ -58,7 +58,7 @@ def select( request,
     vals = dict( next = redirect_to,
                  form = form )
 
-    return render_to_response(domain_select_template, vals, context_instance = RequestContext(request))
+    return render_to_response(request, domain_select_template, vals)
 
 ########################################################################################################
 # 
@@ -212,7 +212,7 @@ def registration_request(request, kind=None):
         if kind is None:
             # Redirect to a page which lets user choose whether or not to create a new account
             vals = {}
-            return render_to_response('domain/registration_reuse_account_p.html', vals, context_instance = RequestContext(request))   
+            return render_to_response(request, 'domain/registration_reuse_account_p.html', vals)   
     else: # not authenticated
         kind = 'new_user' 
     assert(kind == 'existing_user' or kind == 'new_user')
@@ -229,7 +229,7 @@ def registration_request(request, kind=None):
             if reqs_today >= max_req:
                 vals = {'error_msg':'Number of domains requested today exceeds limit ('+str(max_req)+') - contact Dimagi',
                         'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+                return render_to_response(request, 'error.html', vals)   
             
             try:        
                 dom_req = _create_new_domain_request( request, kind, form, now )
@@ -241,22 +241,22 @@ def registration_request(request, kind=None):
                 vals = {'error_msg':'There was a problem with your request',
                         'error_details':sys.exc_info(),
                         'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
+                return render_to_response(request, 'error.html', vals)                   
             else:
                 transaction.commit()    
     
             # Only gets here if the database-insert try block's else clause executed
             if kind == 'existing_user':
                 vals = {'domain_name':dom_req.domain.name, 'username':request.user.username}
-                return render_to_response('domain/registration_confirmed.html', vals, context_instance = RequestContext(request))  
+                return render_to_response(request, 'domain/registration_confirmed.html', vals)
             else: # new_user
                 vals = dict(email=form.cleaned_data['email'])
-                return render_to_response('domain/registration_received.html', vals, context_instance = RequestContext(request))
+                return render_to_response(request, 'domain/registration_received.html', vals)
     else:
         form = RegistrationRequestForm(kind) # An unbound form
 
     vals = dict(form = form, kind=kind)
-    return render_to_response('domain/registration_form.html', vals, context_instance = RequestContext(request))
+    return render_to_response(request, 'domain/registration_form.html', vals)
     
 ########################################################################################################
 
@@ -269,20 +269,20 @@ def registration_confirm(request, guid=None):
     vals = {'show_homepage_link': 1 }    
     if guid is None:
         vals['error_msg'] = 'No domain activation key submitted - nothing to activate'                    
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+        return render_to_response(request, 'error.html', vals)
     
     # Does guid exist in the system?
     reqs = RegistrationRequest.objects.filter(activation_guid=guid) 
     if len(reqs) != 1:
         vals['error_msg'] = 'Submitted link is invalid - no domain with the activation key "' + guid + '" was requested'                     
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+        return render_to_response(request, 'error.html', vals)
     
     # Has guid already been confirmed?
     req = reqs[0]
     if req.domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         vals['error_msg'] = 'Domain "' +  req.domain.name + '" has already been activated - no further validation required'
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))  
+        return render_to_response(request, 'error.html', vals)
     
     # Set confirm time and IP; activate domain and new user who is in the 
     try:
@@ -298,13 +298,13 @@ def registration_confirm(request, guid=None):
         vals = {'error_msg':'There was a problem with your request',
                 'error_details':sys.exc_info(),
                 'show_homepage_link': 1 }
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+        return render_to_response(request, 'error.html', vals)
     else:
         transaction.commit()
         
     vals = {'domain_name':req.domain.name,            
             'username':req.new_user.username }
-    return render_to_response('domain/registration_confirmed.html', vals, context_instance = RequestContext(request))  
+    return render_to_response(request, 'domain/registration_confirmed.html', vals)
 
 ########################################################################################################
 #
@@ -322,22 +322,22 @@ def registration_resend_confirm_email(request):
                 vals = {'error_msg':'There was a problem with your request',
                         'error_details':sys.exc_info(),
                         'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+                return render_to_response(request, 'error.html', vals)
             else:        
                 vals = dict(email=dom_req.new_user.email)
-                return render_to_response('domain/registration_received.html', vals, context_instance = RequestContext(request))
+                return render_to_response(request, 'domain/registration_received.html', vals)
     else:
         form = ResendConfirmEmailForm()
 
     vals = dict(form=form)
-    return render_to_response('domain/registration_resend_confirm_email.html', vals, context_instance = RequestContext(request))
+    return render_to_response(request, 'domain/registration_resend_confirm_email.html', vals)
 
 ########################################################################################################
 
 @login_and_domain_required
 @domain_admin_required
 def admin_main(request):
-    return render_to_response('domain/admin_main.html',  {}, context_instance = RequestContext(request))
+    return render_to_response(request, 'domain/admin_main.html',  {})
 
 ########################################################################################################
         
@@ -382,10 +382,18 @@ def user_list_paging(request, queryset, sort_vars=None):
         users = paginator.page(page)
     except (EmptyPage, InvalidPage):
         users = paginator.page(paginator.num_pages)
-     
-    return render_to_response('domain/user_list.html', 
-                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars}, 
-                              context_instance = RequestContext(request))   
+    
+    sort_index = -1
+    counter = 0
+    for name in user_table.columns.names():
+        print name
+        if order_by == name or order_by == "-%s" % name:
+            sort_index = counter
+            break
+        counter += 1
+    return render_to_response(request, 'domain/user_list.html', 
+                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars,
+                                "sort_index": sort_index})
     
 ########################################################################################################
 
@@ -504,7 +512,7 @@ def edit_user(request, user_id):
         vals = {'error_msg':'There was a problem with your request',
               'error_details':[detail],
               'show_homepage_link': 1 }
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))
+        return render_to_response(request, 'error.html', vals)
     user = users[0]
     membership = user.domain_membership.filter(domain = request.user.selected_domain)[0]
     # Protect user from accidentally disabling himself
@@ -539,10 +547,10 @@ def edit_user(request, user_id):
                 vals = {'error_msg':'There was a problem with your request',
                         'error_details':sys.exc_info(),
                         'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
+                return render_to_response(request, 'error.html', vals)
             else:
                 transaction.commit()
-                return render_to_response('domain/user_edit_complete.html', {}, context_instance = RequestContext(request))  
+                return render_to_response(request, 'domain/user_edit_complete.html', {})
     else:
         initial = dict(first_name = user.first_name,
                        last_name = user.last_name,
@@ -556,7 +564,7 @@ def edit_user(request, user_id):
         form = AdminEditsUserForm(user.username, editing_self, initial=initial) # An unbound form
    
     vals = dict(form=form, title=' edit user in domain',form_title='Edit user - leave passwords blank if no change required')
-    return render_to_response('domain/user_registration/registration_admin_does_all_form.html', vals, context_instance = RequestContext(request))
+    return render_to_response(request, 'domain/user_registration/registration_admin_does_all_form.html', vals)
 
 ########################################################################################################
 
@@ -564,7 +572,7 @@ def edit_user(request, user_id):
 
 @login_and_domain_required
 def admin_own_account_main(request):
-    return render_to_response('admin_own_account_main.html',  {}, context_instance = RequestContext(request))
+    return render_to_response(request, 'admin_own_account_main.html',  {})
 
 ########################################################################################################
 
@@ -582,7 +590,7 @@ def admin_own_account_update(request):
                     
             user_from_db.__dict__.update(form.cleaned_data)
             user_from_db.save()
-            return render_to_response('admin_own_account_update_done.html', dict(table=table), context_instance = RequestContext(request))
+            return render_to_response(request, 'admin_own_account_update_done.html', dict(table=table))
     else:
         initial_vals = {}
         for x in UpdateSelfForm.base_fields.keys():            
@@ -590,6 +598,6 @@ def admin_own_account_update(request):
         form = UpdateSelfForm(initial=initial_vals) # An unbound form - can render, but it can't validate
 
     vals = dict(form=form)
-    return render_to_response('admin_own_account_update_form.html', vals, context_instance = RequestContext(request))
+    return render_to_response(request, 'admin_own_account_update_form.html', vals)
 
 ########################################################################################################

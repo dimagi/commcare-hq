@@ -12,20 +12,18 @@
 
 
 {% block mgr_content %}
-<div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
+<div class="fieldWrapper{% if form.message.errors %} error{% endif %}">
     {% if form.message.errors %}
-        <ol>
         {% for error in form.message.errors %}
-            <li><strong>{{ error|escape }}</strong></li>
+            <strong>{{ error|escape }}</strong>
         {% endfor %}
-        </ol>
     {% endif %}
     {{ form.message }}
 </div>
 
-<div class="fieldWrapper{% if errors %} errors{% endif %}">
+<div class="fieldWrapper{% if errors %} error{% endif %}">
     {% if errors %}
-            <li><strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong></li>
+            <strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong>
     {% endif %}
 </div>
 {% if form_groups %}

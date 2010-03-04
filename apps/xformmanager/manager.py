@@ -59,8 +59,11 @@ class XFormManager(object):
         fout.close()
         try:
             formdef.validate()
-        except Exception, e:
+        except FormDef.FormDefError, e:
             return False, e
+        except MetaDataValidationError, e:
+            return False, e
+        # other failures should propagate up the stack.
         return True, None
 
     def create_schema_from_file(self, new_file_name, domain=None):
