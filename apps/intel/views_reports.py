@@ -19,18 +19,19 @@ from transformers.csv import UnicodeWriter
 
 
 @login_and_domain_required    
-def default_report(request):
-    '''View a single sql report.'''
+def all_mothers_report(request):
+    '''View all mothers - default'''
     return custom_report(request, 3, "chw_submission_details", "all")
 
 @login_and_domain_required
 def hi_risk_report(request):
-    '''View a single sql report.'''
+    '''View only hi risk'''
     return custom_report(request, 3, "hi_risk_pregnancies", "risk")
 
 @login_and_domain_required
 def mother_details(request):
-    pass
+    '''view details for a mother'''
+    return custom_report(request, 3, "_mother_summary", "single")
     
 
 
