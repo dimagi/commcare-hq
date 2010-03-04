@@ -382,9 +382,18 @@ def user_list_paging(request, queryset, sort_vars=None):
         users = paginator.page(page)
     except (EmptyPage, InvalidPage):
         users = paginator.page(paginator.num_pages)
-     
+    
+    sort_index = -1
+    counter = 0
+    for name in user_table.columns.names():
+        print name
+        if order_by == name or order_by == "-%s" % name:
+            sort_index = counter
+            break
+        counter += 1
     return render_to_response('domain/user_list.html', 
-                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars}, 
+                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars,
+                                "sort_index": sort_index}, 
                               context_instance = RequestContext(request))   
     
 ########################################################################################################
