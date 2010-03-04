@@ -1,3 +1,3 @@
-from django.db import models
+# using the reports/graphing models. no models here - unless there's some reason in the future..
 
-# Create your Django models here, if you need them.
+from django.db import models
