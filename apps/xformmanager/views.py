@@ -85,7 +85,7 @@ def home(request, template='register_and_list_xforms.html'):
                     context['errors'] = unicode(e)
                     transaction.rollback()
                 else:
-                    is_valid, errors = xformmanager.validate_schema(file_name)
+                    is_valid, exception = xformmanager.validate_schema(file_name)
                     if is_valid:
                         try:
                             formdefmodel = _register_xform(request, file_name, \
@@ -102,16 +102,29 @@ def home(request, template='register_and_list_xforms.html'):
                             context['newsubmit'] = formdefmodel
                     else:
                         # if there are validation errors, 
-                        # redirect to the confirmation page
-                        logging.error(unicode(errors))
-                        context['errors'] = unicode(errors)
+                        # check the types.  If they are just warnings then
+                        # redirect to the confirmation page.
+                        # If they are true errors, then prevent registration
+                        # but try to explain them
+                        
+                        logging.error(unicode(exception))
+                        transaction.rollback()
+                        context['errors'] = unicode(exception)
+                        context['exception'] = exception
+                        if isinstance(exception, FormDef.FormDefError):
+                            if exception.category == FormDef.FormDefError.ERROR:
+                                # this is where we get into trouble.  Display
+                                # the error and then redirect home
+                                return render_to_response(request, 
+                                                          "xformmanager/registration_error.html", 
+                                                          context)
+                                
                         context['file_name'] = request.FILES['file'].name
                         request.session['schema_file'] = file_name
                         request.session['display_name'] = form.cleaned_data['form_display_name']
                         request.session['REMOTE_ADDR'] = request.META['REMOTE_ADDR']
                         request.session['file_size'] = request.FILES['file'].size
                         template='confirm_register.html'
-                        transaction.rollback()
                         return render_to_response(request, template, context)                    
             else:
                 transaction.rollback()
