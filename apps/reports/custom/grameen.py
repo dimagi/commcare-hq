@@ -87,18 +87,27 @@ def _get_hi_risk_reason(mom):
     if (mom.card_results_blood_group == 'bnegative'): reasons.append("b-negative blood group")
     return ", ".join(reasons)
     
-def hi_risk_pregnancies(request):
+def hi_risk_pregnancies(request, format_to_str=True):
     '''Hi-Risk Pregnancy Summary'''
     # just pass on to the helper view, but ensure that hi-risk is set to yes
     params = request.GET.copy()
     params["sampledata_hi_risk"]="yes"
-    return _chw_submission_summary(request, params)
+    return _chw_submission_summary(request, params, format_to_str)
     
-def chw_submission_details(request):
+def chw_submission_details(request, format_to_str=True):
     '''Health Worker Submission Details'''
-    return _chw_submission_summary(request, request.GET)
+    return _chw_submission_summary(request, request.GET, format_to_str)
 
-def _chw_submission_summary(request, params):
+
+def followed_up(request, format_to_str=True):
+    '''Followed Up - currently only used to display the total count in the chart view'''
+    # just pass on to the helper view, but ensure that hi-risk is set to yes
+    params = request.GET.copy()
+    params["follow"]="yes"
+    return _chw_submission_summary(request, params, format_to_str)
+
+
+def _chw_submission_summary(request, params, format_to_str=True):
     # this was made a private method so that we can call it from multiple reports
     # with an extra parameter.
     
@@ -148,7 +157,11 @@ def _chw_submission_summary(request, params):
         except Exception:
             print "no atachment for %s" % meta
     cols = cols[:6]
-    return render_to_string("custom/grameen/chw_submission_details.html", 
+    
+    if not format_to_str:
+        return cols, new_data    
+    else:
+        return render_to_string("custom/grameen/chw_submission_details.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
                              "columns": cols,
                              "data": new_data})
