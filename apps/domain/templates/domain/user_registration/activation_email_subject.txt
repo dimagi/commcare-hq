@@ -1,1 +1,1 @@
-ACTION REQUIRED WITHIN {{expiration_days}} DAYS - confirm new user account on {{site}} ({{activation_key}})
+Someone has invited you to join {{site}}!  You have {{ expiration_days }} days to accept.
