@@ -25,7 +25,7 @@ def run():
     
     # we need to carry the domains forward.  we'll just use straight up sql, which 
     # allows us to preserve ids for minimal data migration
-    
+    print "migrating existing domains" 
     try:
         cursor.execute("INSERT INTO domain_domain (SELECT id, name, true as is_active FROM hq_domain);")
     except Exception, e:
@@ -40,15 +40,41 @@ def run():
     from django.contrib.auth.models import User
     from django.contrib.contenttypes.models import ContentType
     
-    
+    print "updating domain user links"
     for user_id, domain_id in rows:
         domain = Domain.objects.get(id=domain_id)
         # create the new domain associations with the Membership objects
         ct = ContentType.objects.get_for_model(User)
-        mem = Membership(domain=domain, member_type=ct, is_active=True, member_id=user_id)
-        mem.save()        
+        Membership.objects.get_or_create(domain=domain, 
+                                         member_type=ct, 
+                                         is_active=True, 
+                                         member_id=user_id)
     
+    # Form groups got a new column (domain_id). Update the schema 
+    # accordingly 
+    print "updating form groups"
+    try:
+        cursor.execute("ALTER TABLE xformmanager_formdatagroup ADD COLUMN domain_id INT(11) NOT NULL AFTER id;")
+    except Exception, e:
+        print "Problem updating the form group table!  Your error is %s" % e
     
+    from xformmanager.models import FormDataGroup
+    default_domain = Domain.objects.all()[0]
+    try:
+        # by default set the domain to be the domain of the first form.
+        for group in FormDataGroup.objects.all():
+            if group.forms.count() > 0:
+                group.domain = group.forms.all()[0].domain
+                group.save()
+            else:
+                print "Warning: form group %s has no linked forms and will be assigned a default domain of %s" %\
+                        (group, default_domain)
+                group.domain = default_domain
+                group.save()
+                 
+    except Exception, e:
+        print "Problem updating the form group domains!  Your error is %s" % e
+        
     print "finished update"
 
 def _syncdb():
