@@ -71,10 +71,15 @@ def run():
                         (group, default_domain)
                 group.domain = default_domain
                 group.save()
-                 
     except Exception, e:
         print "Problem updating the form group domains!  Your error is %s" % e
         
+    # this rapidsms change snuck in at some point
+    try:
+        cursor.execute("ALTER TABLE reporters_persistantconnection ADD COLUMN preferred BOOLEAN NOT NULL AFTER last_seen;")
+    except Exception, e:
+        print "Problem updating the form group table!  Your error is %s" % e
+    
     print "finished update"
 
 def _syncdb():
