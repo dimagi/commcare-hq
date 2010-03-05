@@ -13,14 +13,14 @@ class ViewsTestCase(TestCase):
         self.authuser = user
         self.authuser.password = 'test'
         self.client.login(username='brian',password='test')
-        user, domain = create_user_and_domain(username='john',password='test', domain_name='otherdomain')
+        user, domain = create_user_and_domain(username='john',password='test', domain_name='seconddomain')
         self.unauthuser = user
         self.unauthuser.password = 'test'
 
     def testBasicViews(self):
         domain = Domain.objects.get(name='mockdomain')
         formdef = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", domain)
-        instance = populate("data/pf_followup_2.xml")
+        instance = populate("data/pf_followup_2.xml", domain)
 
         response = self.client.get('/xforms/')
         self.assertNotContains(response,"Error", status_code=200)

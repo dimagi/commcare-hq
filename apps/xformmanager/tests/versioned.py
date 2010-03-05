@@ -43,7 +43,7 @@ class VersionedTestCase(unittest.TestCase):
         self.assertEquals(formdefmodel.version, None)
         self.assertEquals(formdefmodel.uiversion, None)
         
-        submission = populate("data/bad_version.xml")
+        submission = populate("data/bad_version.xml", self.domain)
         # metadata version and uiversion should be empty
         m = Metadata.objects.get(attachment__submission=submission)
         self.assertEquals(m.version, None)
@@ -79,7 +79,7 @@ class VersionedTestCase(unittest.TestCase):
         self.assertEquals(int(formdefmodel.version), 2)
         self.assertEquals(int(formdefmodel.uiversion), 3)
 
-        submission = populate("data/8_singlerepeat_2.xml")
+        submission = populate("data/8_singlerepeat_2.xml", self.domain)
         m = Metadata.objects.get(attachment__submission=submission)
         self.assertEquals(int(m.version), 2)
         self.assertEquals(int(m.uiversion), 2)

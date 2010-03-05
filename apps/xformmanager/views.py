@@ -17,7 +17,7 @@ from rapidsms.webui.utils import render_to_response
 
 from xformmanager.util import get_unique_value
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
-from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer
+from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer, FormDataColumn
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from xformmanager.templatetags.xform_tags import NOT_SET
@@ -142,7 +142,8 @@ def xmlns_group(request):
     """View a group of forms for a particular xmlns."""
     xmlns = request.GET["xmlns"]
     group = FormDefModel.get_group_for_namespace(request.user.selected_domain, xmlns)
-    data_groups = FormDataGroup.objects.filter(name=xmlns)
+    
+    data_groups = FormDataGroup.objects.filter(forms__in=group.forms).distinct()
     return render_to_response(request, "xformmanager/xmlns_group.html", 
                                   {"group": group,
                                    "data_groups": data_groups
@@ -177,6 +178,7 @@ def new_form_data_group(req):
                     form_validation = "You must choose at least one form!"
                 else:
                     new_group = form.save(commit=False)
+                    new_group.domain = req.user.selected_domain
                     # TODO: better handling of the name attribute.  
                     new_group.name = get_unique_value(FormDataGroup.objects, "name", new_group.display_name)
                     forms = [FormDefModel.objects.get(id=form_id) for form_id in form_ids]
@@ -347,10 +349,6 @@ def delete_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     if req.method == 'POST':
         group.delete()
-        # TODO: should we also consider deleting all the columns
-        # attached to the form?  Currently columns can be shared
-        # except there's no UI (or use case?) for actually doing
-        # that.  Left open for now.
         return HttpResponseRedirect(reverse('xformmanager.views.home')) 
                 
             

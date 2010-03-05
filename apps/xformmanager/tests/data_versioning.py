@@ -49,7 +49,6 @@ class DataVersioningTestCase(unittest.TestCase):
         self.assertEqual(0, group.columns.count())
         self.assertEqual(0, FormDataColumn.objects.count())
         
-        
     def testFromIdentical(self):
         """Tests the creation of a form group from two identical forms
            (with different version numbers)."""
@@ -128,6 +127,39 @@ class DataVersioningTestCase(unittest.TestCase):
         self.assertTrue("root_added_field" in group.columns.values_list("name", flat=True))
         
             
+    def testDeleteClearsView(self):
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        query = "SELECT * from %s" % group.view_name
+        group.delete()
+        try:
+            query = "SELECT * from %s" % group.view_name
+            self.fail("Selecting from the view did not trigger an error after the form was deleted!")
+        except Exception, e:
+            pass
+        
+    def testFormsSharePointers(self):
+        # make two groups from the same forms.  These should share columns
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        num_cols = group.columns.count()
+        self.assertEqual(num_cols, FormDataPointer.objects.count())
+        group2 = FormDataGroup.from_forms([self.original_formdef], dom) 
+        self.assertEqual(num_cols, FormDataPointer.objects.count())
+        
+        
+    def testDeleteClearsColumns(self):
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        num_cols = group.columns.count()
+        self.assertEqual(num_cols, FormDataColumn.objects.count())
+        
+        # this should clear the columns
+        group.delete()
+        self.assertEqual(0, FormDataColumn.objects.count())
+        self.assertEqual(0, FormDataPointer.objects.count())
+        
+        
     def _check_columns(self, form, group):
         columns = form.get_data_column_names()
         column_types = form.get_data_column_types()

@@ -599,9 +599,18 @@ class FormDataColumn(models.Model):
     # The data type is defined at the column level.  Currently you cannot
     # mix strings, ints, etc. at the column level.  This is intentional.
     data_type = models.CharField(max_length=20)
-    fields = models.ManyToManyField(FormDataPointer)
+    fields = models.ManyToManyField(FormDataPointer, related_name="columns")
     
-
+    def delete(self, *args, **kwargs):
+        """Override delete - if the deletion of this object leaves a dangling
+           data pointer then we want to get rid of that too to avoid 
+           unnecessary clutter in the DB."""
+        for pointer in self.fields.all():
+            if pointer.columns.count() == 1:
+                pointer.delete()
+        super(FormDataColumn, self).delete(*args, **kwargs)
+        
+    
     def __unicode__(self):
         return "%s - (a %s spanning %s forms)" % (self.name, self.data_type, self.fields.count())
     
@@ -643,7 +652,7 @@ class FormDataGroup(models.Model):
     # There is a non-enforced constraint that each column should only
     # contain pointers to forms that are referenced within this group.
     # TODO: add the constraint for real.
-    columns = models.ManyToManyField(FormDataColumn)
+    columns = models.ManyToManyField(FormDataColumn, related_name="groups")
     
     # CZUE: nevermind, don't do this.  It'll be way to slow for 
     # operations that save the group a lot (like creating it).
@@ -659,6 +668,19 @@ class FormDataGroup(models.Model):
 #        super(FormDataGroup, self).save()
 #        self.update_view()
 
+    def delete(self, *args, **kwargs):
+        """Override delete - we want to delete the view and any dangling
+           columns when this gets deleted"""
+        self._drop_view()
+        # delete all the columns attached to the form if they are
+        # no longer referenced by any other forms.  
+        for column in self.columns.all():
+            # based on the selection criteria above this has to be 
+            # the only form referencing the column
+            if column.groups.count() == 1:
+                column.delete()
+        super(FormDataGroup, self).delete(*args, **kwargs)
+        
     def update_view(self):
         """Update the sql view object associated with this.  This will
            create (or replace) the existing view and rebuild it based
@@ -838,6 +860,15 @@ class FormDataGroup(models.Model):
         cursor.execute(sql)
         return cursor
     
+    def _drop_view(self):
+        """Delete the view associated with this group.  
+        """
+        # this should really only becallled as part of the deletion 
+        # process
+        sql = "DROP VIEW %s" % (self.view_name)
+        connection.cursor().execute(sql)
+        
+        
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \
                 (self.name, self.forms.count(), self.columns.count())
@@ -861,7 +892,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
         # time seems wasteful
         manager = XFormManager()
         try:
-            manager.save_form_data(xml_file_name, instance)
+            manager.save_form_data(instance)
         except Exception, e:
             type, value, tb = sys.exc_info()
             traceback_string = '\n'.join(traceback.format_tb(tb))

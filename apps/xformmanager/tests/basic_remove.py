@@ -90,9 +90,9 @@ class RemoveTestCase(unittest.TestCase):
     def test4DeleteInstance(self):
         """ Test instance data deletion from XFormmanager """
         formdefmodel_5 = create_xsd_and_populate("5_singlerepeat.xsd", domain=self.domain)
-        instance_5 = populate("5_singlerepeat.xml")
+        instance_5 = populate("5_singlerepeat.xml", self.domain)
         formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", domain=self.domain)
-        instance_6 = populate("6_nestedrepeats.xml")
+        instance_6 = populate("6_nestedrepeats.xml", self.domain)
         xformmanager = XFormManager()
 
         num_handled = SubmissionHandlingOccurrence.objects.all().count()
@@ -141,9 +141,9 @@ class RemoveTestCase(unittest.TestCase):
         """ This is more a sanity check than anything else. Makes sure
         Django deletes the entire dependency chain for Submission objects. """
         formdefmodel_5 = create_xsd_and_populate("5_singlerepeat.xsd", domain=self.domain)
-        instance_5 = populate("5_singlerepeat.xml")
+        instance_5 = populate("5_singlerepeat.xml", self.domain)
         formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", domain=self.domain)
-        instance_6 = populate("6_nestedrepeats.xml")
+        instance_6 = populate("6_nestedrepeats.xml", self.domain)
         instance_5.delete()
         instance_6.delete()
         # receiver unit tests already check for count([Submission|Attachment]) = 0
