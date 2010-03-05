@@ -17,7 +17,7 @@ from rapidsms.webui.utils import render_to_response
 
 from xformmanager.util import get_unique_value
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
-from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer
+from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer, FormDataColumn
 from xformmanager.xformdef import FormDef
 from xformmanager.manager import *
 from xformmanager.templatetags.xform_tags import NOT_SET
@@ -349,10 +349,6 @@ def delete_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     if req.method == 'POST':
         group.delete()
-        # TODO: should we also consider deleting all the columns
-        # attached to the form?  Currently columns can be shared
-        # except there's no UI (or use case?) for actually doing
-        # that.  Left open for now.
         return HttpResponseRedirect(reverse('xformmanager.views.home')) 
                 
             
