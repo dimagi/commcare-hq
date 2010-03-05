@@ -256,7 +256,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
             elif action == 'resubmit':
                 status = False
                 try:
-                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                    status = xformmanager.save_form_data(submission.xform)
                 except StorageUtility.XFormError, e:
                     # if xform doesn't match schema, that's ok
                     pass

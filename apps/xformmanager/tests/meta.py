@@ -19,7 +19,7 @@ class MetaTestCase(unittest.TestCase):
 
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", self.domain)
-        populate("data/brac_chw_1.xml")
+        populate("data/brac_chw_1.xml", domain=self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_metadata where formname='BRAC CHW visiting CHP'" )
         row = cursor.fetchone()
@@ -69,14 +69,14 @@ class MetaTestCase(unittest.TestCase):
 
     def testMetaData_3(self):
         create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
-        populate("data/pf_followup_2.xml")
+        populate("data/pf_followup_2.xml", domain=self.domain)
         create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", self.domain)
-        populate("data/pf_new_reg_2.xml")
+        populate("data/pf_new_reg_2.xml", domain=self.domain)
         create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml", self.domain)
-        populate("data/pf_ref_completed_2.xml")
+        populate("data/pf_ref_completed_2.xml", domain=self.domain)
         create_xsd_and_populate("data/mvp_mother_reg.xsd", "data/mvp_mother_reg_1.xml", self.domain)
-        populate("data/mvp_mother_reg_2.xml")
-        populate("data/mvp_mother_reg_3.xml")
+        populate("data/mvp_mother_reg_2.xml", domain=self.domain)
+        populate("data/mvp_mother_reg_3.xml", domain=self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM xformmanager_metadata order by id")
         row = cursor.fetchall()
@@ -110,7 +110,7 @@ class MetaTestCase(unittest.TestCase):
         day_after_tomorrow = today + timedelta(days=2)
         yesterday = today - timedelta(days=1)
         for i in range(1, 6):
-            submission = populate("data/pf_followup_%s.xml" % i)
+            submission = populate("data/pf_followup_%s.xml" % i, domain=self.domain)
             meta = Metadata.objects.get(attachment=submission.xform)
             self.assertEqual(i, meta.get_submission_count(today, tomorrow, False))
             self.assertEqual(1, meta.get_submission_count(today, tomorrow, True))
@@ -125,24 +125,24 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(running_count, len(Metadata.objects.all()))
         
         for i in range(1, 6):
-            populate("data/pf_followup_%s.xml" % i)
+            populate("data/pf_followup_%s.xml" % i, domain=self.domain)
             # the first one should update the count.  The rest should not
             running_count = running_count + 1
             self.assertEqual(running_count, len(Metadata.objects.all()))
             for j in range(0, 3):
                 logging.warn("EXPECTING A 'duplicate submission' ERROR NOW:")
-                populate("data/pf_followup_%s.xml" % i)
+                populate("data/pf_followup_%s.xml" % i, domain=self.domain)
                 self.assertEqual(running_count, len(Metadata.objects.all()))
     
     def testReSubmit(self):
         # original submission
-        submission = populate("data/pf_followup_1.xml")
+        submission = populate("data/pf_followup_1.xml", domain=self.domain)
         self.assertEquals(submission.is_orphaned(),True)
         # register schema
         create_xsd_and_populate("data/pf_followup.xsd", domain=self.domain)
         # xformmanagger resubmission
         xformmanager = XFormManager()
-        status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+        status = xformmanager.save_form_data(submission.xform)
         self.assertEquals(status,True)
     
     def testSubmitHandling(self):
@@ -152,7 +152,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(0, len(SubmissionHandlingOccurrence.objects.all()))
         
         # this should create a linked submission
-        populate("data/pf_followup_1.xml")
+        populate("data/pf_followup_1.xml", domain=self.domain)
         
         self.assertEqual(1, len(Metadata.objects.all()))
         self.assertEqual(1, len(Submission.objects.all()))
@@ -168,11 +168,11 @@ class MetaTestCase(unittest.TestCase):
         
         # these should NOT create a linked submission.  No schema
         logging.warn("\nEXPECTING AN ERROR NOW:")
-        populate("data/pf_new_reg_1.xml")
+        populate("data/pf_new_reg_1.xml", domain=self.domain)
         logging.warn("EXPECTING AN ERROR NOW:")
-        populate("data/pf_new_reg_2.xml")
+        populate("data/pf_new_reg_2.xml", domain=self.domain)
         logging.warn("EXPECTING AN ERROR NOW:")
-        populate("data/pf_ref_completed_1.xml")
+        populate("data/pf_ref_completed_1.xml", domain=self.domain)
         
         self.assertEqual(1, len(Metadata.objects.all()))
         self.assertEqual(4, len(Submission.objects.all()))

@@ -40,13 +40,13 @@ class XFormManager(object):
         filename_on_disk = self._save_schema_stream_to_file(stream, type)
         return filename_on_disk
 
-    def save_form_data(self, xml_file_name, attachment):
+    def save_form_data(self, attachment):
         """Given an attachment attempt to match it to a known (registered)
            XForm and parse out its data, saving to the flattened tables and
            creating metadata for it.
            
            Returns True on success and False on failure"""
-        return self.su.save_form_data(xml_file_name, attachment)
+        return self.su.save_form_data(attachment)
     
     def validate_schema(self, file_name):
         """validate schema 

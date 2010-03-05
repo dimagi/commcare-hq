@@ -54,16 +54,48 @@ class StorageUtility(object):
         queries = XFormDBTableCreator( self.formdef, self.formdefmodel ).create()
         self._execute_queries(queries)
         return formdefmodel
-   	
-    @transaction.commit_on_success
-    def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
-        """ returns True on success """
-        logging.debug("StorageProvider: saving form data")
-        data_tree = self._get_data_tree_from_stream(data_stream_pointer)
+    
+    def save_form_data(self, attachment):
+        """The entry point for saving form data from an attachment.
+        
+           returns True on success and false on fail."""
+        
+        xml_file_name = attachment.filepath
+        f = open(xml_file_name, "r")
+        # should match XMLNS
+        xmlns, version = self.get_xmlns_from_instance(f)
+        # If there is a special way to route this form, based on the xmlns
+        # then do so here. 
+        # czue: this is probably not the most appropriate place for this logic
+        # but it keeps us from having to parse the xml multiple times.
+        process(attachment, xmlns, version)
+        try:
+            formdefmodel = FormDefModel.objects.get(domain=attachment.submission.domain,
+                                                    target_namespace=xmlns, version=version)
+            
+        except FormDefModel.DoesNotExist:
+            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % (xmlns, attachment.submission.domain))
+        if formdefmodel.xsd_file_location is None:
+            raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
+        formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
         self.formdef = formdef
         
-        populator = XFormDBTablePopulator( formdef )
-        queries = populator.populate( data_tree )
+        f.seek(0,0)
+        status = self._save_form_data_matching_formdef(f, formdef, formdefmodel, attachment)
+        f.close()
+        return status
+    
+    
+   	
+    @transaction.commit_on_success
+    def _save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
+        """ returns True on success """
+        
+        logging.debug("StorageProvider: saving form data")
+        data_tree = self._get_data_tree_from_stream(data_stream_pointer)
+        
+        populator = XFormDBTablePopulator( formdef, formdefmodel )
+        queries = populator.populate( data_tree)
         if not queries:
             # we cannot put this check queries_to_populate (which is recursive)
             # since this is only an error on the top node
@@ -114,29 +146,6 @@ class StorageUtility(object):
         metadata_model.raw_data = rawdata_id
         metadata_model.save(self.formdef.target_namespace)        
         return metadata_model
-    
-    def save_form_data(self, xml_file_name, attachment):
-        """ returns True on success and false on fail """
-        f = open(xml_file_name, "r")
-        # should match XMLNS
-        xmlns, version = self.get_xmlns_from_instance(f)
-        # If there is a special way to route this form, based on the xmlns
-        # then do so here. 
-        # czue: this is probably not the most appropriate place for this logic
-        # but it keeps us from having to parse the xml multiple times.
-        process(attachment, xmlns, version)
-        try:
-            formdefmodel = FormDefModel.objects.get(target_namespace=xmlns, version=version)
-        except FormDefModel.DoesNotExist:
-            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel." % xmlns)
-        if formdefmodel.xsd_file_location is None:
-            raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
-        formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
-        
-        f.seek(0,0)
-        status = self.save_form_data_matching_formdef(f, formdef, formdefmodel, attachment)
-        f.close()
-        return status
     
     def get_formdef_from_schema_file(self, xsd_file_location):
         g = open( xsd_file_location ,"r")
@@ -473,11 +482,11 @@ class XFormDBTableCreator(XFormProcessor):
     def create(self):
         return self.queries_to_create_instance_tables( self.formdef, 
                                                        self.formdefmodel.element.id, 
-                                                       self.formdef.name, self.formdef.name)
+                                                       self.formdef.name, self.formdef.name, self.formdefmodel.domain)
         
     # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
     # (rather than just passing around tuples of strings)
-    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
+    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='', domain=None):
         
         table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version, self.formdef.domain_name )
         
@@ -639,20 +648,23 @@ class XFormDBTablePopulator(XFormProcessor):
         'integer': int, 'int': int, 'decimal': float, 'double' : float, 'float':float,'gyear':int        
     }
         
-    def __init__(self, formdef):
+    def __init__(self, formdef, formdefmodel):
         self.formdef = formdef
+        self.formdefmodel = formdefmodel
         self.errors = XFormErrors(formdef.target_namespace)
         
     def populate(self, data_tree):
         return self.queries_to_populate_instance_tables(data_tree=data_tree, 
-                                                           elementdef=self.formdef.root, 
-                                                           parent_name=self.formdef.name)
+                                                        elementdef=self.formdef.root, 
+                                                        parent_name=self.formdef.name) 
+
         
     def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0):
       if data_tree is None and elementdef:
           self.errors.missing.append( "Missing element: %s" % elementdef.name )
           return
-      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version )
+      
+      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version, domain=self.formdefmodel.domain)
       if len( parent_table_name ) > 0:
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
@@ -668,12 +680,12 @@ class XFormDBTablePopulator(XFormProcessor):
       
       query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, \
                                                         parent_name=parent_name, parent_table_name=table_name, \
-                                                        parent_id=parent_id )
+                                                        parent_id=parent_id)
       query.parent_id = parent_id
       return query
 
     def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', \
-                                             parent_table_name='', parent_id=0 ):
+                                             parent_table_name='', parent_id=0):
       if data_tree is None and elementdef:
           self.errors.missing.append( "Missing element: %s" % elementdef.name )
           return
@@ -697,7 +709,7 @@ class XFormDBTablePopulator(XFormProcessor):
         if def_child.is_repeatable :
             for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
-                                                                 parent_table_name, parent_id )
+                                                                 parent_table_name, parent_id)
                 if next_query is not None:
                     next_query.child_queries = next_query.child_queries + [ query ]
                 else:
@@ -717,7 +729,7 @@ class XFormDBTablePopulator(XFormProcessor):
                 query = self._populate_instance_tables_inner_loop(data_tree=data_node, \
                                                                   elementdef=def_child, \
                                                                   parent_name=parent_name, \
-                                                                  parent_table_name=parent_table_name )
+                                                                  parent_table_name=parent_table_name)
                 next_query.child_queries = next_query.child_queries + query.child_queries
                 local_field_value_dict.update( query.field_value_dict )
             else:
@@ -828,7 +840,7 @@ def is_schema_registered(target_namespace, version=None):
     except FormDefModel.DoesNotExist:
         return False
 
-def get_registered_table_name(xpath, target_namespace, version=None):
+def get_registered_table_name(xpath, target_namespace, version=None, domain=None):
     """From an xpath, namespace and version, get a tablename"""
-    fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
+    fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version, domain=domain)
     return ElementDefModel.objects.get(xpath=xpath, form=fdd).table_name

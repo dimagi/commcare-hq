@@ -861,7 +861,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
         # time seems wasteful
         manager = XFormManager()
         try:
-            manager.save_form_data(xml_file_name, instance)
+            manager.save_form_data(instance)
         except Exception, e:
             type, value, tb = sys.exc_info()
             traceback_string = '\n'.join(traceback.format_tb(tb))

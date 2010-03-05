@@ -206,7 +206,45 @@ class BasicTestCase(unittest.TestCase):
         nonexistant = FormDefModel.get_formdef("nonexistent", "1")
         self.assertTrue(nonexistant is None)
     
-    def isSchemaRegistered(self):
+    def testCrossDomainFormLookups(self):
+        """Testing posting forms to the same xmlns in different domains."""
+        form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
+        cursor = connection.cursor()
+        
+        # we created one, make sure that's the case
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(1, cursor.fetchone()[0])
+        
+        # create another domain and post to it, make sure it doesnt' 
+        # register
+        other_domain = Domain.objects.create(name="otherdomain")
+        form = populate("data/pf_followup_2.xml", other_domain)
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(1, cursor.fetchone()[0])
+        
+        # register on the second domain.  should be 1 and 1 now.
+        form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_3.xml", other_domain)
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(1, cursor.fetchone()[0])
+        cursor.execute("SELECT count(*) FROM schema_otherdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(1, cursor.fetchone()[0])
+        
+        # post to individual domains, should behave as expected
+        form = populate("data/pf_followup_4.xml", self.domain)
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(2, cursor.fetchone()[0])
+        cursor.execute("SELECT count(*) FROM schema_otherdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(1, cursor.fetchone()[0])
+        
+        form = populate("data/pf_followup_5.xml", other_domain)
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(2, cursor.fetchone()[0])
+        cursor.execute("SELECT count(*) FROM schema_otherdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(2, cursor.fetchone()[0])
+        
+        
+    
+    def testIsSchemaRegistered(self):
         """ given a form and version is that form registered """
         create_xsd_and_populate("5_singlerepeat.xsd")
         create_xsd_and_populate("data/8_singlerepeat_2.xsd")
