@@ -103,24 +103,19 @@ class RemoveTestCase(unittest.TestCase):
         # TODO - change this syntax once meta.attachment becomes meta.submission
         xformmanager.remove_data(formdefmodel_5.id, instance_5.xform.form_metadata.all()[0].raw_data )
         xformmanager.remove_data(formdefmodel_6.id, instance_6.xform.form_metadata.all()[0].raw_data )
-        # Deleting xform instance does not actually delete submission yet - should it?
-        #count = len(Submission.objects.all())
-        #self.assertEquals(0,count)
-        #count = len(Attachment.objects.all())
-        #self.assertEquals(0,count)
         # test metadata deletion
 
-        # Test that children have been marked as 'doubly handled' and remain 'initially handled'
+        # Test that children have been marked as 'deleted' and are no longer 'initially handled'
         # (so that they are not considered 'orphans' i.e. unhandled)
         num_handled = SubmissionHandlingOccurrence.objects.all().count()
-        self.assertEquals(4,num_handled)
+        self.assertEquals(2,num_handled)
+        for handle_means in SubmissionHandlingOccurrence.objects.all():
+            self.assertEqual("deleted", handle_means.handled.method)
         self.assertFalse(instance_5.is_orphaned())        
         self.assertFalse(instance_6.is_orphaned())        
         
         count = Metadata.objects.all().count()
         self.assertEquals(0,count)
-        count = SubmissionHandlingOccurrence.objects.all().count()
-        self.assertEquals(4,count)
         # test raw data deletion
         if settings.DATABASE_ENGINE == 'mysql':
             cursor = connection.cursor()

@@ -6,8 +6,8 @@ from datetime import datetime
 
 from django.db import connection
 from django.http import HttpResponse, HttpResponseBadRequest
+
 from transformers.csv import format_csv
-from django.db import connection
 
 
 MAX_MYSQL_TABLE_NAME_LENGTH = 64

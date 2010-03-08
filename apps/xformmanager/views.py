@@ -1,5 +1,4 @@
 import settings, os, sys
-import tempfile
 import logging
 import traceback
 import hashlib

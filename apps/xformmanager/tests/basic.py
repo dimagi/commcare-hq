@@ -1,4 +1,6 @@
 from django.db import connection, transaction, DatabaseError
+
+from xformmanager.manager import XFormManager
 from xformmanager.tests.util import *
 from xformmanager.models import FormDefModel
 
@@ -242,8 +244,43 @@ class BasicTestCase(unittest.TestCase):
         cursor.execute("SELECT count(*) FROM schema_otherdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
         self.assertEqual(2, cursor.fetchone()[0])
         
+    def testReposting(self):
+        """Testing reposting entire schemas."""
+        form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
+        original_id = form.id
+        populate("data/pf_followup_2.xml", self.domain)
+        self.assertEqual(1, FormDefModel.objects.count())
+        self.assertEqual(2, Metadata.objects.count())
+        original_meta_ids = [meta.id for meta in Metadata.objects.all()]
         
-    
+        cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(2, cursor.fetchone()[0])
+        
+        # repost - numbers should be the same, but the ids should all be different
+        manager = XFormManager()
+        new_form = manager.repost_schema(form)
+        self.assertEqual(1, FormDefModel.objects.count())
+        
+        # compare basic form properties
+        for field in FormDefModel._meta.fields:
+            if field.name not in ("id", "xsd_file_location", "element"):
+                self.assertEqual(getattr(form, field.name), getattr(new_form, field.name), 
+                                 "Field %s was not successfully migrated.  Previous value: %s, new value: %s" \
+                                 % (field.name, getattr(form, field.name), getattr(new_form, field.name))) 
+                
+        # check metadata
+        self.assertEqual(2, Metadata.objects.count())
+        self.assertNotEqual(original_id, new_form)
+        for meta in Metadata.objects.all():
+            self.assertFalse(meta.id in original_meta_ids)
+        
+        # check parsed data
+        cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
+        self.assertEqual(2, cursor.fetchone()[0])
+                
+            
     def testIsSchemaRegistered(self):
         """ given a form and version is that form registered """
         create_xsd_and_populate("5_singlerepeat.xsd")

@@ -1,9 +1,17 @@
-from xformmanager.storageutility import * 
-from xformmanager.xformdef import FormDef
-from xformmanager.models import MetaDataValidationError
+from __future__ import absolute_import
+
 import uuid
 import subprocess
+import copy
 from subprocess import PIPE
+
+from django.db.models import ForeignKey
+
+from xformmanager.storageutility import * 
+from xformmanager.xformdef import FormDef
+from xformmanager.copy import collect_related, copy_related
+from xformmanager.models import MetaDataValidationError, Metadata
+from receiver.models import Attachment
 
 class XFormManager(object):
     """A central location for managing xforms.  This object includes 
@@ -88,6 +96,79 @@ class XFormManager(object):
         file_name = self.save_schema_POST_to_file(input_stream, file_name)
         return self.create_schema_from_file(file_name, domain)
     
+    
+    def repost_schema(self, form):
+        """Repost a schema entirely, dropping its database tables and then
+           recreating them and reposting all submissions that had previously
+           matched.  Useful during upgrades.""" 
+        
+        # copy the original form to map properties
+        form_model_copy = copy.copy(form)
+                
+        # get related objects so we can migrate them
+        related_objs = collect_related(form)
+        copies = copy_related(related_objs)
+        
+        # store the attachments that mapped to the form for later reposting
+        matching_meta_attachments = list(Metadata.objects.filter(formdefmodel=form)\
+                                         .values_list('attachment__id', flat=True))
+        
+        # copy the form's XSD/XForm to a temporary location for reposting  
+        xsd_file = form.xsd_file_location
+        temp_xsd_path = os.path.join(tempfile.gettempdir(), "form%s.xsd" % form.id)
+        shutil.copy(xsd_file, temp_xsd_path)
+        if form.xform_file_location:
+            xform_file = form.xform_file_location
+            temp_xform_path = os.path.join(tempfile.gettempdir(), "form%s.xml" % form.id)
+            shutil.copy(xform_file, temp_xform_path)
+        
+        # drop
+        self.remove_schema(form.id, remove_submissions=False)
+        
+        # add
+        file_to_post = temp_xform_path if form.xform_file_location else temp_xsd_path
+        type = "xform" if form.xform_file_location else "xsd"
+        file_stream = open(file_to_post, "r")
+        fileback = self._save_schema_stream_to_file(file_stream, type)
+        new_form = self.create_schema_from_file(fileback, form_model_copy.domain)
+        
+        # migrate properties
+        for property in ["submit_time", "submit_ip", "bytes_received", "form_display_name", 
+                         "date_created", "uploaded_by"]:
+            setattr(new_form, property, getattr(form_model_copy, property))
+        new_form.save()
+        
+        # migrate related objects
+        # these two classes are covered by reposting
+        classes_not_to_touch = Metadata, ElementDefModel
+        for cls, object_list in copies.items():
+            if cls == FormDefModel or cls in classes_not_to_touch:
+                continue
+            
+            # pull out all the appropriate foreign key fields
+            fks = [field for field in cls._meta.fields \
+                   if isinstance(field, ForeignKey) \
+                   and field.rel.to in copies \
+                   and not field.rel.to in classes_not_to_touch]
+            
+            for pk, obj in object_list.items():
+                # blank out the pk/id and save to create new instances
+                obj.id = None
+                for fk in fks:
+                    fk_value = getattr(obj, "%s_id" % fk.name)
+                    # If this FK has been duplicated then point to the duplicate.
+                    if fk_value in copies[fk.rel.to]:
+                        dupe_obj = copies[fk.rel.to][fk_value]
+                        setattr(obj, fk.name, dupe_obj)
+                obj.save()
+                
+        # repost data
+        for attachment_id in matching_meta_attachments:
+            attach = Attachment.objects.get(id=attachment_id)
+            self.save_form_data(attach)
+        
+        return new_form
+
     def _add_schema_from_file(self, file_name, domain=None):
         """ we keep this api open for the unit tests """
         name = os.path.basename(file_name)

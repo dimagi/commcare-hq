@@ -12,6 +12,8 @@ import sys
 import logging
 import settings
 import string
+import shutil
+import tempfile
 from datetime import datetime, timedelta
 
 from stat import S_ISREG, ST_MODE
@@ -113,13 +115,12 @@ class StorageUtility(object):
         
         metadata_model = self._create_metadata(data_tree, formdefmodel, attachment, new_rawdata_id)
         
-        # rl - seems like a strange place to put this message...
-        # respond with the number of submissions they have
-        # made today.
+        # Add a "handled" flag that will eventually allow the receiver app 
+        # to respond meaningfully about how the posting was handled
         startdate = datetime.now().date() 
         enddate = startdate + timedelta(days=1)
         message = metadata_model.get_submission_count(startdate, enddate)
-        self._add_handled(metadata_model.attachment, method="instance_data", message=message)
+        metadata_model.attachment.handled(get_instance_data_handle_type(), message)
         return True
     
     def _get_data_tree_from_stream(self, stream):
@@ -169,32 +170,12 @@ class StorageUtility(object):
             # not a problem since this simply means the data was 
             # never successfully registered
             return
-        # mark as intentionally handled
-        self._add_handled(meta.attachment, method="deleted")
+        
+        # markup the attachment as intentionally deleted by xformmanager
+        meta.attachment.handled(get_deleted_handle_type())
         if remove_submission:
             meta.attachment.submission.delete()
-        meta.delete()
-
-    def _add_handled(self, attachment, method, message=''):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method=method)
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method=method)
-        attachment.handled(handle_type, message)
-
-    def _remove_handled(self, attachment):
-        '''Tells the receiver that this attachment's submission was not handled.
-           Only used when we are deleting data from xformmanager but not receiver
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        attachment.unhandled(handle_type)
+        remove_metadata(meta)
 
     def _remove_instance_inner_loop(self, elementdef, instance_id):
         edms = ElementDefModel.objects.filter(parent=elementdef)
@@ -212,17 +193,17 @@ class StorageUtility(object):
 
     @transaction.commit_on_success
     def remove_schema(self, id, remove_submissions=False, delete_xml=True):
-        fdds = FormDefModel.objects.all().filter(id=id) 
-        if fdds is None or len(fdds) == 0:
+        try:
+            schema_to_remove = FormDefModel.objects.get(id=id)
+        except FormDefModel.DoesNotExist:
             logging.error("  Schema with id %s could not be found. Not deleted." % id)
             return    
         # must remove tables first since removing form_meta automatically deletes some tables
-        self._remove_form_tables(fdds[0])
-        self._remove_form_models(fdds[0], remove_submissions, delete_xml)
+        self._remove_form_tables(schema_to_remove)
+        self._remove_form_models(schema_to_remove, remove_submissions, delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
-
     def clear(self, remove_submissions=True, delete_xml=True):
         """ removes all schemas found in XSD_REPOSITORY_PATH
             and associated tables. 
@@ -230,7 +211,7 @@ class StorageUtility(object):
             contents of XFORM_SUBMISSION_PATH.        
         """
         self._remove_form_tables()
-        self._remove_form_models(remove_submissions=remove_submissions)
+        self._remove_form_models(remove_submissions=remove_submissions, delete_xml=delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
         
         if delete_xml:
@@ -268,9 +249,9 @@ class StorageUtility(object):
         else:
             cursor.execute(queries)            
     
-    def _remove_form_models(self,form='', remove_submissions=False, delete_xml=True):
-        """Drop all schemas, associated tables, and files"""
-        if form == '':
+    def _remove_form_models(self,form=None, remove_submissions=False, delete_xml=True):
+        """Drop all schemas, associated tables, and files."""
+        if form == None:
             fdds = FormDefModel.objects.all().filter()
         else:
             fdds = [form]            
@@ -283,22 +264,27 @@ class StorageUtility(object):
                         os.remove(file)
                     else:
                         logging.warn("Tried to delete schema file: %s but it wasn't found!" % file)
+            
+            self._drop_form_metadata(form, remove_submissions)
+            
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
-            all_meta = Metadata.objects.filter(formdefmodel=fdd)
-            for meta in all_meta:
-                if remove_submissions:
-                    meta.attachment.submission.delete()
-                self._remove_handled(meta.attachment)
-            all_meta.delete()
             fdd.delete()
-    
+
+
+    def _drop_form_metadata(self, form, remove_submissions):
+        all_meta = Metadata.objects.filter(formdefmodel=form)
+        for meta in all_meta:
+            if remove_submissions:
+                meta.attachment.submission.delete()
+            remove_metadata(meta)
+        
     # in theory, there should be away to *not* remove elemenetdefdata when deleting formdef
     # until we figure out how to do that, this'll work fine
-    def _remove_form_tables(self,form=''):
+    def _remove_form_tables(self,form=None):
         # drop all element definitions and associated tables
         # the reverse ordering is a horrible hack (but efficient) 
         # to make sure we delete children before parents
-        if form == '':
+        if form == None:
             edds = ElementDefModel.objects.all().filter().order_by("-table_name")
         else:
             edds = ElementDefModel.objects.all().filter(form=form).order_by("-table_name")
@@ -844,3 +830,22 @@ def get_registered_table_name(xpath, target_namespace, version=None, domain=None
     """From an xpath, namespace and version, get a tablename"""
     fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version, domain=domain)
     return ElementDefModel.objects.get(xpath=xpath, form=fdd).table_name
+
+
+def get_instance_data_handle_type():
+    """Get the handling type used by the receiver that marks attachments
+       as being processed by the xformmanager"""
+    return SubmissionHandlingType.objects.get_or_create(app="xformmanager", method="instance_data")[0]
+
+def get_deleted_handle_type():
+    """Get the handling type used by the receiver that marks attachments
+       as being processed by the xformmanager"""
+    return SubmissionHandlingType.objects.get_or_create(app="xformmanager", method="deleted")[0]
+
+def remove_metadata(meta):
+    # support generically "unhandling" the attachments and then 
+    # delete the actual metadata object
+    meta.attachment.unhandled(get_instance_data_handle_type())
+    meta.delete()
+
+    
