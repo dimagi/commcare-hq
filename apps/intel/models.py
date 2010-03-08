@@ -36,7 +36,7 @@ class MemberRole(models.Model):
     # >>> MemberRole.per(4)
     # [u'chw', u'doctor']
     # useful for easily checking a user's role, eg:
-    # >>> if 'chw' in MemberRole.per(4): ....
+    # >>> if 'chw' in MemberRole.per(4): ...
     
     @staticmethod
     def per(member):

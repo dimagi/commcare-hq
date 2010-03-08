@@ -47,5 +47,10 @@ def custom_report(request, domain_id, report_name, page):
                                   context)
     context["report_display"] = report_method.__doc__
     context["report_body"] = report_method(request)
+    
+    if 'search' not in request.GET.keys(): 
+        context['search_term'] = ''
+    else:
+        context['search_term'] = request.GET['search']
 
     return render_to_response(request, "report_base.html", context)
