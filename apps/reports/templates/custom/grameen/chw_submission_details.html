@@ -1,7 +1,11 @@
 {% load hq_shared_tags %}
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js"></script>
-<h1>Health Worker Submission Details</h1>
-<h3>Summary view of individual mother data by health workers</h3>
+<!-- <h1>Health Worker Submission Details</h1>
+<h3>Summary view of individual mother data by health workers</h3> -->
+<form action="/intel/all" method="get" style="padding-left: 15px">
+    <input type="text" size="20" name="search" value="{{ search_term }}"/>&nbsp;
+    <input type="submit" value="Filter by Mother Name"/>
+</form>
 <br>
 <table>
 <thead>

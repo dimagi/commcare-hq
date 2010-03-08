@@ -130,8 +130,10 @@ def _chw_submission_summary(request, params, format_to_str=True):
         elif params["follow"] == "no":
             follow_filter = False
 
-    if "search" in params:
-        search = "sampledata_mother_name LIKE '%%" + params['search'] + "%%'" 
+    search_term = (params['search'].strip() if 'search' in params else '')
+
+    if search_term != '':
+        search = "sampledata_mother_name LIKE '%%" + search_term + "%%'" 
         if whereclause.strip() == '':
             whereclause = " WHERE %s" % search
         else:
@@ -172,6 +174,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
         return render_to_string("custom/grameen/chw_submission_details.html", 
                             {"MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
                              "columns": cols,
-                             "data": new_data})
+                             "data": new_data,
+                             "search_term": search_term})
     
 
