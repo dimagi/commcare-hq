@@ -168,6 +168,10 @@ def _chw_submission_summary(request, params, format_to_str=True):
             print "no atachment for %s" % meta
     cols = cols[:6]
     
+    # per PPT
+    cols.remove('Case ID')
+    cols.remove('Healthcare Worker')
+    
     if not format_to_str:
         return cols, new_data    
     else:
