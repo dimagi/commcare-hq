@@ -15,7 +15,6 @@
 {% endblock %}
 {% endblock %}
 {% block auth %}
-<!-- { % include "intel/partials/header.html" % } -->
 <div id="currentlogin-block">
   {% if user.is_authenticated %}        
       Logged in as <strong>{{user}}</strong>{% if user.selected_domain %} in domain <strong>{{ user.selected_domain}}</strong>{% endif %}&nbsp;&nbsp;|  
@@ -32,3 +31,5 @@
 {% block footer %}
 {% include "hq/partials/footer.html" %}
 {% endblock %}
+
+{% block lang_selector %}{% endblock %}
