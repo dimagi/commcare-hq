@@ -18,7 +18,7 @@ from StringIO import StringIO
 from transformers.csv import UnicodeWriter
 
 
-@login_and_domain_required    
+@login_and_domain_required
 def all_mothers_report(request):
     '''View all mothers - default'''
     return custom_report(request, 3, "chw_submission_details", "all")

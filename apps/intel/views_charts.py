@@ -1,4 +1,3 @@
-# Create your views here.
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
@@ -43,7 +42,6 @@ def chart(request):
     return view_graph(request, 20)
     
 
-# @login_and_domain_required
 def view_graph(request, graph_id, template_name="chart.html"):
     context = {}    
     graph = RawGraph.objects.all().get(id=graph_id)

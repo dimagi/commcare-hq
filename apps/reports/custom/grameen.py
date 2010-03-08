@@ -58,6 +58,7 @@ def _mother_summary(request):
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
     mom.hi_risk_reasons = _get_hi_risk_reason(mom)
+
     return render_to_string("custom/grameen/mother_details.html", 
                             {"mother": mom, "attrs": all_attrs,
                              "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this

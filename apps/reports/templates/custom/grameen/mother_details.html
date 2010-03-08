@@ -1,7 +1,10 @@
 {% load hq_shared_tags %}
-
+<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
 <h2>Mother Summary for {{ mother.mother_name }}</h2>
+<div class="annotationtrigger js_link" onclick="show_annotations({{attachment.id}}, '#dialog');">
+	Send Message
+</div>
 <div id="mother-summary">
 <table> <!-- tables within tables! -->
 	<tr>
