@@ -11,22 +11,20 @@
 
 <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/intel.css" />
 
-{% block page_stylesheets %}
-{% endblock %}
+	{% block page_stylesheets %}{% endblock %}
 {% endblock %}
 {% block auth %}
 <div id="currentlogin-block">
   {% if user.is_authenticated %}        
-      Logged in as <strong>{{user}}</strong>{% if user.selected_domain %} in domain <strong>{{ user.selected_domain}}</strong>{% endif %}&nbsp;&nbsp;|  
-      &nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>                
+      Hello, <strong>{{user}}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>                
   {% else %}
-      <a href="{% url webapp.views.login %}">{% trans "Log in" %}</a>
+      <a href="{% url login %}">{% trans "Log in" %}</a>
   {% endif %}
 </div>
 
 {% endblock %}
 {% block branding %}
-<h1 id="site-name">{%trans "CommCare HQ" %}</h1>
+	<h1 id="site-name">{%trans "CommCare HQ" %}</h1>
 {% endblock %}
 {% block footer %}
 {% include "hq/partials/footer.html" %}
