@@ -124,6 +124,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
     cols = ('meta_username', 'sampledata_hi_risk')
     where_cols = dict([(key, val) for key, val in params.items() if key in cols])
     whereclause = get_whereclause(where_cols)
+
     follow_filter = None
     if "follow" in params:
         if params["follow"] == "yes":
@@ -140,9 +141,9 @@ def _chw_submission_summary(request, params, format_to_str=True):
         else:
             whereclause += " AND %s" % search
 
-    cols, data = report.get_data({"whereclause": whereclause})
+    cols, data = report.get_data({"whereclause": whereclause, "orderby" : "ORDER BY sampledata_mother_name ASC"})
     new_data = []
-    print form_def
+
     for row in data:
         new_row_data = dict(zip(cols, row))
         row_id = new_row_data["Instance ID"]

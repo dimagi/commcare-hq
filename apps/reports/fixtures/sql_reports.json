@@ -13,7 +13,7 @@
     "pk": 2, 
     "model": "reports.sqlreport", 
     "fields": {
-      "query": "/* individual chw view */\r\nSELECT sampledata_case_id as 'Case ID',\r\n       meta_username as 'Healthcare Worker',\r\n       sampledata_mother_name as 'Mother Name',\r\n       sampledata_address as 'Address',\r\n       sampledata_hi_risk as 'Hi Risk?',\r\n       'No' as 'Follow up?', /* need to fix this when we actually have FU */\r\n       id as 'Instance ID'\r\nFROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n{{whereclause}}", 
+      "query": "/* individual chw view */\r\nSELECT sampledata_case_id as 'Case ID',\r\n       meta_username as 'Healthcare Worker',\r\n       sampledata_mother_name as 'Mother Name',\r\n       sampledata_address as 'Address',\r\n       sampledata_hi_risk as 'Hi Risk?',\r\n       'No' as 'Follow up?', /* need to fix this when we actually have FU */\r\n       id as 'Instance ID'\r\nFROM schema_intel_grameen_safe_motherhood_registration_v0_3\r\n{{whereclause}} {{orderby}}", 
       "domain": 3, 
       "is_active": 0, 
       "description": "Summary view of individual mother data by health workers", 

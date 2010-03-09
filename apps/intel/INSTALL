@@ -1,0 +1,17 @@
+This documents the steps to install this app, outside the usual Git checkout & syncdb
+
+* In local.ini, change the following:
+
+# LOGIN_REDIRECT_URL = /
+LOGIN_REDIRECT_URL = /intel
+
+# LOGIN_TEMPLATE=login_and_password/login.html
+LOGIN_TEMPLATE=login_and_password/intel-login.html
+
+# LOGGEDOUT_TEMPLATE=loggedout.html
+LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+
+
+* SQL queries in reports_sqlreports now contain an {{orderby}} stub. To update the DB, run:
+
+./manage.py loaddata apps/reports/fixtures/sql_reports.json
