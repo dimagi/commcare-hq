@@ -1,29 +1,9 @@
 {% extends "intel-layout.html" %}
 
-<style>
-#newdom_text{     
-    border: solid 2px;
-    border-color: #a7cce2;
-    color: black;
-    display: block;
-    font-size: 1.5em;
-    margin-top: 100px;
-    padding: 15px 15px;
-    text-align: center;
-    text-decoration: none;    
-    width: 200px;
-}
-#newdom_text:hover {
-    background: steelblue;
-    border-color: #a7cce2;
-    color: white;
-}
-</style>
-
 {% block title %}login{% endblock title %}
-{% block hq-stylesheets %}
+{% block page_stylesheets %}
 <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
-{% endblock hq-stylesheets %}
+{% endblock %}
 
 {#################################################################################################################}
       
@@ -70,7 +50,7 @@
 <div class="prepend-5 span-3 clear" style="margin-bottom:20px; margin-top:-18px">
 <a href="{% url password_reset_email %}">Forgot password?</a>
 </div>
-<div style="text-align: center"><button type="submit">Submit</button></div>
+<div style="text-align: center"><button type="submit">Enter</button></div>
 </form>
 
 </div> 
@@ -87,11 +67,30 @@
 <div class="span-2 last" style="border-bottom:solid 1px; margin-top:1.3em;"></div>
 
 
+<style>
+#newdom_text{     
+    border: solid 2px;
+    border-color: #a7cce2;
+    color: black;
+    display: block;
+    font-size: 1.5em;
+    margin-top: 100px;
+    padding: 15px 15px;
+    text-align: center;
+    text-decoration: none;    
+    width: 200px;
+}
+#newdom_text:hover {
+    background: steelblue;
+    border-color: #a7cce2;
+    color: white;
+}
+</style>
 
 <div style="margin:0 auto;width:230px">
 <a id="newdom_text" class="clear light_button_color light_border_color" href="{% url domain_registration_request %}">Request a new domain</a>
 <a href="{% url domain_registration_resend_confirm_email %}" style="float:right; margin-top:2px;">Resend confirm email?</a>
 </div>
 -->
-
 {% endblock content %} 
+
