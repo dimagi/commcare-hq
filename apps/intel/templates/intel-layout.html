@@ -1,33 +1,40 @@
-{% extends base_template  %} <!-- "layout.html" -->
+{% extends "layout.html" %}
 {% load i18n %}
+
 {% block title_suffix %} - Commcare Grameen{% endblock %}
+
 {% block stylesheets %}
-<link rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
-<link rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/blueprint/print.css" type="text/css" media="print">
-<!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
-<link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
-<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/style.css" />
-<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/modules.css" />
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/print.css" type="text/css" media="print">
+	<!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+	<link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modules.css" />
 
-<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/intel.css" />
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/style.css" />
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/intel.css" />
 
+	{% block hq-stylesheets %}{% endblock %}
 	{% block page_stylesheets %}{% endblock %}
-{% endblock %}
-{% block auth %}
-<div id="currentlogin-block">
-  {% if user.is_authenticated %}        
-      Hello, <strong>{{user}}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>                
-  {% else %}
-      <a href="{% url login %}">{% trans "Log in" %}</a>
-  {% endif %}
-</div>
 
 {% endblock %}
+
+
+{% block auth %}
+	<div id="currentlogin-block">
+	  {% if user.is_authenticated %}        
+	      Hello, <strong>{{user}}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>                
+	  {% else %}
+	      <a href="{% url login %}">{% trans "Log in" %}</a>
+	  {% endif %}
+	</div>
+{% endblock %}
+
 {% block branding %}
 	<h1 id="site-name">{%trans "CommCare HQ" %}</h1>
 {% endblock %}
+
 {% block footer %}
-{% include "hq/partials/footer.html" %}
+	{% include "hq/partials/footer.html" %}
 {% endblock %}
 
 {% block lang_selector %}{% endblock %}
