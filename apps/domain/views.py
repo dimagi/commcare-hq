@@ -386,7 +386,6 @@ def user_list_paging(request, queryset, sort_vars=None):
     sort_index = -1
     counter = 0
     for name in user_table.columns.names():
-        print name
         if order_by == name or order_by == "-%s" % name:
             sort_index = counter
             break
