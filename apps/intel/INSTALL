@@ -2,6 +2,9 @@ This documents the steps to install this app, outside the usual Git checkout & s
 
 * In local.ini, change the following:
 
+# BASE_TEMPLATE=hq-layout.html
+BASE_TEMPLATE=intel-layout.html
+
 # LOGIN_REDIRECT_URL = /
 LOGIN_REDIRECT_URL = /intel
 
@@ -12,6 +15,6 @@ LOGIN_TEMPLATE=login_and_password/intel-login.html
 LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
 
 
-* SQL queries in reports_sqlreports now contain an {{orderby}} stub. To update the DB, run:
+* SQL queries in reports_sqlreports now contain an {{orderby}} stub, to allow ordering by mother name in the list views. To update the DB:
 
 ./manage.py loaddata apps/reports/fixtures/sql_reports.json
