@@ -6,17 +6,17 @@
         
         $('#fail_msg').click(function() { 
             $.unblockUI(); 
-            return false; 
+			location.reload(); //return false; 
         }); 
         
         $('#success_msg').click(function() { 
             $.unblockUI(); 
-            return false; 
+			location.reload(); //return false; 
         }); 
         
         $('#success').click(function() { 
             $.unblockUI(); 
-            return false; 
+			location.reload(); //return false; 
         }); 
         
         $('#fail').click(function() { 
@@ -54,7 +54,7 @@
                                     "uid":  reporter_id,
                                     "text": message,
                                 },
-                                "success": function() { sms_done("success"); },
+                                "success": function() { sms_done("success"); location.reload(); },
                                 "error":   function() { sms_done("error"); }
                         });
                     } else {
@@ -74,7 +74,7 @@
                             "attach_id":  attach_id,
                             "text": message,
                         },
-                        "success": function()    { annotation_done("success"); },
+                        "success": function() { annotation_done("success"); },
                         "error":   function() { annotation_done("error"); }
                     });
             
@@ -110,7 +110,7 @@ Enter a message about this follow-up.<br/>
 {% endif %}
 
 <div id="success" style="display:none; cursor: default"> 
-        <h2>Annotation successfully added!<br>You might have to refresh the page to see it.</h2>
+        <h2>Annotation successfully added!</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
 
@@ -120,11 +120,11 @@ Enter a message about this follow-up.<br/>
 </div> 
 
 <div id="success_msg" style="display:none; cursor: default"> 
-        <h2>Annotation successfully added and message was sent!<br>You might have to refresh the page to see it.</h2>
+        <h2>Annotation successfully added and message was sent!</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
 
 <div id="fail_msg" style="display:none; cursor: default"> 
-        <h2>Annotation successfully added but message sending failed!<br>You might have to refresh the page to see it.</h2>
+        <h2>Annotation successfully added but message sending failed!</h2>
         <input type="button" id="ok" value="       Ok       "/>
 </div> 
