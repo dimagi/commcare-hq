@@ -6,6 +6,7 @@ from xformmanager.manager import *
 from xformmanager.storageutility import StorageUtility
 from receiver.models import Submission, Attachment
 from receiver.tests.util import *
+from reports.models import Case, CaseFormIdentifier, FormIdentifier
 
 
 def clear_data():
@@ -23,6 +24,14 @@ def clear_group_data():
     FormDataGroup.objects.all().delete()
     FormDataColumn.objects.all().delete()
     FormDataPointer.objects.all().delete()
+    
+def clear_case_data():
+    """Clear out the form group objects"""
+    Case.objects.all().delete()
+    CaseFormIdentifier.objects.all().delete()
+    FormIdentifier.objects.all().delete()
+    
+    
     
 def get_file(filename, path=None ):
     """ handles relative pathing of files """

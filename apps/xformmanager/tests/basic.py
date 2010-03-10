@@ -3,6 +3,7 @@ from django.db import connection, transaction, DatabaseError
 from xformmanager.manager import XFormManager
 from xformmanager.tests.util import *
 from xformmanager.models import FormDefModel
+from reports.models import FormIdentifier, CaseFormIdentifier, Case
 
 from decimal import Decimal
 from datetime import *
@@ -244,11 +245,13 @@ class BasicTestCase(unittest.TestCase):
         cursor.execute("SELECT count(*) FROM schema_otherdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
         self.assertEqual(2, cursor.fetchone()[0])
         
-    def testReposting(self):
+    def testRepostingPreservesData(self):
         """Testing reposting entire schemas."""
         form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
         original_id = form.id
         populate("data/pf_followup_2.xml", self.domain)
+        
+        # sanity checks to make sure things are behaving normally
         self.assertEqual(1, FormDefModel.objects.count())
         self.assertEqual(2, Metadata.objects.count())
         original_meta_ids = [meta.id for meta in Metadata.objects.all()]
@@ -271,7 +274,7 @@ class BasicTestCase(unittest.TestCase):
                 
         # check metadata
         self.assertEqual(2, Metadata.objects.count())
-        self.assertNotEqual(original_id, new_form)
+        self.assertNotEqual(original_id, new_form.id)
         for meta in Metadata.objects.all():
             self.assertFalse(meta.id in original_meta_ids)
         
@@ -280,6 +283,57 @@ class BasicTestCase(unittest.TestCase):
         cursor.execute("SELECT count(*) FROM schema_basicdomain_pathfinder_pathfinder_cc_follow_0_0_2a")
         self.assertEqual(2, cursor.fetchone()[0])
                 
+            
+    def testRepostingPreservesRelations(self):
+        """Testing reposting entire schemas with linked objects."""
+        form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
+        
+        # add some linked objects - one and two levels deep, and track them
+        clear_case_data()
+        fid1 = FormIdentifier.objects.create(form=form, identity_column="id")
+        fid2 = FormIdentifier.objects.create(form=form, identity_column="meta_username")
+        case = Case.objects.create(name="somecase", domain=self.domain)
+        cfid11 = CaseFormIdentifier.objects.create(form_identifier=fid1, case=case,
+                                                   sequence_id=1, form_type="follow")
+        cfid12 = CaseFormIdentifier.objects.create(form_identifier=fid1, case=case,
+                                                   sequence_id=2, form_type="follow")
+        cfid13 = CaseFormIdentifier.objects.create(form_identifier=fid2, case=case,
+                                                   sequence_id=3, form_type="follow")
+        self.assertEqual(3, CaseFormIdentifier.objects.count())
+        self.assertEqual(2, FormIdentifier.objects.count())
+        self.assertEqual(1, Case.objects.count())
+        
+        # repost 
+        manager = XFormManager()
+        new_form = manager.repost_schema(form)
+        self.assertEqual(1, FormDefModel.objects.count())
+        
+        # make sure the counts are still correct
+        self.assertEqual(3, CaseFormIdentifier.objects.count())
+        self.assertEqual(2, FormIdentifier.objects.count())
+        self.assertEqual(1, Case.objects.count())
+        
+        # load up the new objects by unique charateristics (NOT ids)
+        newfid1 = FormIdentifier.objects.get(identity_column="id")
+        newfid2 = FormIdentifier.objects.get(identity_column="meta_username")
+        newcfid11 = CaseFormIdentifier.objects.get(sequence_id=1)
+        newcfid12 = CaseFormIdentifier.objects.get(sequence_id=2)
+        newcfid13 = CaseFormIdentifier.objects.get(sequence_id=3)
+        
+        # make sure relationships are the same (with new objs) but not ids
+        self.assertEqual(new_form, newfid1.form)
+        self.assertEqual(new_form, newfid2.form)
+        self.assertNotEqual(fid1.id, newfid1.id)
+        self.assertNotEqual(fid2.id, newfid2.id)
+        self.assertEqual(newcfid11.form_identifier, newfid1)
+        self.assertEqual(newcfid11.case, case)
+        self.assertEqual(newcfid12.form_identifier, newfid1)
+        self.assertEqual(newcfid12.case, case)
+        self.assertEqual(newcfid13.form_identifier, newfid2)
+        self.assertEqual(newcfid13.case, case)
+        self.assertNotEqual(newcfid11.id, cfid11.id)
+        self.assertNotEqual(newcfid12.id, cfid12.id)
+        self.assertNotEqual(newcfid13.id, cfid13.id)
             
     def testIsSchemaRegistered(self):
         """ given a form and version is that form registered """

@@ -25,6 +25,8 @@ def copy_related(collection):
     for cls, objs in collection.items():
         copied_items = {}
         for pk, item in objs.items():
-            copied_items[pk] = copy.copy(item)
+            # we only select one level deep, as we assume that everything
+            # is only referencing things directly touching our objects
+            copied_items[pk] = cls.objects.select_related(depth=1).get(pk=pk)
         to_return[cls] = copied_items
     return to_return
