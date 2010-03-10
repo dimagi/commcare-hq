@@ -170,11 +170,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(len(edds),2)
         # test that the top elementdefmodel has itself as a parent
         top_edm = ElementDefModel.objects.get(id=fd.element.id)
-        self.assertEquals(top_edm.parent, top_edm)
+        self.assertEquals(None, top_edm.parent)
         # test that table name is correct
         self.assertEquals(top_edm.table_name, "schema_basicdomain_xml_singlerepeat")
         # test for only one child table
-        edds = ElementDefModel.objects.filter(parent=top_edm).exclude(id=top_edm.id)
+        edds = top_edm.children.all()
         self.assertEquals(len(edds),1)
         # test that that child table's parent is 'top'
         self.assertEquals(edds[0].parent,top_edm)
@@ -186,9 +186,9 @@ class BasicTestCase(unittest.TestCase):
         edds = ElementDefModel.objects.filter(form=fd)
         self.assertEquals(len(edds),2)
         top_edm = ElementDefModel.objects.get(id=fd.element.id)
-        self.assertEquals(top_edm.parent, top_edm)
+        self.assertEquals(None, top_edm.parent)
         self.assertEquals(top_edm.table_name, "schema_basicdomain_xml_nestedrepeats")
-        edds = ElementDefModel.objects.filter(parent=top_edm).exclude(id=top_edm.id)
+        edds = top_edm.children.all()
         self.assertEquals(len(edds),1)
         self.assertEquals(edds[0].parent,top_edm)
         self.assertEquals(edds[0].xpath,"root/nested")
