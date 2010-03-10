@@ -75,7 +75,7 @@ class ElementDefModel(models.Model):
 
 class FormDefModel(models.Model):
     # a bunch of these fields have null=True to make unit testing easier
-    # also, because creating a form defintion shouldn't be dependent on receing form through server
+    # also, because creating a form defintion shouldn't be dependent on receiving form through server
     uploaded_by = models.ForeignKey(User, null=True)
     
     # the domain this form is associated with, if any
