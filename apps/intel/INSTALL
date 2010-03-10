@@ -1,6 +1,6 @@
 This documents the steps to install this app, outside the usual Git checkout & syncdb
 
-* In local.ini, change the following:
+* In local.ini, change the following (or simply cp local.ini.intel local.ini):
 
 # BASE_TEMPLATE=hq-layout.html
 BASE_TEMPLATE=intel-layout.html

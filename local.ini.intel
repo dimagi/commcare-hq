@@ -1,0 +1,179 @@
+# RapidSMS configuration file.
+
+# -- RAPIDSMS
+#
+# The main configuration of the RapidSMS server. It contains a list of
+# apps and backends to run, which can be names of app classes, or (in the
+# case of multiple apps or backends of the same type) names for apps of
+# the same type (see APPS and BACKENDS sections below).
+#
+# apps=[app1,app2,app3,...]         * comma-separated list of apps to load
+# backends=[backend1,backend2,...]  * comma-separated list of backends to load
+
+[rapidsms]
+#apps=admin,reporters,hq,httptester,django_extensions,receiver,xformmanager,reports,graphing,webapp,locations,patterns,docs,ajax,messaging,buildmanager,requestlogger,backups,photos,django.contrib.comments
+apps=admin,backends,ajax,webapp,patterns,locations,reporters,hq,graphing,django_extensions,receiver,xformmanager,reports,httptester,messaging,logger,logtracker,buildmanager,requestlogger,backups,domain,django_granular_permissions,django_tables,user_registration,docs,intel
+
+backends=http
+
+# -- DATABASE
+#
+# Database configuration info.
+#
+# engine={sqlite3,mysql,postgresql,oracle,postgresql_psycopg2}  * defaults to sqlite3
+# name=<database-name>
+# user=<database-user>                                          * defaults to root
+# password=<database-password>                                  * defaults to empty string
+# host=<datbase-host>                                           * defaults to localhost (empty string)
+# port=<database-port>                                          * not used for sqlite3
+
+[database]
+#engine=sqlite3
+#name=cchq.db
+
+engine=mysql
+name=commcarehq_data
+user=root
+password=
+#host=
+#port=
+
+# -- LOG
+#
+# Configure the built-in log module of RapidSMS.
+#
+# level={debug,info,warning,error,critical}     * defaults to debug
+# file=<full-path-to-log-file>                  * defaults to /tmp/rapidsms.log
+
+[django-log]
+level=debug
+file=rapidsms.log
+
+# -- APPS
+#
+# In this area you can define configurations for individual applications. The app
+# must be listed under the section [rapidsms] in "apps". If no configuration is
+# listed for your app it will use the default parameters. However, if you wish to
+# run two apps of the same type, you MUST define configure them explicitly here.
+
+[receiver]
+export_path=data
+xform_submission_path=data/submissions
+attachments_path=data/attachments
+
+[xformmanager]
+export_path=data
+xsd_repository_path=data/schemas
+csv_path=data/csv
+xform_translate_path=lib
+
+
+[logtracker]
+default_alert_email=
+log_threshold=30
+alert_threshold=40
+
+[buildmanager]
+buildpath=data/builds
+
+#[alpha]
+#beginning=yes
+#end=no
+
+[i18n]
+languages=(sw,Swahili),(en,English)
+
+[photos]
+image_path=data/photos
+
+# -- BACKENDS
+#
+# In this area you can define configurations for individual backends. The backend
+# must be listed under the section [rapidsms] in "backends". If no configuration is
+# listed for your backend it will use the default parameters. However, if you wish to
+# run two backends of the same type, you MUST define configure them explicitly here.
+
+#[spomc]
+#type=spomc
+#port=9000
+
+# These let you override Custom Managers.  See rapidsms.webui.managers.CustomManager
+# for more information
+[managers]
+Reporter=hq.managers.reporter
+
+# -- Custom Django
+# This section is for custom django attributes.  These are things that need to be 
+# appended to your settings, as opposed to the [django] section below, which totally
+# overrides your settings.  Right now the only thing this allows you to do is
+# specify some additional middleware with the "middlewares" key.  This should be
+# a comma separated list of middlelware paths, e.g.:
+# middlewares= myapp.middleware.custom.MyAppMiddleware,myapp.middleware.other.OtherMiddleware
+[customdjango]
+middlewares=hq.middleware.hq.HqMiddleware,domain.middleware.DomainMiddleware
+
+# -- DJANGO
+#
+# In this area you can define configuration options for django that would usually
+# go into your settings.py file. There's no need to make the variables uppercase
+# also do not specify strings by surrounding them with the quotes " or '. This
+# is automatically taken care of before injecting it into django's core configuration
+[django]
+# Specify a cache backend. Caching becomes necessary when you have views or sections
+# that are expensive to generate. Please read http://docs.djangoproject.com/en/dev/topics/cache/
+# for more information on how to use the caching capabilities of django.
+#
+# cache_backend=dummy:///
+
+LOGIN_REDIRECT_URL = /intel
+cache_backend=file:///tmp/django_cache
+use_django_static_server=yes
+admin_media_prefix = /static/admin-media/
+media_server_prog=apache
+# media_root=file:///tmp
+media_url=/static
+
+# restyle some templates
+# BASE_TEMPLATE=hq-layout.html
+BASE_TEMPLATE=intel-layout.html
+# LOGIN_TEMPLATE=login_and_password/login.html
+LOGIN_TEMPLATE=login_and_password/intel-login.html
+# LOGGEDOUT_TEMPLATE=loggedout.html
+LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+
+
+# this is to provide convenient url access in our email logger
+# there's probably a better way to do this.
+SERVER_ROOT_URL=http://dev.commcarehq.org
+
+##### Domain integration settings  ######
+
+# Some urls used in the domain stuff
+DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
+DOMAIN_SELECT_URL = /domain/select/
+LOGIN_URL = /accounts/login/
+
+# For the registration app
+# One week to confirm a registered user account
+ACCOUNT_ACTIVATION_DAYS = 7 
+
+# If a user tries to access domain admin pages but isn't a domain 
+# administrator, here's where he/she is redirected
+DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = homepage
+
+##### End domain integration settings  ######
+
+EMAIL_LOGIN=notifications@dimagi.com
+EMAIL_PASSWORD=alpha321
+EMAIL_SMTP_HOST=smtp.gmail.com
+EMAIL_SMTP_PORT=587
+
+
+# these are the official django settings
+# which really we should be using over the
+# above
+EMAIL_HOST = smtp.gmail.com
+EMAIL_PORT = 587
+EMAIL_HOST_USER = notifications@dimagi.com
+EMAIL_HOST_PASSWORD = alpha321
+EMAIL_USE_TLS = True
