@@ -9,6 +9,7 @@ from xformmanager.storageutility import *
 from xformmanager.xformdef import FormDef
 from xformmanager.copy import prepare_migration_objects, migrate
 from xformmanager.models import MetaDataValidationError, Metadata
+from xformmanager.util import table_exists
 from receiver.models import Attachment
 
 class XFormManager(object):
@@ -147,6 +148,59 @@ class XFormManager(object):
         
         return new_form
 
+    def check_schema(self, form):
+        """
+        Checks a schema for certain errors, logging them and returning
+        them to the caller.  Errors that are checked are:
+         - no xsd file found
+         - no schema tables found for the form or any child tables
+         - no xml files found for linked posts
+        """
+        errors = []
+        warnings = []
+        # check xsd file:
+        xsd_file = form.xsd_file_location
+        if not os.path.exists(xsd_file):
+            errors.append("XSD file not found")
+        if not form.xform_file_location:
+            warnings.append("XForm file not found")
+        
+        # check schema and child tables
+        if not table_exists(form.table_name):
+            errors.append("Root table %s not found in the database")
+        child_errors = self._children_missing_tables(form.element)
+        for child in child_errors:
+            errors.append("Child table %s not found in the database" % child.table_name)
+        
+        # check attachments that matched this schema
+        matching_meta_attachments = Attachment.objects.filter(form_metadata__formdefmodel=form)
+                
+        missing_attachment_files = \
+            [attachment for attachment in matching_meta_attachments \
+             if not os.path.exists(attachment.filepath)]
+        missing_submission_files = \
+            [attachment.submission for attachment in matching_meta_attachments \
+             if not os.path.exists(attachment.submission.raw_post)]
+        if missing_attachment_files:
+            errors.append("%s attachments missing filesystem entries." % len(missing_attachment_files))
+        if missing_submission_files:
+            errors.append("%s attachments missing submission filesystem entries." % len(missing_submission_files))
+        return [errors, warnings]
+        
+    def _children_missing_tables(self, element):
+        """Return a list of children with missing tables for the form, traversing
+           to an arbitrary depth."""
+        error_children = []
+        # we really should never be pointing to ourselves, but unfortunately the
+        # old code was setup this way, so we have to explicitly exclude it from
+        # consideration
+        for child in element.children.exclude(id=element.id):
+            if not table_exists(child.table_name):
+                error_children.append(child)
+            deeper_errors = self._children_missing_tables(child)
+            error_children.extend(deeper_errors)
+        return error_children
+    
     def _add_schema_from_file(self, file_name, domain=None):
         """ we keep this api open for the unit tests """
         name = os.path.basename(file_name)
