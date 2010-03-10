@@ -2,9 +2,12 @@
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
 <h2>Mother Summary for {{ mother.mother_name }}</h2>
-<div class="annotationtrigger js_link" onclick="show_annotations({{attachment.id}}, '#dialog');">
-	Send Message
-</div>
+{% if attach_id %}
+	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog');">
+		<button class="follow-up">Follow Up</button>
+	</div>
+	<br /><br />
+{% endif %}
 <div id="mother-summary">
 <table> <!-- tables within tables! -->
 	<tr>
@@ -69,4 +72,9 @@
 {% endfor %}
 </table>
 </div>
+</div>
+
+<div class="modal_dialog" id="dialog">
+<a href="#" class="jqmClose">Close</a>
+Please wait while that loads... 
 </div>

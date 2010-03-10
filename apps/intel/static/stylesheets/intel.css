@@ -37,6 +37,17 @@
     padding:4px 10px 3px 7px; /* IE7 */
 }
 
+.follow-up {
+  background: #00ff00; 
+  border: 0; 
+  font-size: 18px; 
+  height: 31px; 
+  line-height: 31px; 
+  padding:0 ; 
+  width: 125px; 
+  cursor:pointer;
+}
+
 /*.buttons button img, .buttons a img{
     margin:0 3px -3px 0 !important;
     padding:0;

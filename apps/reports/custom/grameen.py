@@ -12,6 +12,8 @@ from reports.models import Case, SqlReport
 from reports.util import get_whereclause
 from shared import monitoring_report, Mother
 
+from pprint import pprint
+
 
 '''Report file for custom Grameen reports'''
 # see mvp.py for an explanation of how these are used.
@@ -43,9 +45,11 @@ def _mother_summary(request):
     if not "case_id" in request.GET:
         return '''Sorry, you have to specify a mother using the case id
                   in the URL.'''
-    case_id = request.GET["case_id"]
+
+    case_id = request.GET["case_id"]    
     data = case.get_data_map_for_case(case_id)
     mom = Mother(case, case_id, data)
+
     mother_name = request.GET["mother_name"]
     if mom.mother_name != mother_name:
         return '''<p class="error">Sorry it appears that this id has been used by the CHW for
@@ -53,14 +57,27 @@ def _mother_summary(request):
                   yet show you her data here.  Please remind your CHW's to 
                   use unique case Ids!</p> 
                '''
+
     attrs = [name for name in dir(mom) if not name.startswith("_")]
     attrs.remove("data_map")
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
     mom.hi_risk_reasons = _get_hi_risk_reason(mom)
-
+        
+    # get attachment ID for SMS Sending UI
+    # This sucks. But it's impossible to just get the ID from Mother or Cata, since the models seem to overwrite it with the "CHW|ID" format
+    instance_id = data.values()[0][0]['id']
+    form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
+    
+    try: 
+        meta = Metadata.objects.get(formdefmodel=form_def, raw_data=instance_id)
+        attach_id = meta.attachment.id
+    except Metadata.DoesNotExist:
+        # TODO handle this better
+        attach_id = None
+    
     return render_to_string("custom/grameen/mother_details.html", 
-                            {"mother": mom, "attrs": all_attrs,
+                            {"mother": mom, "attrs": all_attrs, "attach_id": attach_id,
                              "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
                              }) 
                              
@@ -147,11 +164,13 @@ def _chw_submission_summary(request, params, format_to_str=True):
     for row in data:
         new_row_data = dict(zip(cols, row))
         row_id = new_row_data["Instance ID"]
+
         try: 
             meta = Metadata.objects.get(formdefmodel=form_def, raw_data=row_id)
         except Metadata.DoesNotExist:
             # TODO handle this better
             pass
+
         try:
             follow = meta.attachment.annotations.count() > 0
             if follow_filter is not None:
