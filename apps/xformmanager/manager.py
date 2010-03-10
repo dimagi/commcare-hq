@@ -5,11 +5,9 @@ import subprocess
 import copy
 from subprocess import PIPE
 
-from django.db.models import ForeignKey
-
 from xformmanager.storageutility import * 
 from xformmanager.xformdef import FormDef
-from xformmanager.copy import collect_related, copy_related
+from xformmanager.copy import prepare_migration_objects, migrate
 from xformmanager.models import MetaDataValidationError, Metadata
 from receiver.models import Attachment
 
@@ -106,8 +104,7 @@ class XFormManager(object):
         form_model_copy = copy.copy(form)
                 
         # get related objects so we can migrate them
-        related_objs = collect_related(form)
-        copies = copy_related(related_objs)
+        migration_objects = prepare_migration_objects(form)
         
         # store the attachments that mapped to the form for later reposting
         matching_meta_attachments = list(Metadata.objects.filter(formdefmodel=form)\
@@ -139,46 +136,10 @@ class XFormManager(object):
         new_form.save()
         
         # migrate related objects
-        
         # these two classes are covered by reposting
         classes_not_to_touch = Metadata, ElementDefModel
+        migrate(migration_objects, new_form, classes_not_to_touch)
         
-        # we traverse in reverse order, because that's how the dependency
-        # chain works
-        reversed_keys = copies.keys()
-        reversed_keys.reverse()
-        
-        # the new classmap keys the old ids to the new objects.
-        # this way we can properly traverse foreign key relationships.
-        new_classmap = {FormDefModel: {form.id: new_form}}
-        for cls in reversed_keys:
-            if cls == FormDefModel or cls in classes_not_to_touch:
-                continue
-            
-            # pull out all the appropriate foreign key fields
-            fks = [field for field in cls._meta.fields \
-                   if isinstance(field, ForeignKey) \
-                   and field.rel.to in copies \
-                   and not field.rel.to in classes_not_to_touch]
-            
-            object_list = copies[cls]
-            new_classmap[cls] = {}
-            for pk, obj in object_list.items():
-                # blank out the pk/id and save to create new instances
-                previous_id = obj.id
-                obj.id = None
-                for fk in fks:
-                    # set any relevant foreign keys to be the newly 
-                    # migrated objects
-                    fk_value = getattr(obj, "%s_id" % fk.name)
-                    if fk_value in copies[fk.rel.to]:
-                        new_obj = new_classmap[fk.rel.to][fk_value]
-                        setattr(obj, fk.name, new_obj)
-                obj.save()
-                
-                # save the newly created object for future access
-                new_classmap[cls][previous_id] = obj
-                
         # repost data
         for attachment_id in matching_meta_attachments:
             attach = Attachment.objects.get(id=attachment_id)
