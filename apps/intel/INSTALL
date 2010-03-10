@@ -1,20 +1,27 @@
-This documents the steps to install this app, outside the usual Git checkout & syncdb
+Steps to install this app:
 
-* In local.ini, change the following (or simply cp local.ini.intel local.ini):
+1. Get source:
+	
+	git pull origin intel
 
-# BASE_TEMPLATE=hq-layout.html
-BASE_TEMPLATE=intel-layout.html
+2. Sync DB
 
-# LOGIN_REDIRECT_URL = /
-LOGIN_REDIRECT_URL = /intel
+	./manage.py syncdb
 
-# LOGIN_TEMPLATE=login_and_password/login.html
-LOGIN_TEMPLATE=login_and_password/intel-login.html
+3. SQL queries in reports_sqlreports now contain an {{orderby}} stub, to allow ordering by mother name in the list views. Update the DB:
 
-# LOGGEDOUT_TEMPLATE=loggedout.html
-LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+	./manage.py loaddata apps/reports/fixtures/sql_reports.json
 
+4. In local.ini, change the following (or simply cp local.ini.intel local.ini):
 
-* SQL queries in reports_sqlreports now contain an {{orderby}} stub, to allow ordering by mother name in the list views. To update the DB:
+	# BASE_TEMPLATE=hq-layout.html
+	BASE_TEMPLATE=intel-layout.html
 
-./manage.py loaddata apps/reports/fixtures/sql_reports.json
+	# LOGIN_REDIRECT_URL = /
+	LOGIN_REDIRECT_URL = /intel
+
+	# LOGIN_TEMPLATE=login_and_password/login.html
+	LOGIN_TEMPLATE=login_and_password/intel-login.html
+
+	# LOGGEDOUT_TEMPLATE=loggedout.html
+	LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
