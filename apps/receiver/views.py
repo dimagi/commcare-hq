@@ -251,9 +251,11 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
         
         def _process(submission, action):
             """
+            Does the actual resubmission of a single form.
+            
             return a tuple of (<success>, <message>) where:
-            success = True if success, else False
-            message = A helpful message about what happened
+              success = True if success, else False
+              message = A helpful message about what happened
             """ 
             if action == 'delete':
                 submission.delete()
@@ -280,7 +282,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                     if status: 
                         count = count + 1
                     else: 
-                        errors[submission.id] = msg
+                        errors[str(submission.id)] = msg
         else: 
             for i in request.POST.getlist('instance'):
                 if 'checked_'+ i in request.POST:
@@ -290,7 +292,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                     if status:
                         count = count + 1
                     else:
-                        errors[submission.id] = msg
+                        errors[str(submission.id)] = msg
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
         context["errors"] = errors
