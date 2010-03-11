@@ -280,7 +280,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                     if status: 
                         count = count + 1
                     else: 
-                        errors[submission] = msg
+                        errors[submission.id] = msg
         else: 
             for i in request.POST.getlist('instance'):
                 if 'checked_'+ i in request.POST:
@@ -290,7 +290,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
                     if status:
                         count = count + 1
                     else:
-                        errors[submission] = msg
+                        errors[submission.id] = msg
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
         context["errors"] = errors
