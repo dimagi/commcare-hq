@@ -503,7 +503,7 @@ msgstr ""
 #: .\apps\custom\brac.py:61
 #, python-format
 msgid "Congratulations for the work done %(username)s. "
-msgstr "Hongera kwa kazi nzuri dada %(username)s. "
+msgstr "Kazi nzuri dada %(username)s. "
 
 #: .\apps\custom\brac.py:62
 msgid "You have submitted %(count)s forms this week! "
