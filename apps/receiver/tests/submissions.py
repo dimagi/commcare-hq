@@ -4,7 +4,7 @@ from receiver.tests.util import *
 
 class ProcessingTestCase(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         allsubmits = Submission.objects.all()
         for submit in allsubmits:
             submit.delete()
