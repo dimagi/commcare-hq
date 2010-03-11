@@ -11,6 +11,8 @@ import unittest
 class VersionedTestCase(unittest.TestCase):
     def setUp(self):
         clear_data()
+        mockdomain = Domain.objects.get_or_create(name='versioneddomain')[0]
+        self.domain = mockdomain
         
     def testFormDef_7(self):
         """ Test deep form definition created and data saved """
@@ -36,19 +38,19 @@ class VersionedTestCase(unittest.TestCase):
         except FormDef.FormDefError, e:
             pass
         
-        formdefmodel = create_xsd_and_populate("data/bad_version.xsd")
+        formdefmodel = create_xsd_and_populate("data/bad_version.xsd", domain=self.domain)
         # schema should not have version associated
         self.assertEquals(formdefmodel.version, None)
         self.assertEquals(formdefmodel.uiversion, None)
         
-        submission = populate("data/bad_version.xml")
+        submission = populate("data/bad_version.xml", self.domain)
         # metadata version and uiversion should be empty
         m = Metadata.objects.get(attachment__submission=submission)
         self.assertEquals(m.version, None)
         self.assertEquals(m.uiversion, None)
         # schema should not have version associated
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_bad_version")
+        cursor.execute("SELECT * FROM schema_versioneddomain_bad_version")
         row = cursor.fetchone()
         self.assertEquals(row[9],"foo")
         self.assertEquals(row[10],"bar")
@@ -57,9 +59,9 @@ class VersionedTestCase(unittest.TestCase):
         
     def testSaveFormData_7(self):
            """ Test very deep form definition created and data saved """
-           formdefmodel = create_xsd_and_populate("data/7_verydeep_2.xsd", "data/7_verydeep_2.xml")
+           formdefmodel = create_xsd_and_populate("data/7_verydeep_2.xsd", "data/7_verydeep_2.xml", self.domain)
            cursor = connection.cursor()
-           cursor.execute("SELECT * FROM schema_xml_verydeep_1")
+           cursor.execute("SELECT * FROM schema_versioneddomain_xml_verydeep_1")
            row = cursor.fetchone()
            try:
                self.assertEquals(row[9],"userid0")
@@ -73,23 +75,23 @@ class VersionedTestCase(unittest.TestCase):
     
     def testSaveFormData_8(self):
         """ Test repeated form definition created and data saved """
-        formdefmodel = create_xsd_and_populate("data/8_singlerepeat_2.xsd")
+        formdefmodel = create_xsd_and_populate("data/8_singlerepeat_2.xsd", domain=self.domain)
         self.assertEquals(int(formdefmodel.version), 2)
         self.assertEquals(int(formdefmodel.uiversion), 3)
 
-        submission = populate("data/8_singlerepeat_2.xml")
+        submission = populate("data/8_singlerepeat_2.xml", self.domain)
         m = Metadata.objects.get(attachment__submission=submission)
         self.assertEquals(int(m.version), 2)
         self.assertEquals(int(m.uiversion), 2)
         
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM schema_xml_singlerepeat_2")
+        cursor.execute("SELECT * FROM schema_versioneddomain_xml_singlerepeat_2")
         try:
             row = cursor.fetchone()
             self.assertEquals(row[9],"deviceid0")
             self.assertEquals(row[10],"starttime")
             self.assertEquals(row[11],"endtime")
-            cursor.execute("SELECT * FROM schema_xml_singlerepeat_root_userid_2")
+            cursor.execute("SELECT * FROM schema_versioneddomain_xml_singlerepeat_root_userid_2")
             row = cursor.fetchall()
             self.assertEquals(row[0][1],"userid0")
             self.assertEquals(row[1][1],"userid2")
@@ -103,21 +105,21 @@ class VersionedTestCase(unittest.TestCase):
 
     def testSaveFormData_9(self):
         """ Test nested repeated form definition created and data saved """
-        formdefmodel = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
-        formdefmodel_2 = create_xsd_and_populate("data/9_nestedrepeats_2.xsd", "data/9_nestedrepeats_2.xml")
-        formdefmodel_3 = create_xsd_and_populate("data/9_nestedrepeats_3.xsd", "data/9_nestedrepeats_3.xml")
-        formdefmodel_4 = create_xsd_and_populate("data/9_nestedrepeats_4.xsd", "data/9_nestedrepeats_4.xml")
+        formdefmodel = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml", self.domain)
+        formdefmodel_2 = create_xsd_and_populate("data/9_nestedrepeats_2.xsd", "data/9_nestedrepeats_2.xml", self.domain)
+        formdefmodel_3 = create_xsd_and_populate("data/9_nestedrepeats_3.xsd", "data/9_nestedrepeats_3.xml", self.domain)
+        formdefmodel_4 = create_xsd_and_populate("data/9_nestedrepeats_4.xsd", "data/9_nestedrepeats_4.xml", self.domain)
         try:
             # add checks for metadata.uiversion, version
             for i in (2,3,4):
                 cursor = connection.cursor()
-                cursor.execute("SELECT * FROM schema_xml_nestedrepeats_%s" % i)
+                cursor.execute("SELECT * FROM schema_versioneddomain_xml_nestedrepeats_%s" % i)
                 row = cursor.fetchone()
                 self.assertEquals(row[9],"foo")
                 self.assertEquals(row[10],"bar")
                 self.assertEquals(row[11],"yes")
                 self.assertEquals(row[12],"no")
-                cursor.execute("SELECT * FROM schema_xml_nestedrepeats_root_nested_%s" % i)
+                cursor.execute("SELECT * FROM schema_versioneddomain_xml_nestedrepeats_root_nested_%s" % i)
                 row = cursor.fetchall()
                 self.assertEquals(row[0][1],"userid0")
                 self.assertEquals(row[0][2],"deviceid0")
@@ -146,18 +148,18 @@ class VersionedTestCase(unittest.TestCase):
     
     def testSaveFormData_10(self):
         """ Test nested repeated form definition created and data saved """
-        formdefmodel = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
-        formdefmodel_2 = create_xsd_and_populate("data/9_nestedrepeats_2.xsd", "data/9_nestedrepeats_2.xml")
-        formdefmodel_3 = create_xsd_and_populate("data/10_other_v3.xsd", "data/10_other_v3.xml")
+        formdefmodel = create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml", self.domain)
+        formdefmodel_2 = create_xsd_and_populate("data/9_nestedrepeats_2.xsd", "data/9_nestedrepeats_2.xml", self.domain)
+        formdefmodel_3 = create_xsd_and_populate("data/10_other_v3.xsd", "data/10_other_v3.xml", self.domain)
         try:
             cursor = connection.cursor()
-            cursor.execute("SELECT * FROM schema_xml_nestedrepeats")
+            cursor.execute("SELECT * FROM schema_versioneddomain_xml_nestedrepeats")
             row = cursor.fetchone()
             self.assertEquals(row[9],"foo")
             self.assertEquals(row[10],"bar")
             self.assertEquals(row[11],"yes")
             self.assertEquals(row[12],"no")
-            cursor.execute("SELECT * FROM schema_xml_nestedrepeats_root_nested")
+            cursor.execute("SELECT * FROM schema_versioneddomain_xml_nestedrepeats_root_nested")
             row = cursor.fetchall()
             self.assertEquals(row[0][1],"userid0")
             self.assertEquals(row[0][2],"deviceid0")

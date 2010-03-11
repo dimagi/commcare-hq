@@ -1,10 +1,13 @@
-from hq.models import Domain
+import logging
+
+from domain.models import Domain
 from xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
 from xformmanager.manager import *
 from xformmanager.storageutility import StorageUtility
 from receiver.models import Submission, Attachment
 from receiver.tests.util import *
-import logging
+from reports.models import Case, CaseFormIdentifier, FormIdentifier
+
 
 def clear_data():
     """Clear most of the data in the system: schemas,
@@ -21,6 +24,14 @@ def clear_group_data():
     FormDataGroup.objects.all().delete()
     FormDataColumn.objects.all().delete()
     FormDataPointer.objects.all().delete()
+    
+def clear_case_data():
+    """Clear out the form group objects"""
+    Case.objects.all().delete()
+    CaseFormIdentifier.objects.all().delete()
+    FormIdentifier.objects.all().delete()
+    
+    
     
 def get_file(filename, path=None ):
     """ handles relative pathing of files """
@@ -48,7 +59,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
         return None
     f = open(xsd_file_path,"r")
     manager = XFormManager()
-    formdefmodel = manager.add_schema(xsd_file_name, f)
+    formdefmodel = manager.add_schema(xsd_file_name, f, domain)
     f.close()
     # fake out the form submission
     formdefmodel.submit_ip = '127.0.0.1'
@@ -71,5 +82,3 @@ def create_fake_submission(xml_file, domain, path=None):
     full_body_path = os.path.join(path, xml_file)
     submission = makeNewEntry(get_full_path('simple-meta.txt'), full_body_path, domain)
     return submission
-
-

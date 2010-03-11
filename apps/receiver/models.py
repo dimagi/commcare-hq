@@ -16,8 +16,10 @@ from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from django.core import serializers
 from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
 
 from hq.models import *
+from domain.models import Domain
 from hq.utils import build_url
 
 _XFORM_URI = 'xform'
@@ -36,7 +38,7 @@ class Submission(models.Model):
     content_type = models.CharField(_('Content Type'), max_length=100)
     raw_header = models.TextField(_('Raw Header'))    
     raw_post = models.FilePathField(_('Raw Request Blob File Location'), match='.*\.postdata$', path=settings.RAPIDSMS_APPS['receiver']['xform_submission_path'], max_length=255, null=True)    
-    authenticated_to = models.ForeignKey(ExtUser, null=True)
+    authenticated_to = models.ForeignKey(User, null=True)
 
     class Meta:
         get_latest_by = 'submit_time'
@@ -307,7 +309,7 @@ class Annotation(models.Model):
     attachment = models.ForeignKey(Attachment, related_name="annotations")
     date = models.DateTimeField(default = datetime.now)
     text = models.CharField(max_length=255)
-    user = models.ForeignKey(ExtUser)
+    user = models.ForeignKey(User)
     
     # eventually link to an outgoing sms message on the annotation.
     #sms_message = models.ForeignKey(OutgoingMessage, related_name="annotations", 

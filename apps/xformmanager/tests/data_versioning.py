@@ -25,10 +25,12 @@ class DataVersioningTestCase(unittest.TestCase):
     def testFromSingle(self):
         """Tests the creation of a form group from a single form."""
         self.assertEqual(0, FormDataColumn.objects.count())
-        group = FormDataGroup.from_forms([self.original_formdef])
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
         self.assertEqual(group.columns.count(), FormDataColumn.objects.count())
         self.assertEqual(1, len(group.forms.all()))
         self.assertEqual(self.original_formdef, group.forms.all()[0])
+        self.assertEqual(dom, group.domain)
         columns = self.original_formdef.get_data_column_names()
         self.assertEqual(len(columns), len(group.columns.all()))
         for column in columns:
@@ -47,13 +49,13 @@ class DataVersioningTestCase(unittest.TestCase):
         self.assertEqual(0, group.columns.count())
         self.assertEqual(0, FormDataColumn.objects.count())
         
-        
     def testFromIdentical(self):
         """Tests the creation of a form group from two identical forms
            (with different version numbers)."""
         duplicate_formdef = create_xsd_and_populate("data/versioning/base.2.xsd")
         forms = [self.original_formdef, duplicate_formdef]
-        group = FormDataGroup.from_forms(forms)
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms(forms, dom)
         self.assertEqual(2, len(group.forms.all()))
         for form in group.forms.all():
             self.assertTrue(form in forms)
@@ -77,7 +79,8 @@ class DataVersioningTestCase(unittest.TestCase):
         
         original_list = [self.original_formdef, fd2_dup, fd3_add, fd4_del, fd5_mod] 
                                           
-        group = FormDataGroup.from_forms(original_list)
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms(original_list, dom)
         self.assertEqual(5, len(group.forms.all()))
         for form in group.forms.all():
             self.assertTrue(form in original_list)
@@ -124,6 +127,39 @@ class DataVersioningTestCase(unittest.TestCase):
         self.assertTrue("root_added_field" in group.columns.values_list("name", flat=True))
         
             
+    def testDeleteClearsView(self):
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        query = "SELECT * from %s" % group.view_name
+        group.delete()
+        try:
+            query = "SELECT * from %s" % group.view_name
+            self.fail("Selecting from the view did not trigger an error after the form was deleted!")
+        except Exception, e:
+            pass
+        
+    def testFormsSharePointers(self):
+        # make two groups from the same forms.  These should share columns
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        num_cols = group.columns.count()
+        self.assertEqual(num_cols, FormDataPointer.objects.count())
+        group2 = FormDataGroup.from_forms([self.original_formdef], dom) 
+        self.assertEqual(num_cols, FormDataPointer.objects.count())
+        
+        
+    def testDeleteClearsColumns(self):
+        dom = Domain.objects.all()[0]
+        group = FormDataGroup.from_forms([self.original_formdef], dom)
+        num_cols = group.columns.count()
+        self.assertEqual(num_cols, FormDataColumn.objects.count())
+        
+        # this should clear the columns
+        group.delete()
+        self.assertEqual(0, FormDataColumn.objects.count())
+        self.assertEqual(0, FormDataPointer.objects.count())
+        
+        
     def _check_columns(self, form, group):
         columns = form.get_data_column_names()
         column_types = form.get_data_column_types()

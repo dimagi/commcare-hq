@@ -1,9 +1,9 @@
-""" Given an xform definition, storageutility generates dynamic data tables.
+"""
+Given an xform definition, storageutility generates dynamic data tables.
 Given an xml instance, storeagutility populates the data tables.
 
 Basically, storageutility abstracts away all interaction with the database,
 and it only knows about the data structures in xformdef.py
-
 """
 
 import re
@@ -12,8 +12,11 @@ import sys
 import logging
 import settings
 import string
+import shutil
+import tempfile
 from datetime import datetime, timedelta
 
+from stat import S_ISREG, ST_MODE
 from lxml import etree
 from MySQLdb import IntegrityError
 
@@ -25,13 +28,16 @@ from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 
-from stat import S_ISREG, ST_MODE
 
+# The maximum length a field is allowed to be.  Column names will get truncated
+# to this length if they are longer than it.
 _MAX_FIELD_NAME_LENTH = 64
 
 class StorageUtility(object):
-    """ This class handles everything that touches the database - both form and instance data."""
-    # should pull this out into a rsc file...
+    """This class handles everything that touches the database - both form and
+       instance data."""
+    
+    # should pull this out into a rsc file...  (CZUE: huh?)
     
     def __init__(self):
         # our own, transient data structure
@@ -41,23 +47,57 @@ class StorageUtility(object):
     
     @transaction.commit_on_success
     def add_schema(self, formdef):
+        """Given a xsd schema, create the django models and database
+           tables reqiured to submit data to that form."""
         formdef.force_to_valid()
         formdefmodel = FormDefModel.create_models(formdef)
         self.formdefmodel = formdefmodel
-        self.formdef = self._strip_meta_def( formdef )
+        self.formdef = formdef 
         queries = XFormDBTableCreator( self.formdef, self.formdefmodel ).create()
         self._execute_queries(queries)
         return formdefmodel
-   	
-    @transaction.commit_on_success
-    def save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
-        """ returns True on success """
-        logging.debug("StorageProvider: saving form data")
-        data_tree = self._get_data_tree_from_stream(data_stream_pointer)
+    
+    def save_form_data(self, attachment):
+        """The entry point for saving form data from an attachment.
+        
+           returns True on success and false on fail."""
+        
+        xml_file_name = attachment.filepath
+        f = open(xml_file_name, "r")
+        # should match XMLNS
+        xmlns, version = self.get_xmlns_from_instance(f)
+        # If there is a special way to route this form, based on the xmlns
+        # then do so here. 
+        # czue: this is probably not the most appropriate place for this logic
+        # but it keeps us from having to parse the xml multiple times.
+        process(attachment, xmlns, version)
+        try:
+            formdefmodel = FormDefModel.objects.get(domain=attachment.submission.domain,
+                                                    target_namespace=xmlns, version=version)
+            
+        except FormDefModel.DoesNotExist:
+            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % (xmlns, attachment.submission.domain))
+        if formdefmodel.xsd_file_location is None:
+            raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
+        formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
         self.formdef = formdef
         
-        populator = XFormDBTablePopulator( formdef )
-        queries = populator.populate( data_tree )
+        f.seek(0,0)
+        status = self._save_form_data_matching_formdef(f, formdef, formdefmodel, attachment)
+        f.close()
+        return status
+    
+    
+   	
+    @transaction.commit_on_success
+    def _save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
+        """ returns True on success """
+        
+        logging.debug("StorageProvider: saving form data")
+        data_tree = self._get_data_tree_from_stream(data_stream_pointer)
+        
+        populator = XFormDBTablePopulator( formdef, formdefmodel )
+        queries = populator.populate( data_tree)
         if not queries:
             # we cannot put this check queries_to_populate (which is recursive)
             # since this is only an error on the top node
@@ -75,13 +115,12 @@ class StorageUtility(object):
         
         metadata_model = self._create_metadata(data_tree, formdefmodel, attachment, new_rawdata_id)
         
-        # rl - seems like a strange place to put this message...
-        # respond with the number of submissions they have
-        # made today.
+        # Add a "handled" flag that will eventually allow the receiver app 
+        # to respond meaningfully about how the posting was handled
         startdate = datetime.now().date() 
         enddate = startdate + timedelta(days=1)
         message = metadata_model.get_submission_count(startdate, enddate)
-        self._add_handled(metadata_model.attachment, method="instance_data", message=message)
+        metadata_model.attachment.handled(get_instance_data_handle_type(), message)
         return True
     
     def _get_data_tree_from_stream(self, stream):
@@ -109,37 +148,13 @@ class StorageUtility(object):
         metadata_model.save(self.formdef.target_namespace)        
         return metadata_model
     
-    def save_form_data(self, xml_file_name, attachment):
-        """ returns True on success and false on fail """
-        f = open(xml_file_name, "r")
-        # should match XMLNS
-        xmlns, version = self.get_xmlns_from_instance(f)
-        # If there is a special way to route this form, based on the xmlns
-        # then do so here. 
-        # czue: this is probably not the most appropriate place for this logic
-        # but it keeps us from having to parse the xml multiple times.
-        process(attachment, xmlns, version)
-        try:
-            formdefmodel = FormDefModel.objects.get(target_namespace=xmlns, version=version)
-        except FormDefModel.DoesNotExist:
-            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel." % xmlns)
-        if formdefmodel.xsd_file_location is None:
-            raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
-        formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
-        
-        f.seek(0,0)
-        status = self.save_form_data_matching_formdef(f, formdef, formdefmodel, attachment)
-        f.close()
-        return status
-    
     def get_formdef_from_schema_file(self, xsd_file_location):
         g = open( xsd_file_location ,"r")
         formdef = FormDef(g)
         formdef.force_to_valid()
-        stripped_formdef = self._strip_meta_def( formdef )
         g.close()
         self.formdef = formdef
-        return stripped_formdef
+        return formdef
     
     # note that this does not remove the file from the filesystem 
     # (by design, for security)
@@ -155,32 +170,12 @@ class StorageUtility(object):
             # not a problem since this simply means the data was 
             # never successfully registered
             return
-        # mark as intentionally handled
-        self._add_handled(meta.attachment, method="deleted")
+        
+        # markup the attachment as intentionally deleted by xformmanager
+        meta.attachment.handled(get_deleted_handle_type())
         if remove_submission:
             meta.attachment.submission.delete()
-        meta.delete()
-
-    def _add_handled(self, attachment, method, message=''):
-        '''Tells the receiver that this attachment's submission was handled.  
-           Should only be called _after_ we are sure that we got a linked 
-           schema of this type.
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method=method)
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method=method)
-        attachment.handled(handle_type, message)
-
-    def _remove_handled(self, attachment):
-        '''Tells the receiver that this attachment's submission was not handled.
-           Only used when we are deleting data from xformmanager but not receiver
-        '''
-        try:
-            handle_type = SubmissionHandlingType.objects.get(app="xformmanager", method="instance_data")
-        except SubmissionHandlingType.DoesNotExist:
-            handle_type = SubmissionHandlingType.objects.create(app="xformmanager", method="instance_data")
-        attachment.unhandled(handle_type)
+        remove_metadata(meta)
 
     def _remove_instance_inner_loop(self, elementdef, instance_id):
         edms = ElementDefModel.objects.filter(parent=elementdef)
@@ -198,17 +193,17 @@ class StorageUtility(object):
 
     @transaction.commit_on_success
     def remove_schema(self, id, remove_submissions=False, delete_xml=True):
-        fdds = FormDefModel.objects.all().filter(id=id) 
-        if fdds is None or len(fdds) == 0:
+        try:
+            schema_to_remove = FormDefModel.objects.get(id=id)
+        except FormDefModel.DoesNotExist:
             logging.error("  Schema with id %s could not be found. Not deleted." % id)
             return    
         # must remove tables first since removing form_meta automatically deletes some tables
-        self._remove_form_tables(fdds[0])
-        self._remove_form_models(fdds[0], remove_submissions, delete_xml)
+        self._remove_form_tables(schema_to_remove)
+        self._remove_form_models(schema_to_remove, remove_submissions, delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
     
     # make sure when calling this function always to confirm with the user
-
     def clear(self, remove_submissions=True, delete_xml=True):
         """ removes all schemas found in XSD_REPOSITORY_PATH
             and associated tables. 
@@ -216,7 +211,7 @@ class StorageUtility(object):
             contents of XFORM_SUBMISSION_PATH.        
         """
         self._remove_form_tables()
-        self._remove_form_models(remove_submissions=remove_submissions)
+        self._remove_form_models(remove_submissions=remove_submissions, delete_xml=delete_xml)
         # when we delete formdefdata, django automatically deletes all associated elementdefdata
         
         if delete_xml:
@@ -246,35 +241,17 @@ class StorageUtility(object):
             simple_queries = queries.split(';')
             for query in simple_queries: 
                 if len(query)>0:
-                    cursor.execute(query)
+                    try: 
+                        cursor.execute(query)
+                    except Exception, e:
+                        logging.error("problem executing query: %s.  %s" % (query, e))
+                        raise
         else:
             cursor.execute(queries)            
     
-    #TODO: commcare-specific functionality - should pull out into separate file
-    def _strip_meta_def(self, formdef):
-        """ TODO: currently, we do not strip the duplicate meta information in the xformdata
-            so as not to break dan's code (reporting/graphing). Should fix dan's code to
-            use metadata tables now.
-            
-            root_node = formdef.child_elements[0]
-            # this requires that 'meta' be the first child element within root node
-            if len( root_node.child_elements ) > 0:
-                meta_node = root_node.child_elements[0]
-                new_meta_children = []
-                if meta_node.name.lower().endswith('meta'):
-                    # this rather tedious construction is so that we can support metadata with missing fields but not lose metadata with wrong fields
-                    for element in meta_node.child_elements:
-                        field = self._data_name(meta_node.name,element.name)
-                        if field.lower() not in Metadata.fields:
-                            new_meta_children = new_meta_children + [ element ]
-                    if len(new_meta_children) > 0:
-                        meta_node.child_elements = new_meta_children
-        """
-        return formdef
-        
-    def _remove_form_models(self,form='', remove_submissions=False, delete_xml=True):
-        """Drop all schemas, associated tables, and files"""
-        if form == '':
+    def _remove_form_models(self,form=None, remove_submissions=False, delete_xml=True):
+        """Drop all schemas, associated tables, and files."""
+        if form == None:
             fdds = FormDefModel.objects.all().filter()
         else:
             fdds = [form]            
@@ -287,22 +264,27 @@ class StorageUtility(object):
                         os.remove(file)
                     else:
                         logging.warn("Tried to delete schema file: %s but it wasn't found!" % file)
+            
+            self._drop_form_metadata(form, remove_submissions)
+            
             logging.debug(  "  deleting form definition for " + fdd.target_namespace )
-            all_meta = Metadata.objects.filter(formdefmodel=fdd)
-            for meta in all_meta:
-                if remove_submissions:
-                    meta.attachment.submission.delete()
-                self._remove_handled(meta.attachment)
-            all_meta.delete()
             fdd.delete()
-    
+
+
+    def _drop_form_metadata(self, form, remove_submissions):
+        all_meta = Metadata.objects.filter(formdefmodel=form)
+        for meta in all_meta:
+            if remove_submissions:
+                meta.attachment.submission.delete()
+            remove_metadata(meta)
+        
     # in theory, there should be away to *not* remove elemenetdefdata when deleting formdef
     # until we figure out how to do that, this'll work fine
-    def _remove_form_tables(self,form=''):
+    def _remove_form_tables(self,form=None):
         # drop all element definitions and associated tables
         # the reverse ordering is a horrible hack (but efficient) 
         # to make sure we delete children before parents
-        if form == '':
+        if form == None:
             edds = ElementDefModel.objects.all().filter().order_by("-table_name")
         else:
             edds = ElementDefModel.objects.all().filter(form=form).order_by("-table_name")
@@ -423,10 +405,10 @@ class XFormProcessor(object):
         return name
 
 class XFormDBTableCreator(XFormProcessor):
-    """ This class is responsible for parsing a schema and generating the corresponding
-    db tables dynamically
+    """This class is responsible for parsing a schema and generating the corresponding
+       db tables dynamically.
     
-    If there are errors, these errors will be stored in self.errors
+       If there are errors, these errors will be stored in self.errors
     """
 
     # Data types taken from mysql. 
@@ -476,9 +458,8 @@ class XFormDBTableCreator(XFormProcessor):
     } 
 
     def __init__(self, formdef, formdefmodel):
-        """
-        formdef - in memory transition object
-        formdefmodel - django model which exists for each schema registered
+        """formdef - in memory transition object
+           formdefmodel - django model which exists for each schema registered
         """
         self.formdef = formdef
         self.formdefmodel = formdefmodel
@@ -487,12 +468,13 @@ class XFormDBTableCreator(XFormProcessor):
     def create(self):
         return self.queries_to_create_instance_tables( self.formdef, 
                                                        self.formdefmodel.element.id, 
-                                                       self.formdef.name, self.formdef.name)
+                                                       self.formdef.name, self.formdef.name, self.formdefmodel.domain)
         
     # TODO - this should be cleaned up to use the same Query object that populate_instance_tables uses
     # (rather than just passing around tuples of strings)
-    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name=''):
-        table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version )
+    def queries_to_create_instance_tables(self, elementdef, parent_id, parent_name='', parent_table_name='', domain=None):
+        
+        table_name = format_table_name( formatted_join(parent_name, elementdef.name), self.formdef.version, self.formdef.domain_name )
         
         (next_query, fields) = self._create_instance_tables_query_inner_loop(elementdef, parent_id, parent_name, parent_table_name )
         # add this later - should never be called during unit tests
@@ -516,9 +498,13 @@ class XFormDBTableCreator(XFormProcessor):
         if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
-                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
+                queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + \
+                                    format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
+                                    "(id) ON DELETE SET NULL" 
             else:
-                queries = queries + " parent_id REFERENCES " + format_table_name(parent_table_name, self.formdef.version) + "(id) ON DELETE SET NULL"
+                queries = queries + " parent_id REFERENCES " + \
+                                    format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
+                                    "(id) ON DELETE SET NULL"
         else:
             queries = self._trim2chars(queries)
 
@@ -558,12 +544,12 @@ class XFormDBTableCreator(XFormProcessor):
               # repeatable elements must generate a new table
               if parent_id == '':
                   ed = ElementDefModel(form_id=self.formdefmodel.id, xpath=child.xpath, 
-                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #should parent_name be next_parent_name?
+                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name) ) #should parent_name be next_parent_name?
                   ed.save()
                   ed.parent = ed
               else:
                   ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
-                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version ) ) #next_parent_name
+                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name ) ) #next_parent_name
               ed.save()
               query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
               next_query = next_query + query
@@ -609,9 +595,11 @@ class XFormDBTableCreator(XFormProcessor):
             return self.XSD_TO_DEFAULT_TYPES['default']
         
     def _truncate(self, field_name):
-        '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which is the max length allowed
-           by mysql.  This is NOT smart enough to check for conflicts, so there could
-           be issues if an xform has two very similar, very long, fields'''
+        '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which 
+           is the max length allowed by mysql.  This is NOT smart enough to 
+           check for conflicts, so there could be issues if an xform has two 
+           very similar, very long, fields.'''
+        # TODO: fix the above
         if len(field_name) > _MAX_FIELD_NAME_LENTH:
             return field_name[:_MAX_FIELD_NAME_LENTH]
         return field_name
@@ -646,20 +634,23 @@ class XFormDBTablePopulator(XFormProcessor):
         'integer': int, 'int': int, 'decimal': float, 'double' : float, 'float':float,'gyear':int        
     }
         
-    def __init__(self, formdef):
+    def __init__(self, formdef, formdefmodel):
         self.formdef = formdef
+        self.formdefmodel = formdefmodel
         self.errors = XFormErrors(formdef.target_namespace)
         
     def populate(self, data_tree):
         return self.queries_to_populate_instance_tables(data_tree=data_tree, 
-                                                           elementdef=self.formdef.root, 
-                                                           parent_name=self.formdef.name)
+                                                        elementdef=self.formdef.root, 
+                                                        parent_name=self.formdef.name) 
+
         
     def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0):
       if data_tree is None and elementdef:
           self.errors.missing.append( "Missing element: %s" % elementdef.name )
           return
-      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version )
+      
+      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version, domain=self.formdefmodel.domain)
       if len( parent_table_name ) > 0:
           # todo - make sure this is thread-safe (in case someone else is updating table). ;)
           # currently this assumes that we update child elements at exactly the same time we update parents =b
@@ -675,12 +666,12 @@ class XFormDBTablePopulator(XFormProcessor):
       
       query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, \
                                                         parent_name=parent_name, parent_table_name=table_name, \
-                                                        parent_id=parent_id )
+                                                        parent_id=parent_id)
       query.parent_id = parent_id
       return query
 
     def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', \
-                                             parent_table_name='', parent_id=0 ):
+                                             parent_table_name='', parent_id=0):
       if data_tree is None and elementdef:
           self.errors.missing.append( "Missing element: %s" % elementdef.name )
           return
@@ -704,7 +695,7 @@ class XFormDBTablePopulator(XFormProcessor):
         if def_child.is_repeatable :
             for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                 query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
-                                                                 parent_table_name, parent_id )
+                                                                 parent_table_name, parent_id)
                 if next_query is not None:
                     next_query.child_queries = next_query.child_queries + [ query ]
                 else:
@@ -724,7 +715,7 @@ class XFormDBTablePopulator(XFormProcessor):
                 query = self._populate_instance_tables_inner_loop(data_tree=data_node, \
                                                                   elementdef=def_child, \
                                                                   parent_name=parent_name, \
-                                                                  parent_table_name=parent_table_name )
+                                                                  parent_table_name=parent_table_name)
                 next_query.child_queries = next_query.child_queries + query.child_queries
                 local_field_value_dict.update( query.field_value_dict )
             else:
@@ -835,8 +826,26 @@ def is_schema_registered(target_namespace, version=None):
     except FormDefModel.DoesNotExist:
         return False
 
-def get_registered_table_name(xpath, target_namespace, version=None):
-    """ the correct lookup function """
-    # TODO : fix - do we need to account for UI version?
-    fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version)
+def get_registered_table_name(xpath, target_namespace, version=None, domain=None):
+    """From an xpath, namespace and version, get a tablename"""
+    fdd = FormDefModel.objects.get(target_namespace=target_namespace, version=version, domain=domain)
     return ElementDefModel.objects.get(xpath=xpath, form=fdd).table_name
+
+
+def get_instance_data_handle_type():
+    """Get the handling type used by the receiver that marks attachments
+       as being processed by the xformmanager"""
+    return SubmissionHandlingType.objects.get_or_create(app="xformmanager", method="instance_data")[0]
+
+def get_deleted_handle_type():
+    """Get the handling type used by the receiver that marks attachments
+       as being processed by the xformmanager"""
+    return SubmissionHandlingType.objects.get_or_create(app="xformmanager", method="deleted")[0]
+
+def remove_metadata(meta):
+    # support generically "unhandling" the attachments and then 
+    # delete the actual metadata object
+    meta.attachment.unhandled(get_instance_data_handle_type())
+    meta.delete()
+
+    

@@ -10,15 +10,15 @@ def reporter():
        view in rapidsms land.  If we can't find any 
        domain, we're not gonna let you see any reporters."""
     domain = get_current_domain()
+    manager = models.Manager()
+    manager.contribute_to_class(Reporter, "Reporter")
     if domain:
         # CZUE: because of recursion we reference hte objects
         # through a custom initialized manager
-        manager = models.Manager()
-        manager.contribute_to_class(Reporter, "Reporter")
         return manager.filter(profile__domain=domain)
     else:
         # although I would prefer that this return nothing
         # because the sms apps will never have domain knowledge
         # it has to return everything for now.
         # return Reporter.objects.none()
-        return Reporter.objects.all()
+        return manager.all()

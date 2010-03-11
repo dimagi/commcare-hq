@@ -12,23 +12,21 @@
 
 
 {% block mgr_content %}
-<div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
+<div class="fieldWrapper{% if form.message.errors %} error{% endif %}">
     {% if form.message.errors %}
-        <ol>
         {% for error in form.message.errors %}
-            <li><strong>{{ error|escape }}</strong></li>
+            <strong>{{ error|escape }}</strong>
         {% endfor %}
-        </ol>
     {% endif %}
     {{ form.message }}
 </div>
 
-<div class="fieldWrapper{% if errors %} errors{% endif %}">
+<div class="fieldWrapper{% if errors %} error{% endif %}">
     {% if errors %}
-            <li><strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong></li>
+            <strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong>
     {% endif %}
 </div>
-
+{% if form_groups %}
 <h2>{% trans "Registered XForms" %}</h2>
 
 <strong>
@@ -71,6 +69,10 @@
    
 
 </strong>
+{% else %}
+<h3 class="error">{% trans "No Forms Registered.  Upload forms below." %}</h3>
+{% endif %}
+
 <div id="xform-register-block" class="span-12">
 <h2>Register a New XForm*</h2>
 Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.

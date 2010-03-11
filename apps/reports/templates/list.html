@@ -1,22 +1,22 @@
 {% extends base_template %}
 {% load i18n %}
-{% block title %}Reports for {{domain}}{% endblock %}
+{% block title %}Reports for {{user.selected_domain}}{% endblock %}
 {% block page_stylesheets %}
     <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css" />
 {% endblock %}
 {% block content %}
 {% if custom_reports %}
-    <h2>Custom Reports for {{domain}}</h2>
+    <h2>Custom Reports for {{user.selected_domain}}</h2>
     <div id="customreports">
     <ul>
     {% for report in custom_reports %}
-        <li><a href="{% url reports.views.custom_report domain.id report.name %}">{{ report.display_name }}</a></li>
+        <li><a href="{% url reports.views.custom_report user.selected_domain.id report.name %}">{{ report.display_name }}</a></li>
     {% endfor %}
     </ul>
     </div>
 {% endif %}
 {% if case_reports %}
-    <h2>Data Export Reports for {{domain}}</h2>
+    <h2>Data Export Reports for {{user.selected_domain}}</h2>
     <ul>
     {% for report in case_reports %}
         <li><a href="{% url reports.views.case_flat report.id %}">{{ report }}</a></li>
@@ -24,7 +24,7 @@
     </ul>
 {% endif %}
 {% if sql_reports %}
-    <h2>Table Reports for {{domain}}</h2>
+    <h2>Table Reports for {{user.selected_domain}}</h2>
     <table>
     <tbody>
     {% for report in sql_reports %}

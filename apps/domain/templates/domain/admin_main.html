@@ -1,0 +1,25 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}Domain Administration{% endblock title %}
+
+
+{#################################################################################################################}
+
+{% block content %}
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2">
+<h3><strong>Administer this domain</strong></h3>
+<div class="prepend-1">
+<h4><li><a href="{% url registration_invite_user %}">Invite a user to join this domain</a> - user fills out account information</li></h4>
+<h4><li><a href="{% url registration_admin_does_all %}">Add a user to this domain</a> - admin fills out all account information</li></h4>
+<h4><li><a href="{% url domain_user_list %}">List all users in this domain</a> - you can also edit user information from this list</li></h4>
+</div>
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</a></h4>
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    

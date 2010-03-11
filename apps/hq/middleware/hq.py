@@ -1,9 +1,9 @@
 from __future__ import absolute_import
-
 from django.contrib.auth import authenticate
-from hq.models import ExtUser
-from hq.utils import get_dates
+from django.contrib.auth.models import User
 from hq.authentication import get_username_password
+from hq.utils import get_dates
+
 
 try:
     from threading import local
@@ -25,16 +25,15 @@ def get_current_domain():
 
 class HqMiddleware(object):
     '''Middleware for CommCare HQ.  Right now the only thing this does is
-       convert the request.user property into an ExtUser, if they exist.'''
-    
+       set some stuff in the thread locals (user and domain) if they exist
+       as well as do some custom authentication for unsalted passwords and
+       set convenience accessors for passed in dates in urlparams.'''
     
     def process_request(self, request):
-        # the assumption here is that we will never have an ExtUser for AnonymousUser
         _thread_locals.user = getattr(request, 'user', None)
         if request.user and not request.user.is_anonymous():
-            self._set_extuser(request, request.user)
+            self._set_local_vars(request, request.user)
         else:
-            request.extuser = None
             # attempt our custom authentication only if regular auth fails
             # (and request.user == anonymousUser
             username, password = get_username_password(request)
@@ -42,7 +41,7 @@ class HqMiddleware(object):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     request.user = user
-                    self._set_extuser(request, user)
+                    self._set_local_vars(request, user)
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  
@@ -55,22 +54,16 @@ class HqMiddleware(object):
             request.enddate = None
         return None
     
-    def _set_extuser(self, request, user):
-        try:
-            extuser = ExtUser.objects.get(id=user.id)
-            # override the request.user property so we can call it 
-            # easily within templates and default to the standard
-            # "user" object when this fails. 
-            request.user = extuser
-            # also duplicate it as request.extuser so we can check
-            # this property in our views. 
-            request.extuser = extuser
-            _thread_locals.domain = extuser.domain
+    def _set_local_vars(self, request, user):
+        """Sets the User and Domain objects in the threadlocals, if
+           they exist"""
+        try: 
+            # set the domain in the thread locals 
+            # so it can be accessed in places other
+            # than views. 
+            _thread_locals.domain = request.user.selected_domain
         except Exception:
-            # make sure the property is set either way to avoid 
-            # having extraneous hasattr() calls.  Most likely
-            # this was an ExtUser.DoesNotExist, but it could
-            # be anything something else and we don't want to
-            # fail hard in the middleware layer. 
-            request.extuser = None        
+            # likely means that there's no selected user or
+            # domain, just let it go.
+            pass
     

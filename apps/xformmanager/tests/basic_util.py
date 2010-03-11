@@ -48,7 +48,7 @@ class UtilTestCase(unittest.TestCase):
         schema = xfm._add_schema_from_file(xsd_file_name)
         formdef = su.get_formdef_from_schema_file(xsd_file_name)
         data_tree = su._get_data_tree_from_file(xml_file_name)
-        populator = XFormDBTablePopulator( formdef )
+        populator = XFormDBTablePopulator( formdef, schema )
         queries = populator.populate( data_tree )
         xfm.remove_schema(schema.id)
         return populator.errors

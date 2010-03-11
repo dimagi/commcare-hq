@@ -16,7 +16,7 @@ from django.utils.encoding import *
 from hq.models import *
 
 import hq.utils as utils
-from hq.decorators import extuser_required
+from domain.decorators import login_and_domain_required
 
 from transformers.csv import UnicodeWriter
 from StringIO import StringIO
@@ -35,26 +35,22 @@ import os
 import string
 
 
-@extuser_required()
+@login_and_domain_required
 def domain_charts(request):
     context = {}
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
-    mychartgroup = utils.get_chart_group(extuser)
+    mychartgroup = utils.get_chart_group(request.user)
     if mychartgroup == None:
         return summary_trend(request)
     else:  
         return view_group(request, mychartgroup.id)
 
-@extuser_required()
+@login_and_domain_required
 def summary_trend(request, template_name="graphing/summary_trend.html"):
     """This is just a really really basic trend of total counts for a given set 
        of forms under this domain/organization"""    
     context = {}        
     formname = ''
     formdef_id = -1
-    # the decorator and middleware ensure this will be set.
-    extuser = request.extuser
     
     for item in request.GET.items():
         if item[0] == 'formdef_id':
@@ -62,7 +58,7 @@ def summary_trend(request, template_name="graphing/summary_trend.html"):
     if formdef_id == -1:
         context['chart_title'] = 'All Data'
         context['dataset'] = {}        
-        defs = FormDefModel.objects.all().filter(domain=extuser.domain)
+        defs = FormDefModel.objects.all().filter(domain=request.user.selected_domain)
     
         for fdef in defs:            
             d = dbhelper.DbHelper(fdef.element.table_name, fdef.form_display_name)            
@@ -112,17 +108,16 @@ def inspector(request, table_name, template_name="graphing/table_inspector.html"
 
 
 
-@extuser_required()
+@login_and_domain_required
 def view_graph(request, graph_id, template_name="graphing/view_graph.html"):
     context = {}    
     graph = RawGraph.objects.all().get(id=graph_id)
     
-    extuser = request.extuser
     #get the root group
     # inject some stuff into the rawgraph.  we can also do more
     # here but for now we'll just work with the domain and set 
     # some dates.  these can be templated down to the sql
-    graph.domain = extuser.domain.name
+    graph.domain = request.user.selected_domain.name
     startdate, enddate = utils.get_dates(request, graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -131,7 +126,7 @@ def view_graph(request, graph_id, template_name="graphing/view_graph.html"):
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
-    rootgroup = utils.get_chart_group(extuser)    
+    rootgroup = utils.get_chart_group(request.user)    
     graphtree = get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
     context['view_name'] = 'graphing.views.view_graph'
@@ -148,13 +143,13 @@ def view_graph(request, graph_id, template_name="graphing/view_graph.html"):
             return _get_chart_csv(graph)
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 def show_allgraphs(request, template_name="graphing/show_allgraphs.html"):
     context = {}    
     context['allgraphs'] = RawGraph.objects.all()    
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 def show_multi(request, template_name="graphing/multi_graph.html"):
     context = {}    
     context['width'] = 900
@@ -163,7 +158,7 @@ def show_multi(request, template_name="graphing/multi_graph.html"):
     return render_to_response(request, template_name, context)
 
 
-@extuser_required()
+@login_and_domain_required
 def view_groups(request, template_name="graphing/view_groups.html"):
     context = {}    
     context['groups'] = GraphGroup.objects.all()
@@ -179,7 +174,7 @@ def get_graphgroup_children(graph_group):
         ret[child] = get_graphgroup_children(child)
     return ret
     
-@extuser_required()
+@login_and_domain_required
 def view_group(request, group_id, template_name="graphing/view_group.html"):
     context = {}
     group = GraphGroup.objects.all().get(id=group_id)
@@ -196,9 +191,7 @@ def view_group(request, group_id, template_name="graphing/view_group.html"):
     
     context['child_groups'] = GraphGroup.objects.all().filter(parent_group=group)
     
-    #get the root group
-    extuser = request.extuser
-    rootgroup = utils.get_chart_group(extuser)    
+    rootgroup = utils.get_chart_group(request.user)    
     graphtree = get_graphgroup_children(rootgroup)
     context['graphtree'] = graphtree
     

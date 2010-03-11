@@ -9,9 +9,11 @@ XPATH_SEPARATOR = "/"
 class ElementDef(object):
     """ Stores metadata about simple and complex types """
  
-    def __init__(self, name='', is_repeatable=False):
+    def __init__(self, name='', is_repeatable=False, domain=None):
         self.name = name
         self.xpath = ''
+        if domain and not self.getattr("domain", None):
+            self.domain=domain
         self.child_elements = []
         self.type = ''
         self.is_repeatable = is_repeatable
@@ -28,7 +30,7 @@ class ElementDef(object):
     @property
     def short_name(self):
         """ This is the unqualified tag of the element
-        (without qualifying namespace or xpath) """
+            (without qualifying namespace or xpath) """
         c = unicode(self.xpath).rsplit(XPATH_SEPARATOR, 1)
         if len(c)==2:
             return c[1]
@@ -46,7 +48,8 @@ class ElementDef(object):
             string = string + child.to_str(depth+1, string)
         return string
 
-    def isValid(self): # to do: place restriction functions in here
+    def isValid(self): 
+        # TODO: place restriction functions in here
         pass
 
     def addChild(self, element_def):
@@ -114,18 +117,20 @@ class ElementDef(object):
         return d
     
 class FormDef(ElementDef):
-    """ Stores metadata about forms 
-    When this code was written, I didn't realize XML requires having
-    only one root element. Ergo, the root of this xml is accessed via
-    FormDef.root (rather than just FormDef)
-    """
-
-    def __init__(self, input_stream=None, child_element=None, **kwargs):
+    """Stores metadata about forms""" 
+    
+    # When this code was written, I didn't realize XML requires having
+    # only one root element. Ergo, the root of this xml is accessed via
+    # FormDef.root (rather than just FormDef)
+    
+    def __init__(self, input_stream=None, child_element=None, domain=None,
+                 **kwargs):
         """Either a stream pointer to an XML stream to populate this form
            or a child element to a valid element_def should be provided.
            If neither is, this is a pretty useless form"""
         # call the base class to initialize some more properties
         super(FormDef, self).__init__(**kwargs) 
+        # set some high level concepts
         self.types = {}
         self.version = None
         self.uiversion = None
@@ -136,8 +141,9 @@ class FormDef(ElementDef):
                              create a new formdef.  The child element %s will be
                              ignored""" % child_element) 
         if input_stream is not None:
+            # populate all of the child elements 
             payload = get_xml_string(input_stream)
-            self.parseString(payload)
+            self.populateFromXmlString(payload)
         elif child_element is not None:
             self.child_elements = [child_element]
         if len(self.child_elements)>1:
@@ -149,6 +155,9 @@ class FormDef(ElementDef):
         else:
             # safe to set a root node here
             self.root = self.child_elements[0]
+            
+        self.domain = domain
+        
     
     def __unicode__(self):
         return unicode(self.target_namespace)
@@ -181,24 +190,24 @@ class FormDef(ElementDef):
         string = string + "ELEMENTS: \n"
         return string + ElementDef.to_str(self)
         
-    def parseString(self, string):
-        """ populates formdef with data from xml string
+    
+    def populateFromXmlString(self, string):
+        """ Populates formdef with data from xml string
         
-        Note that we currently allow 'bad form' xforms 
-        (e.g. bad metadata, bad version numbers)
-        Such errors can be caught/reported using FormDef.validate()
+            Note that we currently allow 'bad form' xforms 
+            (e.g. bad metadata, bad version numbers)
+            Such errors can be caught/reported using FormDef.validate()
         """
+        
         root = etree.XML(string)
 
-        # there must be a better way of finding case-insensitive version
         self.version = case_insensitive_attribute(root, "version")
-        
-        # there must be a better way of finding case-insensitive version
         self.uiversion = case_insensitive_attribute(root, "uiversion")
-
         self.target_namespace = case_insensitive_attribute(root, 'targetNamespace')
+        
         if not self.target_namespace:
             logging.error("Target namespace is not found in xsd schema")
+        
         ElementDef.__init__(self, self.target_namespace)
 
         self.xpath = ""
@@ -212,6 +221,13 @@ class FormDef(ElementDef):
             raise Exception("Tried to get the single root from %s but found %s nodes"
                              % (self, len(self.child_elements)))
         return self.child_elements[0]
+    
+    @property
+    def domain_name(self):
+        """Get the domain name, or an empty string if none found"""
+        if self.domain:
+            return self.domain.name
+        return ""
     
     def get_meta_element(self):
         '''Gets the meta element from the form, if it exists.
@@ -278,15 +294,15 @@ class FormDef(ElementDef):
                     child_element.populateElementFields(input_node, element.xpath, name)
                 else:
                     child_element = ElementDef()
-                    #discard parent_name
+                    # discard parent_name
                     next_name_prefix = join_if_exists( name_prefix, name )
                     full_name = next_name_prefix
                     child_element.populateElementFields(input_node, element.xpath, full_name)
                 element.addChild(child_element)
-                #theoretically, simpleType enumerations and list values can be
-                #defined inside of elements in practice, this isn't how things
-                #are currently generated in the schema generator, so we don't 
-                #support that (yet)
+                # theoretically, simpleType enumerations and list values can be
+                # defined inside of elements in practice, this isn't how things
+                # are currently generated in the schema generator, so we don't 
+                # support that (yet)
                 self._addAttributesAndChildElements(child_element, input_node, next_name_prefix )
             elif (str(input_node.tag)).find("simpleType") > -1:
                 simpleType = SimpleType( str(input_node.get('name')) )
@@ -307,36 +323,33 @@ class FormDef(ElementDef):
 
     def validate(self):
         # check xmlns not none
+        namespace_help_text = "You should find the block in your xform labeled <instance> and " + \
+                              "add an xmlns attribute to the first element so it looks like: " + \
+                              '<instance><node xmlns="http://your.xmlns.goes/here">.  An xmlns ' + \
+                              "is a unique attribute that helps identify the form"
+                                       
         if not self.target_namespace:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.name)
+            raise FormDef.FormDefError("No namespace (xmlns) found in submitted form: %s" % \
+                                       self.name, FormDef.FormDefError.ERROR, namespace_help_text)
 
         # all the forms in use today have a superset namespace they default to
         # something like: http://www.w3.org/2002/xforms
         if self.target_namespace.lower().find('www.w3.org') != -1:
-            raise FormDef.FormDefError("No namespace found in submitted form: %s" % \
-                                       self.target_namespace)
+            raise FormDef.FormDefError("No unique namespace (xmlns) found in submitted form: %s" % \
+                                       self.target_namespace, FormDef.FormDefError.ERROR,
+                                       namespace_help_text)
         
         if self.version is None or self.version.strip() == "":
             raise FormDef.FormDefError("No version number found in submitted form: %s" % \
-                                       self.target_namespace)
+                                       self.target_namespace, FormDef.FormDefError.WARNING)
         if not self.version.strip().isdigit():
             # should make this into a custom exception
             raise FormDef.FormDefError("Version attribute must be an integer in xform %s but was %s" % \
-                                       (self.target_namespace, self.version))
-
-        # something is wrong with this attribute, it isn't carried over from xml -> xsd
-#        if self.uiversion is None or self.uiversion.strip() == "":
-#            raise FormDef.FormDefError("No ui version number found in submitted form: %s" % \
-#                                       self.target_namespace)    
-#        
-#        if not self.uiversion.strip().isdigit():
-#            raise FormDef.FormDefError("UI version attribute must be an integer in xform %s but was %s" % \
-#                                       (self.target_namespace, self.uiversion))
+                                       (self.target_namespace, self.version), FormDef.FormDefError.WARNING)
 
         meta_element = self.get_meta_element()
         if not meta_element:
-            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace)
+            raise FormDef.FormDefError("From %s had no meta block!" % self.target_namespace, FormDef.FormDefError.WARNING)
         
         meta_issues = FormDef.get_meta_validation_issues(meta_element)
         if meta_issues:
@@ -395,7 +408,19 @@ class FormDef(ElementDef):
         return d
     
     class FormDefError(Exception):
-        """ Error from FormDef Processing """
+        """Error from FormDef Processing.  Allows for specification
+           of an additional 'category' which can separate true errors
+           from warning-type errors."""
+        
+        ERROR = 1
+        WARNING = 2
+        
+        def __init__(self, message, category, help_text=""):
+            super(FormDef.FormDefError, self).__init__(message)
+            self.category = category
+            self.help_text = help_text
+            
+        
 
 class SimpleType(object):
     """ Stores type definition for simple types """

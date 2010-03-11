@@ -1,26 +1,28 @@
 """ Authentication Backend for CommCaer HQ """
 from django.conf import settings
-from hq.models import ExtUser
+from django.contrib.auth.models import User
 
 class HQBackend:
     """
-    Authenticate against extuser.unsalted_password 
+    Authenticate against a user's unsalted_password 
     (given username and sha1 of username:password)
     """
     def authenticate(self, username=None, password=None):        
+        # CZUE TODO: need to fix this  
+        raise NotImplementedError("Sorry this broke in the migration and needs to be fixed!")
         try:
-            user = ExtUser.objects.get(username=username)
+            user = User.objects.get(username=username)
             if user.unsalted_password == password:
                 return user
             else:
                 return None
-        except ExtUser.DoesNotExist:
+        except User.DoesNotExist:
             return None        
 
     def get_user(self, user_id):
         try:
-            return ExtUser.objects.get(pk=user_id)
-        except ExtUser.DoesNotExist:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             return None
         
 def get_username_password(request):

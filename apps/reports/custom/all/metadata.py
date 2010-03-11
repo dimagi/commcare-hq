@@ -9,7 +9,7 @@ from hq.utils import paginate, get_table_display_properties, get_query_set
 def metadata(request, domain=None):
     '''Submission Summary List for All Forms'''
     if not domain:
-        domain = request.extuser.domain
+        domain = request.user.selected_domain
     # extract params from the URL
     
     items, sort_column, sort_descending, filters =\

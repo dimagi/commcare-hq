@@ -13,11 +13,11 @@ from graphing.models import *
 def get_members_for_supervisor(organization, supervisor_user):    
     pass
 
-def get_supervisor_roles(extuser):
+def get_supervisor_roles(user):
     """return an array of organizations that a user is a supervisor.  The array is empty if they are nothing"""
     raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
     
-def get_membership(extuser):
+def get_membership(user):
     """return an array of organizations that a user belongs to.  The array is empty if they are nothing"""
     raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
 
@@ -25,11 +25,11 @@ def get_members(organization):
     """return an array of members in an organization"""
     raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
 
-def get_chart_group(extuser):
+def get_chart_group(user):
     # todo this makes a mean assumption there's only one
     # group 
     try:
-        prefs = GraphPref.objects.get(user=extuser)
+        prefs = GraphPref.objects.get(user=user)
         return  prefs.root_graphs.all()[0]
     except GraphPref.DoesNotExist:
         return None
@@ -51,8 +51,8 @@ def get_members_and_supervisors(organization):
     return (members, supervisors)
             
     
-def get_user_affiliation(extuser):
-    (parents, children) = traversal.getImmediateRelationsForObject(extuser)
+def get_user_affiliation(user):
+    (parents, children) = traversal.getImmediateRelationsForObject(user)
     raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
     
 def get_dates(request, default_days=0):
