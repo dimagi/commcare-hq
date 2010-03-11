@@ -19,9 +19,10 @@
     color: #333;
     border: 1px solid black;
     padding: 12px;
+    overflow:auto; /*allow scrolling, in a small screen*/
 }
 
-.jqmOverlay { background-color: #000; }
+.jqmOverlay { background-color: #255471; } /*  indicate that the rest of the window is disable - also OMG white is *so* 2009!! */
 
 /* Fixed posistioning emulation for IE6
      Star selector used to hide definition from browsers other than IE6
