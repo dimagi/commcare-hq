@@ -13,8 +13,8 @@
         
         var series = [],
             options = {
-                // the color theme used for graphs
-                colors: ["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"],
+            // the color theme used for graphs
+            colors: ["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"],
                 legend: {
                     show: true,
                     noColumns: 1, // number of colums in legend table
@@ -60,12 +60,10 @@
                     fillColor: "#ffffff"
                 },
                 lines: {
-                    // we don't put in show: false so we can see
-                    // whether lines were actively disabled 
+                    show: false,
                     lineWidth: 2, // in pixels
                     fill: false,
-                    fillColor: null,
-                    steps: false
+                    fillColor: null
                 },
                 bars: {
                     show: false,
@@ -73,17 +71,14 @@
                     barWidth: 1, // in units of the x axis
                     fill: true,
                     fillColor: null,
-                    align: "left", // or "center" 
-                    horizontal: false // when horizontal, left is now top
+                    align: "left" // or "center"
                 },
-                threshold: null, // or { below: number, color: color spec}
                 grid: {
                     color: "#545454", // primary color used for outline and labels
                     backgroundColor: null, // null for transparent, else color
                     tickColor: "#dddddd", // color used for the ticks
                     labelMargin: 5, // in pixels
-                    borderWidth: 2, // in pixels
-                    borderColor: null, // set if different from the grid color
+                    borderWidth: 2,
                     markings: null, // array of ranges or fn: axes -> array of ranges
                     markingsColor: "#f4f4f4",
                     markingsLineWidth: 2,
@@ -97,17 +92,13 @@
                     mode: null, // one of null, "x", "y" or "xy"
                     color: "#e8cfac"
                 },
-                crosshair: {
-                    mode: null, // one of null, "x", "y" or "xy",
-                    color: "#aa0000"
-                },
-                shadowSize: 3
+                shadowSize: 4
             },
         canvas = null,      // the canvas for the plot itself
         overlay = null,     // canvas for interactive stuff on top of plot
         eventHolder = null, // jQuery object that events should be bound to
         ctx = null, octx = null,
-        target = $(target_),
+        target = target_,
         axes = { xaxis: {}, yaxis: {}, x2axis: {}, y2axis: {} },
         plotOffset = { left: 0, right: 0, top: 0, bottom: 0},
         canvasWidth = 0, canvasHeight = 0,
@@ -124,8 +115,6 @@
         this.getPlotOffset = function() { return plotOffset; };
         this.getData = function() { return series; };
         this.getAxes = function() { return axes; };
-        this.setCrosshair = setCrosshair;
-        this.clearCrosshair = function () { setCrosshair(null); };
         this.highlight = highlight;
         this.unhighlight = unhighlight;
         
@@ -164,8 +153,7 @@
         
         function parseOptions(o) {
             $.extend(true, options, o);
-            if (options.grid.borderColor == null)
-                options.grid.borderColor = options.grid.color
+
             // backwards compatibility, to be removed in future
             if (options.xaxis.noTicks && options.xaxis.ticks == null)
                 options.xaxis.ticks = options.xaxis.noTicks;
@@ -244,249 +232,96 @@
                 s.lines = $.extend(true, {}, options.lines, s.lines);
                 s.points = $.extend(true, {}, options.points, s.points);
                 s.bars = $.extend(true, {}, options.bars, s.bars);
-
-                // turn on lines automatically in case nothing is set
-                if (s.lines.show == null && !s.bars.show && !s.points.show)
-                    s.lines.show = true;
                 if (s.shadowSize == null)
                     s.shadowSize = options.shadowSize;
-
-                if (!s.xaxis)
-                    s.xaxis = axes.xaxis;
-
-                if (s.xaxis == 1)
-                    s.xaxis = axes.xaxis;
-                else if (s.xaxis == 2)
+                if (s.xaxis && s.xaxis == 2)
                     s.xaxis = axes.x2axis;
-
-                if (!s.yaxis)
-                    s.yaxis = axes.yaxis;
-
-                if (s.yaxis == 1)
-                    s.yaxis = axes.yaxis;
-                else if (s.yaxis == 2)
+                else
+                    s.xaxis = axes.xaxis;
+                if (s.yaxis && s.yaxis == 2)
                     s.yaxis = axes.y2axis;
-
-                if (!s.threshold)
-                    s.threshold = options.threshold;
-                s.subseries = null;
+                else
+                    s.yaxis = axes.yaxis;
             }
         }
         
         function processData() {
             var topSentry = Number.POSITIVE_INFINITY,
                 bottomSentry = Number.NEGATIVE_INFINITY,
-                axis, i, j, k, m, s;
+                axis;
 
             for (axis in axes) {
                 axes[axis].datamin = topSentry;
                 axes[axis].datamax = bottomSentry;
-                axes[axis].min = options[axis].min;
-                axes[axis].max = options[axis].max;
                 axes[axis].used = false;
             }
             
-            for (i = 0; i < series.length; ++i) {
-                s = series[i];
-                s.datapoints = { points: [], incr: 2 };
+            for (var i = 0; i < series.length; ++i) {
+                var data = series[i].data,
+                    axisx = series[i].xaxis,
+                    axisy = series[i].yaxis,
+                    mindelta = 0, maxdelta = 0;
                 
-                var data = s.data,
-                    points = s.datapoints.points,
-                    axisx = s.xaxis, axisy = s.yaxis,
-                    xmin = topSentry, xmax = bottomSentry,
-                    ymin = topSentry, ymax = bottomSentry,
-                    x, y, p, incr, format = [];
-
-                // determine the increment
-                if (s.bars.show) {
-                    s.datapoints.incr = 3;
-                    format.push({ d: 0 });
+                // make sure we got room for the bar
+                if (series[i].bars.show) {
+                    mindelta = series[i].bars.align == "left" ? 0 : -series[i].bars.barWidth/2;
+                    maxdelta = mindelta + series[i].bars.barWidth;
                 }
-
-                /*
-                // examine data to find out how to copy
-                for (j = 0; j < data.length; ++j) {
-                }*/
-                
                 
                 axisx.used = axisy.used = true;
-                incr = s.datapoints.incr;
-                
-                for (j = k = 0; j < data.length; ++j, k += incr) {
-                    p = data[j];
-                    x = null;
-                    y = null;
-
-                    if (data[j] != null) {
-                        x = p[0];
-                        y = p[1];
-                    }
+                for (var j = 0; j < data.length; ++j) {
+                    if (data[j] == null)
+                        continue;
                     
+                    var x = data[j][0], y = data[j][1];
+
                     // convert to number
                     if (x != null && !isNaN(x = +x)) {
-                        if (x < xmin)
-                            xmin = x;
-                        if (x > xmax)
-                            xmax = x
+                        if (x + mindelta < axisx.datamin)
+                            axisx.datamin = x + mindelta;
+                        if (x + maxdelta > axisx.datamax)
+                            axisx.datamax = x + maxdelta;
                     }
-                    else
-                        x = null;
                     
                     if (y != null && !isNaN(y = +y)) {
-                        if (y < ymin)
-                            ymin = y;
-                        if (y > ymax)
-                            ymax = y;
+                        if (y < axisy.datamin)
+                            axisy.datamin = y;
+                        if (y > axisy.datamax)
+                            axisy.datamax = y;
                     }
-                    else
-                        y = null;
-
-                    if (x == null || y == null)
-                        x = y = null; // make sure everything is cleared
-
-                    for (m = 2; m < incr; ++m)
-                        points[k + m] = p[m] == null ? format[m-2].d : p[m];
-
-                    points[k + 1] = y;
-                    points[k] = x;
-                }
-
-                if (s.bars.show) {
-                    // make sure we got room for the bar on the dancing floor
-                    var delta = s.bars.align == "left" ? 0 : -s.bars.barWidth/2;
-                    if(s.bars.horizontal) {
-                        ymin += delta;
-                        ymax += delta + s.bars.barWidth;
-                    }
-                    else {
-                        xmin += delta;
-                        xmax += delta + s.bars.barWidth;
-                    }
-                }
-                
-                axisx.datamin = Math.min(axisx.datamin, xmin);
-                axisx.datamax = Math.max(axisx.datamax, xmax);
-                axisy.datamin = Math.min(axisy.datamin, ymin);
-                axisy.datamax = Math.max(axisy.datamax, ymax);
-
-                
-                // step charts
-                if (s.lines.show && s.lines.steps) {
-                    p = [];
-                    // copy, inserting extra points to make steps
-                    for (j = k = 0; j < points.length; j += incr, k += incr) {
-                        x = points[j];
-                        y = points[j + 1];
-                        if (j > 0
-                            && points[j - incr] != null
-                            && x != null
-                            && points[j - incr + 1] != y) {
-                            p[k] = x;
-                            p[k + 1] = points[j - incr + 1];
-                            k += incr;
-                        }
-                        
-                        p[k] = x;
-                        p[k + 1] = y;
-                    }
-                    s.datapoints.linespoints = p;
-                }
-
-                // possibly split data points because of threshold
-                if (s.threshold) {
-                    var orig = $.extend({}, s), thresholded = $.extend({}, s);
-                    orig.datapoints = { points: [], incr: incr };
-                    thresholded.datapoints = { points: [], incr: incr };
                     
-                    thresholded.color = s.threshold.color;
-
-                    var below = s.threshold.below,
-                        origpoints = orig.datapoints.points,
-                        threspoints = thresholded.datapoints.points;
-
-                    // ordinary points
-                    for (j = 0; j < points.length; j += incr) {
-                        x = points[j];
-                        y = points[j + 1];
-
-                        if (y < below)
-                            p = threspoints;
-                        else
-                            p = origpoints;
-
-                        p.push(x);
-                        p.push(y);
-                    }
-
-                    // possibly split lines
-                    if (s.lines.show) {
-                        var lp = s.datapoints.linespoints || points;
-                        
-                        origpoints = [];
-                        threspoints = [];
-                        p = origpoints;
-                        
-                        for (j = 0; j < lp.length; j += incr) {
-                            x = lp[j];
-                            y = lp[j + 1];
-
-                            var prevp = p;
-                            if (y != null) {
-                                if (y < below)
-                                    p = threspoints;
-                                else
-                                    p = origpoints;
-                            }
-
-                            if (p != prevp && x != null && j > 0 && lp[j - incr] != null) {
-                                // find intersection and add it to both
-                                k = (x - lp[j - incr]) / (y - lp[j - incr + 1]) * (below - y) + x;
-                                prevp.push(k);
-                                prevp.push(below);
-                                p.push(null); // start new segment
-                                p.push(null);
-                                p.push(k);
-                                p.push(below);
-                            }
-                            
-                            p.push(x);
-                            p.push(y);
-                        }
-
-                        orig.datapoints.linespoints = origpoints
-                        thresholded.datapoints.linespoints = threspoints;
-                    }
-
-                    s.subseries = [orig, thresholded];
+                    if (x == null || y == null || isNaN(x) || isNaN(y))
+                        data[j] = null; // mark this point as invalid
                 }
+            }
+
+            for (axis in axes) {
+                if (axes[axis].datamin == topSentry)
+                    axes[axis].datamin = 0;
+                if (axes[axis].datamax == bottomSentry)
+                    axes[axis].datamax = 1;
             }
         }
 
         function constructCanvas() {
-            function makeCanvas(width, height) {
-                var c = document.createElement('canvas');
-                c.width = width;
-                c.height = height;
-                if ($.browser.msie) // excanvas hack
-                    c = window.G_vmlCanvasManager.initElement(c);
-                return c;
-            }
-            
             canvasWidth = target.width();
             canvasHeight = target.height();
             target.html(""); // clear target
-            if (target.css("position") == 'static')
-                target.css("position", "relative"); // for positioning labels and overlay
+            target.css("position", "relative"); // for positioning labels and overlay
 
             if (canvasWidth <= 0 || canvasHeight <= 0)
                 throw "Invalid dimensions for plot, width = " + canvasWidth + ", height = " + canvasHeight;
 
             // the canvas
-            canvas = $(makeCanvas(canvasWidth, canvasHeight)).appendTo(target).get(0);
+            canvas = $('<canvas width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
+            if ($.browser.msie) // excanvas hack
+                canvas = window.G_vmlCanvasManager.initElement(canvas);
             ctx = canvas.getContext("2d");
 
             // overlay canvas for interactive features
-            overlay = $(makeCanvas(canvasWidth, canvasHeight)).css({ position: 'absolute', left: 0, top: 0 }).appendTo(target).get(0);
+            overlay = $('<canvas style="position:absolute;left:0px;top:0px;" width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
+            if ($.browser.msie) // excanvas hack
+                overlay = window.G_vmlCanvasManager.initElement(overlay);
             octx = overlay.getContext("2d");
 
             // we include the canvas in the event holder too, because IE 7
@@ -494,9 +329,8 @@
             eventHolder = $([overlay, canvas]);
 
             // bind events
-            if (options.selection.mode != null || options.crosshair.mode != null
-                || options.grid.hoverable) {
-                // FIXME: temp. work-around until jQuery bug 4398 is fixed
+            if (options.selection.mode != null || options.grid.hoverable) {
+                // FIXME: temp. work-around until jQuery bug 1871 is fixed
                 eventHolder.each(function () {
                     this.onmousemove = onMouseMove;
                 });
@@ -505,9 +339,6 @@
                     eventHolder.mousedown(onMouseDown);
             }
 
-            if (options.crosshair.mode != null)
-                eventHolder.mouseout(onMouseOut);
-            
             if (options.grid.clickable)
                 eventHolder.click(onClick);
         }
@@ -539,25 +370,19 @@
         }
         
         function setRange(axis, axisOptions) {
-            var min = axisOptions.min != null ? +axisOptions.min : axis.datamin,
-                max = axisOptions.max != null ? +axisOptions.max : axis.datamax;
+            var min = axisOptions.min != null ? axisOptions.min : axis.datamin;
+            var max = axisOptions.max != null ? axisOptions.max : axis.datamax;
 
-            // degenerate case
-            if (min == Number.POSITIVE_INFINITY)
-                min = 0;
-            if (max == Number.NEGATIVE_INFINITY)
-                max = 1;
-            
             if (max - min == 0.0) {
                 // degenerate case
-                var widen = max == 0 ? 1 : 0.01;
+                var widen;
+                if (max == 0.0)
+                    widen = 1.0;
+                else
+                    widen = 0.01;
 
-                if (axisOptions.min == null)
-                    min -= widen;
-                // alway widen max if we couldn't widen min to ensure we
-                // don't fall into min == max which doesn't work
-                if (axisOptions.max == null || axisOptions.min != null)
-                    max += widen;
+                min -= widen;
+                max += widen;
             }
             else {
                 // consider autoscaling
@@ -597,6 +422,44 @@
             if (axisOptions.mode == "time") {
                 // pretty handling of time
                 
+                function formatDate(d, fmt, monthNames) {
+                    var leftPad = function(n) {
+                        n = "" + n;
+                        return n.length == 1 ? "0" + n : n;
+                    };
+                    
+                    var r = [];
+                    var escape = false;
+                    if (monthNames == null)
+                        monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    for (var i = 0; i < fmt.length; ++i) {
+                        var c = fmt.charAt(i);
+                        
+                        if (escape) {
+                            switch (c) {
+                            case 'h': c = "" + d.getUTCHours(); break;
+                            case 'H': c = leftPad(d.getUTCHours()); break;
+                            case 'M': c = leftPad(d.getUTCMinutes()); break;
+                            case 'S': c = leftPad(d.getUTCSeconds()); break;
+                            case 'd': c = "" + d.getUTCDate(); break;
+                            case 'm': c = "" + (d.getUTCMonth() + 1); break;
+                            case 'y': c = "" + d.getUTCFullYear(); break;
+                            case 'b': c = "" + monthNames[d.getUTCMonth()]; break;
+                            }
+                            r.push(c);
+                            escape = false;
+                        }
+                        else {
+                            if (c == "%")
+                                escape = true;
+                            else
+                                r.push(c);
+                        }
+                    }
+                    return r.join("");
+                }
+                
+                    
                 // map of app. size of time units in milliseconds
                 var timeUnitSize = {
                     "second": 1000,
@@ -728,7 +591,7 @@
 
                     // first check global format
                     if (axisOptions.timeformat != null)
-                        return $.plot.formatDate(d, axisOptions.timeformat, axisOptions.monthNames);
+                        return formatDate(d, axisOptions.timeformat, axisOptions.monthNames);
                     
                     var t = axis.tickSize[0] * timeUnitSize[axis.tickSize[1]];
                     var span = axis.max - axis.min;
@@ -752,7 +615,7 @@
                     else
                         fmt = "%y";
                     
-                    return $.plot.formatDate(d, fmt, axisOptions.monthNames);
+                    return formatDate(d, fmt, axisOptions.monthNames);
                 };
             }
             else {
@@ -930,24 +793,22 @@
 
             // get the most space needed around the grid for things
             // that may stick out
-            var maxOutset = options.grid.borderWidth;
+            var maxOutset = options.grid.borderWidth / 2;
             for (i = 0; i < series.length; ++i)
                 maxOutset = Math.max(maxOutset, 2 * (series[i].points.radius + series[i].points.lineWidth/2));
 
             plotOffset.left = plotOffset.right = plotOffset.top = plotOffset.bottom = maxOutset;
 
-            var margin = options.grid.labelMargin + options.grid.borderWidth;
-            
             if (axes.xaxis.labelHeight > 0)
-                plotOffset.bottom = Math.max(maxOutset, axes.xaxis.labelHeight + margin);
+                plotOffset.bottom = Math.max(maxOutset, axes.xaxis.labelHeight + options.grid.labelMargin);
             if (axes.yaxis.labelWidth > 0)
-                plotOffset.left = Math.max(maxOutset, axes.yaxis.labelWidth + margin);
+                plotOffset.left = Math.max(maxOutset, axes.yaxis.labelWidth + options.grid.labelMargin);
 
             if (axes.x2axis.labelHeight > 0)
-                plotOffset.top = Math.max(maxOutset, axes.x2axis.labelHeight + margin);
+                plotOffset.top = Math.max(maxOutset, axes.x2axis.labelHeight + options.grid.labelMargin);
             
             if (axes.y2axis.labelWidth > 0)
-                plotOffset.right = Math.max(maxOutset, axes.y2axis.labelWidth + margin);
+                plotOffset.right = Math.max(maxOutset, axes.y2axis.labelWidth + options.grid.labelMargin);
 
             plotWidth = canvasWidth - plotOffset.left - plotOffset.right;
             plotHeight = canvasHeight - plotOffset.bottom - plotOffset.top;
@@ -961,13 +822,8 @@
         
         function draw() {
             drawGrid();
-            for (var i = 0; i < series.length; ++i) {
-                var s = series[i];
-                if (s.subseries)
-                    for (var j = 0; j < s.subseries.length; ++j)
-                        drawSeries(s.subseries[j]);
-                else
-                    drawSeries(s);
+            for (var i = 0; i < series.length; i++) {
+                drawSeries(series[i]);
             }
         }
 
@@ -1009,13 +865,13 @@
 
             // draw background, if any
             if (options.grid.backgroundColor) {
-                ctx.fillStyle = getColorOrGradient(options.grid.backgroundColor, plotHeight, 0, "rgba(255, 255, 255, 0)");
+                ctx.fillStyle = options.grid.backgroundColor;
                 ctx.fillRect(0, 0, plotWidth, plotHeight);
             }
 
             // draw markings
-            var markings = options.grid.markings;
-            if (markings) {
+            if (options.grid.markings) {
+                var markings = options.grid.markings;
                 if ($.isFunction(markings))
                     // xmin etc. are backwards-compatible, to be removed in future
                     markings = markings({ xmin: axes.xaxis.min, xmax: axes.xaxis.max, ymin: axes.yaxis.min, ymax: axes.yaxis.max, xaxis: axes.xaxis, yaxis: axes.yaxis, x2axis: axes.x2axis, y2axis: axes.y2axis });
@@ -1057,20 +913,18 @@
                     if (xrange.from == xrange.to || yrange.from == yrange.to) {
                         // draw line
                         ctx.strokeStyle = m.color || options.grid.markingsColor;
-                        ctx.beginPath();
                         ctx.lineWidth = m.lineWidth || options.grid.markingsLineWidth;
-                        //ctx.moveTo(Math.floor(xrange.from), yrange.from);
-                        //ctx.lineTo(Math.floor(xrange.to), yrange.to);
-                        ctx.moveTo(xrange.from, yrange.from);
-                        ctx.lineTo(xrange.to, yrange.to);
+                        ctx.moveTo(Math.floor(xrange.from), Math.floor(yrange.from));
+                        ctx.lineTo(Math.floor(xrange.to), Math.floor(yrange.to));
                         ctx.stroke();
                     }
                     else {
                         // fill area
                         ctx.fillStyle = m.color || options.grid.markingsColor;
-                        ctx.fillRect(xrange.from, yrange.to,
-                                     xrange.to - xrange.from,
-                                     yrange.from - yrange.to);
+                        ctx.fillRect(Math.floor(xrange.from),
+                                     Math.floor(yrange.to),
+                                     Math.floor(xrange.to - xrange.from),
+                                     Math.floor(yrange.from - yrange.to));
                     }
                 }
             }
@@ -1123,10 +977,10 @@
             
             if (options.grid.borderWidth) {
                 // draw border
-                var bw = options.grid.borderWidth;
-                ctx.lineWidth = bw;
-                ctx.strokeStyle = options.grid.borderColor;
-                ctx.strokeRect(-bw/2, -bw/2, plotWidth + bw, plotHeight + bw);
+                ctx.lineWidth = options.grid.borderWidth;
+                ctx.strokeStyle = options.grid.color;
+                ctx.lineJoin = "round";
+                ctx.strokeRect(0, 0, plotWidth, plotHeight);
             }
 
             ctx.restore();
@@ -1135,43 +989,41 @@
         function insertLabels() {
             target.find(".tickLabels").remove();
             
-            var html = ['<div class="tickLabels" style="font-size:smaller;color:' + options.grid.color + '">'];
+            var html = '<div class="tickLabels" style="font-size:smaller;color:' + options.grid.color + '">';
 
             function addLabels(axis, labelGenerator) {
                 for (var i = 0; i < axis.ticks.length; ++i) {
                     var tick = axis.ticks[i];
                     if (!tick.label || tick.v < axis.min || tick.v > axis.max)
                         continue;
-                    html.push(labelGenerator(tick, axis));
+                    html += labelGenerator(tick, axis);
                 }
             }
-
-            var margin = options.grid.labelMargin + options.grid.borderWidth;
             
             addLabels(axes.xaxis, function (tick, axis) {
-                return '<div style="position:absolute;top:' + (plotOffset.top + plotHeight + margin) + 'px;left:' + Math.round(plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
+                return '<div style="position:absolute;top:' + (plotOffset.top + plotHeight + options.grid.labelMargin) + 'px;left:' + (plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
             });
             
             
             addLabels(axes.yaxis, function (tick, axis) {
-                return '<div style="position:absolute;top:' + Math.round(plotOffset.top + axis.p2c(tick.v) - axis.labelHeight/2) + 'px;right:' + (plotOffset.right + plotWidth + margin) + 'px;width:' + axis.labelWidth + 'px;text-align:right" class="tickLabel">' + tick.label + "</div>";
+                return '<div style="position:absolute;top:' + (plotOffset.top + axis.p2c(tick.v) - axis.labelHeight/2) + 'px;right:' + (plotOffset.right + plotWidth + options.grid.labelMargin) + 'px;width:' + axis.labelWidth + 'px;text-align:right" class="tickLabel">' + tick.label + "</div>";
             });
             
             addLabels(axes.x2axis, function (tick, axis) {
-                return '<div style="position:absolute;bottom:' + (plotOffset.bottom + plotHeight + margin) + 'px;left:' + Math.round(plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
+                return '<div style="position:absolute;bottom:' + (plotOffset.bottom + plotHeight + options.grid.labelMargin) + 'px;left:' + (plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
             });
             
             addLabels(axes.y2axis, function (tick, axis) {
-                return '<div style="position:absolute;top:' + Math.round(plotOffset.top + axis.p2c(tick.v) - axis.labelHeight/2) + 'px;left:' + (plotOffset.left + plotWidth + margin) +'px;width:' + axis.labelWidth + 'px;text-align:left" class="tickLabel">' + tick.label + "</div>";
+                return '<div style="position:absolute;top:' + (plotOffset.top + axis.p2c(tick.v) - axis.labelHeight/2) + 'px;left:' + (plotOffset.left + plotWidth + options.grid.labelMargin) +'px;width:' + axis.labelWidth + 'px;text-align:left" class="tickLabel">' + tick.label + "</div>";
             });
 
-            html.push('</div>');
+            html += '</div>';
             
-            target.append(html.join(""));
+            target.append(html);
         }
 
         function drawSeries(series) {
-            if (series.lines.show)
+            if (series.lines.show || (!series.bars.show && !series.points.show))
                 drawSeriesLines(series);
             if (series.bars.show)
                 drawSeriesBars(series);
@@ -1180,18 +1032,19 @@
         }
         
         function drawSeriesLines(series) {
-            function plotLine(datapoints, xoffset, yoffset, axisx, axisy) {
-                var points = datapoints.linespoints || datapoints.points,
-                    incr = datapoints.incr,
-                    prevx = null, prevy = null;
+            function plotLine(data, offset, axisx, axisy) {
+                var prev, cur = null, drawx = null, drawy = null;
                 
                 ctx.beginPath();
-                for (var i = incr; i < points.length; i += incr) {
-                    var x1 = points[i - incr], y1 = points[i - incr + 1],
-                        x2 = points[i], y2 = points[i + 1];
-                    
-                    if (x1 == null || x2 == null)
+                for (var i = 0; i < data.length; ++i) {
+                    prev = cur;
+                    cur = data[i];
+
+                    if (prev == null || cur == null)
                         continue;
+                    
+                    var x1 = prev[0], y1 = prev[1],
+                        x2 = cur[0], y2 = cur[1];
 
                     // clip with ymin
                     if (y1 <= y2 && y1 < axisy.min) {
@@ -1250,27 +1103,29 @@
                         x2 = axisx.max;
                     }
 
-                    if (x1 != prevx || y1 != prevy)
-                        ctx.moveTo(axisx.p2c(x1) + xoffset, axisy.p2c(y1) + yoffset);
+                    if (drawx != axisx.p2c(x1) || drawy != axisy.p2c(y1) + offset)
+                        ctx.moveTo(axisx.p2c(x1), axisy.p2c(y1) + offset);
                     
-                    prevx = x2;
-                    prevy = y2;
-                    ctx.lineTo(axisx.p2c(x2) + xoffset, axisy.p2c(y2) + yoffset);
+                    drawx = axisx.p2c(x2);
+                    drawy = axisy.p2c(y2) + offset;
+                    ctx.lineTo(drawx, drawy);
                 }
                 ctx.stroke();
             }
 
-            function plotLineArea(datapoints, axisx, axisy) {
-                var points = datapoints.linespoints || datapoints.points,
-                    incr = datapoints.incr,
-                    bottom = Math.min(Math.max(0, axisy.min), axisy.max),
-                    top, lastX = 0, areaOpen = false;
+            function plotLineArea(data, axisx, axisy) {
+                var prev, cur = null;
                 
-                for (var i = incr; i < points.length; i += incr) {
-                    var x1 = points[i - incr], y1 = points[i - incr + 1],
-                        x2 = points[i], y2 = points[i + 1];
-                    
-                    if (areaOpen && x1 != null && x2 == null) {
+                var bottom = Math.min(Math.max(0, axisy.min), axisy.max);
+                var top, lastX = 0;
+
+                var areaOpen = false;
+                
+                for (var i = 0; i < data.length; ++i) {
+                    prev = cur;
+                    cur = data[i];
+
+                    if (areaOpen && prev != null && cur == null) {
                         // close area
                         ctx.lineTo(axisx.p2c(lastX), axisy.p2c(bottom));
                         ctx.fill();
@@ -1278,8 +1133,11 @@
                         continue;
                     }
 
-                    if (x1 == null || x2 == null)
+                    if (prev == null || cur == null)
                         continue;
+                        
+                    var x1 = prev[0], y1 = prev[1],
+                        x2 = cur[0], y2 = cur[1];
 
                     // clip x values
                     
@@ -1322,13 +1180,11 @@
                     if (y1 >= axisy.max && y2 >= axisy.max) {
                         ctx.lineTo(axisx.p2c(x1), axisy.p2c(axisy.max));
                         ctx.lineTo(axisx.p2c(x2), axisy.p2c(axisy.max));
-                        lastX = x2;
                         continue;
                     }
                     else if (y1 <= axisy.min && y2 <= axisy.min) {
                         ctx.lineTo(axisx.p2c(x1), axisy.p2c(axisy.min));
                         ctx.lineTo(axisx.p2c(x2), axisy.p2c(axisy.min));
-                        lastX = x2;
                         continue;
                     }
                     
@@ -1383,8 +1239,8 @@
                         else
                             top = axisy.max;
                         
-                        ctx.lineTo(axisx.p2c(x2), axisy.p2c(top));
                         ctx.lineTo(axisx.p2c(x2old), axisy.p2c(top));
+                        ctx.lineTo(axisx.p2c(x2), axisy.p2c(top));
                     }
 
                     lastX = Math.max(x2, x2old);
@@ -1400,47 +1256,57 @@
             ctx.translate(plotOffset.left, plotOffset.top);
             ctx.lineJoin = "round";
 
-            var lw = series.lines.lineWidth,
-                sw = series.shadowSize;
+            var lw = series.lines.lineWidth;
+            var sw = series.shadowSize;
             // FIXME: consider another form of shadow when filling is turned on
-            if (lw > 0 && sw > 0) {
-                // draw shadow as a thick and thin line with transparency
-                ctx.lineWidth = sw;
+            if (sw > 0) {
+                // draw shadow in two steps
+                ctx.lineWidth = sw / 2;
                 ctx.strokeStyle = "rgba(0,0,0,0.1)";
-                var xoffset = 1;
-                plotLine(series.datapoints, xoffset, Math.sqrt((lw/2 + sw/2)*(lw/2 + sw/2) - xoffset*xoffset), series.xaxis, series.yaxis);
-                ctx.lineWidth = sw/2;
-                plotLine(series.datapoints, xoffset, Math.sqrt((lw/2 + sw/4)*(lw/2 + sw/4) - xoffset*xoffset), series.xaxis, series.yaxis);
+                plotLine(series.data, lw/2 + sw/2 + ctx.lineWidth/2, series.xaxis, series.yaxis);
+
+                ctx.lineWidth = sw / 2;
+                ctx.strokeStyle = "rgba(0,0,0,0.2)";
+                plotLine(series.data, lw/2 + ctx.lineWidth/2, series.xaxis, series.yaxis);
             }
 
             ctx.lineWidth = lw;
             ctx.strokeStyle = series.color;
-            var fillStyle = getFillStyle(series.lines, series.color, 0, plotHeight);
-            if (fillStyle) {
-                ctx.fillStyle = fillStyle;
-                plotLineArea(series.datapoints, series.xaxis, series.yaxis);
-            }
-
-            if (lw > 0)
-                plotLine(series.datapoints, 0, 0, series.xaxis, series.yaxis);
+            setFillStyle(series.lines, series.color);
+            if (series.lines.fill)
+                plotLineArea(series.data, series.xaxis, series.yaxis);
+            plotLine(series.data, 0, series.xaxis, series.yaxis);
             ctx.restore();
         }
 
         function drawSeriesPoints(series) {
-            function plotPoints(datapoints, radius, fillStyle, offset, circumference, axisx, axisy) {
-                var points = datapoints.points, incr = datapoints.incr;
-                
-                for (var i = 0; i < points.length; i += incr) {
-                    var x = points[i], y = points[i + 1];
-                    if (x == null || x < axisx.min || x > axisx.max || y < axisy.min || y > axisy.max)
+            function plotPoints(data, radius, fill, axisx, axisy) {
+                for (var i = 0; i < data.length; ++i) {
+                    if (data[i] == null)
+                        continue;
+                    
+                    var x = data[i][0], y = data[i][1];
+                    if (x < axisx.min || x > axisx.max || y < axisy.min || y > axisy.max)
                         continue;
                     
                     ctx.beginPath();
-                    ctx.arc(axisx.p2c(x), axisy.p2c(y) + offset, radius, 0, circumference, true);
-                    if (fillStyle) {
-                        ctx.fillStyle = fillStyle;
+                    ctx.arc(axisx.p2c(x), axisy.p2c(y), radius, 0, 2 * Math.PI, true);
+                    if (fill)
                         ctx.fill();
-                    }
+                    ctx.stroke();
+                }
+            }
+
+            function plotPointShadows(data, offset, radius, axisx, axisy) {
+                for (var i = 0; i < data.length; ++i) {
+                    if (data[i] == null)
+                        continue;
+                    
+                    var x = data[i][0], y = data[i][1];
+                    if (x < axisx.min || x > axisx.max || y < axisy.min || y > axisy.max)
+                        continue;
+                    ctx.beginPath();
+                    ctx.arc(axisx.p2c(x), axisy.p2c(y) + offset, radius, 0, Math.PI, false);
                     ctx.stroke();
                 }
             }
@@ -1448,70 +1314,43 @@
             ctx.save();
             ctx.translate(plotOffset.left, plotOffset.top);
 
-            var lw = series.lines.lineWidth,
-                sw = series.shadowSize,
-                radius = series.points.radius;
-            if (lw > 0 && sw > 0) {
+            var lw = series.lines.lineWidth;
+            var sw = series.shadowSize;
+            if (sw > 0) {
                 // draw shadow in two steps
-                var w = sw / 2;
-                ctx.lineWidth = w;
+                ctx.lineWidth = sw / 2;
                 ctx.strokeStyle = "rgba(0,0,0,0.1)";
-                plotPoints(series.datapoints, radius, null, w + w/2, 2 * Math.PI,
-                           series.xaxis, series.yaxis);
+                plotPointShadows(series.data, sw/2 + ctx.lineWidth/2,
+                                 series.points.radius, series.xaxis, series.yaxis);
 
+                ctx.lineWidth = sw / 2;
                 ctx.strokeStyle = "rgba(0,0,0,0.2)";
-                plotPoints(series.datapoints, radius, null, w/2, 2 * Math.PI,
-                           series.xaxis, series.yaxis);
+                plotPointShadows(series.data, ctx.lineWidth/2,
+                                 series.points.radius, series.xaxis, series.yaxis);
             }
 
-            ctx.lineWidth = lw;
+            ctx.lineWidth = series.points.lineWidth;
             ctx.strokeStyle = series.color;
-            plotPoints(series.datapoints, radius,
-                       getFillStyle(series.points, series.color), 0, 2 * Math.PI,
+            setFillStyle(series.points, series.color);
+            plotPoints(series.data, series.points.radius, series.points.fill,
                        series.xaxis, series.yaxis);
             ctx.restore();
         }
 
-        function drawBar(x, y, b, barLeft, barRight, offset, fillStyleCallback, axisx, axisy, c, horizontal) {
-            var left, right, bottom, top,
-                drawLeft, drawRight, drawTop, drawBottom,
-                tmp;
+        function drawBar(x, y, barLeft, barRight, offset, fill, axisx, axisy, c) {
+            var drawLeft = true, drawRight = true,
+                drawTop = true, drawBottom = false,
+                left = x + barLeft, right = x + barRight,
+                bottom = 0, top = y;
 
-            if (horizontal) {
-                drawBottom = drawRight = drawTop = true;
-                drawLeft = false;
-                left = b;
-                right = x;
-                top = y + barLeft;
-                bottom = y + barRight;
-
-                // account for negative bars
-                if (right < left) {
-                    tmp = right;
-                    right = left;
-                    left = tmp;
-                    drawLeft = true;
-                    drawRight = false;
-                }
+            // account for negative bars
+            if (top < bottom) {
+                top = 0;
+                bottom = y;
+                drawBottom = true;
+                drawTop = false;
             }
-            else {
-                drawLeft = drawRight = drawTop = true;
-                drawBottom = false;
-                left = x + barLeft;
-                right = x + barRight;
-                bottom = b;
-                top = y;
-
-                // account for negative bars
-                if (top < bottom) {
-                    tmp = top;
-                    top = bottom;
-                    bottom = tmp;
-                    drawBottom = true;
-                    drawTop = false;
-                }
-            }
-           
+            
             // clip
             if (right < axisx.min || left > axisx.max ||
                 top < axisy.min || bottom > axisy.max)
@@ -1537,27 +1376,24 @@
                 drawTop = false;
             }
 
-            left = axisx.p2c(left);
-            bottom = axisy.p2c(bottom);
-            right = axisx.p2c(right);
-            top = axisy.p2c(top);
-            
             // fill the bar
-            if (fillStyleCallback) {
+            if (fill) {
                 c.beginPath();
-                c.moveTo(left, bottom);
-                c.lineTo(left, top);
-                c.lineTo(right, top);
-                c.lineTo(right, bottom);
-                c.fillStyle = fillStyleCallback(bottom, top);
+                c.moveTo(axisx.p2c(left), axisy.p2c(bottom) + offset);
+                c.lineTo(axisx.p2c(left), axisy.p2c(top) + offset);
+                c.lineTo(axisx.p2c(right), axisy.p2c(top) + offset);
+                c.lineTo(axisx.p2c(right), axisy.p2c(bottom) + offset);
                 c.fill();
             }
 
             // draw outline
             if (drawLeft || drawRight || drawTop || drawBottom) {
                 c.beginPath();
-
-                // FIXME: inline moveTo is buggy with excanvas
+                left = axisx.p2c(left);
+                bottom = axisy.p2c(bottom);
+                right = axisx.p2c(right);
+                top = axisy.p2c(top);
+                
                 c.moveTo(left, bottom + offset);
                 if (drawLeft)
                     c.lineTo(left, top + offset);
@@ -1580,40 +1416,55 @@
         }
         
         function drawSeriesBars(series) {
-            function plotBars(datapoints, barLeft, barRight, offset, fillStyleCallback, axisx, axisy) {
-                var points = datapoints.points, incr = datapoints.incr;
-                
-                for (var i = 0; i < points.length; i += incr) {
-                    if (points[i] == null)
+            function plotBars(data, barLeft, barRight, offset, fill, axisx, axisy) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i] == null)
                         continue;
-                    drawBar(points[i], points[i + 1], points[i + 2], barLeft, barRight, offset, fillStyleCallback, axisx, axisy, ctx, series.bars.horizontal);
+                    drawBar(data[i][0], data[i][1], barLeft, barRight, offset, fill, axisx, axisy, ctx);
                 }
             }
 
             ctx.save();
             ctx.translate(plotOffset.left, plotOffset.top);
+            ctx.lineJoin = "round";
 
-            // FIXME: figure out a way to add shadows (for instance along the right edge)
+            // FIXME: figure out a way to add shadows
+            /*
+            var bw = series.bars.barWidth;
+            var lw = series.bars.lineWidth;
+            var sw = series.shadowSize;
+            if (sw > 0) {
+                // draw shadow in two steps
+                ctx.lineWidth = sw / 2;
+                ctx.strokeStyle = "rgba(0,0,0,0.1)";
+                plotBars(series.data, bw, lw/2 + sw/2 + ctx.lineWidth/2, false);
+
+                ctx.lineWidth = sw / 2;
+                ctx.strokeStyle = "rgba(0,0,0,0.2)";
+                plotBars(series.data, bw, lw/2 + ctx.lineWidth/2, false);
+            }*/
+
             ctx.lineWidth = series.bars.lineWidth;
             ctx.strokeStyle = series.color;
+            setFillStyle(series.bars, series.color);
             var barLeft = series.bars.align == "left" ? 0 : -series.bars.barWidth/2;
-            var fillStyleCallback = series.bars.fill ? function (bottom, top) { return getFillStyle(series.bars, series.color, bottom, top); } : null;
-            plotBars(series.datapoints, barLeft, barLeft + series.bars.barWidth, 0, fillStyleCallback, series.xaxis, series.yaxis);
+            plotBars(series.data, barLeft, barLeft + series.bars.barWidth, 0, series.bars.fill, series.xaxis, series.yaxis);
             ctx.restore();
         }
 
-        function getFillStyle(filloptions, seriesColor, bottom, top) {
-            var fill = filloptions.fill;
+        function setFillStyle(obj, seriesColor) {
+            var fill = obj.fill;
             if (!fill)
-                return null;
-
-            if (filloptions.fillColor)
-                return getColorOrGradient(filloptions.fillColor, bottom, top, seriesColor);
+                return;
             
-            var c = parseColor(seriesColor);
-            c.a = typeof fill == "number" ? fill : 0.4;
-            c.normalize();
-            return c.toString();
+            if (obj.fillColor)
+                ctx.fillStyle = obj.fillColor;
+            else {
+                var c = parseColor(seriesColor);
+                c.a = typeof fill == "number" ? fill : 0.4;
+                c.normalize();
+                ctx.fillStyle = c.toString();
+            }
         }
         
         function insertLegend() {
@@ -1622,12 +1473,10 @@
             if (!options.legend.show)
                 return;
             
-            var fragments = [], rowStarted = false,
-                lf = options.legend.labelFormatter, s, label;
+            var fragments = [];
+            var rowStarted = false;
             for (i = 0; i < series.length; ++i) {
-                s = series[i];
-                label = s.label;
-                if (!label)
+                if (!series[i].label)
                     continue;
                 
                 if (i % options.legend.noColumns == 0) {
@@ -1637,11 +1486,12 @@
                     rowStarted = true;
                 }
 
-                if (lf)
-                    label = lf(label, s);
+                var label = series[i].label;
+                if (options.legend.labelFormatter != null)
+                    label = options.legend.labelFormatter(label);
                 
                 fragments.push(
-                    '<td class="legendColorBox"><div style="border:1px solid ' + options.legend.labelBoxBorderColor + ';padding:1px"><div style="width:4px;height:0;border:5px solid ' + s.color + ';overflow:hidden"></div></div></td>' +
+                    '<td class="legendColorBox"><div style="border:1px solid ' + options.legend.labelBoxBorderColor + ';padding:1px"><div style="width:14px;height:10px;background-color:' + series[i].color + ';overflow:hidden"></div></div></td>' +
                     '<td class="legendLabel">' + label + '</td>');
             }
             if (rowStarted)
@@ -1652,21 +1502,18 @@
 
             var table = '<table style="font-size:smaller;color:' + options.grid.color + '">' + fragments.join("") + '</table>';
             if (options.legend.container != null)
-                $(options.legend.container).html(table);
+                options.legend.container.html(table);
             else {
-                var pos = "",
-                    p = options.legend.position,
-                    m = options.legend.margin;
-                if (m[0] == null)
-                    m = [m, m];
+                var pos = "";
+                var p = options.legend.position, m = options.legend.margin;
                 if (p.charAt(0) == "n")
-                    pos += 'top:' + (m[1] + plotOffset.top) + 'px;';
+                    pos += 'top:' + (m + plotOffset.top) + 'px;';
                 else if (p.charAt(0) == "s")
-                    pos += 'bottom:' + (m[1] + plotOffset.bottom) + 'px;';
+                    pos += 'bottom:' + (m + plotOffset.bottom) + 'px;';
                 if (p.charAt(1) == "e")
-                    pos += 'right:' + (m[0] + plotOffset.right) + 'px;';
+                    pos += 'right:' + (m + plotOffset.right) + 'px;';
                 else if (p.charAt(1) == "w")
-                    pos += 'left:' + (m[0] + plotOffset.left) + 'px;';
+                    pos += 'left:' + (m + plotOffset.left) + 'px;';
                 var legend = $('<div class="legend">' + table.replace('style="', 'style="position:absolute;' + pos +';') + '</div>').appendTo(target);
                 if (options.legend.backgroundOpacity != 0.0) {
                     // put in the transparent background
@@ -1675,7 +1522,7 @@
                     var c = options.legend.backgroundColor;
                     if (c == null) {
                         var tmp;
-                        if (options.grid.backgroundColor && typeof options.grid.backgroundColor == "string")
+                        if (options.grid.backgroundColor)
                             tmp = options.grid.backgroundColor;
                         else
                             tmp = extractColor(legend);
@@ -1683,6 +1530,7 @@
                     }
                     var div = legend.children();
                     $('<div style="position:absolute;width:' + div.width() + 'px;height:' + div.height() + 'px;' + pos +'background-color:' + c + ';"> </div>').prependTo(legend).css('opacity', options.legend.backgroundOpacity);
+                    
                 }
             }
         }
@@ -1694,120 +1542,97 @@
             selection = {
                 first: { x: -1, y: -1}, second: { x: -1, y: -1},
                 show: false, active: false },
-            crosshair = { pos: { x: -1, y: -1 } },
             highlights = [],
             clickIsMouseUp = false,
             redrawTimeout = null,
             hoverTimeout = null;
         
         // Returns the data item the mouse is over, or null if none is found
-        function findNearbyItem(mouseX, mouseY, seriesFilter) {
+        function findNearbyItem(mouseX, mouseY) {
             var maxDistance = options.grid.mouseActiveRadius,
                 lowestDistance = maxDistance * maxDistance + 1,
-                item = null, foundPoint = false, i, j;
+                item = null, foundPoint = false;
 
-            for (var i = 0; i < series.length; ++i) {
-                if (!seriesFilter(series[i]))
-                    continue;
-                
-                var s = series[i],
-                    axisx = s.xaxis,
-                    axisy = s.yaxis,
-                    points = s.datapoints.points,
-                    incr = s.datapoints.incr,
-                    mx = axisx.c2p(mouseX), // precompute some stuff to make the loop faster
-                    my = axisy.c2p(mouseY),
-                    maxx = maxDistance / axisx.scale,
-                    maxy = maxDistance / axisy.scale;
-
-                if (s.lines.show || s.points.show) {
-                    for (j = 0; j < points.length; j += incr) {
-                        var x = points[j], y = points[j + 1];
-                        if (x == null)
-                            continue;
-                        
-                        // For points and lines, the cursor must be within a
-                        // certain distance to the data point
-                        if (x - mx > maxx || x - mx < -maxx ||
-                            y - my > maxy || y - my < -maxy)
-                            continue;
-
-                        // We have to calculate distances in pixels, not in
-                        // data units, because the scales of the axes may be different
-                        var dx = Math.abs(axisx.p2c(x) - mouseX),
-                            dy = Math.abs(axisy.p2c(y) - mouseY),
-                            dist = dx * dx + dy * dy; // no idea in taking sqrt
-                        if (dist < lowestDistance) {
-                            lowestDistance = dist;
-                            item = [i, j / incr];
-                        }
-                    }
-                }
-                    
-                if (s.bars.show && !item) { // no other point can be nearby
-                    var barLeft = s.bars.align == "left" ? 0 : -s.bars.barWidth/2,
-                        barRight = barLeft + s.bars.barWidth;
-                    
-                    for (j = 0; j < points.length; j += incr) {
-                        var x = points[j], y = points[j + 1], b = points[j + 2];
-                        if (x == null)
-                            continue;
-  
-                        // for a bar graph, the cursor must be inside the bar
-                        if (series[i].bars.horizontal ? 
-                            (mx <= Math.max(b, x) && mx >= Math.min(b, x) && 
-                             my >= y + barLeft && my <= y + barRight) :
-                            (mx >= x + barLeft && mx <= x + barRight &&
-                             my >= Math.min(b, y) && my <= Math.max(b, y)))
-                                item = [i, j / incr];
-                    }
-                }
-            }
-
-            if (item) {
-                i = item[0];
-                j = item[1];
-                
+            function result(i, j) {
                 return { datapoint: series[i].data[j],
                          dataIndex: j,
                          series: series[i],
-                         seriesIndex: i }
+                         seriesIndex: i };
             }
             
-            return null;
+            for (var i = 0; i < series.length; ++i) {
+                var data = series[i].data,
+                    axisx = series[i].xaxis,
+                    axisy = series[i].yaxis,
+                
+                    // precompute some stuff to make the loop faster
+                    mx = axisx.c2p(mouseX),
+                    my = axisy.c2p(mouseY),
+                    maxx = maxDistance / axisx.scale,
+                    maxy = maxDistance / axisy.scale,
+                    checkbar = series[i].bars.show,
+                    checkpoint = !(series[i].bars.show && !(series[i].lines.show || series[i].points.show)),
+                    barLeft = series[i].bars.align == "left" ? 0 : -series[i].bars.barWidth/2,
+                    barRight = barLeft + series[i].bars.barWidth;
+                for (var j = 0; j < data.length; ++j) {
+                    if (data[j] == null)
+                        continue;
+
+                    var x = data[j][0], y = data[j][1];
+  
+                    if (checkbar) {
+                        // For a bar graph, the cursor must be inside the bar
+                        // and no other point can be nearby
+                        if (!foundPoint && mx >= x + barLeft &&
+                            mx <= x + barRight &&
+                            my >= Math.min(0, y) && my <= Math.max(0, y))
+                            item = result(i, j);
+                    }
+ 
+                    if (checkpoint) {
+                        // For points and lines, the cursor must be within a
+                        // certain distance to the data point
+ 
+                        // check bounding box first
+                        if ((x - mx > maxx || x - mx < -maxx) ||
+                            (y - my > maxy || y - my < -maxy))
+                            continue;
+
+                        // We have to calculate distances in pixels, not in
+                        // data units, because the scale of the axes may be different
+                        var dx = Math.abs(axisx.p2c(x) - mouseX),
+                            dy = Math.abs(axisy.p2c(y) - mouseY),
+                            dist = dx * dx + dy * dy;
+                        if (dist < lowestDistance) {
+                            lowestDistance = dist;
+                            foundPoint = true;
+                            item = result(i, j);
+                        }
+                    }
+                }
+            }
+
+            return item;
         }
 
         function onMouseMove(ev) {
-            // FIXME: temp. work-around until jQuery bug 4398 is fixed
+            // FIXME: temp. work-around until jQuery bug 1871 is fixed
             var e = ev || window.event;
             if (e.pageX == null && e.clientX != null) {
                 var de = document.documentElement, b = document.body;
-                lastMousePos.pageX = e.clientX + (de && de.scrollLeft || b.scrollLeft || 0) - (de.clientLeft || 0);
-                lastMousePos.pageY = e.clientY + (de && de.scrollTop || b.scrollTop || 0) - (de.clientTop || 0);
+                lastMousePos.pageX = e.clientX + (de && de.scrollLeft || b.scrollLeft || 0);
+                lastMousePos.pageY = e.clientY + (de && de.scrollTop || b.scrollTop || 0);
             }
             else {
                 lastMousePos.pageX = e.pageX;
                 lastMousePos.pageY = e.pageY;
             }
             
-            if (options.grid.hoverable)
-                triggerClickHoverEvent("plothover", lastMousePos,
-                                       function (s) { return s["hoverable"] != false; });
+            if (options.grid.hoverable && !hoverTimeout)
+                hoverTimeout = setTimeout(onHover, 100);
 
-            if (options.crosshair.mode != null) {
-                if (!selection.active) {
-                    setPositionFromEvent(crosshair.pos, lastMousePos);
-                    triggerRedrawOverlay();
-                }
-                else
-                    crosshair.pos.x = -1; // hide the crosshair while selecting
-            }
-
-            if (selection.active) {
-                target.trigger("plotselecting", [ selectionIsSane() ? getSelectionForEvent() : null ]);
-
+            if (selection.active)
                 updateSelection(lastMousePos);
-            }
         }
         
         function onMouseDown(e) {
@@ -1834,38 +1659,23 @@
             $(document).one("mouseup", onSelectionMouseUp);
         }
 
-        function onMouseOut(ev) {
-            if (options.crosshair.mode != null && crosshair.pos.x != -1) {
-                crosshair.pos.x = -1;
-                triggerRedrawOverlay();
-            }
-        }
-        
         function onClick(e) {
             if (clickIsMouseUp) {
                 clickIsMouseUp = false;
                 return;
             }
 
-            triggerClickHoverEvent("plotclick", e,
-                                   function (s) { return s["clickable"] != false; });
+            triggerClickHoverEvent("plotclick", e);
+        }
+        
+        function onHover() {
+            triggerClickHoverEvent("plothover", lastMousePos);
+            hoverTimeout = null;
         }
 
-        /*
-        function userPositionInCanvasSpace(pos) {
-            return { x: parseInt(pos.x != null ? axes.xaxis.p2c(pos.x) : axes.x2axis.p2c(pos.x2)),
-                     y: parseInt(pos.y != null ? axes.yaxis.p2c(pos.y) : axes.y2axis.p2c(pos.y2)) };
-        }
-        
-        function positionInDivSpace(pos) {
-            var cpos = userPositionInCanvasSpace(pos);
-            return { x: cpos.x + plotOffset.left,
-                     y: cpos.y + plotOffset.top };
-        }*/
-        
         // trigger click or hover event (they send the same parameters
         // so we share their code)
-        function triggerClickHoverEvent(eventname, event, seriesFilter) {
+        function triggerClickHoverEvent(eventname, event) {
             var offset = eventHolder.offset(),
                 pos = { pageX: event.pageX, pageY: event.pageY },
                 canvasX = event.pageX - offset.left - plotOffset.left,
@@ -1880,25 +1690,26 @@
             if (axes.y2axis.used)
                 pos.y2 = axes.y2axis.c2p(canvasY);
 
-            var item = findNearbyItem(canvasX, canvasY, seriesFilter);
+            var item = findNearbyItem(canvasX, canvasY);
 
             if (item) {
                 // fill in mouse pos for any listeners out there
                 item.pageX = parseInt(item.series.xaxis.p2c(item.datapoint[0]) + offset.left + plotOffset.left);
                 item.pageY = parseInt(item.series.yaxis.p2c(item.datapoint[1]) + offset.top + plotOffset.top);
+
+                    
             }
 
             if (options.grid.autoHighlight) {
-                // clear auto-highlights
                 for (var i = 0; i < highlights.length; ++i) {
                     var h = highlights[i];
-                    if (h.auto == eventname &&
+                    if (h.auto &&
                         !(item && h.series == item.series && h.point == item.datapoint))
                         unhighlight(h.series, h.point);
                 }
                 
                 if (item)
-                    highlight(item.series, item.datapoint, eventname);
+                    highlight(item.series, item.datapoint, true);
             }
             
             target.trigger(eventname, [ pos, item ]);
@@ -1906,7 +1717,7 @@
 
         function triggerRedrawOverlay() {
             if (!redrawTimeout)
-                redrawTimeout = setTimeout(redrawOverlay, 30);
+                redrawTimeout = setTimeout(redrawOverlay, 50);
         }
 
         function redrawOverlay() {
@@ -1917,7 +1728,7 @@
             octx.clearRect(0, 0, canvasWidth, canvasHeight);
             octx.translate(plotOffset.left, plotOffset.top);
             
-            var i, hi;
+            var i, hi; 
             for (i = 0; i < highlights.length; ++i) {
                 hi = highlights[i];
 
@@ -1926,6 +1737,7 @@
                 else
                     drawPointHighlight(hi.series, hi.point);
             }
+            octx.restore();
 
             // redraw selection
             if (selection.show && selectionIsSane()) {
@@ -1939,30 +1751,9 @@
                     w = Math.abs(selection.second.x - selection.first.x),
                     h = Math.abs(selection.second.y - selection.first.y);
                 
-                octx.fillRect(x, y, w, h);
-                octx.strokeRect(x, y, w, h);
+                octx.fillRect(x + plotOffset.left, y + plotOffset.top, w, h);
+                octx.strokeRect(x + plotOffset.left, y + plotOffset.top, w, h);
             }
-
-            // redraw crosshair
-            var pos = crosshair.pos, mode = options.crosshair.mode;
-            if (mode != null && pos.x != -1) {
-                octx.strokeStyle = parseColor(options.crosshair.color).scale(null, null, null, 0.8).toString();
-                octx.lineWidth = 1;
-                ctx.lineJoin = "round";
-
-                octx.beginPath();
-                if (mode.indexOf("x") != -1) {
-                    octx.moveTo(pos.x, 0);
-                    octx.lineTo(pos.x, plotHeight);
-                }
-                if (mode.indexOf("y") != -1) {
-                    octx.moveTo(0, pos.y);
-                    octx.lineTo(plotWidth, pos.y);
-                }
-                octx.stroke();
-                
-            }
-            octx.restore();
         }
         
         function highlight(s, point, auto) {
@@ -2024,31 +1815,16 @@
         }
 
         function drawBarHighlight(series, point) {
+            octx.lineJoin = "round";
             octx.lineWidth = series.bars.lineWidth;
             octx.strokeStyle = parseColor(series.color).scale(1, 1, 1, 0.5).toString();
-            var fillStyle = parseColor(series.color).scale(1, 1, 1, 0.5).toString();
+            octx.fillStyle = parseColor(series.color).scale(1, 1, 1, 0.5).toString();
             var barLeft = series.bars.align == "left" ? 0 : -series.bars.barWidth/2;
-            drawBar(point[0], point[1], point[2] || 0, barLeft, barLeft + series.bars.barWidth,
-                    0, function () { return fillStyle; }, series.xaxis, series.yaxis, octx, series.bars.horizontal);
+            drawBar(point[0], point[1], barLeft, barLeft + series.bars.barWidth,
+                    0, true, series.xaxis, series.yaxis, octx);
         }
-
-        function setPositionFromEvent(pos, e) {
-            var offset = eventHolder.offset();
-            pos.x = clamp(0, e.pageX - offset.left - plotOffset.left, plotWidth);
-            pos.y = clamp(0, e.pageY - offset.top - plotOffset.top, plotHeight);
-        }
-
-        function setCrosshair(pos) {
-            if (pos == null)
-                crosshair.pos.x = -1;
-            else {
-                crosshair.pos.x = clamp(0, pos.x != null ? axes.xaxis.p2c(pos.x) : axes.x2axis.p2c(pos.x2), plotWidth);
-                crosshair.pos.y = clamp(0, pos.y != null ? axes.yaxis.p2c(pos.y) : axes.y2axis.p2c(pos.y2), plotHeight);
-            }
-            triggerRedrawOverlay();
-        }
-
-        function getSelectionForEvent() {
+        
+        function triggerSelectedEvent() {
             var x1 = Math.min(selection.first.x, selection.second.x),
                 x2 = Math.max(selection.first.x, selection.second.x),
                 y1 = Math.max(selection.first.y, selection.second.y),
@@ -2062,12 +1838,7 @@
             if (axes.yaxis.used)
                 r.yaxis = { from: axes.yaxis.c2p(y1), to: axes.yaxis.c2p(y2) };
             if (axes.y2axis.used)
-                r.y2axis = { from: axes.y2axis.c2p(y1), to: axes.y2axis.c2p(y2) };
-            return r;
-        }
-        
-        function triggerSelectedEvent() {
-            var r = getSelectionForEvent();
+                r.yaxis = { from: axes.y2axis.c2p(y1), to: axes.y2axis.c2p(y2) };
             
             target.trigger("plotselected", [ r ]);
 
@@ -2091,23 +1862,21 @@
                 triggerSelectedEvent();
                 clickIsMouseUp = true;
             }
-            else {
-                // this counts as a clear
-                target.trigger("plotunselected", [ ]);
-                target.trigger("plotselecting", [ null ]);
-            }
             
             return false;
         }
 
         function setSelectionPos(pos, e) {
-            setPositionFromEvent(pos, e);
-            
+            var offset = eventHolder.offset();
             if (options.selection.mode == "y") {
                 if (pos == selection.first)
                     pos.x = 0;
                 else
                     pos.x = plotWidth;
+            }
+            else {
+                pos.x = e.pageX - offset.left - plotOffset.left;
+                pos.x = Math.min(Math.max(0, pos.x), plotWidth);
             }
 
             if (options.selection.mode == "x") {
@@ -2116,27 +1885,29 @@
                 else
                     pos.y = plotHeight;
             }
+            else {
+                pos.y = e.pageY - offset.top - plotOffset.top;
+                pos.y = Math.min(Math.max(0, pos.y), plotHeight);
+            }
         }
-
+        
         function updateSelection(pos) {
             if (pos.pageX == null)
                 return;
-
+            
             setSelectionPos(selection.second, pos);
             if (selectionIsSane()) {
                 selection.show = true;
                 triggerRedrawOverlay();
             }
             else
-                clearSelection(true);
+                clearSelection();
         }
 
-        function clearSelection(preventEvent) {
+        function clearSelection() {
             if (selection.show) {
                 selection.show = false;
                 triggerRedrawOverlay();
-                if (!preventEvent)
-                    target.trigger("plotunselected", [ ]);
             }
         }
 
@@ -2176,24 +1947,6 @@
             return Math.abs(selection.second.x - selection.first.x) >= minSize &&
                 Math.abs(selection.second.y - selection.first.y) >= minSize;
         }
-        
-        function getColorOrGradient(spec, bottom, top, defaultColor) {
-            if (typeof spec == "string")
-                return spec;
-            else {
-                // assume this is a gradient spec; IE currently only
-                // supports a simple vertical gradient properly, so that's
-                // what we support too
-                var gradient = ctx.createLinearGradient(0, top, 0, bottom);
-                
-                for (var i = 0, l = spec.colors.length; i < l; ++i) {
-                    var c = spec.colors[i];
-                    gradient.addColorStop(i / (l - 1), typeof c == "string" ? c : parseColor(defaultColor).scale(c.brightness, c.brightness, c.brightness, c.opacity));
-                }
-                
-                return gradient;
-            }
-        }
     }
     
     $.plot = function(target, data, options) {
@@ -2207,44 +1960,6 @@
             alert(tstr);*/
         return plot;
     };
-
-    // returns a string with the date d formatted according to fmt
-    $.plot.formatDate = function(d, fmt, monthNames) {
-        var leftPad = function(n) {
-            n = "" + n;
-            return n.length == 1 ? "0" + n : n;
-        };
-        
-        var r = [];
-        var escape = false;
-        if (monthNames == null)
-            monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        for (var i = 0; i < fmt.length; ++i) {
-            var c = fmt.charAt(i);
-            
-            if (escape) {
-                switch (c) {
-                case 'h': c = "" + d.getUTCHours(); break;
-                case 'H': c = leftPad(d.getUTCHours()); break;
-                case 'M': c = leftPad(d.getUTCMinutes()); break;
-                case 'S': c = leftPad(d.getUTCSeconds()); break;
-                case 'd': c = "" + d.getUTCDate(); break;
-                case 'm': c = "" + (d.getUTCMonth() + 1); break;
-                case 'y': c = "" + d.getUTCFullYear(); break;
-                case 'b': c = "" + monthNames[d.getUTCMonth()]; break;
-                }
-                r.push(c);
-                escape = false;
-            }
-            else {
-                if (c == "%")
-                    escape = true;
-                else
-                    r.push(c);
-            }
-        }
-        return r.join("");
-    };
     
     // round to nearby lower multiple of base
     function floorInBase(n, base) {
@@ -2253,7 +1968,7 @@
     
     function clamp(min, value, max) {
         if (value < min)
-            return min;
+            return value;
         else if (value > max)
             return max;
         else
@@ -2306,10 +2021,10 @@
         };
 
         this.normalize = function() {
-            this.r = clamp(0, parseInt(this.r), 255);
-            this.g = clamp(0, parseInt(this.g), 255);
-            this.b = clamp(0, parseInt(this.b), 255);
-            this.a = clamp(0, this.a, 1);
+            this.r = limit(parseInt(this.r), 0, 255);
+            this.g = limit(parseInt(this.g), 0, 255);
+            this.b = limit(parseInt(this.b), 0, 255);
+            this.a = limit(this.a, 0, 1);
             return this;
         };
 
@@ -2374,7 +2089,7 @@
         } while (!$.nodeName(elem.get(0), "body"));
 
         // catch Safari's way of signalling transparent
-        if (color == "rgba(0, 0, 0, 0)")
+        if (color == "rgba(0, 0, 0, 0)") 
             return "transparent";
         
         return color;

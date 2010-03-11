@@ -5,14 +5,11 @@ Consider a call to the plot function:
 
    var plot = $.plot(placeholder, data, options)
 
-The placeholder is a jQuery object or DOM element or jQuery expression
-that the plot will be put into. This placeholder needs to have its
-width and height set as explained in the README (go read that now if
-you haven't, it's short). The plot will modify some properties of the
-placeholder so it's recommended you simply pass in a div that you
-don't use for anything else. Make sure you check any fancy styling
-you apply to the div, e.g. background images have been reported to be a
-problem on IE 7.
+The placeholder is a jQuery object that the plot will be put into.
+This placeholder needs to have its width and height set as explained
+in the README (go read that now if you haven't, it's short). The plot
+will modify some properties of the placeholder so it's recommended you
+simply pass in a div that you don't use for anything else.
 
 The format of the data is documented below, as is the available
 options. The "plot" object returned has some methods you can call.
@@ -43,8 +40,7 @@ Note that to simplify the internal logic in Flot both the x and y
 values must be numbers, even if specifying time series (see below for
 how to do this). This is a common problem because you might retrieve
 data from the database and serialize them directly to JSON without
-noticing the wrong type. If you're getting mysterious errors, double
-check that you're inputting numbers and not strings.
+noticing the wrong type.
 
 If a null is specified as a point or if one of the coordinates is null
 or couldn't be converted to a number, the point is ignored when
@@ -52,23 +48,17 @@ drawing. As a special case, a null value for lines is interpreted as a
 line segment end, i.e. the point before and after the null value are
 not connected.
 
-Lines and points take two coordinates. For bars, you can specify a
-third coordinate which is the bottom of the bar (defaults to 0).
-
 The format of a single series object is as follows:
 
   {
-    color: color or number
-    data: rawdata
-    label: string
-    lines: specific lines options
-    bars: specific bars options
-    points: specific points options
-    threshold: specific threshold options
-    xaxis: 1 or 2
-    yaxis: 1 or 2
-    clickable: boolean
-    hoverable: boolean
+    color: color or number,
+    data: rawdata,
+    label: string,
+    lines: specific lines options,
+    bars: specific bars options,
+    points: specific points options,
+    xaxis: 1 or 2,
+    yaxis: 1 or 2,
     shadowSize: number
   }
 
@@ -97,10 +87,6 @@ The "xaxis" and "yaxis" options specify which axis to use, specify 2
 to get the secondary axis (x axis at top or y axis to the right).
 E.g., you can use this to make a dual axis plot by specifying
 { yaxis: 2 } for one data series.
-
-"clickable" and "hoverable" can be set to false to disable
-interactivity for specific series if interactivity is turned on in
-plot, see below.
 
 The rest of the options are all documented below as they are the same
 as the default options passed in via the options parameter in the plot
@@ -132,14 +118,14 @@ Customizing the legend
 
   legend: {
     show: boolean
-    labelFormatter: null or (fn: string, series object -> string)
+    labelFormatter: null or (fn: string -> string)
     labelBoxBorderColor: color
     noColumns: number
     position: "ne" or "nw" or "se" or "sw"
-    margin: number of pixels or [x margin, y margin]
+    margin: number of pixels
     backgroundColor: null or color
-    backgroundOpacity: number between 0 and 1
-    container: null or jQuery object/DOM element/jQuery expression
+    backgroundOpacity: number in 0.0 - 1.0
+    container: null or jQuery object
   }
 
 The legend is generated as a table with the data series labels and
@@ -148,24 +134,21 @@ the labels in some way, e.g. make them to links, you can pass in a
 function for "labelFormatter". Here's an example that makes them
 clickable:
 
-  labelFormatter: function(label, series) {
-    // series is the series object for the label
-    return '<a href="#' + label + '">' + label + '</a>';
+  labelFormatter: function(label) {
+    return '<a href="' + label + '">' + label + '</a>';
   }
 
 "noColumns" is the number of columns to divide the legend table into.
 "position" specifies the overall placement of the legend within the
 plot (top-right, top-left, etc.) and margin the distance to the plot
-edge (this can be either a number or an array of two numbers like [x,
-y]). "backgroundColor" and "backgroundOpacity" specifies the
+edge. "backgroundColor" and "backgroundOpacity" specifies the
 background. The default is a partly transparent auto-detected
 background.
 
 If you want the legend to appear somewhere else in the DOM, you can
-specify "container" as a jQuery object/expression to put the legend
-table into. The "position" and "margin" etc. options will then be
-ignored. Note that Flot will overwrite the contents of the container.
-Most of the above settings do not apply
+specify "container" as a jQuery object to put the legend table into.
+The "position" and "margin" etc. options will then be ignored. Note
+that it will overwrite the contents of the container.
 
 
 
@@ -187,7 +170,7 @@ Customizing the axes
     tickDecimals: null or number
   }
 
-All axes have the same kind of options. The "mode" option
+The axes have the same kind of options. The "mode" option
 determines how the data is interpreted, the default of null means as
 decimal numbers. Use "time" for time series data, see the next section.
 
@@ -217,8 +200,8 @@ round tick interval size. Then it generates the ticks.
 You can specify how many ticks the algorithm aims for by setting
 "ticks" to a number. The algorithm always tries to generate reasonably
 round tick values so even if you ask for three ticks, you might get
-five if that fits better with the rounding. If you don't want any
-ticks at all, set "ticks" to 0 or an empty array.
+five if that fits better with the rounding. If you don't want ticks,
+set "ticks" to 0 or an empty array.
 
 Another option is to skip the rounding part and directly set the tick
 interval size with "tickSize". If you set it to 2, you'll get ticks at
@@ -337,11 +320,10 @@ pretend trick described above. But you can fix up the timestamps by
 adding the time zone offset, e.g. for UTC+0200 you would add 2 hours
 to the UTC timestamp you got. Then it'll look right on the plot. Most
 programming environments have some means of getting the timezone
-offset for a specific date (note that you need to get the offset for
-each individual timestamp to account for daylight savings).
+offset for a specific date.
 
-Once you've gotten the timestamps into the data and specified "time"
-as the axis mode, Flot will automatically generate relevant ticks and
+Once you've got the timestamps into the data and specified "time" as
+the axis mode, Flot will automatically generate relevant ticks and
 format them. As always, you can tweak the ticks via the "ticks" option
 - just remember that the values should be timestamps (numbers), not
 Date objects.
@@ -349,15 +331,17 @@ Date objects.
 Tick generation and formatting can also be controlled separately
 through the following axis options:
 
-  minTickSize: array
-  timeformat: null or format string
-  monthNames: null or array of size 12 of strings
+  xaxis, yaxis: {
+    minTickSize
+    timeformat: null or format string
+    monthNames: null or array of size 12 of strings
+  }
 
 Here "timeformat" is a format string to use. You might use it like
 this:
 
   xaxis: {
-    mode: "time"
+    mode: "time",
     timeformat: "%y/%m/%d"
   }
   
@@ -376,14 +360,7 @@ specifiers are supported
 You can customize the month names with the "monthNames" option. For
 instance, for Danish you might specify:
 
-  monthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
-
-The format string and month names are used by a very simple built-in
-format function that takes a date object, a format string (and
-optionally an array of month names) and returns the formatted string.
-If needed, you can access it as $.plot.formatDate(date, formatstring,
-monthNames) or even replace it with another more advanced function
-from a date library if you're feeling adventurous.
+  monthName: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
 
 If everything else fails, you can control the formatting by specifying
 a custom tick formatter function as usual. Here's a simple example
@@ -414,7 +391,7 @@ Customizing the data series
     show: boolean
     lineWidth: number
     fill: boolean or number
-    fillColor: null or color/gradient
+    fillColor: color
   }
 
   points: {
@@ -424,38 +401,23 @@ Customizing the data series
   bars: {
     barWidth: number
     align: "left" or "center"
-    horizontal: boolean
-  }
-
-  lines: {
-    steps: boolean
   }
 
   colors: [ color1, color2, ... ]
 
   shadowSize: number
 
-  threshold: {
-    below: number
-    color: color
-  }
-
 The most important options are "lines", "points" and "bars" that
 specifies whether and how lines, points and bars should be shown for
-each data series. In case you don't specify anything at all, Flot will
-default to showing lines (you can turn this off with
-lines: { show: false}). You can specify the various types
-independently of each other, and Flot will happily draw each of them
-in turn, e.g.
+each data series. You can specify them independently of each other,
+and Flot will happily draw each of them in turn, e.g.
 
   var options = {
     lines: { show: true, fill: true, fillColor: "rgba(255, 255, 255, 0.8)" },
     points: { show: true, fill: false }
   };
 
-"lineWidth" is the thickness of the line or outline in pixels. You can
-set it to 0 to prevent a line or outline from being drawn; this will
-also hide the shadow.
+"lineWidth" is the thickness of the line or outline in pixels.
 
 "fill" is whether the shape should be filled. For lines, this produces
 area graphs. You can use "fillColor" to specify the color of the fill.
@@ -464,21 +426,12 @@ points), the fill color is auto-set to the color of the data series.
 You can adjust the opacity of the fill by setting fill to a number
 between 0 (fully transparent) and 1 (fully opaque).
 
-For bars, fillColor can be a gradient, see the gradient documentation
-below. "barWidth" is the width of the bars in units of the x axis,
-contrary to most other measures that are specified in pixels. For
-instance, for time series the unit is milliseconds so 24 * 60 * 60 *
-1000 produces bars with the width of a day. "align" specifies whether
-a bar should be left-aligned (default) or centered on top of the value
-it represents. When "horizontal" is on, the bars are drawn
-horizontally, i.e. from the y axis instead of the x axis; note that
-the bar end points are still defined in the same way so you'll
-probably want to swap the coordinates if you've been plotting vertical
-bars first.
-
-For lines, "steps" specifies whether two adjacent data points are
-connected with a straight (possibly diagonal) line or with first a
-horizontal and then a vertical line.
+"barWidth" is the width of the bars in units of the x axis, contrary
+to most other measures that are specified in pixels. For instance, for
+time series the unit is milliseconds so 24 * 60 * 60 * 1000 produces
+bars with the width of a day. "align" specifies whether a bar should
+be left-aligned (default) or centered on top of the value it
+represents.
 
 The "colors" array specifies a default color theme to get colors for
 the data series from. You can specify as many colors as you like, like
@@ -492,40 +445,36 @@ extra colors by lightening and darkening colors in the theme.
 "shadowSize" is the default size of shadows in pixels. Set it to 0 to
 remove shadows.
 
-"threshold" specifies that the data points below "below" should be
-drawn with the specified color. This makes it easy to mark points
-below 0, e.g. for budget data.
-
 
 Customizing the grid
 ====================
 
   grid: {
     color: color
-    backgroundColor: color/gradient or null
+    backgroundColor: color or null
     tickColor: color
     labelMargin: number
     markings: array of markings or (fn: axes -> array of markings)
     borderWidth: number
-    borderColor: color or null
     clickable: boolean
     hoverable: boolean
     autoHighlight: boolean
     mouseActiveRadius: number
   }
 
-The grid is the thing with the axes and a number of ticks. "color" is
-the color of the grid itself whereas "backgroundColor" specifies the
-background color inside the grid area. The default value of null means
-that the background is transparent. You can also set a gradient, see
-the gradient documentation below.
+The grid is the thing with the axes and a number of ticks. "color"
+is the color of the grid itself whereas "backgroundColor" specifies
+the background color inside the grid area. The default value of null
+means that the background is transparent. You should only need to set
+backgroundColor if you want the grid area to be a different color from the
+page color. Otherwise you might as well just set the background color
+of the page with CSS.
 
 "tickColor" is the color of the ticks and "labelMargin" is the spacing
 between tick labels and the grid. Note that you can style the tick
 labels with CSS, e.g. to change the color. They have class "tickLabel".
 "borderWidth" is the width of the border around the plot. Set it to 0
-to disable the border. You can also set "borderColor" if you want the
-border to have a different color than the grid lines.
+to disable the border.
 
 "markings" is used to draw simple lines and rectangular areas in the
 background of the plot. You can either specify an array of ranges on
@@ -617,10 +566,6 @@ and still activate it. If there are two or more points within this
 radius, Flot chooses the closest item. For bars, the top-most bar
 (from the latest specified data series) is chosen.
 
-If you want to disable interactivity for a specific data series, you
-can set "hoverable" and "clickable" to false in the options for that
-series, like this { data: [...], label: "Foo", clickable: false }.
-
 
 Customizing the selection
 =========================
@@ -646,61 +591,17 @@ like this:
     // and y2axis if present
   });
 
-The "plotselected" event is only fired when the user has finished
-making the selection. A "plotselecting" event is fired during the
-process with the same parameters as the "plotselected" event, in case
-you want to know what's happening while it's happening,
-
-A "plotunselected" event with no arguments is emitted when the user
-clicks the mouse to remove the selection.
-
-
-Customizing the crosshair
-=========================
-
-  crosshair: {
-    mode: null or "x" or "y" or "xy"
-    color: color
-  }
-
-You can enable crosshairs, thin lines, that follow the mouse by
-setting the mode to one of "x", "y" or "xy". The "x" mode enables a
-vertical crosshair that lets you trace the values on the x axis, "y"
-enables a horizontal crosshair and "xy" enables them both.
-
-
-Specifying gradients
-====================
-
-A gradient is specified like this:
-
-  { colors: [ color1, color2, ... ] }
-
-For instance, you might specify a background on the grid going from
-black to gray like this:
-
-  grid: {
-    backgroundColor: { colors: ["#000", "#999"] }
-  }
-
-For the series you can specify the gradient as an object that
-specifies the scaling of the brightness and the opacity of the series
-color, e.g.
-
-  { colors: [{ opacity: 0.8 }, { brightness: 0.6, opacity: 0.8 } ]
-
-where the first color simply has its alpha scaled, whereas the second
-is also darkened.
-  
-Flot currently only supports vertical gradients drawn from top to
-bottom because that's what works with IE.
-
 
 Plot Methods
 ------------
 
 The Plot object returned from the plot function has some methods you
 can call:
+
+  - clearSelection()
+
+    Clear the selection rectangle.
+
 
   - setSelection(ranges, preventEvent)
 
@@ -716,27 +617,7 @@ can call:
     setSelection will trigger the "plotselected" event when called. If
     you don't want that to happen, e.g. if you're inside a
     "plotselected" handler, pass true as the second parameter.
-
     
-  - clearSelection(preventEvent)
-
-    Clear the selection rectangle. Pass in true to avoid getting a
-    "plotunselected" event.
-
-
-  - setCrosshair(pos)
-
-    Set the position of the crosshair. Note that this is cleared if
-    the user moves the mouse. "pos" should be on the form { x: xpos,
-    y: ypos } (or x2 and y2 if you're using the secondary axes), which
-    is coincidentally the same format as what you get from a "plothover"
-    event. If "pos" is null, the crosshair is cleared.
-
-
-  - clearCrosshair()
-
-    Clear the crosshair.
-
 
   - highlight(series, datapoint)
 
