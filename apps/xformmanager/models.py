@@ -63,7 +63,7 @@ class ElementDefModel(models.Model):
     is_repeatable = models.BooleanField(default=False)
     #I don't think we fully support this yet
     #restriction = models.CharField(max_length=255)
-    parent = models.ForeignKey("self", null=True)
+    parent = models.ForeignKey("self", null=True, related_name="children")
     # Note that the following only works for models in the same models.py file
     form = models.ForeignKey('FormDefModel')
     
@@ -157,7 +157,7 @@ class FormDefModel(models.Model):
         ed.table_name = table_name
         ed.form = fdd
         ed.save()
-        ed.parent = ed
+        ed.parent = None
         ed.save()
         
         fdd.element = ed

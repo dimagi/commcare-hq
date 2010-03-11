@@ -5,12 +5,11 @@ import subprocess
 import copy
 from subprocess import PIPE
 
-from django.db.models import ForeignKey
-
 from xformmanager.storageutility import * 
 from xformmanager.xformdef import FormDef
-from xformmanager.copy import collect_related, copy_related
+from xformmanager.copy import prepare_migration_objects, migrate
 from xformmanager.models import MetaDataValidationError, Metadata
+from xformmanager.util import table_exists
 from receiver.models import Attachment
 
 class XFormManager(object):
@@ -106,8 +105,7 @@ class XFormManager(object):
         form_model_copy = copy.copy(form)
                 
         # get related objects so we can migrate them
-        related_objs = collect_related(form)
-        copies = copy_related(related_objs)
+        migration_objects = prepare_migration_objects(form)
         
         # store the attachments that mapped to the form for later reposting
         matching_meta_attachments = list(Metadata.objects.filter(formdefmodel=form)\
@@ -141,27 +139,8 @@ class XFormManager(object):
         # migrate related objects
         # these two classes are covered by reposting
         classes_not_to_touch = Metadata, ElementDefModel
-        for cls, object_list in copies.items():
-            if cls == FormDefModel or cls in classes_not_to_touch:
-                continue
-            
-            # pull out all the appropriate foreign key fields
-            fks = [field for field in cls._meta.fields \
-                   if isinstance(field, ForeignKey) \
-                   and field.rel.to in copies \
-                   and not field.rel.to in classes_not_to_touch]
-            
-            for pk, obj in object_list.items():
-                # blank out the pk/id and save to create new instances
-                obj.id = None
-                for fk in fks:
-                    fk_value = getattr(obj, "%s_id" % fk.name)
-                    # If this FK has been duplicated then point to the duplicate.
-                    if fk_value in copies[fk.rel.to]:
-                        dupe_obj = copies[fk.rel.to][fk_value]
-                        setattr(obj, fk.name, dupe_obj)
-                obj.save()
-                
+        migrate(migration_objects, new_form, classes_not_to_touch)
+        
         # repost data
         for attachment_id in matching_meta_attachments:
             attach = Attachment.objects.get(id=attachment_id)
@@ -169,6 +148,59 @@ class XFormManager(object):
         
         return new_form
 
+    def check_schema(self, form):
+        """
+        Checks a schema for certain errors, logging them and returning
+        them to the caller.  Errors that are checked are:
+         - no xsd file found
+         - no schema tables found for the form or any child tables
+         - no xml files found for linked posts
+        """
+        errors = []
+        warnings = []
+        # check xsd file:
+        xsd_file = form.xsd_file_location
+        if not os.path.exists(xsd_file):
+            errors.append("XSD file not found")
+        if not form.xform_file_location:
+            warnings.append("XForm file not found")
+        
+        # check schema and child tables
+        if not table_exists(form.table_name):
+            errors.append("Root table %s not found in the database")
+        child_errors = self._children_missing_tables(form.element)
+        for child in child_errors:
+            errors.append("Child table %s not found in the database" % child.table_name)
+        
+        # check attachments that matched this schema
+        matching_meta_attachments = Attachment.objects.filter(form_metadata__formdefmodel=form)
+                
+        missing_attachment_files = \
+            [attachment for attachment in matching_meta_attachments \
+             if not os.path.exists(attachment.filepath)]
+        missing_submission_files = \
+            [attachment.submission for attachment in matching_meta_attachments \
+             if not os.path.exists(attachment.submission.raw_post)]
+        if missing_attachment_files:
+            errors.append("%s attachments missing filesystem entries." % len(missing_attachment_files))
+        if missing_submission_files:
+            errors.append("%s attachments missing submission filesystem entries." % len(missing_submission_files))
+        return [errors, warnings]
+        
+    def _children_missing_tables(self, element):
+        """Return a list of children with missing tables for the form, traversing
+           to an arbitrary depth."""
+        error_children = []
+        # we really should never be pointing to ourselves, but unfortunately the
+        # old code was setup this way, so we have to explicitly exclude it from
+        # consideration
+        for child in element.children.exclude(id=element.id):
+            if not table_exists(child.table_name):
+                error_children.append(child)
+            deeper_errors = self._children_missing_tables(child)
+            error_children.extend(deeper_errors)
+        return error_children
+    
     def _add_schema_from_file(self, file_name, domain=None):
         """ we keep this api open for the unit tests """
         name = os.path.basename(file_name)
