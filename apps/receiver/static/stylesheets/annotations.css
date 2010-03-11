@@ -2,10 +2,16 @@
     padding: 4px;
 }
 
-.annotation-date {
-    font-weight: bold;
+.annotation blockquote {
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 
-.annotation-user {
-    font-style: italic;
+#annotation-send {
+  text-align: center;  
+}
+
+#annotation-send textarea {
+  height: 100px; 
+  width: 90%;
 }
