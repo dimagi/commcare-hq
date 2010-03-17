@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
-<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{now "U"}"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js?{now "U"}"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js?{% now "U" %}"></script>
 <h2>Mother Summary for {{ mother.mother_name }}</h2>
 {% if attach_id %}
 	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog');">
