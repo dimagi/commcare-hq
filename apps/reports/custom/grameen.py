@@ -10,7 +10,7 @@ import settings
 from xformmanager.models import Metadata, FormDefModel, ElementDefModel
 from reports.models import Case, SqlReport
 from reports.util import get_whereclause
-from shared import monitoring_report, Mother
+from reports.custom.shared import monitoring_report, Mother
 
 from pprint import pprint
 
@@ -186,7 +186,8 @@ def _chw_submission_summary(request, params, format_to_str=True):
             new_row_data["attachment"] = meta.attachment
             new_data.append(new_row_data)
         except Exception:
-            print "no atachment for %s" % meta
+            # print "no atachment for %s" % meta
+            pass
     cols = cols[:6]
     
     # per PPT
