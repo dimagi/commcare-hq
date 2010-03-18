@@ -1,0 +1,23 @@
+{% extends base_template %}
+
+{% block hq-stylesheets %}
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/pygments.css" />
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/tooltip.css" />
+{% endblock %}
+
+{% block javascripts %}
+	<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/tooltip.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
+{% endblock %}
+
+{% block content %}
+	<div id="subheading">
+		<ul>
+			<li><a href="{% url releasemanager.views.core_list %}">JAD/JAR Manager</a></li>  
+			<!-- <li><a href="{% url buildmanager.views.all_builds %}">Builds</a></li>
+			<li><a href="{% url buildmanager.views.validator %}">X-Form Validator</a></li> -->
+		</ul>
+	</div>
+	{% block releasemanager_content %}
+	{% endblock %}
+{% endblock %}
