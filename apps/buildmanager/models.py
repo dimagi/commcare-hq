@@ -1,7 +1,7 @@
 import os, sys
 import logging
 import traceback
-import settings
+from django.conf import settings
 from datetime import datetime
 import time
 
@@ -261,11 +261,11 @@ class ProjectBuild(models.Model):
         
         jad_properties = {}
         for propln in proplines:
-          i = propln.find(sep)
-          if i == -1:
-            pass #log error?
-          (propname, propvalue) = (propln[:i], propln[i+len(sep):])
-          jad_properties[propname] = propvalue
+            i = propln.find(sep)
+            if i == -1:
+                pass #log error?
+            (propname, propvalue) = (propln[:i], propln[i+len(sep):])
+            jad_properties[propname] = propvalue
         return jad_properties
     
     def write_jad(self, properties):
@@ -393,7 +393,8 @@ class ProjectBuild(models.Model):
         for form in self.xforms.all():
             try:
                 formdef = xformvalidator.validate(form.file_location)
-                modelform = FormDefModel.get_model(formdef.target_namespace, 
+                modelform = FormDefModel.get_model(formdef.target_namespace,
+                                                   self.project.domain, 
                                                    formdef.version)
                 if modelform:
                     # if the model form exists we must ensure it is compatible

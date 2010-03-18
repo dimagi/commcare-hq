@@ -28,14 +28,15 @@ def create_user_and_domain(username='brian',
         user = User.objects.get(username=username)
         print "WARNING: tried to create user %s but it already exists!" % username
         print "Are all your tests cleaning up properly?"
+        # update the pw anyway
+        user.password = _get_salted_pw(password)
+        user.save()
     except User.DoesNotExist:
         user = User()
         user.username = username
         # here, we mimic what the django auth system does
         # only we specify the salt to be 12345
-        salt = '12345'
-        hashed_pass = hashlib.sha1(salt+password).hexdigest()
-        user.password = 'sha1$%s$%s' % (salt, hashed_pass)
+        user.password = _get_salted_pw(password)
         
         user.save()
         
@@ -76,3 +77,7 @@ def create_active_reporter_and_profile(backend, domain, phone_number="1234", use
     prof.save()
     return (rep, prof)
 
+def _get_salted_pw(password, salt="12345"):
+    hashed_pass = hashlib.sha1(salt+password).hexdigest()
+    return 'sha1$%s$%s' % (salt, hashed_pass)
+        
