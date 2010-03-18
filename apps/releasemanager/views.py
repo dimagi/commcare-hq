@@ -36,6 +36,8 @@ def core_list(request, template_name="releasemanager/core.html"):
     
     context['form'] = CoreForm()
     
+    context['builds'] = Core.objects.all().order_by('-created_at')
+    
     return render_to_response(request, template_name, context)
 
 def core_new(request, template_name="releasemanager/core.html"):
