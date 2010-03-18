@@ -6,13 +6,12 @@ import sys
 import time
 
 
-local = True # semi convenient flip-flop for local versus remote testing
-if local:
-    sites = {"http://localhost:8000": ["brian", "test",
-                                   "localhost:8000", "Pathfinder"]}
-else: 
-    sites = {"http://staging.commcarehq.org": ["brian", "test",
-                                        "staging.commcarehq.org", "BRAC"]}
+local   = {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]}
+dev     = {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]}
+staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "BRAC"]}
+
+# point selenium at:
+sites = dev
 
 class testingPost(unittest.TestCase):
 
