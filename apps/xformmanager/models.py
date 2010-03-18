@@ -104,7 +104,7 @@ class FormDefModel(models.Model):
     element = models.OneToOneField(ElementDefModel, null=True)
     
     class Meta:
-        unique_together = ("target_namespace", "version")
+        unique_together = ("domain", "target_namespace", "version")
 
     def _get_xform_file_location(self):
         loc = self.xsd_file_location + str(".xform")
