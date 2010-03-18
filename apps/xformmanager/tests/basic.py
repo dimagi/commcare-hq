@@ -36,7 +36,7 @@ class BasicTestCase(unittest.TestCase):
             Currently only supported in MYSQL.
         """ 
         cursor = connection.cursor()
-        create_xsd_and_populate("2_types.xsd", "2_types.xml")
+        create_xsd_and_populate("2_types.xsd", "2_types.xml", self.domain)
         if settings.DATABASE_ENGINE=='mysql' :
             cursor.execute("DESCRIBE schema_basicdomain_xml_types")
             row = cursor.fetchall()
@@ -89,7 +89,7 @@ class BasicTestCase(unittest.TestCase):
     
     def testSaveFormData_3(self):
         """ Test deep form definition created and data saved """
-        create_xsd_and_populate("3_deep.xsd", "3_deep.xml")
+        create_xsd_and_populate("3_deep.xsd", "3_deep.xml", self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM schema_basicdomain_xml_deep")
         row = cursor.fetchone()
@@ -101,7 +101,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_4(self):
         """ Test very deep form definition created and data saved """
-        create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml")
+        create_xsd_and_populate("4_verydeep.xsd", "4_verydeep.xml", self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM schema_basicdomain_xml_verydeep")
         row = cursor.fetchone()
@@ -113,7 +113,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_5(self):
         """ Test repeated form definition created and data saved """
-        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
+        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml", self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM schema_basicdomain_xml_singlerepeat")
         row = cursor.fetchone()
@@ -131,7 +131,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_6(self):
         """ Test nested repeated form definition created and data saved """
-        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
+        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml", self.domain)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM schema_basicdomain_xml_nestedrepeats")
         row = cursor.fetchone()
@@ -162,8 +162,8 @@ class BasicTestCase(unittest.TestCase):
 
     def testSaveFormData_BasicFormAndElementDefModels(self):
         """ Test that the correct child/parent ids and tables are created """
-        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml")
-        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml")
+        create_xsd_and_populate("5_singlerepeat.xsd", "5_singlerepeat.xml", self.domain)
+        create_xsd_and_populate("6_nestedrepeats.xsd", "6_nestedrepeats.xml", self.domain)
         fd = FormDefModel.objects.get(form_name="schema_basicdomain_xml_singlerepeat")
         # test the children tables are generated with the correct parent
         edds = ElementDefModel.objects.filter(form=fd)
@@ -196,17 +196,17 @@ class BasicTestCase(unittest.TestCase):
 
     def testGetFormDef(self):
         """ Test get_formdef """
-        create_xsd_and_populate("5_singlerepeat.xsd")
-        create_xsd_and_populate("data/8_singlerepeat_2.xsd")
-        formdef = FormDefModel.get_formdef("xml_singlerepeat")
+        create_xsd_and_populate("5_singlerepeat.xsd", domain=self.domain)
+        create_xsd_and_populate("data/8_singlerepeat_2.xsd", domain=self.domain)
+        formdef = FormDefModel.get_formdef("xml_singlerepeat", self.domain)
         self.assertTrue(formdef.version is None)
         self.assertTrue(formdef.uiversion is None)
         self.assertEqual(len(formdef.root.child_elements), 5)
-        formdef2 = FormDefModel.get_formdef("xml_singlerepeat", "2")
+        formdef2 = FormDefModel.get_formdef("xml_singlerepeat", self.domain, "2")
         self.assertTrue(formdef2.version == 2)
         self.assertTrue(formdef2.uiversion == 3)
         self.assertEqual(len(formdef2.root.child_elements), 5)
-        nonexistant = FormDefModel.get_formdef("nonexistent", "1")
+        nonexistant = FormDefModel.get_formdef("nonexistent", self.domain, "1")
         self.assertTrue(nonexistant is None)
     
     def testCrossDomainFormLookups(self):
@@ -337,9 +337,9 @@ class BasicTestCase(unittest.TestCase):
             
     def testIsSchemaRegistered(self):
         """ given a form and version is that form registered """
-        create_xsd_and_populate("5_singlerepeat.xsd")
-        create_xsd_and_populate("data/8_singlerepeat_2.xsd")
-        self.assertTrue(FormDefModel.is_schema_registered("xml_singlerepeat"))
-        self.assertTrue(FormDefModel.is_schema_registered("xml_singlerepeat",2))
-        self.assertFalse(FormDefModel.is_schema_registered("xml_singlerepeat",3))
-        self.assertFalse(FormDefModel.is_schema_registered("nonexistent",1))
+        create_xsd_and_populate("5_singlerepeat.xsd", domain=self.domain)
+        create_xsd_and_populate("data/8_singlerepeat_2.xsd", domain=self.domain)
+        self.assertTrue(FormDefModel.is_schema_registered("xml_singlerepeat", self.domain))
+        self.assertTrue(FormDefModel.is_schema_registered("xml_singlerepeat", self.domain,2))
+        self.assertFalse(FormDefModel.is_schema_registered("xml_singlerepeat", self.domain,3))
+        self.assertFalse(FormDefModel.is_schema_registered("nonexistent", self.domain,1))

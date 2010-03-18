@@ -2,11 +2,11 @@ import os
 import bz2
 import sys
 import logging
-import settings
 import traceback
 import cStringIO
 import tempfile
 
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.servers.basehttp import FileWrapper
 from django.core import serializers
