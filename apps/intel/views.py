@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest
 from django.template import RequestContext
 from django.core.exceptions import *
 
@@ -79,7 +79,13 @@ def custom_report(request, domain_id, report_name, page):
     else:
         context['search_term'] = request.GET['search']
 
-    return render_to_response(request, "report_base.html", context)
+    if request.GET.has_key('print'):
+        context['printmode'] = True
+        template = "report_print.html"
+    else:
+        template = "report_base.html"
+        
+    return render_to_response(request, template, context)
 
 
 ######## Chart Methods
