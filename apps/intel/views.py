@@ -37,6 +37,12 @@ from reports.custom.all.shared import get_data_by_chw, get_case_info
 from reports.models import Case, SqlReport
 
 
+@login_and_domain_required
+def homepage(request):
+    '''Splash page'''
+    return render_to_response(request, "home.html")
+    
+
 ######## Report Methods
 @login_and_domain_required
 def all_mothers_report(request):
