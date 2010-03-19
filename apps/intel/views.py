@@ -110,6 +110,7 @@ def view_graph(request, graph_id, template_name="chart.html"):
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
     context['chart_title'] = graph.title
+    
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
@@ -124,12 +125,12 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
+    
     # get total counts for top bar
     for fname in ('hi_risk_pregnancies', 'chw_submission_details', 'followed_up'):
         report_method = util.get_report_method(request.user.selected_domain, fname) 
         cols, data = report_method(request, False)
         context['total_%s' % fname] = len(data)
-    
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -138,6 +139,7 @@ def view_graph(request, graph_id, template_name="chart.html"):
             template_name='graphing/view_graph_data.html'
         elif item[0] == 'csv':             
             return _get_chart_csv(graph)
+            
     return render_to_response(request, template_name, context)
     
 def get_graphgroup_children(graph_group):

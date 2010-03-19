@@ -306,7 +306,7 @@
       "x_axis_label": "Date", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 
-      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, hq_domain domains\r\nwhere forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
+      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, hq_domain domains\r\nwhere username <> 'admin' and forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username\r\norder by timeend asc;"
     }
   }, 
   {

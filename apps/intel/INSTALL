@@ -12,7 +12,11 @@ Steps to install this app:
 
 	./manage.py loaddata apps/reports/fixtures/sql_reports.json
 
-4. In local.ini, change the following (or simply cp local.ini.intel local.ini):
+4. And graph queries now ignore username 'admin':
+
+	./manage.py loaddata apps/graphing/fixtures/initial_data.json
+
+5. In local.ini, change the following (or simply cp local.ini.intel local.ini):
 
 	# BASE_TEMPLATE=hq-layout.html
 	BASE_TEMPLATE=intel-layout.html
