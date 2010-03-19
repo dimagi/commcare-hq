@@ -104,7 +104,7 @@ class FormDefModel(models.Model):
     element = models.OneToOneField(ElementDefModel, null=True)
     
     class Meta:
-        unique_together = ("target_namespace", "version")
+        unique_together = ("domain", "target_namespace", "version")
 
     def _get_xform_file_location(self):
         loc = self.xsd_file_location + str(".xform")
@@ -165,21 +165,21 @@ class FormDefModel(models.Model):
         return fdd
     
     @classmethod
-    def get_model(cls, target_namespace, version=None):
+    def get_model(cls, target_namespace, domain, version=None):
         """Given a form and version get me that formdef model.
            If formdef could not be found, returns None
         """
         try:
             return FormDefModel.objects.get(target_namespace=target_namespace,
-                                                    version=version)
+                                            domain=domain, version=version)
         except FormDefModel.DoesNotExist:
             return None
     
     @classmethod    
-    def get_formdef(cls, target_namespace, version=None):
+    def get_formdef(cls, target_namespace, domain, version=None):
         """Given an xmlns and version, return the FormDef object associated
            with it, or nothing if no match is found"""
-        formdefmodel = FormDefModel.get_model(target_namespace, version)
+        formdefmodel = FormDefModel.get_model(target_namespace, domain, version)
         if formdefmodel:
             return formdefmodel.to_formdef()
     
@@ -208,9 +208,9 @@ class FormDefModel(models.Model):
         return FormGroup(forms)
         
     @classmethod
-    def is_schema_registered(cls, target_namespace, version=None):
+    def is_schema_registered(cls, target_namespace, domain, version=None):
         """Given a form and version is that form registered """
-        return FormDefModel.get_model(target_namespace, version) is not None
+        return FormDefModel.get_model(target_namespace, domain, version) is not None
     
     @property
     def db_helper(self):

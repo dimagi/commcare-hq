@@ -250,34 +250,52 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
         count = 0
         
         def _process(submission, action):
+            """
+            Does the actual resubmission of a single form.
+            
+            return a tuple of (<success>, <message>) where:
+              success = True if success, else False
+              message = A helpful message about what happened
+            """ 
             if action == 'delete':
                 submission.delete()
-                return True
+                return (True, "deleted")
             elif action == 'resubmit':
                 status = False
                 try:
                     status = xformmanager.save_form_data(submission.xform)
                 except StorageUtility.XFormError, e:
                     # if xform doesn't match schema, that's ok
-                    pass
-                return status
-            return False            
+                    return (False, "Expected problem: %s" % e)
+                except Exception, e:
+                    return (False, "Unexpected ERROR: %s" % e)
+                return (status, "Completed")
+            return (False, "Unknown action: %s" % action)
+               
+        errors = {}
         if 'select_all' in request.POST:
             submissions = Submission.objects.filter(domain=request.user.selected_domain).order_by('-submit_time')
             # TODO - optimize this into 1 db call
             for submission in submissions:
                 if submission.is_orphaned():
-                    if _process(submission, request.POST['action']): 
+                    status, msg = _process(submission, request.POST['action'])
+                    if status: 
                         count = count + 1
+                    else: 
+                        errors[str(submission.id)] = msg
         else: 
             for i in request.POST.getlist('instance'):
                 if 'checked_'+ i in request.POST:
                     submit_id = int(i)
                     submission = Submission.objects.get(id=submit_id)
-                    if _process(submission, request.POST['action']): 
+                    status, msg = _process(submission, request.POST['action'])
+                    if status:
                         count = count + 1
+                    else:
+                        errors[str(submission.id)] = msg
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
+        context["errors"] = errors
     inner_qs = SubmissionHandlingOccurrence.objects.all().values('submission_id').query
     orphans = Submission.objects.filter(domain=request.user.selected_domain).exclude(id__in=inner_qs)
     # We could also put a check in here to not display duplicate data
