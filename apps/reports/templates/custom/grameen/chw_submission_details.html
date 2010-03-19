@@ -1,13 +1,6 @@
 {% load hq_shared_tags %}
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
-<!-- <h1>Health Worker Submission Details</h1>
-<h3>Summary view of individual mother data by health workers</h3> -->
-<form action="/intel/all" method="get" style="padding-left: 15px">
-    <input type="text" size="20" name="search" value="{{ search_term }}"/>&nbsp;
-    <input type="submit" value="Filter by Mother Name"/>
-</form>
-<br>
-<center><a href="/reports/sql/2/csv">download as csv</a></center>
+
 <table>
 <thead>
 {% for col in columns %}
@@ -39,7 +32,7 @@
 </tbody>
 </table>
 
-<div class="modal_dialog" id="dialog">
+<div class="modal_dialog" id="dialog" style="display: none;">
 <a href="#" class="jqmClose">Close</a>
 Please wait while that loads... 
 </div>
