@@ -12,10 +12,12 @@ from hq.utils import paginate
 from domain.decorators import login_and_domain_required
 
 import util
-from custom.all.shared import get_data_by_chw, get_case_info
+from custom.all.shared import get_data_by_chw, get_case_info, get_mon_year
+from custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
+import calendar
 
 @login_and_domain_required
 def reports(request, template_name="list.html"):
@@ -125,4 +127,94 @@ def individual_chw(request, domain_id, chw_id, enddate, active):
     data_by_chw = get_data_by_chw(case)
     get_case_info(context, data_by_chw[chw_id], enddate, active)
     return render_to_response(request, "custom/all/individual_chw.html", 
+                              context)
+
+def sum_provider(request):
+    '''View a single provider summary report'''
+    context = {}
+    case_name = "Pathfinder_1"
+    provider = None
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'provider':
+                provider=item[1]
+    (month, year, startdate, enddate) = get_mon_year(request)
+    
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data = data_by_chw[provider]
+    client_data_list = []
+    for client_id, client_data in chw_data.items():
+        client_obj = ProviderSummaryData(case, client_id, client_data, 
+                                         startdate, enddate)
+        if client_obj.num_visits != 0:
+            client_data_list.append(client_obj)
+
+    context["all_data"] = client_data_list
+    context["region"] = None #TODO: get region
+    context["district"] = None #TODO: get district
+    context["ward"] = None #TODO: get ward
+    context["month"] = calendar.month_name[month]
+    context["year"] = year
+    context["prov_name"] = None #TODO: get name
+    context["num"] = provider
+    context["sex"] = None #TODO: get sex
+    context["trained"] = None #TODO: get trained
+    context["org"] = None #TODO: get org
+    context["days_train"] = None #TODO: get days_train
+    context["category"] = None #TODO: get category
+    context["supervisor"] = None #TODO: get supervisor
+    context["facility"] = None #TODO: get facility
+    context["supervisor_id"] = None #TODO: get supervisor_id
+    context["org_support"] = None #TODO: get org_support
+
+    return render_to_response(request, 
+                              "custom/pathfinder/sum_by_provider_report.html",
+                              context)
+
+def sum_ward(request):
+    '''View the ward summary report'''
+    context = {}
+    case_name = "Pathfinder_1" 
+    (month, year, startdate, enddate) = get_mon_year(request)
+
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data_list = []
+    for chw_id, chw_data in data_by_chw.items():
+        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+        chw_data_list.append(chw_obj)
+    context["all_data"] = chw_data_list
+    context["year"] = year
+    context["month"] = calendar.month_name[month]
+    return render_to_response(request, 
+                              "custom/pathfinder/ward_summary_report.html", 
+                              context)
+
+def hbc_monthly_sum(request):
+    ''' View the hbc monthly summary report'''
+    context = {}
+    case_name = "Pathfinder_1" 
+    (month, year, startdate, enddate) = get_mon_year(request)
+    
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    context["all_data"] = chw_obj
+    context["month"] = calendar.month_name[month]
+    context["year"] = year
+    return render_to_response(request, 
+                              "custom/pathfinder/hbc_summary_report.html", 
                               context)
