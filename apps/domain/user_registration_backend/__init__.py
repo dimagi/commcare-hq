@@ -343,12 +343,12 @@ def _send_user_registration_email(recipient, domain_name, username, password):
     link = 'http://' + DNS_name + reverse('homepage')
     
     text_content = """
-An administrator of CommCareHQ domain "{0}" has set up an account for you.
-Your username is "{1}", and your password is "{2}".
+An administrator of CommCareHQ domain "%s" has set up an account for you.
+Your username is "%s", and your password is "%s".
 To login, navigate to the following link:
-{3}
+%s
 """
-    text_content = text_content.format(domain_name, username, password, link)
+    text_content = text_content % (domain_name, username, password, link)
     cm(text_content)
     html_content = ''.join(['<p>' + x + '</p>' for x in text_content.strip().split('\n')])
     cm(html_content)
