@@ -28,11 +28,12 @@ def tabs(current_page):
 
     t = '<div class="buttons">'
     for i in tabs:
-        bgcolor = (tabs[i]["color"] if i == current_page else "white")
+        bgcolor = (tabs[i]["color"] if i == current_page or current_page == "home" else "white")
         t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
 
-    # icon from http://pixel-mixer.com/ - free for use but link required. We might want to get our own instead.
-    t += '<a href="/intel/all" style="position: absolute; right: 0;"><img src="/static/intel/img/home.png" /></a><!-- icon by http://pixel-mixer.com/ -->'
+    if current_page != "home":
+        # icon from http://pixel-mixer.com/ - free for use but link required. We might want to get our own instead.
+        t += '<a href="/intel/" style="position: absolute; right: 0;"><img src="/static/intel/img/home.png" /></a><!-- icon by http://pixel-mixer.com/ -->'
 
     t += "</div>"
     
