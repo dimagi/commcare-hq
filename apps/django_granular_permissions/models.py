@@ -142,6 +142,6 @@ class Group(MetaObject):
             
     def get_rows_with_permission(self, instance, perm):
         content_type = ContentType.objects.get_for_model(instance)
-        objects = Permission.objects.filter(group=self, content_type__pk=contet_type.id, name=perm)
+        objects = Permission.objects.filter(group=self, content_type__pk=content_type.id, name=perm)
         return objects
         
