@@ -63,12 +63,11 @@ def _mother_summary(request):
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
     mom.hi_risk_reasons = _get_hi_risk_reason(mom)
-        
+    
     # get attachment ID for SMS Sending UI
     # This sucks. But it's impossible to just get the ID from Mother or Cata, since the models seem to overwrite it with the "CHW|ID" format
     instance_id = data.values()[0][0]['id']
     form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
-    
     try: 
         meta = Metadata.objects.get(formdefmodel=form_def, raw_data=instance_id)
         attach_id = meta.attachment.id

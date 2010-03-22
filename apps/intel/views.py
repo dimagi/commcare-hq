@@ -78,7 +78,9 @@ def custom_report(request, domain_id, report_name, page):
         context['search_term'] = ''
     else:
         context['search_term'] = request.GET['search']
-
+    
+    context['print_view'] = (page != "single")
+        
     if request.GET.has_key('print'):
         context['printmode'] = True
         template = "report_print.html"
@@ -125,7 +127,8 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
-    
+    # import pprint ; pprint.pprint(context['datatable'])
+
     # get total counts for top bar
     for fname in ('hi_risk_pregnancies', 'chw_submission_details', 'followed_up'):
         report_method = util.get_report_method(request.user.selected_domain, fname) 
