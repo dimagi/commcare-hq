@@ -21,17 +21,21 @@
     <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css?{% now "U" %}" />
     <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css?{% now "U" %}" />    
 {% endblock %}
-{% block content %}
-<form action="/intel/all" method="get" style="padding-left: 15px">
-    <input type="text" size="20" name="search" value="{{ search_term }}"/>&nbsp;
-    <input type="submit" value="Filter by Mother Name"/>
-</form>
-<br>
-<center>
-	<a href="/reports/sql/2/csv">download as csv</a>
-	&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-	<a href="?print">print view</a>
-</center>
 
-{{ report_body|safe }}
+{% block content %}
+	<form action="/intel/all" method="get" style="padding-left: 15px">
+	    <input type="text" size="20" name="search" value="{{ search_term }}"/>&nbsp;
+	    <input type="submit" value="Filter by Mother Name"/>
+	</form>
+	<br>
+	{% if print_view %}
+		<center>
+			<a href="/reports/sql/2/csv">download as csv</a>
+			&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+			<a href="?print">print view</a>
+		</center>
+	{% endif %}
+
+	{{ report_body|safe }}
+
 {% endblock %}
