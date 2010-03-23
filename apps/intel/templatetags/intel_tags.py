@@ -11,30 +11,40 @@ def tabs(current_page):
     tabs = { "all" : 
                 {
                     "text" : "All Pregnant Mothers",
-                    "color": "#ff6100"
+                    "color": "#ff6100",
+                    "icon" : "/static/intel/img/icons/preg-icon.png"
                 },
                 
              "risk":  
                 {
                     "text" : "High Risk For Follow Up",
-                    "color": "#82c700"
+                    "color": "#82c700",
+                    "icon" : "/static/intel/img/icons/risk-icon.png"
                 },
               "chart": 
                 {
                     "text" : "Program Trends",
-                    "color": "#0099ff"
+                    "color": "#0099ff",
+                    "icon" : "/static/intel/img/icons/trends-icon.png"
                 }
             }
 
     t = '<div class="buttons">'
+    
     for i in tabs:
-        bgcolor = (tabs[i]["color"] if i == current_page or current_page == "home" else "white")
-        t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
+        # bgcolor = (tabs[i]["color"] if i == current_page or current_page == "home" else "white")
+        #t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
+        but = '<a href="/intel/%s"><img src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, tabs[i]["icon"], tabs[i]["text"])
+        if i == current_page or current_page == "home":
+            t += but 
+            
+        #but = '<span style="border: 5px solid %s">%s</span>' % (tabs[i]["color"], but)
+        
 
     if current_page != "home":
         # icon from http://pixel-mixer.com/ - free for use but link required. We might want to get our own instead.
-        t += '<a href="/intel/" style="position: absolute; right: 0;"><img src="/static/intel/img/home.png" /></a><!-- icon by http://pixel-mixer.com/ -->'
-
+        #t += '<a href="/intel/" style="position: absolute; right: 0;"><img src="/static/intel/img/home.png" /></a><!-- icon by http://pixel-mixer.com/ -->'
+        t += '<a href="/intel/" style="position: absolute; right: 0; width: 90px"><img src="/static/intel/img/icons/home-icon.png" /></a>'
     t += "</div>"
     
     if tabs.has_key(current_page): 
