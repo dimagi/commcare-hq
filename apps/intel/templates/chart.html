@@ -37,7 +37,7 @@
 	
     <!-- <div class="submenu">
 	<ul class="sf-menu">
-		{% include "graphing/inline_graphgroup.html" %}	
+		{ % include "graphing/inline_graphgroup.html" % }	
 	</ul>
     </div> -->
 	{% if thegraph.has_errors %}  
@@ -54,9 +54,13 @@
 		   {% include "graphing/inline_rawgraph.html" %}
 	    {% endwith %}
         </p>
-        <p></p><p><br><br><div class="js_link" onclick="hideShow('div.graph_data')">-- show/hide data --</div></p> 
+        <br><br>
+		
+		<p><div class="js_link" onclick="hideShow('div.graph_data')" style="text-align:center">CHW-wise Registrations</div></p> 
+		
         <div class="graph_data" style="display:none;">
-            <br>{% include "graphing/partials/graph_data_table.html" %}
+			<br>{% autoescape off %}{{ report_table }}{% endautoescape %}
+            <!-- <br>{ % include "graphing/partials/graph_data_table.html" % } -->
         </div>
     {% endif %}
 {%endblock%}

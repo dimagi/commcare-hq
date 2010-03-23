@@ -5,7 +5,7 @@
 .buttons a, .buttons button{
     display:block;
     float:left;
-    margin:7px;
+    margin:5px;
     background-color: #fff; /*#f5f5f5;*/
     border:1px solid #dedede;
     border-top:1px solid #eee;

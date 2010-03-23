@@ -45,3 +45,19 @@ class MemberRole(models.Model):
             roles.append(r.role.name)
         
         return roles
+
+
+
+# class Clinic(models.Model):
+#     name = models.CharField(max_length=255)
+# 
+#     def __unicode__(self):
+#         return self.name
+# 
+#     class Meta:
+#         verbose_name = _("Clinic")
+# 
+# 
+# class UserClinic(models.Model):
+#     user    = models.ForeignKey(User)
+#     clinic  = models.ForeignKey(Clinic)
