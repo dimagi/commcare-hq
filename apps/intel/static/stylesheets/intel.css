@@ -5,8 +5,8 @@
 .buttons a, .buttons button{
     display:block;
     float:left;
-    margin:7px;;
-    background-color:#f5f5f5;
+    margin:7px;
+    background-color: #fff; /*#f5f5f5;*/
     border:1px solid #dedede;
     border-top:1px solid #eee;
     border-left:1px solid #eee;
@@ -18,10 +18,12 @@
     font-weight:bold;
     color:#565656;
     cursor:pointer;
-    padding:5px 10px 6px 7px; /* Links */
-    height: 50px;
-    width: 70px;
+    padding:5px 10px 6px 7px; /*Links */
+    height: 75px; /*50px;*/
+    width: 240px; /*70px;*/
     text-align: center;
+    
+    vertical-align:top;
 }
 
 .buttons button{
