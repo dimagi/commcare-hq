@@ -1,17 +1,18 @@
-import logging
-import string
 from datetime import datetime, timedelta
-from django.template.loader import render_to_string
 from django.template import Template, Context
+from django.template.loader import render_to_string
+from domain.models import Domain
 from hq.models import *
-import hq.utils as utils
-import graphing.dbhelper as dbhelper
-from xformmanager.models import *
 from receiver.models import Submission, Attachment
-
 from reports.custom.all.domain_summary import DomainSummary
-import metastats as metastats
+from xformmanager.models import *
+import graphing.dbhelper as dbhelper
+import hq.utils as utils
 import inspector as repinspector
+import logging
+import metastats as metastats
+
+
 
 def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
     
@@ -129,9 +130,9 @@ def admin_stats_summary(report_schedule, run_frequency):
 def domain_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over
        time, for a single domain (the domain of the associated user)'''
-    domain = report_schedule.recipient_user.domain
-    title = "Domain Report - %s" % domain
-    return _catch_all_report(report_schedule, run_frequency, [domain], title)
+    domains = Domain.active_for_user(report_schedule.recipient_user)
+    title = "Domain Report - %s" % (", ".join([domain.name for domain in domains]))
+    return _catch_all_report(report_schedule, run_frequency, domains, title)
     
 def admin_catch_all_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over

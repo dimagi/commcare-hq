@@ -124,7 +124,7 @@ class UserRegistersSelfBackend( DefaultBackend ):
             new_user.set_password(password)
             new_user.is_staff = False # Can't log in to admin site
             new_user.is_active = False # Activated upon receipt of confirmation
-            new_user.is_superuser = False           
+            new_user.is_superuser = True # For now make people superusers because permissions are a pain
             new_user.last_login =  datetime.datetime(1970,1,1)
             # date_joined is used to determine expiration of the invitation key - I'd like to
             # munge it back to 1970, but can't because it makes all keys look expired.
