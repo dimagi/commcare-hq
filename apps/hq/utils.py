@@ -170,3 +170,24 @@ def build_url(relative_path, request=None):
     else:
         return "http://localhost:8000%s" % relative_path
         
+        
+def get_post_redirect(request, get_callback, post_callback,
+                      get_template_name = None, post_template_name = None):
+    """
+    Given a django request and callback methods for get and post, redirect
+    to one of those methods based on the operation of the request.
+    
+    Assumes that the callback methods take in a single required object (the 
+    request) and (optionally) a template name.
+    
+    You can pass templates to the get and post callback methods, but if none 
+    are specified then none will be called.
+    """
+    if request.method == "GET":  
+        if get_template_name:  return get_callback(request, get_template_name)
+        else:                  return get_callback(request)
+    elif request.method == "POST": 
+        if post_template_name: return post_callback(request, post_template_name)        
+        else:                  return post_callback(request)
+    raise Exception("Request method could not be matched.  Expected a GET or a POST.")        
+    
