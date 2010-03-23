@@ -17,9 +17,9 @@
 <hr class="space"/>
 
 <!-- Login form -->  
-<div class="span-9 clear" style="margin-left:auto; margin-right:auto; float:none">
-<form class="sfb" name="form" method="post" action="{% url login %}" id="login_form">
-<h3>Login</h3>
+<form name="form" method="post" action="{% url login %}"> <!-- class="sfb" id="login_form" -->
+<center>
+	
 
 <!-- intel requirement - a single field login -->  
   {% if field.errors %}
@@ -28,14 +28,17 @@
     </div>
   {% endif %}
   
-  <input id="id_username" type="hidden" name="username" /> 
-
-  <div class="span-2 clear"> <div style="float:right;"> 
-  <label for="id_password">Passcode</label> 
-  </div></div> 
-  <div class="span-2"> 
-  <input type="password" name="password" id="id_password" /> 
-  </div> 
+  	<input id="id_username" type="hidden" name="username" /> 
+	<table width="20" style="width:100px; border: none">
+		<tr>
+			<td><span style="font-size:16px; text-align: center">Enter Passcode</span></td>
+			<td>&nbsp;</td>
+		</tr>
+		<tr>
+  			<td><input type="password" name="password" id="id_password" style="height: 30px; font-size:14px"/> </td>
+			<td><input type="image" src="/static/intel/img/login.png" align="bottom"/></td>
+		</tr>
+	</table>
 
 <script>
 $.urlParam = function(name){
@@ -51,14 +54,6 @@ $("#login_form").attr("action", window.location.href);
 
 <!-- /ends here -->
 
-<!--
-<div class="prepend-5 span-3 clear" style="margin-bottom:20px; margin-top:-18px">
-<a href="{% url password_reset_email %}">Forgot password?</a>
-</div> 
--->
-<div style="text-align: center"><button type="submit">Enter</button></div>
 </form>
-
-</div> 
 {% endblock content %} 
 
