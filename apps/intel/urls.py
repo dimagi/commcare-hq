@@ -7,4 +7,6 @@ urlpatterns = patterns('',
     (r'^intel/details/?$', 'intel.views.mother_details'),
     
     (r'^intel/chart/?$', 'intel.views.chart'),
+    
+    (r'^intel/clinic_chart/?$', 'intel.views.clinic_chart'),
 )
