@@ -36,6 +36,7 @@ import reports.util as util
 from reports.custom.all.shared import get_data_by_chw, get_case_info
 from reports.models import Case, SqlReport
 
+import intel.queries as queries
 
 @login_and_domain_required
 def homepage(request):
@@ -97,7 +98,21 @@ def chart(request):
     return view_graph(request, 20)
 
 def clinic_chart(request):
-    return view_clinic_graph(request, 20)
+    return view_clinic_graph(request, 27)
+    
+'''
+select  DATE_FORMAT(timeend,'%m/%d/%Y'), username, count(*)
+from xformmanager_metadata meta,
+xformmanager_formdefmodel forms, hq_domain domains
+where username <> 'admin' and forms.id = meta.formdefmodel_id
+and forms.domain_id = domains.id
+and domains.name = 'Grameen'
+and meta.timeend > '2009-03-23'
+and meta.timeend < '2010-03-24'
+group by
+DATE_FORMAT(timeend,'%m/%d/%Y'), username
+order by timeend asc;
+'''
 
 def view_graph(request, graph_id, template_name="chart.html"):
     context = {}    
@@ -123,14 +138,10 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['height'] = graph.height
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-    
-    # import pprint ; pprint.pprint(context['datatable'])
-
-    # get total counts for top bar
-    for fname in ('hi_risk_pregnancies', 'chw_submission_details', 'followed_up'):
-        report_method = util.get_report_method(request.user.selected_domain, fname) 
-        cols, data = report_method(request, False)
-        context['total_%s' % fname] = len(data)
+        
+    context['total_hi_risk'] = len(queries.hi_risk())
+    context['total_registrations'] = len(queries.registrations())
+    context['total_follow_up'] = len(queries.follow_up())
         
     # get per CHW table for show/hide
     report = SqlReport.objects.get(id=1)
@@ -160,8 +171,6 @@ def get_graphgroup_children(graph_group):
 
 def view_clinic_graph(request, graph_id, template_name="clinic_chart.html"):
     
-    TMP_CLINIC_CHW = {"CHAVEZ" : "Singair", "JOHNSTON" : "Singair", "MEDINA" : "Madhabpur", "MORGAN" : "Madhabpur"}
-    
     context = {}
     graph = RawGraph.objects.all().get(id=graph_id)
 
@@ -186,17 +195,33 @@ def view_clinic_graph(request, graph_id, template_name="clinic_chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
-    import pprint ; pprint.pprint(context['chart_data'])
 
-    # get total counts for top bar
-    for fname in ('hi_risk_pregnancies', 'chw_submission_details', 'followed_up'):
-        report_method = util.get_report_method(request.user.selected_domain, fname) 
-        cols, data = report_method(request, False)
-        context['total_%s' % fname] = len(data)
-        
+    clinics = queries.clinics()
+    d = {
+        'reg' : queries.registrations_by_clinic(),
+        'hi_risk' : queries.hi_risk_by_clinic(),
+        'follow' : queries.followup_by_clinic()
+        }
+
+    context['clinics'] = []    
+    for c in clinics:
+        for k in d.keys():
+            if not d[k].has_key(c):
+                d[k][c] = 0
+        context['clinics'].append({'name': c, 'reg': d['reg'][c], 'hi_risk': d['hi_risk'][c], 'follow': d['follow'][c]})
+    
+    # context['total_hi_risk'] = len(queries.hi_risk())
+    # context['total_registrations'] = len(queries.registrations())
+    # context['total_follow_up'] = len(queries.follow_up())
+    
+
     # get per CHW table for show/hide
     report = SqlReport.objects.get(id=1)
     report_table = report.to_html_table() # {"whereclause": whereclause})    
+
+    # import pprint ; pprint.pprint(context['totals'])
+
+    print context['clinics']
     
     context['report_table'] = report_table
     

@@ -396,7 +396,7 @@ class RawGraph(BaseGraph):
             else:
                 flot_dict = {}
                 labels = self.labels
-                data = self.get_dataseries()        
+                data = self.get_dataseries()
                 for label in labels:            
                     currseries = {}            
                     currseries["label"] = label.__str__()

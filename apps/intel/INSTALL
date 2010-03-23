@@ -12,11 +12,17 @@ Steps to install this app:
 
 	./manage.py loaddata apps/reports/fixtures/sql_reports.json
 
-4. And graph queries now ignore username 'admin':
+4. Changes in graph queries:
+ 	- ignore username 'admin'
+	- ignore users with id < 1
+	- added query #27 to group by clinics (will change as the model does)
 
 	./manage.py loaddata apps/graphing/fixtures/initial_data.json
 
-5. In local.ini, change the following (or simply cp local.ini.intel local.ini):
+5. Assign user_ids to CHWs, assign clinics to users
+
+
+6. In local.ini, change the following (or simply cp local.ini.intel local.ini):
 
 	# BASE_TEMPLATE=hq-layout.html
 	BASE_TEMPLATE=intel-layout.html
@@ -29,3 +35,6 @@ Steps to install this app:
 
 	# LOGGEDOUT_TEMPLATE=loggedout.html
 	LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+
+	# Enable user profile (paste under [django])
+	AUTH_PROFILE_MODULE = 'appname.UserProfile'

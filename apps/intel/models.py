@@ -1,6 +1,6 @@
 from django.db import models
 from domain.models import Membership
-# from django.contrib.auth.models import User
+from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -47,7 +47,13 @@ class MemberRole(models.Model):
         return roles
 
 
+# associate CHWs with clinics
 
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    clinic = models.CharField(max_length=255)
+    
+    
 # class Clinic(models.Model):
 #     name = models.CharField(max_length=255)
 # 
@@ -61,3 +67,5 @@ class MemberRole(models.Model):
 # class UserClinic(models.Model):
 #     user    = models.ForeignKey(User)
 #     clinic  = models.ForeignKey(Clinic)
+#     
+#     
