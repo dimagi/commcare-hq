@@ -46,9 +46,11 @@
         {% if thegraph.time_bound  %}
             <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p><br>
         {% endif %}
-        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?bare&{{ request.META.QUERY_STRING }}">Printable View</a>
+        <!-- 
+		<a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?bare&{{ request.META.QUERY_STRING }}">Printable View</a>
         <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?data&{{ request.META.QUERY_STRING }}">Data View</a>
-        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?csv&{{ request.META.QUERY_STRING }}">Download Data</a>
+        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?csv&{{ request.META.QUERY_STRING }}">Download Data</a> 
+		-->
         <p>
         {% with thegraph as chart %}
 		   {% include "graphing/inline_rawgraph.html" %}
