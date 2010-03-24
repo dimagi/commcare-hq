@@ -8,6 +8,8 @@
 <h5 align="center">Month: {{ month }}</h5>
 <h5 align="center">Year: {{ year }}</h5>
 
+<a href="{% url reports.views.ward_sum_csv month_num year %}">download csv file</a>
+
 <table>
 	<thead>
 	<tr>

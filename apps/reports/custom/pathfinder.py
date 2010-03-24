@@ -101,7 +101,7 @@ class PathfinderCHWData(object):
     reg_forms_in_period = 0
     followup_forms_in_period = 0
     clients_in_period = 0
-    
+            
     def __init__(self, case, chw_id, data_map, startdate, enddate):
         self.case = case
         self.chw_id = chw_id
@@ -310,6 +310,19 @@ class WardSummaryData(object):
     ref_sg = 0
     ref_tb = 0
     conf_ref = 0
+    data = []
+    data_counter = 0
+    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.data_counter == len(self.data):
+            raise StopIteration
+        else:
+            item = self.data[self.data_counter]
+            self.data_counter += 1
+            return item
     
     def __init__(self, case, chw_id, data_map, startdate, enddate):
         self.case = case
@@ -479,6 +492,18 @@ class WardSummaryData(object):
                         self.child_m += 1
                     elif sex == "f":
                         self.child_f += 1
+                        
+        self.data = [self.region, self.district, self.ward, self.chw_name, 
+                     self.chw_id, self.new_plha_m, self.new_plha_f, 
+                     self.new_cip_m, self.new_cip_f, self.existing_plha_m,
+                     self.existing_plha_f, self.existing_cip_m, 
+                     self.existing_cip_f, self.adult_m, self.adult_f, 
+                     self.child_m, self.child_f, self.death_plha_m,
+                     self.death_plha_f, self.death_cip_m, self.death_cip_f,
+                     self.transfer_plha_m, self.transfer_plha_f, 
+                     self.transfer_cip_m, self.transfer_cip_f, self.ref_vct,
+                     self.ref_ois, self.ref_ctc, self.ref_pmtct, self.ref_fp,
+                     self.ref_sg, self.ref_tb, self.conf_ref]
 
 def summary_by_provider_report(request):
     '''Summary by Provider Report'''
@@ -528,6 +553,19 @@ class ProviderSummaryData(object):
     services_provided = ""
     referrals_made = 0
     referrals_completed = 0
+    data = []
+    data_counter = 0
+    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.data_counter == len(self.data):
+            raise StopIteration
+        else:
+            item = self.data[self.data_counter]
+            self.data_counter += 1
+            return item
     
     def __init__(self, case, client_id, client_data, startdate, enddate):
         self.case = case
@@ -612,6 +650,12 @@ class ProviderSummaryData(object):
         self.hbc_status = self.hbc_status.rsplit(';',1)[0]
         self.functional_status = self.functional_status.rsplit(';',1)[0]
         self.ctc_status = self.ctc_status.rsplit(';',1)[0]
+        
+        self.data = [self.patient_code, self.age, self.sex, self.hbc_status,
+                     self.num_visits, self.hiv_status, self.functional_status,
+                     self.ctc_status, self.ctc_num, self.items_provided, 
+                     self.services_provided, self.referrals_made, 
+                     self.referrals_completed]
 
 
 def hbc_monthly_summary_report(request):
