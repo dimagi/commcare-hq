@@ -6,7 +6,6 @@
 
 {% block tabs %}{% endblock %}
 
-
 {% block content %}
 	<div style="margin-top: 100px; text-align: center;">
 		<form action="/intel/all" method="get" style="padding-left: 15px">
@@ -14,8 +13,8 @@
 		    <input type="submit" value="Search for Pregnant Mother"/>
 		</form>
 	<br /><br />
-	<span style="float: right; width: 90%; text-align: center; margin-bottom: 200px">
-		{% tabs "home" %}
+	<span style="float: right; width: {% if hq_mode %}75%{% else %}90%{% endif %}; text-align: center; margin-bottom: 200px;">
+		{% tabs "home" hq_mode %}
 	</span>
 	</div>
 {% endblock %}
