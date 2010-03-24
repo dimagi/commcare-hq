@@ -31,7 +31,6 @@ class Program(models.Model):
         Convenience method to add a user to a program, returning 
         the created membership object.
         """
-        print "adding %s to %s" % (user, self)
         ct = ContentType.objects.get_for_model(User)
         mem = ProgramMembership()
         mem.program = self
