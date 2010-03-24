@@ -1,6 +1,15 @@
 [
 
   {
+    "pk": 28,
+    "model": "graphing.basegraph",
+    "fields": {
+      "shortname": "High Risk Indicators Per Clinic",
+      "title": "High Risk Indicators Per Clinic"
+    }
+  },
+
+  {
     "pk": 27,
     "model": "graphing.basegraph",
     "fields": {
@@ -211,6 +220,28 @@
     }
   }, 
   
+
+  {
+    "pk": 28, 
+    "model": "graphing.rawgraph", 
+    "fields": {
+      "default_interval": 1000, 
+      "series_labels": "Total | < 150 cm | Prev C-Sect | Prev Death | Prev Bleed | Heart Probs | Diabetes | Hip Probs | Syphilis | Hep B | Long Time | Low Hemoglb | Rare Blood ", 
+      "data_source": "", 
+      "y_axis_label": "Number of Registrations", 
+      "x_type": "string", 
+      "additional_options": "{\"legend\": { \"show\": false }}", 
+      "time_bound": 0, 
+      "x_axis_label": "High Risk Indicators", 
+      "width": 950, 
+      "interval_ranges": "", 
+      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
+      "display_type": "histogram-multifield-sorted", 
+      "height": 300, 
+      "db_query": "\nselect \ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\n\n\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userprofile\n\nwhere sampledata_meta_userid = intel_userprofile.user_id and meta_username <> 'admin' and sampledata_meta_userid  > 0 and intel_userprofile.clinic_id = {{clinic_id}}\n"
+    }
+  },
+
   
   {
     "pk": 27, 
@@ -227,7 +258,7 @@
       "x_axis_label": "Date", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 
-      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), clinic, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, hq_domain domains, intel_userprofile prof\r\nwhere username <> 'admin' and prof.user_id = meta.chw_id and forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'),clinic\r\norder by timeend asc;"
+      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), intel_clinic.name as clinic, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, hq_domain domains, intel_userprofile prof, intel_clinic\r\nwhere intel_clinic.id = prof.clinic_id and username <> 'admin' and prof.user_id = meta.chw_id and forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'),clinic\r\norder by timeend asc;"
       
     }
   }, 
@@ -251,7 +282,7 @@
       "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
       "display_type": "histogram-multifield-sorted", 
       "height": 300, 
-      "db_query": "select \r\ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\r\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\r\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\r\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\r\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\r\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\r\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\r\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\r\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\r\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\r\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\r\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\r\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\r\n\r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3\r\n\r\nwhere meta_username <> 'admin';"
+      "db_query": "select \r\ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\r\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\r\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\r\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\r\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\r\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\r\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\r\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\r\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\r\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\r\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\r\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\r\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\r\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\r\n\r\n\r\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3\r\n\r\nwhere meta_username <> 'admin' and sampledata_meta_userid > 0"
     }
   }, 
   {
