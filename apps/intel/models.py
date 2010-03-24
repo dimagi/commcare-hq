@@ -30,8 +30,8 @@ class Clinic(models.Model):
 
 class UserProfile(models.Model):
     user    = models.ForeignKey(User, unique=True)
-    clinic  = models.ForeignKey(Clinic)
-    role    = models.ForeignKey(Role)
+    clinic  = models.ForeignKey(Clinic, null=True)
+    role    = models.ForeignKey(Role, null=True)
 
 
 # schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
