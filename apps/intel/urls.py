@@ -8,5 +8,6 @@ urlpatterns = patterns('',
     
     (r'^intel/chart/?$', 'intel.views.chart'),
     
-    (r'^intel/clinic_chart/?$', 'intel.views.clinic_chart'),
+    (r'^intel/hq_chart/?$', 'intel.views.hq_chart'),
+    (r'^intel/hq_hi_risk/?$', 'intel.views.hq_hi_risk'),
 )
