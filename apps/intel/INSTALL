@@ -37,4 +37,4 @@ Steps to install this app:
 	LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
 
 	# Enable user profile (paste under [django])
-	AUTH_PROFILE_MODULE = 'appname.UserProfile'
+	AUTH_PROFILE_MODULE = 'intel.UserProfile'
