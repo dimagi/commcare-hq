@@ -103,15 +103,18 @@ class RawGraph(BaseGraph):
             reg = re.compile('(\{\{.*?\}\})')
             query = self.db_query
             matches = reg.findall(self.db_query)
+
             if matches:
                 for match in matches:
                     attr = match[2:len(match)-2]
                     repl = getattr(self,attr)
-                    query = query.replace(match, repl)
+                    query = query.replace(match, str(repl))
+
             return query 
+
         except Exception, e:            
             logging.error("error cleaning query", extra={'exception':e, 'query':self.db_query})
-        return self.db_query
+            return self.db_query
         
     @property
     def cursor(self):        
