@@ -6,6 +6,8 @@ from rapidsms.webui.utils import render_to_response
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
+from django.contrib.auth.models import User
+
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from xformmanager.models import *
@@ -36,15 +38,26 @@ import reports.util as util
 from reports.custom.all.shared import get_data_by_chw, get_case_info
 from reports.models import Case, SqlReport
 
-import intel.queries as queries
+# import intel.queries as queries
 from intel.models import *
+
+# A note about user authorization
+# The current system enforces user auth, and provides a plain path for where users go, depending on their role
+# but it is lenient regarding what users *can* see if they enter the right URLs
+# So, users can access the HQ UI if they want to
+# or see HQ/Doctor views, if they know the URLs
+# 
+# The idea is to make it easier to maintain/debug
+# and allow users who wish to, to get to know the system further than their restricted paths
 
 @login_and_domain_required
 def homepage(request):
-    '''Splash page'''
-    # user_role = User.role
-    # print user_role
-    return render_to_response(request, "home.html")
+    context = {}
+
+    role = get_role_for(request.user)
+    context['hq_mode']  = (role.name == "HQ")
+        
+    return render_to_response(request, "home.html", context)
     
 
 ######## Report Methods
