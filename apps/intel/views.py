@@ -42,6 +42,8 @@ from intel.models import *
 @login_and_domain_required
 def homepage(request):
     '''Splash page'''
+    # user_role = User.role
+    # print user_role
     return render_to_response(request, "home.html")
     
 
@@ -201,6 +203,8 @@ def hq_chart(request, template_name="hq_chart.html"):
             
     return render_to_response(request, template_name, context)
 
+
+@login_and_domain_required
 def hq_hi_risk(request, template_name="hq_hi_risk.html"):
     context = {}
 

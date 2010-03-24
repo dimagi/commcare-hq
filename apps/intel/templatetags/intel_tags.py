@@ -10,19 +10,22 @@ def tabs(current_page):
 
     tabs = { "all" : 
                 {
-                    "text" : "All Pregnant Mothers",
+                    "tooltip" : "All Pregnant Mothers", # we don't have tooltips, but maybe someday
+                    "text" : "Pregnant Mothers",
                     "color": "#ff6100",
                     "icon" : "/static/intel/img/icons/preg-icon.png"
                 },
                 
              "risk":  
                 {
-                    "text" : "High Risk For Follow Up",
+                    "tootlip" : "High Risk For Follow Up",
+                    "text" : "High Risk",
                     "color": "#82c700",
                     "icon" : "/static/intel/img/icons/risk-icon.png"
                 },
               "chart": 
                 {
+                    "tooltip" : "Program Trends",
                     "text" : "Program Trends",
                     "color": "#0099ff",
                     "icon" : "/static/intel/img/icons/trends-icon.png"
@@ -34,7 +37,7 @@ def tabs(current_page):
     for i in tabs:
         # bgcolor = (tabs[i]["color"] if i == current_page or current_page == "home" else "white")
         #t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
-        but = '<a href="/intel/%s"><img src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, tabs[i]["icon"], tabs[i]["text"])
+        but = '<a href="/intel/%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, tabs[i]["icon"], tabs[i]["text"])
         if i == current_page or current_page == "home":
             t += but 
             
