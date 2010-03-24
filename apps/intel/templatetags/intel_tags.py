@@ -59,7 +59,7 @@ def _doctor_tabs():
             }
 
 def _hq_tabs():
-    return { "hq_hi_risk":  
+    return { "hq_risk":  
                 {
                     "text" : "High Risk",
                     # "color": "#82c700",

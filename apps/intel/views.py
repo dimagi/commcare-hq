@@ -173,7 +173,7 @@ def hq_chart(request, template_name="hq_chart.html"):
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
-    context['page'] = "chart"
+    context['page'] = "hq_chart"
 
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
@@ -216,7 +216,7 @@ def hq_chart(request, template_name="hq_chart.html"):
 
 
 @login_and_domain_required
-def hq_hi_risk(request, template_name="hq_hi_risk.html"):
+def hq_risk(request, template_name="hq_risk.html"):
     context = {}
 
     clinics = Clinic.objects.all()
@@ -243,8 +243,6 @@ def hq_hi_risk(request, template_name="hq_hi_risk.html"):
 
     graph.domain = request.user.selected_domain.name
 
-    # print showclinic.id
-    
     graph.clinic_id = showclinic.id
     
     startdate, enddate = utils.get_dates(request, 365) 
@@ -258,7 +256,7 @@ def hq_hi_risk(request, template_name="hq_hi_risk.html"):
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
-    context['page'] = "risk"
+    context['page'] = "hq_risk"
 
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
