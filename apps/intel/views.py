@@ -198,8 +198,6 @@ def hq_chart(request, template_name="hq_chart.html"):
             if not d[k].has_key(c.id):
                 d[k][c.id] = 0
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id]})    
-
-    import pprint ; pprint.pprint(context['clinics'])
   
     # get per CHW table for show/hide
     report = SqlReport.objects.get(id=1)
