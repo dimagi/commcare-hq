@@ -1,0 +1,21 @@
+{% extends base_template %}
+{% block content %}
+<a href="{% url add_program %}">add a new program</a>
+<table>
+	<thead>
+		<th>Program Name</th>
+		<th>Active Users</th>
+		<th></th>
+	</thead>
+	<tbody>
+{% for program in programs %}
+		<tr>
+			<td>{{ program.name }}</td>
+			<td>{{ program.get_users|join:", " }}</td>
+			<td><a href="{% url edit_program program.id %}">edit</a>
+				<a href="{% url delete_program program.id %}">delete</a>
+		</tr>
+{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
