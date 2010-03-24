@@ -30,9 +30,22 @@ class Clinic(models.Model):
 
 class UserProfile(models.Model):
     user    = models.ForeignKey(User, unique=True)
-    clinic  = models.ForeignKey(Clinic, null=True)
-    role    = models.ForeignKey(Role, null=True)
+    clinic  = models.ForeignKey(Clinic, null=True, blank=True)
+    role    = models.ForeignKey(Role, null=True, blank=True)
 
+
+
+def get_role_for(user):
+    # this is ugly. UserProfile is supposed to take of this, and just provide User.get_profile().role
+    # but it doesn't work. I suspect RapidSMS ignores AUTH_PROFILE_MODULE in local.ini
+    # TODO: check later. we might change the model in any case.
+    # role = UserProfile.objects.get(user=user.id).role
+    try:
+        role = UserProfile.objects.get(user=user.id).role
+    except UserProfile.DoesNotExist:
+        role = Role.objects.all()[0]
+
+    return role
 
 # schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 
