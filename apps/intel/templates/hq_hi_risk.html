@@ -1,0 +1,93 @@
+{% extends "intel-layout.html" %}
+{% load i18n %}
+{% load mainreport_tags %}
+
+{% load intel_tags %}
+
+{% block tabs %}
+	{% tabs page %}
+{% endblock %}
+
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
+    
+    
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/graphing/superfish/superfish.css" media="screen">    
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
+    <script type="text/javascript">
+		// initialise plugins
+		jQuery(function(){
+			jQuery('ul.sf-menu').superfish();
+		});
+	</script>    
+    {{ form.media }}
+{% endblock %} 
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/graphing/stylesheets/charts.css" />
+{% endblock %}
+{% block content %}
+	<div style="text-align:center; font-size: 1.3em; padding: 5px; border: 1px solid; background-color:#22aaff">
+		<table style="border: none">
+			<tr>
+				<td style="width: 200px">&nbsp;</td>
+				<td>Registrations</td>
+				<td>Hi Risk</td>
+				<td>Followed Up</td>
+			</tr>
+			<tr>
+				<td>{{ showclinic.name }}</td>
+				<td>{{ regs }}</td>
+				<td>{{ hi_risk }}</td>					
+				<td>{{ follow }}</td>
+			</tr>
+		</table>
+	</div>
+	
+    <!-- <div class="submenu">
+	<ul class="sf-menu">
+		{ % include "graphing/inline_graphgroup.html" % }	
+	</ul>
+    </div> -->
+	<table style="border: none">
+		<tr>
+			<td align="top">
+				<div style="text-align:center; font-size: 1.3em; padding: 5px; border: 1px solid; height: {{ height }}px;">
+				{% for clinic in clinics %}
+					<a href="?clinic={{ clinic.id }}" style="color: {% ifequal clinic showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ clinic.name }}</a>
+				{% endfor %}
+				</div>
+			</td>
+			<td>
+				{% if thegraph.has_errors %}  
+				   <h3 style="color:red; text-align: left; float: left;">Sorry, something went wrong displaying that chart.  Please tell your administrator about this!</h3>
+			    {% else %}
+			        <!-- {% if thegraph.time_bound  %}
+			            <br><p>{% get_daterange_links_basic "" thegraph.date_range_list %}</p>
+			        {% endif %} -->
+			        <!--
+					<a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?bare&{{ request.META.QUERY_STRING }}">Printable View</a>
+			        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?data&{{ request.META.QUERY_STRING }}">Data View</a>
+			        <a style="float:right;padding-top:15px;padding-right:20px;" href="{%url graphing.views.view_graph thegraph.id %}?csv&{{ request.META.QUERY_STRING }}">Download Data</a>
+			        -->
+					<p> 
+			        {% with thegraph as chart %}
+					   {% include "graphing/inline_rawgraph.html" %}
+				    {% endwith %}
+					</p>
+				</td>
+			</tr>
+	</table>  
+    
+	<br><br>
+		
+		<p><div class="js_link" onclick="hideShow('div.graph_data')" style="text-align:center">CHW-wise Registrations</div></p> 
+		
+        <div class="graph_data" style="display:none;">
+			<br>{% autoescape off %}{{ report_table }}{% endautoescape %}
+            <!-- <br>{ % include "graphing/partials/graph_data_table.html" % } -->
+        </div>
+    {% endif %}
+{%endblock%}

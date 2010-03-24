@@ -37,6 +37,7 @@ from reports.custom.all.shared import get_data_by_chw, get_case_info
 from reports.models import Case, SqlReport
 
 import intel.queries as queries
+from intel.models import *
 
 @login_and_domain_required
 def homepage(request):
@@ -48,21 +49,21 @@ def homepage(request):
 @login_and_domain_required
 def all_mothers_report(request):
     '''View all mothers - default'''
-    return custom_report(request, 3, "chw_submission_details", "all")
+    return _custom_report(request, 3, "chw_submission_details", "all")
 
 @login_and_domain_required
 def hi_risk_report(request):
     '''View only hi risk'''
-    return custom_report(request, 3, "hi_risk_pregnancies", "risk")
+    return _custom_report(request, 3, "hi_risk_pregnancies", "risk")
 
 @login_and_domain_required
 def mother_details(request):
     '''view details for a mother'''
-    return custom_report(request, 3, "_mother_summary", "single")
+    return _custom_report(request, 3, "_mother_summary", "single")
     
 
 
-def custom_report(request, domain_id, report_name, page):
+def _custom_report(request, domain_id, report_name, page):
     context = {}
     context['page'] = page
     context["report_name"] = report_name
@@ -94,29 +95,9 @@ def custom_report(request, domain_id, report_name, page):
 ######## Chart Methods
 
 @login_and_domain_required
-def chart(request):
-    return view_graph(request, 20)
-
-def clinic_chart(request):
-    return view_clinic_graph(request, 27)
-    
-'''
-select  DATE_FORMAT(timeend,'%m/%d/%Y'), username, count(*)
-from xformmanager_metadata meta,
-xformmanager_formdefmodel forms, hq_domain domains
-where username <> 'admin' and forms.id = meta.formdefmodel_id
-and forms.domain_id = domains.id
-and domains.name = 'Grameen'
-and meta.timeend > '2009-03-23'
-and meta.timeend < '2010-03-24'
-group by
-DATE_FORMAT(timeend,'%m/%d/%Y'), username
-order by timeend asc;
-'''
-
-def view_graph(request, graph_id, template_name="chart.html"):
+def chart(request, template_name="chart.html"):
     context = {}    
-    graph = RawGraph.objects.all().get(id=graph_id)
+    graph = RawGraph.objects.all().get(id=20)
 
     graph.domain = request.user.selected_domain.name
     startdate, enddate = utils.get_dates(request, 365) #graph.default_interval)
@@ -131,7 +112,7 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['page'] = "chart"
 
     rootgroup = utils.get_chart_group(request.user)    
-    graphtree = get_graphgroup_children(rootgroup)    
+    graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
     context['view_name'] = 'chart.html'
     context['width'] = graph.width
@@ -139,9 +120,9 @@ def view_graph(request, graph_id, template_name="chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
         
-    context['total_hi_risk'] = len(queries.hi_risk())
-    context['total_registrations'] = len(queries.registrations())
-    context['total_follow_up'] = len(queries.follow_up())
+    context['total_hi_risk'] = len(hi_risk())
+    context['total_registrations'] = len(registrations())
+    context['total_follow_up'] = len(follow_up())
         
     # get per CHW table for show/hide
     report = SqlReport.objects.get(id=1)
@@ -159,20 +140,13 @@ def view_graph(request, graph_id, template_name="chart.html"):
             
     return render_to_response(request, template_name, context)
     
-def get_graphgroup_children(graph_group):
-    ret = {}
-    children = GraphGroup.objects.all().filter(parent_group=graph_group)
-    for child in children:
-        ret[child] = get_graphgroup_children(child)
-    return ret
-    
     
 # per clinic UI
-
-def view_clinic_graph(request, graph_id, template_name="clinic_chart.html"):
+@login_and_domain_required
+def hq_chart(request, template_name="hq_chart.html"):
     
     context = {}
-    graph = RawGraph.objects.all().get(id=graph_id)
+    graph = RawGraph.objects.all().get(id=27)
 
     graph.domain = request.user.selected_domain.name
     startdate, enddate = utils.get_dates(request, 365) 
@@ -187,42 +161,34 @@ def view_clinic_graph(request, graph_id, template_name="clinic_chart.html"):
     context['page'] = "chart"
 
     rootgroup = utils.get_chart_group(request.user)    
-    graphtree = get_graphgroup_children(rootgroup)    
+    graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    context['view_name'] = 'chart.html'
+    # context['view_name'] = 'chart.html'
     context['width'] = graph.width
     context['height'] = graph.height
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
-
-    clinics = queries.clinics()
+    clinics = Clinic.objects.all()
+    
     d = {
-        'reg' : queries.registrations_by_clinic(),
-        'hi_risk' : queries.hi_risk_by_clinic(),
-        'follow' : queries.followup_by_clinic()
+        'reg' : registrations_by_clinic(),
+        'hi_risk' : hi_risk_by_clinic(),
+        'follow' : followup_by_clinic()
         }
 
     context['clinics'] = []    
     for c in clinics:
         for k in d.keys():
-            if not d[k].has_key(c):
-                d[k][c] = 0
-        context['clinics'].append({'name': c, 'reg': d['reg'][c], 'hi_risk': d['hi_risk'][c], 'follow': d['follow'][c]})
-    
-    # context['total_hi_risk'] = len(queries.hi_risk())
-    # context['total_registrations'] = len(queries.registrations())
-    # context['total_follow_up'] = len(queries.follow_up())
-    
+            if not d[k].has_key(c.id):
+                d[k][c.id] = 0
+        context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id]})    
 
+    import pprint ; pprint.pprint(context['clinics'])
+  
     # get per CHW table for show/hide
     report = SqlReport.objects.get(id=1)
-    report_table = report.to_html_table() # {"whereclause": whereclause})    
-
-    # import pprint ; pprint.pprint(context['totals'])
-
-    print context['clinics']
-    
+    report_table = report.to_html_table()
     context['report_table'] = report_table
     
     for item in request.GET.items():
@@ -234,3 +200,81 @@ def view_clinic_graph(request, graph_id, template_name="clinic_chart.html"):
             return _get_chart_csv(graph)
             
     return render_to_response(request, template_name, context)
+
+def hq_hi_risk(request, template_name="hq_hi_risk.html"):
+    context = {}
+
+    clinics = Clinic.objects.all()
+    
+    # find current clinic. if id is missing/wrong, use the first clinic
+    try:
+        showclinic = clinics.get(id=int(request.GET['clinic']))
+    except:
+        showclinic = clinics[0]
+        
+    context['clinics'] = clinics
+    context['showclinic'] = showclinic
+    
+    reg = registrations_by_clinic()
+    hi  = hi_risk_by_clinic()
+    fol = followup_by_clinic()
+
+    context['regs']    = reg[showclinic.id] if reg.has_key(showclinic.id) else 0
+    context['hi_risk'] = hi[showclinic.id]  if hi.has_key(showclinic.id)  else 0
+    context['follow']  = fol[showclinic.id] if fol.has_key(showclinic.id) else 0
+        
+        
+    graph = RawGraph.objects.all().get(id=28)
+
+    graph.domain = request.user.selected_domain.name
+
+    # print showclinic.id
+    
+    graph.clinic_id = showclinic.id
+    
+    startdate, enddate = utils.get_dates(request, 365) 
+    graph.startdate = startdate.strftime("%Y-%m-%d")
+    graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    graph.width = 800
+    
+    context['chart_title'] = graph.title
+    
+    context['chart_data'] = graph.get_flot_data()
+    context['thegraph'] = graph
+    
+    context['page'] = "risk"
+
+    rootgroup = utils.get_chart_group(request.user)    
+    graphtree = _get_graphgroup_children(rootgroup)    
+    context['graphtree'] = graphtree
+    # context['view_name'] = 'chart.html'
+    context['width'] = graph.width
+    context['height'] = graph.height
+    context['empty_dict'] = {}
+    context['datatable'] = graph.convert_data_to_table(context['chart_data'])
+    
+
+    # get per CHW table for show/hide
+    report = SqlReport.objects.get(id=1)
+    report_table = report.to_html_table()
+    context['report_table'] = report_table
+
+        
+    for item in request.GET.items():
+        if item[0] == 'bare':
+            template_name = 'graphing/view_graph_bare.html'
+        elif item[0] == 'data':
+            template_name='graphing/view_graph_data.html'
+        elif item[0] == 'csv':             
+            return _get_chart_csv(graph)
+
+    return render_to_response(request, template_name, context)
+    
+
+def _get_graphgroup_children(graph_group):
+    ret = {}
+    children = GraphGroup.objects.all().filter(parent_group=graph_group)
+    for child in children:
+        ret[child] = _get_graphgroup_children(child)
+    return ret
