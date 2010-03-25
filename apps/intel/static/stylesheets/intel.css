@@ -24,6 +24,10 @@
     text-align: center;
     
     vertical-align:top;
+    
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    
 }
 
 .buttons button{
@@ -67,7 +71,7 @@
   font-size: 1.3em; 
   padding: 5px; 
   border: 1px solid; 
-  background-color:#b6e3fc;
+  background-color:#c3d9ff; /*#b6e3fc;*/
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
 }
