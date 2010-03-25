@@ -69,8 +69,9 @@
 .top-bar {
   text-align:center; 
   font-size: 1.3em; 
+  font-weight: bold;
   padding: 5px; 
-  border: 1px solid; 
+  border: 2px solid; 
   background-color:#c3d9ff; /*#b6e3fc;*/
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
