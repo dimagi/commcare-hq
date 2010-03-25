@@ -19,8 +19,6 @@
 <!-- Login form -->  
 <form name="form" method="post" action="{% url login %}" id="login_form"> <!-- class="sfb" -->
 <center>
-	
-
 <!-- intel requirement - a single field login -->  
   {% if field.errors %}
     <div class="field_errors">
@@ -29,9 +27,9 @@
   {% endif %}
   
   	<input id="id_username" type="hidden" name="username" /> 
-	<table width="20" style="width:100px; border: none">
-		<tr>
-			<td><span style="font-size:16px; text-align: center">Enter Passcode</span></td>
+	<table style="width:100px; border: none; text-align: right;">
+		<tr style="text-align:right;">
+			<td style="font-size:16px; text-align:center;">Enter Passcode</td>
 			<td>&nbsp;</td>
 		</tr>
 		<tr>
@@ -39,7 +37,7 @@
 			<td><input type="image" src="/static/intel/img/login.png" align="bottom"/></td>
 		</tr>
 	</table>
-
+</center>
 <script>
 $.urlParam = function(name){
 	results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
