@@ -15,22 +15,24 @@ def tabs(current_page, hq_mode=False):
     else:
         tabs = _doctor_tabs()
     
+
     t = '<div class="buttons">'
     
     for i in tabs:
-        # bgcolor = (tabs[i]["color"] if i == current_page or current_page == "home" else "white")
+        bgcolor = "#c3d9ff" if i == current_page else "#fff"
         #t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
-        but = '<a href="/intel/%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, tabs[i]["icon"], tabs[i]["text"])
-        if i == current_page or current_page == "home":
-            t += but 
-        
+        but = '<a href="/intel/%s" style="background-color: %s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, bgcolor, tabs[i]["icon"], tabs[i]["text"])
+
+        # if i == current_page or current_page == "home":
+        #     t += but 
+        t+=but
 
     if current_page != "home":
         t += '<a href="/intel/" style="float: right; width: 90px"><img src="/static/intel/img/icons/home-icon.png" /></a>'
     t += "</div>"
     
     # if tabs.has_key(current_page): 
-    #     t += '<script type="text/javascript">$("#header").css("border-bottom-color", "%s");</script>' % tabs[current_page]["color"]
+        # t += '<script type="text/javascript">$("#header").css("border-bottom-color", "%s");</script>' % tabs[current_page]["color"]
 
     return t
 
