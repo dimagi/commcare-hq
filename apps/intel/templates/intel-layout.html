@@ -27,7 +27,9 @@
 
 			$("#print-but").html("Return to Normal View");
 			$("#print-but").attr("href", "javascript: location.reload();");
-			// setTimeout(3000, print());
+			
+			// print() is slightly delayed here, so the dialog will appear only after the print layout has rendered 
+			setTimeout("print()", 700);
 		}
 		
 	</script>
