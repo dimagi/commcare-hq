@@ -19,12 +19,11 @@ def tabs(current_page, hq_mode=False):
     t = '<div class="buttons">'
     
     for i in tabs:
-        bgcolor = "#c3d9ff" if i == current_page else "#fff"
-        #t+= '<a href="/intel/%s" style="background-color: %s">%s</a>\n' % (i, bgcolor, tabs[i]["text"])
-        but = '<a href="/intel/%s" style="background-color: %s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, bgcolor, tabs[i]["icon"], tabs[i]["text"])
+        style = "border: solid 4px #c3d9ff" if i == current_page else ""
+        but = '<a href="/intel/%s" style="%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, style, tabs[i]["icon"], tabs[i]["text"])
 
+        # uncomment to show only the currnent page icon 
         # if i == current_page or current_page == "home":
-        #     t += but 
         t+=but
 
     if current_page != "home":
