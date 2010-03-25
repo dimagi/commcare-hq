@@ -20,8 +20,8 @@
 	<div id="currentlogin-block">
 		{% if user.is_authenticated %}        
 			Hello, <strong>{{user}}</strong>
-			&nbsp;&nbsp;|&nbsp;&nbsp;
-			<a href="{% url domain_admin_main %}">Domain Settings</a>
+			<!-- &nbsp;&nbsp;|&nbsp;&nbsp;
+			<a href="{% url domain_admin_main %}">Domain Settings</a> -->
 			&nbsp;&nbsp;|&nbsp;&nbsp;
 			<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>
 		{% else %}
