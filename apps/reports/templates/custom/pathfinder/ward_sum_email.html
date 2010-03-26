@@ -1,17 +1,9 @@
-{% extends base_template %}
-{% block title %}Ward Summary Report{% endblock %}
-
-{% block content %}
-<div id="government-report">
 <h2 align="center">Ward Summary Report</h2>
 
-<h5 align="center">Month: {{ month }}</h5>
-<h5 align="center">Year: {{ year }}</h5>
+<h5 align="center">Month: {{ context.month }}</h5>
+<h5 align="center">Year: {{ context.year }}</h5>
 
-<div><a href="{% url reports.views.ward_sum_csv month_num year %}">download csv file</a></div>
-<div><a href="{% url reports.views.ward_sum_pdf month_num year %}">download pdf file</a></div>
-
-<table>
+<table border=1>
 	<thead>
 	<tr>
 		<th rowspan=2></th>
@@ -91,7 +83,7 @@
 		<th></th>
 	</tr>
 	</thead>
-	{% for chw in all_data %}
+	{% for chw in context.all_data %}
 	<tr class="{% cycle 'odd' 'even' %}">
 		<td>{{ chw.region }}</td>
 		<td>{{ chw.district }}</td>
@@ -129,5 +121,3 @@
 	</tr>
 	{% endfor %}
 </table>
-</div>
-{% endblock %}

@@ -5,6 +5,7 @@ from domain.models import Domain
 from hq.models import *
 from receiver.models import Submission, Attachment
 from reports.custom.all.domain_summary import DomainSummary
+from reports.custom.all.shared import get_ward_summary_data, get_provider_summary_data, get_providers, get_hbc_summary_data
 from xformmanager.models import *
 import graphing.dbhelper as dbhelper
 import hq.utils as utils
@@ -273,3 +274,44 @@ def get_delinquent_context_from_statdict(statdict, threshold):
         context['delinquent_reporterprofiles'] = delinquents
         context['threshold'] = threshold
         return context
+
+def ward_summary(report_schedule, run_frequency):
+    """Summary of all providers in the ward"""
+    from hq import reporter
+    (startdate, enddate) = reporter.get_daterange(run_frequency)
+    all_data = get_ward_summary_data(startdate, enddate, startdate.month, 
+                                     startdate.year)
+    body = render_to_string("custom/pathfinder/ward_sum_email.html", 
+                            {"context": all_data })
+
+    reporter.transport_email(body, report_schedule.recipient_user, 
+                    params={"email_subject": "CommCareHQ Ward Summary Report %s" %\
+                            enddate })
+    
+def provider_summary(report_schedule, run_frequency):
+    """Summary of each provider and their patients"""
+    from hq import reporter
+    (startdate, enddate) = reporter.get_daterange(run_frequency)
+    providers = get_providers("Pathfinder_1")
+    for provider in providers:
+        all_data = get_provider_summary_data(startdate, enddate, 
+                    startdate.month, startdate.year, provider)
+        body = render_to_string("custom/pathfinder/sum_prov_email.html",
+                                {"context": all_data })
+    
+        reporter.transport_email(body, report_schedule.recipient_user, 
+                        params={"email_subject": "CommCareHQ Summary by Provider Report %s" %\
+                            enddate })
+
+def hbc_monthly_summary(report_schedule, run_frequency):
+    """Summary of total patient information within a ward"""
+    from hq import reporter
+    (startdate, enddate) = reporter.get_daterange(run_frequency)
+    all_data = get_hbc_summary_data(startdate, enddate, startdate.month, 
+                                     startdate.year)
+    body = render_to_string("custom/pathfinder/hbc_sum_email.html", 
+                            {"context": all_data })
+
+    reporter.transport_email(body, report_schedule.recipient_user, 
+                    params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s" %\
+                            enddate })

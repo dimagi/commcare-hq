@@ -1,5 +1,81 @@
 from datetime import datetime
-from apps.reports.models import CaseFormIdentifier
+from reports.models import CaseFormIdentifier, Case
+from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
+import calendar
+
+def get_ward_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data_list = []
+    for chw_id, chw_data in data_by_chw.items():
+        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+        chw_data_list.append(chw_obj)
+    context["all_data"] = chw_data_list
+    context["year"] = year
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    return context
+    
+def get_provider_summary_data(startdate, enddate, month, year, provider):
+    context = {}
+    case_name = "Pathfinder_1"    
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data = data_by_chw[provider]
+    client_data_list = []
+    for client_id, client_data in chw_data.items():
+        client_obj = ProviderSummaryData(case, client_id, client_data, 
+                                         startdate, enddate)
+        if client_obj.num_visits != 0:
+            client_data_list.append(client_obj)
+
+    context["all_data"] = client_data_list
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    context["num"] = provider
+    return context
+
+def get_hbc_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    context["all_data"] = chw_obj
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    return context
+
+def get_providers(case_name):
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    all_data = case.get_all_data_maps()
+    chws = []
+    for id, map in all_data.items():
+        chw_id = id.split("|")[0]
+        if not chw_id in chws:
+            chws.append(chw_id)
+    return chws
     
 def get_data_by_chw(case):
     ''' Given a case return the data organized by chw id'''
