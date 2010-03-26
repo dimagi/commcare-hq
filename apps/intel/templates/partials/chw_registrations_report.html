@@ -8,16 +8,16 @@
 	 	</tr>
 	</thead>
 	{% for b_row in rows %}
-	<tr style="background-color: #e9f4fd;">
-		<th colspan="4" style="text-align: center">{{b_row.grouper}}</th>
-	</tr>
-		{% for row in b_row.list %}
-		<tr>
-			<td>{{row.name}}</td>
-			<td>{{row.reg}}</td>
-			<td>{{row.risk}}</td>
-			<td>{{row.follow}}</td>
+		<tr style="background-color: #e9f4fd;">
+			<th colspan="4" style="text-align: center">{{b_row.grouper}}</th>
 		</tr>
+		{% for row in b_row.list %}
+			<tr>
+				<td>{{row.name}}</td>
+				<td>{{row.reg}}</td>
+				<td>{{row.risk}}</td>
+				<td>{{row.follow}}</td>
+			</tr>
 		{% endfor %}
 	{% endfor %}
 </table>
