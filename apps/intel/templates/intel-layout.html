@@ -13,27 +13,6 @@
 	{% block hq-stylesheets %}{% endblock %}
 	{% block page_stylesheets %}{% endblock %}
 
-	<script type="text/javascript">
-		function print_view() {
-			$("body").css("background-color", "#fff");
-			$("a").css("color", "#000");
-			$(".top-bar").css("background-color", "#fff");
-			$("#header").css("border-bottom-color", "#000")
-			$("thead").css("background-color", "#fff");
-			$(".buttons").hide();
-			$(".daterange_tabs").hide();
-			$("#wrapper").css("-moz-box-shadow", "none");
-			$("#wrapper").css("box-shadow", "none");
-
-			$("#print-but").html("Return to Normal View");
-			$("#print-but").attr("href", "javascript: location.reload();");
-			
-			// print() is slightly delayed here, so the dialog will appear only after the print layout has rendered 
-			setTimeout("print()", 700);
-		}
-		
-	</script>
-
 {% endblock %}
 
 {% block javascripts %}
@@ -41,6 +20,8 @@
     <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
     <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
 	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/intel/javascripts/print.js"></script>
+	
     <script type="text/javascript">
 		// initialise plugins
 		jQuery(function(){
@@ -53,7 +34,7 @@
 
 {% block auth %}
 	<div id="currentlogin-block">
-		<a href="javascript:print_view();" id="print-but">&nbsp;Print View&nbsp;&nbsp;<img src="{{MEDIA_URL}}/intel/img/print.png" /></a>
+		<a href="javascript:print_view();" id="print-but">Print View&nbsp;&nbsp;<img src="{{MEDIA_URL}}/intel/img/print.png" /></a>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		{% if user.is_authenticated %}        
 			Hello, <strong>{{user}}</strong>

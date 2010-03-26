@@ -8,8 +8,8 @@
 	 	</tr>
 	</thead>
 	{% for b_row in rows %}
-		<tr style="background-color: #e9f4fd;">
-			<th colspan="4" style="text-align: center">{{b_row.grouper}}</th>
+		<tr>
+			<th colspan="4" class="clinic-name">{{b_row.grouper}}</th>
 		</tr>
 		{% for row in b_row.list %}
 			<tr>
