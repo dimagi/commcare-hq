@@ -10,7 +10,7 @@
 {% endif %}
 <style>
 .internal {
-	border: 3px solid black;
+	border: 1px solid #ddd;
 	-moz-border-radius: 20px;
     -webkit-border-radius: 20px;
     -khtml-border-radius: 20px;
@@ -20,13 +20,15 @@
 }
 
 .internal h3 {
-	margin: 5px;
-/*	text-align: center;*/
+	margin-top: -10px;
+	margin-bottom: 20px;
+	text-align: center;
 }
 
 .internal table {
 	border: 0px;
 	width: 80%;
+	margin: 30px;
 }
 </style>
 <div class="container">
@@ -39,7 +41,6 @@
 				<tr><td align="right">Attending CHW</td><td>{{ mother.chw }}</td></tr>
 				<tr><td align="right">Partner Name/Occupation</td><td>{{ mother.partner_occupation }}</td></tr>
 				<tr><td align="right">Phone</td><td>{{ mother.phone }}</td></tr>				
-				<tr><td colspan="2">&nbsp;</td></tr>				
 			</table>
 		</div>
 	</div>
@@ -47,12 +48,16 @@
 		<div class="internal">
 			<table>
 				<tr><td colspan="2" align="center"><h3>Pregnancy Info</h3></td></tr>
-				<tr><td align="right">Hi Risk:</td><td>{{ mother.hi_risk }}</td></tr>
-				<tr><td colspan="2"><b>High Risk Factors</b></td></tr>
 				<tr><td align="right">Months Pregnant:</td><td>{{ mother.months_pregnant }}</td></tr>
-				<tr><td align="right">Heart Problems:</td><td>{{ mother.heart_problems}}</td></tr>
-				<tr><td align="right">Diabetes:</td><td>{{ mother.diabetes }}</td></tr>				
-				<tr><td align="right">Hip Problems:</td><td>{{ mother.hip_problems }}</td></tr>				
+				{% ifequal mother.hi_risk "yes" %}
+					<tr style="color: red"><td align="right">Hi Risk:</td><td>Yes</td></tr>
+					<tr><td colspan="2" style="text-align: center"><b>High Risk Factors</b></td></tr>
+					{% for f in risk_factors %}
+					<tr><td colspan="2">&nbsp;&nbsp;-&nbsp;{{ f }}</td></tr>
+					{% endfor %}
+				{% else %}
+					<tr style="color: green"><td align="right">Hi Risk:</td><td>No</td></tr>
+				{% endifequal %}
 			</table>
 		</div>
 	</div>
