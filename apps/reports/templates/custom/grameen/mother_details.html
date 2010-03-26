@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js?{% now "U" %}"></script>
 <h2>Mother Summary for {{ mother.mother_name }}</h2>
 {% if attach_id %}
 	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog');">
@@ -63,7 +62,7 @@
 	</div>
 </div>
 
-<p><div class="js_link" onclick="hideShow('div.preg_history')" style="text-align: center"><h3 style="color: blue">Pregnancy History</h3></div></p>
+<p><div class="js_link" onclick="$('.preg_history').toggle()" style="text-align: center"><h3 style="color: blue">Pregnancy History</h3></div></p>
 <div class="preg_history" style="display:none;">    
 	<div class="container">
 		<div class="span-12 prepend-6 last">
@@ -81,7 +80,7 @@
 	</div>
 </div>
 
-<p><div class="js_link" onclick="hideShow('div.all_data')" style="text-align: center"><h3 style="color: blue">Show Complete Data</h3></div></p>
+<p><div class="js_link" onclick="$('.all_data').toggle()" style="text-align: center"><h3 style="color: blue">Show Complete Data</h3></div></p>
 <div class="all_data" style="display:none;">
 	<h3>All Data</h3>
 	<table>

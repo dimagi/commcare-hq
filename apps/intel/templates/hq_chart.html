@@ -10,7 +10,6 @@
 
 {% block javascripts %}
     <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
-    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
     <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
     
     
@@ -62,7 +61,7 @@
         </p>
 		
 		<br />
-		<p><div class="js_link" onclick="hideShow('div.graph_data')" style="text-align:center">CHW-wise Registrations</div></p> 
+		<p><div class="js_link" onclick="$('.graph_data').toggle()" style="text-align:center">CHW-wise Registrations</div></p> 
 		
 		<div class="graph_data" style="display:none;">
 			{% include "partials/chw_registrations_report.html" %}
