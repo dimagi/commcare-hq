@@ -15,6 +15,24 @@ def get_data_by_chw(case):
             data_by_chw[chw_id][id] = map
     return data_by_chw
 
+def get_mon_year(request):
+    ''' Given a request returns the month and year included in it'''
+    year = ""
+    month = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'year':
+                year = int(item[1])
+            if item[0] == 'month':
+                month = int(item[1])
+    
+    startdate = datetime(year, month, 01).date()
+    nextmonth = month + 1
+    if nextmonth == 13:
+        nextmonth = 1
+    enddate = datetime(year, nextmonth, 01).date()
+    return (month, year, startdate, enddate)
+
 def get_case_info(context, chw_data, enddate, active):
     ''' Gives information about each case of a chw'''
     all_data = []
