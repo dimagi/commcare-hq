@@ -76,7 +76,7 @@ def _mother_summary(request):
         attach_id = None
     
     return render_to_string("custom/grameen/mother_details.html", 
-                            {"mother": mom, "attrs": all_attrs, "attach_id": attach_id,
+                            {"mother": mom, "attrs": all_attrs, "attach_id": attach_id, "risk_factors": mom.hi_risk_reasons,
                              "MEDIA_URL": settings.MEDIA_URL, # we pretty sneakly have to explicitly pass this
                              }) 
                              
@@ -85,24 +85,25 @@ def _get_hi_risk_reason(mom):
     reasons = []
     if (mom.mother_age >= 35): reasons.append("35 or older") 
     if (mom.mother_age <= 18): reasons.append("18 or younger")
-    if (mom.mother_height == 'under_150'): reasons.append("mother height under 150cm")
-    if (mom.previous_csection == 'yes'): reasons.append("previous c-section")
-    if (mom.previous_newborn_death == 'yes'): reasons.append("previous newborn death")
-    if (mom.previous_bleeding == 'yes'): reasons.append("previous bleeding")
+    if (mom.mother_height == 'under_150'): reasons.append("Mother height under 150cm")
+    if (mom.previous_csection == 'yes'): reasons.append("Previous C-section")
+    if (mom.previous_newborn_death == 'yes'): reasons.append("Previous newborn death")
+    if (mom.previous_bleeding == 'yes'): reasons.append("Previous bleeding")
     if (mom.previous_terminations >= 3): reasons.append("%s previous terminations" % mom.previous_terminations)
     if (mom.previous_pregnancies >= 5): reasons.append("%s previous pregnancies" % mom.previous_pregnancies)
-    if (mom.heart_problems == 'yes'): reasons.append("heart problems")
-    if (mom.diabetes == 'yes'): reasons.append("diabetes")
-    if (mom.hip_problems == 'yes'): reasons.append("hip problems")
-    if (mom.card_results_syphilis_result == 'positive'): reasons.append("positive for syphilis")
-    if (mom.card_results_hepb_result == 'positive'): reasons.append("positive for hepb")
-    if (mom.over_5_years == 'yes'): reasons.append("over 5 years since last pregnancy")
-    if (mom.card_results_hb_test == 'below_normal'): reasons.append("low hb test")
-    if (mom.card_results_blood_group == 'onegative'): reasons.append("o-negative blood group")
-    if (mom.card_results_blood_group == 'anegative'): reasons.append("a-negative blood group")
-    if (mom.card_results_blood_group == 'abnegative'): reasons.append("ab-negative blood group")
-    if (mom.card_results_blood_group == 'bnegative'): reasons.append("b-negative blood group")
-    return ", ".join(reasons)
+    if (mom.heart_problems == 'yes'): reasons.append("Heart problems")
+    if (mom.diabetes == 'yes'): reasons.append("Diabetes")
+    if (mom.hip_problems == 'yes'): reasons.append("Hip problems")
+    if (mom.card_results_syphilis_result == 'positive'): reasons.append("Positive for syphilis")
+    if (mom.card_results_hepb_result == 'positive'): reasons.append("Positive for hepb")
+    if (mom.over_5_years == 'yes'): reasons.append("Over 5 years since last pregnancy")
+    if (mom.card_results_hb_test == 'below_normal'): reasons.append("Low hb test")
+    if (mom.card_results_blood_group == 'onegative'): reasons.append("O-negative blood group")
+    if (mom.card_results_blood_group == 'anegative'): reasons.append("A-negative blood group")
+    if (mom.card_results_blood_group == 'abnegative'): reasons.append("AB-negative blood group")
+    if (mom.card_results_blood_group == 'bnegative'): reasons.append("B-negative blood group")
+    # return ", ".join(reasons)
+    return reasons
     
 def hi_risk_pregnancies(request, format_to_str=True):
     '''Hi-Risk Pregnancy Summary'''
