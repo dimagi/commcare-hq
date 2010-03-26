@@ -6,12 +6,11 @@
     display:block;
     float:left;
     margin:5px;
-    background-color: #fff; /*#f5f5f5;*/
+    background-color: #fff;
     border:1px solid #dedede;
     border-top:1px solid #eee;
     border-left:1px solid #eee;
 
-/*    font-family: Helvetica;*/
     font-size:100%;
     line-height:130%;
     text-decoration:none;
@@ -19,11 +18,11 @@
     color:#565656;
     cursor:pointer;
     padding:5px 10px 6px 7px; /*Links */
-    height: 75px; /*50px;*/
-    width: 200px; /*70px;*/
+    height: 75px;
+    width: 200px;
     text-align: center;
     
-    vertical-align:top;
+    vertical-align:middle;
     
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
@@ -75,5 +74,6 @@
   background-color:#c3d9ff; /*#b6e3fc;*/
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
+  vertical-align:middle;
 }
 
