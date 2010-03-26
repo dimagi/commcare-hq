@@ -140,10 +140,10 @@ def chart(request, template_name="chart.html"):
     context['total_follow_up'] = len(follow_up())
         
     # get per CHW table for show/hide
-    report = SqlReport.objects.get(id=1)
-    report_table = report.to_html_table() # {"whereclause": whereclause})    
+    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
     
-    context['report_table'] = report_table
+    # import pprint ; pprint.pprint(context['chw_reg_cols'])
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -200,9 +200,8 @@ def hq_chart(request, template_name="hq_chart.html"):
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id]})    
   
     # get per CHW table for show/hide
-    report = SqlReport.objects.get(id=1)
-    report_table = report.to_html_table()
-    context['report_table'] = report_table
+    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -266,13 +265,10 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['height'] = graph.height
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-    
 
     # get per CHW table for show/hide
-    report = SqlReport.objects.get(id=1)
-    report_table = report.to_html_table()
-    context['report_table'] = report_table
-
+    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -291,3 +287,17 @@ def _get_graphgroup_children(graph_group):
     for child in children:
         ret[child] = _get_graphgroup_children(child)
     return ret
+    
+
+# get per CHW table for show/hide
+def _get_chw_registrations_table():    
+    report = SqlReport.objects.get(id=1).get_data()
+    
+    # work directly with the data - we know the format we're expecting. if it changes, so will this code
+    cols = report[0][:4] # 'Healthcare Worker', '# of Patients', '# of High Risk', '# of Follow Up'
+    rows = []
+    for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur')
+        d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic'), row))
+        rows.append(d)
+    
+    return cols, rows
