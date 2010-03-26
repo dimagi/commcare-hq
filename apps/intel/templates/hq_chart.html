@@ -8,25 +8,10 @@
 	{% tabs page "true" %}
 {% endblock %}
 
-{% block javascripts %}
-    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
-    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
-    
-    
-    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/graphing/superfish/superfish.css" media="screen">    
-    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
-	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
-    <script type="text/javascript">
-		// initialise plugins
-		jQuery(function(){
-			jQuery('ul.sf-menu').superfish();
-		});
-	</script>    
-    {{ form.media }}
-{% endblock %} 
 {% block page_stylesheets %}
     <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/graphing/stylesheets/charts.css" />
 {% endblock %}
+
 {% block content %}
 	<div class="top-bar">
 		<table style="border: none">

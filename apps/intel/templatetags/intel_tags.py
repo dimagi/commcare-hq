@@ -19,12 +19,10 @@ def tabs(current_page, hq_mode=False):
     t = '<div class="buttons">'
     
     for i in tabs:
+        # to show only the currnent page icon add: if i == current_page or current_page == "home"
         style = "border: solid 4px #c3d9ff" if i == current_page else ""
-        but = '<a href="/intel/%s" style="%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, style, tabs[i]["icon"], tabs[i]["text"])
-
-        # uncomment to show only the currnent page icon 
-        # if i == current_page or current_page == "home":
-        t+=but
+        t += '<a href="/intel/%s" style="%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % \
+              (i, style, tabs[i]["icon"], tabs[i]["text"])
 
     if current_page != "home":
         t += '<a href="/intel/" style="float: right; width: 90px"><img src="/static/intel/img/icons/home-icon.png" /></a>'
@@ -33,14 +31,12 @@ def tabs(current_page, hq_mode=False):
     return t
 
 
-
 def _doctor_tabs():
     return { "all" : 
                 {
                     "text" : "Pregnant Mothers",
                     "icon" : "/static/intel/img/icons/preg-icon.png"
                 },
-
              "risk":  
                 {
                     "text" : "High Risk",
@@ -57,13 +53,11 @@ def _hq_tabs():
     return { "hq_risk":  
                 {
                     "text" : "High Risk",
-                    # "color": "#82c700",
                     "icon" : "/static/intel/img/icons/risk-icon.png"
                 },
               "hq_chart": 
                 {
                     "text" : "Program Trends",
-                    # "color": "#0099ff",
                     "icon" : "/static/intel/img/icons/trends-icon.png"
                 }
             }

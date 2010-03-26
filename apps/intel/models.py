@@ -36,10 +36,9 @@ class UserProfile(models.Model):
 
 
 def get_role_for(user):
-    # this is ugly. UserProfile is supposed to take of this, and just provide User.get_profile().role
+    # this is not ideal. UserProfile is supposed to take of this, and just provide User.get_profile().role
+    # eg: role = UserProfile.objects.get(user=user.id).role
     # but it doesn't work. I suspect RapidSMS ignores AUTH_PROFILE_MODULE in local.ini
-    # TODO: check later. we might change the model in any case.
-    # role = UserProfile.objects.get(user=user.id).role
     try:
         role = UserProfile.objects.get(user=user.id).role
     except UserProfile.DoesNotExist:
@@ -108,33 +107,3 @@ def _result_to_dict(results):
         res[row[0]] = row[1]
 
     return res
-
-
-# # MemberRole.objects.filter(member = 4)
-# # [<MemberRole: brian: chw>, <MemberRole: brian: doctor>]
-# 
-# class MemberRole(models.Model):
-#     member = models.ForeignKey(Membership)
-#     role = models.ForeignKey(Role)
-# 
-#     def __unicode__():
-#         return "%s: %s" % (member.member_object, role)
-#         
-#     class Meta:
-#         verbose_name = _("Member Role")
-# 
-#     
-#     # helper method: get array of roles for a Member
-#     # >>> MemberRole.per(4)
-#     # [u'chw', u'doctor']
-#     # useful for easily checking a user's role, eg:
-#     # >>> if 'chw' in MemberRole.per(4): ...
-#     
-#     @staticmethod
-#     def per(member):
-#         roles = []
-#         for r in MemberRole.objects.filter(member = member):
-#             roles.append(r.role.name)
-#         
-#         return roles
-

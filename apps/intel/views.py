@@ -96,15 +96,7 @@ def _custom_report(request, domain_id, report_name, page):
     else:
         context['search_term'] = request.GET['search']
     
-    context['print_view'] = (page != "single")
-        
-    if request.GET.has_key('print'):
-        context['printmode'] = True
-        template = "report_print.html"
-    else:
-        template = "report_base.html"
-        
-    return render_to_response(request, template, context)
+    return render_to_response(request, "report.html", context)
 
 
 ######## Chart Methods
@@ -142,8 +134,6 @@ def chart(request, template_name="chart.html"):
     # get per CHW table for show/hide
     # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
-    
-    # import pprint ; pprint.pprint(context['chw_reg_cols'])
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -200,7 +190,6 @@ def hq_chart(request, template_name="hq_chart.html"):
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id]})    
   
     # get per CHW table for show/hide
-    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
     
     for item in request.GET.items():
@@ -267,7 +256,6 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
 
     # get per CHW table for show/hide
-    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
     for item in request.GET.items():
