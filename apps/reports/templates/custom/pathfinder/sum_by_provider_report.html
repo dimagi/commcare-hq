@@ -1,0 +1,110 @@
+{% extends base_template %}
+{% block title %}Home Based Care Patients Summary for Month{% endblock %}
+
+{% block content %}
+<h2 align="center">Home Based Care Patients Summary for Month</h2>
+<h5 align="center">(filled at the end of every month by HBC provider)</h5>
+
+<div>
+<a href="{% url reports.views.sum_prov_csv num month_num year %}">download csv file</a>
+</div>
+
+<div style="font-weight:bold;display:inline;">Region:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ region }}    </div>
+<div style="font-weight:bold;display:inline;">District:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ district }}    </div>
+<div style="font-weight:bold;display:inline;">Ward:</div>
+<div style="display:inline;">{{ ward }}</div>
+
+<p>
+<div style="display:inline;font-weight:bold;">Report for month:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ month }}    </div>
+<div style="display:inline;font-weight:bold;">Year:</div>
+<div style="display:inline;">{{ year }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">HBC Provider name:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ prov_name }}    </div>
+<div style="display:inline;font-weight:bold;">HBC Provider number:</div>
+<div style="display:inline;">{{ num }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">Sex (HBC Provider):</div>
+<div style="display:inline;">{{ sex }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">HBC Provider has been trained according to national guidelines:</div>
+<div style="display:inline;">{{ trained }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">Organization who trained HBC Provider:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ org }}    </div>
+<div style="display:inline;font-weight:bold;">Number of days training:</div>
+<div style="display:inline;">{{ days_train }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">Category of HBC Provider:</div>
+<div style="display:inline;">{{ category }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">HBC Supervisor name:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ supervisor }}    </div>
+<div style="display:inline;font-weight:bold;">Health facility name:</div>
+<div style="display:inline;">{{ facility }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">HBC Supervisor number:</div>
+<div style="display:inline;">{{ supervisor_id }}</div>
+</p>
+
+<p>
+<div style="display:inline;font-weight:bold;">Organization supporting HBC</div>
+<div style="display:inline;">{{ org_support }}</div>
+</p>
+
+<div id="government-report">
+<table>
+	<thead>
+	<tr>
+		<th>HBC Patient Code</th>
+		<th>Age</th>
+		<th>Sex</th>
+		<th>HBC Status</th>
+		<th>Number of visits during</th>
+		<th>HIV status</th>
+		<th>Functional status</th>
+		<th>CTC Status</th>
+		<th>CTC Number</th>
+		<th>Material items provided</th>
+		<th>Services provided</th>
+		<th>Referrals made</th>
+		<th>Referrals completed</th>
+	</tr>
+	</thead>
+	{% for chw in all_data %}
+	<tr class="{% cycle 'odd' 'even' %}">
+		<td>{{ chw.patient_code }}</td>
+		<td>{{ chw.age }}</td>
+		<td>{{ chw.sex }}</td>
+		<td>{{ chw.hbc_status }}</td>
+		<td>{{ chw.num_visits }}</td>
+		<td>{{ chw.hiv_status }}</td>
+		<td>{{ chw.functional_status }}</td>
+		<td>{{ chw.ctc_status }}</td>
+		<td>{{ chw.ctc_num }}</td>
+		<td>{{ chw.items_provided }}</td>
+		<td>{{ chw.services_provided }}</td>
+		<td>{{ chw.referrals_made }}</td>
+		<td>{{ chw.referrals_completed }}</td>
+	</tr>
+	{% endfor %}
+</table>
+</div>
+{% endblock %}
