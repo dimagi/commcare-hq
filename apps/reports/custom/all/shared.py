@@ -1,5 +1,81 @@
 from datetime import datetime
-from apps.reports.models import CaseFormIdentifier
+from reports.models import CaseFormIdentifier, Case
+from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
+import calendar
+
+def get_ward_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data_list = []
+    for chw_id, chw_data in data_by_chw.items():
+        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+        chw_data_list.append(chw_obj)
+    context["all_data"] = chw_data_list
+    context["year"] = year
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    return context
+    
+def get_provider_summary_data(startdate, enddate, month, year, provider):
+    context = {}
+    case_name = "Pathfinder_1"    
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data = data_by_chw[provider]
+    client_data_list = []
+    for client_id, client_data in chw_data.items():
+        client_obj = ProviderSummaryData(case, client_id, client_data, 
+                                         startdate, enddate)
+        if client_obj.num_visits != 0:
+            client_data_list.append(client_obj)
+
+    context["all_data"] = client_data_list
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    context["num"] = provider
+    return context
+
+def get_hbc_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    context["all_data"] = chw_obj
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    return context
+
+def get_providers(case_name):
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    all_data = case.get_all_data_maps()
+    chws = []
+    for id, map in all_data.items():
+        chw_id = id.split("|")[0]
+        if not chw_id in chws:
+            chws.append(chw_id)
+    return chws
     
 def get_data_by_chw(case):
     ''' Given a case return the data organized by chw id'''
@@ -15,13 +91,32 @@ def get_data_by_chw(case):
             data_by_chw[chw_id][id] = map
     return data_by_chw
 
+def get_mon_year(request):
+    ''' Given a request returns the month and year included in it'''
+    year = ""
+    month = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'year':
+                year = int(item[1])
+            if item[0] == 'month':
+                month = int(item[1])
+    
+    startdate = datetime(year, month, 01).date()
+    nextmonth = month + 1
+    if nextmonth == 13:
+        nextmonth = 1
+    enddate = datetime(year, nextmonth, 01).date()
+    return (month, year, startdate, enddate)
+
 def get_case_info(context, chw_data, enddate, active):
     ''' Gives information about each case of a chw'''
     all_data = []
     for id, map in chw_data.items():
         form_dates = []
         mindate = datetime(2000, 1, 1)
-        fttd = {'open': mindate, 'close': mindate, 'follow': mindate}
+        fttd = {'open': mindate, 'close': mindate, 'follow': mindate, 
+                'referral': mindate}
         for form_id, form_info in map.items():
             form_type = CaseFormIdentifier.objects.get(form_identifier=
                                                        form_id.id).form_type
@@ -33,7 +128,7 @@ def get_case_info(context, chw_data, enddate, active):
                 if timeend > fttd[form_type] and enddate > datetime.date(
                                                                     timeend):
                     fttd[form_type] = timeend
-        status = get_status(fttd, active)
+        status = get_status(fttd, active, enddate)
         if not len(form_dates) == 0:
             all_data.append({'case_id': id.split("|")[1], 'total_visits': 
                              len(form_dates), 'start_date': 
@@ -136,16 +231,39 @@ def get_last(form_dates):
             last = date
     return last
 
-def get_status(fttd, active):
+def get_status(fttd, active, enddate):
     ''' Returns whether active, late, or closed'''
     if fttd['open'] > fttd['close'] or only_follow(fttd):
         if datetime.date(fttd['open']) >= active or datetime.date(
                                                     fttd['follow']) >= active:
-            return 'active'
+            if referral_late(fttd, enddate, 3):
+                return 'Late (Referral)'
+            else:
+                return 'Active'
         else:
-            return 'late'
+            if referral_late(fttd, enddate, 3):
+                return 'Late (Referral)'
+            else:
+                return 'Late (Routine)'
     else:
-        return 'closed'
+        return 'Closed'
+    
+def referral_late(form_type_to_date, enddate, days_late):
+    ''' Was the last form submitted a referral form and has it 
+    been more than 3 days since that submission'''
+    referral = form_type_to_date['referral']
+    if form_type_to_date['open'] > referral:
+        return False
+    elif form_type_to_date['follow'] > referral:
+        return False
+    elif form_type_to_date['close'] > referral:
+        return False
+    else:
+        time_diff = enddate - datetime.date(referral)
+        if time_diff.days > days_late:
+            return True
+        else:
+            return False
 
 def only_follow(fttd):
     ''' for cases where there was no open form but there was a follow form'''
