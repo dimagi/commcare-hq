@@ -61,6 +61,7 @@ def dashboard(request, template_name="hq/dashboard.html"):
     # we want a structure of:
     # {program: { user: {day: count}}}
     program_data_structure = {}
+    program_totals = {}
     time_bound_metadatas = Metadata.objects.filter(timeend__gt=startdate)\
         .filter(timeend__lt=enddate)\
         .filter(formdefmodel__domain=request.user.selected_domain)
@@ -79,6 +80,8 @@ def dashboard(request, template_name="hq/dashboard.html"):
             for date in dates:  user_date_map[date] = 0
             user_phones = PhoneUserInfo.objects.filter(user=program_user)
             for phone in user_phones:
+                # this querying will be a lot cleaner when we attach the real
+                # phone object to the metadata
                 phone_metas = time_bound_metadatas.filter(deviceid=phone.phone.device_id)\
                     .filter(username=phone.username)
                 for meta in phone_metas:
@@ -87,7 +90,15 @@ def dashboard(request, template_name="hq/dashboard.html"):
                     found_meta_ids.append(meta.id)
             program_map[program_user] = user_date_map
         program_map["Grand Total"] = program_totals_by_date    
+        
+        # set totals for all dates
+        program_user_totals = {}
+        for user, data in program_map.items():
+            program_user_totals[user] = sum([value for value in data.values()])
+        
+        # populate data in higher level maps
         program_data_structure[program]=program_map
+        program_totals[program]=program_user_totals
     
     unregistered_metas = time_bound_metadatas.exclude(id__in=found_meta_ids)
     unregistered_map = SortedDict()
@@ -101,10 +112,14 @@ def dashboard(request, template_name="hq/dashboard.html"):
         unregistered_map[meta.username][meta.timeend.date()] +=1
         unregistered_totals_by_date[meta.timeend.date()] += 1
     unregistered_map["Grand Total"] = unregistered_totals_by_date
-
+    grand_totals = {}
+    for user, data in unregistered_map.items():
+        grand_totals[user] = sum([value for value in data.values()])
+    
     return render_to_response(request, template_name, 
                               {"program_data": program_data_structure,
                                "unregistered_data": unregistered_map,
+                               "unregistered_totals": grand_totals,
                                "dates": dates,
                                "startdate": startdate,
                                "enddate": enddate})

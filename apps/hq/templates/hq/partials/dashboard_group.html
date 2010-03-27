@@ -15,5 +15,13 @@
     {% endfor %}
 </tr> 
 {% endfor %}
+{% if totals %}
+<tr>
+    <td>All Dates Shown</td>
+    {% for username in data %}
+    <td>{{ totals|dict_lookup:username }}</td>
+    {% endfor %}
+</tr>
+{% endif %}
 </tbody>
 </table>
