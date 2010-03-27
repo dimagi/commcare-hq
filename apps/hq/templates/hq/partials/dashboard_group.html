@@ -1,0 +1,19 @@
+{% load hq_shared_tags %}
+<table>
+<thead>
+<th>Date</th>
+{% for username in data %}
+<th>{{ username }}</th>
+{% endfor %}
+</thead>
+<tbody>
+{% for date in dates %}
+<tr>
+    <td>{{ date }}</td>
+    {% for username in data %}
+    <td>{{ data|dict_lookup:username|dict_lookup:date }}</td>
+    {% endfor %}
+</tr> 
+{% endfor %}
+</tbody>
+</table>

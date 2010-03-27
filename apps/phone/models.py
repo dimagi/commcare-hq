@@ -1,16 +1,21 @@
 from __future__ import absolute_import
-
 from datetime import datetime
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.signals import post_save
 
 from domain.models import Domain
+from phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
+    REGISTRATION_XMLNS
 from receiver.models import Attachment
-import xformmanager.xmlrouter as xmlrouter
-from phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, REGISTRATION_XMLNS
-# the scheduler is a really bad place for this class to live
 from scheduler.fields import PickledObjectField
+from xformmanager.models import Metadata
+import xformmanager.xmlrouter as xmlrouter
+
+
+
+# the scheduler is a really bad place for this class to live
 
 
 class Phone(models.Model):
@@ -27,7 +32,7 @@ class PhoneUserInfo(models.Model):
     it basically annotates a User account with some extra info about the phone
     the user is using.  However a user might have multiple phones.
     """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True)
     phone = models.ForeignKey(Phone, related_name="users")
     
     # the username and password are from the phone, not the user account
@@ -38,7 +43,7 @@ class PhoneUserInfo(models.Model):
     additional_data = PickledObjectField(null=True, blank=True)
     
     class Meta:
-        unique_together = ("user", "phone")
+        unique_together = ("phone", "username")
 
     def __unicode__(self):
         return unicode(self.user)
@@ -57,6 +62,22 @@ class PhoneBackup(models.Model):
     def __unicode__(self):
         return "Id: %s, Device: %s, Users: %s" % (self.id, self.phone,
                                                   self.device.users.count())
+
+
+def create_phone(sender, instance, created, **kwargs):
+    """
+    Create a phone from a metadata submission if its a device we've
+    not seen.
+    """
+    
+    if not created:             return
+    if not instance.device_id:  return
+    
+    Phone.objects.get_or_create(device_id = instance.device_id,
+                                domain = instance.attachment.submission.domain)
+    
+
+post_save.connect(create_phone, sender=Metadata)
     
 # register our backup and registration methods, like a signal, 
 # in the models file to make sure this always gets bootstrapped.

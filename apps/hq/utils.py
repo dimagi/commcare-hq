@@ -1,5 +1,5 @@
 from datetime import timedelta
-import settings
+from django.conf import settings
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
@@ -51,9 +51,20 @@ def get_members_and_supervisors(organization):
     return (members, supervisors)
             
     
-def get_user_affiliation(user):
-    (parents, children) = traversal.getImmediateRelationsForObject(user)
-    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
+def get_date_range(startdate, enddate):
+    """
+    Returns a list of dates, including every day between startdate and enddate
+    """
+    if enddate < startdate:
+        raise Exception("Passed in enddate that was before start date, did you flip your variables around?")
+    
+    if isinstance(startdate, datetime.datetime):  startdate = startdate.date()
+    if isinstance(enddate, datetime.datetime):    enddate = enddate.date()
+        
+    totalspan = enddate-startdate
+    return [startdate + timedelta(days=day) for day in range(0, totalspan.days+1)]
+        
+    
     
 def get_dates(request, default_days=0):
     default_delta = timedelta(days=default_days)
