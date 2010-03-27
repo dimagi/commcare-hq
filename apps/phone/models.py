@@ -71,9 +71,9 @@ def create_phone(sender, instance, created, **kwargs):
     """
     
     if not created:             return
-    if not instance.device_id:  return
+    if not instance.deviceid:   return
     
-    Phone.objects.get_or_create(device_id = instance.device_id,
+    Phone.objects.get_or_create(device_id = instance.deviceid,
                                 domain = instance.attachment.submission.domain)
     
 
