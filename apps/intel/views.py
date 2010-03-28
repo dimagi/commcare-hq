@@ -54,8 +54,7 @@ from intel.models import *
 def homepage(request):
     context = {}
 
-    role = get_role_for(request.user)
-    context['hq_mode']  = (role.name == "HQ")
+    context['hq_mode'] = (_get_role(request) == 'HQ')
         
     return render_to_response(request, "home.html", context)
     
@@ -97,6 +96,8 @@ def _custom_report(request, domain_id, report_name, page, title=None):
     context["report_name"] = report_name
     context['title'] = title
     
+    context['hq_mode'] = (_get_role(request) == 'HQ')
+        
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     # return HttpResponse(report_method(request))
     if not report_method:
@@ -117,10 +118,12 @@ def _custom_report(request, domain_id, report_name, page, title=None):
 ######## Chart Methods
 
 @login_and_domain_required
-def chart(request, template_name="chart.html"):
+def chart(request, template_name="chart.html"):    
     context = {}    
     graph = RawGraph.objects.all().get(id=20)
 
+    context['hq_mode'] = (_get_role(request) == 'HQ')
+    
     graph.domain = request.user.selected_domain.name
     startdate, enddate = utils.get_dates(request, 365) #graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
@@ -164,8 +167,9 @@ def chart(request, template_name="chart.html"):
 # per clinic UI
 @login_and_domain_required
 def hq_chart(request, template_name="hq_chart.html"):
-    
     context = {}
+    context['hq_mode'] = (_get_role(request) == 'HQ')
+
     graph = RawGraph.objects.all().get(id=27)
 
     graph.domain = request.user.selected_domain.name
@@ -221,7 +225,8 @@ def hq_chart(request, template_name="hq_chart.html"):
 @login_and_domain_required
 def hq_risk(request, template_name="hq_risk.html"):
     context = {}
-
+    context['hq_mode'] = (_get_role(request) == 'HQ')
+    
     clinics = Clinic.objects.all()
     
     # find current clinic. if id is missing/wrong, use the first clinic
@@ -304,3 +309,7 @@ def _get_chw_registrations_table():
         rows.append(d)
     
     return cols, rows
+
+# sep. method, in case Role implementation changes in the model side
+def _get_role(request):
+    return get_role_for(request.user).name

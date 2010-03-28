@@ -21,6 +21,8 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
 	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
 	<script type="text/javascript" src="{{MEDIA_URL}}/intel/javascripts/print.js"></script>
+
+	{% block page_javascripts %}{% endblock %}
 	
     <script type="text/javascript">
 		// initialise plugins
@@ -28,9 +30,8 @@
 			jQuery('ul.sf-menu').superfish();
 		});
 	</script>    
+	
 {% endblock %}
- 
-
 
 {% block auth %}
 	<div id="currentlogin-block">
@@ -49,7 +50,12 @@
 {% endblock %}
 
 {% block branding %}
-	<h1 id="site-name">{% trans "CommCare HQ" %}</h1>
+	<h1 id="site-name"><a href="/intel/">{% trans "CommCare HQ" %}</a></h1>
+{% endblock %}
+
+{% load intel_tags %}
+{% block tabs %}
+	{% if page %}{% tabs page hq_mode %}{% endif %}
 {% endblock %}
 
 {% block footer %}
