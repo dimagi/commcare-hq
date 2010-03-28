@@ -27,7 +27,7 @@
 	<table style="border: none">
 		<tr>
 			<td align="top">
-				<div style="text-align:center; font-size: 1.3em; padding: 5px; border: 1px solid; height: {{ height }}px;">
+				<div class="top-bar" style="text-align:left; background-color: #fff; height: {{ height }}px; ">
 				{% for clinic in clinics %}
 					<a href="?clinic={{ clinic.id }}" style="color: {% ifequal clinic showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ clinic.name }}</a>
 				{% endfor %}
