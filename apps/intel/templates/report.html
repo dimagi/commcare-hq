@@ -1,16 +1,10 @@
 {% extends "intel-layout.html" %}
 {% load i18n %}
 
-{% load intel_tags %}
-
-{% block tabs %}
-	{% tabs page %}
-{% endblock %}
-
 {% block title %}
 {{ report_display }}
 {% endblock %}
-{% block javascripts %}
+{% block page_javascripts %}
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jquery.blockUI.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
     <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
