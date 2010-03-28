@@ -14,10 +14,11 @@
 		{% for row in b_row.list %}
 			<tr>
 				<td>{{row.name}}</td>
-				<td>{{row.reg}}</td>
-				<td>{{row.risk}}</td>
-				<td>{{row.follow}}</td>
+				<td><a href="/intel/all?meta_username={{row.name}}">{{row.reg}}</a></td>
+				<td><a href="/intel/risk?meta_username={{row.name}}">{{row.risk}}</a></td>
+				<td><a href="/intel/all?meta_username={{row.name}}&follow=yes">{{row.follow}}</td>
 			</tr>
+			</a>
 		{% endfor %}
 	{% endfor %}
 </table>
