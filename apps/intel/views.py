@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.core.exceptions import *
 
@@ -64,12 +64,25 @@ def homepage(request):
 @login_and_domain_required
 def all_mothers_report(request):
     '''View all mothers - default'''
-    return _custom_report(request, 3, "chw_submission_details", "all")
+
+    title = ""
+    
+    if request.GET.has_key('meta_username'): 
+        title = "Cases Entered by %s" % request.GET['meta_username']
+        
+    if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
+        title += ", Followed Up"
+        
+    return _custom_report(request, 3, "chw_submission_details", "all", title)
 
 @login_and_domain_required
 def hi_risk_report(request):
     '''View only hi risk'''
-    return _custom_report(request, 3, "hi_risk_pregnancies", "risk")
+    title = ""
+    if request.GET.has_key('meta_username'): 
+        title = "Cases Entered by %s" % request.GET['meta_username']
+    
+    return _custom_report(request, 3, "hi_risk_pregnancies", "risk", title)
 
 @login_and_domain_required
 def mother_details(request):
@@ -78,10 +91,12 @@ def mother_details(request):
     
 
 
-def _custom_report(request, domain_id, report_name, page):
+def _custom_report(request, domain_id, report_name, page, title=None):
     context = {}
     context['page'] = page
     context["report_name"] = report_name
+    context['title'] = title
+    
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     # return HttpResponse(report_method(request))
     if not report_method:
