@@ -1,0 +1,29 @@
+{% extends "releasemanager/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "JAR/JAD Manager" %}{% endblock %}
+
+{% block releasemanager_content %}
+	<h2>{% trans "Submit New Build" %}</h2>
+	
+	<form action="{% url releasemanager.views.new %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
+		{{form.as_ul}}
+		<input type="submit" value="Submit" />
+	</form>
+	{{errors}}
+		
+	<br />
+	<p>
+		<h3>Releases</h3>
+		{% with builds.released as builds %}
+			{% include "releasemanager/partials/list_builds.html" %}
+		{% endwith %}
+	</p>
+	<br />
+	<p>
+		<h3>Unreleased Builds</h3>
+		{% with builds.unreleased as builds %}
+			{% include "releasemanager/partials/list_builds.html" %}
+		{% endwith %}
+	</p>
+{%endblock%}

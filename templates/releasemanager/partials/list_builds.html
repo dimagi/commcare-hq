@@ -1,0 +1,38 @@
+{% if builds %}
+<table>
+	<thead>
+		<th>Build #</th>
+		<th>Created At</th>
+		<th>Downloads</th>
+		<th>Uploaded By</th>
+		<th>Build Status</th>
+		<th>Description</th>
+		<th>Build Server URL</th>
+		<th></th>
+	</thead>
+	{% for build in builds %}
+
+	    <tr class="{% cycle 'odd' 'even' %}">
+	        <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
+	        <td>{{build.created_at|date}} {{build.created_at|time}}</td>
+	        <td>
+				<a href="{{ build.jar_url }}">{{build.jar_filename}}</a><br />
+	            <a href="{{ build.jad_url }}" onmouseout="hideTooltip()" 
+						onmouseover="showTooltip(event,'{{ build.jad_content|linebreaks }}');return false">{{build.jad_filename}}</a><br />
+	            <a href="{{build.get_zip_downloadurl}}">Zip Archive</a>
+	        </td>
+	        <td>{{build.uploaded_by}}</td>
+	        <td>{% if build.is_release %}Release{% else %}Standard{% endif %}</td>        
+	        <td>{{build.description}}</td>
+	        <td><a href="{{build.get_buildURL}}">Build URL</a></td>
+	        <td>{% if not build.is_release %}
+	           <button onclick="location.assign('{% url releasemanager.views.make_release build.id %}');">Promote to Release</button>
+	            {% endif %}
+	        </td>
+	    </tr>
+
+	{%endfor%}
+</table>
+{% else %}
+	No builds found
+{% endif %}
