@@ -1,8 +1,16 @@
 from django.conf.urls.defaults import *
+import settings
 
 urlpatterns = patterns('',
-    (r'^releasemanager/core/?$', 'releasemanager.views.core_list'),
-    (r'^releasemanager/core/new/?$', 'releasemanager.views.core_new'),
+    (r'^releasemanager/?$', 'releasemanager.views.list'),
+    (r'^releasemanager/new/?$', 'releasemanager.views.new'),
+    (r'^releasemanager/make_release/(?P<id>\d+)?$', 'releasemanager.views.make_release'),
+    
+    url(r'^releasemanager/download/(?P<path>.*)$', 
+        'django.views.static.serve', 
+        {'document_root': settings.RAPIDSMS_APPS['releasemanager']['file_path']}, 
+        name="download_link"),
+    
     # (r'^projects/?$', 'buildmanager.views.all_projects'),
     # (r'^validator/?$', 'buildmanager.views.validator'),
     # (r'^readable_xform/?$', 'buildmanager.views.readable_xform'),

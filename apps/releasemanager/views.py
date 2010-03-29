@@ -30,42 +30,52 @@ from django.core.urlresolvers import reverse
 import mimetypes
 import urllib
 
-@login_required()
-def core_list(request, template_name="releasemanager/core.html"): 
-    context = {} 
+
+def download(request, filename):
+    print "DOWNLOAD: ", filename
     
-    context['form'] = CoreForm()
     
-    context['builds'] = Core.objects.all().order_by('-created_at')
+def list(request, template_name="releasemanager/home.html"): 
+    context = {'form' : BuildForm(), 'builds': {}}
+    context['builds']['unreleased'] = Build.objects.filter(released_by__isnull=True).order_by('-created_at')
+    context['builds']['released']   = Build.objects.filter(released_by__isnull=False).order_by('-created_at')
     
     return render_to_response(request, template_name, context)
 
-def core_new(request, template_name="releasemanager/core.html"):
+@login_required()
+def make_release(request, id):
+    build = Build.objects.get(id=id)
+    build.released_by = request.user
+    build.save()
+    return HttpResponseRedirect(reverse('releasemanager.views.list'))
+    
+@login_required()
+def new(request, template_name="releasemanager/home.html"):
     '''save new Jad & Jar into the system'''
     
     context = {}
-    form = CoreForm()    
+    form = BuildForm()    
     if request.method == 'POST':
-        form = CoreForm(request.POST, request.FILES)                
+        form = BuildForm(request.POST, request.FILES)                
         if form.is_valid():
             try:                      
-                core = form.save(commit=False)
-                core.uploaded_by=request.user
-                core.description = urllib.unquote(core.description)
+                Build = form.save(commit=False)
+                Build.uploaded_by=request.user
+                Build.description = urllib.unquote(Build.description)
 
-                core.save_file(request.FILES['jad_file_upload'])
-                core.save_file(request.FILES['jar_file_upload'])
+                Build.save_file(request.FILES['jad_file_upload'])
+                Build.save_file(request.FILES['jar_file_upload'])
 
-                core.save()
+                Build.save()
                 # _log_build_upload(request, newbuild)
-                return HttpResponseRedirect(reverse('releasemanager.views.core_list'))
+                return HttpResponseRedirect(reverse('releasemanager.views.Build_list'))
             except Exception, e:
-                logging.error("core upload error.", 
+                logging.error("Build upload error.", 
                               extra={'exception':e, 
                                      'request.POST': request.POST, 
                                      'request.FILES': request.FILES, 
                                      'form':form})
-                context['errors'] = "Could not commit core: " + str(e)
+                context['errors'] = "Could not commit Build: " + str(e)
     
     context['form'] = form
     return render_to_response(request, template_name, context)

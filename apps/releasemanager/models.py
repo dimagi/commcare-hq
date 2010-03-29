@@ -7,10 +7,11 @@ from django.db import models
 
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
+from django.core.urlresolvers import reverse
 
 FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 
-class Core(models.Model):
+class Build(models.Model):
     ''' Index of JAR/JAD files '''
     
     uploaded_by = models.ForeignKey(User, related_name="core_uploaded") 
@@ -28,11 +29,42 @@ class Core(models.Model):
 
     def __unicode__(self):
         return "build: %s. jad: %s, jar: %s \"%s\"" %\
-                (self.project, self.build_number, self.jad_file, self.jar_file, self.description)
+                (self.build_number, self.jad_file, self.jar_file, self.description)
 
     def __str__(self):
         return unicode(self).encode('utf-8')
         
+    
+    @property
+    def is_release(self):
+        return (self.released_by != None)
+        
+        
+    @property
+    def jar_url(self):
+        return self._url_for(self.jar_file)
+    
+    @property
+    def jad_url(self):
+        return self._url_for(self.jad_file)
+
+    @property
+    def jar_filename(self):
+        return os.path.split(self.jar_file)[1]
+
+    @property
+    def jad_filename(self):
+        return os.path.split(self.jad_file)[1]
+        
+    def _url_for(self, path):
+        path = path.replace(FILE_PATH, '')[1:] # remove path + first slash
+        url = reverse('download_link', kwargs={'path' : path})
+        return url
+    
+
+    def jad_content(self):
+        return open(self.jad_file).read()
+    
         
     # TODO: not sure if needed, check Django file upload docs
     def save_file(self, file_obj):
