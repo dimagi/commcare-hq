@@ -60,11 +60,19 @@ def create_registration_objects(attachment):
     reg = Registration(attachment)
     # we make these django users for future authentication purposes
     # and generic 'user grouping' functionality
-    user = _create_django_user_and_domain_membership(reg)
     phone = Phone.objects.get_or_create(device_id=reg.registering_phone_id,
                                         domain=reg.domain)[0]
-    phone_info = PhoneUserInfo()
-    phone_info.user = user
+    try:
+        phone_info = PhoneUserInfo.objects.get(phone=phone, username=reg.username)
+        if phone_info.status == "phone_created":
+            raise Exception("Tried to register user %s on phone %s but was already registered!" % \
+                            (reg.username, phone.device_id))
+    except PhoneUserInfo.DoesNotExist:
+        # fine, we are just creating a new one
+        phone_info = PhoneUserInfo()
+    
+    if not phone_info.user:
+        phone_info.user = _create_django_user_and_domain_membership(reg)
     phone_info.phone = phone
     phone_info.attachment = attachment
     phone_info.status = "phone_registered"

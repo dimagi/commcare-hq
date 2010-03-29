@@ -23,8 +23,8 @@ class PhoneUserTestCase(unittest.TestCase):
         """
         self.assertEqual(0, Phone.objects.count())
         self.assertEqual(0, PhoneUserInfo.objects.count())
-        form = create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", 
-                                       self.domain)
+        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", 
+                                self.domain)
         
         # should create a phone and user object
         self.assertEqual(1, Phone.objects.count())

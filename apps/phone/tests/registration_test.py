@@ -74,5 +74,4 @@ class RegistrationTestCase(unittest.TestCase):
         way_handled = SubmissionHandlingOccurrence.objects.get\
                             (submission=user_info.attachment.submission)
         self.assertEqual(APP_NAME, way_handled.handled.app)
-        self.assertEqual(REGISTRATION_HANDLER, way_handled.handled.method)
-        
+        self.assertEqual(REGISTRATION_HANDLER, way_handled.handled.method)    
