@@ -9,14 +9,10 @@ from domain.models import Domain
 from phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
     REGISTRATION_XMLNS
 from receiver.models import Attachment
+# the scheduler is a really bad place for this class to live
 from scheduler.fields import PickledObjectField
 from xformmanager.models import Metadata
 import xformmanager.xmlrouter as xmlrouter
-
-
-
-# the scheduler is a really bad place for this class to live
-
 
 class Phone(models.Model):
     """A phone (device)."""
@@ -26,6 +22,13 @@ class Phone(models.Model):
     def __unicode__(self):
         return self.device_id
     
+
+USER_INFO_STATUS = (    
+    ('auto_created',     'Automatically created from form submission.'),   
+    ('phone_registered', 'Registered from phone'),    
+    ('site_created',     'Manually added/edited from HQ website.'),    
+)
+
 class PhoneUserInfo(models.Model):
     """
     Someone who uses a phone.  This object is somewhat like a profile in that 
@@ -35,11 +38,13 @@ class PhoneUserInfo(models.Model):
     user = models.ForeignKey(User, null=True)
     phone = models.ForeignKey(Phone, related_name="users")
     
+    status = models.CharField(max_length=20, choices=USER_INFO_STATUS)
+    
     # the username and password are from the phone, not the user account
     username = models.CharField(max_length=32)
     password = models.CharField(max_length=32, null=True) 
-    uuid = models.CharField(max_length=32)
-    registered = models.DateField(default=datetime.today)
+    uuid = models.CharField(max_length=32, null=True)
+    registered_on = models.DateField(default=datetime.today)
     additional_data = PickledObjectField(null=True, blank=True)
     
     class Meta:
@@ -64,7 +69,7 @@ class PhoneBackup(models.Model):
                                                   self.device.users.count())
 
 
-def create_phone(sender, instance, created, **kwargs):
+def create_phone_and_user(sender, instance, created, **kwargs):
     """
     Create a phone from a metadata submission if its a device we've
     not seen.
@@ -73,11 +78,18 @@ def create_phone(sender, instance, created, **kwargs):
     if not created:             return
     if not instance.deviceid:   return
     
-    Phone.objects.get_or_create(device_id = instance.deviceid,
-                                domain = instance.attachment.submission.domain)
+    phone = Phone.objects.get_or_create\
+                (device_id = instance.deviceid,
+                 domain = instance.attachment.submission.domain)[0]
     
+    try:
+        PhoneUserInfo.objects.get(phone=phone, username=instance.username)
+    except PhoneUserInfo.DoesNotExist:
+        # create it if we couldn't find it 
+        PhoneUserInfo.objects.create(phone=phone,username=instance.username,
+                                     status="auto_created")
 
-post_save.connect(create_phone, sender=Metadata)
+post_save.connect(create_phone_and_user, sender=Metadata)
     
 # register our backup and registration methods, like a signal, 
 # in the models file to make sure this always gets bootstrapped.

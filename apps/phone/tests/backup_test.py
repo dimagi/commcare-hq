@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from phone.models import PhoneBackup
+from phone.models import Phone, PhoneBackup
 from phone.processor import BACKUP_HANDLER, APP_NAME
 from receiver.models import SubmissionHandlingOccurrence
 from xformmanager.tests.util import populate
@@ -9,10 +9,10 @@ from xformmanager.tests.util import populate
 class BackupTestCase(unittest.TestCase):
     
     def setUp(self):
-        pass
+        Phone.objects.all().delete()
     
     def tearDown(self):
-        pass
+        Phone.objects.all().delete()
     
     def testBasic(self):
         """Test basic backup functionality - create a backup by faking

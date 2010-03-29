@@ -20,7 +20,6 @@ def create_backup_objects(attachment):
     device_id = _get_backup_device_id(attachment)
     backup.phone = Phone.objects.get_or_create(device_id=device_id,
                                                domain = attachment.submission.domain)[0]
-    print "phone is: %s" % backup.phone
     backup.save()
     
     

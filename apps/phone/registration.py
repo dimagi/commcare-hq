@@ -1,17 +1,15 @@
 from __future__ import absolute_import
+import datetime, time
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+
 from domain.models import Membership
 from phone.models import Phone, PhoneUserInfo
+# this import is silly and the referenced method should be moved to a shared utility location
 from xformmanager.util import get_unique_value
 from xml.etree import ElementTree
-import datetime
-
-
-
-
-# this import is silly and the referenced method should be moved to a shared utility location
 
 
 USERNAME_TAG = "username"
@@ -51,6 +49,12 @@ class Registration(object):
                 for generic_data in child:
                     self.additional_data[generic_data.items()[0][1]] = generic_data.text
         
+        if self.date:
+            # the expected format is "2010-03-23"
+            # self.date = \
+            #    datetime.datetime.strptime(self.date, "%Y-%m-%d").date()
+            pass
+            
 @transaction.commit_on_success
 def create_registration_objects(attachment):
     reg = Registration(attachment)
@@ -62,10 +66,11 @@ def create_registration_objects(attachment):
     phone_info = PhoneUserInfo()
     phone_info.user = user
     phone_info.phone = phone
+    phone_info.status = "phone_registered"
     phone_info.username = reg.username
     phone_info.password = reg.password
     phone_info.uuid = reg.uuid
-    phone_info.registered = reg.date
+    phone_info.registered_on = reg.date
     phone_info.additional_data = reg.additional_data
     phone_info.save()
 
