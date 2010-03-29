@@ -35,8 +35,10 @@ class PhoneUserInfo(models.Model):
     it basically annotates a User account with some extra info about the phone
     the user is using.  However a user might have multiple phones.
     """
-    user = models.ForeignKey(User, null=True)
+    user = models.ForeignKey(User, null=True, related_name="phone_registrations")
     phone = models.ForeignKey(Phone, related_name="users")
+    
+    attachment = models.OneToOneField(Attachment, null=True)    
     
     status = models.CharField(max_length=20, choices=USER_INFO_STATUS)
     

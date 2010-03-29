@@ -2,8 +2,9 @@ import unittest
 import os
 from datetime import date
 
+from domain.models import Domain
 from phone.models import Phone, PhoneUserInfo
-from phone.processor import BACKUP_HANDLER, APP_NAME
+from phone.processor import APP_NAME, REGISTRATION_HANDLER
 from receiver.models import SubmissionHandlingOccurrence
 from xformmanager.tests.util import populate
 
@@ -24,7 +25,7 @@ class RegistrationTestCase(unittest.TestCase):
         self.assertEqual(0, Phone.objects.count())
         
         # submit the xml
-        populate("reg.xml", path=data_path)
+        submission = populate("reg.xml", path=data_path)
         
         # should create a phone and user object
         self.assertEqual(1, Phone.objects.count())
@@ -33,8 +34,14 @@ class RegistrationTestCase(unittest.TestCase):
         # sanity check the data
         phone = Phone.objects.all()[0]
         user_info = PhoneUserInfo.objects.all()[0]
+        django_user = user_info.user
+        
+        # phone
         self.assertEqual("67QQ86GVH8CCDNSCL0VQVKF7A", phone.device_id)
+        
+        # phone user info
         self.assertEqual(phone, user_info.phone)
+        self.assertEqual(submission.attachments.all()[0], user_info.attachment)
         self.assertEqual("phone_registered", user_info.status)
         self.assertEqual("test_registration", user_info.username)
         self.assertEqual("1982", user_info.password)
@@ -57,3 +64,15 @@ class RegistrationTestCase(unittest.TestCase):
             self.assertTrue(key in expected_data,
                             "Extra key %s was found in submitted data" % key)
             
+        # django user 
+        self.assertNotEqual(None, django_user)
+        self.assertEqual("test_registration", django_user.username)
+        user_domains = Domain.active_for_user(django_user)
+        self.assertEqual(1, user_domains.count())
+        
+        # also, make sure we created an instance of the right handler
+        way_handled = SubmissionHandlingOccurrence.objects.get\
+                            (submission=user_info.attachment.submission)
+        self.assertEqual(APP_NAME, way_handled.handled.app)
+        self.assertEqual(REGISTRATION_HANDLER, way_handled.handled.method)
+        

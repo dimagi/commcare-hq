@@ -66,6 +66,7 @@ def create_registration_objects(attachment):
     phone_info = PhoneUserInfo()
     phone_info.user = user
     phone_info.phone = phone
+    phone_info.attachment = attachment
     phone_info.status = "phone_registered"
     phone_info.username = reg.username
     phone_info.password = reg.password
@@ -89,6 +90,8 @@ def _create_django_user_and_domain_membership(reg):
     user.last_login =  datetime.datetime(1970,1,1)
     user.date_joined = datetime.datetime.utcnow()
     user.save()
+    
+    # add to the domain too
     mem = Membership()
     mem.domain = reg.domain
     mem.member_type = ContentType.objects.get_for_model(User)
