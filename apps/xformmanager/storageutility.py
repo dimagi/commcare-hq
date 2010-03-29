@@ -70,13 +70,18 @@ class StorageUtility(object):
         # then do so here. 
         # czue: this is probably not the most appropriate place for this logic
         # but it keeps us from having to parse the xml multiple times.
-        process(attachment, xmlns, version)
+        specially_handled = process(attachment, xmlns, version)
         try:
             formdefmodel = FormDefModel.objects.get(domain=attachment.submission.domain,
                                                     target_namespace=xmlns, version=version)
             
         except FormDefModel.DoesNotExist:
-            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % (xmlns, attachment.submission.domain))
+            if not specially_handled:
+                raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % \
+                                      (xmlns, attachment.submission.domain))
+            else:
+                # we handled it above, do not need to do any more work
+                return
         if formdefmodel.xsd_file_location is None:
             raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
         formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
