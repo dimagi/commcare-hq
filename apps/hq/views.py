@@ -118,6 +118,7 @@ def dashboard(request, template_name="hq/dashboard.html"):
     
     return render_to_response(request, template_name, 
                               {"program_data": program_data_structure,
+                               "program_totals": program_totals,
                                "unregistered_data": unregistered_map,
                                "unregistered_totals": grand_totals,
                                "dates": dates,
