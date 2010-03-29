@@ -605,32 +605,37 @@ class ProviderSummaryData(object):
         
         for follow in matching_follow_forms:
             self.num_visits += 1
-            self.hbc_status += follow[COLS['status']] +";"
-            self.functional_status += follow[COLS['func_status']] +";"
-            self.ctc_status += follow[COLS['ctc_status']] +";"
-            self.items_provided += follow[COLS['items']] +";"
+            self.hbc_status += follow[COLS['status']] +"; "
+            self.functional_status += follow[COLS['func_status']] +"; "
+            if follow[COLS['ctc_status']] == 'registered_no_arvs':
+                self.ctc_status += 'registered no arvs; '
+            if follow[COLS['ctc_status']] == 'registered_and_arvs':
+                self.ctc_status += 'registered and arvs; '
+            if follow[COLS['ctc_status']] == 'not_registered':
+                self.ctc_status += 'not registered; '
+            self.items_provided += follow[COLS['items']] +"; "
             if follow[COLS['services_nut']] == 1:
-                self.services_provided += 'nutritional counselling;'
+                self.services_provided += 'nutritional counselling; '
             if follow[COLS['services_infec']] == 1:
-                self.services_provided += 'infectious education;'
+                self.services_provided += 'infectious education; '
             if follow[COLS['services_fp']] == 1:
-                self.services_provided += 'family planning;'
+                self.services_provided += 'family planning; '
             if follow[COLS['services_testing']] == 1:
-                self.services_provided += 'testing;'
+                self.services_provided += 'testing; '
             if follow[COLS['services_counselling']] == 1:
-                self.services_provided += 'counselling;'
+                self.services_provided += 'counselling; '
             if follow[COLS['services_house']] == 1:
-                self.services_provided += 'house;'
+                self.services_provided += 'house; '
             if follow[COLS['services_health']] == 1:
-                self.services_provided += 'health;'
+                self.services_provided += 'health; '
             if follow[COLS['services_treatment']] == 1:
-                self.services_provided += 'treatment;'
+                self.services_provided += 'treatment; '
             if follow[COLS['services_delivery']] == 1:
-                self.services_provided += 'delivery;'
+                self.services_provided += 'delivery; '
             if follow[COLS['services_net']] == 1:
-                self.services_provided += 'net;'
+                self.services_provided += 'net; '
             if follow[COLS['services_std']] == 1:
-                self.services_provided += 'std;'
+                self.services_provided += 'std; '
             if follow[COLS['VCT']] == 1:
                 self.referrals_made += 1
             if follow[COLS['OIS']] == 1:
