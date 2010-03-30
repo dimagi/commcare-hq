@@ -665,7 +665,10 @@ class XFormDBTablePopulator(XFormProcessor):
           cursor.execute(s)
           row = cursor.fetchone()
           if row is not None:
-              parent_id = row[0]
+              # this is really sketchy - the ID is not yet created so we assume this
+              # will be the next one inserted.
+              # TODO: fix properly with real refactoring
+              parent_id = row[0] + 1 
           else:
               parent_id = 1
       
@@ -744,8 +747,6 @@ class XFormDBTablePopulator(XFormProcessor):
         label = self._hack_to_get_cchq_working( sanitize(elementdef.name) )
         #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
         if elementdef.type[0:5] == 'list.':
-            field = ''
-            value = ''
             values = raw_value.split()
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None and simple_type.multiselect_values is not None:
