@@ -34,7 +34,20 @@ class Domain(models.Model):
                                       membership__member_id = user.id, 
                                       membership__is_active=True, # Looks in membership table
                                       is_active=True) # Looks in domain table
-                
+    
+    def add(self, model_instance, is_active=True):
+        """
+        Add something to this domain, through the generic relation.
+        Returns the created membership object
+        """
+        mem = Membership()
+        mem.domain = self
+        mem.member_type = ContentType.objects.get_for_model(model_instance)
+        mem.member_id = model_instance.id
+        mem.is_active = is_active
+        mem.save()        
+        return mem
+        
     def __unicode__(self):
         return self.name
 
