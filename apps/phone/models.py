@@ -26,7 +26,7 @@ class Phone(models.Model):
 USER_INFO_STATUS = (    
     ('auto_created',     'Automatically created from form submission.'),   
     ('phone_registered', 'Registered from phone'),    
-    ('site_created',     'Manually added/edited from HQ website.'),    
+    ('site_edited',     'Manually added or edited from the HQ website.'),    
 )
 
 class PhoneUserInfo(models.Model):
@@ -53,7 +53,9 @@ class PhoneUserInfo(models.Model):
         unique_together = ("phone", "username")
 
     def __unicode__(self):
-        return unicode(self.user)
+        # prefix = "(%s)"  % self.user if self.user else "Unregistered user"
+        return "%s on phone %s" % (self.username, self.phone) 
+        
     
     
 class PhoneBackup(models.Model):

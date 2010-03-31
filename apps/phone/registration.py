@@ -71,8 +71,6 @@ def create_registration_objects(attachment):
         # fine, we are just creating a new one
         phone_info = PhoneUserInfo()
     
-    if not phone_info.user:
-        phone_info.user = _create_django_user_and_domain_membership(reg)
     phone_info.phone = phone
     phone_info.attachment = attachment
     phone_info.status = "phone_registered"
@@ -81,14 +79,29 @@ def create_registration_objects(attachment):
     phone_info.uuid = reg.uuid
     phone_info.registered_on = reg.date
     phone_info.additional_data = reg.additional_data
+    if not phone_info.user:
+        # since we don't have a good way to look who this is up based on what 
+        # comes in from the phone, assume that we always want to create a new user.  
+        phone_info.user = create_django_user_and_domain_membership(phone_info)
     phone_info.save()
+    
+def create_django_user_and_domain_membership(phone_info):
+    """
+    From a phone info object, automatically get a django user object
+    """
+    
+    user = get_django_user_object(phone_info)
+    user.save()
+    
+    # add to the domain too
+    phone_info.domain.add(user)
+    return user
 
-def _create_django_user_and_domain_membership(reg):
-    # since we don't have a good way to look who this is up based on what 
-    # comes in from the phone, assume that we always want to create a new user.  
+def get_django_user_object(phone_info):
+    """From a PhoneUserInfo object, automatically build a django user"""
     user = User()
-    user.username = get_unique_value(User.objects, "username", reg.username, "")
-    user.set_password(reg.password)
+    user.username = get_unique_value(User.objects, "username", phone_info.username, "")
+    user.set_password(phone_info.password)
     user.first_name = ''
     user.last_name  = ''
     user.email = ""
@@ -97,14 +110,4 @@ def _create_django_user_and_domain_membership(reg):
     user.is_superuser = False # Certainly not, although this makes login sad
     user.last_login =  datetime.datetime(1970,1,1)
     user.date_joined = datetime.datetime.utcnow()
-    user.save()
-    
-    # add to the domain too
-    mem = Membership()
-    mem.domain = reg.domain
-    mem.member_type = ContentType.objects.get_for_model(User)
-    mem.member_id = user.id
-    mem.is_active = True 
-    mem.save()        
-
     return user

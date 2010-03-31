@@ -1,0 +1,18 @@
+{% extends base_template %}
+{% block title %}Phone User {{ phone_user }}{% endblock %}
+{% block content %}
+<div class="span-24">
+<div class="span-12">
+<h3>The following user will be created:</h3>
+<p><strong>This information was auto-generated.  You can edit the it before saving.</strong></p>
+<form method="POST">
+{{ user_form.as_p }}
+<input type="submit" value="Ok" />
+</form>
+</div>
+<div class="span-12 last">
+<h3>Phone-specific information</h3>
+{% include "phone/partials/phone_user_display.html" %}
+</div>
+</div>
+{% endblock %}
