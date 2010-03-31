@@ -12,9 +12,12 @@
 {% block content %}
 	<div id="subheading">
 		<ul>
-			<li><a href="{% url releasemanager.views.list %}">Builds</a></li>  
-			<li><a href="{ % url buildmanager.views.all_builds %}">Projects</a></li>
-			<li><a href="{ % url buildmanager.views.validator %}">X-Form Validator</a></li>
+			<li><a href="{% url releasemanager.views.jarjad %}">JAR/JAD</a></li>  
+			<li><a href="{% url releasemanager.views.resource_sets %}">Resource Sets</a></li>  
+			<li><a href="{% url releasemanager.views.builds %}">Builds</a></li>  
+			
+			<!-- <li><a href="{ % url buildmanager.views.all_builds %}">Projects</a></li>
+			<li><a href="{ % url buildmanager.views.validator %}">X-Form Validator</a></li> -->
 		</ul>
 	</div>
 	{% block releasemanager_content %}

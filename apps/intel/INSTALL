@@ -24,17 +24,15 @@ Steps to install this app:
 
 6. In local.ini, change the following (or simply cp local.ini.intel local.ini):
 
-	# BASE_TEMPLATE=hq-layout.html
-	BASE_TEMPLATE=intel-layout.html
+	- add "intel" to apps under [rapidsms]
+	
+	- add this under [django]:
+	
+		AUTH_PROFILE_MODULE = 'intel.UserProfile'
+	
+	- add the following lines to the end of the file:
 
-	# LOGIN_REDIRECT_URL = /
-	LOGIN_REDIRECT_URL = /intel
-
-	# LOGIN_TEMPLATE=login_and_password/login.html
-	LOGIN_TEMPLATE=login_and_password/intel-login.html
-
-	# LOGGEDOUT_TEMPLATE=loggedout.html
-	LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
-
-	# Enable user profile (paste under [django])
-	AUTH_PROFILE_MODULE = 'intel.UserProfile'
+		BASE_TEMPLATE=intel-layout.html
+		LOGIN_REDIRECT_URL = /intel
+		LOGIN_TEMPLATE=login_and_password/intel-login.html
+		LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
