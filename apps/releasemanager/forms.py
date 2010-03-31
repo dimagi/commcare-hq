@@ -5,13 +5,24 @@ from django import forms
 from releasemanager.models import *
 import datetime
 
-class BuildForm(forms.ModelForm):
+class JarjadForm(forms.ModelForm):
     jar_file_upload = forms.FileField()
     jad_file_upload = forms.FileField()    
     
     class Meta:
-        model = Build
-        exclude = ('jar_file', 'jad_file','uploaded_by',
-                   'package_created', 'released_by', 'released')
+        model = Jarjad
+        exclude = ('jar_file', 'jad_file','uploaded_by','is_release')
            
         
+class BuildForm(forms.ModelForm):
+   class Meta:
+       model = Build
+       exclude = ('domain', 'is_release', 'created_at')
+
+
+class ResourceSetForm(forms.ModelForm):
+  class Meta:
+      model = ResourceSet
+      exclude = ('domain', 'is_release', 'created_at')
+
+
