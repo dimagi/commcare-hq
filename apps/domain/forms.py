@@ -33,6 +33,23 @@ class DomainModelChoiceField(forms.ModelChoiceField):
 
 ########################################################################################################
 
+class DomainBoundModelChoiceField(forms.ModelChoiceField):
+    """A model choice field for an object that is restricted by domain"""
+    
+    _domain = None
+    
+    def _get_domain(self):
+        return self._domain
+    
+    def _set_domain(self, domain):
+        _domain = domain
+        self.queryset = self.queryset.model.objects.filter(domain_membership__domain=domain)
+    
+    domain = property(_get_domain, _set_domain)
+
+    
+########################################################################################################
+
 class DomainSelectionForm(forms.Form):
     domain_list = DomainModelChoiceField(queryset=Domain.objects.none(),empty_label=None)
 
