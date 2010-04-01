@@ -1,7 +1,6 @@
-
-"""Route XML files to various processing methods.
 """
-
+Route XML files to various processing methods.
+"""
 
 registered_methods = {}
     

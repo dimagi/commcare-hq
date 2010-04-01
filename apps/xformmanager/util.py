@@ -125,7 +125,8 @@ def case_insensitive_iter(data_tree, tag):
         for e in case_insensitive_iter(d,tag):
             yield e 
 
-def get_unique_value(query_set, field_name, value):
+def get_unique_value(query_set, field_name, value, sep="_"):
+
     """Gets a unique name for an object corresponding to a particular
        django query.  Useful if you've defined your field as unique
        but are system-generating the values.  Starts by checking
@@ -136,7 +137,7 @@ def get_unique_value(query_set, field_name, value):
     column_count = query_set.filter(**{field_name: value}).count()
     to_append = 2
     while column_count != 0:
-        value = "%s_%s" % (original_value, to_append)
+        value = "%s%s%s" % (original_value, sep, to_append)
         column_count = query_set.filter(**{field_name: value}).count()
         to_append = to_append + 1
     return value

@@ -1,6 +1,5 @@
 from django.template.loader import render_to_string
-
-import settings 
+from django.conf import settings
 
 from xformmanager.models import FormDefModel, Metadata
 from receiver.models import Submission, Attachment

@@ -18,14 +18,17 @@ from custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySu
 from StringIO import StringIO
 from transformers.csv import UnicodeWriter
 import calendar
-from reportlab.pdfgen import canvas
-from reportlab.platypus import *
-from reportlab.lib.pagesizes import portrait
-from reportlab.lib import colors
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.enums import *
-
-
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.platypus import *
+    from reportlab.lib.pagesizes import portrait
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import *
+except ImportError:
+    # reportlab isn't installed.  some views will fail but this is better
+    # than bringing down all of HQ
+    pass
 
 @login_and_domain_required
 def reports(request, template_name="list.html"):
