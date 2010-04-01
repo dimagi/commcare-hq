@@ -33,9 +33,9 @@ class PhoneUserTestCase(unittest.TestCase):
         # sanity check the data
         phone = Phone.objects.all()[0]
         user_info = PhoneUserInfo.objects.all()[0]
-        self.assertEqual("WK13O6ST8SWZVXLAI68B9YZWK", phone.device_id)
+        self.assertEqual("6T9MQH37OXQINA7CMZLY0P2J7", phone.device_id)
         self.assertEqual(phone, user_info.phone)
-        self.assertEqual("lucy", user_info.username)
+        self.assertEqual("mary", user_info.username)
         self.assertEqual("auto_created", user_info.status)
         self.assertEqual(date.today(), user_info.registered_on)
         
