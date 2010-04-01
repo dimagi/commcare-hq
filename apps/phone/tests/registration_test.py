@@ -12,6 +12,10 @@ class RegistrationTestCase(unittest.TestCase):
     
     def setUp(self):
         Phone.objects.all().delete()
+        self.domain = Domain.objects.get_or_create(name='reg_domain')[0]
+        self.domain.is_active = True
+        self.domain.save()
+
     
     def tearDown(self):
         Phone.objects.all().delete()
@@ -25,7 +29,7 @@ class RegistrationTestCase(unittest.TestCase):
         self.assertEqual(0, Phone.objects.count())
         
         # submit the xml
-        submission = populate("reg.xml", path=data_path)
+        submission = populate("reg.xml", domain=self.domain, path=data_path)
         
         # should create a phone and user object
         self.assertEqual(1, Phone.objects.count())
@@ -69,6 +73,7 @@ class RegistrationTestCase(unittest.TestCase):
         self.assertEqual("test_registration", django_user.username)
         user_domains = Domain.active_for_user(django_user)
         self.assertEqual(1, user_domains.count())
+        self.assertEqual(self.domain, user_domains.all()[0])
         
         # also, make sure we created an instance of the right handler
         way_handled = SubmissionHandlingOccurrence.objects.get\
