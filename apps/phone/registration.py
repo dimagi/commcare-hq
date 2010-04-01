@@ -94,7 +94,7 @@ def create_django_user_and_domain_membership(phone_info):
     user.save()
     
     # add to the domain too
-    phone_info.domain.add(user)
+    phone_info.phone.domain.add(user)
     return user
 
 def get_django_user_object(phone_info):
