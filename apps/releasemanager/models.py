@@ -73,29 +73,30 @@ class Jarjad(models.Model):
     # TODO: not sure if needed, check Django file upload docs
     def save_file(self, file_obj):
         """Simple utility function to save the uploaded file to the right location and set the property of the model"""
-        try:
-            # get/create destinaton directory
-            save_path = os.path.join(FILE_PATH, str(self.build_number))
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
-            
-            # copy file to that directory
-            new_filename = os.path.join(save_path, file_obj.name)
-            fout = open(new_filename, 'w')
-            fout.write(file_obj.read())
-            fout.close()
-        
-            # set self.jar_file or self.jad_file
-            ext = new_filename.split('.')[-1]
-            if ext == 'jad':
-                self.jad_file = new_filename
-            elif ext == 'jar':
-                self.jar_file = new_filename
-            else:
-                raise "File extension not Jar or Jad"
+        # try:
 
-        except Exception, e:
-            logging.error("Error saving file", extra={"exception":e, "new_filename":new_filename})
+        # get/create destinaton directory
+        save_path = os.path.join(FILE_PATH, str(self.build_number))
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        
+        # copy file to that directory
+        new_filename = os.path.join(save_path, file_obj.name)
+        fout = open(new_filename, 'w')
+        fout.write(file_obj.read())
+        fout.close()
+    
+        # set self.jar_file or self.jad_file
+        ext = new_filename.split('.')[-1]
+        if ext == 'jad':
+            self.jad_file = new_filename
+        elif ext == 'jar':
+            self.jar_file = new_filename
+        else:
+            raise "File extension not Jar or Jad"
+
+        # except Exception, e:
+        #     logging.error("Error saving file", extra={"exception":e, "new_filename":new_filename})
     
 
 
