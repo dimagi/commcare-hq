@@ -144,8 +144,6 @@ def _create_build(build):
     
     new_path = os.path.join(FILE_PATH, build.domain.name, str(int(time.time())))
     
-    print new_path 
-    
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
