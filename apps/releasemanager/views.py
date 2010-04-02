@@ -67,25 +67,25 @@ def new(request, template_name="releasemanager/jarjad.html"):
     if request.method == 'POST':
         form = JarjadForm(request.POST, request.FILES)                
         if form.is_valid():
-            try:                      
-                jj = form.save(commit=False)
-                jj.uploaded_by=request.user
-                jj.description = urllib.unquote(jj.description)
-
-                jj.save_file(request.FILES['jad_file_upload'])
-                jj.save_file(request.FILES['jar_file_upload'])
-
-                jj.save()
-                
-                # _log_build_upload(request, newbuild)
-                return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
-            except Exception, e:
-                logging.error("Build upload error.", 
-                              extra={'exception':e, 
-                                     'request.POST': request.POST, 
-                                     'request.FILES': request.FILES, 
-                                     'form':form})
-                context['errors'] = "Could not commit: " + str(e)
+            # try:                      
+            jj = form.save(commit=False)
+            jj.uploaded_by=request.user
+            jj.description = urllib.unquote(jj.description)
+            
+            jj.save_file(request.FILES['jad_file_upload'])
+            jj.save_file(request.FILES['jar_file_upload'])
+            
+            jj.save()
+            
+            # _log_build_upload(request, newbuild)
+            return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
+            # except Exception, e:
+            #     logging.error("Build upload error.", 
+            #                   extra={'exception':e, 
+            #                          'request.POST': request.POST, 
+            #                          'request.FILES': request.FILES, 
+            #                          'form':form})
+            #     context['errors'] = "Could not commit: " + str(e)
     
     context['form'] = form
     return render_to_response(request, template_name, context)
