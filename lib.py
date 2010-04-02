@@ -49,7 +49,6 @@ def modify_jad(jad_file, jar_file):
     
 def create_zip(target, files):
     ''' create zip from files list, returns created zip file'''
-    print target, files
     zf = ZipFile(target, 'w')
     for f in files:
         zf.write(f)
