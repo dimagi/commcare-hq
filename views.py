@@ -76,6 +76,7 @@ def new(request, template_name="releasemanager/jarjad.html"):
                 jj.save_file(request.FILES['jar_file_upload'])
 
                 jj.save()
+                
                 # _log_build_upload(request, newbuild)
                 return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
             except Exception, e:
@@ -113,20 +114,20 @@ def new_build(request, template_name="releasemanager/builds.html"):
     if request.method == 'POST':
         form = BuildForm(request.POST)
         if form.is_valid():
-            # try:                      
-            b = form.save(commit=False)
-            b.domain = request.user.selected_domain
+            try:                      
+                b = form.save(commit=False)
+                b.domain = request.user.selected_domain
             
-            b.jar_file, b.jad_file, b.zip_file = _create_build(b)
+                b.jar_file, b.jad_file, b.zip_file = _create_build(b)
             
-            b.save()
-            return HttpResponseRedirect(reverse('releasemanager.views.builds'))
-            # except Exception, e:
-            #     logging.error("Build upload error.", 
-            #                   extra={'exception':e, 
-            #                          'request.POST': request.POST, 
-            #                          'form':form})
-            #     context['errors'] = "Could not commit: " + str(e)
+                b.save()
+                return HttpResponseRedirect(reverse('releasemanager.views.builds'))
+            except Exception, e:
+                logging.error("Build upload error.", 
+                              extra={'exception':e, 
+                                     'request.POST': request.POST, 
+                                     'form':form})
+                context['errors'] = "Could not commit: " + str(e)
 
     context['form'] = form
     return render_to_response(request, template_name, context)
@@ -154,7 +155,6 @@ def _create_build(build):
         
     shutil.copy2(new_tmp_jar, new_jar)
     shutil.copy2(new_tmp_jad, new_jad)
-    shutil.copy2(new_tmp_jad, new_jad)    
     
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % build.name), [new_jar, new_jad])
