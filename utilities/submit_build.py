@@ -15,8 +15,11 @@ import urllib
 from cookielib import * 
 from urlparse import urlparse
 
-#curl_command = 'curl' #if curl is in your path/linux
-curl_command = 'c:\curl\curl.exe' #if curl is in your path/linux
+curl_command = 'curl' #if curl is in your path/linux
+# curl_command = 'c:\curl\curl.exe' #if curl is in your path/linux
+
+#TARGET_URL = "http://{{remote_host}}/builds/new"
+TARGET_URL = "http://{{remote_host}}/releasemanager/new/"
 
 class AuthenticatedHandler(object):    
     def __init__(self, username, password, hostname):
@@ -34,7 +37,8 @@ class AuthenticatedHandler(object):
         results = p.stdout.read()
         
         
-
+    def get_url(self, remote_host):
+        return TARGET_URL.replace("{{remote_host}}", remote_host)
 
     def do_upload_build(self,
                         hostname,
@@ -63,7 +67,7 @@ class AuthenticatedHandler(object):
                                   '-F revision_number=%s' % revision_number,                                  
                                   '-F status=%s' % status,
                                   '-F description=%s' % urllib.quote(description),                                  
-                                  '--request', 'POST', 'http://%s/builds/new' % self.hostname]
+                                  '--request', 'POST', self.get_url(self.hostname)]
             
             
             p = subprocess.Popen(command_arr,
