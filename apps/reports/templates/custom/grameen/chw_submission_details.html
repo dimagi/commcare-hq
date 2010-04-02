@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
-
 <table>
 <thead>
 {% for col in columns %}
@@ -16,7 +15,7 @@
             {% else %}{{ row|dict_lookup:col }}{% endifequal %}
         </td>
     {% endfor %}
-    <td style="min-width:200px">{% with row|dict_lookup:"attachment" as attach %}
+    <td style="width:30%">{% with row|dict_lookup:"attachment" as attach %}
         {% if attach %}
             {% if attach.most_recent_annotation %}
                 {{ attach.most_recent_annotation }}
