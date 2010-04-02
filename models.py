@@ -105,6 +105,13 @@ class ResourceSet(models.Model):
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __unicode__(self):
+        return self.name
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+
 
 class Build(models.Model):
     domain = models.ForeignKey(Domain)
@@ -113,6 +120,10 @@ class Build(models.Model):
     jarjad = models.ForeignKey(Jarjad)
     resource_set = models.ForeignKey(ResourceSet)
     created_at = models.DateTimeField(auto_now_add=True)
+    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
+    jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
+    zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
+
     
 # class Package(models.Model):
     
