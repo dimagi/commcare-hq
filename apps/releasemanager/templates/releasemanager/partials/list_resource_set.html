@@ -1,28 +1,24 @@
 {% if items %}
 <table>
 	<thead>
+		<th>Name</th>
 		<th>Created At</th>
-		<th>Downloads</th>
-		<th>Build Status</th>
-		<th>Description</th>
-		<th>Build Server URL</th>
+		<th>URL</th>
 		<th></th>
 	</thead>
 	{% for item in items %}
 
 	    <tr class="{% cycle 'odd' 'even' %}">
+			<td>{{item.name}}</td>
 	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
 	        <td>
-	            <a href="{{item.get_zip_downloadurl}}">Zip Archive</a>
+	            <a href="{{item.url}}">{{item.url}}</a>
 	        </td>
-	        <td>{% if item.is_release %}Release{% else %}Standard{% endif %}</td>        
-	        <td>{{item.description}}</td>
-	        <td><a href="{{item.get_itemURL}}">Build URL</a></td>
 	        <td>
 				{% if item.is_release %}
-	           		<button onclick="location.assign('{% url releasemanager.views.build_set_release item.id 'false'%}');">Remove from Releases</button>
+	           		<button onclick="location.assign('{% url releasemanager.views.resource_set_set_release item.id 'false'%}');">Remove from Releases</button>
 				{% else %}
-					<button onclick="location.assign('{% url releasemanager.views.build_set_release item.id 'true'%}');">Release</button>
+					<button onclick="location.assign('{% url releasemanager.views.resource_set_set_release item.id 'true'%}');">Release</button>
 	            {% endif %}
 	        </td>
 	    </tr>
@@ -30,5 +26,5 @@
 	{%endfor%}
 </table>
 {% else %}
-	No builds found
+	No resource sets found
 {% endif %}
