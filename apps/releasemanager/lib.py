@@ -38,8 +38,13 @@ def add_to_jar(jar_file, path_to_add):
     return tmpjar
 
 
-def modify_jad(jad, jar):
-    return jad
+def modify_jad(jad_file, jar_file):
+    tmpjad = os.path.join(tmp.mkdtemp(), os.path.basename(jad_file))
+    shutil.copy2(jad_file, tmpjad)
+
+    # modify tmpjad here...
+    
+    return tmpjad
     
     
 def create_zip(target, files):
