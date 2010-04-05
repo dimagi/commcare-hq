@@ -17,26 +17,32 @@
 <hr class="space"/>
 
 <!-- Login form -->  
-<form name="form" method="post" action="{% url login %}" id="login_form"> <!-- class="sfb" -->
 <center>
+<form name="form" method="post" action="{% url login %}" id="login_form" style="height:300px"> <!-- class="sfb" -->
+
 <!-- intel requirement - a single field login -->  
   {% if field.errors %}
     <div class="field_errors">
     {{field.errors}}
     </div>
   {% endif %}
-  
-  	<input id="id_username" type="hidden" name="username" /> 
-	<table style="width:100px; border: none; text-align: right;">
-		<tr style="text-align:right;">
+	<input id="id_username" type="hidden" name="username" /> 
+<table style="width:100px; border: none; text-align: right;">
+	<tr>
+		<td><h2>Grameen Intel</h2></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+	<!-- <table style="width:100px; border: none; text-align: right;">
+		<tr style="text-align:right;"> -->
 			<td style="font-size:16px; text-align:center;">Enter Passcode</td>
 			<td>&nbsp;</td>
-		</tr>
-		<tr>
-  			<td><input type="password" name="password" id="id_password" style="height: 30px; font-size:14px"/> </td>
-			<td><input type="image" src="/static/intel/img/login.png" align="bottom"/></td>
-		</tr>
-	</table>
+	</tr>
+	<tr>
+ 			<td><input type="password" name="password" id="id_password" style="height: 30px; font-size:14px"/> </td>
+		<td><input type="image" src="/static/intel/img/login.png" align="bottom"/></td>
+	</tr>
+</table>
 </center>
 <script>
 $.urlParam = function(name){
@@ -51,7 +57,7 @@ $("#login_form").attr("action", window.location.href);
 </script>
 
 <!-- /ends here -->
-
 </form>
+<br /><br /><br /><br />
 {% endblock content %} 
 
