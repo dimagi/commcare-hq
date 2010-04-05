@@ -105,13 +105,17 @@ def _custom_report(request, domain_id, report_name, page, title=None):
                                   "report_not_found.html",
                                   context)
     context["report_display"] = report_method.__doc__
-    context["report_body"] = report_method(request)
+    
+    params = { 'clinic' : _get_clinic_id }
+
+    context["report_body"] = report_method(request, params )
     
     if 'search' not in request.GET.keys(): 
         context['search_term'] = ''
     else:
         context['search_term'] = request.GET['search']
-    
+        
+        
     return render_to_response(request, "report.html", context)
 
 
@@ -151,7 +155,7 @@ def chart(request, template_name="chart.html"):
         
     # get per CHW table for show/hide
     # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(_get_clinic_id(request))
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -298,18 +302,29 @@ def _get_graphgroup_children(graph_group):
     
 
 # get per CHW table for show/hide
-def _get_chw_registrations_table():    
+def _get_chw_registrations_table(clinic_id = None):    
     report = SqlReport.objects.get(id=1).get_data()
     
     # work directly with the data - we know the format we're expecting. if it changes, so will this code
     cols = report[0][:4] # 'Healthcare Worker', '# of Patients', '# of High Risk', '# of Follow Up'
     rows = []
-    for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur')
-        d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic'), row))
+    for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur', '1')
+        d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic', 'clinic_id'), row))
+        if clinic_id is not None and clinic_id != d['clinic_id']: continue
         rows.append(d)
     
+    # print cols, rows
     return cols, rows
 
 # sep. method, in case Role implementation changes in the model side
 def _get_role(request):
+    # print "USER", request.user
+    # # import pprint ; print "SDs" ; pprint(request.user)
+    # print "ROLE", get_role_for(request.user).name #.name
     return get_role_for(request.user).name
+
+def _get_clinic_id(request):
+    try:
+        return UserProfile.objects.get(user=request.user.id).clinic_id
+    except:
+        return None
