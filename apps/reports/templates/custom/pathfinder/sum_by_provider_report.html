@@ -5,9 +5,8 @@
 <h2 align="center">Home Based Care Patients Summary for Month</h2>
 <h5 align="center">(filled at the end of every month by HBC provider)</h5>
 
-<div>
-<a href="{% url reports.views.sum_prov_csv num month_num year %}">download csv file</a>
-</div>
+<div><a href="{% url reports.views.sum_prov_csv num month_num year %}">download csv file</a></div>
+<div><a href="{% url reports.views.sum_prov_pdf num month_num year %}">download pdf file</a></div>
 
 <div style="font-weight:bold;display:inline;">Region:</div>
 <div style="display:inline;white-space:pre-wrap;">{{ region }}    </div>

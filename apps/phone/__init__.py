@@ -12,12 +12,13 @@ def backup_response(way_handled, additional_params):
        of the xform, in this case as a valid backup file.
     '''
     try:
-        from backups.models import Backup
+        from phone.models import PhoneBackup
+        
         # Backups should only ever be posting as a single file
         # We don't know what it means if they're not
         if way_handled.submission.attachments.count() == 1:
             attachment = way_handled.submission.attachments.all()[0]
-            backup = Backup.objects.get(attachment=attachment)
+            backup = PhoneBackup.objects.get(attachment=attachment)
             response = SubmitResponse(status_code=200, 
                                       submit_id=way_handled.submission.id, 
                                       or_status_code=2000, 

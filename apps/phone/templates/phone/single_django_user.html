@@ -1,0 +1,8 @@
+{% extends base_template %}
+{% block title %}Phone User {{ django_user }}{% endblock %}
+{% block content %}
+<div class="span-24">
+<h3>User information</h3>
+{% include "phone/partials/phone_django_user_display.html" %}
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@
 
 {% block releasemanager_content %}
 	<h2>{% trans "Submit New JAR/JAD" %}</h2>
+	(JAR/JAD files are submitted via utilities/submit_build.py. This form is here for testing reasons.)
 	
 	<form action="{% url releasemanager.views.new %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
 		{{form.as_ul}}

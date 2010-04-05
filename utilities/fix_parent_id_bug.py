@@ -49,7 +49,10 @@ cursor = db.cursor()
 for res in get_tables():
     table = res[0]
     print "Fixing: ", table
-    fix_table(table)
+    try:
+        fix_table(table)
+    except Exception, e:
+        print "Can't fix table '%s': %s", (table, e)
 # 
 # # normal brac domain
 # # CZUE: need to fix this to work with all the other child tables on HQ as well

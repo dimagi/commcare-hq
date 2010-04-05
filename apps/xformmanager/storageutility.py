@@ -70,13 +70,18 @@ class StorageUtility(object):
         # then do so here. 
         # czue: this is probably not the most appropriate place for this logic
         # but it keeps us from having to parse the xml multiple times.
-        process(attachment, xmlns, version)
+        specially_handled = process(attachment, xmlns, version)
         try:
             formdefmodel = FormDefModel.objects.get(domain=attachment.submission.domain,
                                                     target_namespace=xmlns, version=version)
             
         except FormDefModel.DoesNotExist:
-            raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % (xmlns, attachment.submission.domain))
+            if not specially_handled:
+                raise self.XFormError("XMLNS %s could not be matched to any registered formdefmodel in %s." % \
+                                      (xmlns, attachment.submission.domain))
+            else:
+                # we handled it above, do not need to do any more work
+                return
         if formdefmodel.xsd_file_location is None:
             raise self.XFormError("Schema for form %s could not be found on the file system." % formdefmodel[0].id)
         formdef = self.get_formdef_from_schema_file(formdefmodel.xsd_file_location)
@@ -660,7 +665,10 @@ class XFormDBTablePopulator(XFormProcessor):
           cursor.execute(s)
           row = cursor.fetchone()
           if row is not None:
-              parent_id = row[0]
+              # this is really sketchy - the ID is not yet created so we assume this
+              # will be the next one inserted.
+              # TODO: fix properly with real refactoring
+              parent_id = row[0] + 1 
           else:
               parent_id = 1
       
@@ -739,8 +747,6 @@ class XFormDBTablePopulator(XFormProcessor):
         label = self._hack_to_get_cchq_working( sanitize(elementdef.name) )
         #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
         if elementdef.type[0:5] == 'list.':
-            field = ''
-            value = ''
             values = raw_value.split()
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None and simple_type.multiselect_values is not None:

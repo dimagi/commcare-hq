@@ -1,0 +1,139 @@
+<div id="government-report">
+<h2 align="center">Home Based Care Monthly Summary Report</h2>
+<h4 align="center">Ward: ?</h4>
+<h5 align="center">Month: {{ context.month }}</h5>
+<h5 align="center">Year: {{ context.year }}</h5>
+
+<div>
+<table border=1>
+	<tr>
+		<td style="width:275px">Number of providers - who reported this month:</td>
+		<td style="width:30px">{{ context.all_data.providers_reporting }}</td>
+		<td style="width:200px">- who did not report this month:</td>
+		<td style="width:30px">{{ context.all_data.providers_not_reporting }}</td>
+		<td></td>
+	</tr>
+</table>
+</div>
+<table border=1>
+	<thead>
+	<tr>
+		<th rowspan=2></th>
+		<th colspan=2>Total</th>
+		<th colspan=2>Less than 15</th>
+		<th colspan=2>15 to 24</th>
+		<th colspan=2>25 to 49</th>
+		<th colspan=2>50 and above</th>
+		<th></th>
+	</tr>
+	<tr>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th></th>
+	</tr>
+	</thead>
+	<tr>
+		<td style="width:375px">1. Number of New Clients enrolled this month</td>
+		<td style="width:32px">{{ context.all_data.new_total_m }}</td>
+		<td style="width:32px">{{ context.all_data.new_total_f }}</td>
+		<td style="width:32px">{{ context.all_data.new_0_14_m }}</td>
+		<td style="width:32px">{{ context.all_data.new_0_14_f }}</td>
+		<td style="width:32px">{{ context.all_data.new_15_24_m }}</td>
+		<td style="width:32px">{{ context.all_data.new_15_24_f }}</td>
+		<td style="width:32px">{{ context.all_data.new_25_49_m }}</td>
+		<td style="width:32px">{{ context.all_data.new_25_49_f }}</td>
+		<td style="width:32px">{{ context.all_data.new_50_m }}</td>
+		<td style="width:32px">{{ context.all_data.new_50_f }}</td>
+		<td></td>
+	</tr>
+</table>
+<table border=1>
+	<tr>
+		<td style="width:375px">2. New and continuing clients receiving services this month</td>
+		<td style="width:32px">{{ context.all_data.all_total_m }}</td>
+		<td style="width:32px">{{ context.all_data.all_total_f }}</td>
+		<td></td>
+	</tr>
+</table>
+<div>HIV status</div>
+<table border=1>
+	<tr>
+		<td style="width:375px">Positive</td>
+		<td style="width:32px">{{ context.all_data.positive_m }}</td>
+		<td style="width:32px">{{ context.all_data.positive_f }}</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="width:375px">Negative</td>
+		<td style="width:32px">{{ context.all_data.negative_m }}</td>
+		<td style="width:32px">{{ context.all_data.negative_f }}</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="width:375px">Unknown</td>
+		<td style="width:32px">{{ context.all_data.unknown_m }}</td>
+		<td style="width:32px">{{ context.all_data.unknown_f }}</td>
+		<td></td>
+	</tr>
+</table>
+<div>CTC enrollment status</div>
+<table border=1>
+	<tr>
+		<td style="width:375px">Enrolled in CTC but not on ARVs</td>
+		<td style="width:32px">{{ context.all_data.ctc_m }}</td>
+		<td style="width:32px">{{ context.all_data.ctc_f }}</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="width:375px">Enrolled in CTC and on ARVs</td>
+		<td style="width:32px">{{ context.all_data.ctc_arv_m }}</td>
+		<td style="width:32px">{{ context.all_data.ctc_arv_f }}</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="width:375px">Not enrolled in CTC</td>
+		<td style="width:32px">{{ context.all_data.no_ctc_m }}</td>
+		<td style="width:32px">{{ context.all_data.no_ctc_f }}</td>
+		<td></td>
+	</tr>
+</table>
+<table border=1>
+	<tr>
+		<td style="width:375px">3. Number of clients ever enrolled in HBC</td>
+		<td style="width:32px">{{ context.all_data.enrolled_m }}</td>
+		<td style="width:32px">{{ context.all_data.enrolled_f }}</td>
+		<td></td>
+	</tr>
+</table>
+<table border=1>
+	<thead>
+	<tr>
+		<th></th>
+		<th>Died</th>
+		<th>Lost</th>
+		<th>Transferred to other HBC services</th>
+		<th>Migrated</th>
+		<th>No longer in need of services</th>
+		<th>Opted out</th>
+		<th>Total</th>
+	</tr>
+	</thead>
+	<tr>
+		<td>4. Number of clients no longer receiving services</td>
+		<td>{{ context.all_data.died }}</td>
+		<td>{{ context.all_data.lost }}</td>
+		<td>{{ context.all_data.transferred }}</td>
+		<td>{{ context.all_data.migrated }}</td>
+		<td>{{ context.all_data.no_need }}</td>
+		<td>{{ context.all_data.opt_out }}</td>
+		<td>{{ context.all_data.total_no_services }}</td>
+	</tr>
+</table>

@@ -142,14 +142,14 @@ def _create_build(build):
     new_tmp_jar = lib.add_to_jar(jar, resources)    
     new_tmp_jad = lib.modify_jad(jad, new_tmp_jar)
     
-    new_path = os.path.join(FILE_PATH, build.domain.name, str(int(time.time())))
+    new_path = os.path.join(FILE_PATH, build.resource_set.domain.name, str(int(time.time())))
     
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
     # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
-    new_jar = str(os.path.join(new_path, "%s.jar" % build.name))
-    new_jad = str(os.path.join(new_path, "%s.jad" % build.name))
+    new_jar = str(os.path.join(new_path, "%s.jar" % build.resource_set.name))
+    new_jad = str(os.path.join(new_path, "%s.jad" % build.resource_set.name))
         
     shutil.copy2(new_tmp_jar, new_jar)
     shutil.copy2(new_tmp_jad, new_jad)
@@ -185,6 +185,7 @@ def new_resource_set(request, template_name="releasemanager/resource_sets.html")
     context = {}
     form = ResourceSetForm()    
     if request.method == 'POST':
+        import pprint ; pprint.pprint(request.POST)
         form = ResourceSetForm(request.POST)
         if form.is_valid():
             try:                      
