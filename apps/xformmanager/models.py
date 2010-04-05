@@ -397,7 +397,9 @@ class Metadata(models.Model):
     formname = models.CharField(max_length=255, null=True)
     formversion = models.CharField(max_length=255, null=True)
     
+    # TODO: make this the real device (phone) object
     deviceid = models.CharField(max_length=255, null=True)
+    
     # do not remove default values, as these are currently used to discover field type
     timestart = models.DateTimeField(_('Time start form'), default = datetime.now)
     timeend= models.DateTimeField(_('Time end form'), default = datetime.now)

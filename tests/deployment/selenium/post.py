@@ -38,6 +38,7 @@ def post(serverhost, domain_name, filename = r'testupload_tmp.xml'):
         beg = re.search('<SubmissionId>', results).span()
         end = re.search('</SubmissionId>', results).span()
         number =  results[beg[1]:end[0]]
+        # print "RESPONSE: \n%s\n\n\nNUMBER:%s\n\n" % (results, number)
     except Exception, e:
         print"problem submitting form: %s" % filename 
         print e

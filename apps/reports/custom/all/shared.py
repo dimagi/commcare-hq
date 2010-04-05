@@ -1,5 +1,155 @@
 from datetime import datetime
-from apps.reports.models import CaseFormIdentifier
+from reports.models import CaseFormIdentifier, Case
+from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
+import calendar
+
+def get_ward_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data_list = []
+    for chw_id, chw_data in data_by_chw.items():
+        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+        chw_data_list.append(chw_obj)
+    context["all_data"] = chw_data_list
+    context["year"] = year
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    return context
+    
+def get_provider_summary_data(startdate, enddate, month, year, provider):
+    context = {}
+    case_name = "Pathfinder_1"    
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_data = data_by_chw[provider]
+    client_data_list = []
+    for client_id, client_data in chw_data.items():
+        client_obj = ProviderSummaryData(case, client_id, client_data, 
+                                         startdate, enddate)
+        if client_obj.num_visits != 0:
+            client_data_list.append(client_obj)
+
+    context["all_data"] = client_data_list
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    context["num"] = provider
+    return context
+
+def get_hbc_summary_data(startdate, enddate, month, year):
+    context = {}
+    case_name = "Pathfinder_1" 
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    context["all_data"] = chw_obj
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    return context
+
+def get_providers(case_name):
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    all_data = case.get_all_data_maps()
+    chws = []
+    for id, map in all_data.items():
+        chw_id = id.split("|")[0]
+        if not chw_id in chws:
+            chws.append(chw_id)
+    return chws
+
+def get_ward_summary_headings():
+    ''' Gets headers to use in csv and pdf files'''
+    all_data = []
+    all_data.append(['', '', '', '', '', 'Type of Patient visited', '', '',
+                     '', '', '', '', '', '', '', '', '', '', '', '' ,'', '',
+                     '', '', '', '', '', '', '', '', '', '', ''])
+    all_data.append(['', '', '', '', '', 'New', '', '', '', 'Existing', '',
+                     '', '', 'Age', '', '', '', 'Deaths', '', '', '',
+                     'Transfer', '', '', '', 'Type of Referrals', '', '', '',
+                     '', '', '', 'confirmed referrals for this month'])
+    all_data.append(['Region', 'District', 'Ward', 'Provider name', 
+                     'Provider ID', 'PLWHAs', '', 'CIP', '', 'PLWHAs', '',
+                     'CIP', '', '>18yrs', '', '<=18yrs', '', 'PLWHAs', '',
+                     'CIP', '', 'PLWHAs', '', 'CIP', '', 'VCT', 'OIS', 'CTC',
+                     'PMTCT', 'FP', 'SG', 'TB', ''])
+    all_data.append(['', '', '', '', '', 'M', 'F', 'M', 'F', 'M', 'F', 'M',
+                     'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F',
+                     'M', 'F', '', '', '', '', '', '', '', ''])
+    return all_data
+
+def get_hbc_monthly_display(chw_obj):
+    ''' Gets headers and data to use in csv and pdf files'''
+    table2 = []
+    table2.append(['', 'Total', '', 'Less than 15', '', '15 to 24', '',
+                   '25-49', '', '50 and above', ''])
+    table2.append(['', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F'])
+    table2.append(['1. Number of New Clients enrolled this month', 
+                chw_obj.new_total_m, chw_obj.new_total_f, chw_obj.new_0_14_m,
+                chw_obj.new_0_14_f, chw_obj.new_15_24_m, chw_obj.new_15_24_f,
+                chw_obj.new_25_49_m, chw_obj.new_25_49_f, chw_obj.new_50_m,
+                chw_obj.new_50_f])
+    table2.append(['2. New and continuing clients receiving services this month',
+                chw_obj.all_total_m, chw_obj.all_total_f, '', '', '', '', '',
+                '', '', ''])
+    table2.append(['   HIV status', '', '', '', '', '', '', '', '', '', ''])
+    table2.append(['       Positive', chw_obj.positive_m, chw_obj.positive_f,
+                   '', '', '', '', '', '', '', ''])
+    table2.append(['       Negative', chw_obj.negative_m, chw_obj.negative_f,
+                   '', '', '', '', '', '', '', ''])
+    table2.append(['       Unknown', chw_obj.unknown_m, chw_obj.unknown_f, '',
+                   '', '', '', '', '', '', ''])
+    table2.append(['   CTC enrollment status', '', '', '', '', '', '', '', '',
+                     '', ''])
+    table2.append(['       Enrolled in CTC but not on ARVs', chw_obj.ctc_m, 
+                     chw_obj.ctc_f, '', '', '', '', '', '', '', ''])
+    table2.append(['       Enrolled in CTC and on ARVs', chw_obj.ctc_arv_m,
+                     chw_obj.ctc_arv_f, '', '', '', '', '', '', '', ''])
+    table2.append(['       Not enrolled in CTC', chw_obj.no_ctc_m, 
+                     chw_obj.no_ctc_f, '', '', '', '', '', '', '', ''])
+    table2.append(['3. Number of clients ever enrolled in HBC', 
+                     chw_obj.enrolled_m, chw_obj.enrolled_f, '', '', '', '',
+                      '', '', '', ''])
+    return table2
+
+def get_hbc_monthly_display_second(chw_obj):
+    ''' Gets the headers and data to use in the second table in 
+    csv and pdf files'''
+    table3 = []
+    table3.append(['', 'Died', 'Lost', 'Transferred to other HBC services', 
+                'Migrated', 'No longer in need of services', 'Opted out', 
+                'Total'])
+    table3.append(['4. Number of clients no longer receiving services', 
+                chw_obj.died, chw_obj.lost, chw_obj.transferred, 
+                chw_obj.migrated, chw_obj.no_need, chw_obj.opt_out, 
+                chw_obj.total_no_services])
+    return table3
+
+def get_provider_summary_headers():
+    ''' Gets the headers to use in the csv and pdf files'''
+    return ['HBC Patient Code', 'Age', 'Sex', 'HBC Status', 
+            'Number of visits during', 'HIV status', 'Functional status',
+            'CTC status', 'CTC Number', 'Material items provided', 
+            'Services provided', 'Referrals made', 'Referrals completed']
     
 def get_data_by_chw(case):
     ''' Given a case return the data organized by chw id'''
@@ -32,6 +182,18 @@ def get_mon_year(request):
         nextmonth = 1
     enddate = datetime(year, nextmonth, 01).date()
     return (month, year, startdate, enddate)
+
+def get_start_end(month, year):
+    ''' Given a month and year, returns the first date of the month and the
+    first day of the next month'''
+    month = int(month)
+    year = int(year)
+    startdate = datetime(year, month, 01).date()
+    nextmonth = month + 1
+    if nextmonth == 13:
+        nextmonth = 1
+    enddate = datetime(year, nextmonth, 01).date()
+    return (startdate, enddate)
 
 def get_case_info(context, chw_data, enddate, active):
     ''' Gives information about each case of a chw'''

@@ -3,7 +3,7 @@ import os
 import logging
 
 from django.contrib.auth.models import User
-from hq.utils import build_url
+from hq.utils import build_url, get_post_redirect
 from domain.models import Domain
 from domain.decorators import login_and_domain_required
 from requestlogger.models import RequestLog
@@ -287,11 +287,7 @@ def readable_xform(req, template_name="buildmanager/readable_form_creator.html")
                                                            })
         
     
-    # invoke the correct function...
-    # this should be abstracted away
-    if   req.method == "GET":  return get(req, template_name)
-    elif req.method == "POST": return post(req, template_name)        
-    
+    return get_post_redirect(request, get, post)
 
 def validator(req, template_name="buildmanager/validator.html"):
     """Validate an xform"""

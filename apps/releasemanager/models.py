@@ -103,7 +103,8 @@ class Jarjad(models.Model):
 class ResourceSet(models.Model):
     domain = models.ForeignKey(Domain)
     url = models.URLField(max_length=512)
-    name   = models.CharField(max_length=255)
+    #### MAKE THIS REGEX FIELD??
+    name   = models.CharField(max_length=255, unique=True)
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -116,15 +117,15 @@ class ResourceSet(models.Model):
 
 
 class Build(models.Model):
-    domain = models.ForeignKey(Domain)
-    name   = models.CharField(max_length=255)
+    # domain = models.ForeignKey(Domain)
+    # name   = models.CharField(max_length=255)
     is_release = models.BooleanField(default=False)
     jarjad = models.ForeignKey(Jarjad)
     resource_set = models.ForeignKey(ResourceSet)
     created_at = models.DateTimeField(auto_now_add=True)
     jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
     jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
-    zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
+    zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.zip$', recursive=True, path=FILE_PATH, max_length=255)
 
     def jad_content(self):
         return open(self.jad_file).read()
