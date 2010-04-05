@@ -34,7 +34,6 @@ class UserProfile(models.Model):
     role    = models.ForeignKey(Role, null=True, blank=True)
 
 
-
 def get_role_for(user):
     # this is not ideal. UserProfile is supposed to take of this, and just provide User.get_profile().role
     # eg: role = UserProfile.objects.get(user=user.id).role
@@ -46,8 +45,8 @@ def get_role_for(user):
 
     return role
 
-# schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 
+# schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 REGISTRATION_TABLE = IntelGrameenMotherRegistration._meta.db_table
 FOLLOWUP_TABLE     = IntelGrameenSafeMotherhoodFollowup._meta.db_table
 
