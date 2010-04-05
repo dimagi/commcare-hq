@@ -105,22 +105,23 @@ def _get_hi_risk_reason(mom):
     # return ", ".join(reasons)
     return reasons
     
-def hi_risk_pregnancies(request, format_to_str=True):
+def hi_risk_pregnancies(request, params={}, format_to_str=True):
     '''Hi-Risk Pregnancy Summary'''
     # just pass on to the helper view, but ensure that hi-risk is set to yes
-    params = request.GET.copy()
+    params = dict(request.GET.items() + params.items())
     params["sampledata_hi_risk"]="yes"
     return _chw_submission_summary(request, params, format_to_str)
     
-def chw_submission_details(request, format_to_str=True):
+def chw_submission_details(request, params = {}, format_to_str=True):
     '''Health Worker Submission Details'''
-    return _chw_submission_summary(request, request.GET, format_to_str)
+    params = dict(request.GET.items() + params.items())
+    return _chw_submission_summary(request, params, format_to_str)
 
 
 def followed_up(request, format_to_str=True):
     '''Followed Up - currently only used to display the total count in the chart view'''
     # just pass on to the helper view, but ensure that hi-risk is set to yes
-    params = request.GET.copy()
+    params = dict(request.GET.items() + params.items())
     params["follow"]="yes"
     return _chw_submission_summary(request, params, format_to_str)
 
@@ -138,9 +139,16 @@ def _chw_submission_summary(request, params, format_to_str=True):
     # hard coded to our schema.  bad bad!
     form_def = ElementDefModel.objects.get(table_name="schema_intel_grameen_safe_motherhood_registration_v0_3").form
     report = SqlReport.objects.get(id=grameen_submission_details_id)
+
+
     cols = ('meta_username', 'sampledata_hi_risk')
     where_cols = dict([(key, val) for key, val in params.items() if key in cols])
     whereclause = get_whereclause(where_cols)
+
+    # retarded
+    startwhere = " WHERE " if whereclause.strip() == '' else " AND "
+    
+    whereclause += startwhere + " intel_userprofile.user_id = schema_intel_grameen_safe_motherhood_registration_v0_3.sampledata_meta_userid"
 
     follow_filter = None
     if "follow" in params:
@@ -149,14 +157,13 @@ def _chw_submission_summary(request, params, format_to_str=True):
         elif params["follow"] == "no":
             follow_filter = False
 
-    search_term = (params['search'].strip() if 'search' in params else '')
-
+    search_term = (params['search'].strip() if params.has_key('search') else '')
     if search_term != '':
-        search = "sampledata_mother_name LIKE '%%" + search_term + "%%'" 
-        if whereclause.strip() == '':
-            whereclause = " WHERE %s" % search
-        else:
-            whereclause += " AND %s" % search
+        whereclause = " AND sampledata_mother_name LIKE '%%" + search_term + "%%'" 
+
+    if params.has_key('clinic'):
+        whereclause += " AND intel_userprofile.clinic_id = %s" % params['clinic']
+
 
     cols, data = report.get_data({"whereclause": whereclause, "orderby" : "ORDER BY sampledata_mother_name ASC"})
     new_data = []
