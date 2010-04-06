@@ -51,7 +51,8 @@ def create_temporary_xml(filename):
     """Creates a temporary XML file in this directory to submit.  This 
        is done to avoid duplicates"""
     f = open(filename, "w")
-    xml_to_write = "<?xml version='1.0' ?><brac xmlns=\"http://dev.commcarehq.org/BRAC/CHP/coakley\">"
+    xml_to_write = "<?xml version='1.0' ?>" + '<brac xmlns="http://dev.commcarehq.org/BRAC/CHP/coakley" version="1" uiVersion="1">'
+    # xml_to_write = "<?xml version='1.0' ?><brac xmlns=\"http://dev.commcarehq.org/BRAC/CHP/coakley\" >"
     i = 1
     while i < 4:
         random_num = random.randint(0, 100)
