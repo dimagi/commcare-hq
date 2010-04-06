@@ -17,6 +17,7 @@ class testingPost(unittest.TestCase):
 
     def setUp(self):
         self.verificationErrors = []
+        self.call_delete = False
         self.selenium = selenium("localhost", 4444, "*firefox", server)
         self.selenium.start()
     
@@ -55,6 +56,7 @@ class testingPost(unittest.TestCase):
         # testing basic submission of xml (or file) and diff against actual
         # copy
         temp_file_name = 'testupload_tmp.xml'
+        self.call_delete = True
         submission_number = post(serverhost, domain, temp_file_name)
         sel.click("link=Submissions")
         sel.wait_for_page_to_load("30000")
@@ -88,9 +90,11 @@ class testingPost(unittest.TestCase):
         except AssertionError, e: self.verificationErrors.append(str(e))
 
         #test Xform deletion
+        self.call_delete = False
         self.delete_xform(sel)
 
     def tearDown(self):
+        if self.call_delete: self.delete_xform(self.selenium)
         self.selenium.stop()
         self.assertEqual([], self.verificationErrors)
 
@@ -105,7 +109,7 @@ class testingPost(unittest.TestCase):
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(not sel.is_text_present("Sample Form 1"),
-                             "Deleted form was removced from xform listing")
+                             "Deleted form was removed from xform listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
  
 if __name__ == "__main__":
