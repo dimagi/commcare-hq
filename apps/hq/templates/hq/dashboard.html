@@ -5,12 +5,12 @@
 {% block title %}{% trans "My Dashboard" %}{% endblock %}
 {% block org_content %}
 
-<h2>{% trans "Activity Dashboard" %} :: {% ifequal startdate enddate %}
+<h2>{%trans "Activity Dashboard"%} :: {% ifequal startdate enddate %}
                                         {{startdate|date}}
                                       {% else %}
                                         {{startdate|date}} - {{enddate|date}}
                                       {% endifequal%}</h2>
-{% get_daterange_links view_name %} 	
+{% get_daterange_links_basic "" %}	
 <br>
 {% for program, data in program_data.items %}
 <h3>{{ program.name }} - {% trans "Forms Submitted" %}</h3>
