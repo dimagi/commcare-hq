@@ -337,7 +337,7 @@ def _get_clinic_info(request):
     try:
         clinic_id = UserProfile.objects.get(user=request.user.id).clinic_id
         clinic_name = Clinic.objects.get(id=clinic_id).name
-        print clinic_id, clinic_name
+#        print clinic_id, clinic_name
         return clinic_id, clinic_name
     except:
-        return None
+        return None, None
