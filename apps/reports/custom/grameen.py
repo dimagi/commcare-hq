@@ -31,7 +31,7 @@ def _monitoring(request):
     
     return monitoring_report(request, case)
 
-def _mother_summary(request):
+def _mother_summary(request, params={}):
     '''Individual Mother Summary'''
     # this is intentionally private, as it's only accessed from within other
     # reports that explicitly know about it.  We don't want to list it because
@@ -150,6 +150,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
     
     whereclause += startwhere + " intel_userprofile.user_id = schema_intel_grameen_safe_motherhood_registration_v0_3.sampledata_meta_userid"
 
+
     follow_filter = None
     if "follow" in params:
         if params["follow"] == "yes":
@@ -159,7 +160,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
 
     search_term = (params['search'].strip() if params.has_key('search') else '')
     if search_term != '':
-        whereclause = " AND sampledata_mother_name LIKE '%%" + search_term + "%%'" 
+        whereclause += " AND sampledata_mother_name LIKE '%%" + search_term + "%%'" 
 
     if params.has_key('clinic'):
         whereclause += " AND intel_userprofile.clinic_id = %s" % params['clinic']
