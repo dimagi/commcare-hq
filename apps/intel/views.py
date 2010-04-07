@@ -102,11 +102,11 @@ def _custom_report(request, domain_id, report_name, page, title=None):
     context['hq_mode'] = (_get_role(request) == 'HQ')
         
     report_method = util.get_report_method(request.user.selected_domain, report_name)
-    # return HttpResponse(report_method(request))
     if not report_method:
         return render_to_response(request, 
                                   "report_not_found.html",
                                   context)
+ 
     context["report_display"] = report_method.__doc__
     
     clinic_id, context['clinic_name'] = _get_clinic_info(request)
@@ -187,7 +187,7 @@ def hq_chart(request, template_name="hq_chart.html"):
     graph = RawGraph.objects.all().get(id=27)
 
     graph.domain = request.user.selected_domain.name
-    startdate, enddate = utils.get_dates(request, 365) 
+    startdate, enddate = utils.get_dates(request, graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
@@ -267,7 +267,7 @@ def hq_risk(request, template_name="hq_risk.html"):
 
     graph.clinic_id = showclinic.id
     
-    startdate, enddate = utils.get_dates(request, 365) 
+    startdate, enddate = utils.get_dates(request, graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
