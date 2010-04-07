@@ -1,6 +1,12 @@
 <h2>Select Report Parameters</h2>
 
 <form action="{% url reports.views.sum_ward %}" method="post">
+Ward: <select name="ward">
+{% for ward in wards %}
+<option value="{{ ward }}">{{ ward }}</option>
+{% endfor %}
+</select>
+
 Month: <select name="month">
 <option value="01">January</option>
 <option value="02">February</option>
@@ -15,6 +21,7 @@ Month: <select name="month">
 <option value="11">November</option>
 <option value="12">December</option>
 </select>
+
 Year: <select name="year">
 {% for year in years %}
 <option value="{{ year }}">{{ year }}</option>
