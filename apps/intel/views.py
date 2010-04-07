@@ -55,7 +55,10 @@ def homepage(request):
     context = {}
 
     context['hq_mode'] = (_get_role(request) == 'HQ')
-        
+    
+    if not context['hq_mode']:
+         clinic_id, context['clinic_name'] = _get_clinic_info(request)
+    
     return render_to_response(request, "home.html", context)
     
 
@@ -106,9 +109,11 @@ def _custom_report(request, domain_id, report_name, page, title=None):
                                   context)
     context["report_display"] = report_method.__doc__
     
-    params = { 'clinic' : _get_clinic_id }
+    clinic_id, context['clinic_name'] = _get_clinic_info(request)
+    
+    params = { 'clinic' : clinic_id }
 
-    context["report_body"] = report_method(request, params )
+    context["report_body"] = report_method(request, params)
     
     if 'search' not in request.GET.keys(): 
         context['search_term'] = ''
@@ -124,14 +129,19 @@ def _custom_report(request, domain_id, report_name, page, title=None):
 @login_and_domain_required
 def chart(request, template_name="chart.html"):    
     context = {}    
-    graph = RawGraph.objects.all().get(id=20)
+    graph = RawGraph.objects.all().get(id=29) #20)
 
     context['hq_mode'] = (_get_role(request) == 'HQ')
+    clinic_id, context['clinic_name'] = _get_clinic_info(request)
+    
+    graph.clinic_id = clinic_id
     
     graph.domain = request.user.selected_domain.name
-    startdate, enddate = utils.get_dates(request, 365) #graph.default_interval)
+    startdate, enddate = utils.get_dates(request, graph.default_interval)
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    print startdate.strftime("%Y-%m-%d"), (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
     context['chart_title'] = graph.title
     
@@ -155,7 +165,7 @@ def chart(request, template_name="chart.html"):
         
     # get per CHW table for show/hide
     # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(_get_clinic_id(request))
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(clinic_id)
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -323,8 +333,11 @@ def _get_role(request):
     # print "ROLE", get_role_for(request.user).name #.name
     return get_role_for(request.user).name
 
-def _get_clinic_id(request):
+def _get_clinic_info(request):
     try:
-        return UserProfile.objects.get(user=request.user.id).clinic_id
+        clinic_id = UserProfile.objects.get(user=request.user.id).clinic_id
+        clinic_name = Clinic.objects.get(id=clinic_id).name
+        print clinic_id, clinic_name
+        return clinic_id, clinic_name
     except:
         return None

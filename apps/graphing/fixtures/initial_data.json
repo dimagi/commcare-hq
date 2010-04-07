@@ -1,6 +1,15 @@
 [
 
   {
+    "pk": 29, 
+    "model": "graphing.basegraph", 
+    "fields": {
+      "shortname": "CHW Submissions Over Time", 
+      "title": "CHW Submissions Over Time"
+    }
+  }, 
+
+  {
     "pk": 28,
     "model": "graphing.basegraph",
     "fields": {
@@ -220,6 +229,26 @@
     }
   }, 
   
+
+  {
+    "pk": 29, 
+    "model": "graphing.rawgraph", 
+    "fields": {
+      "series_labels": "Count", 
+      "data_source": "", 
+      "y_axis_label": "Number of Submissions", 
+      "x_type": "MM/DD/YYYY", 
+      "additional_options": "{\"yaxis\": {\"tickDecimals\": 0}}", 
+      "time_bound": 1, 
+      "default_interval": 30, 
+      "interval_ranges": "7|30|90|365", 
+      "x_axis_label": "Date", 
+      "table_name": "xformmanager_metadata", 
+      "display_type": "compare-cumulative", 
+      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\nfrom xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userprofile prof, intel_clinic\nwhere username <> 'admin' and forms.id = meta.formdefmodel_id and intel_clinic.id = prof.clinic_id and prof.user_id = meta.chw_id\nand forms.domain_id = domains.id\nand domains.name = 'Grameen'\nand meta.timeend > '2009-04-06'\nand meta.timeend < '2010-04-07'\nand clinic_id = {{clinic_id}}\ngroup by\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, clinic_id\norder by timeend asc;"
+    }
+  }, 
+
 
   {
     "pk": 28, 
