@@ -175,12 +175,13 @@ def get_wards():
     ''' Get a list of all wards'''
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
     return wards
 
 def get_mon_year(request):
