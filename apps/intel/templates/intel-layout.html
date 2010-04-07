@@ -38,7 +38,9 @@
 		<a href="javascript:print_view();" id="print-but">Print View&nbsp;&nbsp;<img src="{{MEDIA_URL}}/intel/img/print.png" /></a>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		{% if user.is_authenticated %}        
-			Hello, <strong>{{user}}</strong>
+			Hello, <strong>{{user}}</strong> in 
+				<strong>{% if hq_mode %}HQ{% else %}{{ clinic_name }}{% endif %}</strong>
+			
 			<!-- &nbsp;&nbsp;|&nbsp;&nbsp;
 			<a href="{% url domain_admin_main %}">Domain Settings</a> -->
 			&nbsp;&nbsp;|&nbsp;&nbsp;

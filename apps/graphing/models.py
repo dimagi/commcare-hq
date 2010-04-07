@@ -109,7 +109,8 @@ class RawGraph(BaseGraph):
                     attr = match[2:len(match)-2]
                     repl = getattr(self,attr)
                     query = query.replace(match, str(repl))
-
+            
+            # print query         
             return query 
 
         except Exception, e:            
