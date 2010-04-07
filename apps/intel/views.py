@@ -111,7 +111,7 @@ def _custom_report(request, domain_id, report_name, page, title=None):
     
     clinic_id, context['clinic_name'] = _get_clinic_info(request)
     
-    params = { 'clinic' : clinic_id }
+    params = { 'clinic' : clinic_id } if clinic_id is not None else {}
 
     context["report_body"] = report_method(request, params)
     
