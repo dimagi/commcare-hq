@@ -274,12 +274,15 @@ def ward_summary(request):
     
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/select_info_ward_summary.html", context)
 
@@ -533,12 +536,15 @@ def summary_by_provider_report(request):
     context = {}
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/provider_select_ward.html", context)
 
@@ -685,12 +691,15 @@ def hbc_monthly_summary_report(request):
     
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/select_info_hbc_summary.html", 
                             context)
