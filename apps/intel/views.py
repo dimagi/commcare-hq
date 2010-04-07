@@ -141,7 +141,7 @@ def chart(request, template_name="chart.html"):
     graph.startdate = startdate.strftime("%Y-%m-%d")
     graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    print startdate.strftime("%Y-%m-%d"), (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+    # print startdate.strftime("%Y-%m-%d"), (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
 
     context['chart_title'] = graph.title
     
