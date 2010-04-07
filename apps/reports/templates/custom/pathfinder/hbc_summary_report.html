@@ -4,12 +4,12 @@
 {% block content %}
 <div id="government-report">
 <h2 align="center">Home Based Care Monthly Summary Report</h2>
-<h4 align="center">Ward: ?</h4>
+<h4 align="center">Ward: {{ ward }}</h4>
 <h5 align="center">Month: {{ month }}</h5>
 <h5 align="center">Year: {{ year }}</h5>
 
-<div><a href="{% url reports.views.hbc_sum_csv month_num year %}">download csv file</a></div>
-<div><a href="{% url reports.views.hbc_sum_pdf month_num year %}">download pdf file</a></div>
+<div><a href="{% url reports.views.hbc_sum_csv month_num year ward %}">download csv file</a></div>
+<div><a href="{% url reports.views.hbc_sum_pdf month_num year ward %}">download pdf file</a></div>
 <div>
 <table>
 	<tr>

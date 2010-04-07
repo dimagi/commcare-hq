@@ -157,7 +157,12 @@ def sum_provider(request):
 def sum_ward(request):
     '''View the ward summary report'''
     (month, year, startdate, enddate) = get_mon_year(request)
-    context = get_ward_summary_data(startdate, enddate, month, year)
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    context = get_ward_summary_data(startdate, enddate, month, year, ward)
     return render_to_response(request, 
                               "custom/pathfinder/ward_summary_report.html", 
                               context)
@@ -165,12 +170,43 @@ def sum_ward(request):
 def hbc_monthly_sum(request):
     ''' View the hbc monthly summary report'''
     (month, year, startdate, enddate) = get_mon_year(request)
-    context = get_hbc_summary_data(startdate, enddate, month, year)
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    context = get_hbc_summary_data(startdate, enddate, month, year, ward)
     return render_to_response(request, 
                               "custom/pathfinder/hbc_summary_report.html", 
                               context)
     
-def ward_sum_csv(request, month, year):
+def select_prov(request):
+    '''Given a ward, select the provider and date for the report'''
+    context = {}
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    providers = {}
+    puis = PhoneUserInfo.objects.all()
+    for pui in puis:
+        additional_data = pui.additional_data
+        if "ward" in additional_data:
+            if ward == additional_data["ward"]:
+                providers[pui.username + pui.phone.device_id] = pui.username
+    context["providers"] = providers
+
+    year = datetime.now().date().year
+    years = []
+    for i in range(0, 5):
+        years.append(year-i)
+    context["years"] = years
+    return render_to_response(request, 
+                              "custom/pathfinder/select_provider.html", 
+                              context)
+    
+def ward_sum_csv(request, month, year, ward):
     ''' Creates CSV file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
     case_name = "Pathfinder_1" 
@@ -183,7 +219,8 @@ def ward_sum_csv(request, month, year):
     chw_data_list = []
     for chw_id, chw_data in data_by_chw.items():
         chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        chw_data_list.append(chw_obj)
+        if chw_obj.ward == ward:
+            chw_data_list.append(chw_obj)
     output = StringIO()
     w = UnicodeWriter(output)
     headers = get_ward_summary_headings()
@@ -208,7 +245,9 @@ def sum_prov_csv(request, chw_id, month, year):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_data = data_by_chw[chw_id]
+    chw_data = {}
+    if chw_id in data_by_chw:
+        chw_data = data_by_chw[chw_id]
     client_data_list = []
     for client_id, client_data in chw_data.items():
         client_obj = ProviderSummaryData(case, client_id, client_data, 
@@ -226,7 +265,7 @@ def sum_prov_csv(request, chw_id, month, year):
                                         % ( chw_id, month, year)
     return response
 
-def hbc_sum_csv(request, month, year):
+def hbc_sum_csv(request, month, year, ward):
     '''Creates csv file of HBC monthly summary report'''
     case_name = "Pathfinder_1" 
     (startdate, enddate) = get_start_end(month, year)
@@ -237,7 +276,7 @@ def hbc_sum_csv(request, month, year):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)
     w.writerow(['Number of providers - who reported this month:',
@@ -258,7 +297,7 @@ def hbc_sum_csv(request, month, year):
                                         % ( month, year)
     return response
 
-def ward_sum_pdf(request, month, year):
+def ward_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
     case_name = "Pathfinder_1" 
@@ -271,7 +310,8 @@ def ward_sum_pdf(request, month, year):
     chw_data_list = []
     for chw_id, chw_data in data_by_chw.items():
         chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        chw_data_list.append(chw_obj)
+        if chw_obj.ward == ward:
+            chw_data_list.append(chw_obj)
 
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=ward_summary_%s-%s.pdf'\
@@ -319,7 +359,7 @@ def ward_sum_pdf(request, month, year):
     doc.build(elements)
     return response
 
-def hbc_sum_pdf(request, month, year):
+def hbc_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of HBC monthly summary report'''
     case_name = "Pathfinder_1" 
     (startdate, enddate) = get_start_end(month, year)
@@ -330,7 +370,7 @@ def hbc_sum_pdf(request, month, year):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s-%s.pdf'\
@@ -340,8 +380,8 @@ def hbc_sum_pdf(request, month, year):
     elements = []
     
     ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
-    para = Paragraph('Home Based Care Monthly Summary Report<br/>Month: %s<br/>Year: %s<br/><br/>'% 
-                     ( calendar.month_name[int(month)], year), ps)
+    para = Paragraph('Home Based Care Monthly Summary Report<br/>Ward: %s<br/>Month: %s<br/>Year: %s<br/><br/>'% 
+                     ( ward, calendar.month_name[int(month)], year), ps)
     elements.append(para)
     
     table1 = []
@@ -409,7 +449,9 @@ def sum_prov_pdf(request, chw_id, month, year):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_data = data_by_chw[chw_id]
+    chw_data = {}
+    if chw_id in data_by_chw:
+        chw_data = data_by_chw[chw_id]
     client_data_list = []
     for client_id, client_data in chw_data.items():
         client_obj = ProviderSummaryData(case, client_id, client_data, 

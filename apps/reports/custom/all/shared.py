@@ -2,11 +2,11 @@ from datetime import datetime
 from reports.models import CaseFormIdentifier, Case
 from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 import calendar
+from phone.models import PhoneUserInfo
 
-def get_ward_summary_data(startdate, enddate, month, year):
+def get_ward_summary_data(startdate, enddate, month, year, ward):
     context = {}
     case_name = "Pathfinder_1" 
-
     try:
         case = Case.objects.get(name=case_name)
     except Case.DoesNotExist:
@@ -16,15 +16,23 @@ def get_ward_summary_data(startdate, enddate, month, year):
     chw_data_list = []
     for chw_id, chw_data in data_by_chw.items():
         chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        chw_data_list.append(chw_obj)
+        if chw_obj.ward == ward:
+            chw_data_list.append(chw_obj)
     context["all_data"] = chw_data_list
     context["year"] = year
     context["month"] = calendar.month_name[month]
     context["month_num"] = month
+    context["ward"] = ward
     return context
     
 def get_provider_summary_data(startdate, enddate, month, year, provider):
     context = {}
+    userinfo = None
+    puis = PhoneUserInfo.objects.all()
+    for pui in puis:
+        if provider == pui.username + pui.phone.device_id:
+            userinfo = pui
+    additional_data = userinfo.additional_data
     case_name = "Pathfinder_1"    
     try:
         case = Case.objects.get(name=case_name)
@@ -32,7 +40,9 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_data = data_by_chw[provider]
+    chw_data = {}
+    if provider in data_by_chw:
+        chw_data = data_by_chw[provider]
     client_data_list = []
     for client_id, client_data in chw_data.items():
         client_obj = ProviderSummaryData(case, client_id, client_data, 
@@ -45,9 +55,12 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
     context["month_num"] = month
     context["year"] = year
     context["num"] = provider
+    context["prov_name"] = userinfo.username
+    for key in additional_data:
+        context[key] = additional_data[key] #TODO: change in templates to match what joachim says
     return context
 
-def get_hbc_summary_data(startdate, enddate, month, year):
+def get_hbc_summary_data(startdate, enddate, month, year, ward):
     context = {}
     case_name = "Pathfinder_1" 
     try:
@@ -56,26 +69,13 @@ def get_hbc_summary_data(startdate, enddate, month, year):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     context["all_data"] = chw_obj
     context["month"] = calendar.month_name[month]
     context["month_num"] = month
     context["year"] = year
+    context["ward"] = ward
     return context
-
-def get_providers(case_name):
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    all_data = case.get_all_data_maps()
-    chws = []
-    for id, map in all_data.items():
-        chw_id = id.split("|")[0]
-        if not chw_id in chws:
-            chws.append(chw_id)
-    return chws
 
 def get_ward_summary_headings():
     ''' Gets headers to use in csv and pdf files'''
@@ -158,12 +158,30 @@ def get_data_by_chw(case):
     # organize data by chw id -- this currently only works for pathfinder
     for id, map in case_data.items():
         index = id.find('|')
-        if index != -1:
-            chw_id = id.split("|")[0]
+        if index != -1 and index != 0:
+            all_ids = id.split("|")
+            if len(all_ids) == 3:
+                chw_id = all_ids[0] + all_ids[1]
+                id = all_ids[2]
+            else:
+                chw_id = all_ids[0]
+                id = all_ids[1]
             if not chw_id in data_by_chw:
                 data_by_chw[chw_id] = {}
             data_by_chw[chw_id][id] = map
     return data_by_chw
+
+def get_wards():
+    ''' Get a list of all wards'''
+    wards = []
+    puis = PhoneUserInfo.objects.all()
+    for pui in puis:
+        additional_data = pui.additional_data
+        if "ward" in additional_data:
+            ward = additional_data["ward"]
+            if not ward in wards and ward != None:
+                wards.append(ward)
+    return wards
 
 def get_mon_year(request):
     ''' Given a request returns the month and year included in it'''

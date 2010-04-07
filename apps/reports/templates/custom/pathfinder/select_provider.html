@@ -1,3 +1,7 @@
+{% extends base_template %}
+{% block title %}Select Report Parameters{% endblock %}
+
+{% block content %}
 <h2>Select Report Parameters</h2>
 
 <form action="{% url reports.views.sum_provider %}" method="post">
@@ -21,9 +25,10 @@ Year: <select name="year">
 {% endfor %}
 </select>
 Provider: <select name="provider">
-{% for chw in providers %}
-<option value="{{ chw }}">{{ chw }}</option>
+{% for provider_id, provider_name in providers.items %}
+<option value="{{ provider_id }}">{{ provider_name }}</option>
 {% endfor %}
 </select>
 <input type="submit" value="Get Report" />
 </form>
+{% endblock %}
