@@ -86,7 +86,6 @@ def followup_by(group_by):
 
 
 def _rawquery(sql):
-    print sql
     cursor = connection.cursor()
     cursor.execute(sql)
     return cursor.fetchall()
