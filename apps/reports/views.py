@@ -255,8 +255,12 @@ def sum_prov_csv(request, chw_id, month, year):
                                          startdate, enddate)
         if client_obj.num_visits != 0:
             client_data_list.append(client_obj)
+    provider_data_list = get_provider_data_list(chw_id, month, year)
     output = StringIO()
     w = UnicodeWriter(output)
+    for row in provider_data_list:
+        w.writerow(row)
+    w.writerow([''])
     w.writerow(get_provider_summary_headers())
     for row in client_data_list:
         w.writerow(row)
@@ -469,9 +473,23 @@ def sum_prov_pdf(request, chw_id, month, year):
     elements = []
     
     ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
-    para = Paragraph('Home Based Care Patients Summary for Month<br/>Month: %s<br/>Year: %s'% 
-                     ( calendar.month_name[int(month)], year), ps)
+    para = Paragraph('Home Based Care Patients Summary for Month', ps)
     elements.append(para)
+    
+    style_pd = ParagraphStyle(name='pd')
+    provider_data = get_provider_data_list(chw_id, month, year)
+    for row in provider_data:
+        row_table = Table([row])
+        row_table.hAlign='LEFT'
+        row_table.setStyle(TableStyle([('FONTNAME', (0, 0), (0, 0), 
+                                        'Times-Bold')]))
+        if len(row) > 2:
+            row_table.setStyle(TableStyle([('FONTNAME', (2, 0), (2, 0), 
+                                        'Times-Bold')]))
+        if len(row) > 4:
+            row_table.setStyle(TableStyle([('FONTNAME', (4, 0), (4, 0), 
+                                        'Times-Bold')]))
+        elements.append(row_table)
     
     all_data = []
     headers = []

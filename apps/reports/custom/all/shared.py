@@ -33,7 +33,9 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
         for pui in puis:
             if provider == pui.username + pui.phone.device_id:
                 userinfo = pui
-    additional_data = userinfo.additional_data
+    additional_data = None
+    if userinfo != None:
+        additional_data = userinfo.additional_data
     case_name = "Pathfinder_1"    
     try:
         case = Case.objects.get(name=case_name)
@@ -56,7 +58,8 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
     context["month_num"] = month
     context["year"] = year
     context["num"] = provider
-    context["prov_name"] = userinfo.username
+    if userinfo != None:
+        context["prov_name"] = userinfo.username
     if additional_data != None:
         for key in additional_data:
             context[key] = additional_data[key] #TODO: change in templates to match what joachim says
@@ -78,6 +81,87 @@ def get_hbc_summary_data(startdate, enddate, month, year, ward):
     context["year"] = year
     context["ward"] = ward
     return context
+
+def get_user_data(chw_id):
+    ''' Gets user specific data from PhoneUserInfo'''
+    data = {}
+    userinfo = None
+    puis = PhoneUserInfo.objects.all()
+    if puis != None:
+        for pui in puis:
+            if chw_id == pui.username + pui.phone.device_id:
+                userinfo = pui
+    if userinfo != None:
+        additional_data = userinfo.additional_data
+        if additional_data != None:
+            for key in additional_data:
+                data[key] = additional_data[key]
+            data["prov_name"] = userinfo.username
+    return data
+
+def get_provider_data_list(chw_id, month, year):
+    data = get_user_data(chw_id)
+    all_data = []
+    
+    first_row = ['Region:', '', 'District:', '', 'Ward:', '']
+    if 'region' in data:
+        first_row[1] = data['region']
+    if 'district' in data:
+        first_row[3] = data['district']
+    if 'ward' in data:
+        first_row[5] = data['ward']
+    all_data.append(first_row)
+    
+    all_data.append(['Report for month:', calendar.month_name[int(month)], 'Year:',
+                     year])
+    
+    third_row = ['HBC Provider name:', '', 'HBC Provider number:', '']
+    if 'prov_name' in data:
+        third_row[1] = data['prov_name']
+    if 'hcbpid' in data:
+        third_row[3] = data['hcbpid']
+    all_data.append(third_row)
+    
+    fourth_row = ['Sex (HBC Provider):']
+    if 'sex' in data: #TODO: what is the real key?
+        fourth_row.append(data['sex'])
+    all_data.append(fourth_row)
+    
+    fifth_row = ['HBC Provider has been trained according to national guidelines:']
+    if 'trained' in data: #TODO: what is the real key?
+        fifth_row.append(data['trained'])
+        
+    sixth_row = ['Organization who trained HBC Provider:', '', 
+                 'Number of days training:', '']
+    if 'org' in data: # TODO: what is the real key?
+        sixth_row[1] = data['org']
+    if 'num_days' in data: #TODO: what is the real key?
+        sixth_row[3] = data['num_days']
+    all_data.append(sixth_row)
+    
+    seventh_row = ['Category of HBC Provider:']
+    if 'category' in data: #TODO: What is the real key?
+        seventh_row.append(data['category'])
+    all_data.append(seventh_row)
+    
+    eighth_row = ['HBC Supervisor name:', '', 'Health facility name:', '']
+    if 'supervisor' in data:#TODO: what is the real key?
+        eighth_row[1] = data['supervisor']
+    if 'facility' in data: #TODO: what is the real key?
+        eighth_row[3] = data['facility']
+    all_data.append(eighth_row)
+    
+    ninth_row = ['HBC Supervisor number:']
+    if 'supervisor_id' in data: #TODO: what is the real key?
+        ninth_row.append(data['supervisor_id'])
+    all_data.append(ninth_row)
+    
+    tenth_row = ['Organization supporting HBC:']
+    if 'org_supporting' in data: #TODO: what is the real key?
+        tenth_row.append(data['org_supporting'])
+    all_data.append(tenth_row)
+    
+    return all_data
 
 def get_ward_summary_headings():
     ''' Gets headers to use in csv and pdf files'''
