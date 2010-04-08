@@ -190,11 +190,12 @@ def select_prov(request):
                 ward = item[1]
     providers = {}
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            if ward == additional_data["ward"]:
-                providers[pui.username + pui.phone.device_id] = pui.username
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                if ward == additional_data["ward"]:
+                    providers[pui.username + pui.phone.device_id] = pui.username
     context["providers"] = providers
 
     year = datetime.now().date().year

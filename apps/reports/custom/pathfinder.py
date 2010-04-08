@@ -348,19 +348,21 @@ class WardSummaryData(object):
         #add ward, district, region for this chw
         puis = PhoneUserInfo.objects.all()
         userinfo = None
-        for pui in puis:
-            if chw_id == pui.username + pui.phone.device_id:
-                userinfo = pui
+        if puis != None:
+            for pui in puis:
+                if chw_id == pui.username + pui.phone.device_id:
+                    userinfo = pui
         if userinfo != None:
             additional_data = userinfo.additional_data
-            if "region" in additional_data:
-                self.region = additional_data["region"]
-            if "ward" in additional_data:
-                self.ward = additional_data["ward"]
-            if "district" in additional_data:
-                self.district = additional_data["district"]
-            if "hcbpid" in additional_data:
-                self.hcbpid = additional_data["hcbpid"]
+            if additional_data != None:
+                if "region" in additional_data:
+                    self.region = additional_data["region"]
+                if "ward" in additional_data:
+                    self.ward = additional_data["ward"]
+                if "district" in additional_data:
+                    self.district = additional_data["district"]
+                if "hcbpid" in additional_data:
+                    self.hcbpid = additional_data["hcbpid"]
         
         # go through all of this chw's clients
         for client_id, client_data in data_map.items():
@@ -759,11 +761,13 @@ class HBCMonthlySummaryData(object):
         for chw_id, chw_data in data_by_chw.items():
             form_this_month = False
             in_ward = False
-            for pui in puis:
-                if chw_id == pui.username + pui.phone.device_id:
-                    ad_data = pui.additional_data
-                    if "ward" in ad_data and ad_data["ward"] == ward:
-                        in_ward = True
+            if puis != None:
+                for pui in puis:
+                    if chw_id == pui.username + pui.phone.device_id:
+                        ad_data = pui.additional_data
+                        if ad_data != None and "ward" in ad_data and \
+                            ad_data["ward"] == ward:
+                            in_ward = True
             if in_ward:
                 for client_data in chw_data.values():
                     # use form_type? 

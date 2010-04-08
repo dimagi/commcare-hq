@@ -29,9 +29,10 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
     context = {}
     userinfo = None
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        if provider == pui.username + pui.phone.device_id:
-            userinfo = pui
+    if puis != None:
+        for pui in puis:
+            if provider == pui.username + pui.phone.device_id:
+                userinfo = pui
     additional_data = userinfo.additional_data
     case_name = "Pathfinder_1"    
     try:
@@ -56,8 +57,9 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
     context["year"] = year
     context["num"] = provider
     context["prov_name"] = userinfo.username
-    for key in additional_data:
-        context[key] = additional_data[key] #TODO: change in templates to match what joachim says
+    if additional_data != None:
+        for key in additional_data:
+            context[key] = additional_data[key] #TODO: change in templates to match what joachim says
     return context
 
 def get_hbc_summary_data(startdate, enddate, month, year, ward):
