@@ -12,7 +12,7 @@ from reports.models import Case, SqlReport
 from reports.util import get_whereclause
 from reports.custom.shared import monitoring_report, Mother
 
-from pprint import pprint
+# from pprint import pprint
 
 
 '''Report file for custom Grameen reports'''
@@ -148,7 +148,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
     # retarded
     startwhere = " WHERE " if whereclause.strip() == '' else " AND "
     
-    whereclause += startwhere + " intel_userprofile.user_id = schema_intel_grameen_safe_motherhood_registration_v0_3.sampledata_meta_userid"
+    whereclause += startwhere + " intel_userclinic.username = schema_intel_grameen_safe_motherhood_registration_v0_3.meta_username"
 
 
     follow_filter = None
@@ -163,7 +163,7 @@ def _chw_submission_summary(request, params, format_to_str=True):
         whereclause += " AND sampledata_mother_name LIKE '%%" + search_term + "%%'" 
 
     if params.has_key('clinic'):
-        whereclause += " AND intel_userprofile.clinic_id = %s" % params['clinic']
+        whereclause += " AND intel_userclinic.clinic_id = %s" % params['clinic']
 
 
     cols, data = report.get_data({"whereclause": whereclause, "orderby" : "ORDER BY sampledata_mother_name ASC"})

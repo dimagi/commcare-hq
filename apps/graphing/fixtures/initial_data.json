@@ -245,7 +245,7 @@
       "x_axis_label": "Date", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 
-      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, count(*)\nfrom xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userprofile prof, intel_clinic\nwhere username <> 'admin' and forms.id = meta.formdefmodel_id and intel_clinic.id = prof.clinic_id and prof.user_id = meta.chw_id\nand forms.domain_id = domains.id\nand domains.name = 'Grameen'\nand meta.timeend > '{{startdate}}'\nand meta.timeend < '{{enddate}}'\nand clinic_id = {{clinic_id}}\ngroup by\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), username, clinic_id\norder by timeend asc;"
+      "db_query": "\nselect  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), prof.username, count(*)\nfrom xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic\nwhere forms.id = meta.formdefmodel_id and intel_clinic.id = prof.clinic_id and prof.username = meta.username\nand forms.domain_id = domains.id\nand domains.name = 'Grameen'\nand meta.timeend > '{{startdate}}'\nand meta.timeend < '{{enddate}}'\nand clinic_id = {{clinic_id}}\ngroup by\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'), prof.username, clinic_id\norder by timeend asc;\n"
     }
   }, 
 
@@ -267,7 +267,8 @@
       "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
       "display_type": "histogram-multifield-sorted", 
       "height": 300, 
-      "db_query": "\nselect \ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\n\n\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userprofile\n\nwhere sampledata_meta_userid = intel_userprofile.user_id and meta_username <> 'admin' and sampledata_meta_userid  > 0 and intel_userprofile.clinic_id = {{clinic_id}}\n"
+      "db_query": "\nselect \ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\n\n\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userclinic where meta_username = intel_userclinic.username and meta_username <> 'admin' and intel_userclinic.clinic_id = {{clinic_id}}"
+      
     }
   },
 
@@ -287,8 +288,7 @@
       "x_axis_label": "Date", 
       "table_name": "xformmanager_metadata", 
       "display_type": "compare-cumulative", 
-      "db_query": "select  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), intel_clinic.name as clinic, count(*)\r\nfrom xformmanager_metadata meta,\r\nxformmanager_formdefmodel forms, hq_domain domains, intel_userprofile prof, intel_clinic\r\nwhere intel_clinic.id = prof.clinic_id and username <> 'admin' and prof.user_id = meta.chw_id and forms.id = meta.formdefmodel_id\r\nand forms.domain_id = domains.id\r\nand domains.name = '{{domain}}'\r\nand meta.timeend > '{{startdate}}'\r\nand meta.timeend < '{{enddate}}'\r\ngroup by\r\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'),clinic\r\norder by timeend asc;"
-      
+      "db_query": "\nselect  DATE_FORMAT(timeend,'%%m/%%d/%%Y'), intel_clinic.name as clinic, count(*)\nfrom xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic\nwhere intel_clinic.id = prof.clinic_id and prof.username = meta.username and forms.id = meta.formdefmodel_id\nand forms.domain_id = domains.id\nand domains.name = '{{domain}}'\nand meta.timeend > '{{startdate}}'\nand meta.timeend < '{{enddate}}'\ngroup by\nDATE_FORMAT(timeend,'%%m/%%d/%%Y'),clinic\norder by timeend asc;\n"
     }
   }, 
   
