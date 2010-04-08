@@ -8,17 +8,8 @@ from domain.models import Membership
 from intel.schema_models import *
 
 
-# Adding roles and clinics to the user profile
 
-class Role(models.Model):
-    name = models.CharField(max_length=255)    
-
-    def __unicode__(self):
-        return self.name
-    class Meta:
-        verbose_name = _("Role")
-
-
+# dropping roles - HQ is just another clinic.
 class Clinic(models.Model):
     name = models.CharField(max_length=255)
 
@@ -28,10 +19,15 @@ class Clinic(models.Model):
         verbose_name = _("Clinic")
 
 
-class UserProfile(models.Model):
-    user    = models.ForeignKey(User, unique=True)
-    clinic  = models.ForeignKey(Clinic, null=True, blank=True)
-    role    = models.ForeignKey(Role, null=True, blank=True)
+# have to join on username, since user_ids are not consistent. So, UserProfile won't help here.
+class UserClinic(models.Model):
+    username = models.CharField(max_length=255)
+    clinic = models.ForeignKey(Clinic, null=True, blank=True)
+
+    def __unicode__(self):
+        return "User: %s Clinic: %s" % (self.username, self.clinic.name)
+    class Meta:
+        verbose_name = _("User Clinic")
 
 
 def get_role_for(user):
@@ -51,50 +47,46 @@ REGISTRATION_TABLE = IntelGrameenMotherRegistration._meta.db_table
 FOLLOWUP_TABLE     = IntelGrameenSafeMotherhoodFollowup._meta.db_table
 
 def registrations():
-    return IntelGrameenMotherRegistration.objects.filter(sampledata_meta_userid__gt=0)
+    return IntelGrameenMotherRegistration.objects.exclude(meta_username='admin')
 
 def hi_risk():
-    return IntelGrameenMotherRegistration.objects.filter(sampledata_meta_userid__gt=0, sampledata_hi_risk="yes")
+    return IntelGrameenMotherRegistration.objects.exclude(meta_username='admin').filter(sampledata_hi_risk="yes")
 
 def follow_up():
     return IntelGrameenSafeMotherhoodFollowup.objects.all()
 
 
-# this is adapted from the various SqlReport stuff, which wasn't accurate (references xforms_ tables instead of actual data)
-# and was a pain to use
-# 
-# TODO: see if Django GROUP BY equivalent is powerful enough to turn this to ORM code instead of SQL
-def registrations_by_clinic():
+def registrations_by(group_by):
     sql = ''' 
-        select clinic_id, count(sampledata_case_id)
-        from %s, intel_userprofile
-        where sampledata_meta_userid > 0
-        and sampledata_meta_userid = intel_userprofile.user_id
-        group by clinic_id
-    ''' % REGISTRATION_TABLE
+        SELECT clinic_id, count(sampledata_case_id)
+        FROM %s, intel_userclinic
+        WHERE meta_username = intel_userclinic.username
+        GROUP BY %s
+    ''' % (REGISTRATION_TABLE, group_by)
     return _result_to_dict(_rawquery(sql))
 
-def hi_risk_by_clinic():
+def hi_risk_by(group_by):
     sql = ''' 
-        select clinic_id, count(sampledata_case_id)
-        from %s, intel_userprofile
-        where sampledata_hi_risk = 'yes' and sampledata_meta_userid > 0
-        and sampledata_meta_userid = intel_userprofile.user_id
-        group by clinic_id
-    ''' % REGISTRATION_TABLE
+        SELECT clinic_id, count(sampledata_case_id)
+        FROM %s, intel_userclinic
+        WHERE sampledata_hi_risk = 'yes' and meta_username = intel_userclinic.username
+        GROUP BY %s
+    ''' % (REGISTRATION_TABLE, group_by)
     return _result_to_dict(_rawquery(sql))
 
-def followup_by_clinic():
+def followup_by(group_by):
     sql = ''' 
-        select clinic_id, count(safe_pregnancy_case_id)
-        from %s, intel_userprofile
-        where safe_pregnancy_meta_userid > 0
-        and safe_pregnancy_meta_userid = intel_userprofile.user_id
-        group by clinic_id
-    ''' % FOLLOWUP_TABLE
+        SELECT clinic_id, count(safe_pregnancy_case_id)
+        FROM %s, intel_userclinic
+        WHERE meta_username = intel_userclinic.username
+        GROUP BY %s
+    ''' % (FOLLOWUP_TABLE, group_by)
     return _result_to_dict(_rawquery(sql))
 
-def _rawquery( sql):
+
+
+def _rawquery(sql):
+    print sql
     cursor = connection.cursor()
     cursor.execute(sql)
     return cursor.fetchall()

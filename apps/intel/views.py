@@ -52,13 +52,9 @@ from intel.models import *
 
 @login_and_domain_required
 def homepage(request):
-    context = {}
-
-    context['hq_mode'] = (_get_role(request) == 'HQ')
-    
-    if not context['hq_mode']:
-         clinic_id, context['clinic_name'] = _get_clinic_info(request)
-    
+    context = { 'clinic' : _get_clinic(request) }
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
+        
     return render_to_response(request, "home.html", context)
     
 
@@ -94,12 +90,14 @@ def mother_details(request):
 
 
 def _custom_report(request, domain_id, report_name, page, title=None):
-    context = {}
+    context = { 'clinic' : _get_clinic(request) }
+
     context['page'] = page
     context["report_name"] = report_name
     context['title'] = title
-    
-    context['hq_mode'] = (_get_role(request) == 'HQ')
+
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
+    params = { 'clinic' : context['clinic']['id'] } if context['clinic']['name'] != 'HQ' else {}
         
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     if not report_method:
@@ -108,10 +106,7 @@ def _custom_report(request, domain_id, report_name, page, title=None):
                                   context)
  
     context["report_display"] = report_method.__doc__
-    
-    clinic_id, context['clinic_name'] = _get_clinic_info(request)
-    
-    params = { 'clinic' : clinic_id } if clinic_id is not None else {}
+        
 
     context["report_body"] = report_method(request, params)
     
@@ -124,17 +119,14 @@ def _custom_report(request, domain_id, report_name, page, title=None):
     return render_to_response(request, "report.html", context)
 
 
-######## Chart Methods
-
+# Chart Methods
 @login_and_domain_required
 def chart(request, template_name="chart.html"):    
-    context = {}    
+    context = { 'clinic' : _get_clinic(request) }
     graph = RawGraph.objects.all().get(id=29) #20)
 
-    context['hq_mode'] = (_get_role(request) == 'HQ')
-    clinic_id, context['clinic_name'] = _get_clinic_info(request)
-    
-    graph.clinic_id = clinic_id
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
+    graph.clinic_id = context['clinic']['id']
     
     graph.domain = request.user.selected_domain.name
     startdate, enddate = utils.get_dates(request, graph.default_interval)
@@ -159,13 +151,14 @@ def chart(request, template_name="chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
         
-    context['total_hi_risk'] = len(hi_risk())
-    context['total_registrations'] = len(registrations())
-    context['total_follow_up'] = len(follow_up())
-        
-    # get per CHW table for show/hide
-    # context['report_table'] = report.to_html_table() # {"whereclause": whereclause})    
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(clinic_id)
+    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(context['clinic']['id'])
+    context['total_hi_risk'] = 0 ; context['total_registrations'] = 0 ; context['total_follow_up'] = 0
+    
+    for item in context['chw_reg_rows']:
+        context['total_registrations']  += item['reg'] or 0
+        context['total_hi_risk']        += item['risk'] or 0
+        context['total_follow_up']      += item['follow'] or 0
+
     
     for item in request.GET.items():
         if item[0] == 'bare':
@@ -181,8 +174,8 @@ def chart(request, template_name="chart.html"):
 # per clinic UI
 @login_and_domain_required
 def hq_chart(request, template_name="hq_chart.html"):
-    context = {}
-    context['hq_mode'] = (_get_role(request) == 'HQ')
+    context = { 'clinic' : _get_clinic(request) }
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
 
     graph = RawGraph.objects.all().get(id=27)
 
@@ -207,12 +200,12 @@ def hq_chart(request, template_name="hq_chart.html"):
     context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
-    clinics = Clinic.objects.all()
+    clinics = Clinic.objects.exclude(name='HQ')
     
     d = {
-        'reg' : registrations_by_clinic(),
-        'hi_risk' : hi_risk_by_clinic(),
-        'follow' : followup_by_clinic()
+        'reg' : registrations_by('clinic_id'),
+        'hi_risk' : hi_risk_by('clinic_id'),
+        'follow' : followup_by('clinic_id')
         }
 
     context['clinics'] = []    
@@ -238,10 +231,10 @@ def hq_chart(request, template_name="hq_chart.html"):
 
 @login_and_domain_required
 def hq_risk(request, template_name="hq_risk.html"):
-    context = {}
-    context['hq_mode'] = (_get_role(request) == 'HQ')
+    context = { 'clinic' : _get_clinic(request) }
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
     
-    clinics = Clinic.objects.all()
+    clinics = Clinic.objects.exclude(name='HQ')
     
     # find current clinic. if id is missing/wrong, use the first clinic
     try:
@@ -252,9 +245,9 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['clinics'] = clinics
     context['showclinic'] = showclinic
     
-    reg = registrations_by_clinic()
-    hi  = hi_risk_by_clinic()
-    fol = followup_by_clinic()
+    reg = registrations_by('clinic_id')
+    hi  = hi_risk_by('clinic_id')
+    fol = followup_by('clinic_id')
 
     context['regs']    = reg[showclinic.id] if reg.has_key(showclinic.id) else 0
     context['hi_risk'] = hi[showclinic.id]  if hi.has_key(showclinic.id)  else 0
@@ -321,23 +314,19 @@ def _get_chw_registrations_table(clinic_id = None):
     for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur', '1')
         d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic', 'clinic_id'), row))
         if clinic_id is not None and clinic_id != d['clinic_id']: continue
+
+        # convert None to 0
+        for i in d:
+            if d[i] is None: d[i] = 0
         rows.append(d)
     
-    # print cols, rows
     return cols, rows
 
-# sep. method, in case Role implementation changes in the model side
-def _get_role(request):
-    # print "USER", request.user
-    # # import pprint ; print "SDs" ; pprint(request.user)
-    # print "ROLE", get_role_for(request.user).name #.name
-    return get_role_for(request.user).name
 
-def _get_clinic_info(request):
+def _get_clinic(request):
     try:
-        clinic_id = UserProfile.objects.get(user=request.user.id).clinic_id
+        clinic_id = UserClinic.objects.get(username=request.user.username).clinic_id
         clinic_name = Clinic.objects.get(id=clinic_id).name
-#        print clinic_id, clinic_name
-        return clinic_id, clinic_name
+        return {'id' : clinic_id, 'name' : clinic_name}
     except:
-        return None, None
+        return {}
