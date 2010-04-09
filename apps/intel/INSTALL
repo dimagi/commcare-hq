@@ -22,7 +22,7 @@ Steps to install this app:
 5. Assign user_ids to CHWs, assign clinics to users
 
 	INSERT INTO `intel_clinic` VALUES (3,'Shaharial'),(2,'Madhabpur'),(1,'HQ');
-	INSERT INTO `intel_userclinic` VALUES (1,'demo1',3), (2,'demo2',2), (3,'sazadha',2), (4,'shahana',2), (5,'afroza',3), (6,'renoura',3), 		(7,'nir',1), (8,'brian',1);
+	INSERT INTO `intel_userclinic` VALUES (1,'demo1',3), (2,'demo2',2), (3,'sazadha',2), (4,'shahana',2), (5,'afroza',3), (6,'renoura',3),(7,'nir',1), (8,'brian',1);
 
 
 6. In local.ini, change the following (or simply cp local.ini.intel local.ini):
