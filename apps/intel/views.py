@@ -60,7 +60,7 @@ def homepage(request):
 
 ######## Report Methods
 @login_and_domain_required
-def all_mothers_report(request):
+def all_mothers_report(request, format):
     '''View all mothers - default'''
 
     title = ""
@@ -71,16 +71,16 @@ def all_mothers_report(request):
     if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
         title += ", Followed Up"
         
-    return _custom_report(request, 3, "chw_submission_details", "all", title)
+    return _custom_report(request, 3, "chw_submission_details", "all", title, format)
 
 @login_and_domain_required
-def hi_risk_report(request):
+def hi_risk_report(request, format):
     '''View only hi risk'''
     title = ""
     if request.GET.has_key('meta_username'): 
         title = "Cases Entered by %s" % request.GET['meta_username']
     
-    return _custom_report(request, 3, "hi_risk_pregnancies", "risk", title)
+    return _custom_report(request, 3, "hi_risk_pregnancies", "risk", title, format)
 
 @login_and_domain_required
 def mother_details(request):
@@ -89,7 +89,7 @@ def mother_details(request):
     
 
 
-def _custom_report(request, domain_id, report_name, page, title=None):
+def _custom_report(request, domain_id, report_name, page, title=None, format=None):
     context = { 'clinic' : _get_clinic(request) }
 
     context['page'] = page
@@ -107,8 +107,26 @@ def _custom_report(request, domain_id, report_name, page, title=None):
  
     context["report_display"] = report_method.__doc__
         
+    if format == 'csv':
+        cols, rows = report_method(request, params, False)
+        
+        csv = 'Mother Name,Address,Hi Risk?,Follow up?,Most Recent Follow Up\n'
+        for r in rows:
+            msg = r['attachment'].most_recent_annotation()
+            if msg is None: 
+                msg = ""
+            else:
+                msg = str(msg).replace('"', '""')
+                
+            csv += '"%s","%s","%s","%s","%s"\n' % (r['Mother Name'], r['Address'], r['Hi Risk?'], r['Follow up?'], msg)
+
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=pregnant_mothers.csv'
+        response.write(csv)
+        return response
 
     context["report_body"] = report_method(request, params)
+
     
     if 'search' not in request.GET.keys(): 
         context['search_term'] = ''
