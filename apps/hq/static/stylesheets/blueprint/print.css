@@ -25,5 +25,8 @@ blockquote {margin:1.5em;padding:1em;font-style:italic;font-size:.9em;}
 .large {font-size:1.1em;}
 .quiet {color:#999;}
 .hide {display:none;}
+/* 
+NIR: This adds underscore and "(<url>)" to links in the print view, thus making it look different than the user expected. Disabling.
 a:link, a:visited {background:transparent;font-weight:700;text-decoration:underline;}
 a:link:after, a:visited:after {content:" (" attr(href) ")";font-size:90%;}
+*/
