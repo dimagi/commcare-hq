@@ -224,6 +224,10 @@ def ward_sum_csv(request, month, year, ward):
             chw_data_list.append(chw_obj)
     output = StringIO()
     w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
     headers = get_ward_summary_headings()
     for header in headers:
         w.writerow(header)
@@ -231,8 +235,8 @@ def ward_sum_csv(request, month, year, ward):
         w.writerow(row)
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="ward_summary_%s-%s.csv"'\
-                                        % ( month, year)
+    response["content-disposition"] = 'attachment; filename="ward_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
     return response
 
 def sum_prov_csv(request, chw_id, month, year):
@@ -255,7 +259,11 @@ def sum_prov_csv(request, chw_id, month, year):
                                          startdate, enddate)
         if client_obj.num_visits != 0:
             client_data_list.append(client_obj)
-    provider_data_list = get_provider_data_list(chw_id, month, year)
+    data = get_user_data(chw_id)
+    provider_data_list = get_provider_data_list(data, month, year)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
     output = StringIO()
     w = UnicodeWriter(output)
     for row in provider_data_list:
@@ -267,7 +275,7 @@ def sum_prov_csv(request, chw_id, month, year):
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
     response["content-disposition"] = 'attachment; filename="provider_%s_summary_%s-%s.csv"'\
-                                        % ( chw_id, month, year)
+                                        % ( username, month, year)
     return response
 
 def hbc_sum_csv(request, month, year, ward):
@@ -284,6 +292,10 @@ def hbc_sum_csv(request, month, year, ward):
     chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
     w.writerow(['Number of providers - who reported this month:',
                 chw_obj.providers_reporting])
     w.writerow(['- who did not report this month:', 
@@ -298,8 +310,8 @@ def hbc_sum_csv(request, month, year, ward):
         w.writerow(row)
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="hbc_monthly_summary_%s-%s.csv"'\
-                                        % ( month, year)
+    response["content-disposition"] = 'attachment; filename="hbc_monthly_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
     return response
 
 def ward_sum_pdf(request, month, year, ward):
@@ -319,8 +331,8 @@ def ward_sum_pdf(request, month, year, ward):
             chw_data_list.append(chw_obj)
 
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=ward_summary_%s-%s.pdf'\
-                                        % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=ward_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
     doc = SimpleDocTemplate(response)
     doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
     doc.title = "Ward Summary Report"
@@ -378,8 +390,8 @@ def hbc_sum_pdf(request, month, year, ward):
     chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s-%s.pdf'\
-                                        % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
     doc = SimpleDocTemplate(response)
     doc.title = "Home Based Care Monthly Summary Report"
     elements = []
@@ -464,9 +476,14 @@ def sum_prov_pdf(request, chw_id, month, year):
         if client_obj.num_visits != 0:
             client_data_list.append(client_obj)
             
+    data = get_user_data(chw_id)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
+            
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=provider_summary_%s-%s.pdf'\
-                                     % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=provider_%s_summary_%s-%s.pdf'\
+                                     % (username, month, year)
     doc = SimpleDocTemplate(response)
     doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
     doc.title = "Home Based Care Patients Summary for Month"
@@ -476,8 +493,7 @@ def sum_prov_pdf(request, chw_id, month, year):
     para = Paragraph('Home Based Care Patients Summary for Month', ps)
     elements.append(para)
     
-    style_pd = ParagraphStyle(name='pd')
-    provider_data = get_provider_data_list(chw_id, month, year)
+    provider_data = get_provider_data_list(data, month, year)
     for row in provider_data:
         row_table = Table([row])
         row_table.hAlign='LEFT'

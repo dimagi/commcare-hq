@@ -99,8 +99,7 @@ def get_user_data(chw_id):
             data["prov_name"] = userinfo.username
     return data
 
-def get_provider_data_list(chw_id, month, year):
-    data = get_user_data(chw_id)
+def get_provider_data_list(data, month, year):
     all_data = []
     
     first_row = ['Region:', '', 'District:', '', 'Ward:', '']
