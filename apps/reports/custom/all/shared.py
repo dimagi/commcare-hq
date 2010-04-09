@@ -6,6 +6,18 @@ from phone.models import PhoneUserInfo
 
 def get_ward_summary_data(startdate, enddate, month, year, ward):
     context = {}
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
+    context["all_data"] = chw_data_list
+    context["year"] = year
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["ward"] = ward
+    return context
+
+def get_ward_chw_data_list(startdate, enddate, ward):
+    ''' Get a list of WardSummaryData's for the given ward'''
+    chw_data_list = []
+    
     case_name = "Pathfinder_1" 
     try:
         case = Case.objects.get(name=case_name)
@@ -13,17 +25,18 @@ def get_ward_summary_data(startdate, enddate, month, year, ward):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        if chw_obj.ward == ward:
-            chw_data_list.append(chw_obj)
-    context["all_data"] = chw_data_list
-    context["year"] = year
-    context["month"] = calendar.month_name[month]
-    context["month_num"] = month
-    context["ward"] = ward
-    return context
+    
+    puis = PhoneUserInfo.objects.all()
+    if puis != None:
+        for pui in puis:
+            chw_id = pui.username + pui.phone.device_id
+            chw_data = None
+            if chw_id in data_by_chw:
+                chw_data = data_by_chw[chw_id]
+            chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+            if chw_obj.ward == ward:
+                chw_data_list.append(chw_obj)
+    return chw_data_list
     
 def get_provider_summary_data(startdate, enddate, month, year, provider):
     context = {}

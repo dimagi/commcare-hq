@@ -210,18 +210,7 @@ def select_prov(request):
 def ward_sum_csv(request, month, year, ward):
     ''' Creates CSV file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
-    case_name = "Pathfinder_1" 
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        if chw_obj.ward == ward:
-            chw_data_list.append(chw_obj)
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)
     w.writerow(['Ward:', ward])
@@ -317,18 +306,7 @@ def hbc_sum_csv(request, month, year, ward):
 def ward_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
-    case_name = "Pathfinder_1" 
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        if chw_obj.ward == ward:
-            chw_data_list.append(chw_obj)
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
 
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=ward_summary_%s_%s-%s.pdf'\
