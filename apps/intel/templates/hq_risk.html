@@ -45,11 +45,34 @@
 				</td>
 			</tr>
 	</table>  
-    
-	<p><div class="js_link" onclick="$('.graph_data').toggle()" style="text-align:center">CHW-wise Registrations</div></p> 
+	
+		
+	<p><div class="js_link" onclick="$('#ind_data').toggle()" style="text-align:center">Show/hide data</div></p> 
 
-	<div class="graph_data" style="display:none;">
+	<center>
+	<div id="ind_data" style="display:none;">
+	    <table style="width: 350px; text-align: center">
+			<thead>
+				<tr style="text-align: center">
+					<th>High Risk Indicator</th>
+					<th>Number of Pregnant Mothers</th>
+				</tr>
+			</thead>
+			{% for name, value in indicators %}
+				<tr style="background-color: {% cycle '#fff' '#eeeeee' %}">
+					<td>{{ name }}</td>
+					<td style="text-align: center">{{ value }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+	</center>
+	
+	<p><div class="js_link" onclick="$('#graph_data').toggle()" style="text-align:center">CHW-wise Registrations</div></p> 
+
+	<div id="graph_data" style="display:none;">
 		{% include "partials/chw_registrations_report.html" %}
 	</div>
+	
     {% endif %}
 {%endblock%}

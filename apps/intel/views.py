@@ -298,8 +298,12 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['width'] = graph.width
     context['height'] = graph.height
     context['empty_dict'] = {}
-    context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-
+    data = graph.convert_data_to_table(context['chart_data'])
+    
+    # context['datatable'] = graph.convert_data_to_table(context['chart_data'])
+        
+    context['indicators'] = zip(data[0], data[1])
+    
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
