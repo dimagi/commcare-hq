@@ -17,6 +17,7 @@
     <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css?{% now "U" %}" />    
 {% endblock %}
 
+{% load url_for %}
 {% block content %}
 	{% ifnotequal page "single" %}
 		<form action="/intel/all" method="get" style="padding-left: 15px">
@@ -26,7 +27,7 @@
 		<br>
 		{% if title %}<b>{{title}}</b>{% endif %}
 		<center>
-			<a href="/reports/sql/2/csv" style="font-size: 1.2em">Download as CSV</a>
+			<a href="{% url_for request "csv" %}" style="font-size: 1.2em">Download as CSV</a>
 		</center>
 	{% endifnotequal %}
 
