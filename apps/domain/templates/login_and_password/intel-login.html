@@ -43,6 +43,7 @@
 </table>
 </center>
 <script>
+// inject username from URL to the form
 $.urlParam = function(name){
 	results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
 	return (results == null ? false : results[1])
@@ -52,6 +53,11 @@ username = $.urlParam('u');
 // alert(window.location.href + "\n" + username);
 $("#id_username").val(username);
 $("#login_form").attr("action", window.location.href); 
+
+// focus on password entry box on load
+$(function() {
+  $("#id_password").focus();
+});
 </script>
 
 <!-- /ends here -->
