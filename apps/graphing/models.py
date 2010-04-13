@@ -166,7 +166,7 @@ class RawGraph(BaseGraph):
         # are set are the first N
         for i in range(len(query_cols)):
             if i < len(labelarr):
-                labels.append(str(labelarr[i]))
+                labels.append(str(labelarr[i].strip()))
             else:
                 labels.append(str(query_cols[i][0]))
         return labels
