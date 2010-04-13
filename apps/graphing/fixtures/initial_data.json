@@ -255,20 +255,19 @@
     "model": "graphing.rawgraph", 
     "fields": {
       "default_interval": 365, 
-      "series_labels": "Total | < 150 cm | Prev C-Sect | Prev Death | Prev Bleed | Heart Probs | Diabetes | Hip Probs | Syphilis | Hep B | Long Time | Low Hemoglb | Rare Blood ", 
+      "series_labels": "Total | < 150 cm | C-Sect | Pr. Death | Pr. Bleed | Heart | Diabetes | Hip | Syph | Hep B | Long Time | Low Hemoglb | Age <=18 | Age >=34 | Pr. Term | Pr. Preg | Rare Blood", 
       "data_source": "", 
       "y_axis_label": "Number of Registrations", 
       "x_type": "string", 
-      "additional_options": "{\"legend\": { \"show\": false }}", 
+      "additional_options": "{\"legend\": { \"show\": true }}", 
       "time_bound": 0, 
       "x_axis_label": "High Risk Indicators", 
       "width": 950, 
       "interval_ranges": "", 
       "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
-      "display_type": "histogram-multifield-sorted", 
-      "height": 300, 
-      "db_query": "\nselect \ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\ncount(nullif(sampledata_card_results_blood_group, 'opositive') OR\n         nullif(sampledata_card_results_blood_group, 'apositive') OR\n         nullif(sampledata_card_results_blood_group, 'abpositive') OR\n         nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\n\n\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userclinic where meta_username = intel_userclinic.username and meta_username <> 'admin' and intel_userclinic.clinic_id = {{clinic_id}}"
-      
+      "display_type": "histogram-multifield-sorted",
+      "height": 450, 
+      "db_query": "\nselect \ncount(nullif(sampledata_hi_risk,'no')) as high_risk,\ncount(nullif(sampledata_mother_height,'over_150')) as small_frame,\ncount(nullif(sampledata_previous_csection,'no')) as previous_c_section,\ncount(nullif(sampledata_previous_newborn_death,'no')) as previous_newborn_death,\ncount(nullif(sampledata_previous_bleeding,'no')) as previous_bleeding,\ncount(nullif(sampledata_heart_problems,'no')) as heart_problems,\ncount(nullif(sampledata_diabetes,'no')) as diabetes,\ncount(nullif(sampledata_hip_problems,'no')) as hip_problems,\ncount(nullif(sampledata_card_results_syphilis_result,'negative')) as syphilis,\ncount(nullif(sampledata_card_results_hepb_result,'negative')) as hebp,\ncount(nullif(sampledata_over_5_years,'no')) as time_since_last,\ncount(nullif(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,\ncount(if(sampledata_mother_age <= 18, 1, NULL)) as age_under_19,\ncount(if(sampledata_mother_age >= 34, 1, NULL)) as age_over_34,\ncount(if(sampledata_previous_terminations >= 3, 1, NULL)) as over_3_terminations,\ncount(if(sampledata_previous_pregnancies >= 5, 1, NULL)) as over_5_pregs, \ncount(nullif(sampledata_card_results_blood_group, 'opositive') \nOR nullif(sampledata_card_results_blood_group, 'apositive') \nOR nullif(sampledata_card_results_blood_group, 'abpositive') \nOR nullif(sampledata_card_results_blood_group, 'bpositive')) as rare_blood\nfrom schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userclinic \nwhere meta_username = intel_userclinic.username and meta_username <> 'admin' and intel_userclinic.clinic_id = {{clinic_id}}"
     }
   },
 
