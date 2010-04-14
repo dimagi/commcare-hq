@@ -77,8 +77,11 @@ def all_mothers_report(request, format):
 def hi_risk_report(request, format):
     '''View only hi risk'''
     title = ""
+    
     if request.GET.has_key('meta_username'): 
         title = "Cases Entered by %s" % request.GET['meta_username']
+
+    # title for Hi Risk filters is handled in _custom_report
     
     return _custom_report(request, 3, "hi_risk_pregnancies", "risk", title, format)
 
@@ -98,6 +101,10 @@ def _custom_report(request, domain_id, report_name, page, title=None, format=Non
 
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
     params = { 'clinic' : context['clinic']['id'] } if context['clinic']['name'] != 'HQ' else {}
+    
+    if request.GET.has_key('filter'):
+        params['filter'] = HI_RISK_INDICATORS[request.GET['filter'].strip()]['where']
+        context['title'] = "Cases with '%s' indicator" % HI_RISK_INDICATORS[request.GET['filter'].strip()]['long']
         
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     if not report_method:
@@ -166,7 +173,6 @@ def chart(request, template_name="chart.html"):
     context['view_name'] = 'chart.html'
     context['width'] = graph.width
     context['height'] = graph.height
-    context['empty_dict'] = {}
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
         
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(context['clinic']['id'])
@@ -212,7 +218,6 @@ def hq_chart(request, template_name="hq_chart.html"):
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    # context['view_name'] = 'chart.html'
     context['width'] = graph.width
     context['height'] = graph.height
     context['empty_dict'] = {}
@@ -284,8 +289,7 @@ def hq_risk(request, template_name="hq_risk.html"):
 
     graph.width = 800
     
-    context['chart_title'] = graph.title
-    
+    context['chart_title'] = graph.title    
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
@@ -294,16 +298,18 @@ def hq_risk(request, template_name="hq_risk.html"):
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    # context['view_name'] = 'chart.html'
     context['width'] = graph.width
     context['height'] = graph.height
-    context['empty_dict'] = {}
     data = graph.convert_data_to_table(context['chart_data'])
     
-    # context['datatable'] = graph.convert_data_to_table(context['chart_data'])
-        
-    context['indicators'] = zip(data[0], data[1])
+    indicators = graph.get_dataset_as_dict()[0]
     
+    # populate indicators table, making sure "Total Hi Risk" is first
+    context['indicators'] = [['high_risk', indicators['high_risk'], HI_RISK_INDICATORS['high_risk']['long']]]    
+    for ind in HI_RISK_INDICATORS:
+        if ind == 'high_risk': continue
+        context['indicators'].append([ind, indicators[ind], HI_RISK_INDICATORS[ind]['long']])
+            
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
