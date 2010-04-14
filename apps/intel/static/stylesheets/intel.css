@@ -13,17 +13,15 @@
 
     font-size:100%;
     line-height:130%;
-    text-decoration:none;
     font-weight:bold;
-    color:#565656;
+    font-size: 15px;
+    text-decoration:none !important;
+    color:#565656 !important;
     cursor:pointer;
     padding:5px 10px 6px 7px; /*Links */
     height: 75px;
     width: 200px;
-    text-align: center;
-    
-    vertical-align:middle;
-    
+    text-align: right;
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
     
