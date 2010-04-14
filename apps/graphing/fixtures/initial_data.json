@@ -255,7 +255,7 @@
     "model": "graphing.rawgraph", 
     "fields": {
       "default_interval": 365, 
-      "series_labels": "Total | < 150 cm | C-Sect | Pr. Death | Pr. Bleed | Heart | Diabetes | Hip | Syph | Hep B | Long Time | Low Hemoglb | Age <=18 | Age >=34 | Pr. Term | Pr. Preg | Rare Blood", 
+      "series_labels": "Total | <150cm | C-Sect | Pr.Death | Pr.Bleed | Heart | Diabetes | Hip | Syph | Hep B | Long Time | Lo.Hmglb | Age<19 | Age>34 | Pr.Term | Pr.Preg | Rare Bld", 
       "data_source": "", 
       "y_axis_label": "Number of Registrations", 
       "x_type": "string", 
