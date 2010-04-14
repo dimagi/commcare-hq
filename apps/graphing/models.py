@@ -153,6 +153,25 @@ class RawGraph(BaseGraph):
             extra = {"exception": e, "query": self.cleaned_query}            
             logging.log(logging.ERROR,"Error in doing sql query", extra=extra)       
             raise                 
+
+    def get_dataset_as_dict(self):
+        """Execute the query and get the data as a dictionary, the way civilized people do"""
+        try:
+            row_names = []
+            for i in self.cursor.description:
+                row_names.append(i[0])
+        
+            out = []
+            for row in self.cursor.fetchall():
+                out.append(dict(zip(row_names, row)))
+
+            return out
+
+        except Exception, e:
+            args = []
+            extra = {"exception": e, "query": self.cleaned_query}            
+            logging.log(logging.ERROR,"Error in doing sql query", extra=extra)       
+            raise                 
                       
     
     @property
