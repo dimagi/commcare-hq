@@ -60,8 +60,13 @@
 			</thead>
 			{% for link, value, name in indicators %}
 				<tr style="background-color: {% cycle '#fff' '#eeeeee' %}">
-					<td><a href="/intel/risk?filter={{ link }}&clinic={{ showclinic.id }}">{{ name }}</a></td>
-					<td style="text-align: center">{{ value }}</td>
+					<td>{{ name }}</td>
+					<td style="text-align: center">
+						{% ifequal value 0 %}
+							--
+						{% else %}
+							<a href="/intel/risk?filter={{ link }}&clinic={{ showclinic.id }}">{{ value }}</a></td>
+						{% endifequal %}
 				</tr>
 			{% endfor %}
 		</table>

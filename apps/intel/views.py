@@ -104,7 +104,7 @@ def _custom_report(request, domain_id, report_name, page, title=None, format=Non
     
     if request.GET.has_key('filter'):
         params['filter'] = HI_RISK_INDICATORS[request.GET['filter'].strip()]['where']
-        context['title'] = "Cases with '%s' indicator" % HI_RISK_INDICATORS[request.GET['filter'].strip()]['long']
+        context['title'] = "%s Cases" % HI_RISK_INDICATORS[request.GET['filter'].strip()]['long']
         
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     if not report_method:
@@ -304,12 +304,16 @@ def hq_risk(request, template_name="hq_risk.html"):
     
     indicators = graph.get_dataset_as_dict()[0]
     
-    # populate indicators table, making sure "Total Hi Risk" is first
-    context['indicators'] = [['high_risk', indicators['high_risk'], HI_RISK_INDICATORS['high_risk']['long']]]    
+    # populate indicators table
+    context['indicators'] = []
+
     for ind in HI_RISK_INDICATORS:
         if ind == 'high_risk': continue
         context['indicators'].append([ind, indicators[ind], HI_RISK_INDICATORS[ind]['long']])
-            
+    
+    # sort by value, making sure Total is first item in the process
+    context['indicators'].sort(key=lambda x:x[1], reverse=True)
+    
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
