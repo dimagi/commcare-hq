@@ -97,3 +97,41 @@ def _result_to_dict(results):
         res[row[0]] = row[1]
 
     return res
+    
+
+HI_RISK_INDICATORS = {
+    'high_risk':
+        {'short' : "Tot.",          'long' : "Total High Risk Cases",   'where' : "sampledata_hi_risk = 'yes'"},
+    'hebp': 
+        {'short' : "Hep B",         'long' : "Hepatitis B",             'where' : "sampledata_card_results_hepb_result = 'yes"},
+    'previous_newborn_death': 
+        {'short' : "Pr. NB Death",  'long' : "Previous Newborn Death",  'where' : "sampledata_previous_newborn_death = 'yes'"},
+    'low_hemoglobin': 
+        {'short' : "Lo Hmg",        'long' : "Low Hemoglobin",          'where' : "sampledata_card_results_hb_test = 'yes'"},
+    'syphilis': 
+        {'short' : "Syph.",         'long' : "Syphilis",                'where' : "sampledata_card_results_syphilis_result = 'yes'"},
+    'rare_blood': 
+        {'short' : "Blood",         'long' : "Rare Blood",              'where' : "sampledata_card_results_blood_group <> 'opositive' AND sampledata_card_results_blood_group <> 'apositive' AND sampledata_card_results_blood_group <> 'bpositive' AND sampledata_card_results_blood_group<>'abpositive' AND sampledata_card_results_blood_group IS NOT NULL"},
+    'age_over_34': 
+        {'short' : ">34",           'long' : "35 or Older",             'where' : 'sampledata_mother_age >= 34'},
+    'previous_bleeding': 
+        {'short' : "Bleed",         'long' : "Previous Bleeding",       'where' : "sampledata_previous_bleeding = 'yes'"},
+    'over_5_pregs': 
+        {'short' : ">5 pr",         'long' : "5+ Previous Pregnanices", 'where' : 'sampledata_previous_pregnancies >= 5'},
+    'heart_problems': 
+        {'short' : "Heart",         'long' : "Heart Problems",          'where' : "sampledata_heart_problems = 'yes'"},
+    'previous_c_section':
+        {'short' : "Pr. C",         'long' : "Previous C-Section",      'where' : "sampledata_previous_csection = 'yes'"},
+    'time_since_last':
+        {'short' : "Time",          'long' : "Last Checkup >5 Years Ago",'where' : "sampledata_over_5_years = 'yes'"},
+    'age_under_19': 
+        {'short' : "<19",           'long' : "18 or Younger",           'where' : "sampledata_mother_age <= 18"},
+    'small_frame': 
+        {'short' : "Small",         'long' : "Height 150cm or Less",    'where' : "sampledata_mother_height = 'under_150'"},
+    'over_3_terminations': 
+        {'short' : "3+ Term",       'long' : "Over 3 Past Terminations",'where' : 'sampledata_previous_terminations >= 3'},
+    'hip_problems':
+        {'short' : "Hip",           'long' : "Hip Problems",            'where' : "sampledata_hip_problems = 'yes'"},
+    'diabetes':
+        {'short' : "Diab.",         'long' : "Diabetes",                'where' : "sampledata_diabetes = 'yes'"}
+}
