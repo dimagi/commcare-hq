@@ -28,8 +28,8 @@
 		<tr>
 			<td align="top">
 				<div class="top-bar" style="text-align:left; background-color: #fff; height: {{ height }}px; ">
-				{% for clinic in clinics %}
-					<a href="?clinic={{ clinic.id }}" style="color: {% ifequal clinic showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ clinic.name }}</a>
+				{% for c in clinics %}
+					<a href="?clinic={{ c.id }}" style="color: {% ifequal c showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ c.name }}</a>
 				{% endfor %}
 				</div>
 			</td>
@@ -58,9 +58,9 @@
 					<th>Number of Pregnant Mothers</th>
 				</tr>
 			</thead>
-			{% for name, value in indicators %}
+			{% for link, value, name in indicators %}
 				<tr style="background-color: {% cycle '#fff' '#eeeeee' %}">
-					<td>{{ name }}</td>
+					<td><a href="/intel/risk?filter={{ link }}&clinic={{ showclinic.id }}">{{ name }}</a></td>
 					<td style="text-align: center">{{ value }}</td>
 				</tr>
 			{% endfor %}
