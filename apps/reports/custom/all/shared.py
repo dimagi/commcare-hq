@@ -308,45 +308,6 @@ def get_provider_data_list(data, month, year):
         third_row[3] = data['hcbpid']
     all_data.append(third_row)
     
-    fourth_row = ['Sex (HBC Provider):']
-    if 'sex' in data: #TODO: what is the real key?
-        fourth_row.append(data['sex'])
-    all_data.append(fourth_row)
-    
-    fifth_row = ['HBC Provider has been trained according to national guidelines:']
-    if 'trained' in data: #TODO: what is the real key?
-        fifth_row.append(data['trained'])
-        
-    sixth_row = ['Organization who trained HBC Provider:', '', 
-                 'Number of days training:', '']
-    if 'org' in data: # TODO: what is the real key?
-        sixth_row[1] = data['org']
-    if 'num_days' in data: #TODO: what is the real key?
-        sixth_row[3] = data['num_days']
-    all_data.append(sixth_row)
-    
-    seventh_row = ['Category of HBC Provider:']
-    if 'category' in data: #TODO: What is the real key?
-        seventh_row.append(data['category'])
-    all_data.append(seventh_row)
-    
-    eighth_row = ['HBC Supervisor name:', '', 'Health facility name:', '']
-    if 'supervisor' in data:#TODO: what is the real key?
-        eighth_row[1] = data['supervisor']
-    if 'facility' in data: #TODO: what is the real key?
-        eighth_row[3] = data['facility']
-    all_data.append(eighth_row)
-    
-    ninth_row = ['HBC Supervisor number:']
-    if 'supervisor_id' in data: #TODO: what is the real key?
-        ninth_row.append(data['supervisor_id'])
-    all_data.append(ninth_row)
-    
-    tenth_row = ['Organization supporting HBC:']
-    if 'org_supporting' in data: #TODO: what is the real key?
-        tenth_row.append(data['org_supporting'])
-    all_data.append(tenth_row)
-    
     return all_data
 
 def get_ward_summary_headings():
