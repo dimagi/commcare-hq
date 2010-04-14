@@ -20,9 +20,13 @@ def tabs(current_page, hq_mode=False):
     
     for i in tabs:
         # to show only the currnent page icon add: if i == current_page or current_page == "home"
-        style = "border: solid 4px #c3d9ff" if i == current_page else ""
-        t += '<a href="/intel/%s" style="%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % \
-              (i, style, tabs[i]["icon"], tabs[i]["text"])
+        # t += '<a href="/intel/%s" style="%s"><img class="left" src="%s"/><span style="vertical-align:top">%s</span></a>' % (i, style, tabs[i]["icon"], tabs[i]["text"])
+
+        style = "background: url('%s') no-repeat 7px 7px;" % tabs[i]["icon"]
+        if i == current_page: style += " border: solid 4px #c3d9ff;"
+
+        t += '<a href="/intel/%s" style="%s"><span style="position:relative; top:25px; left:0px;">%s</span></a>' % \
+            (i, style, tabs[i]["text"])
 
     if current_page != "home":
         t += '<a href="/intel/" style="float: right; width: 90px"><img src="/static/intel/img/icons/home-icon.png" /></a>'
