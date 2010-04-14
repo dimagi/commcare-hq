@@ -60,6 +60,7 @@ def _mother_summary(request, params={}):
 
     attrs = [name for name in dir(mom) if not name.startswith("_")]
     attrs.remove("data_map")
+
     display_attrs = [attr.replace("_", " ") for attr in attrs]
     all_attrs = zip(attrs, display_attrs)
     mom.hi_risk_reasons = _get_hi_risk_reason(mom)
@@ -165,7 +166,9 @@ def _chw_submission_summary(request, params, format_to_str=True):
     if params.has_key('clinic'):
         whereclause += " AND intel_userclinic.clinic_id = %s" % params['clinic']
 
-
+    if params.has_key('filter'):
+        whereclause += " AND " + params['filter']
+        
     cols, data = report.get_data({"whereclause": whereclause, "orderby" : "ORDER BY sampledata_mother_name ASC"})
     new_data = []
 
