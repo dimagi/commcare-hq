@@ -101,7 +101,7 @@ def _result_to_dict(results):
 
 HI_RISK_INDICATORS = {
     'high_risk':
-        {'short' : "Tot.",          'long' : "Total High Risk Cases",   'where' : "sampledata_hi_risk = 'yes'"},
+        {'short' : "Tot.",          'long' : "All High Risk",   'where' : "sampledata_hi_risk = 'yes'"},
     'hebp': 
         {'short' : "Hep B",         'long' : "Hepatitis B",             'where' : "sampledata_card_results_hepb_result = 'yes"},
     'previous_newborn_death': 
