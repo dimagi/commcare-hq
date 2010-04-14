@@ -104,7 +104,7 @@ def _custom_report(request, domain_id, report_name, page, title=None, format=Non
     
     if request.GET.has_key('filter'):
         params['filter'] = HI_RISK_INDICATORS[request.GET['filter'].strip()]['where']
-        context['title'] = "%s Cases" % HI_RISK_INDICATORS[request.GET['filter'].strip()]['long']
+        context['title'] = '%s <span style="color: #646462">Cases in</span> %s' % (HI_RISK_INDICATORS[request.GET['filter'].strip()]['long'], Clinic.objects.get(id=request.GET['clinic']).name)
         
     report_method = util.get_report_method(request.user.selected_domain, report_name)
     if not report_method:
@@ -308,7 +308,6 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['indicators'] = []
 
     for ind in HI_RISK_INDICATORS:
-        if ind == 'high_risk': continue
         context['indicators'].append([ind, indicators[ind], HI_RISK_INDICATORS[ind]['long']])
     
     # sort by value, making sure Total is first item in the process

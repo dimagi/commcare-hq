@@ -25,7 +25,7 @@
 		    <input type="submit" value="Search by Mother Name"/>
 		</form>
 		<br>
-		{% if title %}<b>{{title}}</b>{% endif %}
+		{% if title %}<b>{{title|safe}}</b>{% endif %}
 		<center>
 			<a href="{% url_for request "csv" %}" style="font-size: 1.2em">Download as CSV</a>
 		</center>
