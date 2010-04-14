@@ -286,14 +286,20 @@ def ward_summary(report_schedule, run_frequency):
         (startdate, enddate) = reporter.get_daterange(run_frequency)
         wards = get_wards()
         for ward in wards:
-            all_data = get_ward_summary_data(startdate, enddate, startdate.month,
-                                             startdate.year, ward)
-            body = render_to_string("custom/pathfinder/ward_sum_email.html", 
-                                    {"context": all_data })
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_ward_summary_pdf(startdate, enddate, startdate.month, 
+                                 startdate.year, ward, doc)
+            
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ Ward Summary Report %s-%s.pdf" %\
+                        (ward, enddate), 'content': content, 'mimetype': 
+                        'application/pdf'}]
         
-            reporter.transport_email(body, report_schedule.recipient_user, 
+            reporter.transport_email('', report_schedule.recipient_user, 
                             params={"email_subject": "CommCareHQ Ward Summary Report %s-%s" %\
-                                    (ward, enddate) })
+                                    (ward, enddate), "attachment": attachment })
     
 def provider_summary(report_schedule, run_frequency):
     """Summary of each provider and their patients"""
@@ -308,17 +314,26 @@ def provider_summary(report_schedule, run_frequency):
         if puis != None:
             for pui in puis:
                 provider = pui.username + pui.phone.device_id
-                all_data = get_provider_summary_data(startdate, enddate, 
-                            startdate.month, startdate.year, provider)
-                body = render_to_string("custom/pathfinder/sum_prov_email.html",
-                                        {"context": all_data })
+                additional_data = pui.additional_data
                 user_id = ""
-                if 'hcbpid' in all_data:
-                    user_id = all_data['hcbpid']
+                if additional_data != None and 'hcbpid' in additional_data:
+                    user_id = additional_data['hcbpid']
+                
+                output = StringIO()
+                doc = SimpleDocTemplate(output)
+                data_list = get_provider_data_by_case("Pathfinder_1", provider, startdate, enddate)
+                get_provider_summary_pdf(startdate.month, startdate.year, 
+                                         provider, data_list, doc)
+                
+                output.seek(0)
+                content = output.read()
+                attachment = [{'filename': "CommCareHQ Summary by Provider Report %s_%s.pdf" %\
+                            (user_id, enddate), 'content': content, 'mimetype': 
+                            'application/pdf'}]
             
-                reporter.transport_email(body, report_schedule.recipient_user, 
+                reporter.transport_email('', report_schedule.recipient_user, 
                                 params={"email_subject": "CommCareHQ Summary by Provider Report %s_%s" %\
-                                    (user_id, enddate) })
+                                    (user_id, enddate), "attachment": attachment })
 
 def hbc_monthly_summary(report_schedule, run_frequency):
     """Summary of total patient information within each ward"""
@@ -333,9 +348,15 @@ def hbc_monthly_summary(report_schedule, run_frequency):
         for ward in wards:
             all_data = get_hbc_summary_data(startdate, enddate, startdate.month, 
                                              startdate.year, ward)
-            body = render_to_string("custom/pathfinder/hbc_sum_email.html", 
-                                    {"context": all_data })
-        
-            reporter.transport_email(body, report_schedule.recipient_user, 
+            chw_obj = all_data["all_data"]
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_hbc_monthly_pdf(startdate.month, startdate.year, chw_obj, ward, doc)
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ HBC Monthly Summary Report %s-%s.pdf" %\
+                           (ward, enddate), 'content': content, 'mimetype': 
+                           'application/pdf'}]
+            reporter.transport_email('', report_schedule.recipient_user, 
                             params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s-%s" %\
-                                    (ward, enddate) })
+                                    (ward, enddate), "attachment": attachment })

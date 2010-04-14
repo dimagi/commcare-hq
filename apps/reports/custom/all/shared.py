@@ -3,6 +3,173 @@ from reports.models import CaseFormIdentifier, Case
 from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 import calendar
 from phone.models import PhoneUserInfo
+from StringIO import StringIO
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.platypus import *
+    from reportlab.lib.pagesizes import portrait
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import *
+except ImportError:
+    # reportlab isn't installed.  some views will fail but this is better
+    # than bringing down all of HQ
+    pass
+
+def get_ward_summary_pdf(startdate, enddate, month, year, ward, doc):
+    ''' Builds pdf document for ward summary report'''
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
+    doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
+    doc.title = "Ward Summary Report"
+    elements = []
+    
+    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
+    para = Paragraph('Ward Summary Report<br/>Month: %s<br/>Year: %s'% 
+                     ( calendar.month_name[int(month)], year), ps)
+    elements.append(para)
+    all_data = []
+    
+    style = ParagraphStyle(name='header', fontName='Times-Bold', fontSize=6)
+    for line in get_ward_summary_headings():
+        headers = []
+        for entry in line:
+            para = Paragraph(entry, style)
+            headers.append(para)
+        all_data.append(headers)
+    
+    # maybe make these paragraphs so they wrap too?
+    for chw_data in chw_data_list:
+        all_data.append(chw_data.data)
+    colwidths = [40, 40, 40, 40, 40, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+                 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 22, 22, 22, 30, 22,
+                 22, 22, 34]
+    table = Table(all_data, colwidths, repeatRows=4, splitByRow=0)
+    ts = TableStyle([('FONTSIZE', (0, 0), (-1, -1), 6),
+                    ('SPAN', (5, 0), (12, 0)), ('SPAN', (5, 1), (8, 1)),
+                    ('SPAN', (5, 2), (6, 2)), ('SPAN', (7, 2), (8, 2)),
+                    ('SPAN', (9, 1), (12, 1)), ('SPAN', (9, 2), (10, 2)),
+                    ('SPAN', (11, 2), (12, 2)), ('SPAN', (13, 1), (16, 1)),
+                    ('SPAN', (13, 2), (14,2)), ('SPAN', (15, 2), (16, 2)),
+                    ('SPAN', (17, 1), (20, 1)), ('SPAN', (17, 2), (18, 2)),
+                    ('SPAN', (19, 2), (20, 2)), ('SPAN', (21, 1), (24, 1)),
+                    ('SPAN', (21, 2), (22, 2)), ('SPAN', (23, 2), (24, 2)),
+                    ('SPAN', (25, 1), (31, 1)), ('SPAN', (32, 1), (32, 2)),
+                    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                    ('BOX', (0,0), (-1,-1), 0.25, colors.black)])
+    table.setStyle(ts)
+    elements.append(table)
+    doc.build(elements)
+    
+def get_provider_summary_pdf(month, year, chw_id, client_data_list, doc):
+    ''' Builds pdf document for summary by provider report'''
+    doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
+    doc.title = "Home Based Care Patients Summary for Month"
+    elements = []
+    
+    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
+    para = Paragraph('Home Based Care Patients Summary for Month', ps)
+    elements.append(para)
+    
+    data = get_user_data(chw_id)
+    
+    provider_data = get_provider_data_list(data, month, year)
+    for row in provider_data:
+        row_table = Table([row])
+        row_table.hAlign='LEFT'
+        row_table.setStyle(TableStyle([('FONTNAME', (0, 0), (0, 0), 
+                                        'Times-Bold')]))
+        if len(row) > 2:
+            row_table.setStyle(TableStyle([('FONTNAME', (2, 0), (2, 0), 
+                                        'Times-Bold')]))
+        if len(row) > 4:
+            row_table.setStyle(TableStyle([('FONTNAME', (4, 0), (4, 0), 
+                                        'Times-Bold')]))
+        elements.append(row_table)
+    
+    all_data = []
+    headers = []
+    style_h = ParagraphStyle(name='header', fontName='Times-Bold', fontSize=7)
+    for header in get_provider_summary_headers():
+        para = Paragraph(header, style_h)
+        headers.append(para)
+    all_data.append(headers)
+    style_r = ParagraphStyle(name='header', fontName='Times-Roman', fontSize=7)
+    for chw_data in client_data_list:
+        datas = []
+        for data in chw_data.data:
+            para = Paragraph(str(data), style_r)
+            datas.append(para)
+        all_data.append(datas)
+    table = Table(all_data, repeatRows=1, splitByRow=1)
+    table.setStyle(TableStyle([('INNERGRID', (0,0), (-1,-1), 0.25, 
+                                colors.black),
+                               ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
+
+    elements.append(table)
+    doc.build(elements)
+    
+def get_hbc_monthly_pdf(month, year, chw_obj, ward, doc):
+    ''' Builds pdf document for hbc monthly summary report'''
+    doc.title = "Home Based Care Monthly Summary Report"
+    elements = []
+    
+    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
+    para = Paragraph('Home Based Care Monthly Summary Report<br/>Ward: %s<br/>Month: %s<br/>Year: %s<br/><br/>'% 
+                     ( ward, calendar.month_name[int(month)], year), ps)
+    elements.append(para)
+    
+    table1 = []
+    table1.append(['Number of providers - who reported this month:',
+                chw_obj.providers_reporting, 
+                '- who did not report this month:',
+                chw_obj.providers_not_reporting])
+    t1 = Table(table1)
+    t1.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
+                            ('FONTNAME', (2, 0), (2, 0), 'Times-Bold'),
+                            ('FONTNAME', (0, 0), (0, 0), 'Times-Bold'),
+                            ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
+    t1.hAlign='LEFT'
+    elements.append(t1)
+    elements.append(Paragraph('<br/>', ps))
+
+    table2 = get_hbc_monthly_display(chw_obj)
+    t2 = Table(table2)
+    t2.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
+                            ('FONTNAME', (0, 0), (-1, 1), 'Times-Bold'),
+                            ('FONTNAME', (0, 4), (0, 4), 'Times-Italic'),
+                            ('FONTNAME', (0, 8), (0, 8), 'Times-Italic'),
+                            ('SPAN', (1, 0), (2, 0)), #Total
+                            ('SPAN', (3, 0), (4, 0)), #Less than 15
+                            ('SPAN', (5, 0), (6, 0)), #15-24
+                            ('SPAN', (7, 0), (8, 0)), #25-49
+                            ('SPAN', (9, 0), (10, 0)), #50 and above
+                            ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
+    t2.hAlign = 'LEFT'
+    elements.append(t2)
+    elements.append(Paragraph('<br/>', ps))
+    
+    table3 = []
+    style_h = ParagraphStyle(name='style', fontName='Times-Bold', fontSize=8)
+    style_r = ParagraphStyle(name='style', fontName='Times-Roman', fontSize=8)
+    lines = get_hbc_monthly_display_second(chw_obj)
+    headers = []
+    for entry in lines[0]:
+        para = Paragraph(str(entry), style_h)
+        headers.append(para)
+    table3.append(headers)
+    headers = []
+    for entry in lines[1]:
+        para = Paragraph(str(entry), style_r)
+        headers.append(para)
+    table3.append(headers)
+    t3 = Table(table3)
+    t3.setStyle(TableStyle([('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
+    t3.hAlign='LEFT'
+    elements.append(t3)
+    doc.build(elements)
 
 def get_ward_summary_data(startdate, enddate, month, year, ward):
     context = {}
@@ -50,6 +217,21 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
     if userinfo != None:
         additional_data = userinfo.additional_data
     case_name = "Pathfinder_1"    
+    client_data_list = get_provider_data_by_case(case_name, provider, startdate, enddate)
+    context["all_data"] = client_data_list
+    context["month"] = calendar.month_name[month]
+    context["month_num"] = month
+    context["year"] = year
+    context["num"] = provider
+    if userinfo != None:
+        context["prov_name"] = userinfo.username
+    if additional_data != None:
+        for key in additional_data:
+            context[key] = additional_data[key] #TODO: change in templates to match what joachim says
+    return context
+
+def get_provider_data_by_case(case_name, provider, startdate, enddate):
+    ''' Given a case and provider returns data about each client'''
     try:
         case = Case.objects.get(name=case_name)
     except Case.DoesNotExist:
@@ -65,20 +247,10 @@ def get_provider_summary_data(startdate, enddate, month, year, provider):
                                          startdate, enddate)
         if client_obj.num_visits != 0:
             client_data_list.append(client_obj)
-
-    context["all_data"] = client_data_list
-    context["month"] = calendar.month_name[month]
-    context["month_num"] = month
-    context["year"] = year
-    context["num"] = provider
-    if userinfo != None:
-        context["prov_name"] = userinfo.username
-    if additional_data != None:
-        for key in additional_data:
-            context[key] = additional_data[key] #TODO: change in templates to match what joachim says
-    return context
+    return client_data_list
 
 def get_hbc_summary_data(startdate, enddate, month, year, ward):
+    ''' Gets the data for the hbc monthly summary report given a ward'''
     context = {}
     case_name = "Pathfinder_1" 
     try:
@@ -89,7 +261,7 @@ def get_hbc_summary_data(startdate, enddate, month, year, ward):
     data_by_chw = get_data_by_chw(case)
     chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     context["all_data"] = chw_obj
-    context["month"] = calendar.month_name[month]
+    context["month"] = calendar.month_name[int(month)]
     context["month_num"] = month
     context["year"] = year
     context["ward"] = ward
@@ -113,6 +285,8 @@ def get_user_data(chw_id):
     return data
 
 def get_provider_data_list(data, month, year):
+    ''' Gets the provider specific data arranged properly with headers for the 
+    summary by provider report'''
     all_data = []
     
     first_row = ['Region:', '', 'District:', '', 'Ward:', '']
