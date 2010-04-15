@@ -650,6 +650,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
             for i in request.POST.getlist('instance'):
                 # user has selected items and clicked 'delete'
                 # redirect to confirmation
+                print "SDSDSSDS", form, i
                 if 'checked_'+ i in request.POST:
                     meta = Metadata.objects.get(formdefmodel=form, raw_data=int(i))
                     metadata.append(meta)

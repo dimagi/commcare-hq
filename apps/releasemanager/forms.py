@@ -21,8 +21,10 @@ class BuildForm(forms.ModelForm):
 
 
 class ResourceSetForm(forms.ModelForm):
-  class Meta:
-      model = ResourceSet
-      exclude = ('domain', 'is_release', 'created_at')
+    name = forms.SlugField(error_message="name should include only letters, numbers, underscores and hyphens")
+
+    class Meta:
+        model = ResourceSet
+        exclude = ('domain', 'is_release', 'created_at')
 
 
