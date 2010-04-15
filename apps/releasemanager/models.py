@@ -11,7 +11,12 @@ from django.core.urlresolvers import reverse
 
 from domain.models import Domain
 
-FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+FILE_PATH       = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+JARJAD_PATH     = os.path.join(FILE_PATH, "jarjad")
+BUILD_PATH      = os.path.join(FILE_PATH, "builds")
+
+# currently unused
+# RESOURCE_PATH   = os.path.join(FILE_PATH, "resources")
 
 class Jarjad(models.Model):
     ''' Index of JAR/JAD files '''
@@ -22,49 +27,24 @@ class Jarjad(models.Model):
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    description = models.CharField(max_length=512, null=True, blank=True)
+    description = models.CharField(max_length=255, null=True, blank=True, unique=True)
     build_number = models.PositiveIntegerField(help_text="the teamcity build number")
     revision_number = models.CharField(max_length=255, null=True, blank=True, help_text="the source control revision number")
     version = models.CharField(max_length=20, null=True, blank=True, help_text = 'the "release" version.  e.g. 2.0.1')
 
     jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
     jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
-    # zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.zip$', recursive=True, path=FILE_PATH, max_length=255)
     
+    class Meta:
+        unique_together = ('build_number', 'revision_number', 'version')
+
     def __unicode__(self):
         return "#%s \"%s\"" %\
                 (self.build_number, self.description)
 
     def __str__(self):
         return unicode(self).encode('utf-8')
-        
-    
-    # @property
-    # def is_release(self):
-    #     return (self.released_by != None)
-        
-        
-    @property
-    def jar_url(self):
-        return self._url_for(self.jar_file)
-    
-    @property
-    def jad_url(self):
-        return self._url_for(self.jad_file)
-
-    @property
-    def jar_filename(self):
-        return os.path.basename(self.jar_file)
-
-    @property
-    def jad_filename(self):
-        return os.path.basename(self.jad_file)
-        
-    def _url_for(self, path):
-        path = path.replace(FILE_PATH, '')[1:] # remove path + first slash
-        url = reverse('download_link', kwargs={'path' : path})
-        return url
-    
+            
 
     def jad_content(self):
         return open(self.jad_file).read()
@@ -76,7 +56,7 @@ class Jarjad(models.Model):
         # try:
 
         # get/create destinaton directory
-        save_path = os.path.join(FILE_PATH, str(self.build_number))
+        save_path = os.path.join(JARJAD_PATH, str(self.build_number))
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         
@@ -103,7 +83,6 @@ class Jarjad(models.Model):
 class ResourceSet(models.Model):
     domain = models.ForeignKey(Domain)
     url = models.URLField(max_length=512)
-    #### MAKE THIS REGEX FIELD??
     name   = models.CharField(max_length=255, unique=True)
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -120,8 +99,8 @@ class Build(models.Model):
     # domain = models.ForeignKey(Domain)
     # name   = models.CharField(max_length=255)
     is_release = models.BooleanField(default=False)
-    jarjad = models.ForeignKey(Jarjad)
-    resource_set = models.ForeignKey(ResourceSet)
+    jarjad = models.ForeignKey(Jarjad, limit_choices_to={ 'is_release' : True })
+    resource_set = models.ForeignKey(ResourceSet, limit_choices_to={ 'is_release' : True })
     created_at = models.DateTimeField(auto_now_add=True)
     jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
     jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)

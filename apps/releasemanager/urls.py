@@ -1,10 +1,11 @@
 from django.conf.urls.defaults import *
 import settings
 
-urlpatterns = patterns('',
-    # (r'^releasemanager/?$', 'releasemanager.views.home'),
+urlpatterns = patterns( '', #'releasemanager.views',
+    (r'^releasemanager/?$', 'releasemanager.views.resource_sets'),
+
     (r'^releasemanager/jarjad/?$', 'releasemanager.views.jarjad'),
-    (r'^releasemanager/new/?$', 'releasemanager.views.new'),
+    (r'^releasemanager/new_jarjad/?$', 'releasemanager.views.new_jarjad'),
     (r'^releasemanager/jarjad/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.jarjad_set_release'),
 
     (r'^releasemanager/builds/?$', 'releasemanager.views.builds'),
@@ -15,12 +16,11 @@ urlpatterns = patterns('',
     (r'^releasemanager/new_resource_set/?$', 'releasemanager.views.new_resource_set'),
     (r'^releasemanager/resources_set/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.resource_set_set_release'),
     
-    
     url(r'^releasemanager/download/(?P<path>.*)$', 
-        'django.views.static.serve', 
-        {'document_root': settings.RAPIDSMS_APPS['releasemanager']['file_path']}, 
-        name="download_link"),
-    
+            'django.views.static.serve', 
+            {'document_root': settings.RAPIDSMS_APPS['releasemanager']['file_path']}, 
+            name="download_link"),
+
     # (r'^projects/?$', 'buildmanager.views.all_projects'),
     # (r'^validator/?$', 'buildmanager.views.validator'),
     # (r'^readable_xform/?$', 'buildmanager.views.readable_xform'),

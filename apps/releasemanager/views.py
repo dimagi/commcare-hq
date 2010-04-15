@@ -43,7 +43,7 @@ def jarjad_set_release(request, id, set_to):
     return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
     
 @login_and_domain_required
-def jarjad(request, template_name="releasemanager/jarjad.html"): 
+def jarjad(request, template_name="jarjad.html"): 
     context = {'form' : JarjadForm(), 'items': {}}
     context['items']['unreleased'] = Jarjad.objects.filter(is_release=False).order_by('-created_at')
     context['items']['released']   = Jarjad.objects.filter(is_release=True).order_by('-created_at')
@@ -59,9 +59,11 @@ def make_release(request, id):
     
 
 @login_and_domain_required
-def new(request, template_name="releasemanager/jarjad.html"):
+def new_jarjad(request, template_name="jarjad.html"):
     '''save new Jad & Jar into the system'''
-    
+    # import pprint ; pprint.pprint(request)
+    xml_mode = ('CCHQ-submitfromfile' in request.META['HTTP_USER_AGENT'])
+        
     context = {}
     form = JarjadForm()    
     if request.method == 'POST':
@@ -71,14 +73,14 @@ def new(request, template_name="releasemanager/jarjad.html"):
             jj = form.save(commit=False)
             jj.uploaded_by=request.user
             jj.description = urllib.unquote(jj.description)
-            
+                    
             jj.save_file(request.FILES['jad_file_upload'])
             jj.save_file(request.FILES['jar_file_upload'])
-            
+                    
             jj.save()
             
             # _log_build_upload(request, newbuild)
-            return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
+            return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
             # except Exception, e:
             #     logging.error("Build upload error.", 
             #                   extra={'exception':e, 
@@ -88,11 +90,12 @@ def new(request, template_name="releasemanager/jarjad.html"):
             #     context['errors'] = "Could not commit: " + str(e)
     
     context['form'] = form
-    return render_to_response(request, template_name, context)
+    return HttpResponse(form.errors) if xml_mode else render_to_response(request, template_name, context)
+    
     
 
 @login_and_domain_required
-def builds(request, template_name="releasemanager/builds.html"): 
+def builds(request, template_name="builds.html"): 
     context = {'form' : BuildForm(), 'items': {}}
     context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
     context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
@@ -108,26 +111,26 @@ def build_set_release(request, id, set_to):
 
 
 @login_and_domain_required
-def new_build(request, template_name="releasemanager/builds.html"):
+def new_build(request, template_name="builds.html"):
     context = {}
     form = BuildForm()    
     if request.method == 'POST':
         form = BuildForm(request.POST)
         if form.is_valid():
-            try:                      
-                b = form.save(commit=False)
-                b.domain = request.user.selected_domain
-            
-                b.jar_file, b.jad_file, b.zip_file = _create_build(b)
-            
-                b.save()
-                return HttpResponseRedirect(reverse('releasemanager.views.builds'))
-            except Exception, e:
-                logging.error("Build upload error.", 
-                              extra={'exception':e, 
-                                     'request.POST': request.POST, 
-                                     'form':form})
-                context['errors'] = "Could not commit: " + str(e)
+            # try:                      
+            b = form.save(commit=False)
+            # b.domain = request.user.selected_domain
+        
+            b.jar_file, b.jad_file, b.zip_file = _create_build(b)
+        
+            b.save()
+            return HttpResponseRedirect(reverse('releasemanager.views.builds'))
+            # except Exception, e:
+            #     logging.error("Build upload error.", 
+            #                   extra={'exception':e, 
+            #                          'request.POST': request.POST, 
+            #                          'form':form})
+            #     context['errors'] = "Could not commit: " + str(e)
 
     context['form'] = form
     return render_to_response(request, template_name, context)
@@ -135,27 +138,29 @@ def new_build(request, template_name="releasemanager/builds.html"):
 def _create_build(build):
     jar = build.jarjad.jar_file
     jad = build.jarjad.jad_file
+    buildname = build.resource_set.name
 
     resource_zip = lib.grab_from(build.resource_set.url)
     resources = lib.unzip_to_tmp(resource_zip)
 
     new_tmp_jar = lib.add_to_jar(jar, resources)    
     new_tmp_jad = lib.modify_jad(jad, new_tmp_jar)
-    
-    new_path = os.path.join(FILE_PATH, build.resource_set.domain.name, str(int(time.time())))
-    
+    # print (BUILD_PATH, build.resource_set.name, build.resource_set.id)
+    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname)
+    print new_path
+
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
     # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
-    new_jar = str(os.path.join(new_path, "%s.jar" % build.resource_set.name))
-    new_jad = str(os.path.join(new_path, "%s.jad" % build.resource_set.name))
+    new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
+    new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
         
     shutil.copy2(new_tmp_jar, new_jar)
     shutil.copy2(new_tmp_jad, new_jad)
     
     # create a zip
-    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % build.name), [new_jar, new_jad])
+    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), [new_jar, new_jad])
     
     # # clean up tmp files
     os.remove(new_tmp_jar)
@@ -165,7 +170,7 @@ def _create_build(build):
 
 
 @login_and_domain_required
-def resource_sets(request, template_name="releasemanager/resource_sets.html"): 
+def resource_sets(request, template_name="resource_sets.html"): 
     context = {'form' : ResourceSetForm(), 'items': {}}
     context['items']['unreleased'] = ResourceSet.objects.filter(is_release=False).order_by('-created_at')
     context['items']['released']   = ResourceSet.objects.filter(is_release=True).order_by('-created_at')
@@ -181,7 +186,7 @@ def resource_set_set_release(request, id, set_to):
 
 
 @login_and_domain_required
-def new_resource_set(request, template_name="releasemanager/resource_sets.html"):
+def new_resource_set(request, template_name="resource_sets.html"):
     context = {}
     form = ResourceSetForm()    
     if request.method == 'POST':

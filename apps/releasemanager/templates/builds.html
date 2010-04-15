@@ -1,4 +1,4 @@
-{% extends "releasemanager/base.html" %}
+{% extends "rm_base.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Builds" %}{% endblock %}
@@ -15,7 +15,7 @@
 	<p>
 		<h3>Releases</h3>
 		{% with items.released as items %}
-			{% include "releasemanager/partials/list_build.html" %}
+			{% include "partials/list_build.html" %}
 		{% endwith %}
 	</p>
 	<br />
@@ -23,7 +23,7 @@
 	<p>
 		<h3>Unreleased</h3>
 		{% with items.unreleased as items %}
-			{% include "releasemanager/partials/list_build.html" %}
+			{% include "partials/list_build.html" %}
 		{% endwith %}
 	</p>
 
