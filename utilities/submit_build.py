@@ -62,7 +62,8 @@ class AuthenticatedHandler(object):
 
             command_arr = [CURL_CMD,'-b', 
                                   self.session_cookie,
-                                  "--user-agent '%s'" % USER_AGENT,
+                                  "-s",
+                                  "--user-agent", USER_AGENT,
                                   '-F jar_file_upload=@%s' % jar_file, 
                                   '-F jad_file_upload=@%s' % jad_file, 
                                   '-F project=%s' % project_id,                                  
@@ -79,7 +80,9 @@ class AuthenticatedHandler(object):
             print ' '.join(command_arr)
             results = p.stdout.read()
             errors = p.stderr.read()
-            print results            
+            print results
+            if errors.strip() != '': print "ERROR: %s" % errors
+            
         except Exception, e:
             print "Error uploading submission: " + str(e)
         finally:
