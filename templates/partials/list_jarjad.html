@@ -1,3 +1,5 @@
+{% load paths %}
+
 {% if items %}
 <table>
 	<thead>
@@ -21,9 +23,9 @@
 	        <td>{{item.uploaded_by}}</td>
 	        <td>{{item.status}}</td>        
 	        <td>
-				<a href="{{ item.jar_url }}">{{item.jar_filename}}</a><br />
-	            <a href="{{ item.jad_url }}" onmouseout="hideTooltip()" 
-						onmouseover="showTooltip(event,'{{ item.jad_content|linebreaks }}');return false">{{item.jad_filename}}</a><br />
+				<a href="{% download_url item.jar_file %}">{% filename item.jar_file %}</a><br />
+	            <a href="{% download_url item.jad_file %}" onmouseout="hideTooltip()" 
+						onmouseover="showTooltip(event,'{{ item.jad_content|linebreaks }}');return false">{% filename item.jad_file %}</a><br />
 	        </td>
 			<!-- <td><a href="{{item.get_zip_downloadurl}}">Zip Archive</a></td> -->
 	        <td>

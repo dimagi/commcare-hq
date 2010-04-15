@@ -1,25 +1,25 @@
+{% load paths %}
+
 {% if items %}
 <table>
 	<thead>
-		<th>Name</th>
-		<th>Created At</th>
-		<th>JAD/JAR</th>
 		<th>Resource Set</th>
 		<th>Downloads</th>
-		<th></th>
+		<th>Created At</th>
+		<th>JAD/JAR</th>
+		<th>&nbsp;</th>
 	</thead>
 	{% for item in items %}
 
 	    <tr class="{% cycle 'odd' 'even' %}">
-	        <td>{{item.name}}</td>
-	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
 			<td>{{item.jarjad.description}}</td>
 			<td>{{item.resource_set.name}}</td>
+	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
 	        <td>
-	            <a href="{{item.jar_file}}">JAR File</a><br />
-	            <a href="{{ item.jad_file }}" onmouseout="hideTooltip()" 
-						onmouseover="showTooltip(event,'{{ item.jad_content|linebreaks }}');return false">JAD File</a><br />
-				<a href="{{item.zip_file}}">Zip Archive</a><br />
+	            <a href="{% download_url item.jar_file %}">{% filename item.jar_file %}</a><br />
+	            <a href="{% download_url item.jad_file %}" onmouseout="hideTooltip()" 
+						onmouseover="showTooltip(event,'{{ item.jad_content|linebreaks }}');return false">{% filename item.jad_file %}</a><br />
+				<a href="{% download_url item.zip_file %}">{% filename item.zip_file %}</a><br />
 	        </td>
 	        <td>
 				{% if item.is_release %}

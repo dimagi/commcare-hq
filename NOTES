@@ -1,4 +1,3 @@
-So if i've made a template defining where my resources are, the process is:
 
 *)Go to the build page
 *)Click "Create New Build"
@@ -9,3 +8,6 @@ So if i've made a template defining where my resources are, the process is:
 *)The build is downloaded and tested
 *)The user clicks "Make Release"
 *) The release process is followed as normal.
+
+
+# At the moment resource_set stores only URL for a resource set and a name. In next iterations it will relate to a group of files (or a directory?) in under /builds
