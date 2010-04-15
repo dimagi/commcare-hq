@@ -142,19 +142,25 @@ def _create_build(build):
     resource_zip = lib.grab_from(build.resource_set.url)
     resources = lib.unzip_to_tmp(resource_zip)
 
-    new_tmp_jar = lib.add_to_jar(jar, resources)    
-    new_tmp_jad = lib.modify_jad(jad, new_tmp_jar)
-    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname)
-
+    ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
+    new_id = (1 + ids[0].id) if len(ids) > 0 else 1
+    # new_id = str(1 + Build.objects.order_by('-id').filter(resource_set=build.resource_set)[0].id)
+    
+    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname, str(new_id))
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
+
     # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
+
+    new_tmp_jar = lib.add_to_jar(jar, resources)    
     new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
-    new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
-        
     shutil.copy2(new_tmp_jar, new_jar)
+
+    new_tmp_jad = lib.modify_jad(jad, new_jar)
+    new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
     shutil.copy2(new_tmp_jad, new_jad)
+        
     
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), [new_jar, new_jad])
