@@ -61,7 +61,6 @@ def make_release(request, id):
 @login_and_domain_required
 def new_jarjad(request, template_name="jarjad.html"):
     '''save new Jad & Jar into the system'''
-    # import pprint ; pprint.pprint(request)
     xml_mode = ('CCHQ-submitfromfile' in request.META['HTTP_USER_AGENT'])
         
     context = {}
@@ -145,9 +144,7 @@ def _create_build(build):
 
     new_tmp_jar = lib.add_to_jar(jar, resources)    
     new_tmp_jad = lib.modify_jad(jad, new_tmp_jar)
-    # print (BUILD_PATH, build.resource_set.name, build.resource_set.id)
     new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname)
-    print new_path
 
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
@@ -190,7 +187,6 @@ def new_resource_set(request, template_name="resource_sets.html"):
     context = {}
     form = ResourceSetForm()    
     if request.method == 'POST':
-        import pprint ; pprint.pprint(request.POST)
         form = ResourceSetForm(request.POST)
         if form.is_valid():
             try:                      
