@@ -31,7 +31,7 @@ def add_to_jar(jar_file, path_to_add):
     zf = ZipFile(tmpjar, 'a')
     
     for f in os.listdir(path_to_add):
-        zf.write(os.path.join(path_to_add, f))
+        zf.write(os.path.join(path_to_add, f), f)
         
     zf.close
     
