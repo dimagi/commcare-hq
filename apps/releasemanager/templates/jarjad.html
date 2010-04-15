@@ -15,7 +15,7 @@
 		
 	<br />
 	<p>
-		<h3>Current Release</h3>
+		<h3>Visible</h3>(Users can select these JAD/JAR files when creating their own builds)
 		{% with items.released as items %}
 			{% include "partials/list_jarjad.html" %}
 		{% endwith %}
@@ -23,7 +23,7 @@
 	<br />
 	
 	<p>
-		<h3>Unreleased</h3>
+		<h3>Hidden</h3>
 		{% with items.unreleased as items %}
 			{% include "partials/list_jarjad.html" %}
 		{% endwith %}

@@ -118,8 +118,7 @@ def new_build(request, template_name="builds.html"):
         if form.is_valid():
             # try:                      
             b = form.save(commit=False)
-            # b.domain = request.user.selected_domain
-        
+
             b.jar_file, b.jad_file, b.zip_file = _create_build(b)
         
             b.save()

@@ -30,9 +30,9 @@
 			<!-- <td><a href="{{item.get_zip_downloadurl}}">Zip Archive</a></td> -->
 	        <td>
 				{% if item.is_release %}
-	           		<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'false'%}');">Remove from Releases</button>
+	           		<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'false'%}');">Hide</button>
 				{% else %}
-					<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'true'%}');">Release</button>
+					<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'true'%}');">Make Visible</button>
 	            {% endif %}
 	        </td>
 	    </tr>
