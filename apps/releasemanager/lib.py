@@ -39,10 +39,28 @@ def add_to_jar(jar_file, path_to_add):
 
 
 def modify_jad(jad_file, jar_file):
-    tmpjad = os.path.join(tmp.mkdtemp(), os.path.basename(jad_file))
-    shutil.copy2(jad_file, tmpjad)
+    # tmpjad = os.path.join(tmp.mkdtemp(), os.path.basename(jad_file))
+    # shutil.copy2(jad_file, tmpjad)
 
-    # modify tmpjad here...
+    # read JAD to dict
+    jad = {}
+    for line in open(jad_file).readlines():
+        key, val = line.split(':',1)
+        jad[key] = val.strip()
+    
+    # modify JAD data 
+    jad['MIDlet-Jar-Size'] = os.path.getsize(jar_file)
+    jad['MIDlet-Jar-URL']  = os.path.basename(jar_file)
+
+    # create new JAD
+    new_content = ''
+    for i in jad:
+        new_content += "%s: %s\n" % (i, jad[i])
+    
+    x, tmpjad = tmp.mkstemp() 
+    f = open(tmpjad, 'w')
+    f.write(new_content)
+    f.close()
     
     return tmpjad
     
