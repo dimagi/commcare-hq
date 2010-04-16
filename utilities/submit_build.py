@@ -21,7 +21,7 @@ CURL_CMD = 'curl' #if curl is in your path/linux
 USER_AGENT = 'CCHQ-submitfromfile-python-v0.1' 
 
 #TARGET_URL = "http://{{remote_host}}/builds/new"
-TARGET_URL = "http://{{remote_host}}/releasemanager/new/"
+TARGET_URL = "http://{{remote_host}}/releasemanager/new_jarjad/"
 
 class AuthenticatedHandler(object):    
     def __init__(self, username, password, hostname):
