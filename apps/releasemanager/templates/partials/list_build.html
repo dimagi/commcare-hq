@@ -4,16 +4,16 @@
 <table>
 	<thead>
 		<th>Resource Set</th>
-		<th>Downloads</th>
-		<th>Created At</th>
 		<th>JAD/JAR</th>
+		<th>Created At</th>
+		<th>Downloads</th>
 		<th>&nbsp;</th>
 	</thead>
 	{% for item in items %}
 
 	    <tr class="{% cycle 'odd' 'even' %}">
-			<td>{{item.jarjad.description}}</td>
 			<td>{{item.resource_set.name}}</td>
+			<td>{{item.jarjad.description}}</td>
 	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
 	        <td>
 	            <a href="{% download_url item.jar_file %}">{% filename item.jar_file %}</a><br />

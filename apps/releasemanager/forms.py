@@ -6,8 +6,8 @@ from releasemanager.models import *
 import datetime
 
 class JarjadForm(forms.ModelForm):
-    jar_file_upload = forms.FileField()
     jad_file_upload = forms.FileField()    
+    jar_file_upload = forms.FileField()
     
     class Meta:
         model = Jarjad
