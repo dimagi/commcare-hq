@@ -2,10 +2,13 @@ import sys
 import os
 import urllib2
 import shutil
+import re
 
 import tempfile as tmp
 from zipfile import ZipFile 
 from cStringIO import StringIO
+
+from subprocess import Popen, PIPE
 
 # import re
 # import logging
@@ -20,7 +23,7 @@ from cStringIO import StringIO
 def add_to_jar(jar_file, path_to_add):
     '''adds files under /path_to_add to jar_file, return path to the new JAR'''
     if not os.path.isdir(path_to_add):
-        raise "Trying to add non-existant directory '%s' to JAR" % path_to_add
+        raise "Trying to add non-existant directory '%s' to JAR" % str(path_to_add)
         
     if not jar_file.endswith('.jar') or not os.path.isfile(jar_file):
         raise "'%s' isn't a JAR file" % jar_file
@@ -31,7 +34,9 @@ def add_to_jar(jar_file, path_to_add):
     zf = ZipFile(tmpjar, 'a')
     
     for f in os.listdir(path_to_add):
-        zf.write(os.path.join(path_to_add, f), f)
+        full_path = os.path.join(path_to_add, f)
+        if os.path.isdir(full_path): continue
+        zf.write(full_path, str(f))
         
     zf.close
     
@@ -39,9 +44,6 @@ def add_to_jar(jar_file, path_to_add):
 
 
 def modify_jad(jad_file, jar_file):
-    # tmpjad = os.path.join(tmp.mkdtemp(), os.path.basename(jad_file))
-    # shutil.copy2(jad_file, tmpjad)
-
     # read JAD to dict
     jad = {}
     for line in open(jad_file).readlines():
@@ -89,14 +91,17 @@ def grab_from(url):
     return tmpfile
 
 
-def unzip_to_tmp(zip_file):
+def unzip(zip_file, target_dir=None):
     '''
     extracts a resources zip.
     assumes that all files are on one root dir
     returns path of extracted files
     '''
     zf = ZipFile(zip_file)
-    target_dir = tmp.mkdtemp()
+    if target_dir is None:
+        target_dir = tmp.mkdtemp()
+    elif not os.path.exists(target_dir):
+        os.makedirs(target_dir)
     
     namelist = zf.namelist()
     filelist = filter( lambda x: not x.endswith( '/' ), namelist )
@@ -119,3 +124,31 @@ def unzip_to_tmp(zip_file):
         out.close()
         
     return target_dir
+
+
+def clone_from(url):
+    if re.match(r'http:\/\/.*bitbucket.org\/', url) is not None:
+        # hg won't clone to an existing directory, and tempfile won't return just a name without creating a dir
+        # so just delete the new tmp dir and let hg recreate it in clone
+        tmpdir = tmp.mkdtemp()
+        os.rmdir(tmpdir)
+
+        # obviously, this is a bit shaky - what if /src is elsewhere in the URL? 
+        # but the whole hg thing is shaky atm, fix it later on.
+        hg_root, path = url.split('/src')
+        path = path.replace('/tip', '')
+        path = path.lstrip('/') # dont confuse os.path.join
+        
+        clone_cmd = ["hg", "clone", hg_root, tmpdir]
+        p = Popen(clone_cmd, stdout=PIPE, stderr=PIPE, shell=False)
+        err = p.stderr.read().strip()
+        
+        if err != '': raise err
+
+        return os.path.join(tmpdir, path)
+
+    else:
+        raise "Unknown SCM URL"
+    
+    
+    
