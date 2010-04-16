@@ -28,18 +28,18 @@ class Jarjad(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     description = models.CharField(max_length=255, null=True, blank=True, unique=True)
-    build_number = models.PositiveIntegerField(help_text="the teamcity build number")
+    build_number = models.PositiveIntegerField(help_text="the teamcity build number", unique=True)
     revision_number = models.CharField(max_length=255, null=True, blank=True, help_text="the source control revision number")
     version = models.CharField(max_length=20, null=True, blank=True, help_text = 'the "release" version.  e.g. 2.0.1')
 
-    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
     jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
+    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
     
     class Meta:
         unique_together = ('build_number', 'revision_number', 'version')
 
     def __unicode__(self):
-        return "#%s \"%s\"" %\
+        return "build #%s \"%s\"" %\
                 (self.build_number, self.description)
 
     def __str__(self):
@@ -49,6 +49,11 @@ class Jarjad(models.Model):
     def jad_content(self):
         return open(self.jad_file).read()
     
+    @staticmethod
+    def verify_all_files(delete_missing=False):
+        for o in Jarjad.objects.all():
+            verify_files(o, delete_missing)
+        
         
     # TODO: not sure if needed, check Django file upload docs
     def save_file(self, file_obj):
@@ -109,6 +114,41 @@ class Build(models.Model):
     def jad_content(self):
         return open(self.jad_file).read()
 
+    @staticmethod
+    def verify_all_files(delete_missing=False):
+        for o in Build.objects.all():
+            verify_files(o, delete_missing)
+    
+    
+# def verify_files(obj, delete_missing=False):
+#     ''' 
+#     Check that all files a record points to actually exist. If delete_missing is True, remove rows with non-existant files 
+# 
+#     >>> verify_files(Jarjad.objects.all()[0], ['jar_file','jad_file'], delete_missing=True)
+#     
+#     '''
+#     exists = True
+#     for f in file_columns:
+#         path = getattr(obj, f)
+#         exists = exists and os.path.exists(path)
+# 
+#     if delete_missing:
+#         getattr(obj, "delete")()
+#         
+#     return exists
+    
+def verify_files(obj, delete_missing=False):
+    exists = True
+    
+    # get at obj._meta.fields
+    for f in getattr(getattr(obj, '_meta'), 'fields'):
+        if f.get_internal_type() == 'FilePathField':
+            exists = exists and os.path.exists(getattr(obj, f.get_attname()))
+
+    if not exists and delete_missing:
+        getattr(obj, "delete")()
+        
+    return exists
     
 # class Package(models.Model):
     
