@@ -43,7 +43,9 @@ def jarjad_set_release(request, id, set_to):
     return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
     
 @login_and_domain_required
-def jarjad(request, template_name="jarjad.html"): 
+def jarjad(request, template_name="jarjad.html"):
+    Jarjad.verify_all_files(delete_missing=True)
+    
     context = {'form' : JarjadForm(), 'items': {}}
     context['items']['unreleased'] = Jarjad.objects.filter(is_release=False).order_by('-created_at')
     context['items']['released']   = Jarjad.objects.filter(is_release=True).order_by('-created_at')
@@ -95,6 +97,8 @@ def new_jarjad(request, template_name="jarjad.html"):
 
 @login_and_domain_required
 def builds(request, template_name="builds.html"): 
+    Build.verify_all_files(delete_missing=True)
+
     context = {'form' : BuildForm(), 'items': {}}
     context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
     context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
