@@ -14,9 +14,7 @@ from domain.models import Domain
 FILE_PATH       = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 JARJAD_PATH     = os.path.join(FILE_PATH, "jarjad")
 BUILD_PATH      = os.path.join(FILE_PATH, "builds")
-
-# currently unused
-# RESOURCE_PATH   = os.path.join(FILE_PATH, "resources")
+RESOURCE_PATH   = os.path.join(FILE_PATH, "resources")
 
 class Jarjad(models.Model):
     ''' Index of JAR/JAD files '''
@@ -32,8 +30,8 @@ class Jarjad(models.Model):
     revision_number = models.CharField(max_length=255, null=True, blank=True, help_text="the source control revision number")
     version = models.CharField(max_length=20, null=True, blank=True, help_text = 'the "release" version.  e.g. 2.0.1')
 
-    jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
-    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
+    jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=JARJAD_PATH, max_length=255)
+    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=JARJAD_PATH, max_length=255)
     
     class Meta:
         unique_together = ('build_number', 'revision_number', 'version')
@@ -87,7 +85,8 @@ class Jarjad(models.Model):
 
 class ResourceSet(models.Model):
     domain = models.ForeignKey(Domain)
-    url = models.URLField(max_length=512)
+    url = models.URLField(max_length=512, help_text="<br />(Bitbucket URL, eg:<tt> http://bitbucket.org/commcare/commcare-path/src/tip/path-comm/</tt><br /> or ZIP URL, eg:<tt> http://bitbucket.org/ctsims/resourcetest/get/tip.zip</tt>)")
+    # resource_dir = models.FilePathField(_('Directory of files'), recursive=True, path=RESOURCE_PATH, max_length=255, null=True, blank=True)
     name   = models.CharField(max_length=255, unique=True)
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -101,15 +100,13 @@ class ResourceSet(models.Model):
 
 
 class Build(models.Model):
-    # domain = models.ForeignKey(Domain)
-    # name   = models.CharField(max_length=255)
     is_release = models.BooleanField(default=False)
     jarjad = models.ForeignKey(Jarjad, limit_choices_to={ 'is_release' : True })
     resource_set = models.ForeignKey(ResourceSet, limit_choices_to={ 'is_release' : True })
     created_at = models.DateTimeField(auto_now_add=True)
-    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=FILE_PATH, max_length=255)
-    jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=FILE_PATH, max_length=255)
-    zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.zip$', recursive=True, path=FILE_PATH, max_length=255)
+    jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=BUILD_PATH, max_length=255)
+    jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=BUILD_PATH, max_length=255)
+    zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.zip$', recursive=True, path=BUILD_PATH, max_length=255)
 
     def jad_content(self):
         return open(self.jad_file).read()
@@ -119,25 +116,13 @@ class Build(models.Model):
         for o in Build.objects.all():
             verify_files(o, delete_missing)
     
-    
-# def verify_files(obj, delete_missing=False):
-#     ''' 
-#     Check that all files a record points to actually exist. If delete_missing is True, remove rows with non-existant files 
-# 
-#     >>> verify_files(Jarjad.objects.all()[0], ['jar_file','jad_file'], delete_missing=True)
-#     
-#     '''
-#     exists = True
-#     for f in file_columns:
-#         path = getattr(obj, f)
-#         exists = exists and os.path.exists(path)
-# 
-#     if delete_missing:
-#         getattr(obj, "delete")()
-#         
-#     return exists
-    
+
+
 def verify_files(obj, delete_missing=False):
+    ''' 
+    gets an object instance, looks for file fields and checks the paths exists. 
+    if delete_missing, removes records that dont correspond to existing paths
+    '''
     exists = True
     
     # get at obj._meta.fields

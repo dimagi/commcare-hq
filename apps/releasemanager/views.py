@@ -28,13 +28,13 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.http import *
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
 
 import mimetypes
 import urllib
 
-FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+# FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 
 @login_and_domain_required
 def jarjad_set_release(request, id, set_to):
@@ -70,28 +70,32 @@ def new_jarjad(request, template_name="jarjad.html"):
     if request.method == 'POST':
         form = JarjadForm(request.POST, request.FILES)                
         if form.is_valid():
-            # try:                      
-            jj = form.save(commit=False)
-            jj.uploaded_by=request.user
-            jj.description = urllib.unquote(jj.description)
+            try:                      
+                jj = form.save(commit=False)
+                jj.uploaded_by=request.user
+                jj.description = urllib.unquote(jj.description)
                     
-            jj.save_file(request.FILES['jad_file_upload'])
-            jj.save_file(request.FILES['jar_file_upload'])
+                jj.save_file(request.FILES['jad_file_upload'])
+                jj.save_file(request.FILES['jar_file_upload'])
                     
-            jj.save()
+                jj.save()
             
-            # _log_build_upload(request, newbuild)
-            return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
-            # except Exception, e:
-            #     logging.error("Build upload error.", 
-            #                   extra={'exception':e, 
-            #                          'request.POST': request.POST, 
-            #                          'request.FILES': request.FILES, 
-            #                          'form':form})
-            #     context['errors'] = "Could not commit: " + str(e)
+                # _log_build_upload(request, newbuild)
+                return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
+            except Exception, e:
+                logging.error("Build upload error.", 
+                              extra={'exception':e, 
+                                     'request.POST': request.POST, 
+                                     'request.FILES': request.FILES, 
+                                     'form':form})
+                context['errors'] = "Could not commit: " + str(e)
     
     context['form'] = form
-    return HttpResponse(form.errors) if xml_mode else render_to_response(request, template_name, context)
+
+    if xml_mode:
+        return HttpResponseBadRequest("FAIL")
+    else:
+        render_to_response(request, template_name, context)
     
     
 
@@ -120,19 +124,10 @@ def new_build(request, template_name="builds.html"):
     if request.method == 'POST':
         form = BuildForm(request.POST)
         if form.is_valid():
-            # try:                      
             b = form.save(commit=False)
-
             b.jar_file, b.jad_file, b.zip_file = _create_build(b)
-        
             b.save()
             return HttpResponseRedirect(reverse('releasemanager.views.builds'))
-            # except Exception, e:
-            #     logging.error("Build upload error.", 
-            #                   extra={'exception':e, 
-            #                          'request.POST': request.POST, 
-            #                          'form':form})
-            #     context['errors'] = "Could not commit: " + str(e)
 
     context['form'] = form
     return render_to_response(request, template_name, context)
@@ -142,8 +137,12 @@ def _create_build(build):
     jad = build.jarjad.jad_file
     buildname = build.resource_set.name
 
-    resource_zip = lib.grab_from(build.resource_set.url)
-    resources = lib.unzip_to_tmp(resource_zip)
+    # get the resources: load & zip if zip file, hg clone otherwise
+    if build.resource_set.url.endswith('.zip'):
+        resource_zip = lib.grab_from(build.resource_set.url)
+        resources = lib.unzip(resource_zip)
+    else:
+        resources = lib.clone_from(build.resource_set.url)
 
     ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
     new_id = (1 + ids[0].id) if len(ids) > 0 else 1
@@ -198,17 +197,15 @@ def new_resource_set(request, template_name="resource_sets.html"):
     if request.method == 'POST':
         form = ResourceSetForm(request.POST)
         if form.is_valid():
-            try:                      
-                b = form.save(commit=False)
-                b.domain = request.user.selected_domain
-                b.save()
-                return HttpResponseRedirect(reverse('releasemanager.views.resource_sets'))
-            except Exception, e:
-                logging.error("Build upload error.", 
-                              extra={'exception':e, 
-                                     'request.POST': request.POST, 
-                                     'form':form})
-                context['errors'] = "Could not commit: " + str(e)
+            r = form.save(commit=False)
+            r.domain = request.user.selected_domain
+
+            # resource_zip = lib.grab_from(r.url)
+            # r.resource_dir = os.path.join(RESOURCE_PATH, r.name)
+            # resources = lib.unzip(resource_zip, r.resource_dir)
+            
+            r.save()
+            return HttpResponseRedirect(reverse('releasemanager.views.resource_sets'))
 
     context['form'] = form
     return render_to_response(request, template_name, context)
