@@ -133,8 +133,8 @@ def clone_from(url):
         tmpdir = tmp.mkdtemp()
         os.rmdir(tmpdir)
 
-        # obviously, this is a bit shaky - what if /src is elsewhere in the URL? 
-        # but the whole hg thing is shaky atm, fix it later on.
+        # obviously, this depends on a particular URL format.
+        # if we stick with bitbucket, standardize on an expected URL.
         hg_root, path = url.split('/src')
         path = path.replace('/tip', '')
         path = path.lstrip('/') # dont confuse os.path.join
@@ -150,5 +150,22 @@ def clone_from(url):
     else:
         raise "Unknown SCM URL"
     
+
+# unused for now. move it later to a short_url app as HQ-wide service.
+def get_bitly_url_for(url):
+    try:
+        bitly_login  = settings.RAPIDSMS_APPS['releasemanager']['bitly_login']
+        bitly_apikey = settings.RAPIDSMS_APPS['releasemanager']['bitly_apikey']
+    except:
+        return false
+
+    bitly_url = "http://api.bit.ly/v3/shorten?login=dmgi&apiKey=R_af7d5c0d899197fe43e18acceebd5cdb&uri=%s&format=txt" % url
     
+    u = urllib2.urlopen(bitly_url)
+    short_url = u.read().strip()
     
+    if short_url == '': return false
+    
+    return short_url
+    
+        

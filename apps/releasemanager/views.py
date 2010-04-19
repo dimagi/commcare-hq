@@ -36,6 +36,12 @@ import urllib
 
 # FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 
+def projects(request, template_name="projects.html"):
+    context = {'form' : BuildForm(), 'items': {}}
+    context['items'] = Build.objects.filter(is_release=True).order_by('-created_at')
+
+    return render_to_response(request, template_name, context)
+    
 @login_and_domain_required
 def jarjad_set_release(request, id, set_to):
     if set_to == "true" or set_to == "false":
