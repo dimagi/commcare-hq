@@ -18,6 +18,7 @@ def download_url(path):
     url = reverse('download_link', kwargs={'path' : path})
     return url
     
+    
 @register.simple_tag
 def filename(path):
     return os.path.basename(path)

@@ -20,7 +20,6 @@ class Jarjad(models.Model):
     ''' Index of JAR/JAD files '''
     
     uploaded_by = models.ForeignKey(User, related_name="core_uploaded") 
-    # released_by = models.ForeignKey(User, related_name="core_released", null=True, blank=True) 
 
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -104,6 +103,8 @@ class Build(models.Model):
     jarjad = models.ForeignKey(Jarjad, limit_choices_to={ 'is_release' : True })
     resource_set = models.ForeignKey(ResourceSet, limit_choices_to={ 'is_release' : True })
     created_at = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    
     jar_file = models.FilePathField(_('JAR File Location'), match='.*\.jar$', recursive=True, path=BUILD_PATH, max_length=255)
     jad_file = models.FilePathField(_('JAD File Location'), match='.*\.jad$', recursive=True, path=BUILD_PATH, max_length=255)
     zip_file = models.FilePathField(_('ZIP File Location'), match='.*\.zip$', recursive=True, path=BUILD_PATH, max_length=255)
