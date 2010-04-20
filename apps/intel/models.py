@@ -159,7 +159,7 @@ def hq_chart_sql(startdate, enddate):
     startdate, enddate = _date_format(startdate, enddate)
     return '''    
         SELECT DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), intel_clinic.name as clinic, count(*)
-        FROM xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic
+        FROM xformmanager_metadata meta, xformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic
         WHERE intel_clinic.id = prof.clinic_id AND prof.username = meta.username AND forms.id = meta.formdefmodel_id
             AND forms.domain_id = domains.id AND domains.name = 'Grameen' AND meta.timeend > '%s' AND meta.timeend < '%s'
         GROUP BY DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), clinic
