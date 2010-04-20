@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.db import connection
-
+from datetime import *
 from domain.models import Membership
 
 from intel.schema_models import *
@@ -135,3 +135,62 @@ HI_RISK_INDICATORS = {
     'diabetes':
         {'short' : "Diab.",         'long' : "Diabetes",                'where' : "sampledata_diabetes = 'yes'"}
 }
+
+
+
+def _date_format(startdate, enddate):
+    return startdate.strftime("%Y-%m-%d"), (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    
+def clinic_chart_sql(startdate, enddate, clinic_id):
+    startdate, enddate = _date_format(startdate, enddate)
+    return '''    
+        SELECT DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), prof.username, count(*)
+        FROM xformmanager_metadata meta,xformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic
+        WHERE forms.id = meta.formdefmodel_id AND intel_clinic.id = prof.clinic_id AND prof.username = meta.username 
+            AND forms.domain_id = domains.id AND domains.name = 'Grameen' AND meta.timeend > '%s' AND meta.timeend < '%s' 
+            AND clinic_id = %s
+        GROUP BY DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), prof.username, clinic_id
+        ORDER BY timeend ASC;
+        ''' % (startdate, enddate, clinic_id)
+        
+    
+def hq_chart_sql(startdate, enddate):
+    startdate, enddate = _date_format(startdate, enddate)
+    return '''    
+        SELECT DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), intel_clinic.name as clinic, count(*)
+        FROM xformmanager_metadata meta,\nxformmanager_formdefmodel forms, hq_domain domains, intel_userclinic prof, intel_clinic
+        WHERE intel_clinic.id = prof.clinic_id AND prof.username = meta.username AND forms.id = meta.formdefmodel_id
+            AND forms.domain_id = domains.id AND domains.name = 'Grameen' AND meta.timeend > '%s' AND meta.timeend < '%s'
+        GROUP BY DATE_FORMAT(timeend,'%%%%m/%%%%d/%%%%Y'), clinic
+        ORDER BY timeend ASC;
+        ''' % (startdate, enddate)
+
+
+def hq_risk_sql(clinic_id):
+    return '''
+        SELECT 
+            COUNT(NULLIF(sampledata_hi_risk,'no')) AS high_risk,
+            COUNT(NULLIF(sampledata_mother_height,'over_150')) AS small_frame,
+            COUNT(NULLIF(sampledata_previous_csection,'no')) AS previous_c_section,
+            COUNT(NULLIF(sampledata_previous_newborn_death,'no')) AS previous_newborn_death,
+            COUNT(NULLIF(sampledata_previous_bleeding,'no')) AS previous_bleeding,
+            COUNT(NULLIF(sampledata_heart_problems,'no')) AS heart_problems,
+            COUNT(NULLIF(sampledata_diabetes,'no')) AS diabetes,
+            COUNT(NULLIF(sampledata_hip_problems,'no')) AS hip_problems,
+            COUNT(NULLIF(sampledata_card_results_syphilis_result,'negative')) AS syphilis,
+            COUNT(NULLIF(sampledata_card_results_hepb_result,'negative')) AS hebp,
+            COUNT(NULLIF(sampledata_over_5_years,'no')) AS time_since_last,
+            COUNT(NULLIF(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,
+            COUNT(IF(sampledata_mother_age <= 18, 1, NULL)) AS age_under_19,
+            COUNT(IF(sampledata_mother_age >= 34, 1, NULL)) AS age_over_34,
+            COUNT(IF(sampledata_previous_terminations >= 3, 1, NULL)) as over_3_terminations,
+            COUNT(IF(sampledata_previous_pregnancies >= 5, 1, NULL)) as over_5_pregs, 
+            COUNT(
+                NULLIF(sampledata_card_results_blood_group, 'opositive') 
+                OR NULLIF(sampledata_card_results_blood_group, 'apositive') 
+                OR NULLIF(sampledata_card_results_blood_group, 'abpositive') 
+                OR NULLIF(sampledata_card_results_blood_group, 'bpositive')) AS rare_blood
+        FROM schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userclinic 
+        WHERE meta_username = intel_userclinic.username AND meta_username <> 'admin' AND intel_userclinic.clinic_id = %s;
+        ''' % clinic_id
