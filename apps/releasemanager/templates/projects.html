@@ -1,0 +1,23 @@
+{% extends "rm_base.html" %}
+{% load i18n %}
+
+{% load paths %}
+{% block title %}{% trans "Projects" %}{% endblock %}
+
+{% block releasemanager_content %}
+
+<div class="span-10 prepend-2">
+{% if items %}
+	
+	{% for item in items %}
+		{{item.resource_set.name}} :: {{item.description}} :: 
+		<a href="{% download_url item.jar_file %}">Download JAR</a> | 
+        <a href="{% download_url item.jad_file %}">Download JAD</a> | 
+		<a href="{% download_url item.zip_file %}">Download ZIP</a><br />
+	{%endfor%}
+	
+{% else %}
+	No builds found
+{% endif %}
+</div>
+{%endblock%}
