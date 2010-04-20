@@ -64,7 +64,6 @@ def all_mothers_report(request, format):
     '''View all mothers - default'''
 
     title = ""
-    
     if request.GET.has_key('meta_username'): 
         title = "Cases Entered by %s" % request.GET['meta_username']
         
@@ -77,7 +76,6 @@ def all_mothers_report(request, format):
 def hi_risk_report(request, format):
     '''View only hi risk'''
     title = ""
-    
     if request.GET.has_key('meta_username'): 
         title = "Cases Entered by %s" % request.GET['meta_username']
 
@@ -93,9 +91,8 @@ def mother_details(request):
 
 
 def _custom_report(request, domain_id, report_name, page, title=None, format=None):
-    context = { 'clinic' : _get_clinic(request) }
+    context = { 'page' : page, 'clinic' : _get_clinic(request) }
 
-    context['page'] = page
     context["report_name"] = report_name
     context['title'] = title
 
@@ -147,30 +144,33 @@ def _custom_report(request, domain_id, report_name, page, title=None, format=Non
 # Chart Methods
 @login_and_domain_required
 def chart(request, template_name="chart.html"):    
-    context = { 'clinic' : _get_clinic(request) }
-    graph = RawGraph.objects.all().get(id=29) #20)
-
+    context = {'page' : "chart" , 'clinic' : _get_clinic(request)}
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
-    graph.clinic_id = context['clinic']['id']
+
+    graph = RawGraph() #.objects.all().get(id=29)
+    graph.set_fields({
+          "series_labels": "Count", 
+          "data_source": "", 
+          "y_axis_label": "Number of Submissions", 
+          "x_type": "MM/DD/YYYY", 
+          "additional_options": {"yaxis" : {"tickDecimals": 0}}, 
+          "time_bound": 1, 
+          "default_interval": 365, 
+          "interval_ranges": "7|30|90|365", 
+          "x_axis_label": "Date", 
+          "table_name": "xformmanager_metadata", 
+          "display_type": "compare-cumulative", 
+    })
     
-    graph.domain = request.user.selected_domain.name
-    startdate, enddate = utils.get_dates(request, graph.default_interval)
-    graph.startdate = startdate.strftime("%Y-%m-%d")
-    graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
-
-    # print startdate.strftime("%Y-%m-%d"), (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
-
-    context['chart_title'] = graph.title
+    startdate, enddate = utils.get_dates(request, graph.default_interval)    
+    graph.db_query = clinic_chart_sql(startdate, enddate, context['clinic']['id']) #startdate, enddate, context['clinic']['id'])    
     
     context['chart_data'] = graph.get_flot_data()
-    context['thegraph'] = graph
-    
-    context['page'] = "chart"
+    context['thegraph'] = graph    
 
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
-    context['view_name'] = 'chart.html'
     context['width'] = graph.width
     context['height'] = graph.height
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
@@ -179,48 +179,47 @@ def chart(request, template_name="chart.html"):
     context['total_hi_risk'] = 0 ; context['total_registrations'] = 0 ; context['total_follow_up'] = 0
     
     for item in context['chw_reg_rows']:
-        context['total_registrations']  += item['reg'] or 0
-        context['total_hi_risk']        += item['risk'] or 0
+        context['total_registrations']  += item['reg']    or 0
+        context['total_hi_risk']        += item['risk']   or 0
         context['total_follow_up']      += item['follow'] or 0
 
-    
-    for item in request.GET.items():
-        if item[0] == 'bare':
-            template_name = 'graphing/view_graph_bare.html'
-        elif item[0] == 'data':
-            template_name='graphing/view_graph_data.html'
-        elif item[0] == 'csv':             
-            return _get_chart_csv(graph)
-            
     return render_to_response(request, template_name, context)
     
     
 # per clinic UI
 @login_and_domain_required
 def hq_chart(request, template_name="hq_chart.html"):
-    context = { 'clinic' : _get_clinic(request) }
+    context = { 'page': "hq_chart", 'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
 
-    graph = RawGraph.objects.all().get(id=27)
-
-    graph.domain = request.user.selected_domain.name
-    startdate, enddate = utils.get_dates(request, graph.default_interval)
-    graph.startdate = startdate.strftime("%Y-%m-%d")
-    graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
-
-    context['chart_title'] = graph.title
+    graph = RawGraph() #.objects.all().get(id=27)
     
+    graph.set_fields({
+      "series_labels": "Count", 
+      "data_source": "", 
+      "y_axis_label": "Number of Submissions", 
+      "x_type": "MM/DD/YYYY", 
+      "additional_options": {"yaxis": {"tickDecimals": 0}}, 
+      "time_bound": 1, 
+      "default_interval": 365, 
+      "interval_ranges": "7|30|90|365", 
+      "x_axis_label": "Date", 
+      "table_name": "xformmanager_metadata", 
+      "display_type": "compare-cumulative", 
+    })
+
+    startdate, enddate = utils.get_dates(request, graph.default_interval)
+    graph.db_query = hq_chart_sql(startdate, enddate)
+
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
-    context['page'] = "hq_chart"
-
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
     context['width'] = graph.width
     context['height'] = graph.height
-    context['empty_dict'] = {}
+
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
     
     clinics = Clinic.objects.exclude(name='HQ')
@@ -241,20 +240,12 @@ def hq_chart(request, template_name="hq_chart.html"):
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
     
-    for item in request.GET.items():
-        if item[0] == 'bare':
-            template_name = 'graphing/view_graph_bare.html'
-        elif item[0] == 'data':
-            template_name='graphing/view_graph_data.html'
-        elif item[0] == 'csv':             
-            return _get_chart_csv(graph)
-            
     return render_to_response(request, template_name, context)
 
 
 @login_and_domain_required
 def hq_risk(request, template_name="hq_risk.html"):
-    context = { 'clinic' : _get_clinic(request) }
+    context = { 'page' : "hq_risk", 'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
     
     clinics = Clinic.objects.exclude(name='HQ')
@@ -277,24 +268,29 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['follow']  = fol[showclinic.id] if fol.has_key(showclinic.id) else 0
         
         
-    graph = RawGraph.objects.all().get(id=28)
+    graph = RawGraph() #.objects.all().get(id=28)
 
-    graph.domain = request.user.selected_domain.name
+    graph.set_fields({
+      "default_interval": 365, 
+      "series_labels": "Total | <150cm | C-Sect | Pr.Death | Pr.Bleed | Heart | Diabetes | Hip | Syph | Hep B | Long Time | Lo.Hmglb | Age<19 | Age>34 | Pr.Term | Pr.Preg | Rare Bld", 
+      "data_source": "", 
+      "y_axis_label": "Number of Registrations", 
+      "x_type": "string", 
+      "additional_options": {"legend": { "show": True }}, 
+      "time_bound": 0, 
+      "x_axis_label": "High Risk Indicators", 
+      "width": 800, 
+      "interval_ranges": "", 
+      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
+      "display_type": "histogram-multifield-sorted",
+      "height": 450, 
+    })
 
-    graph.clinic_id = showclinic.id
-    
-    startdate, enddate = utils.get_dates(request, graph.default_interval)
-    graph.startdate = startdate.strftime("%Y-%m-%d")
-    graph.enddate = (enddate + timedelta(days=1)).strftime("%Y-%m-%d")
+    graph.db_query = hq_risk_sql(showclinic.id)
 
-    graph.width = 800
-    
-    context['chart_title'] = graph.title    
     context['chart_data'] = graph.get_flot_data()
     context['thegraph'] = graph
     
-    context['page'] = "hq_risk"
-
     rootgroup = utils.get_chart_group(request.user)    
     graphtree = _get_graphgroup_children(rootgroup)    
     context['graphtree'] = graphtree
@@ -302,28 +298,17 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['height'] = graph.height
     data = graph.convert_data_to_table(context['chart_data'])
     
-    indicators = graph.get_dataset_as_dict()[0]
-    
     # populate indicators table
+    indicators = graph.get_dataset_as_dict()[0]    
     context['indicators'] = []
-
     for ind in HI_RISK_INDICATORS:
         context['indicators'].append([ind, indicators[ind], HI_RISK_INDICATORS[ind]['long']])
-    
-    # sort by value, making sure Total is first item in the process
-    context['indicators'].sort(key=lambda x:x[1], reverse=True)
+        
+    context['indicators'].sort(key=lambda x:x[1], reverse=True) # sort by value, making sure Total is first item in the process
     
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
         
-    for item in request.GET.items():
-        if item[0] == 'bare':
-            template_name = 'graphing/view_graph_bare.html'
-        elif item[0] == 'data':
-            template_name='graphing/view_graph_data.html'
-        elif item[0] == 'csv':             
-            return _get_chart_csv(graph)
-
     return render_to_response(request, template_name, context)
     
 

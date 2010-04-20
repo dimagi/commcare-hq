@@ -110,7 +110,7 @@ class RawGraph(BaseGraph):
                     repl = getattr(self,attr)
                     query = query.replace(match, str(repl))
             
-            # print query         
+            # print query
             return query 
 
         except Exception, e:            
@@ -491,19 +491,36 @@ class RawGraph(BaseGraph):
             retarr.append(rowarr)
         return retarr
                 
-                
-            
-            
-        
-        
-        
         #ok, 2 steps here.
         #first, establish the "columns" or the series here
         #second, establish buckets for what we're trying to display
         #if it's dates, make a global list of all the buckets in use
         #then populate them
         
+
+    def set_fields(self, fields):
+        ''' 
+            Send a hash of values directly to RawGraph, rather than have it read from the DB
+            This allows working with RawGraph code without having to deal with its DB tables.
+        '''
+        ret = {}
+        ret['yaxis'] = {'min':0}
+        ret['xaxis'] = self.get_xaxis_options()
         
+        for f in fields:
+            if f == "additional_options":
+                options_dict = fields[f]
+                for key in options_dict:
+                    to_use = {}
+                    if key in ret:
+                        # if we already had some options, use those
+                        # as a starting point
+                        to_use = ret[key]
+                    for inner_key, value in options_dict[key].items():
+                        to_use[str(inner_key)] = value
+                    ret[str(key)] = to_use
+            else:
+                setattr(self, f, fields[f])
             
         
         
