@@ -181,11 +181,11 @@ def hq_risk_sql(clinic_id):
             COUNT(NULLIF(sampledata_card_results_syphilis_result,'negative')) AS syphilis,
             COUNT(NULLIF(sampledata_card_results_hepb_result,'negative')) AS hebp,
             COUNT(NULLIF(sampledata_over_5_years,'no')) AS time_since_last,
-            COUNT(NULLIF(sampledata_card_results_hb_test,'normal')) as low_hemoglobin,
+            COUNT(NULLIF(sampledata_card_results_hb_test,'normal')) AS low_hemoglobin,
             COUNT(IF(sampledata_mother_age <= 18, 1, NULL)) AS age_under_19,
             COUNT(IF(sampledata_mother_age >= 34, 1, NULL)) AS age_over_34,
-            COUNT(IF(sampledata_previous_terminations >= 3, 1, NULL)) as over_3_terminations,
-            COUNT(IF(sampledata_previous_pregnancies >= 5, 1, NULL)) as over_5_pregs, 
+            COUNT(IF(sampledata_previous_terminations >= 3, 1, NULL)) AS over_3_terminations,
+            COUNT(IF(sampledata_previous_pregnancies >= 5, 1, NULL)) AS over_5_pregs, 
             COUNT(
                 NULLIF(sampledata_card_results_blood_group, 'opositive') 
                 OR NULLIF(sampledata_card_results_blood_group, 'apositive') 
