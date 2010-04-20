@@ -274,12 +274,15 @@ def ward_summary(request):
     
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/select_info_ward_summary.html", context)
 
@@ -345,176 +348,180 @@ class WardSummaryData(object):
         #add ward, district, region for this chw
         puis = PhoneUserInfo.objects.all()
         userinfo = None
-        for pui in puis:
-            if chw_id == pui.username + pui.phone.device_id:
-                userinfo = pui
+        if puis != None:
+            for pui in puis:
+                if chw_id == pui.username + pui.phone.device_id:
+                    userinfo = pui
+                    self.chw_name = pui.username
         if userinfo != None:
             additional_data = userinfo.additional_data
-            if "region" in additional_data:
-                self.region = additional_data["region"]
-            if "ward" in additional_data:
-                self.ward = additional_data["ward"]
-            if "district" in additional_data:
-                self.district = additional_data["district"]
-            if "hcbpid" in additional_data:
-                self.hcbpid = additional_data["hcbpid"]
+            if additional_data != None:
+                if "region" in additional_data:
+                    self.region = additional_data["region"]
+                if "ward" in additional_data:
+                    self.ward = additional_data["ward"]
+                if "district" in additional_data:
+                    self.district = additional_data["district"]
+                if "hcbpid" in additional_data:
+                    self.hcbpid = additional_data["hcbpid"]
         
         # go through all of this chw's clients
-        for client_id, client_data in data_map.items():
-            # use form_type?
-            [reg_forms, followup_forms, ref_forms] = [client_data[form] for 
-                                                      form in 
-                                                      case.form_identifiers]
-
-            birthdate = datetime.date(datetime(1000, 01, 01))
-            matching_reg_forms = []
-            sex = None
-            # collect reg_forms matching the correct dates
-            # get general data like birthdate, sex, chw_name. location info
-            for reg in reg_forms:
-                date = reg[COLS["timeend"]]
-                if date and date.date() >= startdate and date.date() \
-                    < enddate:
-                    matching_reg_forms.append(reg)
-                birthdate = reg[COLS["dob"]]
-                sex = reg[COLS["sex"]]
-                if not self.chw_name and reg[COLS["username"]]:
-                    self.chw_name = reg[COLS["username"]]
-                elif self.chw_name and reg[COLS["username"]]:
-                    if self.chw_name != reg[COLS["username"]]:
-                        logging.debug("Warning, multiple ids found for %s: %s and %s" %\
-                            (self.chw_id, self.chw_name, 
-                             reg[COLS["username"]]))
-                    
-            # collect followup forms matching the correct dates
-            matching_followups = []
-            for follow in followup_forms:
-                date = follow[COLS["timeend"]]
-                if date and date.date() >= startdate and date.date() \
-                    < enddate:
-                    matching_followups.append(follow)
-                # if there will always be a registration form, could leave this out
-                if not self.chw_name and follow[COLS["username"]]:
-                    self.chw_name = follow[COLS["username"]]
-                elif self.chw_name and follow[COLS["username"]]:
-                    if self.chw_name != follow[COLS["username"]]:
-                        logging.debug("Warning, multiple ids found for %s: %s and %s" %\
-                            (self.chw_id, self.chw_name, 
-                             follow[COLS["username"]]))
-            
-            # collect resolved referral forms matching the correct dates
-            matching_refs = []
-            for ref in ref_forms:
-                date = ref[COLS["timeend"]]
-                if date and date.date() >= startdate and date.date() \
-                    < enddate:
-                    matching_refs.append(ref)
-                # if there will always be a registration form, could leave this out
-                if not self.chw_name and ref[COLS["username"]]:
-                    self.chw_name = ref[COLS["username"]]
-                elif self.chw_name and ref[COLS["username"]]:
-                    if self.chw_name != ref[COLS["username"]]:
-                        logging.debug("Warning, multiple ids found for %s: %s and %s" %\
-                            (self.chw_id, self.chw_name, 
-                             ref[COLS["username"]]))
+        if data_map != None:
+            for client_id, client_data in data_map.items():
+                # use form_type?
+                [reg_forms, followup_forms, ref_forms] = [client_data[form] for 
+                                                          form in 
+                                                          case.form_identifiers]
+    
+                birthdate = datetime.date(datetime(1000, 01, 01))
+                matching_reg_forms = []
+                sex = None
+                # collect reg_forms matching the correct dates
+                # get general data like birthdate, sex, chw_name. location info
+                for reg in reg_forms:
+                    date = reg[COLS["timeend"]]
+                    if date and date.date() >= startdate and date.date() \
+                        < enddate:
+                        matching_reg_forms.append(reg)
+                    birthdate = reg[COLS["dob"]]
+                    sex = reg[COLS["sex"]]
+                    if not self.chw_name and reg[COLS["username"]]:
+                        self.chw_name = reg[COLS["username"]]
+                    elif self.chw_name and reg[COLS["username"]]:
+                        if self.chw_name != reg[COLS["username"]]:
+                            logging.debug("Warning, multiple ids found for %s: %s and %s" %\
+                                (self.chw_id, self.chw_name, 
+                                 reg[COLS["username"]]))
                         
-            # collect counts for new clients
-            reg_form = None
-            if matching_reg_forms:
-                if len(matching_reg_forms)!= 1:
-                    logging.debug("Warning, multiple registration forms found for %s" %\
-                                  client_id)
-                reg_form = matching_reg_forms[0]
-                if reg_form[COLS["reg_hiv"]] == 1:
-                    if sex == "m":
-                        self.new_plha_m += 1
-                    elif sex == "f":
-                        self.new_plha_f += 1
-                else:
-                    if sex == "m":
-                        self.new_cip_m += 1
-                    elif sex == "f":
-                        self.new_cip_f += 1
-                        
-            # collect counts for existing clients
-            first_follow = None
-            if matching_followups:
-                # collect counts for existing, death, transfer and referral categories
-                # a single client could have multiple counts for any of these if multiple
-                # followup forms were submitted for them in the last month
-                for followup in matching_followups:
-                    type_of_client = followup[COLS["type_client"]] 
-                    if type_of_client == "hiv":
+                # collect followup forms matching the correct dates
+                matching_followups = []
+                for follow in followup_forms:
+                    date = follow[COLS["timeend"]]
+                    if date and date.date() >= startdate and date.date() \
+                        < enddate:
+                        matching_followups.append(follow)
+                    # if there will always be a registration form, could leave this out
+                    if not self.chw_name and follow[COLS["username"]]:
+                        self.chw_name = follow[COLS["username"]]
+                    elif self.chw_name and follow[COLS["username"]]:
+                        if self.chw_name != follow[COLS["username"]]:
+                            logging.debug("Warning, multiple ids found for %s: %s and %s" %\
+                                (self.chw_id, self.chw_name, 
+                                 follow[COLS["username"]]))
+                
+                # collect resolved referral forms matching the correct dates
+                matching_refs = []
+                for ref in ref_forms:
+                    date = ref[COLS["timeend"]]
+                    if date and date.date() >= startdate and date.date() \
+                        < enddate:
+                        matching_refs.append(ref)
+                    # if there will always be a registration form, could leave this out
+                    if not self.chw_name and ref[COLS["username"]]:
+                        self.chw_name = ref[COLS["username"]]
+                    elif self.chw_name and ref[COLS["username"]]:
+                        if self.chw_name != ref[COLS["username"]]:
+                            logging.debug("Warning, multiple ids found for %s: %s and %s" %\
+                                (self.chw_id, self.chw_name, 
+                                 ref[COLS["username"]]))
+                            
+                # collect counts for new clients
+                reg_form = None
+                if matching_reg_forms:
+                    if len(matching_reg_forms)!= 1:
+                        logging.debug("Warning, multiple registration forms found for %s" %\
+                                      client_id)
+                    reg_form = matching_reg_forms[0]
+                    if reg_form[COLS["reg_hiv"]] == 1:
                         if sex == "m":
-                            self.existing_plha_m += 1
+                            self.new_plha_m += 1
                         elif sex == "f":
-                            self.existing_plha_f += 1
+                            self.new_plha_f += 1
                     else:
                         if sex == "m":
-                            self.existing_cip_m += 1
+                            self.new_cip_m += 1
                         elif sex == "f":
-                            self.existing_cip_f += 1
+                            self.new_cip_f += 1
                             
-                    why_missing = followup[COLS["status"]]
-                    if why_missing == "dead":
+                # collect counts for existing clients
+                first_follow = None
+                if matching_followups:
+                    # collect counts for existing, death, transfer and referral categories
+                    # a single client could have multiple counts for any of these if multiple
+                    # followup forms were submitted for them in the last month
+                    for followup in matching_followups:
+                        type_of_client = followup[COLS["type_client"]] 
                         if type_of_client == "hiv":
                             if sex == "m":
-                                self.death_plha_m += 1
+                                self.existing_plha_m += 1
                             elif sex == "f":
-                                self.death_plha_f += 1
+                                self.existing_plha_f += 1
                         else:
                             if sex == "m":
-                                self.death_cip_m += 1
+                                self.existing_cip_m += 1
                             elif sex == "f":
-                                self.death_cip_f += 1
-                    elif why_missing == "transferred":
-                        if type_of_client == "hiv":
-                            if sex == "m":
-                                self.transfer_plha_m += 1
-                            elif sex == "f":
-                                self.transfer_plha_f += 1
-                        else:
-                            if sex == "m":
-                                self.transfer_cip_m += 1
-                            elif sex == "f":
-                                self.transfer_cip_f += 1
-                    if followup[COLS["VCT"]] == 1:
-                        self.ref_vct += 1
-                    if followup[COLS["OIS"]] == 1:
-                        self.ref_ois += 1
-                    if followup[COLS["CTC"]] == 1:
-                        self.ref_ctc += 1
-                    if followup[COLS["PMTCT"]] == 1:
-                        self.ref_pmtct += 1
-                    if followup[COLS["FP"]] == 1:
-                        self.ref_fp += 1
-                    if followup[COLS["SG"]] == 1:
-                        self.ref_sg += 1 
-                    if followup[COLS["TB"]] == 1:
-                        self.ref_tb += 1
-            
-            # Counts for confirmed referrals this month
-            if matching_refs:
-                for ref in matching_refs:
-                    if ref[COLS["ref_done"]] == "yes":
-                        self.conf_ref += 1
-                        
-            # Get counts of adults and children
-            if reg_form != None or first_follow != None and birthdate > \
-                datetime.date(datetime(1000, 01, 01)):
-                # at least one form was submitted for this client this month
-                age = enddate - birthdate
-                years = age.days/365
-                if years > 18:
-                    if sex == "m":
-                        self.adult_m += 1
-                    elif sex == "f":
-                        self.adult_f += 1
-                else:
-                    if sex == "m":
-                        self.child_m += 1
-                    elif sex == "f":
-                        self.child_f += 1
+                                self.existing_cip_f += 1
+                                
+                        why_missing = followup[COLS["status"]]
+                        if why_missing == "dead":
+                            if type_of_client == "hiv":
+                                if sex == "m":
+                                    self.death_plha_m += 1
+                                elif sex == "f":
+                                    self.death_plha_f += 1
+                            else:
+                                if sex == "m":
+                                    self.death_cip_m += 1
+                                elif sex == "f":
+                                    self.death_cip_f += 1
+                        elif why_missing == "transferred":
+                            if type_of_client == "hiv":
+                                if sex == "m":
+                                    self.transfer_plha_m += 1
+                                elif sex == "f":
+                                    self.transfer_plha_f += 1
+                            else:
+                                if sex == "m":
+                                    self.transfer_cip_m += 1
+                                elif sex == "f":
+                                    self.transfer_cip_f += 1
+                        if followup[COLS["VCT"]] == 1:
+                            self.ref_vct += 1
+                        if followup[COLS["OIS"]] == 1:
+                            self.ref_ois += 1
+                        if followup[COLS["CTC"]] == 1:
+                            self.ref_ctc += 1
+                        if followup[COLS["PMTCT"]] == 1:
+                            self.ref_pmtct += 1
+                        if followup[COLS["FP"]] == 1:
+                            self.ref_fp += 1
+                        if followup[COLS["SG"]] == 1:
+                            self.ref_sg += 1 
+                        if followup[COLS["TB"]] == 1:
+                            self.ref_tb += 1
+                
+                # Counts for confirmed referrals this month
+                if matching_refs:
+                    for ref in matching_refs:
+                        if ref[COLS["ref_done"]] == "yes":
+                            self.conf_ref += 1
+                            
+                # Get counts of adults and children
+                if reg_form != None or first_follow != None and birthdate > \
+                    datetime.date(datetime(1000, 01, 01)):
+                    # at least one form was submitted for this client this month
+                    age = enddate - birthdate
+                    years = age.days/365
+                    if years > 18:
+                        if sex == "m":
+                            self.adult_m += 1
+                        elif sex == "f":
+                            self.adult_f += 1
+                    else:
+                        if sex == "m":
+                            self.child_m += 1
+                        elif sex == "f":
+                            self.child_f += 1
                         
         self.data = [self.region, self.district, self.ward, self.chw_name, 
                      self.hcbpid, self.new_plha_m, self.new_plha_f, 
@@ -533,12 +540,15 @@ def summary_by_provider_report(request):
     context = {}
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/provider_select_ward.html", context)
 
@@ -685,12 +695,15 @@ def hbc_monthly_summary_report(request):
     
     wards = []
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            ward = additional_data["ward"]
-            if not ward in wards and ward != None:
-                wards.append(ward)
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                ward = additional_data["ward"]
+                if ward != None and not ward in wards:
+                    wards.append(ward)
+    if len(wards) == 0:
+        return '''Sorry, it doesn't look like there are any wards.'''
     context["wards"] = wards
     return render_to_string("custom/pathfinder/select_info_hbc_summary.html", 
                             context)
@@ -747,185 +760,190 @@ class HBCMonthlySummaryData(object):
         self.enddate = enddate
         self.ward = ward
         puis = PhoneUserInfo.objects.all()
-        for chw_id, chw_data in data_by_chw.items():
-            form_this_month = False
-            in_ward = False
+        if puis != None:
             for pui in puis:
-                if chw_id == pui.username + pui.phone.device_id:
-                    ad_data = pui.additional_data
-                    if "ward" in ad_data and ad_data["ward"] == ward:
-                        in_ward = True
-            if in_ward:
-                for client_data in chw_data.values():
-                    # use form_type? 
-                    [reg_forms, followup_forms, ref_forms] = [client_data[form] 
-                                                              for form in 
-                                                              case.form_identifiers]
-                    sex = None
-                    years = 0
-                    client_new = False
-                    client_new_cont = False
-                    client_ever = False
-                    match_reg_forms = []
-                    for reg in reg_forms:
-                        date = reg[COLS["timeend"]]
-                        if date and date.date() >= startdate and date.date() \
-                            < enddate:
-                            match_reg_forms.append(reg)
-                        sex = reg[COLS["sex"]]
-                        diff = enddate - reg[COLS["dob"]]
-                        years = diff.days/365
-                    
-                    match_follow_forms = []
-                    for follow in followup_forms:
-                        date = follow[COLS['timeend']]
-                        if date and date.date() >= startdate and date.date() \
-                            < enddate:
-                            match_follow_forms.append(follow)
-                    
-                    match_ref_forms = []
-                    for ref in ref_forms:
-                        date = ref[COLS['timeend']]
-                        if date and date.date() >= startdate and date.date() \
-                            < enddate:
-                            match_ref_forms.append(ref)
-                    
-                    if match_reg_forms or match_follow_forms or match_ref_forms:
-                        form_this_month = True
-                    
-                    if match_reg_forms:
-                        reg = match_reg_forms[0]
-                        client_new = True
-                        client_new_cont = True
-                        client_ever = True
+                form_this_month = False
+                in_ward = False
+                chw_data = None
+                chw_id = pui.username + pui.phone.device_id
+                ad_data = pui.additional_data
+                if ad_data != None and "ward" in ad_data and \
+                        ad_data["ward"] == ward:
+                    in_ward = True
+                    if chw_id in data_by_chw:
+                        chw_data = data_by_chw[chw_id]
                         
-                        # Count HIV status
-                        hiv = reg[COLS['hiv_status']]
-                        if hiv == 'Positive':
-                            if sex == 'm':
-                                self.positive_m += 1
-                            elif sex == 'f':
-                                self.positive_f += 1
-                        elif hiv == 'Negative':
-                            if sex == 'm':
-                                self.negative_m += 1
-                            elif sex == 'f':
-                                self.negative_f += 1
-                        elif hiv == 'Not_sure':
-                            if sex == 'm':
-                                self.unknown_m += 1
-                            elif sex == 'f':
-                                self.unknown_f += 1
-    
-                    ctc_no_arv = False
-                    ctc_and_arv = False
-                    no_ctc = False
-                    lost = False
-                    died = False
-                    transferred = False
-                    migrated = False
-                    no_need = False
-                    opted_out = False
-                    if match_follow_forms:
-                        for follow in match_follow_forms:
-                            status = follow[COLS['status']]
-                            if status == 'new':
-                                client_new = True
-                            if status  == 'new' or status == 'continuing':
-                                client_new_cont = True
-                            ctc = follow[COLS['ctc_status']]
-                            if ctc == 'registered_no_arvs':
-                                ctc_no_arv = True
-                            elif ctc == 'registered_and_arvs':
-                                ctc_and_arv = True
-                            elif ctc == 'not_registered':
-                                no_ctc = True
+                if chw_data != None:
+                    for client_data in chw_data.values():
+                        # use form_type? 
+                        [reg_forms, followup_forms, ref_forms] = [client_data[form] 
+                                                                  for form in 
+                                                                  case.form_identifiers]
+                        sex = None
+                        years = 0
+                        client_new = False
+                        client_new_cont = False
+                        client_ever = False
+                        match_reg_forms = []
+                        for reg in reg_forms:
+                            date = reg[COLS["timeend"]]
+                            if date and date.date() >= startdate and date.date() \
+                                < enddate:
+                                match_reg_forms.append(reg)
+                            sex = reg[COLS["sex"]]
+                            diff = enddate - reg[COLS["dob"]]
+                            years = diff.days/365
+                        
+                        match_follow_forms = []
+                        for follow in followup_forms:
+                            date = follow[COLS['timeend']]
+                            if date and date.date() >= startdate and date.date() \
+                                < enddate:
+                                match_follow_forms.append(follow)
+                        
+                        match_ref_forms = []
+                        for ref in ref_forms:
+                            date = ref[COLS['timeend']]
+                            if date and date.date() >= startdate and date.date() \
+                                < enddate:
+                                match_ref_forms.append(ref)
+                        
+                        if match_reg_forms or match_follow_forms or match_ref_forms:
+                            form_this_month = True
+                        
+                        if match_reg_forms:
+                            reg = match_reg_forms[0]
+                            client_new = True
+                            client_new_cont = True
+                            client_ever = True
                             
-                            if status == 'new' or status == 'continuing' or \
-                                status == 'dead' or status == 'lost' or status ==\
-                                'transferred' or status == 'migrated' or \
-                                status == 'no_need' or status == 'opted_out':
-                                client_ever = True
-                            if status == 'dead':
-                                died = True
-                            if status == 'lost':
-                                lost = True
-                            if status == 'transferred':
-                                transferred = True
-                            if status == 'migrated':
-                                migrated = True
-                            if status == 'no_need':
-                                no_need = True
-                            if status == 'opted_out':
-                                opted_out = True
+                            # Count HIV status
+                            hiv = reg[COLS['hiv_status']]
+                            if hiv == 'Positive':
+                                if sex == 'm':
+                                    self.positive_m += 1
+                                elif sex == 'f':
+                                    self.positive_f += 1
+                            elif hiv == 'Negative':
+                                if sex == 'm':
+                                    self.negative_m += 1
+                                elif sex == 'f':
+                                    self.negative_f += 1
+                            elif hiv == 'Not_sure':
+                                if sex == 'm':
+                                    self.unknown_m += 1
+                                elif sex == 'f':
+                                    self.unknown_f += 1
+        
+                        ctc_no_arv = False
+                        ctc_and_arv = False
+                        no_ctc = False
+                        lost = False
+                        died = False
+                        transferred = False
+                        migrated = False
+                        no_need = False
+                        opted_out = False
+                        if match_follow_forms:
+                            for follow in match_follow_forms:
+                                status = follow[COLS['status']]
+                                if status == 'new':
+                                    client_new = True
+                                if status  == 'new' or status == 'continuing':
+                                    client_new_cont = True
+                                ctc = follow[COLS['ctc_status']]
+                                if ctc == 'registered_no_arvs':
+                                    ctc_no_arv = True
+                                elif ctc == 'registered_and_arvs':
+                                    ctc_and_arv = True
+                                elif ctc == 'not_registered':
+                                    no_ctc = True
+                                
+                                if status == 'new' or status == 'continuing' or \
+                                    status == 'dead' or status == 'lost' or status ==\
+                                    'transferred' or status == 'migrated' or \
+                                    status == 'no_need' or status == 'opted_out':
+                                    client_ever = True
+                                if status == 'dead':
+                                    died = True
+                                if status == 'lost':
+                                    lost = True
+                                if status == 'transferred':
+                                    transferred = True
+                                if status == 'migrated':
+                                    migrated = True
+                                if status == 'no_need':
+                                    no_need = True
+                                if status == 'opted_out':
+                                    opted_out = True
+                        
+                        # Count all new clients enrolled this month
+                        if client_new:
+                            if sex == 'm':
+                                self.new_total_m += 1
+                                if years < 15:
+                                    self.new_0_14_m += 1
+                                elif years < 25:
+                                    self.new_15_24_m += 1
+                                elif years < 50:
+                                    self.new_25_49_m += 1
+                                else:
+                                    self.new_50_m += 1
+                            elif sex == 'f':
+                                self.new_total_f += 1
+                                if years < 15:
+                                    self.new_0_14_f += 1
+                                elif years < 25:
+                                    self.new_15_24_f += 1
+                                elif years < 50:
+                                    self.new_25_49_f += 1
+                                else:
+                                    self.new_50_f += 1
+                        
+                        # Count all new or continuing clients            
+                        if client_new_cont and sex == 'm':
+                            self.all_total_m += 1
+                        elif client_new_cont and sex == 'f':
+                            self.all_total_f += 1
+                        
+                        # Count CTC enrollment status    
+                        if ctc_no_arv and sex == 'm':
+                            self.ctc_m += 1
+                        elif ctc_no_arv and sex == 'f':
+                            self.ctc_f += 1
+                        elif ctc_and_arv and sex == 'm':
+                            self.ctc_arv_m += 1
+                        elif ctc_and_arv and sex == 'f':
+                            self.ctc_arv_f += 1
+                        elif no_ctc and sex == 'm':
+                            self.no_ctc_m += 1
+                        elif no_ctc and sex == 'f':
+                            self.no_ctc_f += 1
+                        
+                        # Count all clients ever enrolled this month    
+                        if client_ever and sex == 'm':
+                            self.enrolled_m += 1
+                        elif client_ever and sex == 'f':
+                            self.enrolled_f += 1
+                        
+                        # Count clients no longer receiving services    
+                        if died:
+                            self.died += 1
+                        if lost:
+                            self.lost += 1
+                        if transferred:
+                            self.transferred += 1
+                        if migrated:
+                            self.migrated += 1
+                        if no_need:
+                            self.no_need += 1
+                        if opted_out:
+                            self.opt_out += 1
                     
-                    # Count all new clients enrolled this month
-                    if client_new:
-                        if sex == 'm':
-                            self.new_total_m += 1
-                            if years < 15:
-                                self.new_0_14_m += 1
-                            elif years < 25:
-                                self.new_15_24_m += 1
-                            elif years < 50:
-                                self.new_25_49_m += 1
-                            else:
-                                self.new_50_m += 1
-                        elif sex == 'f':
-                            self.new_total_f += 1
-                            if years < 15:
-                                self.new_0_14_f += 1
-                            elif years < 25:
-                                self.new_15_24_f += 1
-                            elif years < 50:
-                                self.new_25_49_f += 1
-                            else:
-                                self.new_50_f += 1
-                    
-                    # Count all new or continuing clients            
-                    if client_new_cont and sex == 'm':
-                        self.all_total_m += 1
-                    elif client_new_cont and sex == 'f':
-                        self.all_total_f += 1
-                    
-                    # Count CTC enrollment status    
-                    if ctc_no_arv and sex == 'm':
-                        self.ctc_m += 1
-                    elif ctc_no_arv and sex == 'f':
-                        self.ctc_f += 1
-                    elif ctc_and_arv and sex == 'm':
-                        self.ctc_arv_m += 1
-                    elif ctc_and_arv and sex == 'f':
-                        self.ctc_arv_f += 1
-                    elif no_ctc and sex == 'm':
-                        self.no_ctc_m += 1
-                    elif no_ctc and sex == 'f':
-                        self.no_ctc_f += 1
-                    
-                    # Count all clients ever enrolled this month    
-                    if client_ever and sex == 'm':
-                        self.enrolled_m += 1
-                    elif client_ever and sex == 'f':
-                        self.enrolled_f += 1
-                    
-                    # Count clients no longer receiving services    
-                    if died:
-                        self.died += 1
-                    if lost:
-                        self.lost += 1
-                    if transferred:
-                        self.transferred += 1
-                    if migrated:
-                        self.migrated += 1
-                    if no_need:
-                        self.no_need += 1
-                    if opted_out:
-                        self.opt_out += 1
-                
                 # Count the number of providers reporting this month
-                if form_this_month:
+                if in_ward and form_this_month:
                     self.providers_reporting += 1
-                else:
+                elif in_ward:
                     self.providers_not_reporting += 1
             
         self.total_no_services = self.died + self.lost + self.transferred + \

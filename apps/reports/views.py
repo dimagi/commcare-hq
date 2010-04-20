@@ -190,11 +190,12 @@ def select_prov(request):
                 ward = item[1]
     providers = {}
     puis = PhoneUserInfo.objects.all()
-    for pui in puis:
-        additional_data = pui.additional_data
-        if "ward" in additional_data:
-            if ward == additional_data["ward"]:
-                providers[pui.username + pui.phone.device_id] = pui.username
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                if ward == additional_data["ward"]:
+                    providers[pui.username + pui.phone.device_id] = pui.username
     context["providers"] = providers
 
     year = datetime.now().date().year
@@ -209,20 +210,13 @@ def select_prov(request):
 def ward_sum_csv(request, month, year, ward):
     ''' Creates CSV file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
-    case_name = "Pathfinder_1" 
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        if chw_obj.ward == ward:
-            chw_data_list.append(chw_obj)
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
     headers = get_ward_summary_headings()
     for header in headers:
         w.writerow(header)
@@ -230,8 +224,8 @@ def ward_sum_csv(request, month, year, ward):
         w.writerow(row)
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="ward_summary_%s-%s.csv"'\
-                                        % ( month, year)
+    response["content-disposition"] = 'attachment; filename="ward_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
     return response
 
 def sum_prov_csv(request, chw_id, month, year):
@@ -254,15 +248,23 @@ def sum_prov_csv(request, chw_id, month, year):
                                          startdate, enddate)
         if client_obj.num_visits != 0:
             client_data_list.append(client_obj)
+    data = get_user_data(chw_id)
+    provider_data_list = get_provider_data_list(data, month, year)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
     output = StringIO()
     w = UnicodeWriter(output)
+    for row in provider_data_list:
+        w.writerow(row)
+    w.writerow([''])
     w.writerow(get_provider_summary_headers())
     for row in client_data_list:
         w.writerow(row)
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
     response["content-disposition"] = 'attachment; filename="provider_%s_summary_%s-%s.csv"'\
-                                        % ( chw_id, month, year)
+                                        % ( username, month, year)
     return response
 
 def hbc_sum_csv(request, month, year, ward):
@@ -279,6 +281,10 @@ def hbc_sum_csv(request, month, year, ward):
     chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
     w.writerow(['Number of providers - who reported this month:',
                 chw_obj.providers_reporting])
     w.writerow(['- who did not report this month:', 
@@ -293,204 +299,47 @@ def hbc_sum_csv(request, month, year, ward):
         w.writerow(row)
     output.seek(0)
     response = HttpResponse(output.read(), mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="hbc_monthly_summary_%s-%s.csv"'\
-                                        % ( month, year)
+    response["content-disposition"] = 'attachment; filename="hbc_monthly_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
     return response
 
 def ward_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
-    case_name = "Pathfinder_1" 
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        if chw_obj.ward == ward:
-            chw_data_list.append(chw_obj)
 
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=ward_summary_%s-%s.pdf'\
-                                        % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=ward_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
     doc = SimpleDocTemplate(response)
-    doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
-    doc.title = "Ward Summary Report"
-    elements = []
-    
-    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
-    para = Paragraph('Ward Summary Report<br/>Month: %s<br/>Year: %s'% 
-                     ( calendar.month_name[int(month)], year), ps)
-    elements.append(para)
-    all_data = []
-    
-    style = ParagraphStyle(name='header', fontName='Times-Bold', fontSize=6)
-    for line in get_ward_summary_headings():
-        headers = []
-        for entry in line:
-            para = Paragraph(entry, style)
-            headers.append(para)
-        all_data.append(headers)
-    
-    # maybe make these paragraphs so they wrap too?
-    for chw_data in chw_data_list:
-        all_data.append(chw_data.data)
-    colwidths = [40, 40, 40, 40, 40, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-                 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 22, 22, 22, 30, 22,
-                 22, 22, 34]
-    table = Table(all_data, colwidths, repeatRows=4, splitByRow=0)
-    ts = TableStyle([('FONTSIZE', (0, 0), (-1, -1), 6),
-                    ('SPAN', (5, 0), (12, 0)), ('SPAN', (5, 1), (8, 1)),
-                    ('SPAN', (5, 2), (6, 2)), ('SPAN', (7, 2), (8, 2)),
-                    ('SPAN', (9, 1), (12, 1)), ('SPAN', (9, 2), (10, 2)),
-                    ('SPAN', (11, 2), (12, 2)), ('SPAN', (13, 1), (16, 1)),
-                    ('SPAN', (13, 2), (14,2)), ('SPAN', (15, 2), (16, 2)),
-                    ('SPAN', (17, 1), (20, 1)), ('SPAN', (17, 2), (18, 2)),
-                    ('SPAN', (19, 2), (20, 2)), ('SPAN', (21, 1), (24, 1)),
-                    ('SPAN', (21, 2), (22, 2)), ('SPAN', (23, 2), (24, 2)),
-                    ('SPAN', (25, 1), (31, 1)), ('SPAN', (32, 1), (32, 2)),
-                    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                    ('BOX', (0,0), (-1,-1), 0.25, colors.black)])
-    table.setStyle(ts)
-    elements.append(table)
-    doc.build(elements)
+    get_ward_summary_pdf(startdate, enddate, month, year, ward, doc)
     return response
 
 def hbc_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of HBC monthly summary report'''
-    case_name = "Pathfinder_1" 
     (startdate, enddate) = get_start_end(month, year)
-    
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
+    all_data = get_hbc_summary_data(startdate, enddate, month, year, ward)
+    chw_obj = all_data["all_data"]
     
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s-%s.pdf'\
-                                        % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
     doc = SimpleDocTemplate(response)
-    doc.title = "Home Based Care Monthly Summary Report"
-    elements = []
-    
-    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
-    para = Paragraph('Home Based Care Monthly Summary Report<br/>Ward: %s<br/>Month: %s<br/>Year: %s<br/><br/>'% 
-                     ( ward, calendar.month_name[int(month)], year), ps)
-    elements.append(para)
-    
-    table1 = []
-    table1.append(['Number of providers - who reported this month:',
-                chw_obj.providers_reporting, 
-                '- who did not report this month:',
-                chw_obj.providers_not_reporting])
-    t1 = Table(table1)
-    t1.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
-                            ('FONTNAME', (2, 0), (2, 0), 'Times-Bold'),
-                            ('FONTNAME', (0, 0), (0, 0), 'Times-Bold'),
-                            ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
-    t1.hAlign='LEFT'
-    elements.append(t1)
-    elements.append(Paragraph('<br/>', ps))
-
-    table2 = get_hbc_monthly_display(chw_obj)
-    t2 = Table(table2)
-    t2.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
-                            ('FONTNAME', (0, 0), (-1, 1), 'Times-Bold'),
-                            ('FONTNAME', (0, 4), (0, 4), 'Times-Italic'),
-                            ('FONTNAME', (0, 8), (0, 8), 'Times-Italic'),
-                            ('SPAN', (1, 0), (2, 0)), #Total
-                            ('SPAN', (3, 0), (4, 0)), #Less than 15
-                            ('SPAN', (5, 0), (6, 0)), #15-24
-                            ('SPAN', (7, 0), (8, 0)), #25-49
-                            ('SPAN', (9, 0), (10, 0)), #50 and above
-                            ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
-    t2.hAlign = 'LEFT'
-    elements.append(t2)
-    elements.append(Paragraph('<br/>', ps))
-    
-    table3 = []
-    style_h = ParagraphStyle(name='style', fontName='Times-Bold', fontSize=8)
-    style_r = ParagraphStyle(name='style', fontName='Times-Roman', fontSize=8)
-    lines = get_hbc_monthly_display_second(chw_obj)
-    headers = []
-    for entry in lines[0]:
-        para = Paragraph(str(entry), style_h)
-        headers.append(para)
-    table3.append(headers)
-    headers = []
-    for entry in lines[1]:
-        para = Paragraph(str(entry), style_r)
-        headers.append(para)
-    table3.append(headers)
-    t3 = Table(table3)
-    t3.setStyle(TableStyle([('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                            ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
-    t3.hAlign='LEFT'
-    elements.append(t3)
-    doc.build(elements)
+    get_hbc_monthly_pdf(month, year, chw_obj, ward, doc)
     return response
 
 def sum_prov_pdf(request, chw_id, month, year):
     '''Creates PDF file of summary by provider report'''
     case_name = "Pathfinder_1"
     (startdate, enddate) = get_start_end(month, year)
-    
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data = {}
-    if chw_id in data_by_chw:
-        chw_data = data_by_chw[chw_id]
-    client_data_list = []
-    for client_id, client_data in chw_data.items():
-        client_obj = ProviderSummaryData(case, client_id, client_data, 
-                                         startdate, enddate)
-        if client_obj.num_visits != 0:
-            client_data_list.append(client_obj)
+    client_data_list = get_provider_data_by_case(case_name, chw_id, startdate, enddate)
+    data = get_user_data(chw_id)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
             
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=provider_summary_%s-%s.pdf'\
-                                     % (month, year)
+    response['Content-Disposition'] = 'attachment; filename=provider_%s_summary_%s-%s.pdf'\
+                                     % (username, month, year)
     doc = SimpleDocTemplate(response)
-    doc.pagesize = (841.88976377952747, 595.27559055118104) # landscape
-    doc.title = "Home Based Care Patients Summary for Month"
-    elements = []
-    
-    ps = ParagraphStyle(name='Normal', alignment=TA_CENTER) 
-    para = Paragraph('Home Based Care Patients Summary for Month<br/>Month: %s<br/>Year: %s'% 
-                     ( calendar.month_name[int(month)], year), ps)
-    elements.append(para)
-    
-    all_data = []
-    headers = []
-    style_h = ParagraphStyle(name='header', fontName='Times-Bold', fontSize=7)
-    for header in get_provider_summary_headers():
-        para = Paragraph(header, style_h)
-        headers.append(para)
-    all_data.append(headers)
-    style_r = ParagraphStyle(name='header', fontName='Times-Roman', fontSize=7)
-    for chw_data in client_data_list:
-        datas = []
-        for data in chw_data.data:
-            para = Paragraph(str(data), style_r)
-            datas.append(para)
-        all_data.append(datas)
-    table = Table(all_data, repeatRows=1, splitByRow=1)
-    table.setStyle(TableStyle([('INNERGRID', (0,0), (-1,-1), 0.25, 
-                                colors.black),
-                               ('BOX', (0,0), (-1,-1), 0.25, colors.black)]))
-
-    elements.append(table)
-    doc.build(elements)
+    get_provider_summary_pdf(month, year, chw_id, client_data_list, doc)
     return response
