@@ -278,49 +278,85 @@ def get_delinquent_context_from_statdict(statdict, threshold):
 def ward_summary(report_schedule, run_frequency):
     """Summary of all providers in each ward"""
     from hq import reporter
-    # TODO: get today's date and only continue if it is the last day of the month
-    (startdate, enddate) = reporter.get_daterange(run_frequency)
-    wards = get_wards()
-    for ward in wards:
-        all_data = get_ward_summary_data(startdate, enddate, startdate.month,
-                                         startdate.year, ward)
-        body = render_to_string("custom/pathfinder/ward_sum_email.html", 
-                                {"context": all_data })
-    
-        reporter.transport_email(body, report_schedule.recipient_user, 
-                        params={"email_subject": "CommCareHQ Ward Summary Report %s-%s" %\
-                                (ward, enddate) })
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
+    if tomorrow.day == 1:
+        (startdate, enddate) = reporter.get_daterange(run_frequency)
+        wards = get_wards()
+        for ward in wards:
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_ward_summary_pdf(startdate, enddate, startdate.month, 
+                                 startdate.year, ward, doc)
+            
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ Ward Summary Report %s-%s.pdf" %\
+                        (ward, enddate), 'content': content, 'mimetype': 
+                        'application/pdf'}]
+        
+            reporter.transport_email('', report_schedule.recipient_user, 
+                            params={"email_subject": "CommCareHQ Ward Summary Report %s-%s" %\
+                                    (ward, enddate), "attachment": attachment })
     
 def provider_summary(report_schedule, run_frequency):
     """Summary of each provider and their patients"""
-    # TODO: get today's date and only continue if it is the last day of the month
-    tomorrow = datetime.now().date() + timedelta(days=1)
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
     if tomorrow.day == 1:
         from hq import reporter
-        (startdate, enddate) = reporter.get_daterange(run_frequency) # pass in monthly
-        providers = get_data_by_chw("Pathfinder_1").values()
-        for provider in providers:
-            all_data = get_provider_summary_data(startdate, enddate, 
-                        startdate.month, startdate.year, provider)
-            body = render_to_string("custom/pathfinder/sum_prov_email.html",
-                                    {"context": all_data })
-        
-            reporter.transport_email(body, report_schedule.recipient_user, 
-                            params={"email_subject": "CommCareHQ Summary by Provider Report %s" %\
-                                enddate })
+        (startdate, enddate) = reporter.get_daterange('monthly') # run_frequency is daily
+        puis = PhoneUserInfo.objects.all()
+        if puis != None:
+            for pui in puis:
+                provider = pui.username + pui.phone.device_id
+                additional_data = pui.additional_data
+                user_id = ""
+                if additional_data != None and 'hcbpid' in additional_data:
+                    user_id = additional_data['hcbpid']
+                
+                output = StringIO()
+                doc = SimpleDocTemplate(output)
+                data_list = get_provider_data_by_case("Pathfinder_1", provider, startdate, enddate)
+                get_provider_summary_pdf(startdate.month, startdate.year, 
+                                         provider, data_list, doc)
+                
+                output.seek(0)
+                content = output.read()
+                attachment = [{'filename': "CommCareHQ Summary by Provider Report %s_%s.pdf" %\
+                            (user_id, enddate), 'content': content, 'mimetype': 
+                            'application/pdf'}]
+            
+                reporter.transport_email('', report_schedule.recipient_user, 
+                                params={"email_subject": "CommCareHQ Summary by Provider Report %s_%s" %\
+                                    (user_id, enddate), "attachment": attachment })
 
 def hbc_monthly_summary(report_schedule, run_frequency):
     """Summary of total patient information within each ward"""
     from hq import reporter
-    # TODO: get today's date and only continue if it is the last day of the month
-    (startdate, enddate) = reporter.get_daterange(run_frequency)
-    wards = get_wards()
-    for ward in wards:
-        all_data = get_hbc_summary_data(startdate, enddate, startdate.month, 
-                                         startdate.year, ward)
-        body = render_to_string("custom/pathfinder/hbc_sum_email.html", 
-                                {"context": all_data })
-    
-        reporter.transport_email(body, report_schedule.recipient_user, 
-                        params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s-%s" %\
-                                (ward, enddate) })
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
+    if tomorrow.day == 1:
+        (startdate, enddate) = reporter.get_daterange(run_frequency)
+        wards = get_wards()
+        for ward in wards:
+            all_data = get_hbc_summary_data(startdate, enddate, startdate.month, 
+                                             startdate.year, ward)
+            chw_obj = all_data["all_data"]
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_hbc_monthly_pdf(startdate.month, startdate.year, chw_obj, ward, doc)
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ HBC Monthly Summary Report %s-%s.pdf" %\
+                           (ward, enddate), 'content': content, 'mimetype': 
+                           'application/pdf'}]
+            reporter.transport_email('', report_schedule.recipient_user, 
+                            params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s-%s" %\
+                                    (ward, enddate), "attachment": attachment })
