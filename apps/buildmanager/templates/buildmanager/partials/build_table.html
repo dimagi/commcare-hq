@@ -12,7 +12,7 @@
 	<th></th>
 </thead>
 {% for build in builds %}
-       
+
     <tr class="{% cycle 'odd' 'even' %}">
         <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>

@@ -27,7 +27,7 @@ from django.core.urlresolvers import reverse
 
 import mimetypes
 import urllib
-                       
+
 
 @login_required()
 def all_projects(request, template_name="buildmanager/all_projects.html"):    
@@ -40,7 +40,7 @@ def all_projects(request, template_name="buildmanager/all_projects.html"):
 
     
 @login_required()
-def show_project(request, project_id, template_name="buildmanager/show_project.html"):    
+def show_project(request, project_id, template_name="buildmanager/show_project.html"):
     context = {}
     try:
         project = Project.objects.get(id=project_id)
