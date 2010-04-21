@@ -11,9 +11,9 @@
 # backends=[backend1,backend2,...]  * comma-separated list of backends to load
 
 [rapidsms]
-apps=admin,backends,ajax,webapp,patterns,locations,reporters,hq,graphing,django_extensions,receiver,xformmanager,reports,httptester,messaging,logger,logtracker,buildmanager,requestlogger,backups,domain,django_granular_permissions,django_tables,user_registration,docs,intel
+apps=admin,hq,webapp,ajax,patterns,locations,reporters,httptester,django_extensions,receiver,xformmanager,reports,logger,messaging,docs,graphing,logtracker,buildmanager,requestlogger,scheduler,domain,django_granular_permissions,django_tables,user_registration,intel,releasemanager,program,phone
 
-backends=http
+backends=http,end2end,email
 
 # -- DATABASE
 #
@@ -27,11 +27,10 @@ backends=http
 # port=<database-port>                                          * not used for sqlite3
 
 [database]
-#engine=sqlite3
-#name=cchq.db
-
 engine=mysql
-name=commcarehq_data
+#name=commcarehq_staging
+#name=intel_demo
+name=commcarehq_dev
 user=root
 password=
 #host=
@@ -44,9 +43,13 @@ password=
 # level={debug,info,warning,error,critical}     * defaults to debug
 # file=<full-path-to-log-file>                  * defaults to /tmp/rapidsms.log
 
+[log]
+level=debug
+file=/tmp/dev-rapidsms.log
+
 [django-log]
 level=debug
-file=rapidsms.log
+file=/tmp/dev-rapidsms-django.log
 
 # -- APPS
 #
@@ -55,35 +58,80 @@ file=rapidsms.log
 # listed for your app it will use the default parameters. However, if you wish to
 # run two apps of the same type, you MUST define configure them explicitly here.
 
-[receiver]
-export_path=data
-xform_submission_path=data/submissions
-attachments_path=data/attachments
+[hq]
+taborder=1
+
+[graphing]
+taborder=2
+
+[reports]
+taborder=3
+
+[buildmanager]
+taborder=4
+export_path=/home/brian
+buildpath=data/builds
+
+[releasemanager]
+file_path=data/builds
+
+[docs]
+hidetab=True
 
 [xformmanager]
-export_path=data
-xsd_repository_path=data/schemas
-csv_path=data/csv
-xform_translate_path=lib
+taborder=6
+export_path=/home/brian
+xsd_repository_path=/var/django-sites/commcarehq_dev/data/schemas
+csv_path=/var/django-sites/commcarehq_dev/data/csv
+xform_translate_path=/var/django-sites/commcarehq_dev/lib
 
+[receiver]
+taborder=7
+export_path=/home/brian
+xform_submission_path=/var/django-sites/commcarehq_dev/data/submissions/
+attachments_path=/var/django-sites/commcarehq_dev/data/attachments/
+
+
+[requestlogger]
+hidetab=True
+
+[scheduler]
+hidetab=True
 
 [logtracker]
-default_alert_email=
+default_alert_email=commcarehq-dev+dev-notifications@dimagi.com
 log_threshold=30
 alert_threshold=40
 
-[buildmanager]
-buildpath=data/builds
 
-#[alpha]
-#beginning=yes
-#end=no
+[httptester]
+host=localhost
+port=1337
+hidetab=True
+
+
+[reporters]
+#hidetab=True
+
+[messaging]
+hidetab=True
+
+[ajax]
+host=0.0.0.0
+port=1338
+
+[logger]
+#hidetab=True
+
+[webapp]
+anon_perms = ['httptester.can_view']
+
 
 [i18n]
-languages=(sw,Swahili),(en,English)
+languages=(en,English),(sw,Swahili)
+# necessary for localization
+locale_paths=/var/django-sites/commcarehq_dev/contrib/locale
 
-[photos]
-image_path=data/photos
 
 # -- BACKENDS
 #
@@ -92,24 +140,42 @@ image_path=data/photos
 # listed for your backend it will use the default parameters. However, if you wish to
 # run two backends of the same type, you MUST define configure them explicitly here.
 
-#[spomc]
-#type=spomc
-#port=9000
+[http]
+type=http
+host=0.0.0.0
+port=1337
+
+[end2end]
+type=http
+handler=End2EndHandler
+host=0.0.0.0
+port=8001
+
+
+[email]
+smtp_host=smtp.gmail.com
+smtp_port=587
+imap_host=imap.gmail.com
+imap_port=993
+username=notifications@dimagi.com
+password=alpha321
+use_tls=True
 
 # These let you override Custom Managers.  See rapidsms.webui.managers.CustomManager
 # for more information
 [managers]
 Reporter=hq.managers.reporter
 
-# -- Custom Django
+
+[customdjango]
 # This section is for custom django attributes.  These are things that need to be 
 # appended to your settings, as opposed to the [django] section below, which totally
 # overrides your settings.  Right now the only thing this allows you to do is
 # specify some additional middleware with the "middlewares" key.  This should be
 # a comma separated list of middlelware paths, e.g.:
 # middlewares= myapp.middleware.custom.MyAppMiddleware,myapp.middleware.other.OtherMiddleware
-[customdjango]
 middlewares=hq.middleware.hq.HqMiddleware,domain.middleware.DomainMiddleware
+#authentications=hq.authentication.HQBackend
 
 # -- DJANGO
 #
@@ -124,26 +190,24 @@ middlewares=hq.middleware.hq.HqMiddleware,domain.middleware.DomainMiddleware
 #
 # cache_backend=dummy:///
 
-LOGIN_REDIRECT_URL = /intel
+LOGIN_REDIRECT_URL = /
 cache_backend=file:///tmp/django_cache
 use_django_static_server=yes
 admin_media_prefix = /static/admin-media/
 media_server_prog=apache
-# media_root=file:///tmp
 media_url=/static
-
-# restyle some templates
-# BASE_TEMPLATE=hq-layout.html
-BASE_TEMPLATE=intel-layout.html
-# LOGIN_TEMPLATE=login_and_password/login.html
-LOGIN_TEMPLATE=login_and_password/intel-login.html
-# LOGGEDOUT_TEMPLATE=loggedout.html
-LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
-
+media_root=/var/django-sites/commcarehq_dev/staticmedia
 
 # this is to provide convenient url access in our email logger
 # there's probably a better way to do this.
+# Yes!  use the sites framework
 SERVER_ROOT_URL=http://dev.commcarehq.org
+
+
+# restyle some templates
+BASE_TEMPLATE=hq-layout.html
+LOGIN_TEMPLATE=login_and_password/login.html
+LOGGEDOUT_TEMPLATE=loggedout.html
 
 ##### Domain integration settings  ######
 
@@ -176,3 +240,13 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = notifications@dimagi.com
 EMAIL_HOST_PASSWORD = alpha321
 EMAIL_USE_TLS = True
+
+#### Intel app settings
+
+BASE_TEMPLATE=intel-layout.html
+LOGIN_REDIRECT_URL = /intel
+LOGIN_TEMPLATE=login_and_password/intel-login.html
+LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+
+# Enable user profile (paste under [django])
+AUTH_PROFILE_MODULE = 'intel.UserProfile'
