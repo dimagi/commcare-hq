@@ -1,5 +1,5 @@
 from django.contrib import admin
-from intel.models import *
+from releasemanager.models import *
 
 admin.site.register(Jarjad)
 admin.site.register(ResourceSet)
