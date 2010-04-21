@@ -143,12 +143,15 @@ def _create_build(build):
     jad = build.jarjad.jad_file
     buildname = build.resource_set.name
 
-    # get the resources: load & zip if zip file, hg clone otherwise
-    if build.resource_set.url.endswith('.zip'):
-        resource_zip = lib.grab_from(build.resource_set.url)
-        resources = lib.unzip(resource_zip)
-    else:
-        resources = lib.clone_from(build.resource_set.url)
+    # remove zip support, now that we have HG
+    # # get the resources: load & zip if zip file, hg clone otherwise
+    # if build.resource_set.url.endswith('.zip'):
+    #     resource_zip = lib.grab_from(build.resource_set.url)
+    #     resources = lib.unzip(resource_zip)
+    # else:
+    #     resources = lib.clone_from(build.resource_set.url)
+
+    resources = lib.clone_from(build.resource_set.url)
 
     ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
     new_id = (1 + ids[0].id) if len(ids) > 0 else 1
