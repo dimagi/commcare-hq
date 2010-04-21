@@ -19,6 +19,18 @@ from subprocess import Popen, PIPE
 # from xformmanager.models import MetaDataValidationError
 # from xformmanager.xformdef import FormDef, ElementDef
 
+def rlistdir(start_path, paths=[], prepend=''):
+    ''' list dirs recursively '''
+    
+    for f in os.listdir(start_path):
+        full_path = os.path.join(start_path, f)
+        if os.path.isdir(full_path):
+            rlistdir(full_path, paths, f)
+        
+        paths.append(os.path.join(prepend, f))
+
+    return paths
+    
 
 def add_to_jar(jar_file, path_to_add):
     '''adds files under /path_to_add to jar_file, return path to the new JAR'''
@@ -33,10 +45,15 @@ def add_to_jar(jar_file, path_to_add):
     
     zf = ZipFile(tmpjar, 'a')
     
-    for f in os.listdir(path_to_add):
+    for f in rlistdir(path_to_add):
         full_path = os.path.join(path_to_add, f)
         if os.path.isdir(full_path): continue
         zf.write(full_path, str(f))
+
+    # for f in os.listdir(path_to_add):
+    #     full_path = os.path.join(path_to_add, f)
+    #     if os.path.isdir(full_path): continue
+    #     zf.write(full_path, str(f))
         
     zf.close
     
