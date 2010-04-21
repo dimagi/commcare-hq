@@ -50,11 +50,6 @@ def add_to_jar(jar_file, path_to_add):
         if os.path.isdir(full_path): continue
         zf.write(full_path, str(f))
 
-    # for f in os.listdir(path_to_add):
-    #     full_path = os.path.join(path_to_add, f)
-    #     if os.path.isdir(full_path): continue
-    #     zf.write(full_path, str(f))
-        
     zf.close
     
     return tmpjar
@@ -93,7 +88,8 @@ def create_zip(target, files):
     zf.close()
     return target
     
-    
+
+#### Deprecating ZIP URL #####
 # http://bitbucket.org/ctsims/resourcetest/get/tip.zip
 def grab_from(url):
     '''copy a file from a URL to a local tmp dir, returns path to local copy'''
