@@ -7,17 +7,17 @@
 {% block releasemanager_content %}
 
 <div class="span-16 prepend-2">
-{% if items %}
+	{% if items %}
 	
-	{% for item in items %}
-		{{item.resource_set.name}} :: {{item.description}} :: 
-		<a href="{% download_url item.jar_file %}">Download JAR</a> | 
-        <a href="{% download_url item.jad_file %}">Download JAD</a> | 
-		<a href="{% download_url item.zip_file %}">Download ZIP</a><br />
-	{%endfor%}
+		{% for item in items %}
+			{{item.resource_set.name}} :: {{item.description}} :: 
+			<a href="{% download_url item.jar_file %}">Download JAR</a> | 
+	        <a href="{% download_url item.jad_file %}">Download JAD</a> | 
+			<a href="{% download_url item.zip_file %}">Download ZIP</a><br />
+		{%endfor%}
 	
-{% else %}
-	No builds found
-{% endif %}
+	{% else %}
+		No builds found
+	{% endif %}
 </div>
 {%endblock%}
