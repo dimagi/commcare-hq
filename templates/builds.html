@@ -12,6 +12,9 @@
 	{{errors}}
 		
 	<br />
+	{% if resource_set %}
+		Showing builds for resource set <tt>{{resource_set.name}}</tt>. (<a href="{% url releasemanager.views.builds %}">Show all builds</a>)
+	{% endif %}
 	<p>
 		<h3>Releases</h3>
 		{% with items.released as items %}

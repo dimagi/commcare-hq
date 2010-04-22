@@ -5,6 +5,7 @@
 		<th>Created At</th>
 		<th>URL</th>
 		<th></th>
+		<th></th>
 	</thead>
 	{% for item in items %}
 
@@ -21,6 +22,7 @@
 					<button onclick="location.assign('{% url releasemanager.views.resource_set_set_release item.id 'true'%}');">Release</button>
 	            {% endif %}
 	        </td>
+			<td><a href="{% url releasemanager.views.builds %}?resource_set={{ item.id }}">Builds</td>
 	    </tr>
 
 	{%endfor%}
