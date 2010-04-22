@@ -36,20 +36,31 @@ import urllib
 
 # FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 
+@login_and_domain_required
 def projects(request, template_name="projects.html"):
+    domain = request.user.selected_domain
+    
     context = {'form' : BuildForm(), 'items': {}}
-    context['items'] = Build.objects.filter(is_release=True).order_by('-created_at')
+    context['items'] = Build.objects.filter(is_release=True).filter(resource_set__domain=domain).order_by('-created_at')
 
     return render_to_response(request, template_name, context)
     
 @login_and_domain_required
 def jarjad_set_release(request, id, set_to):
+    
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Forbidden")
+    
     if set_to == "true" or set_to == "false":
         Jarjad.objects.filter(id=id).update(is_release=(set_to == "true"))
     return HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
     
 @login_and_domain_required
 def jarjad(request, template_name="jarjad.html"):
+    
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Forbidden")
+        
     Jarjad.verify_all_files(delete_missing=True)
     
     context = {'form' : JarjadForm(), 'items': {}}
@@ -69,6 +80,9 @@ def make_release(request, id):
 @login_and_domain_required
 def new_jarjad(request, template_name="jarjad.html"):
     '''save new Jad & Jar into the system'''
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Forbidden")
+
     xml_mode = ('CCHQ-submitfromfile' in request.META['HTTP_USER_AGENT'])
         
     context = {}
@@ -107,11 +121,29 @@ def new_jarjad(request, template_name="jarjad.html"):
 
 @login_and_domain_required
 def builds(request, template_name="builds.html"): 
-    Build.verify_all_files(delete_missing=True)
-
     context = {'form' : BuildForm(), 'items': {}}
-    context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
-    context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
+
+    Build.verify_all_files(delete_missing=True)
+    
+    resource_set = request.GET['resource_set'] if request.GET.has_key('resource_set') else None
+    
+    resource_set = request.GET.has_key('resource_set')
+    
+    if resource_set:
+        try:
+            context['resource_set'] = ResourceSet.objects.get(id=request.GET['resource_set'])
+        except:
+            resource_set = False        
+        
+    
+    if resource_set:
+        context['resource_set'] = ResourceSet.objects.get(id=resource_set)
+        
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).order_by('-created_at')
+    else:
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
 
     return render_to_response(request, template_name, context)
 
@@ -184,9 +216,11 @@ def _create_build(build):
 
 @login_and_domain_required
 def resource_sets(request, template_name="resource_sets.html"): 
+    domain = request.user.selected_domain
+    
     context = {'form' : ResourceSetForm(), 'items': {}}
-    context['items']['unreleased'] = ResourceSet.objects.filter(is_release=False).order_by('-created_at')
-    context['items']['released']   = ResourceSet.objects.filter(is_release=True).order_by('-created_at')
+    context['items']['unreleased'] = ResourceSet.objects.filter(is_release=False, domain=domain).order_by('-created_at')
+    context['items']['released']   = ResourceSet.objects.filter(is_release=True, domain=domain).order_by('-created_at')
 
     return render_to_response(request, template_name, context)
 
