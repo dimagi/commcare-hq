@@ -89,54 +89,54 @@ def create_zip(target, files):
     return target
     
 
-#### Deprecating ZIP URL #####
-# http://bitbucket.org/ctsims/resourcetest/get/tip.zip
-def grab_from(url):
-    '''copy a file from a URL to a local tmp dir, returns path to local copy'''
-    u = urllib2.urlopen(url)
-    u = u.read()
-    
-    x, tmpfile = tmp.mkstemp()
-    f = open(tmpfile, 'w')
-    f.write(u)
-    f.close()
-    
-    return tmpfile
-
-
-def unzip(zip_file, target_dir=None):
-    '''
-    extracts a resources zip.
-    assumes that all files are on one root dir
-    returns path of extracted files
-    '''
-    zf = ZipFile(zip_file)
-    if target_dir is None:
-        target_dir = tmp.mkdtemp()
-    elif not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-    
-    namelist = zf.namelist()
-    filelist = filter( lambda x: not x.endswith( '/' ), namelist )
-
-    for filename in filelist:
-        basename = os.path.basename(filename)
-        if basename.startswith('.'): continue #filename.endswith(".xml") or filename.endswith(".xhtml"):
-
-        target_file = os.path.join(target_dir, basename)
-
-        out = open(target_file, 'wb')
-
-        buffer = StringIO( zf.read(filename))
-        buflen = 2 ** 20
-        datum = buffer.read(buflen)
-
-        while datum:
-            out.write(datum)
-            datum = buffer.read(buflen)
-        out.close()
-        
-    return target_dir
+# #### Deprecating ZIP URL #####
+# # http://bitbucket.org/ctsims/resourcetest/get/tip.zip
+# def grab_from(url):
+#     '''copy a file from a URL to a local tmp dir, returns path to local copy'''
+#     u = urllib2.urlopen(url)
+#     u = u.read()
+#     
+#     x, tmpfile = tmp.mkstemp()
+#     f = open(tmpfile, 'w')
+#     f.write(u)
+#     f.close()
+#     
+#     return tmpfile
+# 
+# 
+# def unzip(zip_file, target_dir=None):
+#     '''
+#     extracts a resources zip.
+#     assumes that all files are on one root dir
+#     returns path of extracted files
+#     '''
+#     zf = ZipFile(zip_file)
+#     if target_dir is None:
+#         target_dir = tmp.mkdtemp()
+#     elif not os.path.exists(target_dir):
+#         os.makedirs(target_dir)
+#     
+#     namelist = zf.namelist()
+#     filelist = filter( lambda x: not x.endswith( '/' ), namelist )
+# 
+#     for filename in filelist:
+#         basename = os.path.basename(filename)
+#         if basename.startswith('.'): continue #filename.endswith(".xml") or filename.endswith(".xhtml"):
+# 
+#         target_file = os.path.join(target_dir, basename)
+# 
+#         out = open(target_file, 'wb')
+# 
+#         buffer = StringIO( zf.read(filename))
+#         buflen = 2 ** 20
+#         datum = buffer.read(buflen)
+# 
+#         while datum:
+#             out.write(datum)
+#             datum = buffer.read(buflen)
+#         out.close()
+#         
+#     return target_dir
 
 
 def clone_from(url):
