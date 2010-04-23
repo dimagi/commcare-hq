@@ -1,4 +1,4 @@
-{% extends "hq/base.html" %}
+{% extends "hqwebapp/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load mainreport_tags %}
@@ -15,13 +15,13 @@
 {% for program, data in program_data.items %}
 <h3>{{ program.name }} - {% trans "Forms Submitted" %}</h3>
 {% with program_totals|dict_lookup:program as totals %}
-{% include "hq/partials/dashboard_group.html" %}
+{% include "hqwebapp/partials/dashboard_group.html" %}
 {% endwith %}
 {% endfor %}
 <h3>Unregistered Users - {% trans "Forms Submitted" %}</h3>
 {% with unregistered_data as data %}
 {% with unregistered_totals as totals %}
-{% include "hq/partials/dashboard_group.html" %}
+{% include "hqwebapp/partials/dashboard_group.html" %}
 {% endwith %}
 {% endwith %}
 {% endblock %}
