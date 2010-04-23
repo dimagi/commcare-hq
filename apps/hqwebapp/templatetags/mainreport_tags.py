@@ -1,18 +1,6 @@
 from django import template
 from django.core.urlresolvers import reverse
-from django.core.urlresolvers import reverse
-
-from django.contrib.contenttypes.models import ContentType
-from types import ListType,TupleType
-
-from hq.models import *
-
-import xformmanager.adapter.querytools as qtools
-import hqutils as utils
-from xformmanager.models import *
-import time
-from datetime import timedelta
-import dbhelper
+from datetime import datetime, timedelta
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = '%Y-%m-%d %H:%M'
