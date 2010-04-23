@@ -1,0 +1,75 @@
+{% extends base_template %}
+{% load i18n %}
+{% load submission_tags %}
+{% block title %}{% trans "Submissions Not Matching Any Known Schema" %}{% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+{% block content %}
+<h2>{% trans "Submissions Not Matching Any Known Schema" %}</h2>
+<a href="{% url receiver.views.orphaned_data_xml %}">download zip file of xml submissions</a>
+<br>
+<p>NOTE: This page currently includes some duplicate submissions, shown in <span class="duplicate">orange</span>.  These will disappear the next time our server migrates.  Please be patient with us.</p>  
+
+{% if errors %}
+	<!-- TODO: put this formatting in stylesheets -->
+    <div class="error"><strong>{{ errors|escape }}</strong></div>
+{% endif %}
+
+{% if status %}
+	<!-- TODO: put this formatting in stylesheets -->
+    <div class="status"><strong>{{ status }}</strong></div>
+{% endif %}
+
+{% with submissions as data %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
+
+<form action="" method="POST">
+<table>
+   <thead>
+    <tr>
+        <th></th>
+        <th>ID</th><th>Date</th><th>From</th><th>Size (bytes)</th><th>Attachments</th>
+    </tr>
+   </thead>
+   {% for orphan in submissions.object_list %}      
+   	<tr class="{% cycle 'odd' 'even' %}">
+        <td>
+	       <input type="hidden" name="instance" value="{{orphan.id}}"/>
+	       <input type="checkbox" name="checked_{{orphan.id}}"/>
+        </td>
+   		<td><a href="{%url receiver.views.single_submission orphan.id %}">
+   		   {% if orphan.is_duplicate %}
+                  <span class="duplicate">{{orphan.id}}</span>
+           {% else %}
+                  {{orphan.id}}
+   		   {% endif %}
+   		   </a></td>
+   		<td>{{orphan.submit_time|date}} - {{orphan.submit_time|time}}</td>
+   		<td>{{orphan.submit_ip}}</td>
+   		<td>{{orphan.bytes_received}}</td>
+   		{% if orphan.xform %}
+            <td><a href="{% url receiver.views.single_attachment orphan.xform.id %}">view xml submission</a></td>
+        {% else %}
+            <td>no xform found</td>
+        {% endif %}
+   	</tr>	
+   {% endfor %}
+   </table>
+
+{% if submissions.object_list %}
+ 	<p/><p/>
+    <input type="checkbox" name="select_all"/>Select ALL orphans<br/>
+ 	<p/><p/>
+
+	<select name="action">
+	<option value="resubmit">Resubmit</option>
+	<option value="delete">Delete</option>
+	</select>
+    <input type="submit" value="Go" />
+{% endif %}   	
+
+</form>
+
+{% endblock %}

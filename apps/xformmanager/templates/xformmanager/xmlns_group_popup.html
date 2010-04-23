@@ -1,0 +1,10 @@
+{% load i18n %}
+<h3>Forms for {{ group.xmlns }}</h3>
+<p style="text-align:right"><a href="{% url xformmanager.views.xmlns_group %}?xmlns={{ group.xmlns }}">details view</a></p>
+{% with group.forms as forms %}
+{% include "xformmanager/partials/xform_group_table.html" %}
+{% endwith %}
+<p>
+<input id="close" class="jqmClose" type="button" value="Close" style="float:right;"/>
+</p>
+

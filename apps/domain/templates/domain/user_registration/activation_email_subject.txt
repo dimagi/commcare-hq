@@ -1,0 +1,1 @@
+Someone has invited you to join {{site}}!  You have {{ expiration_days }} days to accept.

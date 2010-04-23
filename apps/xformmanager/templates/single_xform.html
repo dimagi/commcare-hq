@@ -1,0 +1,38 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Registered XForms" %}{% endblock %}
+{% block mgr_content %}
+
+<h2>{% trans "Registered XForm" %}</h2>
+
+<strong>
+<ul>
+	   	<li>
+	   		{% trans "FORM NAME:" %} {{xform_item.form_name}}   		
+	   	</li>
+	   	<li>
+	   		{% trans "FORM Display Name::" %} {{xform_item.form_display_name}}   		
+	   	</li>
+	   	<li>
+	   		{% trans "Submission ID:" %} {{xform_item.id}}   		
+	   	</li>
+	   	
+	   	<li>
+	   		{% trans "IP Address:" %} {{xform_item.submit_ip}}   		
+	   	</li>
+	   	
+	   	<li>
+	   		{% trans "Bytes Received:" %} {{xform_item.bytes_received}}   		
+	   	</li>
+	   	<li>
+	   		{% trans "Raw File Location:" %} {{xform_item.xsd_file_location}}   		
+	   	</li>
+	   	<li>
+	   		<a href="{%url xformmanager.views.single_xform xform_item.id %}?show_schema=yes">{%trans "Show Schema" %}</a>
+	   	</li>
+
+</ul>
+</strong>
+
+{% endblock %}
+

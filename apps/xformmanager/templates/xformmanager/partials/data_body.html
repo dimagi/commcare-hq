@@ -1,0 +1,106 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<h2>{% trans "Data for Schema: " %}{{form_name}}</h2>
+{% if filters %}
+    <h3>FILTERED BY
+        {{filters}}
+    {% if sort_params %}
+        <a href="{% url xformmanager.views.data xform.id %}?{{sort_params}}">(Click here to remove filters)</a>
+    {% else %}
+        <a href="{% url xformmanager.views.data xform.id %}">(Click here to remove filters)</a>
+    {% endif %}
+    </h3>
+
+    <br/>
+{% endif %}
+<br/>
+
+<a href="{% url xformmanager.views.single_xform xform.id %}">more information about this schema</a>
+<br>
+<a href="{% url xformmanager.views.export_xml xform.id %}">download zip file of xml submissions</a>
+<br>
+<a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
+<br>
+{% if errors %}
+    <p class="error">{{ errors }}</p>
+{% endif %}
+<br>
+<div class="span-12">
+{% with param_string_no_page as extra_params %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
+</div>
+<div class="span-12 last" style="text-align:right;">
+<a href="{%url xformmanager.views.plain_data xform.id %}">view fullscreen</a>
+</div>
+<br>
+<form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
+<div class="big-table">
+<table>
+    <thead>
+       <tr>
+          <th></th>
+       {% for col in columns %}
+          {% ifequal forloop.counter0 sort_index %}
+             <th class="sorted{% if sort_descending %} descending{% else %} ascending{% endif %}">
+               <a href="?sort_column={{col}}&sort_descending={% if sort_descending %}false{% else %}true{% endif %}{% if filters %}&filter_{{filters}}{% endif %}">
+                 {{col}}
+             </th>
+          {% else %}
+             <th><a href="?sort_column={{col}}{% if filters %}&filter_{{filters}}{% endif %}">{{col}}</th>
+          {% endifequal %}              
+       {% endfor%}
+       </tr>
+    </thead>
+    {% for record in data.object_list %}
+    <tr class="{% cycle 'odd' 'even' %}">
+       <td>
+           <input type="hidden" name="instance" value="{{record|first}}"/>
+           <input type="checkbox" name="checked_{{record|first}}"/>
+       </td>
+       {% for field in record %}
+           {% ifequal forloop.counter0 sort_index %}
+                <td class="sorted">
+           {% else %}
+                <td>
+           {% endifequal %}
+           {% ifequal forloop.counter0 0 %}
+                 <b><a href="{%url receiver.views.single_submission field %}">{{ field }}</a></b>
+           {% else %}
+           {% ifequal forloop.counter0 2 %}
+                 <b><a href = "{%url xformmanager.views.single_instance xform.id field %}">&nbsp;{{ field }}&nbsp;</a></b>
+           {% else %}
+                 {% comment %} rO - for some reason, this doesn't work. why? {% endcomment %}
+                 {% if filtered_by %} 
+                     {% ifequal filtered_by columns|array_lookup:forloop.counter0 %}
+                         {{field}}
+                     {% else %}
+                        {% if sort_params %}
+                             <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
+                        {% else %}
+                             <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
+                        {% endif %}
+                            {{field}}
+                         </a>
+                     {% endifequal %}
+                 {% else %}
+                        {% if sort_params %}
+                             <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}&{{sort_params}}">
+                        {% else %}
+                             <a href="?filter_{{ columns|array_lookup:forloop.counter0 }}={{field}}">
+                        {% endif %}
+                            {{field}}
+                         </a>
+                 {% endif %}
+           {% endifequal %}
+           {% endifequal %} 
+           </td>
+       {% endfor %}
+    </tr>
+   {% endfor %}
+</table>
+{% if data.object_list %}       
+Select items and: <input type="submit" value="Delete" />
+{% endif %}     
+</div>
+</form>

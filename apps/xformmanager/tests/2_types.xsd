@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xml_types" xmlns="http://www.w3.org/2001/XMLSchema">
+      <simpleType name="_pathfinder_followup_type_med">
+            <restriction base="string">
+                  <enumeration value="Septrini" />
+                  <enumeration value="ARV" />
+                  <enumeration value="Anti_TB" />
+                  <enumeration value="Kinga_ya_TB" />
+            </restriction>
+      </simpleType>
+      <simpleType name="list._pathfinder_followup_type_med">
+            <list itemType="_pathfinder_followup_type_med" />
+      </simpleType>
+      <simpleType name="_list_type">
+            <restriction base="string">
+                  <enumeration value="list_item_1" />
+                  <enumeration value="list_item_2" />
+                  <enumeration value="list_item_3" />
+                  <enumeration value="list_item_4" />
+            </restriction>
+      </simpleType>
+      <simpleType name="list._list_type">
+            <list itemType="_list_type" />
+      </simpleType>
+      <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+				        <element name="Meta" minOccurs="0">
+				          <complexType>
+				            <sequence>
+				              <element name="formName" minOccurs="0" type="string"/>
+				              <element name="formVersion" minOccurs="0" type="string"/>
+				              <element name="chw_id" minOccurs="0" type="string"/>
+				              <element name="uid" minOccurs="0" type="string"/>
+				              <element name="DeviceID" minOccurs="0" type="string"/>
+				              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+				              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+				              <element name="username" minOccurs="0" type="string"/>
+				            </sequence>
+				          </complexType>
+				        </element>	                    
+        				<element name="UserID" type="string"/>
+	                    <element name="my_device" type="integer"/>
+	                    <element name="TimeStartRecorded" type="int"/>
+			 		    <element name="TimeEndRecorded" type="decimal"/>
+	                    <element name="Prov" minOccurs="0" type="double" />
+			 		    <element name="Date" minOccurs="0" type="date" />
+			 		    <element name="Time" minOccurs="0" type="time" />
+	                    <element name="DateTime" minOccurs="0" type="dateTime" />
+	                    <element name="Meds" minOccurs="0" type="list._pathfinder_followup_type_med" />
+	                    <element name="Other_Meds" minOccurs="0" type="list._pathfinder_followup_type_med" />
+	                    <element name="ListItem" minOccurs="0" type="list._list_type" />
+					    <!--<element name="LocWCHC" minOccurs="0" type="listItem" />-->
+					    <!--<element name="LocWCHCother" minOccurs="0" type="listItems" />-->
+                  </sequence>
+            </complexType>
+	  </element>
+</schema>
+

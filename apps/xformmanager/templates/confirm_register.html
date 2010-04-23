@@ -1,0 +1,25 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Are you sure?{% endblock %}
+{% block mgr_content %}
+
+<h3 class="error">{% trans "This XForm has some problems. Are you sure you want to register it?" %}</h3>
+
+<ul>
+<strong>
+It contains the following issues:
+{{ errors|linebreaks }}
+	
+	<p/><p/><p/>
+	<form action="" method="post">
+	<div>
+	<input type="hidden" name="confirm_register" value="yes" />
+	<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+	</div>
+	</form>
+</strong>
+</ul>
+
+
+{% endblock %}
+

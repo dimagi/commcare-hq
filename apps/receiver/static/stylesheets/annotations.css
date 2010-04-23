@@ -1,0 +1,11 @@
+.annotation {
+    padding: 4px;
+}
+
+.annotation-date {
+    font-weight: bold;
+}
+
+.annotation-user {
+    font-style: italic;
+}

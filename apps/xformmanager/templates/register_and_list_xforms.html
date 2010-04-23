@@ -1,0 +1,109 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Upload your xforms here{% endblock %}
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/xformmanager/javascripts/form_group.js"></script>
+{% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modal_dialog.css" />
+{% endblock %}
+
+
+{% block mgr_content %}
+<div class="fieldWrapper{% if form.message.errors %} error{% endif %}">
+    {% if form.message.errors %}
+        {% for error in form.message.errors %}
+            <strong>{{ error|escape }}</strong>
+        {% endfor %}
+    {% endif %}
+    {{ form.message }}
+</div>
+
+<div class="fieldWrapper{% if errors %} error{% endif %}">
+    {% if errors %}
+            <strong>{%trans "Submit Error: "%}{{ errors|escape|linebreaks }}</strong>
+    {% endif %}
+</div>
+{% if form_groups %}
+<h2>{% trans "Registered XForms" %}</h2>
+
+<strong>
+    <table>
+        <thead>
+   		   <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "XMLNS" %}</th>
+                <th>{% trans "Forms" %}</th>
+                <th>{% trans "Versions" %}</th>
+                <th>{% trans "First Registered" %}</th>
+                <th>{% trans "Last Received" %}</th>
+   		   </tr>
+   		</thead>
+   		{% for group in form_groups %}   
+   		<tr class="{% cycle "odd" "even" %}">
+   			<td>{{ group.display_name }}</td>
+   			<td>{{ group.xmlns }}</td>
+   			<td>
+   			<div class="formtrigger js_link" onclick="show_forms('{{group.xmlns}}', '#formlist');">{{ group.forms|length }}</div>
+   			</td>
+   			<td>{{ group.version_string }}</td>
+   			<td>{% blocktrans with group.first_date_registered|date as date_t %}
+	   				{{date_t}}
+	   			{% endblocktrans %}
+   			</td>
+            <td>{% if group.last_received %}
+		   			{% blocktrans with group.last_received|date as date_t %}
+		   				{{date_t}}
+		   			{% endblocktrans %}
+		   		{% else %}
+		   			n/a
+		   		{% endif %}
+   			</td>
+   			
+   			
+   		</tr>
+   		{% endfor %}   		
+   </table>
+   
+
+</strong>
+{% else %}
+<h3 class="error">{% trans "No Forms Registered.  Upload forms below." %}</h3>
+{% endif %}
+
+<div id="xform-register-block" class="span-12">
+<h2>Register a New XForm*</h2>
+Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
+If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
+<form action="" method="POST" enctype="multipart/form-data">
+<br>
+<ul style="margin-left:-30px"><!-- I don't know why this is getting indented, so just hack it backwards -->
+{{ upload_form.as_ul }}
+<li><input type="submit" value="Submit" /></li>
+</ul>
+
+</form>
+{% if newsubmit %}
+    <p>{% trans "Registration successful for xform id:"%}{{newsubmit.id}}</p>
+{% endif %}
+
+*Note that files are processed as <a href="http://code.javarosa.org/wiki/xform">XForms</a>, unless they have a ".xsd" extension, in which case they are processed as <a href="http://www.w3schools.com/Schema/default.asp">XML Schema</a>.
+</div>
+<div class="span-12 last">
+<h2>You can also...</h2>
+<h3><a href="{% url xformmanager.views.manage_groups %}">Manage XForm Groups</a></h3>
+<p>Group several XForms together for a unified view of data across forms or form versions.</p>
+<h3><a href="{% url buildmanager.views.validator %}">Validate an XForm</a></h3>
+<p>Instantly check any XForm for validity without registering it.  We can validate against both regular
+and CommCare HQ compliant forms.</p>
+<h3><a href="{% url buildmanager.views.readable_xform %}">Get a Readable XForm</a></h3>
+<p>Paste an XForm - get a human-friendly readable view of that form.</p>
+</div>  
+
+<div class="modal_dialog" id="formlist">
+Hello World
+</div>
+{% endblock %}
+

@@ -1,0 +1,48 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{% trans "Single Submission" %}{% endblock %}
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+{% block content %}
+<div class="attachmentsblock">
+   	<h3>Attachments</h3>
+   	{%if attachments %}
+	   	<ul>
+	   	{% for attach in attachments %}
+	   		<li>
+	   		<a href="{% url receiver.views.single_attachment attach.id%}"> Attachment {{attach.id}}</a>
+	   		</li>
+	   	{% endfor %}
+	   	</ul>
+   	{%else%}
+   		No Attachments
+   	{% endif %}
+   	</div>
+
+<h2>{% trans "Information about Submission" %} {{submission.id}}</h2>
+<div class="summary-info">  
+    <ul>
+	   	<li>{% trans "Domain:" %} <b>{{submission.domain}}</b></li>           
+	   	<li>{% trans "Received:" %} <b>{{submission.submit_time }}</b></li>           
+        <li>{% trans "Size:" %} <b>{{submission.bytes_received}} bytes</b></li>           
+        <li>{% trans "From: " %} <b>{{submission.submit_ip}}</b></li>
+   	</ul>
+</div>
+
+<div id="actions">
+<br>
+    <ul>
+    <li><a href="{%url receiver.views.single_submission submission.id %}?get_original">{% trans "view full raw submission" %}</a></li>           
+    
+    {% include "receiver/partials/submission_actions.html" %}
+    <li>
+    <a href="{% url receiver.views.delete_submission submission.id %}">
+        {% trans "delete this submission" %}</a>
+    </li>
+    </ul>
+</div>
+    <p></p>
+    
+   	
+{% endblock %}

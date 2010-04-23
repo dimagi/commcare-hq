@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="bad_version" version="abc" uiVersion="1.3.5">
+	<Meta>
+	    <formName>BRACCHPHomeVisit</formName>
+	    <formVersion>0.0.1</formVersion>
+	    <chw_id>6</chw_id>
+	    <uid>RW07SHOPTWGAOJKUQJJJN215F</uid>
+	    <DeviceID>WK13O6ST8SWZVXLAI68B9YZWK</DeviceID>
+	    <TimeStart>2009-04-30T11:17:25.089</TimeStart>
+	    <TimeEnd>2009-04-30T11:21:29.512</TimeEnd>
+	    <username>lucy</username>
+	</Meta>
+	<nested>
+	  <my_user>userid0</my_user>
+	  <my_device>deviceid0</my_device>
+	  <TimeStartRecorded>2009-10-9T11:04:30.3</TimeStartRecorded>
+	  <TimeEndRecorded>2009-10-9T11:09:30.3</TimeEndRecorded>
+	</nested>
+	<nested>
+	  <my_user>userid2</my_user>
+	  <my_device>deviceid2</my_device>
+	  <TimeStartRecorded>2009-11-12T11:11:11</TimeStartRecorded>
+	  <TimeEndRecorded>2009-11-12T11:16:11</TimeEndRecorded>
+	</nested>
+    <LocFSSCother>foo</LocFSSCother>
+    <LocLPSCother>bar</LocLPSCother>
+    <LocMPSCother>yes</LocMPSCother>
+    <LocNCSCother>no</LocNCSCother>
+</root>
+

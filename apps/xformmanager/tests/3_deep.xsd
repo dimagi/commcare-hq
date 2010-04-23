@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema targetNamespace="xml_deep" xmlns="http://www.w3.org/2001/XMLSchema">
+      <element name="root" minOccurs="0">
+            <complexType>
+                  <sequence>
+			        <element name="Meta" minOccurs="0">
+			          <complexType>
+			            <sequence>
+			              <element name="formName" minOccurs="0" type="string"/>
+			              <element name="formVersion" minOccurs="0" type="string"/>
+			              <element name="chw_id" minOccurs="0" type="string"/>
+			              <element name="uid" minOccurs="0" type="string"/>
+			              <element name="DeviceID" minOccurs="0" type="string"/>
+			              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+			              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+			              <element name="username" minOccurs="0" type="string"/>
+			            </sequence>
+			          </complexType>
+			        </element>	 
+		            <element name="UserID" type="string"/>
+                    <element name="my_device" minOccurs="0">
+                          <complexType>
+                                <sequence>
+                                      <element name="Grandchild" minOccurs="0" type="string"/>
+                                      <element name="grandchild2" minOccurs="0" type="string"/>
+                                </sequence>
+                          </complexType>
+                    </element>            
+		            <element name="TimeStartRecorded" type="int"/>
+				    <element name="TimeEndRecorded" minOccurs="0">
+            			<complexType>
+	                    	<element name="otherchild" minOccurs="0" type="string" />
+			            </complexType>
+				    </element>
+				    <element name="Date" minOccurs="0" type="date" />
+                  </sequence>
+            </complexType>
+	    </element>
+</schema>
+

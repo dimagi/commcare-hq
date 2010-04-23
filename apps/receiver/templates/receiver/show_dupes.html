@@ -1,0 +1,58 @@
+{% extends base_template %}
+{% load i18n %}
+{% load submission_tags %}
+{% block title %}{% trans "All Submissions" %}{% endblock %}
+
+<!-- stylesheets -->
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/receiver.css" />
+{% endblock %}
+
+{% block content %}
+
+<h2>{% trans "Duplicate Submissions" %}</h2>
+
+{% if errors %} 
+	{{errors}}
+{% else %}
+
+   <table>
+   <thead>
+    <tr>
+        <th>ID</th><th>Date</th><th>From</th><th>Size (bytes)</th><th>Actions</th><th>Attachments</th>
+    </tr>
+   </thead>
+   {% for submission in submissions.object_list %}      
+   	<tr class="{% cycle 'odd' 'even' %}">
+   		<td><a href="{%url receiver.views.single_submission submission.id %}">
+		    {% if submission.is_duplicate %} 
+	            <span class="duplicate">		       
+	           		{{submission.id}}
+	           	</span>
+ 		    {% else %}
+           		{{submission.id}}
+            {% endif %}
+   		</a></td>
+   		<td>{{submission.submit_time|date}} - {{submission.submit_time|time}}</td>
+   		<td>{{submission.submit_ip}}</td>
+   		<td>{{submission.bytes_received}}</td>
+   		<td>{% if submission.xform %}
+   		    <a href="{% url receiver.views.single_attachment submission.xform.id %}">view xml submission</a>
+   		    {% if submission.xform.has_linked_schema %}
+   		    &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">view form data</a>
+            &nbsp;&nbsp;<a href="{% url xformmanager.views.single_instance_csv submission.xform.get_linked_metadata.formdefmodel.id submission.xform.get_linked_metadata.raw_data %}">download data as csv</a>
+            {% endif %}
+            {% endif %}
+   		</td>
+        <td>{% get_attachments_links submission %}</td>
+   	</tr>	
+   {% endfor %}
+   </table>
+   
+{% with submissions as data %}
+{% include "hq/partials/pagination.html" %}
+{% endwith %}
+
+{% endif %}
+
+{% endblock %}

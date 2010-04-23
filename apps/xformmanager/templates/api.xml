@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding='utf-8'?>
+<!-- I just made up this xml schema - please revise -->
+<api href="https://dev.commcarehq.org/api">
+      <resource href="http://dev.commcarehq.org/api/">
+          <desc>List allowable api calls</desc>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms">
+      	  <desc>List all registered schemas</desc>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1">
+      	  <desc>Data associated with the first registered schema</desc>
+          <args>
+              <arg>format
+                  <option value="xml">xml</option>
+                  <option value="csv">csv</option>
+                  <!-- option value="json">json</option -->
+              </arg>
+              <!-- show instance data submitted within a specified id range -->
+              <arg type="integer" minOccurs="0">start-id</arg>
+              <arg type="integer" minOccurs="0">end-id</arg>
+              <!-- show instance data submitted within a specified date range -->
+              <arg type="date" minOccurs="0">start-date</arg>
+              <arg type="date" minOccurs="0">end-date</arg>
+          </args>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/2">
+      	  <desc>Data associated with the second instance data submitted to the first registered schema</desc>
+          <args>
+              <arg>format</arg>
+          </args>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/2/attachment">
+      	  <desc>List all attachments associated with the second instance submitted to the first registered schema</desc>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/2/attachment/3">
+      	  <desc>Download the third submitted attachment associated with the second instance data submitted to the first registered schema</desc>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/schema">
+      	  <desc>Schema associated with the first registered schema</desc>
+      </resource>
+      <resource href="http://dev.commcarehq.org/api/xforms/1/metadata">
+      	  <desc>Metadata associated with the first registered schema</desc>
+          <args>
+              <arg>format
+                  <option value="xml">xml</option>
+                  <option value="csv">csv</option>
+                  <!-- option value="json">json</option -->
+              </arg>
+              <!-- show instance data submitted within a specified id range -->
+              <arg type="integer" minOccurs="0">start-id</arg>
+              <arg type="integer" minOccurs="0">end-id</arg>
+              <!-- show instance data submitted within a specified date range -->
+              <arg type="date" minOccurs="0">start-date</arg>
+              <arg type="date" minOccurs="0">end-date</arg>
+          </args>
+      </resource>
+      <!-- resource href="http://dev.commcarehq.org/api/xforms/1/2/metadata/schema">
+      	  <desc>Schema of metadata associated with the second submitted instance of the first registered schema</desc>
+      </resource-->
+      <resource href="http://dev.commcarehq.org/api/xforms/1/2/metadata">
+      	  <desc>Metadata associated with the second submitted instance of the first registered schema</desc>
+          <args>
+              <arg>format
+                  <option value="xml">xml</option>
+                  <option value="csv">csv</option>
+                  <!-- option value="json">json</option -->
+              </arg>
+          </args>
+      </resource>
+</api>

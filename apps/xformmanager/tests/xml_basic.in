@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="http://www.w3.org/2001/XMLSchema">
+	<UserID>userid0</UserID>
+	<DeviceID>deviceid0</DeviceID>
+	<TimeStartRecorded>starttime</TimeStartRecorded>
+	<TimeEndRecorded>endtime</TimeEndRecorded>
+</root>
+

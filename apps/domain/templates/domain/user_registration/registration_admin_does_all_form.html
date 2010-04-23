@@ -1,0 +1,70 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+
+{% if title %}
+{{title}}
+{% else %}
+ add user to domain
+{% endif %}
+{% endblock title %}
+
+{#################################################################################################################}
+
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}           
+{% block content %}
+
+<hr class="space"/>
+<hr class="space"/>
+
+<!-- Registration request form -->  
+<div class="span-12" style="margin-left:auto; margin-right:auto; float:none">
+<form class="sfb clear" name="form" method="post" action="">
+<h3>
+{% if form_title %}
+{{form_title}}
+{% else %}
+Add a user to this domain
+{% endif %}
+</h3>
+
+{% if form.non_field_errors %}
+  <div class="non_field_errors">
+  {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+{% for field in form.visible_fields %}
+  {% if field.errors %}
+    <div class="field_errors">
+    {{field.errors}}
+    </div>
+  {% endif %}
+  
+  <div class="span-5 clear"> <div style="float:right;">
+  {{ field.label_tag }}
+  </div></div>
+  <div class="span-2">
+  {{ field }}
+  </div>
+
+{% endfor %}
+
+<button type="submit">Submit</button>
+</form>
+</div>
+<!-- Registration request form -->  
+<div class="span-12" style="margin-left:auto; margin-right:auto; float:none">
+<div class="sfb clear">
+<br>
+<a href="{% url domain_user_list %}">&lt;-- back to user list</a>
+</div>
+</div>
+
+{% endblock content %}     

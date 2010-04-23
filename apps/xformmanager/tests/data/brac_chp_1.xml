@@ -1,0 +1,13 @@
+<brac xmlns="http://dev.commcarehq.org/test_no_meta">
+  <Meta>
+    <formName>BRACCHPHomeVisit</formName>
+    <formVersion>0.0.1</formVersion>
+    <CommCareVersion>0.0.5</CommCareVersion>
+    <DeviceID>WK13O6ST8SWZVXLAI68B9YZWK</DeviceID>
+    <TimeStart>2009-04-30T11:17:25.089</TimeStart>
+    <TimeEnd>2009-04-30T11:21:29.512</TimeEnd>
+    <username>lucy</username>
+    <chw_id>6</chw_id>
+    <uid>RW07SHOPTWGAOJKUQJJJN215D</uid>
+  </Meta>
+</brac>

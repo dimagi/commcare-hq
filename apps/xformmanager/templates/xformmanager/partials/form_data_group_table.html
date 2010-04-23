@@ -1,0 +1,28 @@
+{% load i18n %}
+{% load xform_tags %}
+<table>
+<thead>
+    <th>Xmlns</th>
+    <th>Version</th>
+    <th>Uploaded</th>
+    <th>Submissions</th>
+    {% for column in group.columns.all %}
+        <th>{{ column.name }}</th>
+    {% endfor %}
+</thead>
+<tbody>
+    {% for form in group.forms.all %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        <td>{{ form.target_namespace }}</td>
+        <td>{{ form.version }}</td>
+        <td>{{ form.date_created }}</td>
+        <td>{{ form.submission_count }}</td>
+        {% for column in group.columns.all %}
+            <td>
+            {% form_data_lookup column form %}
+            </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</tbody>
+</table>

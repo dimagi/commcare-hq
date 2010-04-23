@@ -1,0 +1,46 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+ account update complete{% endblock title %}
+
+{#################################################################################################################}
+
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}
+
+{% block content %}
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2 span-20 append-2 last">
+<h3><strong>Account update successful</strong></h3>
+
+<div class="clear prepend-3 span-14 append-3">
+<table class="table_base clear" cellspacing="0" style="width:560px">
+<caption>Changes in data</caption>
+<tr>
+{% for column in table.columns %}
+<th class="hed" scope="col">{{ column }}</th>
+{% endfor %}
+</tr>
+
+{% for row in table.rows %}
+<tr>
+{% for value in row %}
+<td>{{ value }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</table>
+</div>
+
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</a></h4>
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    

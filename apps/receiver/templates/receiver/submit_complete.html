@@ -1,0 +1,11 @@
+{% load i18n %}
+{% for message in app_messages %}
+   {{ message }}
+   <br>
+{% endfor %}
+<h2>{% trans "Submission received, thank you" %}</h2>
+<a href="{% url receiver.views.single_submission submission.id %}">{%trans "Transaction ID" %} 
+		{{transaction_id}}</a>
+
+<p>{%trans "SubmitID:"%}{{submission.id}}</p>
+<p>{%trans "Attachments:"%}{{num_attachments}}</p>

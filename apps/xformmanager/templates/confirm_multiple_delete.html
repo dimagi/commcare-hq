@@ -1,0 +1,34 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Data for Schema: {{form_name}}{% endblock %}
+{% block mgr_content %}
+
+<h2>{% trans "Are you sure? " %}</h2>
+
+<ul>
+{% if xform_data %}
+	Are you sure you want to delete the following xform submissions? <br/>
+	XForm submissions with the following IDs will be deleted: <p/>
+	{% for datum in xform_data %}
+		<li><a href="{% url xformmanager.views.single_instance formdef_id datum.raw_data%}">
+			{{datum.formname}} ( started:{{datum.timestart}} completed:{{datum.timeend}})
+		</a></li>
+	{% endfor %}
+	
+	<p/><p/><p/>
+	<form action="" method="post">
+	<div>
+	<input type="hidden" name="confirm_delete" value="yes" />
+	<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+	</div>
+	</form>
+
+{% else %}
+	No XForm Submissions were selected. Please click 'back' on your browser to return.
+
+{% endif %}
+</ul>
+
+
+{% endblock %}
+

@@ -1,0 +1,50 @@
+<style>
+.padding-2px-vert {padding-bottom:2px; padding-top:2px;}
+.padding-3px-vert {padding-bottom:3px; padding-top:3px;}
+a.subtle {
+    color: black;
+    outline-style: none; /* keeps link from moving when clicked */
+    text-decoration: none;
+}
+a.reverse_hilite:hover {
+    color: white;
+}
+</style>
+
+<!-- top bar -->
+<div class="span-24 last padding-3px-vert dark_blue">
+<h3 class="bottom" style="padding-left:10px;"><strong><a class="subtle reverse_hilite" href="{%url homepage%}">address book</a></strong></h3>
+</div>
+<!-- end top bar -->
+
+{% if user.username %}
+
+<!-- second bar -->
+<div class="span-24 last padding-2px-vert dark_blue">
+  
+<div class="span-12">
+<h6 class="bottom" style="float:left; padding-left:10px;">user</h6>
+<h4 class="bottom" style="color: white; float:left;padding-left:5px;"><strong>{{user.username}}</strong></h4>
+
+{# We expect to always have a domain by this point, but in case it somehow doesn't get passed in, flag it in the header #}
+{% if user.selected_domain %}
+<h6 class="bottom" style="float:left; padding-left:15px">domain</h6>
+<h4 class="bottom" style="color: white; float:left; padding-left:5px"><strong>{{user.selected_domain}}</strong></h4>
+{% else %}
+<h4 class="bottom" style="color: crimson; float:left; padding-left:10px">no domain specified</h4>
+{% endif %}  
+</div> <!-- left span-12 -->
+
+<div class="span-12 last" id="change_user_header">
+<h4 class="bottom" style="float:right; padding-right:10px;"><strong><a class="subtle reverse_hilite" href="{%url logout%}">logout</a></strong></h4>
+{# Next version of Django will have proper equality predicates; get rid of 'ifnotequal' then #}
+{% ifnotequal user.active_domains|length  1 %}
+<h4 class="bottom" style="float:right; padding-right:15px;"><strong><a class="subtle reverse_hilite" href="{%url domain_select%}">change domain</a></strong></h4>
+{% endifnotequal %}
+</div> <!-- right span-12 -->
+
+</div> <!-- second bar -->
+
+
+{% endif %} {# username #}
+

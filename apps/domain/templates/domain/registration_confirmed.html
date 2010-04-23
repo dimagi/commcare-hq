@@ -1,0 +1,20 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+new domain activated{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2">
+<h3><strong>Domain "{{domain_name}}" activated - you may now log in as "{{username}}"<strong></h3>  
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</h4>
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    

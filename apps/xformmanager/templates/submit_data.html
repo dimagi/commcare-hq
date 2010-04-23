@@ -1,0 +1,38 @@
+{% extends "xformmanager_base.html" %}
+{% load i18n %}
+{% block title %}Upload your xforms here{% endblock %}
+{% block mgr_content %}
+
+<div class="fieldWrapper{% if form.message.errors %} errors{% endif %}">
+    {% if form.message.errors %}
+        <ol>
+        {% for error in form.message.errors %}
+            <li><strong>{{ error|escape }}</strong></li>
+        {% endfor %}
+        </ol>
+    {% endif %}
+    {{ form.message }}
+</div>
+
+<div class="fieldWrapper{% if errors %} errors{% endif %}">
+    {% if errors %}
+            <li><strong>{%trans "Submit Error: "%}{{ errors|escape }}</strong></li>
+    {% endif %}
+</div>
+
+<div id="xform-register-block">
+	<h1>Submit XML Data Directly to CommCareHQ</h1>
+	<form action="" method="POST" enctype="multipart/form-data">
+		<table>
+			{{ upload_form.as_ul}}
+		</table>
+		<input type="submit" value="Submit" />
+	</form>
+	{% if submission %}
+		<p>{% trans "Registration successful for xform id:"%}{{submission.id}}</p>
+	{% endif %}
+</div>
+
+{% include 'xformmanager/partials/data_body.html' %}
+{% endblock %}
+

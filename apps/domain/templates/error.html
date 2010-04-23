@@ -1,0 +1,35 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+error{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<hr class="space"/>
+<hr class="space"/>
+<div class="prepend-2">
+<h3><strong>{{error_msg}}</strong></h3>
+
+{% if error_details %}
+<h3>Error details:</h3>
+{% for err in error_details %}
+<h4>{{err}}</h4>
+{% endfor%}
+{% endif %}
+
+{% if back %}
+<h4><a href="{{back}}">Back</h4>
+{% endif %}
+
+{% if show_homepage_link %}
+<hr class="space"/>
+<h4><a href="{% url homepage %}">Homepage</a></h4>
+{% endif %}
+</div>
+{% endblock content %}
+
+{#################################################################################################################}    

@@ -1,0 +1,180 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://dev.commcarehq.org/MVP/safe_motherhood/registration_v0.2" elementFormDefault="qualified">
+  <simpleType name="_sampledata_mother_education">
+    <restriction base="string">
+      <enumeration value="0"/>
+      <enumeration value="1"/>
+      <enumeration value="2"/>
+      <enumeration value="3"/>
+      <enumeration value="4"/>
+      <enumeration value="5"/>
+      <enumeration value="6"/>
+      <enumeration value="7"/>
+      <enumeration value="more"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_mother_height">
+    <restriction base="string">
+      <enumeration value="over_150"/>
+      <enumeration value="under_150"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_partner_education">
+    <restriction base="string">
+      <enumeration value="0"/>
+      <enumeration value="1"/>
+      <enumeration value="2"/>
+      <enumeration value="3"/>
+      <enumeration value="4"/>
+      <enumeration value="5"/>
+      <enumeration value="6"/>
+      <enumeration value="7"/>
+      <enumeration value="more"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_previous_newborn_death">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_over_10_years">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_previous_csection">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_previous_bleeding">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_heart_problems">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_diabetes">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_hip_problems">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_hiv_test">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_hiv_willing">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_hiv_result">
+    <restriction base="string">
+      <enumeration value="positive"/>
+      <enumeration value="negative"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_syphilis_test">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_syphilis_willing">
+    <restriction base="string">
+      <enumeration value="yes"/>
+      <enumeration value="no"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_syphilis_result">
+    <restriction base="string">
+      <enumeration value="positive"/>
+      <enumeration value="negative"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="_sampledata_hi_risk_info">
+    <restriction base="string">
+      <enumeration value="ok"/>
+      <enumeration value="more"/>
+    </restriction>
+  </simpleType>
+  <element name="sampledata" minOccurs="0">
+    <complexType>
+      <sequence>
+        <element name="Meta" minOccurs="0">
+          <complexType>
+            <sequence>
+              <element name="formName" minOccurs="0" type="string"/>
+              <element name="formVersion" minOccurs="0" type="string"/>
+              <element name="DeviceID" minOccurs="0" type="string"/>
+              <element name="TimeStart" minOccurs="0" type="dateTime"/>
+              <element name="TimeEnd" minOccurs="0" type="dateTime"/>
+              <element name="username" minOccurs="0" type="string"/>
+              <element name="chw_id" minOccurs="0" type="string"/>
+              <element name="uid" minOccurs="0" type="string"/>
+            </sequence>
+          </complexType>
+        </element>
+        <element name="household" minOccurs="0" type="integer"/>
+        <element name="case_id" minOccurs="0" type="integer"/>
+        <element name="phone" minOccurs="0" type="integer"/>
+        <element name="mother_name" minOccurs="0" type="string"/>
+        <element name="mother_age" minOccurs="0" type="integer"/>
+        <element name="mother_education" minOccurs="0" type="_sampledata_mother_education"/>
+        <element name="mother_height" minOccurs="0" type="_sampledata_mother_height"/>
+        <element name="partner_name" minOccurs="0" type="string"/>
+        <element name="partner_age" minOccurs="0" type="integer"/>
+        <element name="partner_education" minOccurs="0" type="_sampledata_partner_education"/>
+        <element name="months_pregnant" minOccurs="0" type="integer"/>
+        <element name="previous_pregnancies" minOccurs="0" type="integer"/>
+        <element name="previous_deliveries" minOccurs="0" type="integer"/>
+        <element name="previous_terminations" minOccurs="0" type="integer"/>
+        <element name="children" minOccurs="0" type="integer"/>
+        <element name="previous_newborn_death" minOccurs="0" type="_sampledata_previous_newborn_death"/>
+        <element name="over_10_years" minOccurs="0" type="_sampledata_over_10_years"/>
+        <element name="previous_csection" minOccurs="0" type="_sampledata_previous_csection"/>
+        <element name="previous_bleeding" minOccurs="0" type="_sampledata_previous_bleeding"/>
+        <element name="heart_problems" minOccurs="0" type="_sampledata_heart_problems"/>
+        <element name="diabetes" minOccurs="0" type="_sampledata_diabetes"/>
+        <element name="hip_problems" minOccurs="0" type="_sampledata_hip_problems"/>
+        <element name="hiv_test" minOccurs="0" type="_sampledata_hiv_test"/>
+        <element name="hiv_willing" minOccurs="0" type="_sampledata_hiv_willing"/>
+        <element name="hiv_result" minOccurs="0" type="_sampledata_hiv_result"/>
+        <element name="syphilis_test" minOccurs="0" type="_sampledata_syphilis_test"/>
+        <element name="syphilis_willing" minOccurs="0" type="_sampledata_syphilis_willing"/>
+        <element name="syphilis_result" minOccurs="0" type="_sampledata_syphilis_result"/>
+        <element name="hi_risk_info" minOccurs="0" type="_sampledata_hi_risk_info"/>
+        <element name="get_tested_info_hiv" minOccurs="0" type="string"/>
+        <element name="get_tested_info_syphilis" minOccurs="0" type="string"/>
+        <element name="more_details" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_old" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_young" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_education" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_small" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_10_years" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_complications" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_many" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_health" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_hiv" minOccurs="0" type="string"/>
+        <element name="hi_risk_info_syphilis" minOccurs="0" type="string"/>
+      </sequence>
+    </complexType>
+  </element>
+</schema>

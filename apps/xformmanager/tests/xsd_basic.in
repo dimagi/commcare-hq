@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" name="pregnancy">
+                    <element name="UserID" type="string"/>
+                    <element name="DeviceID" type="string"/>
+                    <element name="TimeStartRecorded" type="string"/>
+                    <element name="TimeEndRecorded" type="string"/>
+</schema>
+

@@ -1,0 +1,28 @@
+{% extends "xformmanager_base.html" %}
+{% block title %}Instance Data for {{ form.form_display_name }}{% endblock %}
+{% block mgr_content %}
+<h2>Instance Data for {{ form.form_display_name }}</h2>
+{% if attachment %}
+<p><a href="{%url receiver.views.single_submission attachment.submission.id %}">Submission Summary</a></p>
+{% endif %}
+<table>
+    <thead>
+       <tr>
+          <th>Field</th>
+          <th>Value
+          <div style="float:right; font-weight:normal;"><a href="{% url xformmanager.views.single_instance_csv form.id id %}">download as csv</a></div>
+          </th>
+       </tr>
+    </thead>
+    <tbody>
+    {% for key, value in data %}
+    <tr class="{% cycle 'odd' 'even' %}">
+        <td><b>{{ key }}</b></td>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+<p align="right"><a href="{% url xformmanager.views.single_instance_csv form.id id %}">download as csv</a></p>
+{% endblock %}

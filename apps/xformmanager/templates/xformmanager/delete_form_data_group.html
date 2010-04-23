@@ -1,0 +1,19 @@
+{% extends base_template %}
+{% block title %}Delete Group{% endblock %}
+{% block content %}
+<form method="POST">
+<h3 class="error">Are you sure you want to delete this data group?
+This action cannot be undone.  Your data will not be deleted but you will
+have to re-create this group, and any reports that depend on it will no
+longer run.</h3>
+<div style="float:right">
+<input type="submit" value="Yes, I'm sure" />
+</div>
+</form>
+<br>
+<h3>Group details:</h3>
+Name: <b>{{ group.display_name }}</b>
+<div class="big-table" style="max-height:600px">
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
+</div>
+{% endblock %}

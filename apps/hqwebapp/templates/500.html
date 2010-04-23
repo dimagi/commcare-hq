@@ -1,0 +1,11 @@
+{% extends base_template %}
+{% block title %} 500 Error {% endblock %}
+{% block content %}
+<p class="error">
+{% if error_message %}
+    {{ error_message|safe }}
+{% else %} 
+    Oops!  Sorry something went wrong.  Please try again later...
+{% endif %}
+</p>
+{% endblock %}

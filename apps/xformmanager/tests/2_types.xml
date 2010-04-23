@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<root xmlns="xml_types">
+	<Meta>
+	    <formName>BRACCHPHomeVisit</formName>
+	    <formVersion>0.0.1</formVersion>
+	    <chw_id>6</chw_id>
+	    <uid>RW07SHOPTWGAOJKUQJJJN215D</uid>
+	    <DeviceID>WK13O6ST8SWZVXLAI68B9YZWK</DeviceID>
+	    <TimeStart>2009-04-30T11:17:25.089</TimeStart>
+	    <TimeEnd>2009-04-30T11:21:29.512</TimeEnd>
+	    <username>lucy</username>
+	</Meta>
+	<UserID>userid0</UserID>
+	<my_device>111</my_device>
+	<TimeStartRecorded>222</TimeStartRecorded>
+	<TimeEndRecorded>3.20</TimeEndRecorded>
+	<Date>2002-09-24</Date>
+	<Prov>2002.09</Prov>
+	<Date>2002-09-24</Date>
+	<Time>12:24:48</Time>
+	<DateTime>2007-12-31T23:59:59.11199</DateTime>
+	<Meds>Anti_TB</Meds>
+	<Other_Meds>Septrini Anti_TB Kinga_ya_TB</Other_Meds>
+	<ListItem>invalid_value</ListItem>
+</root>
+

@@ -1,0 +1,17 @@
+{% extends base_template %}
+{% block title %}Form data for {{ group.display_name }}{% endblock %}
+{% block content %}
+<h1>{{ group.display_name }}</h1>
+<p><a href="{% url xformmanager.views.edit_form_data_group group.id %}">edit this group</a></p>
+<h2>Forms</h2>
+{% with group.forms.all as forms %}
+{% include "xformmanager/partials/xform_group_table_2.html" %}
+{% endwith %}
+{% include "xformmanager/partials/form_group_data.html" %}
+<p><a href="{% url xformmanager.views.edit_form_data_group_columns group.id %}">edit these columns</a></p>
+<div class="big-table">
+{% include "xformmanager/partials/form_data_group_table_transposed.html" %}
+</div>
+<br>
+<p><a href="{% url xformmanager.views.delete_form_data_group group.id %}" class="error">delete this data group</a></p>
+{% endblock %}
