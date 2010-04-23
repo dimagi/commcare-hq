@@ -127,8 +127,11 @@ class Settings(models.Model):
 # Looks like we have to enable the above hackery if we want an easy means of filtering users in a domain. Makes
 # life easier, too, in that views will have access to this information.
 #
-
-User.add_to_class('domain_membership', 
+if not hasattr(User, "domain_membership"):
+    # the above check is sketchy, but in some instances the models were getting
+    # loaded twice.
+    # TODO: figure out why this is the case.
+    User.add_to_class('domain_membership', 
                   generic.GenericRelation( Membership, content_type_field='member_type', object_id_field='member_id' ) )
 
 ##############################################################################################################
