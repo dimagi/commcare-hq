@@ -118,3 +118,12 @@ def self_link(req, **kwargs):
     kwargs_enc = new_kwargs.urlencode()
     return "%s?%s" % (req.path, kwargs_enc)
 
+def web_message(req, msg, link=None):
+    return render_to_response(req,
+        "message.html", {
+            "message": msg,
+            "link": link
+    })
+
+
+
