@@ -11,7 +11,12 @@ class DomainMiddleware(object):
     def __init__(self):        
         # Normally we'd expect this class to be pulled out of the middleware list, too,
         # but in case someone forgets, this will stop this class from being used.
-        if 'domain' not in settings.INSTALLED_APPS:
+        found_domain_app = False
+        for app_name in settings.INSTALLED_APPS:
+            if app_name == "domain" or app_name.endswith(".domain"):
+                found_domain_app = True
+                break
+        if not found_domain_app:
             raise django.core.exceptions.MiddlewareNotUsed
 
     # Always put a user's active domains in request.user object
@@ -30,7 +35,6 @@ class DomainMiddleware(object):
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
         user = request.user
-        
         # Lookup is done via the ContentTypes framework, stored in the domain_membership table
         # id(user) == id(request.user), so we can save a lookup into request by using 'user' alone    
         active_domains = Domain.active_for_user(user)
