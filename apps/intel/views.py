@@ -62,15 +62,35 @@ def homepage(request):
 @login_and_domain_required
 def all_mothers_report(request, format):
     '''View all mothers - default'''
+    context = { 'page' : 'all', 'clinic' : _get_clinic(request) }
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
 
-    title = ""
+    context['title']
     if request.GET.has_key('meta_username'): 
-        title = "Cases Entered by %s" % request.GET['meta_username']
+        context['title'] = "Cases Entered by %s" % request.GET['meta_username']
         
     if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
-        title += ", Followed Up"
+        context['title'] += ", Followed Up"
+
+    # localize    
+    chws = [request.GET['meta_username']] if request.GET.has_key('meta_username') else chws_for(context['clinic']['id'])
+    rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
+    atts = attachments_for(REGISTRATION_TABLE)
+    
+    # Django's retarded template language forces this nonsense
+    items = []
+    for i in rows:
+        at = atts[i.id] if atts.has_key(i.id) else None
+        items.append({ "row" : i, "attach" : at })
         
-    return _custom_report(request, 3, "chw_submission_details", "all", title, format)
+    context['items'] = items
+    
+    return render_to_response(request, "report.html", context)
+    # /localize
+        
+    # context["report_name"] = report_name
+        
+    # return _custom_report(request, 3, "chw_submission_details", "all", title, format)
 
 @login_and_domain_required
 def hi_risk_report(request, format):

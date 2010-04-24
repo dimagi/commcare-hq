@@ -1,12 +1,14 @@
+from datetime import *
+
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.db import connection
-from datetime import *
-from domain.models import Membership
+
+from xformmanager.models import Metadata, FormDefModel, ElementDefModel
+# from domain.models import Membership
+# from django.contrib.auth.models import User
 
 from intel.schema_models import *
-
 
 
 # dropping roles - HQ is just another clinic.
@@ -30,17 +32,6 @@ class UserClinic(models.Model):
         verbose_name = _("User Clinic")
 
 
-def get_role_for(user):
-    # this is not ideal. UserProfile is supposed to take of this, and just provide User.get_profile().role
-    # eg: role = UserProfile.objects.get(user=user.id).role
-    # but it doesn't work. I suspect RapidSMS ignores AUTH_PROFILE_MODULE in local.ini
-    try:
-        role = UserProfile.objects.get(user=user.id).role
-    except UserProfile.DoesNotExist:
-        role = Role.objects.all()[0]
-
-    return role
-
 
 # schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 REGISTRATION_TABLE = IntelGrameenMotherRegistration._meta.db_table
@@ -56,6 +47,26 @@ def follow_up():
     return IntelGrameenSafeMotherhoodFollowup.objects.all()
 
 
+# this is because we don't use foreign keys properly. 
+# TODO: see if Django allows explicitly joining on the query (as we do in registrations_by())
+def chws_for(clinic_id):
+    chws = []
+    for i in Clinic.objects.get(id=clinic_id).userclinic_set.values_list('username'):
+        chws.append(i[0])
+    
+    return chws
+
+# and this one too..
+def attachments_for(table):
+    atts = {}
+    form_def = ElementDefModel.objects.get(table_name=table).form
+    for a in Metadata.objects.filter(formdefmodel=form_def):
+        atts[a.raw_data] = a.attachment
+
+    return atts
+
+
+    
 def registrations_by(group_by):
     sql = ''' 
         SELECT clinic_id, count(sampledata_case_id)
