@@ -15,7 +15,8 @@
             {% else %}{{ row|dict_lookup:col }}{% endifequal %}
         </td>
     {% endfor %}
-    <td style="width:30%">{% with row|dict_lookup:"attachment" as attach %}
+    <td style="width:30%">
+	{% with row|dict_lookup:"attachment" as attach %}
         {% if attach %}
             {% if attach.most_recent_annotation %}
                 {{ attach.most_recent_annotation }}
@@ -24,7 +25,7 @@
             {% if attach.most_recent_annotation %}view all/add{% else %}add{% endif %} 
             </div>
         {% endif %}
-        {% endwith %}
+	{% endwith %}
     </td>
 </tr>
 {% endfor %}
