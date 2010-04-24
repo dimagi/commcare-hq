@@ -31,6 +31,13 @@
 		</center>
 	{% endifnotequal %}
 
-	{{ report_body|safe }}
+	{% include 'partials/list_report.html' %}
+	
+	<!-- { { report_body|safe } } -->
 
+
+	<div class="modal_dialog" id="dialog" style="display: none;">
+		<a href="#" class="jqmClose">Close</a>
+		Please wait while that loads... 
+	</div>
 {% endblock %}
