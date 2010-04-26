@@ -66,7 +66,6 @@ def attachments_for(table):
     return atts
 
 
-    
 def registrations_by(group_by):
     sql = ''' 
         SELECT clinic_id, count(sampledata_case_id)

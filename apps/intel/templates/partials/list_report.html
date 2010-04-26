@@ -1,0 +1,34 @@
+{% load hq_shared_tags %}
+<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
+
+<table style="text-align: center; width: 100%">
+	<thead>
+	 	<tr>
+	 		<th>Mother Name</th>
+	 		<th>Address</th>
+	 		<th>Hi Risk?</th>
+	 		<th>Visited Clinic?</th>
+	 		<th>Most recent follow up</th>
+	 	</tr>
+	</thead>
+	{% for i in items %}
+		<tr>
+			<td><a 
+				href="{% url intel.views.mother_details %}?mother_name={{i.row.sampledata_mother_name}}&case_id={{i.row.meta_username}}|{{i.row.sampledata_case_id}}"
+				>{{ i.row.sampledata_mother_name }}</a></td>
+			<td>{{ i.row.sampledata_address }}</td>
+			<td>{{ i.row.sampledata_hi_risk|capfirst }}</td>
+			<td>{{ i.attach.most_recent_annotation|yesno:"Yes, No" }}</td>
+			<td style="width:30%">
+	            {% if i.attach.most_recent_annotation %}
+	                {{ i.attach.most_recent_annotation }}
+	            {% else %}
+					No follow ups
+				{% endif %}
+	            <div class="annotationtrigger js_link" onclick="show_annotations( {{ i.attach.id }}, '#dialog');">
+	            	{{ i.attach.most_recent_annotation|yesno:"View All / Add, Add" }}
+	            </div>
+			</td>
+		</tr>
+	{% endfor %}
+</table>
