@@ -1,4 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest, QueryDict
+from django.shortcuts import get_object_or_404
 from django.template import RequestContext
 from django.core.exceptions import *
 
@@ -37,6 +38,8 @@ import string
 import reports.util as util
 from reports.custom.all.shared import get_data_by_chw, get_case_info
 from reports.models import Case, SqlReport
+from reports.custom.shared import Mother
+
 
 # import intel.queries as queries
 from intel.models import *
@@ -56,109 +59,123 @@ def homepage(request):
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
         
     return render_to_response(request, "home.html", context)
-    
 
-######## Report Methods
+
 @login_and_domain_required
-def all_mothers_report(request, format):
-    '''View all mothers - default'''
-    context = { 'page' : 'all', 'clinic' : _get_clinic(request) }
+def report(request, format):
+    hi_risk_only = request.path.replace(".%s" % format, '').endswith('/risk')
+    
+    context = {'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
 
-    context['title']
-    if request.GET.has_key('meta_username'): 
-        context['title'] = "Cases Entered by %s" % request.GET['meta_username']
-        
-    if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
-        context['title'] += ", Followed Up"
+    context['page'] = 'risk' if hi_risk_only else 'all' 
+    search = request.GET['search'] if request.GET.has_key('search') else ''
+    search = search.strip()
+    
 
-    # localize    
+    if request.GET.has_key('meta_username'): 
+        if hi_risk_only:
+            context['title'] = "Hi Risk Cases Entered by %s" % request.GET['meta_username']
+        else:
+            context['title'] = "Cases Entered by %s" % request.GET['meta_username']
+        
+        if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
+            context['title'] += ", Followed Up"
+
     chws = [request.GET['meta_username']] if request.GET.has_key('meta_username') else chws_for(context['clinic']['id'])
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
-    atts = attachments_for(REGISTRATION_TABLE)
+
+    if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
     
+    if search != '':
+        rows = rows.filter(sampledata_mother_name__icontains=search)
+        
     # Django's retarded template language forces this nonsense
+    atts = attachments_for(REGISTRATION_TABLE)    
     items = []
     for i in rows:
         at = atts[i.id] if atts.has_key(i.id) else None
         items.append({ "row" : i, "attach" : at })
         
-    context['items'] = items
+    context['items'] = items    
+    context['search_term'] = search
     
-    return render_to_response(request, "report.html", context)
-    # /localize
-        
-    # context["report_name"] = report_name
-        
-    # return _custom_report(request, 3, "chw_submission_details", "all", title, format)
-
-@login_and_domain_required
-def hi_risk_report(request, format):
-    '''View only hi risk'''
-    title = ""
-    if request.GET.has_key('meta_username'): 
-        title = "Cases Entered by %s" % request.GET['meta_username']
-
-    # title for Hi Risk filters is handled in _custom_report
-    
-    return _custom_report(request, 3, "hi_risk_pregnancies", "risk", title, format)
-
-@login_and_domain_required
-def mother_details(request):
-    '''view details for a mother'''
-    return _custom_report(request, 3, "_mother_summary", "single")
-    
-
-
-def _custom_report(request, domain_id, report_name, page, title=None, format=None):
-    context = { 'page' : page, 'clinic' : _get_clinic(request) }
-
-    context["report_name"] = report_name
-    context['title'] = title
-
-    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
-    params = { 'clinic' : context['clinic']['id'] } if context['clinic']['name'] != 'HQ' else {}
-    
-    if request.GET.has_key('filter'):
-        params['filter'] = HI_RISK_INDICATORS[request.GET['filter'].strip()]['where']
-        context['title'] = '%s <span style="color: #646462">Cases in</span> %s' % (HI_RISK_INDICATORS[request.GET['filter'].strip()]['long'], Clinic.objects.get(id=request.GET['clinic']).name)
-        
-    report_method = util.get_report_method(request.user.selected_domain, report_name)
-    if not report_method:
-        return render_to_response(request, 
-                                  "report_not_found.html",
-                                  context)
- 
-    context["report_display"] = report_method.__doc__
-        
     if format == 'csv':
-        cols, rows = report_method(request, params, False)
-        
         csv = 'Mother Name,Address,Hi Risk?,Follow up?,Most Recent Follow Up\n'
-        for r in rows:
-            msg = r['attachment'].most_recent_annotation()
-            if msg is None: 
+        for i in items:
+            row = i['row']
+            msg = i['attach'].most_recent_annotation()
+            if msg is None:
+                follow = "no"
                 msg = ""
             else:
-                msg = str(msg).replace('"', '""')
-                
-            csv += '"%s","%s","%s","%s","%s"\n' % (r['Mother Name'], r['Address'], r['Hi Risk?'], r['Follow up?'], msg)
+                follow = "yes"
+                msg = str(msg).replace('"', '""').replace("\n", " ")
+
+            csv += '"%s","%s","%s","%s","%s"\n' % (row.sampledata_mother_name, row.sampledata_address, row.sampledata_hi_risk, follow, msg)
 
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = 'attachment; filename=pregnant_mothers.csv'
         response.write(csv)
         return response
-
-    context["report_body"] = report_method(request, params)
-
-    
-    if 'search' not in request.GET.keys(): 
-        context['search_term'] = ''
+   
     else:
-        context['search_term'] = request.GET['search']
+        return render_to_response(request, "report.html", context)
+    
+
+@login_and_domain_required    
+def mother_details(request):
+    chw, case_id = request.GET['case_id'].split('|')
+    mother_name = request.GET['mother_name']
+    
+    mother_id = registrations().get(sampledata_mother_name=mother_name, sampledata_case_id=case_id, meta_username=chw).id
+    
+    context = {'clinic' : _get_clinic(request), 'page': "single"}
+    context['hq_mode'] = (context['clinic']['name'] == 'HQ')
         
-        
-    return render_to_response(request, "report.html", context)
+    case = get_object_or_404(Case, name="Grameen Safe Pregnancies")
+
+    data = case.get_data_map_for_case(request.GET["case_id"])
+    mom = Mother(case, case_id, data)
+
+    if mom.mother_name != mother_name:
+        return HttpResponse("ID %s points to more than one person (mom.mother_name: %s, mother_name: %s)" % (request.GET["case_id"], mom.mother_name, mother_name))
+
+    attrs = [name for name in dir(mom) if not name.startswith("_")]
+    attrs.remove("data_map")
+    display_attrs = [attr.replace("_", " ") for attr in attrs]
+    
+    context['mother'] = mom
+    context['attrs'] = zip(attrs, display_attrs)
+    
+    # get attachment ID for SMS Sending UI
+    atts = attachments_for(REGISTRATION_TABLE)
+    context['attach_id'] = atts[mother_id].id
+    
+    reasons = []
+    if (mom.mother_age >= 35):              reasons.append("35 or older") 
+    if (mom.mother_age <= 18):              reasons.append("18 or younger")
+    if (mom.mother_height == 'under_150'):  reasons.append("Mother height under 150cm")
+    if (mom.previous_csection == 'yes'):    reasons.append("Previous C-section")
+    if (mom.over_5_years == 'yes'):         reasons.append("Over 5 years since last pregnancy")
+    if (mom.previous_bleeding == 'yes'):    reasons.append("Previous bleeding")
+    if (mom.previous_terminations >= 3):    reasons.append("%s previous terminations" % mom.previous_terminations)
+    if (mom.previous_pregnancies >= 5):     reasons.append("%s previous pregnancies" % mom.previous_pregnancies)
+    if (mom.heart_problems == 'yes'):       reasons.append("Heart problems")
+    if (mom.diabetes == 'yes'):             reasons.append("Diabetes")
+    if (mom.hip_problems == 'yes'):         reasons.append("Hip problems")
+    if (mom.previous_newborn_death == 'yes'):           reasons.append("Previous newborn death")
+    if (mom.card_results_hb_test == 'below_normal'):    reasons.append("Low hb test")
+    if (mom.card_results_blood_group == 'onegative'):   reasons.append("O-negative blood group")
+    if (mom.card_results_blood_group == 'anegative'):   reasons.append("A-negative blood group")
+    if (mom.card_results_blood_group == 'abnegative'):  reasons.append("AB-negative blood group")
+    if (mom.card_results_blood_group == 'bnegative'):   reasons.append("B-negative blood group")
+    if (mom.card_results_hepb_result == 'positive'):    reasons.append("Positive for hepb")
+    if (mom.card_results_syphilis_result == 'positive'):    reasons.append("Positive for syphilis")
+    
+    context['risk_factors'] = reasons
+    
+    return render_to_response(request, "mother_details.html", context)
 
 
 # Chart Methods

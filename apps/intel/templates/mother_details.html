@@ -1,0 +1,122 @@
+{% extends "intel-layout.html" %}
+{% load i18n %}
+
+{% block title %}
+{{ report_display }}
+{% endblock %}
+
+{% block page_javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jquery.blockUI.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqModal.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/jqDnR.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
+{% endblock %}
+
+{% block page_stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/modal_dialog.css?{% now "U" %}" />
+    <link type="text/css" rel="stylesheet" href="/static/reports/stylesheets/style.css?{% now "U" %}" />
+    <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css?{% now "U" %}" />    
+{% endblock %}
+
+{% load url_for %}
+{% load hq_shared_tags %}
+{% block content %}
+{% load hq_shared_tags %}
+<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
+<h2>Mother Summary for {{ mother.mother_name }}</h2>
+{% if attach_id %}
+	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog');">
+		<button class="follow-up">Follow Up</button>
+	</div>
+	<br /><br />
+{% endif %}
+<style>
+.internal {
+	border: 1px solid #ddd;
+	-moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -khtml-border-radius: 20px;
+    border-radius: 20px;
+	text-align: center;
+	font-size: 16px;
+}
+
+.internal h3 {
+	margin-top: -10px;
+	margin-bottom: 20px;
+	text-align: center;
+}
+
+.internal table {
+	border: 0px;
+/*	width: 80%;*/
+	margin: 30px;
+}
+</style>
+<div class="container">
+	<div class="span-12">
+		<div class="internal">
+			<table>
+				<tr><td colspan="2" align="center"><h3>General Info</h3></td></tr>
+				<tr><td align="right">Age</td><td>{{ mother.mother_age}}</td></tr>
+				<tr><td align="right">Height</td><td>{{ mother.mother_height}}</td></tr>
+				<tr><td align="right">Attending CHW</td><td>{{ mother.chw }}</td></tr>
+				<tr><td align="right">Partner Name/Occupation</td><td>{{ mother.partner_occupation }}</td></tr>
+				<tr><td align="right">Phone</td><td>{{ mother.phone }}</td></tr>				
+			</table>
+		</div>
+	</div>
+	<div class="span-12 last">
+		<div class="internal">
+			<table>
+				<tr><td colspan="2" align="center"><h3>Pregnancy Info</h3></td></tr>
+				<tr><td align="right">Months Pregnant:</td><td>{{ mother.months_pregnant }}</td></tr>
+				{% ifequal mother.hi_risk "yes" %}
+					<tr style="color: red"><td align="right">Hi Risk:</td><td>Yes</td></tr>
+					<tr><td colspan="2" style="text-align: center"><b>High Risk Factors</b></td></tr>
+					{% for f in risk_factors %}
+					<tr><td colspan="2">&nbsp;&nbsp;-&nbsp;{{ f }}</td></tr>
+					{% endfor %}
+				{% else %}
+					<tr style="color: green"><td align="right">Hi Risk:</td><td>No</td></tr>
+				{% endifequal %}
+			</table>
+		</div>
+	</div>
+</div>
+
+<p><div class="js_link" onclick="$('.preg_history').toggle()" style="text-align: center"><h3 style="color: blue">Pregnancy History</h3></div></p>
+<div class="preg_history" style="display:none;">    
+	<div class="container">
+		<div class="span-12 prepend-6 last">
+			<div class="internal">	
+				<table>
+					<tr><td align="right">Previous Pregnancies:</td><td>{{ mother.previous_pregnancies }}</td></tr>
+				    <tr><td align="right">Previous Deliveries:</td><td>{{ mother.previous_deliveries }}</td></tr>
+				    <tr><td align="right">Previous Terminations:</td><td>{{ mother.previous_terminations }}</td></tr>
+				    <tr><td align="right">Previous Newborn Death:</td><td>{{ mother.previous_newborn_death }}</td></tr>
+				    <tr><td align="right">Previous C-Section:</td><td>{{ mother.previous_csection }}</td></tr>
+				    <tr><td align="right">Previous Bleeding:</td><td>{{ mother.previous_bleeding }}</td></tr>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<p><div class="js_link" onclick="$('.all_data').toggle()" style="text-align: center"><h3 style="color: blue">Show Complete Data</h3></div></p>
+<div class="all_data" style="display:none;">
+	<h3>All Data</h3>
+	<table>
+	    <thead><th>Name</th><th>Value</th></thead>
+	{% for attr, display in attrs %}
+	<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
+	{% endfor %}
+	</table>
+</div>
+
+<div class="modal_dialog" id="dialog" style="display: none;">
+<a href="#" class="jqmClose">Close</a>
+Please wait while that loads... 
+</div>
+{% endblock %}
+
