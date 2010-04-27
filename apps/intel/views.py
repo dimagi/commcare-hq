@@ -72,7 +72,6 @@ def report(request, format):
     search = request.GET['search'] if request.GET.has_key('search') else ''
     search = search.strip()
     
-
     if request.GET.has_key('meta_username'): 
         if hi_risk_only:
             context['title'] = "Hi Risk Cases Entered by %s" % request.GET['meta_username']
@@ -82,11 +81,19 @@ def report(request, format):
         if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
             context['title'] += ", Followed Up"
 
-    chws = [request.GET['meta_username']] if request.GET.has_key('meta_username') else chws_for(context['clinic']['id'])
+    showclinic = request.GET['clinic'] if request.GET.has_key('clinic') else context['clinic']['id']
+        
+    chws = [request.GET['meta_username']] if request.GET.has_key('meta_username') else chws_for(showclinic)
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
 
     if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
-    
+
+    if request.GET.has_key('filter'):
+        filt = "%s.%s" % (REGISTRATION_TABLE, HI_RISK_INDICATORS[request.GET['filter']]['where'])
+        rows = rows.extra(where=[filt])
+        context['title'] = '%s <span style="color: #646462">Cases in</span> %s' % \
+                            (HI_RISK_INDICATORS[request.GET['filter'].strip()]['long'], Clinic.objects.get(id=request.GET['clinic']).name)
+
     if search != '':
         rows = rows.filter(sampledata_mother_name__icontains=search)
         
