@@ -104,7 +104,7 @@ def report(request, format):
         at = atts[i.id] if atts.has_key(i.id) else None
         items.append({ "row" : i, "attach" : at })
         
-    context['items'] = items    
+    context['items'] = items   
     context['search_term'] = search
     
     if format == 'csv':
@@ -227,6 +227,8 @@ def chart(request, template_name="chart.html"):
         context['total_hi_risk']        += item['risk']   or 0
         context['total_follow_up']      += item['follow'] or 0
 
+    context['total_visits'] = sum([i for i in clinic_visits(context['clinic']['id']).values()])
+
     return render_to_response(request, template_name, context)
     
     
@@ -279,7 +281,8 @@ def hq_chart(request, template_name="hq_chart.html"):
         for k in d.keys():
             if not d[k].has_key(c.id):
                 d[k][c.id] = 0
-        context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id]})    
+            visits = sum([i for i in clinic_visits(c.id).values()])
+        context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id], 'visits': visits})    
   
     # get per CHW table for show/hide
     context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
@@ -310,7 +313,7 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['regs']    = reg[showclinic.id] if reg.has_key(showclinic.id) else 0
     context['hi_risk'] = hi[showclinic.id]  if hi.has_key(showclinic.id)  else 0
     context['follow']  = fol[showclinic.id] if fol.has_key(showclinic.id) else 0
-        
+    context['visits']  = sum([i for i in clinic_visits(showclinic.id).values()])
         
     graph = RawGraph() #.objects.all().get(id=28)
 
@@ -380,6 +383,12 @@ def _get_chw_registrations_table(clinic_id = None):
             if d[i] is None: d[i] = 0
         rows.append(d)
     
+    # add clinic visits
+    cols.append('# of Clinic Visits')
+    visits = clinic_visits()    
+    for r in rows:
+        r['visits'] = visits[r['name']]
+
     return cols, rows
 
 

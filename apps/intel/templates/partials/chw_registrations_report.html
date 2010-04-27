@@ -9,7 +9,7 @@
 	</thead>
 	{% for b_row in rows %}
 		<tr>
-			<th colspan="4" class="clinic-name">{{b_row.grouper}}</th>
+			<th colspan="5" class="clinic-name">{{b_row.grouper}}</th>
 		</tr>
 		{% for row in b_row.list %}
 			<tr>
@@ -17,6 +17,7 @@
 				<td><a href="/intel/all?meta_username={{row.name}}">{{row.reg}}</a></td>
 				<td><a href="/intel/risk?meta_username={{row.name}}">{{row.risk}}</a></td>
 				<td><a href="/intel/all?meta_username={{row.name}}&follow=yes">{{row.follow}}</td>
+				<td><a href="/intel/all?meta_username={{row.name}}&visits=yes">{{row.visits}}</td>
 			</tr>
 			</a>
 		{% endfor %}
