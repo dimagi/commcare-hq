@@ -32,6 +32,9 @@ class UserClinic(models.Model):
         verbose_name = _("User Clinic")
 
 
+# class ClinicVisits(models.Model):
+#     registration_id
+
 
 # schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 REGISTRATION_TABLE = IntelGrameenMotherRegistration._meta.db_table
@@ -61,9 +64,26 @@ def attachments_for(table):
     atts = {}
     form_def = ElementDefModel.objects.get(table_name=table).form
     for a in Metadata.objects.filter(formdefmodel=form_def):
-        atts[a.raw_data] = a.attachment
+        if a.attachment.most_recent_annotation() is not None:
+            atts[a.raw_data] = a.attachment
 
     return atts
+
+
+def clinic_visits(clinic_id=None):
+    visits = {}
+    form_def = ElementDefModel.objects.get(table_name=REGISTRATION_TABLE).form
+    atts = Metadata.objects.filter(formdefmodel=form_def)
+
+    if clinic_id is not None:
+        chws = chws_for(clinic_id)
+        atts = atts.filter(username__in=chws)
+    
+    for a in atts:
+        if a.attachment.most_recent_annotation() is not None:
+            visits[a.username] = visits[a.username] + 1 if visits.has_key(a.username) else 1
+    
+    return visits
 
 
 def registrations_by(group_by):
