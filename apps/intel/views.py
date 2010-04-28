@@ -102,6 +102,8 @@ def report(request, format):
     items = []
     for i in rows:
         at = atts[i.id] if atts.has_key(i.id) else None
+        if request.GET.has_key('visited'):
+            if at is None: continue
         items.append({ "row" : i, "attach" : at })
         
     context['items'] = items   
