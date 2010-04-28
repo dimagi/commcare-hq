@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from reports.models import CaseFormIdentifier, Case
 from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 import calendar
-from phone.models import PhoneUserInfo
+from phone.models import PhoneUserInfo, Phone
 from StringIO import StringIO
 try:
     from reportlab.pdfgen import canvas
@@ -275,13 +275,13 @@ def get_user_data(chw_id):
     if puis != None:
         for pui in puis:
             if chw_id == pui.username + pui.phone.device_id:
+                data["prov_name"] = pui.username
                 userinfo = pui
     if userinfo != None:
         additional_data = userinfo.additional_data
         if additional_data != None:
             for key in additional_data:
                 data[key] = additional_data[key]
-            data["prov_name"] = userinfo.username
     return data
 
 def get_provider_data_list(data, month, year):
@@ -392,16 +392,13 @@ def get_data_by_chw(case):
     for id, map in case_data.items():
         index = id.find('|')
         if index != -1 and index != 0:
-            all_ids = id.split("|")
+            all_ids = id.split('|')
             if len(all_ids) == 3:
                 chw_id = all_ids[0] + all_ids[1]
                 id = all_ids[2]
-            else:
-                chw_id = all_ids[0]
-                id = all_ids[1]
-            if not chw_id in data_by_chw:
-                data_by_chw[chw_id] = {}
-            data_by_chw[chw_id][id] = map
+                if not chw_id in data_by_chw:
+                    data_by_chw[chw_id] = {}
+                data_by_chw[chw_id][id] = map
     return data_by_chw
 
 def get_wards():
@@ -468,10 +465,10 @@ def get_case_info(context, chw_data, enddate, active):
                     fttd[form_type] = timeend
         status = get_status(fttd, active, enddate)
         if not len(form_dates) == 0:
-            all_data.append({'case_id': id.split("|")[1], 'total_visits': 
-                             len(form_dates), 'start_date': 
-                             get_first(form_dates), 'last_visit': 
-                             get_last(form_dates), 'status': status})
+            all_data.append({'case_id': id, 'total_visits': len(form_dates),
+                             'start_date': get_first(form_dates), 
+                             'last_visit': get_last(form_dates), 'status': 
+                             status})
     context['all_data'] = all_data
 
 def get_counts(current_count, excused_count, late_count, verylate_count,
@@ -610,3 +607,96 @@ def only_follow(fttd):
         return True
     else:
         return False
+    
+
+def get_active_open_by_chw(data_by_chw, active, enddate):
+    data = []
+    for chw_id, chw_data in data_by_chw.items():
+        user_data = get_user_data(chw_id)
+        count_of_open = 0
+        count_of_active = 0
+        count_last_week = 0
+        days_late_list = []
+        chw_name = ''
+        hcbpid = chw_id
+        #if 'prov_name' in user_data:
+        #    chw_name = user_data['prov_name']
+        if 'hcbpid' in user_data:
+            hcbpid = user_data['hcbpid']
+        mindate = datetime(2000, 1, 1)
+        for id, map in chw_data.items():
+            (chw_name, form_type_to_date, last_week) = \
+                get_form_type_to_date_last_week(map, enddate, mindate)
+            count_last_week += last_week
+            # if the most recent open form was submitted more recently than  
+            # the most recent close form then this case is open
+            if form_type_to_date['open'] > form_type_to_date['close'] or \
+                only_follow(form_type_to_date):
+                count_of_open += 1
+                if datetime.date(form_type_to_date['open']) >= active or \
+                    datetime.date(form_type_to_date['follow']) >= active:
+                    count_of_active += 1
+                else:
+                    days_late = get_days_late(form_type_to_date, active)
+                    days_late_list.append(days_late)
+        percentage = get_percentage(count_of_open, count_of_active)
+        if percentage >= 90: over_ninety = True
+        else: over_ninety = False
+        avg_late = get_avg_late(days_late_list) 
+        data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
+                    count_of_active, 'open': count_of_open, 
+                    'percentage': percentage, 'last_week': 
+                    count_last_week, 'avg_late': avg_late,
+                    'over_ninety': over_ninety})
+    return data
+
+def get_form_type_to_date_last_week(map, enddate, mindate):
+    ''' Gives the chw name and for each form type, the date of the most 
+    recently submitted form. Also the number of forms in the last week'''
+    last_week = 0
+    chw_name = ''
+    form_type_to_date = {'open': mindate, 'close': mindate, 'follow': mindate,
+                         'referral': mindate}
+    for form_id, form_info in map.items():
+        cfi = CaseFormIdentifier.objects.get(form_identifier=form_id.id)
+        form_type = cfi.form_type
+        for form in form_info:
+            # I'm assuming that all the forms in this case will have 
+            # the same chw name (since they all have the same chw id)
+            chw_name = form["meta_username"]
+            timeend = form["meta_timeend"]
+            time_diff = enddate - datetime.date(timeend)
+            if time_diff <= timedelta(days=7) and time_diff >= timedelta(days=0):
+                last_week += 1
+            # for each form type get the date of the most recently 
+            # submitted form
+            if timeend > form_type_to_date[form_type] and enddate > \
+                datetime.date(timeend):
+                form_type_to_date[form_type] = timeend
+    return (chw_name, form_type_to_date, last_week)
+
+def get_days_late(form_type_to_date, active):
+    '''Returns the number of days past the active date of the most recent form'''
+    most_recent = form_type_to_date['follow']
+    if form_type_to_date['open'] > most_recent:
+        most_recent = form_type_to_date['open']
+    time_diff = active - datetime.date(most_recent)
+    return time_diff.days
+
+def get_avg_late(days_late_list):
+    ''' given a list of days late, return the average number of days'''
+    count = 0
+    sum = 0
+    for days_late in days_late_list:
+        count += 1
+        sum += days_late
+    if not count == 0:
+        return sum/count
+    else:
+        return 0
+
+def get_percentage(count_of_open, count_of_active):
+    if not count_of_open == 0:
+        return (count_of_active * 100)/count_of_open
+    else:
+        return 0    

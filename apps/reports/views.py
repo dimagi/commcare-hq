@@ -8,7 +8,7 @@ from rapidsms.webui.utils import render_to_response
 from transformers.csv import format_csv 
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
-from hq.utils import paginate
+from hq.utils import paginate, get_dates_reports
 from domain.decorators import login_and_domain_required
 
 import util
@@ -124,17 +124,48 @@ def sql_report_csv(request, report_id):
     whereclause = util.get_whereclause(request.GET)
     cols, data = report.get_data({"whereclause": whereclause})
     return format_csv(data, cols, report.title)
-    
 
 @login_and_domain_required
-def individual_chw(request, domain_id, chw_id, enddate, active):
+def sum_chw(request):
+    ''' View the chw summary for the given case'''
+    case_id = None
+    year = None
+    month = None
+    if request:
+        for item in request.GET.items():
+            if item[0] == 'case':
+                case_id = int(item[1])
+    if case_id == None:
+        return '''Sorry, no case has been selected'''
+    domain = request.user.selected_domain
+    # to configure these numbers use 'startdate_active', 'startdate_late', 
+    # and 'enddate' in the url
+    active, late, enddate = get_dates_reports(request, 30, 90)
+    try:
+        case = Case.objects.get(id=case_id)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    
+    data_by_chw = get_data_by_chw(case)
+    all_data = {}
+    all_data['domain'] = domain.id
+    all_data['case_id'] = case_id
+    all_data['enddate'] = str(enddate.month) + "/" + str(enddate.day) + "/" +\
+         str(enddate.year)
+    all_data['startdate_active'] = str(active.month) + "/" + str(active.day) +\
+        "/" + str(active.year)
+    all_data['data'] = get_active_open_by_chw(data_by_chw, active, enddate)
+    return render_to_response(request, "custom/all/chw_summary.html", all_data)
+
+@login_and_domain_required
+def individual_chw(request, domain_id, case_id, chw_id, enddate, active):
     '''View the cases of a single chw'''
     context = {}
     enddate = datetime.strptime(enddate, '%m/%d/%Y').date()
     active = datetime.strptime(active, '%m/%d/%Y').date()
     context['chw_id'] = chw_id
-    domain = request.extuser.domain
-    case = Case.objects.get(domain=domain)
+    case = Case.objects.get(id=case_id)
     data_by_chw = get_data_by_chw(case)
     get_case_info(context, data_by_chw[chw_id], enddate, active)
     return render_to_response(request, "custom/all/individual_chw.html", 
