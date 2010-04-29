@@ -63,16 +63,18 @@ def homepage(request):
 
 @login_and_domain_required
 def report(request, format):
-    hi_risk_only = request.path.replace(".%s" % format, '').endswith('/risk')
-    
     context = {'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
 
-    context['page'] = 'risk' if hi_risk_only else 'all' 
-    search = request.GET['search'] if request.GET.has_key('search') else ''
-    search = search.strip()
+    showclinic = request.GET['clinic'] if request.GET.has_key('clinic') else context['clinic']['id']
+    context['showclinic'] = showclinic
     
-    if request.GET.has_key('meta_username'): 
+    # hi risk view?
+    hi_risk_only = request.path.replace(".%s" % format, '').endswith('/risk')
+    context['page'] = 'risk' if hi_risk_only else 'all' 
+        
+    if request.GET.has_key('meta_username'):
+        showclinic = None
         if hi_risk_only:
             context['title'] = "Hi Risk Cases Entered by %s" % request.GET['meta_username']
         else:
@@ -81,39 +83,59 @@ def report(request, format):
         if request.GET.has_key('follow') and request.GET['follow'] == 'yes':
             context['title'] += ", Followed Up"
 
-    showclinic = request.GET['clinic'] if request.GET.has_key('clinic') else context['clinic']['id']
-        
-    chws = [request.GET['meta_username']] if request.GET.has_key('meta_username') else chws_for(showclinic)
+    # filter by CHW name
+    filter_chw = request.GET['meta_username'] if request.GET.has_key('meta_username') else None
+    chws = [filter_chw] if filter_chw else chws_for(showclinic)
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
 
     if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
 
+    # filter by a specific risk indicator (for links from the HQ view "High Risk" page)
     if request.GET.has_key('filter'):
         filt = "%s.%s" % (REGISTRATION_TABLE, HI_RISK_INDICATORS[request.GET['filter']]['where'])
         rows = rows.extra(where=[filt])
         context['title'] = '%s <span style="color: #646462">Cases in</span> %s' % \
                             (HI_RISK_INDICATORS[request.GET['filter'].strip()]['long'], Clinic.objects.get(id=request.GET['clinic']).name)
 
+    # for search by mother name
+    search = request.GET['search'] if request.GET.has_key('search') else ''
+    search = search.strip()    
     if search != '':
         rows = rows.filter(sampledata_mother_name__icontains=search)
         
-    # Django's retarded template language forces this nonsense
+            
+    visits = clinic_visits(clinic_id=showclinic, chw_name=filter_chw)
+    
+    # finally, pack it up and ship to the template/CSV
+    # Django's retarded template language forces this bollocks
+    # So might as well use it to stitch in visits & attachments
     atts = attachments_for(REGISTRATION_TABLE)    
     items = []
     for i in rows:
         at = atts[i.id] if atts.has_key(i.id) else None
-        if request.GET.has_key('visited'):
-            if at is None: continue
-        items.append({ "row" : i, "attach" : at })
+        try:
+            visit = visits["%s-%s-%s" % (i.sampledata_mother_name, i.meta_username, i.sampledata_case_id)]
+        except KeyError:
+            visit = False
+        items.append({ "row" : i, "attach" : at, "visit": visit })
+        
+    # filter only mothers who visited the clinic
+    if request.GET.has_key('visited'):
+        items = filter(lambda i:i['visit'], items)
+
         
     context['items'] = items   
     context['search_term'] = search
+    # for record_visit to return to
+    context['return_to'] = "%s?%s" % (request.path, request.META['QUERY_STRING'])
     
+    # CSV export
     if format == 'csv':
-        csv = 'Mother Name,Address,Hi Risk?,Follow up?,Most Recent Follow Up\n'
+        csv = 'Mother Name,Address,Hi Risk?,Visited Clinic?,Follow up?,Most Recent Follow Up\n'
         for i in items:
             row = i['row']
-            msg = i['attach'].most_recent_annotation()
+            visited = i['visit'].created_at.strftime('%B %d, %Y') if i['visit'] else "No"
+            msg = i['attach'].most_recent_annotation() if i['attach'] is not None else ""
             if msg is None:
                 follow = "no"
                 msg = ""
@@ -121,17 +143,29 @@ def report(request, format):
                 follow = "yes"
                 msg = str(msg).replace('"', '""').replace("\n", " ")
 
-            csv += '"%s","%s","%s","%s","%s"\n' % (row.sampledata_mother_name, row.sampledata_address, row.sampledata_hi_risk, follow, msg)
+            csv += '"%s","%s","%s","%s","%s","%s"\n' % (row.sampledata_mother_name, row.sampledata_address, row.sampledata_hi_risk, visited, follow, msg)
 
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = 'attachment; filename=pregnant_mothers.csv'
         response.write(csv)
         return response
-   
+
+    # or plain HTML 
     else:
         return render_to_response(request, "report.html", context)
     
-
+@login_and_domain_required
+def record_visit(request):
+    ClinicVisit(
+        mother_name=request.POST['mother_name'], 
+        chw_name=request.POST['chw_name'], 
+        chw_case_id=request.POST['chw_case_id'],
+        clinic=Clinic.objects.get(id=request.POST['clinic_id'])
+    ).save()
+    
+    return HttpResponseRedirect(request.POST['return_to'])
+    
+    
 @login_and_domain_required    
 def mother_details(request):
     chw, case_id = request.GET['case_id'].split('|')
@@ -229,7 +263,7 @@ def chart(request, template_name="chart.html"):
         context['total_hi_risk']        += item['risk']   or 0
         context['total_follow_up']      += item['follow'] or 0
 
-    context['total_visits'] = sum([i for i in clinic_visits(context['clinic']['id']).values()])
+    context['total_visits'] = len(clinic_visits(context['clinic']['id'])) #sum([i for i in clinic_visits(context['clinic']['id']).values()])
 
     return render_to_response(request, template_name, context)
     
@@ -283,7 +317,7 @@ def hq_chart(request, template_name="hq_chart.html"):
         for k in d.keys():
             if not d[k].has_key(c.id):
                 d[k][c.id] = 0
-            visits = sum([i for i in clinic_visits(c.id).values()])
+            visits = len(clinic_visits(c.id))
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id], 'visits': visits})    
   
     # get per CHW table for show/hide
@@ -315,7 +349,7 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['regs']    = reg[showclinic.id] if reg.has_key(showclinic.id) else 0
     context['hi_risk'] = hi[showclinic.id]  if hi.has_key(showclinic.id)  else 0
     context['follow']  = fol[showclinic.id] if fol.has_key(showclinic.id) else 0
-    context['visits']  = sum([i for i in clinic_visits(showclinic.id).values()])
+    context['visits']  = len(clinic_visits(clinic_id=showclinic.id))
         
     graph = RawGraph() #.objects.all().get(id=28)
 
@@ -378,18 +412,14 @@ def _get_chw_registrations_table(clinic_id = None):
     rows = []
     for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur', '1')
         d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic', 'clinic_id'), row))
+
         if clinic_id is not None and clinic_id != d['clinic_id']: continue
 
-        # convert None to 0
-        for i in d:
-            if d[i] is None: d[i] = 0
+        d['visits'] = len(clinic_visits(chw_name=d['name']))
         rows.append(d)
     
     # add clinic visits
     cols.append('# of Clinic Visits')
-    visits = clinic_visits()    
-    for r in rows:
-        r['visits'] = visits[r['name']]
 
     return cols, rows
 

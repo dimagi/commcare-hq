@@ -13,7 +13,7 @@ from intel.schema_models import *
 
 # dropping roles - HQ is just another clinic.
 class Clinic(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
 
     def __unicode__(self):
         return self.name
@@ -21,21 +21,47 @@ class Clinic(models.Model):
         verbose_name = _("Clinic")
 
 
-# have to join on username, since user_ids are not consistent. So, UserProfile won't help here.
+# have to join on username, since user_ids are not consistent.
+# gods of db design weep for future maintainers :'(
 class UserClinic(models.Model):
     username = models.CharField(max_length=255)
     clinic = models.ForeignKey(Clinic, null=True, blank=True)
 
     def __unicode__(self):
         return "User: %s Clinic: %s" % (self.username, self.clinic.name)
+
     class Meta:
         verbose_name = _("User Clinic")
+        unique_together = ('username', 'clinic')
 
 
-# class ClinicVisits(models.Model):
-#     registration_id
+# this table records clinic visits for mothers.
+class ClinicVisit(models.Model):
+    mother_name  = models.CharField(max_length=255)
+    chw_name    = models.CharField(max_length=255)
+    chw_case_id = models.CharField(max_length=255)
+    clinic = models.ForeignKey(Clinic)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('mother_name', 'chw_name', 'chw_case_id')
 
 
+def clinic_visits(clinic_id=None, chw_name=None):
+    cv = ClinicVisit.objects.all()
+    
+    if clinic_id is not None:
+        cv = cv.filter(clinic=clinic_id)
+    
+    if chw_name is not None:
+        cv = cv.filter(chw_name=chw_name)
+    
+    visits = {}
+    for v in cv:
+        visits["%s-%s-%s" % (v.mother_name, v.chw_name, v.chw_case_id)] = v
+    
+    return visits
+    
 # schema specific methods - these use the inspectdb general schema_models.py which in turn dumps the models generated per the domain's xforms
 REGISTRATION_TABLE = IntelGrameenMotherRegistration._meta.db_table
 FOLLOWUP_TABLE     = IntelGrameenSafeMotherhoodFollowup._meta.db_table
@@ -64,26 +90,29 @@ def attachments_for(table):
     atts = {}
     form_def = ElementDefModel.objects.get(table_name=table).form
     for a in Metadata.objects.filter(formdefmodel=form_def):
-        if a.attachment.most_recent_annotation() is not None:
-            atts[a.raw_data] = a.attachment
+        atts[a.raw_data] = a.attachment
+        # if a.attachment.most_recent_annotation() is not None:
+        #     atts[a.raw_data] = a.attachment
 
     return atts
 
 
-def clinic_visits(clinic_id=None):
-    visits = {}
-    form_def = ElementDefModel.objects.get(table_name=REGISTRATION_TABLE).form
-    atts = Metadata.objects.filter(formdefmodel=form_def)
-
-    if clinic_id is not None:
-        chws = chws_for(clinic_id)
-        atts = atts.filter(username__in=chws)
-    
-    for a in atts:
-        if a.attachment.most_recent_annotation() is not None:
-            visits[a.username] = visits[a.username] + 1 if visits.has_key(a.username) else 1
-    
-    return visits
+# # this checks clinic visits by SMS (user who had SMS sent is considered visited)
+# # deprecated since we're moving to the mark-visit button model, but keeping the code
+# def clinic_visits(clinic_id=None):
+#     visits = {}
+#     form_def = ElementDefModel.objects.get(table_name=REGISTRATION_TABLE).form
+#     atts = Metadata.objects.filter(formdefmodel=form_def)
+# 
+#     if clinic_id is not None:
+#         chws = chws_for(clinic_id)
+#         atts = atts.filter(username__in=chws)
+#     
+#     for a in atts:
+#         if a.attachment.most_recent_annotation() is not None:
+#             visits[a.username] = visits[a.username] + 1 if visits.has_key(a.username) else 1
+#     
+#     return visits
 
 
 def registrations_by(group_by):
