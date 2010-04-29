@@ -18,7 +18,20 @@
 				>{{ i.row.sampledata_mother_name }}</a></td>
 			<td>{{ i.row.sampledata_address }}</td>
 			<td>{{ i.row.sampledata_hi_risk|capfirst }}</td>
-			<td>{{ i.attach.most_recent_annotation|yesno:"Yes, No" }}</td>
+			<td>
+				{% if i.visit %}
+					{{ i.visit.created_at|date }}
+				{% else %}
+					<form action="record_visit" method="POST">
+						<input type="hidden" name="mother_name" value="{{ i.row.sampledata_mother_name }}" />
+						<input type="hidden" name="chw_case_id" value="{{ i.row.sampledata_case_id }}" />
+						<input type="hidden" name="chw_name" 	value="{{ i.row.meta_username }}" />
+						<input type="hidden" name="clinic_id" 	value="{{ showclinic }}" />
+						<input type="hidden" name="return_to" 	value="{{ return_to }}" />
+						<input type="submit" value="Record Visit" />
+					</form>
+				{% endif %}
+			</td>
 			<td style="width:30%">
 	            {% if i.attach.most_recent_annotation %}
 	                {{ i.attach.most_recent_annotation }}
