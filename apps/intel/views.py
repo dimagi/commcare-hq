@@ -160,7 +160,7 @@ def record_visit(request):
         mother_name=request.POST['mother_name'], 
         chw_name=request.POST['chw_name'], 
         chw_case_id=request.POST['chw_case_id'],
-        clinic=Clinic.objects.get(id=request.POST['clinic_id'])
+        clinic=UserClinic.objects.get(username=request.POST['chw_name']).clinic
     ).save()
     
     return HttpResponseRedirect(request.POST['return_to'])
