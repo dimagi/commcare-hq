@@ -91,7 +91,9 @@
 		    <textarea id="new_annotation"></textarea>
 		    <input type="hidden" id="annotation_reporter_id" value={{ attachment.get_linked_metadata.submitting_reporter.id }} /> 
 		    {% if attachment.has_linked_schema and attachment.get_linked_metadata.submitting_reporter %}
-		       <!-- <br /> <input type="checkbox" id="send_sms">Send as SMS to {{ attachment.get_linked_metadata.submitting_reporter }}</input> -->
+				<span style="display: none;">
+					<input type="checkbox" id="send_sms" checked>Send as SMS to {{ attachment.get_linked_metadata.submitting_reporter }}</input>
+				</span>
 		    {% else %}
 		        {# we still need the input on the page, so just add a hidden one #}
 		        <input type="hidden" id="send_sms" />
