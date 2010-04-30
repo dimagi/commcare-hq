@@ -255,7 +255,8 @@ def chart(request, template_name="chart.html"):
     context['height'] = graph.height
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
         
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table(context['clinic']['id'])
+    context['chw_reg_rows'] = _get_chw_registrations_table(context['clinic']['id'])
+
     context['total_hi_risk'] = 0 ; context['total_registrations'] = 0 ; context['total_follow_up'] = 0
     
     for item in context['chw_reg_rows']:
@@ -321,7 +322,7 @@ def hq_chart(request, template_name="hq_chart.html"):
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id], 'visits': visits})    
   
     # get per CHW table for show/hide
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
+    context['chw_reg_rows'] = _get_chw_registrations_table()
     
     return render_to_response(request, template_name, context)
 
@@ -390,7 +391,7 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['indicators'].sort(key=lambda x:x[1], reverse=True) # sort by value, making sure Total is first item in the process
     
     # get per CHW table for show/hide
-    context['chw_reg_cols'], context['chw_reg_rows'] = _get_chw_registrations_table()
+    context['chw_reg_rows'] = _get_chw_registrations_table()
         
     return render_to_response(request, template_name, context)
     
@@ -403,26 +404,24 @@ def _get_graphgroup_children(graph_group):
     return ret
     
 
-# get per CHW table for show/hide
-def _get_chw_registrations_table(clinic_id = None):    
-    report = SqlReport.objects.get(id=1).get_data()
+def _get_chw_registrations_table(clinic_id = None):   
+    rows = [] ; cu = {}
+    for i in UserClinic.objects.all(): cu[i.username] = { 'clinic': i.clinic.name, 'clinic_id': i.clinic.id }
     
-    # work directly with the data - we know the format we're expecting. if it changes, so will this code
-    cols = report[0][:4] # 'Healthcare Worker', '# of Patients', '# of High Risk', '# of Follow Up'
-    rows = []
-    for row in report[1]:   # (u'CHAVEZ', 11L, 6L, None, u'Madhabpur', '1')
-        d = dict(zip(('name', 'reg', 'risk', 'follow', 'clinic', 'clinic_id'), row))
-
-        if clinic_id is not None and clinic_id != d['clinic_id']: continue
-
-        d['visits'] = len(clinic_visits(chw_name=d['name']))
-        rows.append(d)
+    for chw in all_chws():
+        if clinic_id is not None and cu[chw]['clinic_id'] != clinic_id: continue
+        rows.append ({
+            'name' : chw,
+            'reg'   : registrations().filter(meta_username=chw).count(),
+            'risk'  : hi_risk().filter(meta_username=chw).count(),
+            'follow': follow_up().filter(meta_username=chw).count(),
+            'visits': len(clinic_visits(chw_name=chw)),
+            'clinic': cu[chw]['clinic'],
+            'clinic_id': cu[chw]['clinic_id']
+        })
     
-    # add clinic visits
-    cols.append('# of Clinic Visits')
-
-    return cols, rows
-
+    return rows
+    
 
 def _get_clinic(request):
     try:
