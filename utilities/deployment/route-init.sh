@@ -4,7 +4,7 @@
 # IMPORTANT: To use, do the folling:
 #
 # 1. Change 'NAME' variable to the name of your project. E.g. "bednets_for_nigeria"
-# 2. Place this file in the TOP-LEVEL of your project, right where 'rapidsms' is
+# 2. Place this file in the TOP-LEVEL of your project, right where 'manage.py' is
 # 3. Link it into /etc/init.d e.g. > ln -s /usr/local/my_project/route-init.sh /etc/init.d/
 # 4. Add it to the runlevels, on Ubuntu/Debian there is a nice tool to do this for you:
 #    > sudo update-rc.d route-init.sh defaults
@@ -32,7 +32,7 @@ ME=`readlink -f $0`
 WHERE_AM_I=`dirname $ME`
 
 ############### EDIT ME ##################
-NAME="smsforum" # change to your project name
+NAME="commcarehq" # change to your project name
 DAEMON=$WHERE_AM_I/manage.py
 DAEMON_OPTS=""
 RUN_AS=root
