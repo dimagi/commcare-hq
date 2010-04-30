@@ -1,5 +1,9 @@
 <h2>Select Case</h2>
 
+{% if not data %}
+No cases exist in this domain.
+
+{% else %}
 <form action="{% url reports.views.sum_chw %}" method="get">
 Case: <select name="case">
 {% for case_id, case_name in data.items %}
@@ -14,3 +18,4 @@ Case: <select name="case">
 
 <input type="submit" value="Get Report" />
 </form>
+{% endif %}
