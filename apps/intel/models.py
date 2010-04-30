@@ -85,6 +85,14 @@ def chws_for(clinic_id):
     
     return chws
 
+
+def all_chws():
+    chws = []
+    for i in registrations().values('meta_username').distinct():
+        chws.append(i['meta_username'])
+    
+    return chws
+    
 # and this one too..
 def attachments_for(table):
     atts = {}
