@@ -1,16 +1,18 @@
+from datahq.apps.xformmanager.models import FormDefModel, Metadata
 from datetime import datetime
+from django.conf import settings
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django_rest_interface.resource import Resource
 from django_rest_interface import util
+from django_rest_interface.resource import Resource
+from domain.decorators import login_and_domain_required
 from transformers.csv import get_csv_from_django_query, format_csv
 from transformers.zip import get_zipfile, get_tarfile
 from xformmanager.xformdef import FormDef
-from xformmanager.models import *
-from hq.models import *
-from domain.decorators import login_and_domain_required
+import logging
+import os
 
 """ changes to the API need to occur in 
 * api/urls.py (redirection)
