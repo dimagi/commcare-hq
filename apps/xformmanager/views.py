@@ -1,55 +1,36 @@
-import settings, os, sys
-import logging
-import traceback
-import hashlib
-import csv
 from StringIO import StringIO
-import util as xutils
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
-from django.template import RequestContext
-from django.db import transaction, connection
-from django.core.urlresolvers import reverse
-
-from webutils import render_to_response
-
-from xformmanager.util import get_unique_value
-from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
-from xformmanager.models import FormDefModel, FormDataGroup, FormDataPointer, FormDataColumn
-from xformmanager.xformdef import FormDef
-from xformmanager.manager import *
-from xformmanager.templatetags.xform_tags import NOT_SET
-from domain.decorators import login_and_domain_required
-from receiver import submitprocessor
+from datahq.apps.xformmanager import xformvalidator
+from datahq.apps.xformmanager.manager import readable_form
 from dbutils import get_column_names
-from hq.models import *
-from hqutils import paginate, get_table_display_properties
-
-from transformers.csv import UnicodeWriter
-from transformers.zip import get_zipfile
-
-from receiver.models import Attachment
+from django.core.urlresolvers import reverse
+from django.db import transaction, connection
 from django.db.models import signals
+from django.http import HttpResponseRedirect, HttpResponse, \
+    HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
+from domain.decorators import login_and_domain_required
+from domain.models import Domain
+from hqutils import paginate, get_table_display_properties, get_post_redirect
+from receiver import submitprocessor
+from receiver.models import Attachment
+from transformers.csv import UnicodeWriter, format_csv
+from transformers.zip import get_zipfile
+from webutils import render_to_response
+from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
+from xformmanager.manager import XFormManager
+from xformmanager.models import FormDataGroup, FormDataPointer, FormDataColumn, \
+    FormDefModel, Metadata
+from xformmanager.templatetags.xform_tags import NOT_SET
+from xformmanager.util import get_unique_value
+from xformmanager.xformdef import FormDef
+import hashlib
+import logging
+import sys
+import traceback
 
 @login_and_domain_required
 @transaction.commit_manually
-def remove_xform(request, form_id=None, template='confirm_delete.html'):
-    context = {}
-    form = get_object_or_404(FormDefModel, pk=form_id)
-    if request.method == "POST":
-        if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
-            xformmanager = XFormManager()
-            xformmanager.remove_schema(form_id)
-            logging.debug("Schema %s deleted ", form_id)
-            #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
-            return HttpResponseRedirect("../register")
-    context['form_name'] = form.form_display_name
-    return render_to_response(request, template, context)
-
-@login_and_domain_required
-@transaction.commit_manually
-def home(request, template='register_and_list_xforms.html'):
+def dashboard(request, template='register_and_list_xforms.html'):
     context = {}
     if request.method == 'POST':
         if 'confirm_register' in request.POST:
@@ -133,6 +114,22 @@ def home(request, template='register_and_list_xforms.html'):
     # group the formdefs by names
     context['registered_forms'] = FormDefModel.objects.all().filter(domain=request.user.selected_domain)
     context['form_groups'] = FormDefModel.get_groups(request.user.selected_domain)
+    return render_to_response(request, template, context)
+
+
+@login_and_domain_required
+@transaction.commit_manually
+def remove_xform(request, form_id=None, template='confirm_delete.html'):
+    context = {}
+    form = get_object_or_404(FormDefModel, pk=form_id)
+    if request.method == "POST":
+        if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
+            xformmanager = XFormManager()
+            xformmanager.remove_schema(form_id)
+            logging.debug("Schema %s deleted ", form_id)
+            #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
+            return HttpResponseRedirect("../register")
+    context['form_name'] = form.form_display_name
     return render_to_response(request, template, context)
 
 
@@ -348,7 +345,7 @@ def delete_form_data_group(req, group_id):
     group = get_object_or_404(FormDataGroup, id=group_id)
     if req.method == 'POST':
         group.delete()
-        return HttpResponseRedirect(reverse('xformmanager.views.home')) 
+        return HttpResponseRedirect(reverse('xformmanager.views.dashboard')) 
                 
             
     return render_to_response(req, "xformmanager/delete_form_data_group.html",
@@ -676,7 +673,61 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
     return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
+
+
+def readable_xform(req):
+    """Get a readable xform"""
     
+    def get(req):
+        return render_to_response(req, "xformmanager/readable_form_creator.html", {})
+    
+    def post(req, template_name="xformmanager/readable_form_creator.html"):
+        xform_body = req.POST["xform"]
+        try:
+            result, errors, has_error = readable_form(xform_body)
+            return render_to_response(req, "xformmanager/readable_form_creator.html", 
+                                      {"success": True, 
+                                       "message": "Your form was successfully validated!",
+                                       "xform": xform_body,
+                                       "readable_form": result
+                                       })
+        except Exception, e:
+            return render_to_response(req, "xformmanager/readable_form_creator.html", 
+                                      {"success": False, 
+                                       "message": "Failure to generate readable xform! %s" % e,
+                                       "xform": xform_body
+                                       })
+        
+    
+    return get_post_redirect(req, get, post)
+
+def validator(req, template_name="xformmanager/validator.html"):
+    """Validate an xform"""
+    
+    def get(req, template_name):
+        return render_to_response(req, template_name, {})
+    
+    def post(req, template_name):
+        xform_body = req.POST["xform"]
+        hq_validation = True if "hq-validate" in req.POST else False
+        try:
+            xformvalidator.validate_xml(xform_body, do_hq_validation=hq_validation)
+            return render_to_response(req, template_name, {"success": True, 
+                                                           "message": "Your form was successfully validated!",
+                                                           "xform": xform_body
+                                                           })
+        except Exception, e:
+            return render_to_response(req, template_name, {"success": False, 
+                                                           "message": "Validation Fail! %s" % e,
+                                                           "xform": xform_body
+                                                           })
+        
+    
+    # invoke the correct function...
+    # this should be abstracted away
+    if   req.method == "GET":  return get(req, template_name)
+    elif req.method == "POST": return post(req, template_name)        
+
 def get_csv_from_form(formdef_id, form_id=0, filter=''):
     try:
         xsd = FormDefModel.objects.get(id=formdef_id)

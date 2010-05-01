@@ -1,11 +1,12 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    (r'^xforms/$', 'xformmanager.views.home'),
-    (r'^xforms/register/$', 'xformmanager.views.home'),
+    url(r'^xforms/$', 'xformmanager.views.dashboard', name='xformmanager.views.dashboard'),
     (r'^xforms/reregister/(?P<domain_name>.*)/?$', 'xformmanager.views.reregister_xform'),
     (r'^xforms/remove/(?P<form_id>\d+)/?$', 'xformmanager.views.remove_xform'),
     (r'^xforms/show/(?P<formdef_id>\d+)/?$', 'xformmanager.views.single_xform'),
+    (r'^xforms/validator/?$', 'xformmanager.views.validator'),
+    (r'^xforms/readable_xform/?$', 'xformmanager.views.readable_xform'),
     (r'^xforms/form_versions/?$', 'xformmanager.views.xmlns_group'),
     (r'^xforms/form_versions/popup/?$', 'xformmanager.views.xmlns_group_popup'),
     (r'^xforms/groups/?$', 'xformmanager.views.manage_groups'),
