@@ -21,6 +21,11 @@
 			<td>
 				{% if i.visit %}
 					{{ i.visit.created_at|date }}
+					<form action="delete_visit" method="POST" id="delete_form-{{ i.visit.id}}">
+						<input type="hidden" name="id" value="{{ i.visit.id }}"/>
+						<input type="hidden" name="return_to" 	value="{{ return_to }}" />
+					</form>
+					(<a href="#" onclick="$('#delete_form-{{ i.visit.id}}').submit()">Delete visit</a>)
 				{% else %}
 					<form action="record_visit" method="POST">
 						<input type="hidden" name="mother_name" value="{{ i.row.sampledata_mother_name }}" />

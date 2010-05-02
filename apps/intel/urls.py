@@ -7,6 +7,7 @@ urlpatterns = patterns('intel.views',
     (r'^intel/details/?$', 'mother_details'),
 
     (r'^intel/record_visit/?$', 'record_visit'),
+    (r'^intel/delete_visit/?$', 'delete_visit'),
     
     (r'^intel/chart/?$', 'chart'),
     

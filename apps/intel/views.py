@@ -164,6 +164,14 @@ def record_visit(request):
     ).save()
     
     return HttpResponseRedirect(request.POST['return_to'])
+
+@login_and_domain_required
+def delete_visit(request):
+    ClinicVisit(
+        id=request.POST['id']
+    ).delete()
+
+    return HttpResponseRedirect(request.POST['return_to'])
     
     
 @login_and_domain_required    
