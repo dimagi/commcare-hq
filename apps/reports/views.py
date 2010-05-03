@@ -3,7 +3,7 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 
-from rapidsms.webui.utils import render_to_response
+from rapidsms.webui.utils import render_to_response, UnicodeWriter
 
 from transformers.csv import format_csv 
 from models import Case, SqlReport
@@ -16,7 +16,6 @@ from custom.all.shared import *
 from custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 
 from StringIO import StringIO
-from transformers.csv import UnicodeWriter
 import calendar
 try:
     from reportlab.pdfgen import canvas
