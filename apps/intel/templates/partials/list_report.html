@@ -18,12 +18,12 @@
 				>{{ i.row.sampledata_mother_name }}</a></td>
 			<td>{{ i.row.sampledata_address }}</td>
 			<td>{{ i.row.sampledata_hi_risk|capfirst }}</td>
-			<td>
+			<td style="text-align:center">
 				{% if i.visit %}
 					{{ i.visit.created_at|date }}
 					<form action="delete_visit" method="POST" id="delete_form-{{ i.visit.id}}">
 						<input type="hidden" name="id" value="{{ i.visit.id }}"/>
-						<input type="hidden" name="return_to" 	value="{{ return_to }}" />
+						<input type="hidden" name="return_to" value="{{ return_to }}" />
 					</form>
 					(<a href="#" onclick="$('#delete_form-{{ i.visit.id}}').submit()">Delete visit</a>)
 				{% else %}
