@@ -88,18 +88,24 @@ def get_dates_reports(request, default_days_active=0, default_days_late=0):
     startdate_late = enddate - default_delta_late
     if request:
         for item in request.GET.items():
-            if item[0] == 'startdate_active':
-                startdate_active_str=item[1]
-                startdate_active = datetime.datetime.strptime(
-                    startdate_active_str,'%m/%d/%Y').date()
-            if item[0] == 'startdate_late':
-                startdate_late_str=item[1]
-                startdate_late = datetime.datetime.strptime(
-                    startdate_late_str,'%m/%d/%Y').date()
-            if item[0] == 'enddate':
-                enddate_str=item[1]
-                enddate = datetime.datetime.strptime(enddate_str,
-                                                     '%m/%d/%Y').date()
+            try:
+                if item[0] == 'startdate_active':
+                    startdate_active_str=item[1]
+                    if startdate_active_str != '':
+                        startdate_active = datetime.datetime.strptime(
+                            startdate_active_str,'%m/%d/%Y').date()
+                if item[0] == 'startdate_late':
+                    startdate_late_str=item[1]
+                    if startdate_late_str != '':
+                        startdate_late = datetime.datetime.strptime(
+                            startdate_late_str,'%m/%d/%Y').date()
+                if item[0] == 'enddate':
+                    enddate_str=item[1]
+                    if enddate_str != '':
+                        enddate = datetime.datetime.strptime(enddate_str,
+                                                         '%m/%d/%Y').date()
+            except ValueError:
+                print 'Invalid date string' #TODO: This isn't right
     return (startdate_active, startdate_late, enddate)
 
 def get_table_display_properties(request, default_items=25, default_sort_column = "id", 

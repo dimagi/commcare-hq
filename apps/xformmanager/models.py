@@ -151,7 +151,8 @@ class FormDefModel(models.Model):
             fdd.save()
         except IntegrityError, e:
             raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
-                                   " Did you remember to update your version number?")
+                                   " Did you remember to update your version number?\n" + \
+                                   " Technical Details: %s" % unicode(e))
         ed = ElementDefModel()
         ed.xpath=formdef.root.xpath
         ed.table_name = table_name

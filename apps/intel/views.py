@@ -9,37 +9,39 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth.models import User
 
-from django.utils.translation import ugettext_lazy as _
-from django.db.models.query_utils import Q
-from xformmanager.models import *
-from graphing import dbhelper
-from django.utils.encoding import *
-from hq.models import *
+# from django.utils.translation import ugettext_lazy as _
+# from django.db.models.query_utils import Q
+# from xformmanager.models import *
+#from graphing import dbhelper
+# from django.utils.encoding import *
+# from hq.models import *
 
 import hq.utils as utils
 from domain.decorators import login_and_domain_required
 
-from transformers.csv import UnicodeWriter
-from StringIO import StringIO
+# from transformers.csv import UnicodeWriter
+# from StringIO import StringIO
 
-from datetime import timedelta
-from django.db import transaction
-import uuid
+# from datetime import timedelta
+# from django.db import transaction
+# import uuid
 
 from graphing.models import *
 import logging
-import hashlib
+# import hashlib
 import settings
-import traceback
+# import traceback
 import sys
 import os
 import string
 
 import reports.util as util
-from reports.custom.all.shared import get_data_by_chw, get_case_info
-from reports.models import Case, SqlReport
-from reports.custom.shared import Mother
+from reports.models import Case #, SqlReport
 
+# from reports.custom.all.shared import get_data_by_chw, get_case_info
+# from reports.custom.shared import Mother
+
+from hi_risk import *
 
 # import intel.queries as queries
 from intel.models import *
@@ -107,8 +109,8 @@ def report(request, format):
     visits = clinic_visits(clinic_id=showclinic, chw_name=filter_chw)
     
     # finally, pack it up and ship to the template/CSV
-    # Django's retarded template language forces this bollocks
-    # So might as well use it to stitch in visits & attachments
+    # Django's retarded template language forces this items{} dict,
+    # so might as well use it to stitch in visits & attachments
     atts = attachments_for(REGISTRATION_TABLE)    
     items = []
     for i in rows:
@@ -203,29 +205,8 @@ def mother_details(request):
     atts = attachments_for(REGISTRATION_TABLE)
     context['attach_id'] = atts[mother_id].id
     
-    reasons = []
-    if (mom.mother_age >= 35):              reasons.append("35 or older") 
-    if (mom.mother_age <= 18):              reasons.append("18 or younger")
-    if (mom.mother_height == 'under_150'):  reasons.append("Mother height under 150cm")
-    if (mom.previous_csection == 'yes'):    reasons.append("Previous C-section")
-    if (mom.over_5_years == 'yes'):         reasons.append("Over 5 years since last pregnancy")
-    if (mom.previous_bleeding == 'yes'):    reasons.append("Previous bleeding")
-    if (mom.previous_terminations >= 3):    reasons.append("%s previous terminations" % mom.previous_terminations)
-    if (mom.previous_pregnancies >= 5):     reasons.append("%s previous pregnancies" % mom.previous_pregnancies)
-    if (mom.heart_problems == 'yes'):       reasons.append("Heart problems")
-    if (mom.diabetes == 'yes'):             reasons.append("Diabetes")
-    if (mom.hip_problems == 'yes'):         reasons.append("Hip problems")
-    if (mom.previous_newborn_death == 'yes'):           reasons.append("Previous newborn death")
-    if (mom.card_results_hb_test == 'below_normal'):    reasons.append("Low hb test")
-    if (mom.card_results_blood_group == 'onegative'):   reasons.append("O-negative blood group")
-    if (mom.card_results_blood_group == 'anegative'):   reasons.append("A-negative blood group")
-    if (mom.card_results_blood_group == 'abnegative'):  reasons.append("AB-negative blood group")
-    if (mom.card_results_blood_group == 'bnegative'):   reasons.append("B-negative blood group")
-    if (mom.card_results_hepb_result == 'positive'):    reasons.append("Positive for hepb")
-    if (mom.card_results_syphilis_result == 'positive'):    reasons.append("Positive for syphilis")
-    
-    context['risk_factors'] = reasons
-    
+    context['risk_factors'] = get_hi_risk_factors_for(mom)  #reasons
+
     return render_to_response(request, "mother_details.html", context)
 
 
