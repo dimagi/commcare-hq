@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
 
-from rapidsms.webui.utils import render_to_response
+from rapidsms.webui.utils import render_to_response, UnicodeWriter
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -18,7 +18,6 @@ from hq.models import *
 import hq.utils as utils
 from domain.decorators import login_and_domain_required
 
-from transformers.csv import UnicodeWriter
 from StringIO import StringIO
 
 from datetime import timedelta
