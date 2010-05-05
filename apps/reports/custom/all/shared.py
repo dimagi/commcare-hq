@@ -456,13 +456,18 @@ def get_case_info(context, chw_data, enddate, active):
             form_type = CaseFormIdentifier.objects.get(form_identifier=
                                                        form_id.id).form_type
             for form in form_info:
+                temp_form_type = form_type
                 context['chw_name'] = form["meta_username"]
                 timeend = form["meta_timeend"]
+                if form_type == 'follow':
+                    referral = get_value(form, 'referral_id')
+                    if referral and referral != '':
+                        temp_form_type = 'referral'
                 if datetime.date(timeend) < enddate:
                     form_dates.append(timeend)
-                if timeend > fttd[form_type] and enddate > datetime.date(
+                if timeend > fttd[temp_form_type] and enddate > datetime.date(
                                                                     timeend):
-                    fttd[form_type] = timeend
+                    fttd[temp_form_type] = timeend
         status = get_status(fttd, active, enddate)
         if not len(form_dates) == 0:
             all_data.append({'case_id': id, 'total_visits': len(form_dates),
@@ -569,8 +574,9 @@ def get_last(form_dates):
 def get_status(fttd, active, enddate):
     ''' Returns whether active, late, or closed'''
     if fttd['open'] > fttd['close'] or only_follow(fttd):
-        if datetime.date(fttd['open']) >= active or datetime.date(
-                                                    fttd['follow']) >= active:
+        if datetime.date(fttd['open']) >= active or \
+            datetime.date(fttd['follow']) >= active or \
+            datetime.date(fttd['referral']) >= active:
             if referral_late(fttd, enddate, 3):
                 return 'Late (Referral)'
             else:
@@ -603,7 +609,8 @@ def referral_late(form_type_to_date, enddate, days_late):
 def only_follow(fttd):
     ''' for cases where there was no open form but there was a follow form'''
     mindate = datetime(2000, 1, 1)
-    if fttd['open'] == mindate and fttd['follow'] > mindate:
+    if fttd['open'] == mindate and fttd['follow'] > mindate or \
+                                    fttd['referral'] > mindate:
         return True
     else:
         return False
@@ -666,7 +673,8 @@ def get_form_type_to_date_last_week(map, enddate, mindate):
             chw_name = form["meta_username"]
             timeend = form["meta_timeend"]
             time_diff = enddate - datetime.date(timeend)
-            if time_diff <= timedelta(days=7) and time_diff >= timedelta(days=0):
+            if time_diff <= timedelta(days=7) and time_diff >= \
+                timedelta(days=0):
                 last_week += 1
             # for each form type get the date of the most recently 
             # submitted form
