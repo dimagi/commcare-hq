@@ -42,7 +42,7 @@
 	            {% else %}
 					No follow ups
 				{% endif %}
-	            <div class="annotationtrigger js_link" onclick="show_annotations( {{ i.attach.id }}, '#dialog');">
+	            <div class="annotationtrigger js_link" onclick="show_annotations( {{ i.attach.id }}, '#dialog', '{{ i.row.sampledata_mother_name }}:');">
 	            	{{ i.attach.most_recent_annotation|yesno:"View All / Add, Add" }}
 	            </div>
 			</td>
