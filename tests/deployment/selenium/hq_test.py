@@ -5,6 +5,15 @@ import os
 import sys
 import time
 
+
+local = True # semi convenient flip-flop for local versus remote testing
+if local:
+    sites = {"http://localhost:8000": ["brian", "test",
+                                   "localhost:8000", "Pathfinder"]}
+else: 
+    sites = {"http://staging.commcarehq.org": ["brian", "test",
+                                        "staging.commcarehq.org", "BRAC"]}
+
 class testingPost(unittest.TestCase):
 
     def setUp(self):
@@ -14,13 +23,18 @@ class testingPost(unittest.TestCase):
     
     def test_testingPost(self):
         sel = self.selenium
+        # get to the login page
         sel.open("/no_permissions?next=/")
         sel.click("link=Log in to CommcareHQ")
         sel.wait_for_page_to_load("30000")
         sel.type("id_username", user)
         sel.type("id_password", passw)
-        sel.click("//input[@value='Login']")
-     
+        sel.click("//button[@type='submit']")
+        
+        # redirects to domain selection, so just click through
+        sel.wait_for_page_to_load("30000")
+        sel.click("//button[@type='submit']")
+        
         # testing creation of xform
         sel.wait_for_page_to_load("30000")
         sel.click("link=XForms")
@@ -35,13 +49,14 @@ class testingPost(unittest.TestCase):
         sel.wait_for_page_to_load("30000")
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
-        try: self.failUnless(sel.is_text_present("Sample Form 1"))
+        try: self.failUnless(sel.is_text_present("Sample Form 1"), "New form showed in XForm Listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
         
 
         # testing basic submission of xml (or file) and diff against actual
         # copy
-        submission_number = post(serverhost, domain)
+        temp_file_name = 'testupload_tmp.xml'
+        submission_number = post(serverhost, domain, temp_file_name)
         sel.click("link=Submissions")
         sel.wait_for_page_to_load("30000")
         time.sleep(3)
@@ -50,19 +65,25 @@ class testingPost(unittest.TestCase):
         time.sleep(2)
         sel.click("link=view full raw submission")
         time.sleep(2)
+        file = None
         try:
-            file = open('testupload.xml', 'r')
+            file = open(temp_file_name, 'r')
             xml_present = file.read()
-            self.failUnless(sel.is_text_present(xml_present))
-        except AssertionError, e: self.verificationErrors.append(str(e))
-
+            self.failUnless(sel.is_text_present(xml_present), "Correct XML was present in file")
+        except AssertionError, e: 
+            self.verificationErrors.append(str(e))
+        finally:
+            if file: file.close()
+        os.remove(temp_file_name)
+        
         #test to see if form has been processed
         sel.open("/receiver/review")
         sel.wait_for_page_to_load("30000")
         time.sleep(3)
         sel.click("link=%s" % submission_number)
         sel.wait_for_page_to_load("30000")
-        try: self.failUnless(sel.is_text_present("view form data"))
+        try: self.failUnless(sel.is_text_present("view form data"), 
+                             "xml submission was parsed and matched to form")
         except AssertionError, e: self.verificationErrors.append(str(e))
 
         #test Xform deletion
@@ -82,11 +103,9 @@ class testingPost(unittest.TestCase):
         sel.wait_for_page_to_load("30000")
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
-        try: self.failUnless(not sel.is_text_present("Sample Form 1"))
+        try: self.failUnless(not sel.is_text_present("Sample Form 1"),
+                             "Deleted form was removced from xform listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
- 
-sites = {"http://staging.commcarehq.org": ["brian", "test",
-    "staging.commcarehq.org", "BRAC"]}
  
 if __name__ == "__main__":
     for key, value in sites.items():

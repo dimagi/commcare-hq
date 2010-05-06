@@ -1,0 +1,56 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}
+
+{% block title %}Domain Selection{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<!-- domain_select form -->  
+<hr class="space"/>
+<hr class="space"/>
+<div class="span-8 clear" style="margin-left:auto; margin-right:auto; float:none">
+<form class="sfb" name="form" method="post" action="{% url domain_select %}">
+
+<h3>Select a domain</h3>
+{% if form.non_field_errors %}
+  <div class="non_field_errors">
+  {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+{% if next %}
+<input name="next" type="hidden" value="{{next}}" />
+{% endif %}
+
+<!-- See: http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html for
+  example of multiline text associated with each input field -->
+
+{% for field in form.visible_fields %}
+  {% if field.errors %}
+    <div class="field_errors">
+    {{field.errors}}
+    </div>
+  {% endif %}
+  <div class="span-2 clear"> <div style="float:right;">
+  {{ field.label_tag }}
+  </div></div>
+  <div class="span-1">
+  {{ field }}
+  </div>
+{% endfor %}
+  
+<div style="text-align: center"><button type="submit">Submit</button></div>
+</form>
+
+</div> 
+<!-- domain_select form -->  
+{% endblock content %}

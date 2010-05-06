@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.test.client import Client
-from hq.models import ExtUser, Domain, Organization, ReporterProfile
+from django.contrib.auth.models import User
+from domain.models import Domain
+from hq.models import Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from reporters.models import Reporter
 
@@ -27,18 +29,6 @@ class ViewsTestCase(TestCase):
         self.assertNotContains(response,"Exception", status_code=200)
 
         response = self.client.get('/change_password/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-
-        response = self.client.get('/report/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-
-        response = self.client.get('/report/email/')
-        self.assertNotContains(response,"Error", status_code=200)
-        self.assertNotContains(response,"Exception", status_code=200)
-        
-        response = self.client.get('/report/sms/')
         self.assertNotContains(response,"Error", status_code=200)
         self.assertNotContains(response,"Exception", status_code=200)
 
@@ -72,7 +62,7 @@ class ViewsTestCase(TestCase):
         # response = self.client.get('/api/xforms/',{'format':'json'})
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()

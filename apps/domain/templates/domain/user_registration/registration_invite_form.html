@@ -1,0 +1,51 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+     user invitation{% endblock title %}
+
+{#################################################################################################################}
+
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}           
+{% block content %}
+
+<hr class="space"/>
+<hr class="space"/>
+
+<!-- Registration request form -->  
+<div class="span-11" style="margin-left:auto; margin-right:auto; float:none">
+<form class="sfb clear" name="form" method="post" action="">
+<h3>Invite a user to join this domain</h3>
+{% if form.non_field_errors %}
+  <div class="non_field_errors">
+  {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+{% for field in form.visible_fields %}
+  {% if field.errors %}
+    <div class="field_errors">
+    {{field.errors}}
+    </div>
+  {% endif %}
+  
+  <div class="span-4 clear"> <div style="float:right;">
+  {{ field.label_tag }}
+  </div></div>
+  <div class="span-2">
+  {{ field }}
+  </div>
+
+{% endfor %}
+  
+<button type="submit">Submit</button>
+</form>
+</div>
+<!-- Registration request form -->  
+
+{% endblock content %}     

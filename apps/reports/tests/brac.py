@@ -2,8 +2,12 @@ import os
 from datetime import datetime, timedelta
 from rapidsms.tests.scripted import TestScript
 import reporters.app as reporters_app
+
+from django.db import connection, transaction
+
 from reporters.models import ReporterGroup, PersistantBackend
-from hq.models import Organization, Domain, ReporterProfile
+from domain.models import Domain
+from hq.models import Organization, ReporterProfile
 from receiver.models import Submission, Attachment
 from xformmanager.tests.util import *
 from reports.sms.brac import *
@@ -13,11 +17,10 @@ class BracTestCase(TestScript):
     apps = [ reporters_app.App ]
     
     def setUp(self):
-        clear_data()
+        self._clear_data()
         
         TestScript.setUp(self, default_lang='sw')
-        self.domain = Domain(name='mockdomain')
-        self.domain.save()
+        self.domain = Domain.objects.get_or_create(name='mockdomain')[0]
         chws = ReporterGroup(title="mocksupes")
         chws.save()
         chvs = ReporterGroup(title="mocksubs")
@@ -46,12 +49,17 @@ class BracTestCase(TestScript):
         self.router.start()
 
     def tearDown(self):
-        # MUST clear storageutility first (since it deletes manually)
-        su = StorageUtility()
-        su.clear()
-        # all other deletions are automatically handled by django
-        self.domain.delete()
+        # although theoretically all other deletions are automatically 
+        # handled by django, this doesn't appear to actually be the case
+        # so reset a bunch of things.
+        # This has to do with django changing to transaction managed tests
+        # and something deep within HQ that is fooling it.  Django calls 
+        # rollback at some point which causes this test to actualy roll
+        # back the deletion (but not creation), so we just call clear in
+        # both setup and teardown, which is hacky, but works.
+        self._clear_data()
         self.router.stop()
+        
     
     def test_send_activity_to_reporter(self):
         send_activity_to_reporter(self.router, self.sub_profile, "lucy", 5 )
@@ -121,3 +129,15 @@ class BracTestCase(TestScript):
             3093 < lucy hawajatuma fomu zao kwa zaidi ya siku 2, tafadhali naomba ufuatilie ujue nini tatizo.
         """
         self.runScript(script)
+
+    def _clear_data(self):
+        clear_data()
+        # MUST clear storageutility first (since it deletes manually)
+        su = StorageUtility()
+        su.clear()
+        Domain.objects.all().delete()
+        Reporter.objects.all().delete()
+        Organization.objects.all().delete()
+        ReporterGroup.objects.all().delete()
+        transaction.commit()
+        

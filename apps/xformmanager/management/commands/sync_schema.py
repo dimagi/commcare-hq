@@ -1,6 +1,6 @@
-""" This script downloads synchronization data from a remote server,
+"""
+This script downloads synchronization data from a remote server,
 deletes local xforms and submissions, and loads the data
-
 """
 import bz2
 import sys

@@ -105,3 +105,18 @@ class EmailAgent(object):
         #msg.attach(attachname,rendered,"text/html")
         msg.content_subtype = "html"
         msg.send(fail_silently=False)
+    
+    def send_email_attach(self, subject, recipient_addr, msg_payload, attachments):
+        msg = EmailMessage(subject=subject, #subj 
+                           body=msg_payload, #body
+                           from_email=settings.EMAIL_LOGIN, #from
+                           to=[recipient_addr],#to
+                           connection=self.conn
+                           )
+        
+        for attachment in attachments:              
+            msg.attach(attachment['filename'], 
+                       attachment['content'],
+                       attachment['mimetype'])
+        msg.content_subtype = "html"
+        msg.send(fail_silently=False)

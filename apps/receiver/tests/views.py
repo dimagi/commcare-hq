@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.client import Client
-from hq.models import ExtUser, Domain
+from domain.models import Domain
+from django.contrib.auth.models import User
 from hq.tests.util import create_user_and_domain
 from receiver.tests.util import *
 
@@ -57,7 +58,7 @@ class ViewsTestCase(TestCase):
         submission.delete()
 
     def tearDown(self):
-        user = ExtUser.objects.get(username='brian')
+        user = User.objects.get(username='brian')
         user.delete()
         domain = Domain.objects.get(name='mockdomain')
         domain.delete()

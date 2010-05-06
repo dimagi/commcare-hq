@@ -1,0 +1,49 @@
+{% extends base_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+ homepage{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<style>
+div.category {text-align:right;}
+.category h2 {font-weight:bold; margin:0; padding:1em 0;}
+
+div.action {border-style:solid; border-width:1px; margin-top:13px;}
+.action h3 {background:#ebf4fb; margin:0; padding:1em;}
+.action h3:hover {color:white; background-color:steelblue;}
+</style>
+
+<div class="span-24 last"> 
+<hr class="space"/>
+<div class="span-8 prepend-2 prepend-top">
+<h2><strong>What would you like to do?</strong></h2>
+</div>
+
+<hr class="space"/>
+<div class="span-4 prepend-3 colborder category clear"><h2>View</h2></div>
+<div class="span-4 action light_button_color" onClick="window.location='{% url patient_list %}'"><h3>All patients</h3></div>
+
+<div class="span-4 prepend-3 colborder category clear"><h2>Add</h2></div>
+<div class="span-4 action light_button_color" onClick="window.location='{% url new_patient %}'"><h3>New patient</h3></div>
+
+<div class="span-4 prepend-3 colborder category clear"><h2>Search</h2></div>
+<div class="span-4 action light_button_color" onClick="window.location='{% url search_text %}'"><h3>By text</h3></div>
+<div class="span-4 action light_button_color" onClick="window.location='{% url search_id %}'"><h3>By ID</h3></div>
+
+<div class="span-4 prepend-3 colborder category clear"><h2>Administer</h2></div>
+<div class="span-4 action light_button_color" onClick="window.location='{% url admin_own_account_main %}'"><h3>Your account</h3></div>
+{% if user.is_selected_dom_admin %}
+<div class="span-4 action light_button_color" onClick="window.location='{% url domain_admin_main %}'"><h3>This domain</h3></div>
+{% endif %}
+<div class="span-4 action light_button_color" onClick="window.location='{% url domain_registration_request %}'"><h3>New domain</h3></div>
+
+</div>
+
+{% endblock content %}
+
+{#################################################################################################################}      

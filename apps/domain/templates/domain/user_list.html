@@ -1,0 +1,76 @@
+{% extends base_template %}
+
+{#################################################################################################################}p
+
+{% block hq-stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+{% endblock hq-stylesheets %}
+
+{#################################################################################################################}
+
+{% block title %}
+ user list{% endblock title %}
+
+{#################################################################################################################}
+
+{% block content %}
+
+<table class="table_base clear" cellspacing="0">
+<caption>Users in domain {{user.selected_domain}}</caption>
+<tr>
+  {% for column in columns %}
+  {% if column.is_ordered %}
+    <th class="sorted {% if column.is_ordered_reverse %} descending{% else %} ascending{% endif %}" scope="col">
+  {% else %}
+    <th class="hed" scope="col">
+  {% endif %}
+    {% if column.sortable %}
+      <a href="?sort={{ column.name_toggled }}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}">
+        {{ column }}
+      </a>
+    {% else %}
+      {{ column }}
+    {% endif %}
+  </th>
+  {% endfor %}
+  <th class="hed">Edit</th>
+</tr>
+
+{% for row in rows.object_list %}
+  <tr>
+  {% for value in row %}
+    {% ifequal forloop.counter0 sort_index %}
+           <td class="sorted">{{ value }}</td>
+    {% else %}
+           <td>{{ value }}</td>
+    {% endifequal %}
+  {% endfor %}
+    <td>
+    <a href="{% url domain_edit_user user_id=row.id %}">Go</a>
+    </td>
+  </tr>
+{% endfor %}
+
+</table>
+
+{# pagination code taken right from Django dev docs #}
+<div class="pagination">
+	{% if rows.has_previous %}
+	    <a href="?page={{ rows.previous_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_left.gif" style="border:0" /></a>
+	    <!--   <a href="?page={{ rows.previous_page_number }}">previous</a>a  -->
+	{% endif %}
+	
+	<span class="current">
+	    {{ rows.number }} of {{ rows.paginator.num_pages }}
+	</span>
+	
+	{% if rows.has_next %}
+	     <!-- <a href="?page={{ rows.next_page_number }}">next</a> -->
+	    <a href="?page={{ rows.next_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_right.gif" style="border:0" /></a>
+	{% endif %}
+</div>
+
+
+{% endblock content %}
+
+{#################################################################################################################}      

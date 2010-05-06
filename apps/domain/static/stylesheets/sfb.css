@@ -1,0 +1,68 @@
+/*
+    Modified from http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html
+*/
+ 
+form.sfb {
+    background:#ebf4fb;    
+    border:solid 2px #a7cce2;
+    margin:0 auto;
+    overflow: auto;
+    padding:14px;
+}
+.sfb h1, .sfb h2, .sfb h3, .sfb h4, .sfb h5, .sfb h6 {
+    border-bottom: solid 1px #b7ddf2;
+	font-weight:bold;
+    margin-bottom:20px;
+    padding-bottom:10px;      
+}
+.sfb label {
+    clear: left;
+    display: block;
+    float: left;
+    font-weight: bold;    
+    padding: 5px 2px 2px 2px;
+    text-align: right;    
+}      
+.sfb input{
+    border: solid 1px #a7cce2;
+	float: left;
+    font-size: 12px;
+    margin: 1px 0px 20px 0px;
+    padding: 4px 2px;
+    width: 200px;
+}
+.sfb select{
+    border: solid 1px #aacfe4;
+    float: left;
+    font-size: 12px;
+    margin: 1px 0 20px 10px;
+    padding: 4px 2px;
+    width: 150px;
+}
+.sfb button{
+    background: #666666 url(img/button.png) no-repeat;
+	border: 0;
+	clear: both;    
+    color: #FFFFFF;
+	display: block;
+    font-size: 11px;
+    font-weight: bold;
+	height: 31px;
+    line-height: 31px; 
+	margin: 0 auto 0 auto;
+    padding: 0;
+    width: 125px;
+}
+.sfb .non_field_errors {    
+    border-bottom: solid 1px #b7ddf2;
+    color: red;
+    margin-bottom: 15px;
+}
+.sfb .field_errors {
+    clear: both;
+    color:red;
+    display:block;
+}
+
+
+

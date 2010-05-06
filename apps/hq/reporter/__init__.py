@@ -223,7 +223,10 @@ def transport_email(rendered_text, recipient_usr, params={}):
     else:
         daterangestr = params['startdate'].strftime('%m/%d/%Y') + " - " + params['enddate'].strftime('%m/%d/%Y')
         subject_line = "[CommCare HQ] " + params['frequency'] + " report " + daterangestr
-    eml.send_email(subject_line, recipient_usr.email, rendered_text)     
+    if params.has_key('attachment'):
+        eml.send_email_attach(subject_line, recipient_usr.email, rendered_text, params['attachment'])
+    else:
+        eml.send_email(subject_line, recipient_usr.email, rendered_text)     
     
 def transport_sms(rendered_text, recipient_usr, params={}):
     logging.debug("SMS Report transport via RapidSMS backend")    

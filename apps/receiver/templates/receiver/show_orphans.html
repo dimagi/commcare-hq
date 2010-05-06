@@ -13,12 +13,12 @@
 
 {% if errors %}
 	<!-- TODO: put this formatting in stylesheets -->
-    <label class="error"><strong>{{ errors|escape }}</strong></label>
+    <div class="error"><strong>{{ errors|escape }}</strong></div>
 {% endif %}
 
 {% if status %}
 	<!-- TODO: put this formatting in stylesheets -->
-    <label class="status"><strong>{{ status }}</strong></label>
+    <div class="status"><strong>{{ status }}</strong></div>
 {% endif %}
 
 {% with submissions as data %}

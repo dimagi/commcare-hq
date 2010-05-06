@@ -3,7 +3,10 @@
 """
 
 import hashlib
-from hq.models import ExtUser, Domain, ReporterProfile
+from domain.models import Domain, Membership
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
+from hq.models import ReporterProfile
 from reporters.models import Reporter, PersistantConnection
 
 def create_user_and_domain(username='brian', 
@@ -18,25 +21,33 @@ def create_user_and_domain(username='brian',
         print "Are all your tests cleaning up properly?"
     except Domain.DoesNotExist:
         # this is the normal case
-        domain = Domain(name=domain_name)
+        domain = Domain(name=domain_name, is_active=True)
         domain.save()
     
     try:
-        user = ExtUser.objects.get(username=username)
+        user = User.objects.get(username=username)
         print "WARNING: tried to create user %s but it already exists!" % username
         print "Are all your tests cleaning up properly?"
-    except ExtUser.DoesNotExist:
-        user = ExtUser()
-        user.domain = domain
+        # update the pw anyway
+        user.password = _get_salted_pw(password)
+        user.save()
+    except User.DoesNotExist:
+        user = User()
         user.username = username
         # here, we mimic what the django auth system does
         # only we specify the salt to be 12345
-        salt = '12345'
-        hashed_pass = hashlib.sha1(salt+password).hexdigest()
-        user.password = 'sha1$%s$%s' % (salt, hashed_pass)
+        user.password = _get_salted_pw(password)
         
-        user.set_unsalted_password( username, password )
         user.save()
+        
+        # update the domain mapping using the Membership object
+        mem = Membership()
+        mem.domain = domain         
+        mem.member_type = ContentType.objects.get_for_model(User)
+        mem.member_id = user.id
+        mem.is_active = True
+        mem.save()
+                
     return (user, domain)
                                 
 def create_reporter_with_connection(alias, 
@@ -66,3 +77,7 @@ def create_active_reporter_and_profile(backend, domain, phone_number="1234", use
     prof.save()
     return (rep, prof)
 
+def _get_salted_pw(password, salt="12345"):
+    hashed_pass = hashlib.sha1(salt+password).hexdigest()
+    return 'sha1$%s$%s' % (salt, hashed_pass)
+        

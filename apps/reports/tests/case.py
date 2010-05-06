@@ -1,11 +1,12 @@
 import unittest
 import os
+
 from receiver.models import Submission, Attachment
 from reports.models import *
 from xformmanager.tests.util import *
 from xformmanager.models import *
 from xformmanager.storageutility import StorageUtility
-from hq.models import Domain
+from domain.models import Domain
 #from django.test import TestCase
 
 class CaseTestCase(unittest.TestCase):
@@ -14,23 +15,23 @@ class CaseTestCase(unittest.TestCase):
         # clean up, in case some other tests left some straggling
         # form data.
         clear_data()
-        
+        self.domain = Domain.objects.get_or_create(name="cases")[0]
         path = os.path.dirname(__file__)
         # register some schemas
-        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", path=path)
+        create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", domain=self.domain, path=path)
         for i in range(2, 6):
-            populate("data/pf_followup_%s.xml" % i, path=path)
+            populate("data/pf_followup_%s.xml" % i, domain=self.domain, path=path)
         
-        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", path=path)
-        populate("data/pf_new_reg_2.xml", path=path)
-        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml", path=path)
-        populate("data/pf_ref_completed_2.xml", path=path)
+        create_xsd_and_populate("data/pf_new_reg.xsd", "data/pf_new_reg_1.xml", domain=self.domain, path=path)
+        populate("data/pf_new_reg_2.xml", domain=self.domain, path=path)
+        create_xsd_and_populate("data/pf_ref_completed.xsd", "data/pf_ref_completed_1.xml", domain=self.domain, path=path)
+        populate("data/pf_ref_completed_2.xml", domain=self.domain, path=path)
         
         
         # get the three forms
-        self.reg_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_registration_0_0_2")
-        self.follow_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_follow_0_0_2")
-        self.close_form = FormDefModel.objects.get(form_name="schema_pathfinder_pathfinder_cc_resolution_0_0_2")
+        self.reg_form = FormDefModel.objects.get(form_name="schema_%s_pathfinder_pathfinder_cc_registration_0_0_2" % self.domain.name)
+        self.follow_form = FormDefModel.objects.get(form_name="schema_%s_pathfinder_pathfinder_cc_follow_0_0_2" % self.domain.name)
+        self.close_form = FormDefModel.objects.get(form_name="schema_%s_pathfinder_pathfinder_cc_resolution_0_0_2" % self.domain.name)
         
         # make some objects for these to build our case
         self.reg_fid = FormIdentifier.objects.create(form=self.reg_form, identity_column="meta_username")
@@ -43,9 +44,8 @@ class CaseTestCase(unittest.TestCase):
                                                         sorting_column="meta_timeend", sort_descending=True)
         self.close_complex_fid = FormIdentifier.objects.create(form=self.close_form, identity_column="meta_username|pathfinder_referral_meta_chw_id")
         
-        pf_domain = Domain.objects.all()[0]
-        self.pf_case = Case.objects.create(name="pathfinder cases", domain=pf_domain)
-        self.complex_case = Case.objects.create(name="pathfinder complex cases", domain=pf_domain)
+        self.pf_case = Case.objects.create(name="pathfinder cases", domain=self.domain)
+        self.complex_case = Case.objects.create(name="pathfinder complex cases", domain=self.domain)
         
         self.reg_cfi = CaseFormIdentifier.objects.create(form_identifier=self.reg_fid, case=self.pf_case, sequence_id=1, form_type="open")
         self.follow_cfi = CaseFormIdentifier.objects.create(form_identifier=self.follow_fid, case=self.pf_case, sequence_id=2, form_type="follow")
@@ -60,11 +60,8 @@ class CaseTestCase(unittest.TestCase):
         # clean up, in case some other tests left some straggling
         # form data.  Do this in setup and teardown because we want
         # to start with a clean slate and leave a clean slate.
-        su = StorageUtility()
-        su.clear()
-        Submission.objects.all().delete()
-        Attachment.objects.all().delete()
-    
+        clear_data()
+        
     def testFormIdentifier(self):
         uniques = self.reg_fid.get_uniques()
         self.assertEqual(1, len(uniques))

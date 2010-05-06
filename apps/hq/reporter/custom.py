@@ -1,17 +1,19 @@
-import logging
-import string
 from datetime import datetime, timedelta
-from django.template.loader import render_to_string
 from django.template import Template, Context
+from django.template.loader import render_to_string
+from domain.models import Domain
 from hq.models import *
-import hq.utils as utils
-import graphing.dbhelper as dbhelper
-from xformmanager.models import *
 from receiver.models import Submission, Attachment
-
 from reports.custom.all.domain_summary import DomainSummary
-import metastats as metastats
+from reports.custom.all.shared import *
+from xformmanager.models import *
+import graphing.dbhelper as dbhelper
+import hq.utils as utils
 import inspector as repinspector
+import logging
+import metastats as metastats
+
+
 
 def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
     
@@ -42,7 +44,7 @@ def _get_flat_data_for_domain(domain, startdate, enddate, use_blacklist=True):
             
             if use_blacklist:
                 if fdef.domain:
-                    blacklist = fdef.domain.get_blacklist()
+                    blacklist = BlacklistedUser.for_domain(fdef.domain)
                 else:
                     blacklist = []
             #now that we've got ALL users, we can now the count query of their occurences in the formdef tables
@@ -129,9 +131,9 @@ def admin_stats_summary(report_schedule, run_frequency):
 def domain_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over
        time, for a single domain (the domain of the associated user)'''
-    domain = report_schedule.recipient_user.domain
-    title = "Domain Report - %s" % domain
-    return _catch_all_report(report_schedule, run_frequency, [domain], title)
+    domains = Domain.active_for_user(report_schedule.recipient_user)
+    title = "Domain Report - %s" % (", ".join([domain.name for domain in domains]))
+    return _catch_all_report(report_schedule, run_frequency, domains, title)
     
 def admin_catch_all_flat(report_schedule, run_frequency):
     '''A report that shows, per user, how many forms were submitted over
@@ -272,3 +274,89 @@ def get_delinquent_context_from_statdict(statdict, threshold):
         context['delinquent_reporterprofiles'] = delinquents
         context['threshold'] = threshold
         return context
+
+def ward_summary(report_schedule, run_frequency):
+    """Summary of all providers in each ward"""
+    from hq import reporter
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
+    if tomorrow.day == 1:
+        (startdate, enddate) = reporter.get_daterange(run_frequency)
+        wards = get_wards()
+        for ward in wards:
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_ward_summary_pdf(startdate, enddate, startdate.month, 
+                                 startdate.year, ward, doc)
+            
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ Ward Summary Report %s-%s.pdf" %\
+                        (ward, enddate), 'content': content, 'mimetype': 
+                        'application/pdf'}]
+        
+            reporter.transport_email('', report_schedule.recipient_user, 
+                            params={"email_subject": "CommCareHQ Ward Summary Report %s-%s" %\
+                                    (ward, enddate), "attachment": attachment })
+    
+def provider_summary(report_schedule, run_frequency):
+    """Summary of each provider and their patients"""
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
+    if tomorrow.day == 1:
+        from hq import reporter
+        (startdate, enddate) = reporter.get_daterange('monthly') # run_frequency is daily
+        puis = PhoneUserInfo.objects.all()
+        if puis != None:
+            for pui in puis:
+                provider = pui.username + pui.phone.device_id
+                additional_data = pui.additional_data
+                user_id = ""
+                if additional_data != None and 'hcbpid' in additional_data:
+                    user_id = additional_data['hcbpid']
+                
+                output = StringIO()
+                doc = SimpleDocTemplate(output)
+                data_list = get_provider_data_by_case("Pathfinder_1", provider, startdate, enddate)
+                get_provider_summary_pdf(startdate.month, startdate.year, 
+                                         provider, data_list, doc)
+                
+                output.seek(0)
+                content = output.read()
+                attachment = [{'filename': "CommCareHQ Summary by Provider Report %s_%s.pdf" %\
+                            (user_id, enddate), 'content': content, 'mimetype': 
+                            'application/pdf'}]
+            
+                reporter.transport_email('', report_schedule.recipient_user, 
+                                params={"email_subject": "CommCareHQ Summary by Provider Report %s_%s" %\
+                                    (user_id, enddate), "attachment": attachment })
+
+def hbc_monthly_summary(report_schedule, run_frequency):
+    """Summary of total patient information within each ward"""
+    from hq import reporter
+    # this is a hack to ensure that the monthly reports are sent on the last day of the month
+    today = datetime.now().date()
+    tomorrow = today + timedelta(days=1)
+    # if it's the last day of the month then send the report
+    if tomorrow.day == 1:
+        (startdate, enddate) = reporter.get_daterange(run_frequency)
+        wards = get_wards()
+        for ward in wards:
+            all_data = get_hbc_summary_data(startdate, enddate, startdate.month, 
+                                             startdate.year, ward)
+            chw_obj = all_data["all_data"]
+            output = StringIO()
+            doc = SimpleDocTemplate(output)
+            get_hbc_monthly_pdf(startdate.month, startdate.year, chw_obj, ward, doc)
+            output.seek(0)
+            content = output.read()
+            attachment = [{'filename': "CommCareHQ HBC Monthly Summary Report %s-%s.pdf" %\
+                           (ward, enddate), 'content': content, 'mimetype': 
+                           'application/pdf'}]
+            reporter.transport_email('', report_schedule.recipient_user, 
+                            params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s-%s" %\
+                                    (ward, enddate), "attachment": attachment })

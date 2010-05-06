@@ -1,0 +1,124 @@
+<h2 align="center">Ward Summary Report</h2>
+
+<h5 align="center">Ward: {{ context.ward }}</h5>
+<h5 align="center">Month: {{ context.month }}</h5>
+<h5 align="center">Year: {{ context.year }}</h5>
+
+<table border=1>
+	<thead>
+	<tr>
+		<th rowspan=2></th>
+		<th rowspan=2></th>
+		<th rowspan=2></th>
+		<th rowspan=2></th>
+		<th rowspan=2></th>
+		<th colspan=8 style="vertical-align:bottom;">Type of Patient visited</th>
+		<th colspan=4 rowspan=2>Age</th>
+		<th colspan=4 rowspan=2>Deaths</th>
+		<th colspan=4 rowspan=2>Transfer</th>
+		<th colspan=7 rowspan=2>Type of referrals</th>
+		<th rowspan=2>confirmed referrals for this month</th>
+	</tr>
+	<tr>
+		<th colspan=4>New</th>
+		<th colspan=4>Existing</th>
+	</tr>
+	<tr>
+		<th>Region</th>
+		<th>District</th>
+		<th>Ward</th>
+		<th>Provider Name</th>
+		<th>Provider ID</th>
+		<th colspan=2>PLWHAs</th>
+		<th colspan=2>CIP</th>
+		<th colspan=2>PLWHAs</th>
+		<th colspan=2>CIP</th>
+		<th colspan=2>>18yrs</th>
+		<th colspan=2><=18yrs</th>
+		<th colspan=2>PLWHAs</th>
+		<th colspan=2>CIP</th>
+		<th colspan=2>PLWHAs</th>
+		<th colspan=2>CIP</th>
+		<th>VCT</th>
+		<th>OIS</th>
+		<th>CTC</th>
+		<th>PMTCT</th>
+		<th>FP</th>
+		<th>SG</th>
+		<th>TB</th>
+		<th></th>
+	</tr>
+	<tr>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th>M</th>
+		<th>F</th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+		<th></th>
+	</tr>
+	</thead>
+	{% for chw in context.all_data %}
+	<tr class="{% cycle 'odd' 'even' %}">
+		<td>{{ chw.region }}</td>
+		<td>{{ chw.district }}</td>
+		<td>{{ chw.ward }}</td>
+		<td>{{ chw.chw_name }}</td>
+		<td>{{ chw.hcbpid }}</td>
+		<td>{{ chw.new_plha_m }}</td>
+		<td>{{ chw.new_plha_f }}</td>
+		<td>{{ chw.new_cip_m }}</td>
+		<td>{{ chw.new_cip_f }}</td>
+		<td>{{ chw.existing_plha_m }}</td>
+		<td>{{ chw.existing_plha_f }}</td>
+		<td>{{ chw.existing_cip_m }}</td>
+		<td>{{ chw.existing_cip_f }}</td>
+		<td>{{ chw.adult_m }}</td>
+		<td>{{ chw.adult_f }}</td>
+		<td>{{ chw.child_m }}</td>
+		<td>{{ chw.child_f }}</td>
+		<td>{{ chw.death_plha_m }}</td>
+		<td>{{ chw.death_plha_f }}</td>
+		<td>{{ chw.death_cip_m }}</td>
+		<td>{{ chw.death_cip_f }}</td>
+		<td>{{ chw.transfer_plha_m }}</td>
+		<td>{{ chw.transfer_plha_f }}</td>
+		<td>{{ chw.transfer_cip_m }}</td>
+		<td>{{ chw.transfer_cip_f }}</td>
+		<td>{{ chw.ref_vct }}</td>
+		<td>{{ chw.ref_ois }}</td>
+		<td>{{ chw.ref_ctc }}</td>
+		<td>{{ chw.ref_pmtct }}</td>
+		<td>{{ chw.ref_fp }}</td>
+		<td>{{ chw.ref_sg }}</td>
+		<td>{{ chw.ref_tb }}</td>
+		<td>{{ chw.conf_ref }}</td>
+	</tr>
+	{% endfor %}
+</table>

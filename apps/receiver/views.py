@@ -25,8 +25,9 @@ from receiver.models import _XFORM_URI as XFORM_URI
 from receiver.submitresponse import SubmitResponse
 from django.contrib.auth.models import User
 
+from domain.decorators import login_and_domain_required
 from hq.utils import paginate
-from hq.decorators import extuser_required
+
 
 import logging
 import hashlib
@@ -37,11 +38,10 @@ import string
 import submitprocessor
 
 
-@extuser_required()
+@login_and_domain_required
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
     '''View duplicates of this submission.'''
     context = {}
-    extuser = request.extuser
     submit = get_object_or_404(Submission, id=submission_id)
     if submit.checksum is None or len(submit.checksum) == 0:
         # this error will go away as soon as we update all submissions 
@@ -52,17 +52,16 @@ def show_dupes(request, submission_id, template_name="receiver/show_dupes.html")
         context['submissions'] = paginate(request, slogs)
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 def show_submits(request, template_name="receiver/show_submits.html"):
     '''View submissions for this domain.'''
     context = {}
-    extuser = request.extuser
-    slogs = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
+    slogs = Submission.objects.filter(domain=request.user.selected_domain).order_by('-submit_time')
     
     context['submissions'] = paginate(request, slogs)
     return render_to_response(request, template_name, context)
 
-@extuser_required()    
+@login_and_domain_required    
 def single_attachment(request, attachment_id):
     try:
         attachment = Attachment.objects.get(id=attachment_id)
@@ -76,7 +75,7 @@ def single_attachment(request, attachment_id):
     except:
         return ""
 
-@extuser_required()
+@login_and_domain_required
 def single_submission(request, submission_id, template_name="receiver/single_submission.html"):
     context = {}        
     slog = Submission.objects.all().filter(id=submission_id)
@@ -188,8 +187,9 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
         elif is_legacy_blob == False:             
             attachments = submitprocessor.handle_multipart_form(new_submission, request.FILES)
             
-        if request.extuser:
-            new_submission.authenticated_to = request.extuser
+        if request.user and request.user.is_authenticated():
+            # set the user info if necessary
+            new_submission.authenticated_to = request.user
             new_submission.save()
         
         # the receiver creates its own set of params it cares about 
@@ -239,58 +239,74 @@ def _do_domain_submission(request, domain_name, is_resubmission=False):
         return response.to_response()
 
     
-@extuser_required()
+@login_and_domain_required
 def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
      View data that we could not link to any known schema
     '''
     context = {}
-    extuser = request.extuser
     if request.method == "POST":
         xformmanager = XFormManager()
         count = 0
         
         def _process(submission, action):
+            """
+            Does the actual resubmission of a single form.
+            
+            return a tuple of (<success>, <message>) where:
+              success = True if success, else False
+              message = A helpful message about what happened
+            """ 
             if action == 'delete':
                 submission.delete()
-                return True
+                return (True, "deleted")
             elif action == 'resubmit':
                 status = False
                 try:
-                    status = xformmanager.save_form_data(submission.xform.filepath, submission.xform)
+                    status = xformmanager.save_form_data(submission.xform)
                 except StorageUtility.XFormError, e:
                     # if xform doesn't match schema, that's ok
-                    pass
-                return status
-            return False            
+                    return (False, "Expected problem: %s" % e)
+                except Exception, e:
+                    return (False, "Unexpected ERROR: %s" % e)
+                return (status, "Completed")
+            return (False, "Unknown action: %s" % action)
+               
+        errors = {}
         if 'select_all' in request.POST:
-            submissions = Submission.objects.filter(domain=extuser.domain).order_by('-submit_time')
+            submissions = Submission.objects.filter(domain=request.user.selected_domain).order_by('-submit_time')
             # TODO - optimize this into 1 db call
             for submission in submissions:
                 if submission.is_orphaned():
-                    if _process(submission, request.POST['action']): 
+                    status, msg = _process(submission, request.POST['action'])
+                    if status: 
                         count = count + 1
+                    else: 
+                        errors[str(submission.id)] = msg
         else: 
             for i in request.POST.getlist('instance'):
                 if 'checked_'+ i in request.POST:
                     submit_id = int(i)
                     submission = Submission.objects.get(id=submit_id)
-                    if _process(submission, request.POST['action']): 
+                    status, msg = _process(submission, request.POST['action'])
+                    if status:
                         count = count + 1
+                    else:
+                        errors[str(submission.id)] = msg
         context['status'] = "%s attempted. %s forms processed." % \
                             (request.POST['action'], count)
+        context["errors"] = errors
     inner_qs = SubmissionHandlingOccurrence.objects.all().values('submission_id').query
-    orphans = Submission.objects.filter(domain=extuser.domain).exclude(id__in=inner_qs)
+    orphans = Submission.objects.filter(domain=request.user.selected_domain).exclude(id__in=inner_qs)
     # We could also put a check in here to not display duplicate data
     # using 'if not orphan.is_duplicate()'
     context['submissions'] = paginate(request, orphans )
     return render_to_response(request, template_name, context)
 
-@extuser_required()
+@login_and_domain_required
 @transaction.commit_on_success
 def delete_submission(request, submission_id=None, template='receiver/confirm_delete.html'):
     context = {}
-    extuser = request.extuser
     submission = get_object_or_404(Submission, pk=submission_id)
     if request.method == "POST":
         if request.POST["confirm_delete"]: # user has confirmed deletion.
@@ -301,20 +317,19 @@ def delete_submission(request, submission_id=None, template='receiver/confirm_de
     context['type'] = 'Submission'
     return render_to_response(request, template, context)
 
-@extuser_required()
+@login_and_domain_required
 def orphaned_data_xml(request):
     """
     Get a zip file containing all orphaned submissions
     """
     context = {}
-    extuser = request.extuser
     inner_qs = SubmissionHandlingOccurrence.objects.all().values('pk').query
     orphans = Submission.objects.exclude(id__in=inner_qs)
     attachments = Attachment.objects.filter(submission__in=orphans)
     xforms = attachments.filter(attachment_uri=XFORM_URI)
     return get_zipfile( xforms.values_list('filepath', flat=True) )
 
-@extuser_required()
+@login_and_domain_required
 def annotations(request, attachment_id, allow_add=True):
     # TODO: error checking
     attach = Attachment.objects.get(id=attachment_id)
@@ -322,14 +337,14 @@ def annotations(request, attachment_id, allow_add=True):
     return render_to_response(request, "receiver/partials/annotations.html", {"attachment": attach, 
                                                                               "annotations": annotes, 
                                                                               "allow_add": allow_add})
-@extuser_required()
+@login_and_domain_required
 def new_annotation(request):
     # TODO: error checking
     attach_id = request.POST["attach_id"] 
     text = request.POST["text"]
     if text and attach_id:
         attach = Attachment.objects.get(id=attach_id)
-        Annotation.objects.create(attachment=attach, text=text, user=request.extuser)
+        Annotation.objects.create(attachment=attach, text=text, user=request.user)
         return HttpResponse("Success!")
     else:
         return HttpResponse("No Data!")

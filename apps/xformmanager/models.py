@@ -13,7 +13,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
+from django.contrib.contenttypes import generic
 
+from domain.models import Domain, Membership
 from hq.models import *
 from hq.utils import build_url
 from hq.dbutil import get_column_names, get_column_types_from_table, get_column_names_from_table
@@ -61,7 +63,7 @@ class ElementDefModel(models.Model):
     is_repeatable = models.BooleanField(default=False)
     #I don't think we fully support this yet
     #restriction = models.CharField(max_length=255)
-    parent = models.ForeignKey("self", null=True)
+    parent = models.ForeignKey("self", null=True, related_name="children")
     # Note that the following only works for models in the same models.py file
     form = models.ForeignKey('FormDefModel')
     
@@ -73,8 +75,8 @@ class ElementDefModel(models.Model):
 
 class FormDefModel(models.Model):
     # a bunch of these fields have null=True to make unit testing easier
-    # also, because creating a form defintion shouldn't be dependent on receing form through server
-    uploaded_by = models.ForeignKey(ExtUser, null=True)
+    # also, because creating a form defintion shouldn't be dependent on receiving form through server
+    uploaded_by = models.ForeignKey(User, null=True)
     
     # the domain this form is associated with, if any
     domain = models.ForeignKey(Domain, null=True, blank=True)
@@ -95,14 +97,14 @@ class FormDefModel(models.Model):
     target_namespace = models.CharField(max_length=255)
     version = models.IntegerField(null=True)
     uiversion = models.IntegerField(null=True)
-    date_created = models.DateField(auto_now=True)
+    date_created = models.DateField(default = datetime.today)
     #group_id = models.ForeignKey(Group)
     #blobs aren't supported in django, so we just store the filename
     
     element = models.OneToOneField(ElementDefModel, null=True)
     
     class Meta:
-        unique_together = ("target_namespace", "version")
+        unique_together = ("domain", "target_namespace", "version")
 
     def _get_xform_file_location(self):
         loc = self.xsd_file_location + str(".xform")
@@ -137,24 +139,26 @@ class FormDefModel(models.Model):
         """Create FormDefModel and ElementDefModel objects for a FormDef
            object."""
         fdd = FormDefModel()
-        table_name = format_table_name(formdef.target_namespace, formdef.version)
+        table_name = format_table_name(formdef.target_namespace, formdef.version, formdef.domain_name)
         fdd.name = str(formdef.name)
         fdd.form_name = table_name
         fdd.target_namespace = formdef.target_namespace
         fdd.version = formdef.version
         fdd.uiversion = formdef.uiversion
+        fdd.domain = formdef.domain
         
         try:
             fdd.save()
         except IntegrityError, e:
             raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
-                                   " Did you remember to update your version number?")
+                                   " Did you remember to update your version number?\n" + \
+                                   " Technical Details: %s" % unicode(e))
         ed = ElementDefModel()
         ed.xpath=formdef.root.xpath
         ed.table_name = table_name
         ed.form = fdd
         ed.save()
-        ed.parent = ed
+        ed.parent = None
         ed.save()
         
         fdd.element = ed
@@ -162,21 +166,21 @@ class FormDefModel(models.Model):
         return fdd
     
     @classmethod
-    def get_model(cls, target_namespace, version=None):
+    def get_model(cls, target_namespace, domain, version=None):
         """Given a form and version get me that formdef model.
            If formdef could not be found, returns None
         """
         try:
             return FormDefModel.objects.get(target_namespace=target_namespace,
-                                                    version=version)
+                                            domain=domain, version=version)
         except FormDefModel.DoesNotExist:
             return None
     
     @classmethod    
-    def get_formdef(cls, target_namespace, version=None):
+    def get_formdef(cls, target_namespace, domain, version=None):
         """Given an xmlns and version, return the FormDef object associated
            with it, or nothing if no match is found"""
-        formdefmodel = FormDefModel.get_model(target_namespace, version)
+        formdefmodel = FormDefModel.get_model(target_namespace, domain, version)
         if formdefmodel:
             return formdefmodel.to_formdef()
     
@@ -205,9 +209,9 @@ class FormDefModel(models.Model):
         return FormGroup(forms)
         
     @classmethod
-    def is_schema_registered(cls, target_namespace, version=None):
+    def is_schema_registered(cls, target_namespace, domain, version=None):
         """Given a form and version is that form registered """
-        return FormDefModel.get_model(target_namespace, version) is not None
+        return FormDefModel.get_model(target_namespace, domain, version) is not None
     
     @property
     def db_helper(self):
@@ -394,7 +398,9 @@ class Metadata(models.Model):
     formname = models.CharField(max_length=255, null=True)
     formversion = models.CharField(max_length=255, null=True)
     
+    # TODO: make this the real device (phone) object
     deviceid = models.CharField(max_length=255, null=True)
+    
     # do not remove default values, as these are currently used to discover field type
     timestart = models.DateTimeField(_('Time start form'), default = datetime.now)
     timeend= models.DateTimeField(_('Time end form'), default = datetime.now)
@@ -596,9 +602,18 @@ class FormDataColumn(models.Model):
     # The data type is defined at the column level.  Currently you cannot
     # mix strings, ints, etc. at the column level.  This is intentional.
     data_type = models.CharField(max_length=20)
-    fields = models.ManyToManyField(FormDataPointer)
+    fields = models.ManyToManyField(FormDataPointer, related_name="columns")
     
-
+    def delete(self, *args, **kwargs):
+        """Override delete - if the deletion of this object leaves a dangling
+           data pointer then we want to get rid of that too to avoid 
+           unnecessary clutter in the DB."""
+        for pointer in self.fields.all():
+            if pointer.columns.count() == 1:
+                pointer.delete()
+        super(FormDataColumn, self).delete(*args, **kwargs)
+        
+    
     def __unicode__(self):
         return "%s - (a %s spanning %s forms)" % (self.name, self.data_type, self.fields.count())
     
@@ -617,6 +632,8 @@ class FormDataGroup(models.Model):
     # I don't love these model names.  In fact I rather dislike them.  
     # Sigh.
     
+    domain = models.ForeignKey(Domain)
+        
     # Name is the internal name.  when generated from a collection of
     # forms it is the xmlns.  This should generally not be changed
     name = models.CharField(max_length=255)
@@ -638,7 +655,7 @@ class FormDataGroup(models.Model):
     # There is a non-enforced constraint that each column should only
     # contain pointers to forms that are referenced within this group.
     # TODO: add the constraint for real.
-    columns = models.ManyToManyField(FormDataColumn)
+    columns = models.ManyToManyField(FormDataColumn, related_name="groups")
     
     # CZUE: nevermind, don't do this.  It'll be way to slow for 
     # operations that save the group a lot (like creating it).
@@ -654,6 +671,19 @@ class FormDataGroup(models.Model):
 #        super(FormDataGroup, self).save()
 #        self.update_view()
 
+    def delete(self, *args, **kwargs):
+        """Override delete - we want to delete the view and any dangling
+           columns when this gets deleted"""
+        self._drop_view()
+        # delete all the columns attached to the form if they are
+        # no longer referenced by any other forms.  
+        for column in self.columns.all():
+            # based on the selection criteria above this has to be 
+            # the only form referencing the column
+            if column.groups.count() == 1:
+                column.delete()
+        super(FormDataGroup, self).delete(*args, **kwargs)
+        
     def update_view(self):
         """Update the sql view object associated with this.  This will
            create (or replace) the existing view and rebuild it based
@@ -731,7 +761,7 @@ class FormDataGroup(models.Model):
         
     
     @classmethod
-    def from_forms(cls, forms):
+    def from_forms(cls, forms, domain):
         """Create a group from a set of forms.  Walks through all of 
            the forms' root tables and creates columns for each column
            in the form's table.  If the column name and data type match
@@ -748,11 +778,13 @@ class FormDataGroup(models.Model):
         # forms with the same xmlns.
         name = forms[0].target_namespace
         now = datetime.utcnow()
+        
         view_name = get_unique_value(FormDataGroup.objects, "view_name", 
-                                format_table_name(name, prefix="view_"))
+                                format_table_name(name, prefix="view_", 
+                                                  domain_name=domain.name))
                     
         group = cls.objects.create(name=name, display_name=name, created=now,
-                                   view_name=view_name)
+                                   view_name=view_name, domain=domain)
         group.forms = forms
         group.save()
         for form in forms:
@@ -831,6 +863,15 @@ class FormDataGroup(models.Model):
         cursor.execute(sql)
         return cursor
     
+    def _drop_view(self):
+        """Delete the view associated with this group.  
+        """
+        # this should really only becallled as part of the deletion 
+        # process
+        sql = "DROP VIEW %s" % (self.view_name)
+        connection.cursor().execute(sql)
+        
+        
     def __unicode__(self):
         return "%s - (%s forms, %s columns)" % \
                 (self.name, self.forms.count(), self.columns.count())
@@ -854,7 +895,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
         # time seems wasteful
         manager = XFormManager()
         try:
-            manager.save_form_data(xml_file_name, instance)
+            manager.save_form_data(instance)
         except Exception, e:
             type, value, tb = sys.exc_info()
             traceback_string = '\n'.join(traceback.format_tb(tb))

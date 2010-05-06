@@ -2,9 +2,10 @@ import datetime
 import os
 import logging
 
-from hq.models import ExtUser
-from hq.models import Domain
-from hq.utils import build_url
+from django.contrib.auth.models import User
+from hq.utils import build_url, get_post_redirect
+from domain.models import Domain
+from domain.decorators import login_and_domain_required
 from requestlogger.models import RequestLog
 from xformmanager.manager import readable_form, csv_dump
 
@@ -31,10 +32,9 @@ import urllib
 @login_required()
 def all_projects(request, template_name="buildmanager/all_projects.html"):    
     context = {}
-    try: 
-        extuser = ExtUser.objects.all().get(id=request.user.id)
-        context['projects'] = Project.objects.filter(domain=extuser.domain)
-    except:
+    if request.user.selected_domain:
+        context['projects'] = Project.objects.filter(domain=request.user.selected_domain)
+    else:
         context['projects'] = Project.objects.all()
     return render_to_response(request, template_name, context)
 
@@ -51,18 +51,13 @@ def show_project(request, project_id, template_name="buildmanager/show_project.h
         raise Http404    
     return render_to_response(request, template_name, context)
 
-@login_required()
+@login_and_domain_required
 def all_builds(request, template_name="buildmanager/all_builds.html"):    
     context = {}    
-    try: 
-        extuser = ExtUser.objects.all().get(id=request.user.id)
-        context["domain"] = extuser.domain
-        projects = Project.objects.filter(domain=extuser.domain)
-        builds = _get_build_dictionary(projects)
-        context['all_builds'] = builds
-    except ExtUser.DoesNotExist:
-        template_name="hq/no_permission.html"
-        return render_to_response(request, template_name, context)
+    domain = request.user.selected_domain
+    projects = Project.objects.filter(domain=domain)
+    builds = _get_build_dictionary(projects)
+    context['all_builds'] = builds
     return render_to_response(request, template_name, context)
 
 def _get_build_dictionary(projects):
@@ -218,7 +213,6 @@ def new_build(request, template_name="buildmanager/new_build.html"):
     if request.method == 'POST':
         form = ProjectBuildForm(request.POST, request.FILES)                
         if form.is_valid():
-            # must add_schema to storage provide first since forms are dependent upon elements            
             try:                      
                 newbuild = form.save(commit=False)
                 newbuild.uploaded_by=request.user
@@ -293,11 +287,7 @@ def readable_xform(req, template_name="buildmanager/readable_form_creator.html")
                                                            })
         
     
-    # invoke the correct function...
-    # this should be abstracted away
-    if   req.method == "GET":  return get(req, template_name)
-    elif req.method == "POST": return post(req, template_name)        
-    
+    return get_post_redirect(request, get, post)
 
 def validator(req, template_name="buildmanager/validator.html"):
     """Validate an xform"""

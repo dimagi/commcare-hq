@@ -3,12 +3,12 @@
 {% block title %}Are you sure?{% endblock %}
 {% block mgr_content %}
 
-<h2>{% trans "This XForm contains invalid metadata. Are you sure you want to register it?" %}</h2>
+<h3 class="error">{% trans "This XForm has some problems. Are you sure you want to register it?" %}</h3>
 
 <ul>
-	Are you sure you want to register the xform {{file_name}}? <br/>
-	It contains the following errors:
-	{{ errors|linebreaks }}
+<strong>
+It contains the following issues:
+{{ errors|linebreaks }}
 	
 	<p/><p/><p/>
 	<form action="" method="post">
@@ -17,7 +17,7 @@
 	<input type="submit" value="{% trans "Yes, I'm sure" %}" />
 	</div>
 	</form>
-
+</strong>
 </ul>
 
 

@@ -179,7 +179,8 @@ class DbHelper(object):
     
     
     def get_filtered_date_count(self, startdate, enddate, filters = {}):
-        """Special report query to give you for a given filtered count over a certain column value
+        """
+        Special report query to give you for a given filtered count over a certain column value
         For example, if i know a username column, I want to get a daily count returns count, date
         
         Filters are a dictionary of {'colname','value} or {'colname':[value1,value2]}
