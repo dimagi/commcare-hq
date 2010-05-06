@@ -461,8 +461,6 @@ class SqlReport(models.Model):
                     query = query.replace(match, additional_params[attr])
                 else:
                     query = query.replace(match, "")
-        
-        # print query 
         return query
         
     def get_display_cols(self):
