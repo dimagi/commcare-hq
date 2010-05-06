@@ -91,3 +91,4 @@ def _safe_import(module_name):
     except ImportError:
         # this is ok, there just wasn't a module with custom reports
         return None
+

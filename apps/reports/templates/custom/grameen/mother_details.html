@@ -1,97 +1,49 @@
 {% load hq_shared_tags %}
-<script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/hideShow.js"></script>
 <h2>Mother Summary for {{ mother.mother_name }}</h2>
-{% if attach_id %}
-	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog');">
-		<button class="follow-up">Follow Up</button>
-	</div>
-	<br /><br />
-{% endif %}
-<style>
-.internal {
-	border: 1px solid #ddd;
-	-moz-border-radius: 20px;
-    -webkit-border-radius: 20px;
-    -khtml-border-radius: 20px;
-    border-radius: 20px;
-	text-align: center;
-	font-size: 16px;
-}
-
-.internal h3 {
-	margin-top: -10px;
-	margin-bottom: 20px;
-	text-align: center;
-}
-
-.internal table {
-	border: 0px;
-/*	width: 80%;*/
-	margin: 30px;
-}
-</style>
-<div class="container">
-	<div class="span-12">
-		<div class="internal">
-			<table>
-				<tr><td colspan="2" align="center"><h3>General Info</h3></td></tr>
-				<tr><td align="right">Age</td><td>{{ mother.mother_age}}</td></tr>
-				<tr><td align="right">Height</td><td>{{ mother.mother_height}}</td></tr>
-				<tr><td align="right">Attending CHW</td><td>{{ mother.chw }}</td></tr>
-				<tr><td align="right">Partner Name/Occupation</td><td>{{ mother.partner_occupation }}</td></tr>
-				<tr><td align="right">Phone</td><td>{{ mother.phone }}</td></tr>				
-			</table>
-		</div>
-	</div>
-	<div class="span-12 last">
-		<div class="internal">
-			<table>
-				<tr><td colspan="2" align="center"><h3>Pregnancy Info</h3></td></tr>
-				<tr><td align="right">Months Pregnant:</td><td>{{ mother.months_pregnant }}</td></tr>
-				{% ifequal mother.hi_risk "yes" %}
-					<tr style="color: red"><td align="right">Hi Risk:</td><td>Yes</td></tr>
-					<tr><td colspan="2" style="text-align: center"><b>High Risk Factors</b></td></tr>
-					{% for f in risk_factors %}
-					<tr><td colspan="2">&nbsp;&nbsp;-&nbsp;{{ f }}</td></tr>
-					{% endfor %}
-				{% else %}
-					<tr style="color: green"><td align="right">Hi Risk:</td><td>No</td></tr>
-				{% endifequal %}
-			</table>
-		</div>
-	</div>
-</div>
-
-<p><div class="js_link" onclick="$('.preg_history').toggle()" style="text-align: center"><h3 style="color: blue">Pregnancy History</h3></div></p>
-<div class="preg_history" style="display:none;">    
-	<div class="container">
-		<div class="span-12 prepend-6 last">
-			<div class="internal">	
-				<table>
-					<tr><td align="right">Previous Pregnancies:</td><td>{{ mother.previous_pregnancies }}</td></tr>
-				    <tr><td align="right">Previous Deliveries:</td><td>{{ mother.previous_deliveries }}</td></tr>
-				    <tr><td align="right">Previous Terminations:</td><td>{{ mother.previous_terminations }}</td></tr>
-				    <tr><td align="right">Previous Newborn Death:</td><td>{{ mother.previous_newborn_death }}</td></tr>
-				    <tr><td align="right">Previous C-Section:</td><td>{{ mother.previous_csection }}</td></tr>
-				    <tr><td align="right">Previous Bleeding:</td><td>{{ mother.previous_bleeding }}</td></tr>
-				</table>
-			</div>
-		</div>
-	</div>
-</div>
-
-<p><div class="js_link" onclick="$('.all_data').toggle()" style="text-align: center"><h3 style="color: blue">Show Complete Data</h3></div></p>
+<div id="mother-summary">
+<h3>General Information</h3>
+<table>
+    <tr><td class="prompt">Name:</td> <td class="value">{{ mother.mother_name }}</td></tr>
+    <tr><td class="prompt">Address:</td> <td class="value">{{ mother.address }}</td></tr>
+    <tr><td class="prompt">Phone:</td> <td class="value">{{ mother.phone }}</td></tr>
+    <tr><td class="prompt">Attending CHW:</td> <td class="value">{{ mother.chw }}</td></tr>
+    <tr><td class="prompt">Age:</td> <td class="value">{{ mother.mother_age}}</td></tr>
+    <tr><td class="prompt">Height:</td> <td class="value">{{ mother.mother_height}}</td></tr>
+    <tr><td class="prompt">Partner Name:</td> <td class="value">{{ mother.partner_name }}</td></tr>
+    <tr><td class="prompt">Partner Occupation:</td> <td class="value">{{ mother.partner_occupation }}</td></tr>
+</table>
+<h3>This Pregnancy</h3>
+<table>
+    <tr><td class="prompt">Date Registered:</td> <td class="value">{{ mother.date_of_reg|date }}</td></tr>
+    <tr><td class="prompt">Months Pregnant:</td> <td class="value">{{ mother.months_pregnant }}</td></tr>
+    <tr><td class="prompt">Heart Problems:</td> <td class="value">{{ mother.heart_problems }}</td></tr>
+    <tr><td class="prompt">Diabetes:</td> <td class="value">{{ mother.diabetes }}</td></tr>
+    <tr><td class="prompt">Hip Problems:</td> <td class="value">{{ mother.hip_problems }}</td></tr>
+    <tr><td class="prompt">Hi Risk:</td> <td class="value{% ifequal mother.hi_risk 'yes' %} problem{% endifequal %}">{{ mother.hi_risk }}</td></tr>
+</table>
+<h3>Pregnancy History</h3>
+<table>
+    <tr><td class="prompt">Previous Pregnancies:</td> <td class="value">{{ mother.previous_pregnancies }}</td></tr>
+    <tr><td class="prompt">Previous Deliveries:</td> <td class="value">{{ mother.previous_deliveries }}</td></tr>
+    <tr><td class="prompt">Previous Terminations:</td> <td class="value">{{ mother.previous_terminations }}</td></tr>
+    <tr><td class="prompt">Previous Newborn Death:</td> <td class="value">{{ mother.previous_newborn_death }}</td></tr>
+    <tr><td class="prompt">Previous C-Section:</td> <td class="value">{{ mother.previous_csection }}</td></tr>
+    <tr><td class="prompt">Previous Bleeding:</td> <td class="value">{{ mother.previous_bleeding }}</td></tr>
+</table>
+<h3>Problems</h3>
+<table>
+    <tr><td class="prompt">High Risk Factors:</td> <td class="value">{{ mother.hi_risk_reasons }}</td></tr>
+    <tr><td class="prompt">Incomplete Checklist Items:</td> <td class="value">{{ mother.incomplete_checklist_items }}</td></tr>
+</table>
+<p><div class="js_link" onclick="hideShow('div.all_data')">-- show/hide full data list --</div></p>
 <div class="all_data" style="display:none;">
-	<h3>All Data</h3>
-	<table>
-	    <thead><th>Name</th><th>Value</th></thead>
-	{% for attr, display in attrs %}
-	<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
-	{% endfor %}
-	</table>
+<h3>All Data</h3>
+<table>
+    <thead><th>Name</th><th>Value</th></thead>
+{% for attr, display in attrs %}
+<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
+{% endfor %}
+</table>
 </div>
-
-<div class="modal_dialog" id="dialog" style="display: none;">
-<a href="#" class="jqmClose">Close</a>
-Please wait while that loads... 
 </div>
