@@ -2,8 +2,10 @@
  ** Main wrapper/body stylings
  *******************************************/
 
-body {  
+html,body {  
     background-color: #eeeeee;
+    margin: 0px;
+    padding: 0;
 }
 
 #inner {
@@ -18,12 +20,15 @@ body {
     margin: 0 auto;
     background: #fff;
     
-    /* a little pretty for the 10/dec demo */
     -moz-box-shadow: 4px 4px 8px #aaa;
+    -webkit-box-shadow: 4px 4px 8px #aaa;
     box-shadow: 4px 4px 8px #aaa;
     margin-top: 0.5em;
-    -moz-border-radius-bottomright: 1em;
+    -moz-border-radius-bottomright: 1em;    
     -moz-border-radius-bottomleft: 1em;
+    -webkit-border-bottom-right-radius: 5px;    
+    -webkit-border-bottom-left-radius: 5px;
+    
 }
 
     /* no scaling for ie6 */
