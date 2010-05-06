@@ -13,8 +13,9 @@
 [rapidsms]
 apps=admin,hq,webapp,ajax,patterns,locations,reporters,httptester,django_extensions,receiver,xformmanager,reports,logger,messaging,docs,graphing,logtracker,buildmanager,requestlogger,scheduler,domain,django_granular_permissions,django_tables,user_registration,intel,releasemanager,program,phone
 
-#backends=http,end2end,email
+# backends=http,end2end,email
 backends=http,end2end
+
 
 # -- DATABASE
 #
