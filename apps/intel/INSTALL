@@ -29,9 +29,9 @@ Steps to install this app:
 
 	- add "intel" to apps under [rapidsms]
 
-	- add the following lines to the end of the file:
+	- add the following lines to the end of the file (the templates are all under apps/intel/templates):
 
 		BASE_TEMPLATE=intel-layout.html
 		LOGIN_REDIRECT_URL = /intel
-		LOGIN_TEMPLATE=login_and_password/intel-login.html
-		LOGGEDOUT_TEMPLATE=login_and_password/intel-logout.html
+		LOGIN_TEMPLATE=intel-login.html
+		LOGGEDOUT_TEMPLATE=intel-logout.html
