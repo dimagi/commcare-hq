@@ -71,6 +71,8 @@ def report(request, format):
     showclinic = request.GET['clinic'] if request.GET.has_key('clinic') else context['clinic']['id']
     context['showclinic'] = showclinic
     
+    context['req'] = request
+    
     # hi risk view?
     hi_risk_only = request.path.replace(".%s" % format, '').endswith('/risk')
     context['page'] = 'risk' if hi_risk_only else 'all' 
@@ -88,8 +90,9 @@ def report(request, format):
     # filter by CHW name
     filter_chw = request.GET['meta_username'] if request.GET.has_key('meta_username') else None
     chws = [filter_chw] if filter_chw else chws_for(showclinic)
+    
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
-
+    
     if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
 
     # filter by a specific risk indicator (for links from the HQ view "High Risk" page)
@@ -104,8 +107,8 @@ def report(request, format):
     search = search.strip()    
     if search != '':
         rows = rows.filter(sampledata_mother_name__icontains=search)
-        
-            
+
+
     visits = clinic_visits(clinic_id=showclinic, chw_name=filter_chw)
     
     # finally, pack it up and ship to the template/CSV

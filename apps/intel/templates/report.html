@@ -20,10 +20,17 @@
 {% load url_for %}
 {% block content %}
 	{% ifnotequal page "single" %}
-		<form action="/intel/all" method="get" style="padding-left: 15px">
+		<form action="/intel/{{ page }}" method="get" style="padding-left: 15px">
+			
+			{% for key,val in req.GET.items %}
+			    <input type="hidden" name="{{ key }}" value="{{ val }}" />
+			{% endfor %}
+			
 		    <input type="text" size="20" name="search" value="{{ search_term }}"/>&nbsp;
 		    <input type="submit" value="Search by Mother Name"/>
 		</form>
+
+
 		<br>
 		{% if title %}<b>{{title|safe}}</b>{% endif %}
 		<center>
