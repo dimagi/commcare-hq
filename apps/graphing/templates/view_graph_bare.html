@@ -1,0 +1,14 @@
+{% load i18n %}
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
+    {{ form.media }}
+{% endblock %} 
+{% block content %}
+    {% with thegraph as chart %}
+		{% include "graphing/inline_rawgraph.html" %}
+	{% endwith %}
+<p><a href="{% url graphing.views.view_graph thegraph.id %}">&lt;-- back to graphs</a></p>
+{%endblock%}
+    

@@ -1,0 +1,32 @@
+{% extends base_template %}
+{% load i18n %}
+{% block javascripts %}
+    {# commenting out because these are redundant due to webapp <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.js"></script>#} 
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
+    
+    
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/graphing/superfish/superfish.css" media="screen">    
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
+    <script type="text/javascript">
+		// initialise plugins
+		jQuery(function(){
+			jQuery('ul.sf-menu').superfish();
+		});
+	</script>
+    
+    {{ form.media }}
+{% endblock %} 
+
+{% block content %}
+
+<ul class="sf-menu">
+	{% include "graphing/inline_graphgroup.html" %}	
+</ul>
+ 
+    {% for chart in group_charts %}
+		{% include "graphing/inline_rawgraph.html" %}
+	{%endfor %}
+
+{%endblock%}

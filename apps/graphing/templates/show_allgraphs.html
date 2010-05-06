@@ -1,0 +1,20 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{% trans "All Graph Queries" %}{% endblock %}
+{% block content %}
+<h2>{% trans "All Graphs" %}</h2>
+   <table>
+    <thead>
+        <tr>
+            <th>ID</th><th>Shortname</th><th>Full Description</th>
+        </tr>
+    </thead>
+   {% for graph in allgraphs %}      
+   	<tr class="{% cycle 'odd' 'even' %}">
+   		<td><a href="{%url graphing.views.view_graph graph.id %}">{{graph.id}}</a></td>
+   		<td>{{graph.shortname}}</td>
+   		<td>{{graph.title}}</td>   		
+   	</tr>   	
+   {% endfor %}
+   </table>
+{% endblock %}

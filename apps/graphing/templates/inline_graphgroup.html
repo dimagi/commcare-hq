@@ -1,0 +1,20 @@
+{% for group, subgroups in graphtree.items %}
+		<li><a>{{ group.name }}</a>
+			<ul>
+			{% if group.graphs %}				
+					{% for graph in group.graphs.all %}
+					<li>
+						<a href="{%url graphing.views.view_graph graph.id %}">{{graph.shortname}}</a>
+					</li>
+					{% endfor %}								
+			{% endif %}
+			{% if subgroups %}			
+				{% with "graphing/inline_graphgroup.html" as recursefile %}  		
+				{% with subgroups as graphtree %}
+					{% include recursefile %}													
+				{% endwith %}					
+				{%endwith %}			
+			{%endif %}
+			</ul>
+		</li>		
+{% endfor %}
