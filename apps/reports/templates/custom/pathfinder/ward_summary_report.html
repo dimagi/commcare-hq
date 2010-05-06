@@ -5,8 +5,13 @@
 <div id="government-report">
 <h2 align="center">Ward Summary Report</h2>
 
+
+<h5 align="center">Ward: {{ ward }}</h5>
 <h5 align="center">Month: {{ month }}</h5>
 <h5 align="center">Year: {{ year }}</h5>
+
+<div><a href="{% url reports.views.ward_sum_csv month_num year ward %}">download csv file</a></div>
+<div><a href="{% url reports.views.ward_sum_pdf month_num year ward %}">download pdf file</a></div>
 
 <table>
 	<thead>
@@ -94,7 +99,7 @@
 		<td>{{ chw.district }}</td>
 		<td>{{ chw.ward }}</td>
 		<td>{{ chw.chw_name }}</td>
-		<td>{{ chw.chw_id }}</td>
+		<td>{{ chw.hcbpid }}</td>
 		<td>{{ chw.new_plha_m }}</td>
 		<td>{{ chw.new_plha_f }}</td>
 		<td>{{ chw.new_cip_m }}</td>

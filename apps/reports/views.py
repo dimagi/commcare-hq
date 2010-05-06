@@ -3,21 +3,31 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 
-from rapidsms.webui.utils import render_to_response
+from rapidsms.webui.utils import render_to_response, UnicodeWriter
 
 from transformers.csv import format_csv 
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
-from hq.utils import paginate
+from hq.utils import paginate, get_dates_reports
 from domain.decorators import login_and_domain_required
 
 import util
-from custom.all.shared import get_data_by_chw, get_case_info, get_mon_year
+from custom.all.shared import *
 from custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCMonthlySummaryData
 
 from StringIO import StringIO
-from transformers.csv import UnicodeWriter
 import calendar
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.platypus import *
+    from reportlab.lib.pagesizes import portrait
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import *
+except ImportError:
+    # reportlab isn't installed.  some views will fail but this is better
+    # than bringing down all of HQ
+    pass
 
 @login_and_domain_required
 def reports(request, template_name="list.html"):
@@ -113,17 +123,48 @@ def sql_report_csv(request, report_id):
     whereclause = util.get_whereclause(request.GET)
     cols, data = report.get_data({"whereclause": whereclause})
     return format_csv(data, cols, report.title)
-    
 
 @login_and_domain_required
-def individual_chw(request, domain_id, chw_id, enddate, active):
+def sum_chw(request):
+    ''' View the chw summary for the given case'''
+    case_id = None
+    year = None
+    month = None
+    if request:
+        for item in request.GET.items():
+            if item[0] == 'case':
+                case_id = int(item[1])
+    if case_id == None:
+        return '''Sorry, no case has been selected'''
+    domain = request.user.selected_domain
+    # to configure these numbers use 'startdate_active', 'startdate_late', 
+    # and 'enddate' in the url
+    active, late, enddate = get_dates_reports(request, 30, 90)
+    try:
+        case = Case.objects.get(id=case_id)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    
+    data_by_chw = get_data_by_chw(case)
+    all_data = {}
+    all_data['domain'] = domain.id
+    all_data['case_id'] = case_id
+    all_data['enddate'] = str(enddate.month) + "/" + str(enddate.day) + "/" +\
+         str(enddate.year)
+    all_data['startdate_active'] = str(active.month) + "/" + str(active.day) +\
+        "/" + str(active.year)
+    all_data['data'] = get_active_open_by_chw(data_by_chw, active, enddate)
+    return render_to_response(request, "custom/all/chw_summary.html", all_data)
+
+@login_and_domain_required
+def individual_chw(request, domain_id, case_id, chw_id, enddate, active):
     '''View the cases of a single chw'''
     context = {}
     enddate = datetime.strptime(enddate, '%m/%d/%Y').date()
     active = datetime.strptime(active, '%m/%d/%Y').date()
     context['chw_id'] = chw_id
-    domain = request.extuser.domain
-    case = Case.objects.get(domain=domain)
+    case = Case.objects.get(id=case_id)
     data_by_chw = get_data_by_chw(case)
     get_case_info(context, data_by_chw[chw_id], enddate, active)
     return render_to_response(request, "custom/all/individual_chw.html", 
@@ -131,79 +172,137 @@ def individual_chw(request, domain_id, chw_id, enddate, active):
 
 def sum_provider(request):
     '''View a single provider summary report'''
-    context = {}
-    case_name = "Pathfinder_1"
+
     provider = None
     if request:
         for item in request.POST.items():
             if item[0] == 'provider':
                 provider=item[1]
     (month, year, startdate, enddate) = get_mon_year(request)
-    
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data = data_by_chw[provider]
-    client_data_list = []
-    for client_id, client_data in chw_data.items():
-        client_obj = ProviderSummaryData(case, client_id, client_data, 
-                                         startdate, enddate)
-        if client_obj.num_visits != 0:
-            client_data_list.append(client_obj)
 
-    context["all_data"] = client_data_list
-    context["region"] = None #TODO: get region
-    context["district"] = None #TODO: get district
-    context["ward"] = None #TODO: get ward
-    context["month"] = calendar.month_name[month]
-    context["year"] = year
-    context["prov_name"] = None #TODO: get name
-    context["num"] = provider
-    context["sex"] = None #TODO: get sex
-    context["trained"] = None #TODO: get trained
-    context["org"] = None #TODO: get org
-    context["days_train"] = None #TODO: get days_train
-    context["category"] = None #TODO: get category
-    context["supervisor"] = None #TODO: get supervisor
-    context["facility"] = None #TODO: get facility
-    context["supervisor_id"] = None #TODO: get supervisor_id
-    context["org_support"] = None #TODO: get org_support
-
+    context = get_provider_summary_data(startdate, enddate, month, year, 
+                                        provider)
     return render_to_response(request, 
                               "custom/pathfinder/sum_by_provider_report.html",
                               context)
 
 def sum_ward(request):
     '''View the ward summary report'''
-    context = {}
-    case_name = "Pathfinder_1" 
     (month, year, startdate, enddate) = get_mon_year(request)
-
-    try:
-        case = Case.objects.get(name=case_name)
-    except Case.DoesNotExist:
-        return '''Sorry, it doesn't look like the forms that this report 
-                  depends on have been uploaded.'''
-    data_by_chw = get_data_by_chw(case)
-    chw_data_list = []
-    for chw_id, chw_data in data_by_chw.items():
-        chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-        chw_data_list.append(chw_obj)
-    context["all_data"] = chw_data_list
-    context["year"] = year
-    context["month"] = calendar.month_name[month]
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    context = get_ward_summary_data(startdate, enddate, month, year, ward)
     return render_to_response(request, 
                               "custom/pathfinder/ward_summary_report.html", 
                               context)
 
 def hbc_monthly_sum(request):
     ''' View the hbc monthly summary report'''
-    context = {}
-    case_name = "Pathfinder_1" 
     (month, year, startdate, enddate) = get_mon_year(request)
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    context = get_hbc_summary_data(startdate, enddate, month, year, ward)
+    return render_to_response(request, 
+                              "custom/pathfinder/hbc_summary_report.html", 
+                              context)
+    
+def select_prov(request):
+    '''Given a ward, select the provider and date for the report'''
+    context = {}
+    ward = ""
+    if request:
+        for item in request.POST.items():
+            if item[0] == 'ward':
+                ward = item[1]
+    providers = {}
+    puis = PhoneUserInfo.objects.all()
+    if puis != None:
+        for pui in puis:
+            additional_data = pui.additional_data
+            if additional_data != None and "ward" in additional_data:
+                if ward == additional_data["ward"]:
+                    providers[pui.username + pui.phone.device_id] = pui.username
+    context["providers"] = providers
+
+    year = datetime.now().date().year
+    years = []
+    for i in range(0, 5):
+        years.append(year-i)
+    context["years"] = years
+    return render_to_response(request, 
+                              "custom/pathfinder/select_provider.html", 
+                              context)
+    
+def ward_sum_csv(request, month, year, ward):
+    ''' Creates CSV file of ward summary report'''
+    (startdate, enddate) = get_start_end(month, year)
+    chw_data_list = get_ward_chw_data_list(startdate, enddate, ward)
+    output = StringIO()
+    w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
+    headers = get_ward_summary_headings()
+    for header in headers:
+        w.writerow(header)
+    for row in chw_data_list:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(), mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="ward_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
+    return response
+
+def sum_prov_csv(request, chw_id, month, year):
+    ''' Creates CSV file of summary by provider report'''
+    case_name = "Pathfinder_1"
+    (startdate, enddate) = get_start_end(month, year)
+    try:
+        case = Case.objects.get(name=case_name)
+    except Case.DoesNotExist:
+        return '''Sorry, it doesn't look like the forms that this report 
+                  depends on have been uploaded.'''
+    data_by_chw = get_data_by_chw(case)
+
+    chw_data = {}
+    if chw_id in data_by_chw:
+        chw_data = data_by_chw[chw_id]
+    client_data_list = []
+    for client_id, client_data in chw_data.items():
+        client_obj = ProviderSummaryData(case, client_id, client_data, 
+                                         startdate, enddate)
+        if client_obj.num_visits != 0:
+            client_data_list.append(client_obj)
+    data = get_user_data(chw_id)
+    provider_data_list = get_provider_data_list(data, month, year)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
+    output = StringIO()
+    w = UnicodeWriter(output)
+    for row in provider_data_list:
+        w.writerow(row)
+    w.writerow([''])
+    w.writerow(get_provider_summary_headers())
+    for row in client_data_list:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(), mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="provider_%s_summary_%s-%s.csv"'\
+                                        % ( username, month, year)
+    return response
+
+def hbc_sum_csv(request, month, year, ward):
+    '''Creates csv file of HBC monthly summary report'''
+    case_name = "Pathfinder_1" 
+    (startdate, enddate) = get_start_end(month, year)
     
     try:
         case = Case.objects.get(name=case_name)
@@ -211,10 +310,69 @@ def hbc_monthly_sum(request):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
-    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate)
-    context["all_data"] = chw_obj
-    context["month"] = calendar.month_name[month]
-    context["year"] = year
-    return render_to_response(request, 
-                              "custom/pathfinder/hbc_summary_report.html", 
-                              context)
+
+    chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
+    output = StringIO()
+    w = UnicodeWriter(output)
+    w.writerow(['Ward:', ward])
+    w.writerow(['Month:', calendar.month_name[int(month)]])
+    w.writerow(['Year:', year])
+    w.writerow([''])
+    w.writerow(['Number of providers - who reported this month:',
+                chw_obj.providers_reporting])
+    w.writerow(['- who did not report this month:', 
+                chw_obj.providers_not_reporting])
+    w.writerow('')
+    display_data = get_hbc_monthly_display(chw_obj)
+    for row in display_data:
+        w.writerow(row)
+    w.writerow('')
+    display_data2 = get_hbc_monthly_display_second(chw_obj)
+    for row in display_data2:
+        w.writerow(row)
+    output.seek(0)
+    response = HttpResponse(output.read(), mimetype='application/ms-excel')
+    response["content-disposition"] = 'attachment; filename="hbc_monthly_summary_%s_%s-%s.csv"'\
+                                        % ( ward, month, year)
+    return response
+
+def ward_sum_pdf(request, month, year, ward):
+    ''' Creates PDF file of ward summary report'''
+    (startdate, enddate) = get_start_end(month, year)
+
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=ward_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
+    doc = SimpleDocTemplate(response)
+    get_ward_summary_pdf(startdate, enddate, month, year, ward, doc)
+    return response
+
+def hbc_sum_pdf(request, month, year, ward):
+    ''' Creates PDF file of HBC monthly summary report'''
+    (startdate, enddate) = get_start_end(month, year)
+    all_data = get_hbc_summary_data(startdate, enddate, month, year, ward)
+    chw_obj = all_data["all_data"]
+    
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=hbc_monthly_summary_%s_%s-%s.pdf'\
+                                        % (ward, month, year)
+    doc = SimpleDocTemplate(response)
+    get_hbc_monthly_pdf(month, year, chw_obj, ward, doc)
+    return response
+
+def sum_prov_pdf(request, chw_id, month, year):
+    '''Creates PDF file of summary by provider report'''
+    case_name = "Pathfinder_1"
+    (startdate, enddate) = get_start_end(month, year)
+    client_data_list = get_provider_data_by_case(case_name, chw_id, startdate, enddate)
+    data = get_user_data(chw_id)
+    username = ''
+    if 'prov_name' in data:
+        username = data['prov_name']
+            
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=provider_%s_summary_%s-%s.pdf'\
+                                     % (username, month, year)
+    doc = SimpleDocTemplate(response)
+    get_provider_summary_pdf(month, year, chw_id, client_data_list, doc)
+    return response

@@ -1,13 +1,8 @@
 {% extends "hq/base.html" %}
 {% load i18n %}
-{% load dashboard_tags %}
+{% load hq_shared_tags %}
 {% load mainreport_tags %}
-
 {% block title %}{% trans "My Dashboard" %}{% endblock %}
-{% block javascripts %}
-    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.js"></script> 
-    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
-{% endblock %}
 {% block org_content %}
 
 <h2>{%trans "Activity Dashboard"%} :: {% ifequal startdate enddate %}
@@ -15,8 +10,18 @@
                                       {% else %}
                                         {{startdate|date}} - {{enddate|date}}
                                       {% endifequal%}</h2>
-{% get_daterange_links view_name %}	
+{% get_daterange_links_basic "" %}	
 <br>
-<h3>{%trans "Forms Submitted" %}</h3>	
-{% get_dashboard_user_counts user.selected_domain startdate enddate %}
+{% for program, data in program_data.items %}
+<h3>{{ program.name }} - {% trans "Forms Submitted" %}</h3>
+{% with program_totals|dict_lookup:program as totals %}
+{% include "hq/partials/dashboard_group.html" %}
+{% endwith %}
+{% endfor %}
+<h3>Unregistered Users - {% trans "Forms Submitted" %}</h3>
+{% with unregistered_data as data %}
+{% with unregistered_totals as totals %}
+{% include "hq/partials/dashboard_group.html" %}
+{% endwith %}
+{% endwith %}
 {% endblock %}

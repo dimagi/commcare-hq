@@ -1,3 +1,6 @@
+{% extends base_template %}
+{% block title %}Community Health Worker Summary Report{% endblock %}
+{% block content %}
 <h2>Community Health Worker Summary Report</h2>
 <table>
 	<thead>
@@ -10,10 +13,10 @@
 		<th>Late (Routine)/Late (Referral)</th>
 	</tr>
 	</thead>
-	{% for chw_data in all_data.data %}
+	{% for chw_data in data %}
 	
 	<tr class="{% cycle 'odd' 'even' %}" {% if not chw_data.over_ninety %} style="color:red" {% endif %}>
-		<td><a href="{% url reports.views.individual_chw all_data.domain chw_data.chw all_data.enddate all_data.startdate_active %}">{{ chw_data.chw }}</a></td>
+		<td><a href="{% url reports.views.individual_chw domain case_id chw_data.chw enddate startdate_active %}">{{ chw_data.chw }}</a></td>
 		<td>{{ chw_data.chw_name }}</td>
 		<td>{{ chw_data.active }}/{{ chw_data.open }} ({{ chw_data.percentage }}%)</td>
 		<td>{{ chw_data.last_week }}</td>
@@ -22,3 +25,4 @@
 	</tr>
 	{% endfor %}
 </table>
+{% endblock %}

@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from domain.models import Domain 
 from reporters.models import Reporter, ReporterGroup
-from hq.processor import REGISTRATION_XMLNS, create_phone_user
 import xformmanager.xmlrouter as xmlrouter
 
 
@@ -24,7 +23,7 @@ class ReporterProfile(models.Model):
     '''The profile for a reporter object.  For attaching some of our
        own metadata-type information to RapidSMS reporters.  This is 
        loosely modeled on how django user profiles work.'''    
-           
+    
     reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")    
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
@@ -223,10 +222,6 @@ class BlacklistedUser(models.Model):
                   (self.username, 
                    ",".join([domain.name for domain in self.domains.all()]))
                   
-                  
-# register our registration method, like a signal, in the models file
-# to make sure this always gets bootstrapped.  
-# TODO: it's unclear what app reg should belong to, for now stick it in
-# the blanket "hq"
-xmlrouter.register(REGISTRATION_XMLNS, create_phone_user)
+
+
 

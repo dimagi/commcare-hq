@@ -1,5 +1,5 @@
 from datetime import timedelta
-import settings
+from django.conf import settings
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
@@ -51,9 +51,20 @@ def get_members_and_supervisors(organization):
     return (members, supervisors)
             
     
-def get_user_affiliation(user):
-    (parents, children) = traversal.getImmediateRelationsForObject(user)
-    raise Exception("Someone needs to fix this method to no longer be dependent on model relationship if they're going to use it!")
+def get_date_range(startdate, enddate):
+    """
+    Returns a list of dates, including every day between startdate and enddate
+    """
+    if enddate < startdate:
+        raise Exception("Passed in enddate that was before start date, did you flip your variables around?")
+    
+    if isinstance(startdate, datetime.datetime):  startdate = startdate.date()
+    if isinstance(enddate, datetime.datetime):    enddate = enddate.date()
+        
+    totalspan = enddate-startdate
+    return [startdate + timedelta(days=day) for day in range(0, totalspan.days+1)]
+        
+    
     
 def get_dates(request, default_days=0):
     default_delta = timedelta(days=default_days)
@@ -77,18 +88,24 @@ def get_dates_reports(request, default_days_active=0, default_days_late=0):
     startdate_late = enddate - default_delta_late
     if request:
         for item in request.GET.items():
-            if item[0] == 'startdate_active':
-                startdate_active_str=item[1]
-                startdate_active = datetime.datetime.strptime(
-                    startdate_active_str,'%m/%d/%Y').date()
-            if item[0] == 'startdate_late':
-                startdate_late_str=item[1]
-                startdate_late = datetime.datetime.strptime(
-                    startdate_late_str,'%m/%d/%Y').date()
-            if item[0] == 'enddate':
-                enddate_str=item[1]
-                enddate = datetime.datetime.strptime(enddate_str,
-                                                     '%m/%d/%Y').date()
+            try:
+                if item[0] == 'startdate_active':
+                    startdate_active_str=item[1]
+                    if startdate_active_str != '':
+                        startdate_active = datetime.datetime.strptime(
+                            startdate_active_str,'%m/%d/%Y').date()
+                if item[0] == 'startdate_late':
+                    startdate_late_str=item[1]
+                    if startdate_late_str != '':
+                        startdate_late = datetime.datetime.strptime(
+                            startdate_late_str,'%m/%d/%Y').date()
+                if item[0] == 'enddate':
+                    enddate_str=item[1]
+                    if enddate_str != '':
+                        enddate = datetime.datetime.strptime(enddate_str,
+                                                         '%m/%d/%Y').date()
+            except ValueError:
+                print 'Invalid date string' #TODO: This isn't right
     return (startdate_active, startdate_late, enddate)
 
 def get_table_display_properties(request, default_items=25, default_sort_column = "id", 
@@ -170,3 +187,24 @@ def build_url(relative_path, request=None):
     else:
         return "http://localhost:8000%s" % relative_path
         
+        
+def get_post_redirect(request, get_callback, post_callback,
+                      get_template_name = None, post_template_name = None):
+    """
+    Given a django request and callback methods for get and post, redirect
+    to one of those methods based on the operation of the request.
+    
+    Assumes that the callback methods take in a single required object (the 
+    request) and (optionally) a template name.
+    
+    You can pass templates to the get and post callback methods, but if none 
+    are specified then none will be called.
+    """
+    if request.method == "GET":  
+        if get_template_name:  return get_callback(request, get_template_name)
+        else:                  return get_callback(request)
+    elif request.method == "POST": 
+        if post_template_name: return post_callback(request, post_template_name)        
+        else:                  return post_callback(request)
+    raise Exception("Request method could not be matched.  Expected a GET or a POST.")        
+    

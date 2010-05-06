@@ -12,7 +12,7 @@ from django.template import RequestContext
 from django.db import transaction, connection
 from django.core.urlresolvers import reverse
 
-from rapidsms.webui.utils import render_to_response
+from rapidsms.webui.utils import render_to_response, UnicodeWriter
 
 from xformmanager.util import get_unique_value
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
@@ -26,7 +26,6 @@ from hq.dbutil import get_column_names
 from hq.models import *
 from hq.utils import paginate, get_table_display_properties
 
-from transformers.csv import UnicodeWriter
 from transformers.zip import get_zipfile
 
 from receiver.models import Attachment
