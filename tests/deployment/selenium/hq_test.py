@@ -6,18 +6,18 @@ import sys
 import time
 
 
-local = True # semi convenient flip-flop for local versus remote testing
-if local:
-    sites = {"http://localhost:8000": ["brian", "test",
-                                   "localhost:8000", "Pathfinder"]}
-else: 
-    sites = {"http://staging.commcarehq.org": ["brian", "test",
-                                        "staging.commcarehq.org", "BRAC"]}
+local   = {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]}
+dev     = {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]}
+staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "BRAC"]}
+
+# point selenium at:
+sites = dev
 
 class testingPost(unittest.TestCase):
 
     def setUp(self):
         self.verificationErrors = []
+        self.call_delete = False
         self.selenium = selenium("localhost", 4444, "*firefox", server)
         self.selenium.start()
     
@@ -56,11 +56,13 @@ class testingPost(unittest.TestCase):
         # testing basic submission of xml (or file) and diff against actual
         # copy
         temp_file_name = 'testupload_tmp.xml'
+        self.call_delete = True
         submission_number = post(serverhost, domain, temp_file_name)
         sel.click("link=Submissions")
         sel.wait_for_page_to_load("30000")
         time.sleep(3)
-        sel.click("link=%s" % submission_number)
+        # sel.click("link=%s" % submission_number)
+        sel.open("/receiver/review/%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         time.sleep(2)
         sel.click("link=view full raw submission")
@@ -80,16 +82,19 @@ class testingPost(unittest.TestCase):
         sel.open("/receiver/review")
         sel.wait_for_page_to_load("30000")
         time.sleep(3)
-        sel.click("link=%s" % submission_number)
+        # sel.click("link=%s" % submission_number)
+        sel.open("/receiver/review/%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(sel.is_text_present("view form data"), 
                              "xml submission was parsed and matched to form")
         except AssertionError, e: self.verificationErrors.append(str(e))
 
         #test Xform deletion
+        self.call_delete = False
         self.delete_xform(sel)
 
     def tearDown(self):
+        if self.call_delete: self.delete_xform(self.selenium)
         self.selenium.stop()
         self.assertEqual([], self.verificationErrors)
 
@@ -104,7 +109,7 @@ class testingPost(unittest.TestCase):
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
         try: self.failUnless(not sel.is_text_present("Sample Form 1"),
-                             "Deleted form was removced from xform listing")
+                             "Deleted form was removed from xform listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
  
 if __name__ == "__main__":

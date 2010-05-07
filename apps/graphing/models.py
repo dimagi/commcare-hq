@@ -103,15 +103,19 @@ class RawGraph(BaseGraph):
             reg = re.compile('(\{\{.*?\}\})')
             query = self.db_query
             matches = reg.findall(self.db_query)
+
             if matches:
                 for match in matches:
                     attr = match[2:len(match)-2]
                     repl = getattr(self,attr)
-                    query = query.replace(match, repl)
+                    query = query.replace(match, str(repl))
+            
+            # print query
             return query 
+
         except Exception, e:            
             logging.error("error cleaning query", extra={'exception':e, 'query':self.db_query})
-        return self.db_query
+            return self.db_query
         
     @property
     def cursor(self):        
@@ -149,6 +153,25 @@ class RawGraph(BaseGraph):
             extra = {"exception": e, "query": self.cleaned_query}            
             logging.log(logging.ERROR,"Error in doing sql query", extra=extra)       
             raise                 
+
+    def get_dataset_as_dict(self):
+        """Execute the query and get the data as a dictionary, the way civilized people do"""
+        try:
+            row_names = []
+            for i in self.cursor.description:
+                row_names.append(i[0])
+        
+            out = []
+            for row in self.cursor.fetchall():
+                out.append(dict(zip(row_names, row)))
+
+            return out
+
+        except Exception, e:
+            args = []
+            extra = {"exception": e, "query": self.cleaned_query}            
+            logging.log(logging.ERROR,"Error in doing sql query", extra=extra)       
+            raise                 
                       
     
     @property
@@ -162,7 +185,7 @@ class RawGraph(BaseGraph):
         # are set are the first N
         for i in range(len(query_cols)):
             if i < len(labelarr):
-                labels.append(str(labelarr[i]))
+                labels.append(str(labelarr[i].strip()))
             else:
                 labels.append(str(query_cols[i][0]))
         return labels
@@ -396,7 +419,7 @@ class RawGraph(BaseGraph):
             else:
                 flot_dict = {}
                 labels = self.labels
-                data = self.get_dataseries()        
+                data = self.get_dataseries()
                 for label in labels:            
                     currseries = {}            
                     currseries["label"] = label.__str__()
@@ -468,19 +491,36 @@ class RawGraph(BaseGraph):
             retarr.append(rowarr)
         return retarr
                 
-                
-            
-            
-        
-        
-        
         #ok, 2 steps here.
         #first, establish the "columns" or the series here
         #second, establish buckets for what we're trying to display
         #if it's dates, make a global list of all the buckets in use
         #then populate them
         
+
+    def set_fields(self, fields):
+        ''' 
+            Send a hash of values directly to RawGraph, rather than have it read from the DB
+            This allows working with RawGraph code without having to deal with its DB tables.
+        '''
+        ret = {}
+        ret['yaxis'] = {'min':0}
+        ret['xaxis'] = self.get_xaxis_options()
         
+        for f in fields:
+            if f == "additional_options":
+                options_dict = fields[f]
+                for key in options_dict:
+                    to_use = {}
+                    if key in ret:
+                        # if we already had some options, use those
+                        # as a starting point
+                        to_use = ret[key]
+                    for inner_key, value in options_dict[key].items():
+                        to_use[str(inner_key)] = value
+                    ret[str(key)] = to_use
+            else:
+                setattr(self, f, fields[f])
             
         
         

@@ -1,0 +1,37 @@
+Steps to install this app:
+
+1. Get source:
+	
+	git pull origin intel
+
+2. Sync DB
+
+	./manage.py syncdb
+
+3. SQL queries in reports_sqlreports now contain an {{orderby}} stub, to allow ordering by mother name in the list views. Update the DB:
+
+	./manage.py loaddata apps/reports/fixtures/sql_reports.json
+
+4. Changes in graph queries:
+ 	- ignore username 'admin'
+	- ignore users with id < 1
+	- added query #27 to group by clinics (will change as the model does)
+
+	./manage.py loaddata apps/graphing/fixtures/initial_data.json
+
+5. Assign user_ids to CHWs, assign clinics to users
+
+	INSERT INTO `intel_clinic` VALUES (3,'Shaharial'),(2,'Madhabpur'),(1,'HQ');
+	INSERT INTO `intel_userclinic` VALUES (1,'demo1',3), (2,'demo2',2), (3,'sazadha',2), (4,'shahana',2), (5,'afroza',3), (6,'renoura',3),(7,'nir',1), (8,'brian',1);
+
+
+6. In local.ini, change the following (or simply cp local.ini.intel local.ini):
+
+	- add "intel" to apps under [rapidsms]
+
+	- add the following lines to the end of the file (the templates are all under apps/intel/templates):
+
+		BASE_TEMPLATE=intel-layout.html
+		LOGIN_REDIRECT_URL = /intel
+		LOGIN_TEMPLATE=intel-login.html
+		LOGGEDOUT_TEMPLATE=intel-logout.html

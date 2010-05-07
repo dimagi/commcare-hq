@@ -15,4 +15,3 @@ urlpatterns = patterns('',
     
     (r'', include('hq.reporter.api_.urls')),    
 )
-

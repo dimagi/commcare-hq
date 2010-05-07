@@ -1,0 +1,33 @@
+{% extends "rm_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Builds" %}{% endblock %}
+
+{% block releasemanager_content %}
+	<h2>{% trans "Create New Build" %}</h2>
+	<form action="{% url releasemanager.views.new_build %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
+		{{form.as_ul}}
+		<input type="submit" value="Submit" />
+	</form>
+	{{errors}}
+		
+	<br />
+	{% if resource_set %}
+		Showing builds for resource set <tt>{{resource_set.name}}</tt>. (<a href="{% url releasemanager.views.builds %}">Show all builds</a>)
+	{% endif %}
+	<p>
+		<h3>Releases</h3>
+		{% with items.released as items %}
+			{% include "partials/list_build.html" %}
+		{% endwith %}
+	</p>
+	<br />
+	
+	<p>
+		<h3>Unreleased</h3>
+		{% with items.unreleased as items %}
+			{% include "partials/list_build.html" %}
+		{% endwith %}
+	</p>
+
+{%endblock%}
