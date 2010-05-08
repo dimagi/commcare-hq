@@ -1,12 +1,13 @@
 from django.db import connection, transaction, DatabaseError
+from django.conf import settings
 
 from xformmanager.manager import XFormManager
-from xformmanager.tests.util import *
-from xformmanager.models import FormDefModel
-from reports.models import FormIdentifier, CaseFormIdentifier, Case
+from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from xformmanager.models import FormDefModel, Metadata, ElementDefModel
+from domain.models import Domain
 
 from decimal import Decimal
-from datetime import *
+from datetime import datetime
 import unittest
 
 class BasicTestCase(unittest.TestCase):
@@ -286,6 +287,8 @@ class BasicTestCase(unittest.TestCase):
             
     def testRepostingPreservesRelations(self):
         """Testing reposting entire schemas with linked objects."""
+        raise Exception("This test is super broken!")
+    
         form = create_xsd_and_populate("data/pf_followup.xsd", "data/pf_followup_1.xml", self.domain)
         
         # add some linked objects - one and two levels deep, and track them

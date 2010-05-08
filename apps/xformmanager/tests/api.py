@@ -1,9 +1,7 @@
 from django.test import TestCase
-from django.test.client import Client
 from xformmanager.tests.util import create_xsd_and_populate, clear_data
-from xformmanager.models import *
 from xformmanager.manager import XFormManager
-from hq.tests.util import create_user_and_domain
+from datahq.util.test import create_user_and_domain
 
 class APITestCase(TestCase):
     

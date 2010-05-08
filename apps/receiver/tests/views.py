@@ -1,9 +1,8 @@
 from django.test import TestCase
-from django.test.client import Client
 from domain.models import Domain
 from django.contrib.auth.models import User
-from hq.tests.util import create_user_and_domain
-from receiver.tests.util import *
+from datahq.util.test import create_user_and_domain
+from receiver.tests.util import get_full_path, makeNewEntry
 
 class ViewsTestCase(TestCase):
     

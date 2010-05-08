@@ -1,12 +1,12 @@
 import logging
+import os
 
 from domain.models import Domain
 from xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
-from xformmanager.manager import *
+from xformmanager.manager import XFormManager
 from xformmanager.storageutility import StorageUtility
 from receiver.models import Submission, Attachment
-from receiver.tests.util import *
-from reports.models import Case, CaseFormIdentifier, FormIdentifier
+from receiver.tests.util import get_full_path, makeNewEntry
 
 
 def clear_data():
@@ -24,14 +24,7 @@ def clear_group_data():
     FormDataGroup.objects.all().delete()
     FormDataColumn.objects.all().delete()
     FormDataPointer.objects.all().delete()
-    
-def clear_case_data():
-    """Clear out the form group objects"""
-    Case.objects.all().delete()
-    CaseFormIdentifier.objects.all().delete()
-    FormIdentifier.objects.all().delete()
-    
-    
+
     
 def get_file(filename, path=None ):
     """ handles relative pathing of files """
