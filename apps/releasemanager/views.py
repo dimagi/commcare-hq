@@ -123,6 +123,8 @@ def new_jarjad(request, template_name="jarjad.html"):
 def builds(request, template_name="builds.html"): 
     context = {'form' : BuildForm(), 'items': {}}
 
+    domain = request.user.selected_domain
+    
     Build.verify_all_files(delete_missing=True)
     
     resource_set = request.GET['resource_set'] if request.GET.has_key('resource_set') else None
@@ -139,11 +141,11 @@ def builds(request, template_name="builds.html"):
     if resource_set:
         context['resource_set'] = ResourceSet.objects.get(id=resource_set)
         
-        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).order_by('-created_at')
-        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).order_by('-created_at')
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
     else:
-        context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
-        context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at').filter(resource_set__domain=domain)
+        context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at').filter(resource_set__domain=domain)
 
     return render_to_response(request, template_name, context)
 
