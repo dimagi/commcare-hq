@@ -15,9 +15,10 @@ class JarjadForm(forms.ModelForm):
            
         
 class BuildForm(forms.ModelForm):
-   class Meta:
-       model = Build
-       exclude = ('domain', 'is_release', 'created_at', 'jar_file', 'jad_file', 'zip_file')
+        
+    class Meta:
+        model = Build
+        exclude = ('domain', 'is_release', 'created_at', 'jar_file', 'jad_file', 'zip_file')
 
 
 class ResourceSetForm(forms.ModelForm):

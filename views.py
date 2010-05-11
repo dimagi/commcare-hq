@@ -30,6 +30,7 @@ from django.http import *
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
+from django.forms.models import modelformset_factory
 
 import mimetypes
 import urllib
@@ -121,29 +122,25 @@ def new_jarjad(request, template_name="jarjad.html"):
 
 @login_and_domain_required
 def builds(request, template_name="builds.html"): 
-    context = {'form' : BuildForm(), 'items': {}}
+    domain = request.user.selected_domain
 
     Build.verify_all_files(delete_missing=True)
     
-    resource_set = request.GET['resource_set'] if request.GET.has_key('resource_set') else None
+    form = BuildForm()
+    form.fields["resource_set"].queryset = ResourceSet.objects.filter(domain=domain)
     
-    resource_set = request.GET.has_key('resource_set')
-    
-    if resource_set:
-        try:
-            context['resource_set'] = ResourceSet.objects.get(id=request.GET['resource_set'])
-        except:
-            resource_set = False        
+    context = {'items': {}, 'form' : form}
         
-    
+    resource_set = request.GET['resource_set'] if request.GET.has_key('resource_set') else False
+        
     if resource_set:
         context['resource_set'] = ResourceSet.objects.get(id=resource_set)
         
-        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).order_by('-created_at')
-        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).order_by('-created_at')
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
     else:
-        context['items']['unreleased'] = Build.objects.filter(is_release=False).order_by('-created_at')
-        context['items']['released']   = Build.objects.filter(is_release=True).order_by('-created_at')
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set__domain=domain).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set__domain=domain).order_by('-created_at')
 
     return render_to_response(request, template_name, context)
 
