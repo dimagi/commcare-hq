@@ -636,17 +636,14 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
             (chw_name, form_type_to_date, last_week) = \
                 get_form_type_to_date_last_week(map, enddate, mindate)
             count_last_week += last_week
-            # if the most recent open form was submitted more recently than  
-            # the most recent close form then this case is open
-            if form_type_to_date['open'] > form_type_to_date['close'] or \
-                only_follow(form_type_to_date):
+            status = get_status(form_type_to_date, active, enddate)
+            if status != 'Closed':
                 count_of_open += 1
-                if datetime.date(form_type_to_date['open']) >= active or \
-                    datetime.date(form_type_to_date['follow']) >= active:
-                    count_of_active += 1
-                else:
-                    days_late = get_days_late(form_type_to_date, active)
-                    days_late_list.append(days_late)
+            if status == 'Active':
+                count_of_active += 1
+            if status == 'Late (Routine)':
+                days_late = get_days_late(form_type_to_date, active)
+                days_late_list.append(days_late)
         percentage = get_percentage(count_of_open, count_of_active)
         if percentage >= 90: over_ninety = True
         else: over_ninety = False
@@ -669,6 +666,11 @@ def get_form_type_to_date_last_week(map, enddate, mindate):
         cfi = CaseFormIdentifier.objects.get(form_identifier=form_id.id)
         form_type = cfi.form_type
         for form in form_info:
+            temp_form_type = form_type
+            if form_type == 'follow':
+                referral = get_value(form, 'referral_id')
+                if referral and referral != '':
+                    temp_form_type = 'referral'
             # I'm assuming that all the forms in this case will have 
             # the same chw name (since they all have the same chw id)
             chw_name = form["meta_username"]
@@ -679,9 +681,9 @@ def get_form_type_to_date_last_week(map, enddate, mindate):
                 last_week += 1
             # for each form type get the date of the most recently 
             # submitted form
-            if timeend > form_type_to_date[form_type] and enddate > \
+            if timeend > form_type_to_date[temp_form_type] and enddate > \
                 datetime.date(timeend):
-                form_type_to_date[form_type] = timeend
+                form_type_to_date[temp_form_type] = timeend
     return (chw_name, form_type_to_date, last_week)
 
 def get_days_late(form_type_to_date, active):
