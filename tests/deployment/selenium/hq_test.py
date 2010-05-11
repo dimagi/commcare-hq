@@ -31,9 +31,10 @@ class testingPost(unittest.TestCase):
         sel.type("id_password", passw)
         sel.click("//button[@type='submit']")
         
-        # redirects to domain selection, so just click through
-        sel.wait_for_page_to_load("30000")
-        sel.click("//button[@type='submit']")
+        if sites == dev:
+            # redirects to domain selection, so just click through
+            sel.wait_for_page_to_load("30000")
+            sel.click("//button[@type='submit']")
         
         # testing creation of xform
         sel.wait_for_page_to_load("30000")
@@ -45,10 +46,14 @@ class testingPost(unittest.TestCase):
         path = os.path.join(sys.path[0], "sample_form.xhtml")
         sel.type("id_file", path)
         sel.type("id_form_display_name", "Sample Form 1")
+        time.sleep(3)
         sel.click("//div[@id='xform-register-block']/form/ul/li[3]/input")
         sel.wait_for_page_to_load("30000")
+        time.sleep(3)
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
+        time.sleep(3)
+        
         try: self.failUnless(sel.is_text_present("Sample Form 1"), "New form showed in XForm Listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
         
