@@ -84,7 +84,7 @@ class Jarjad(models.Model):
 
 class ResourceSet(models.Model):
     domain = models.ForeignKey(Domain)
-    url = models.URLField(max_length=512, help_text="<br />(Bitbucket URL, eg:<tt> http://bitbucket.org/commcare/commcare-path/src/tip/path-comm/</tt><br /> or ZIP URL, eg:<tt> http://bitbucket.org/ctsims/resourcetest/get/tip.zip</tt>)")
+    url = models.URLField(max_length=512, help_text="<br />(BitBucket URL, eg:<tt> http://bitbucket.org/commcare/commcare-path/src/tip/path-comm/</tt>)")
     # resource_dir = models.FilePathField(_('Directory of files'), recursive=True, path=RESOURCE_PATH, max_length=255, null=True, blank=True)
     name   = models.CharField(max_length=255, unique=True)
     is_release = models.BooleanField(default=False)
