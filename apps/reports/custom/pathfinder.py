@@ -344,6 +344,7 @@ class WardSummaryData(object):
         self.chw_id = chw_id
         self.startdate = startdate
         self.enddate = enddate
+
         
         #add ward, district, region for this chw
         puis = PhoneUserInfo.objects.all()
@@ -538,6 +539,7 @@ class WardSummaryData(object):
 def summary_by_provider_report(request):
     '''Summary by Provider Report'''
     context = {}
+
     wards = []
     puis = PhoneUserInfo.objects.all()
     if puis != None:
@@ -626,6 +628,7 @@ class ProviderSummaryData(object):
         
         for follow in matching_follow_forms:
             self.num_visits += 1
+
             self.hbc_status += follow[COLS['status']] +"; "
             self.functional_status += follow[COLS['func_status']] +"; "
             if follow[COLS['ctc_status']] == 'registered_no_arvs':
@@ -692,7 +695,7 @@ def hbc_monthly_summary_report(request):
     for i in range(0, 5):
         years.append(year-i)
     context["years"] = years
-    
+
     wards = []
     puis = PhoneUserInfo.objects.all()
     if puis != None:
@@ -753,11 +756,13 @@ class HBCMonthlySummaryData(object):
     opt_out = 0
     total_no_services = 0
     
+
     def __init__(self, case, data_by_chw, startdate, enddate, ward):
         self.case = case
         self.data_by_chw = data_by_chw
         self.startdate = startdate
         self.enddate = enddate
+
         self.ward = ward
         puis = PhoneUserInfo.objects.all()
         if puis != None:
