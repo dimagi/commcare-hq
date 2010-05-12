@@ -166,6 +166,11 @@ def individual_chw(request, domain_id, case_id, chw_id, enddate, active):
     context['chw_id'] = chw_id
     case = Case.objects.get(id=case_id)
     data_by_chw = get_data_by_chw(case)
+    user_data = get_user_data(chw_id)
+    hcbpid = chw_id
+    if 'hcbpid' in user_data:
+        hcbpid = user_data['hcbpid']
+    context['hcbpid'] = hcbpid
     get_case_info(context, data_by_chw[chw_id], enddate, active)
     return render_to_response(request, "custom/all/individual_chw.html", 
                               context)

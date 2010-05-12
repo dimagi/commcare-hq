@@ -625,6 +625,7 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
         count_of_active = 0
         count_last_week = 0
         days_late_list = []
+        ref_days_late_list = []
         chw_name = ''
         hcbpid = chw_id
         #if 'prov_name' in user_data:
@@ -644,15 +645,20 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
             if status == 'Late (Routine)':
                 days_late = get_days_late(form_type_to_date, active)
                 days_late_list.append(days_late)
+            if status == 'Late (Referral)':
+                ref_days_late = get_ref_days_late(form_type_to_date, enddate)
+                ref_days_late_list.append(ref_days_late)
         percentage = get_percentage(count_of_open, count_of_active)
         if percentage >= 90: over_ninety = True
         else: over_ninety = False
         avg_late = get_avg_late(days_late_list) 
+        ref_avg_late = get_avg_late(ref_days_late_list)
         data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
                     count_of_active, 'open': count_of_open, 
                     'percentage': percentage, 'last_week': 
-                    count_last_week, 'avg_late': avg_late,
-                    'over_ninety': over_ninety})
+                    count_last_week, 'avg_late': avg_late,  
+                    'ref_avg_late': ref_avg_late, 'over_ninety': over_ninety,
+                    'hcbpid': hcbpid})
     return data
 
 def get_form_type_to_date_last_week(map, enddate, mindate):
@@ -693,6 +699,15 @@ def get_days_late(form_type_to_date, active):
         most_recent = form_type_to_date['open']
     time_diff = active - datetime.date(most_recent)
     return time_diff.days
+
+def get_ref_days_late(form_type_to_date, enddate):
+    '''Returns the number of days past the active date for a late referral'''
+    # can I assume that if something is late for referral that the last form was 
+    # a form that triggered a referral?
+    most_recent = form_type_to_date['referral']
+    time_diff = enddate - datetime.date(most_recent)
+    # subtract the grace period
+    return time_diff.days - 3
 
 def get_avg_late(days_late_list):
     ''' given a list of days late, return the average number of days'''
