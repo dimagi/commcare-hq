@@ -7,7 +7,6 @@ from basic_remove import *
 from basic_util import *
 from meta import *
 from api import *
-from views import *
 from versioned import *
 from formdef_checker import *
 from xsd_checker import *

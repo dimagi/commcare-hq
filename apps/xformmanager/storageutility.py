@@ -10,7 +10,7 @@ import re
 import os
 import sys
 import logging
-import settings
+from django.conf import settings
 import string
 import shutil
 import tempfile

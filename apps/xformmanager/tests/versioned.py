@@ -1,11 +1,12 @@
-from django.db import connection, transaction, DatabaseError
-from xformmanager.tests.util import *
-from xformmanager.xformdef import FormDef
-from xformmanager.manager import XFormManager
-from xformmanager.models import Metadata
-from receiver.models import Submission, Attachment
-from decimal import Decimal
-from datetime import *
+from datahq.apps.domain.models import Domain
+from datahq.apps.xformmanager.manager import XFormManager
+from datahq.apps.xformmanager.models import Metadata
+from datahq.apps.xformmanager.tests.util import create_xsd_and_populate, \
+    populate, clear_data, get_file
+from datahq.apps.xformmanager.xformdef import FormDef
+from datetime import datetime
+from django.conf import settings
+from django.db import connection
 import unittest
 
 class VersionedTestCase(unittest.TestCase):
