@@ -1,11 +1,10 @@
 import unittest
-import traceback, sys, os
-from xformmanager.tests.util import *
-from xformmanager.storageutility import Query, XFormDBTableCreator, XFormDBTablePopulator
-from xformmanager.storageutility import StorageUtility as SU
-from xformmanager.manager import XFormManager as XFM
-from _mysql_exceptions import OperationalError, ProgrammingError
-from receiver.models import Attachment
+import os
+#from datahq.apps.xformmanager.tests.util import 
+from datahq.apps.xformmanager.storageutility import XFormDBTablePopulator
+from datahq.apps.xformmanager.storageutility import StorageUtility as SU
+from datahq.apps.xformmanager.manager import XFormManager as XFM
+from datahq.apps.xformmanager.manager import form_translate
 
 class UtilTestCase(unittest.TestCase):
             

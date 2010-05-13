@@ -1,17 +1,19 @@
-from models import *
 import logging
 import hashlib
-import settings
 import traceback
 import sys
 import os
 import string
 import uuid
+import email
+from django.conf import settings
 from django.db import transaction
-from receiver.models import _XFORM_URI
+from datahq.apps.receiver.models import Submission, Attachment, _XFORM_URI 
 
 def get_submission_path():
-    return settings.RAPIDSMS_APPS['receiver']['xform_submission_path']
+    return settings.RECEIVER_SUBMISSION_PATH
+
+
 def save_legacy_blob(submission, rawpayload):
     '''
        Saves a legacy raw formed blob POST to a file.  Assumes the body of the post is
@@ -104,11 +106,11 @@ def new_attachment(submission, payload, content_type, attach_uri, outfilename, *
     new_attach.attachment_content_type = content_type    
     new_attach.attachment_uri = attach_uri
     
-    fout = open(os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'], outfilename),'wb')
+    fout = open(os.path.join(settings.RECEIVER_ATTACHMENT_PATH, outfilename),'wb')
     fout.write(payload)
     fout.close() 
     
-    new_attach.filepath = os.path.join(settings.RAPIDSMS_APPS['receiver']['attachments_path'], outfilename)
+    new_attach.filepath = os.path.join(settings.RECEIVER_ATTACHMENT_PATH, outfilename)
     new_attach.save()
     
     return new_attach 

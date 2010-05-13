@@ -1,8 +1,13 @@
-from django.db import connection, transaction, DatabaseError
-from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
-from xformmanager.tests.util import *
+from django.db import connection
+from django.conf import settings
 
-from datetime import datetime
+from datahq.apps.domain.models import Domain
+from datahq.apps.receiver.models import SubmissionHandlingOccurrence
+from datahq.apps.xformmanager.models import Metadata
+from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from datahq.apps.xformmanager.storageutility import StorageUtility
+from datahq.apps.xformmanager.manager import XFormManager
+
 import unittest
 
 class RemoveTestCase(unittest.TestCase):

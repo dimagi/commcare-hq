@@ -5,12 +5,11 @@ from django.core import serializers
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django_rest_interface import util
-from django_rest_interface.resource import Resource
-from domain.decorators import login_and_domain_required
-from transformers.csv import get_csv_from_django_query, format_csv
-from transformers.zip import get_zipfile, get_tarfile
-from xformmanager.xformdef import FormDef
+from datahq.apps.django_rest_interface import util
+from datahq.apps.django_rest_interface.resource import Resource
+from datahq.shared_code.transformers.csv import get_csv_from_django_query, format_csv
+from datahq.shared_code.transformers.zip import get_zipfile, get_tarfile
+from datahq.apps.xformmanager.xformdef import FormDef
 import logging
 import os
 
@@ -87,7 +86,7 @@ class XFormSchemata(Resource):
         if not xforms:
             logging.info("No schemas have been registered.")
             return HttpResponse("No schemas have been registered.")
-        if 'export_path' not in settings.RAPIDSMS_APPS['xformmanager']:
+        if not hasattr(settings, "XFORMMANAGER_EXPORT_PATH"):
             logging.error("Please set 'export_path' " + \
                           "in your cchq xformmanager settings.")
             return HttpResponseBadRequest("Please set 'export_path' " + \
@@ -111,7 +110,7 @@ class XFormSchemata(Resource):
             exported_file = self._export_to_file(schema)
             if exported_file: 
                 file_list.append( exported_file )
-        export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
+        export_path = settings.XFORMMANAGER_EXPORT_PATH
         export_file = os.path.join(export_path, "commcarehq-schemata.tar")
         return get_tarfile(file_list, export_file)
             
@@ -120,7 +119,7 @@ class XFormSchemata(Resource):
         if not schema.xsd_file_location:
             return
         dir, filename = os.path.split(schema.xsd_file_location)
-        export_path = settings.RAPIDSMS_APPS['xformmanager']['export_path']
+        export_path = settings.XFORMMANAGER_EXPORT_PATH
         write_file = os.path.join(export_path, \
                                   filename.replace(".xml", ".xsdexport"))
         fout = open(write_file, 'w')

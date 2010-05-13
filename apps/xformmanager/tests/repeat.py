@@ -1,7 +1,9 @@
 import unittest
 from datetime import datetime
+from django.conf import settings
 from django.db import connection
-from xformmanager.tests.util import *
+from datahq.apps.domain.models import Domain
+from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
 
 class RepeatTestCase(unittest.TestCase):
     

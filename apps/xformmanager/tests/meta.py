@@ -1,10 +1,16 @@
-from django.db import connection, transaction, DatabaseError
-from xformmanager.tests.util import *
-from xformmanager.models import Metadata, MetaDataValidationError
-from xformmanager.manager import XFormManager, FormDefError
-from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
+from datahq.apps.domain.models import Domain
+from datahq.apps.receiver.models import SubmissionHandlingOccurrence, Attachment, \
+    Submission
+from datahq.apps.xformmanager.manager import XFormManager, FormDefError
+from datahq.apps.xformmanager.models import Metadata, MetaDataValidationError, \
+    FormDefModel
+from datahq.apps.xformmanager.tests.util import clear_data, \
+    create_xsd_and_populate, populate
+from datetime import datetime, timedelta
+from django.conf import settings
+from django.db import connection
+import logging
 import unittest
-from datetime import datetime, timedelta 
 
 class MetaTestCase(unittest.TestCase):
     
@@ -205,7 +211,9 @@ class MetaTestCase(unittest.TestCase):
 
     def testEmptySubmission(self):
         logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
+        self.assertEqual(0, Metadata.objects.count())
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml", self.domain)
+        self.assertEqual(1, Metadata.objects.count())
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables

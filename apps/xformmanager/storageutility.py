@@ -221,8 +221,8 @@ class StorageUtility(object):
         
         if delete_xml:
             # drop all xml data instance files stored in XFORM_SUBMISSION_PATH
-            for file in os.listdir( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] ):
-                file = os.path.join( settings.RAPIDSMS_APPS['receiver']['xform_submission_path'] , file)
+            for file in os.listdir( settings.RECEIVER_SUBMISSION_PATH):
+                file = os.path.join( settings.RECEIVER_SUBMISSION_PATH, file)
                 logging.debug(  "Deleting " + file )
                 stat = os.stat(file)
                 if S_ISREG(stat[ST_MODE]) and os.access(file, os.W_OK):

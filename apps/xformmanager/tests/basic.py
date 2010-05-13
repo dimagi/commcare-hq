@@ -1,13 +1,13 @@
-from django.db import connection, transaction, DatabaseError
+from django.db import connection
 from django.conf import settings
 
-from xformmanager.manager import XFormManager
-from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
-from xformmanager.models import FormDefModel, Metadata, ElementDefModel
-from domain.models import Domain
+from datahq.apps.xformmanager.manager import XFormManager
+from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from datahq.apps.xformmanager.models import FormDefModel, Metadata, ElementDefModel
+from datahq.apps.domain.models import Domain
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date, time
 import unittest
 
 class BasicTestCase(unittest.TestCase):

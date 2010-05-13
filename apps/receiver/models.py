@@ -11,8 +11,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
-from domain.models import Domain
-from hqutils import build_url
+from datahq.apps.domain.models import Domain
+from datahq.shared_code.hqutils import build_url
 
 _XFORM_URI = 'xform'
 _DUPLICATE_ATTACHMENT = "duplicate_attachment"
@@ -375,3 +375,4 @@ def log_duplicates(sender, instance, created, **kwargs): #get sender, instance, 
 # Register to receive signals on every attachment save.
 post_save.connect(log_duplicates, sender=Attachment)
 
+import datahq.apps.receiver.bootstrap

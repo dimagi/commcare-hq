@@ -42,10 +42,10 @@ def _get_submissions(request, domain_id=0):
             logging.error("Domain with id %s could not found." % domain_id)
             return HttpResponseBadRequest("Domain with id %s could not found." % domain_id)
         submissions.filter(domain=domain)
-    if 'export_path' not in settings.RAPIDSMS_APPS['receiver']:
+    if not hasattr(settings, "RECEIVER_EXPORT_PATH"):
         logging.error("Please set 'export_path' in your cchq receiver settings.")
         return HttpResponseBadRequest("Please set 'export_path' in your cchq receiver settings.")
-    export_dir = settings.RAPIDSMS_APPS['receiver']['export_path']
+    export_dir = settings.RECEIVER_EXPORT_PATH
     # We check > 1 (instead of >0 ) since sync requests with no namespaces
     # to match will still POST some junk character
     if len(request.raw_post_data) > 1:
@@ -101,49 +101,3 @@ def _get_submissions(request, domain_id=0):
     response['Content-Disposition'] = 'attachment; filename=commcarehq-submissions.tar'
     return response
 
-""" 
-We do not need the following parameters for now.
-But we might as some point, so I'll keep 'em around for a bit.
-
-
-Exports complete submission data (including headers) to tar format
-(which is more unicode-friendly than zip). This is fairly duplicated with the
-'create' function above, but we keep it around in case anyone wants to request
-submissions by id or date or whatever
-
-TODO - make this mutipart/byte-friendly
-""
-    
-    submissions = Submission.objects.all()
-    
-    # domain_id=0 is a temporary hack until we get server-server authentication
-    # working properly
-    if domain_id != 0:
-        try:
-            domain = Domain.objects.get(id=domain_id)
-        except Domain.DoesNotExist:
-            return HttpResponseBadRequest("Domain with id %s could not found." % domain_id)
-        submissions = Submission.objects.filter(domain=domain)
-    if request.REQUEST.has_key('start-id'):
-        submissions = submissions.filter(id__gte=request.GET['start-id'])
-    if request.REQUEST.has_key('end-id'):
-        submissions = submissions.filter(id__lte=request.GET['end-id'])
-    if request.REQUEST.has_key('start-date'):
-        date = datetime.strptime(request.GET['start-date'],"%Y-%m-%d")
-        submissions = submissions.filter(submit_time__gte=date)
-    if request.REQUEST.has_key('end-date'):
-        date = datetime.strptime(request.GET['end-date'],"%Y-%m-%d")
-        submissions = submissions.filter(submit_time__lte=date)
-    if request.REQUEST.has_key('received_count'):
-        # when the satellite server specifies how many it has received
-        # the master server responds with all the missing submissions
-        received_count = int(request.GET['received_count'])
-        count = submissions.count()
-        missing_count = count - received_count
-        submissions = submissions[0:missing_count]
-    if 'export_path' not in settings.RAPIDSMS_APPS['receiver']:
-        return HttpResponseBadRequest("Please set 'export_path' " + \
-                                      "in your cchq receiver settings.")
-
-
-"""

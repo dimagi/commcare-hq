@@ -12,13 +12,13 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.conf import settings
 
-from domain.models import Domain
-from dbutils import get_column_names, get_column_types_from_table, get_column_names_from_table
-from receiver.models import Submission, Attachment
-from xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
-from xformmanager.xformdef import FormDef
+from datahq.apps.domain.models import Domain
+from datahq.shared_code.dbutils import get_column_names, get_column_types_from_table, get_column_names_from_table
+from datahq.apps.receiver.models import Submission, Attachment
+from datahq.apps.xformmanager.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
+from datahq.apps.xformmanager.xformdef import FormDef
 
-import dbhelper
+import datahq.shared_code.dbhelper as dbhelper
 
 class ElementDefModel(models.Model):
     # this class is really not used
@@ -963,3 +963,5 @@ class FormGroup():
                 self.last_received = last_seen
         
         self.version_string = ",".join(["%s" % version for version in self.versions])
+        
+import datahq.apps.xformmanager.bootstrap
