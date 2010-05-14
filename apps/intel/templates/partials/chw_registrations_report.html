@@ -1,0 +1,27 @@
+{% regroup chw_reg_rows by clinic as rows %}
+<table style="text-align: center; width: 100%">
+	<thead>
+	 	<tr>
+			<th>Healthcare Worker</th>
+			<th>Patients</th>
+			<th>High Risk</th>
+			<th>Follow Up</th>
+			<th>Clinic Visits</th>
+	 	</tr>
+	</thead>
+	{% for b_row in rows %}
+		<tr>
+			<th colspan="5" class="clinic-name">{{b_row.grouper}}</th>
+		</tr>
+		{% for row in b_row.list %}
+			<tr>
+				<td>{{row.name}}</td>
+				<td><a href="/intel/all?meta_username={{row.name}}" >{{ row.reg|default_if_none:"0" }}</a></td>
+				<td><a href="/intel/risk?meta_username={{row.name}}">{{ row.risk|default_if_none:"0" }}</a></td>
+				<td><a href="/intel/all?meta_username={{row.name}}&follow=yes" >{{ row.follow|default_if_none:"0" }}</td>
+				<td><a href="/intel/all?meta_username={{row.name}}&visited=yes">{{ row.visits|default_if_none:"0" }}</td>
+			</tr>
+			</a>
+		{% endfor %}
+	{% endfor %}
+</table>

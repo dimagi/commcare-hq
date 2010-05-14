@@ -1,0 +1,13 @@
+{% load i18n %}
+<html>
+<head>
+<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/style.css" />
+</head>
+<body>
+{% block content %}
+<h1><center>{{thegraph.title}}</center></h1>
+{% include "graphing/partials/graph_data_table.html" %}
+<p><a href="{% url graphing.views.view_graph thegraph.id %}">&lt;-- back to graphs</a></p>
+{%endblock%}
+</body>    
+</html>

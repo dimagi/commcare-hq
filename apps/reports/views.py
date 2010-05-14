@@ -166,18 +166,25 @@ def individual_chw(request, domain_id, case_id, chw_id, enddate, active):
     context['chw_id'] = chw_id
     case = Case.objects.get(id=case_id)
     data_by_chw = get_data_by_chw(case)
+    user_data = get_user_data(chw_id)
+    hcbpid = chw_id
+    if 'hcbpid' in user_data:
+        hcbpid = user_data['hcbpid']
+    context['hcbpid'] = hcbpid
     get_case_info(context, data_by_chw[chw_id], enddate, active)
     return render_to_response(request, "custom/all/individual_chw.html", 
                               context)
 
 def sum_provider(request):
     '''View a single provider summary report'''
+
     provider = None
     if request:
         for item in request.POST.items():
             if item[0] == 'provider':
                 provider=item[1]
     (month, year, startdate, enddate) = get_mon_year(request)
+
     context = get_provider_summary_data(startdate, enddate, month, year, 
                                         provider)
     return render_to_response(request, 
@@ -262,13 +269,13 @@ def sum_prov_csv(request, chw_id, month, year):
     ''' Creates CSV file of summary by provider report'''
     case_name = "Pathfinder_1"
     (startdate, enddate) = get_start_end(month, year)
-    
     try:
         case = Case.objects.get(name=case_name)
     except Case.DoesNotExist:
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
+
     chw_data = {}
     if chw_id in data_by_chw:
         chw_data = data_by_chw[chw_id]
@@ -308,6 +315,7 @@ def hbc_sum_csv(request, month, year, ward):
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
     data_by_chw = get_data_by_chw(case)
+
     chw_obj = HBCMonthlySummaryData(case, data_by_chw, startdate, enddate, ward)
     output = StringIO()
     w = UnicodeWriter(output)

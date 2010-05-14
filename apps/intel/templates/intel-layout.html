@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% load i18n %}
+
+{% block title_suffix %}Commcare Grameen{% endblock %}
+
+{% block stylesheets %}
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/print.css" type="text/css" media="print">
+	<!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/style.css?{% now "U" %}" />
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/intel/stylesheets/intel.css?{% now "U" %}" />
+
+	{% block hq-stylesheets %}{% endblock %}
+	{% block page_stylesheets %}{% endblock %}
+
+{% endblock %}
+
+{% block javascripts %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/jquery.flot.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{MEDIA_URL}}/graphing/flot/excanvas.pack.js"></script><![endif]-->
+    <script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/hoverIntent.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/graphing/superfish/superfish.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}/intel/javascripts/print.js"></script>
+
+	{% block page_javascripts %}{% endblock %}
+	
+    <script type="text/javascript">
+		// initialise plugins
+		jQuery(function(){
+			jQuery('ul.sf-menu').superfish();
+		});
+	</script>    
+	
+{% endblock %}
+
+{% block auth %}
+	<div id="currentlogin-block">
+		<a href="javascript:print_view();" id="print-but">Print View&nbsp;&nbsp;<img src="{{MEDIA_URL}}/intel/img/print.png" /></a>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{% if user.is_authenticated %}        
+			Hello, <strong>{{user}}</strong> at <strong>{{ clinic.name }}</strong>
+			
+			<!-- &nbsp;&nbsp;|&nbsp;&nbsp;
+			<a href="{% url domain_admin_main %}">Domain Settings</a> -->
+			&nbsp;&nbsp;|&nbsp;&nbsp;
+			<a href="{% url webapp.views.logout %}">{% trans "Log out" %}</a>
+		{% else %}
+		    <a href="{% url login %}">{% trans "Log in" %}</a>
+		{% endif %}
+	</div>
+{% endblock %}
+
+{% block branding %}
+	<h1 id="site-name"><a href="/intel/">{% trans "CommCare HQ" %}</a></h1>
+{% endblock %}
+
+{% load buttons %}
+{% block tabs %}
+	{% if page %}{% tabs page hq_mode %}{% endif %}
+{% endblock %}
+
+{% block footer %}
+	{% include "hq/partials/footer.html" %}
+{% endblock %}
+
+{% block language_selector %}{% endblock %}

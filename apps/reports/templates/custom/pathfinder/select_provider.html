@@ -1,3 +1,4 @@
+
 {% extends base_template %}
 {% block title %}Select Report Parameters{% endblock %}
 
@@ -25,6 +26,7 @@ Year: <select name="year">
 {% endfor %}
 </select>
 Provider: <select name="provider">
+
 {% for provider_id, provider_name in providers.items %}
 <option value="{{ provider_id }}">{{ provider_name }}</option>
 {% endfor %}

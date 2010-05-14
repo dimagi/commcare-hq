@@ -12,7 +12,7 @@
 	<th></th>
 </thead>
 {% for build in builds %}
-       
+
     <tr class="{% cycle 'odd' 'even' %}">
         <td><a href="{% url buildmanager.views.show_build build.id %}">{{build.build_number}}</a></td>
         <td>{{build.package_created|date}} {{build.package_created|time}}</td>
@@ -26,7 +26,7 @@
         <td>{{build.get_status_display}}</td>        
         <td>{{build.description}}</td>
         <td><a href="{{build.get_buildURL}}">Build URL</a></td>
-        <td style="min-width:200px"><div class="js_link" onclick="hideShow('div.xforms-{{build.id}}')">{{build.xforms.count}} forms</div> 
+        <td style="min-width:200px"><div class="js_link" onclick="$('.xforms-{{build.id}}').toggle()">{{build.xforms.count}} forms</div> 
         <div class="xforms-{{build.id}}" style="display:none;">
             --<p>{{build.get_xform_html_summary|safe}}</p>
         </div>

@@ -15,8 +15,13 @@ import urllib
 from cookielib import * 
 from urlparse import urlparse
 
-#curl_command = 'curl' #if curl is in your path/linux
-curl_command = 'c:\curl\curl.exe' #if curl is in your path/linux
+CURL_CMD = 'curl' #if curl is in your path/linux
+# CURL_CMD = 'c:\curl\curl.exe' #if curl is in your path/linux
+
+USER_AGENT = 'CCHQ-submitfromfile-python-v0.1' 
+
+#TARGET_URL = "http://{{remote_host}}/builds/new"
+TARGET_URL = "http://{{remote_host}}/releasemanager/new_jarjad/"
 
 class AuthenticatedHandler(object):    
     def __init__(self, username, password, hostname):
@@ -30,16 +35,17 @@ class AuthenticatedHandler(object):
     
     def _establishSession(self):
         self.session_cookie = os.path.join(os.path.dirname(__file__),str(uuid.uuid1()) + "_cookie.txt")
-        p = subprocess.Popen([curl_command,'-c',self.session_cookie, '-F username=%s' % self.username, '-F password=%s' % self.password,'--request', 'POST', 'http://%s/accounts/login/' % hostname],stdout=PIPE,stderr=PIPE,shell=False)
+        p = subprocess.Popen([CURL_CMD,'-c',self.session_cookie, '-F username=%s' % self.username, '-F password=%s' % self.password,'--request', 'POST', 'http://%s/accounts/login/' % hostname],stdout=PIPE,stderr=PIPE,shell=False)
         results = p.stdout.read()
         
         
-
+    def get_url(self, remote_host):
+        return TARGET_URL.replace("{{remote_host}}", remote_host)
 
     def do_upload_build(self,
                         hostname,
                         project_id, 
-                        status,
+                        version,
                         revision_number,
                         build_number,
                         jar_file,
@@ -54,16 +60,18 @@ class AuthenticatedHandler(object):
 #            jadfile_str= fin.read()
 #            fin.close()
 
-            command_arr = [curl_command,'-b', 
-                                  self.session_cookie, 
+            command_arr = [CURL_CMD,'-b', 
+                                  self.session_cookie,
+                                  "-s",
+                                  "--user-agent", USER_AGENT,
                                   '-F jar_file_upload=@%s' % jar_file, 
                                   '-F jad_file_upload=@%s' % jad_file, 
                                   '-F project=%s' % project_id,                                  
                                   '-F build_number=%s' % build_number,
                                   '-F revision_number=%s' % revision_number,                                  
-                                  '-F status=%s' % status,
+                                  '-F version=%s' % version,
                                   '-F description=%s' % urllib.quote(description),                                  
-                                  '--request', 'POST', 'http://%s/builds/new' % self.hostname]
+                                  '--request', 'POST', self.get_url(self.hostname)]
             
             
             p = subprocess.Popen(command_arr,
@@ -72,7 +80,9 @@ class AuthenticatedHandler(object):
             print ' '.join(command_arr)
             results = p.stdout.read()
             errors = p.stderr.read()
-            print results            
+            print results
+            if errors.strip() != '': print "ERROR: %s" % errors
+            
         except Exception, e:
             print "Error uploading submission: " + str(e)
         finally:
@@ -89,7 +99,7 @@ if __name__ == "__main__":
         password = os.environ['password']
         
         project_id = os.environ['project_id']        
-        status = os.environ['build_status']
+        version = os.environ['version']
         revision_number = os.environ['revision_number']
         build_number = os.environ['build_number']
         jar_file = os.environ['jar_file_path']
@@ -105,7 +115,7 @@ if __name__ == "__main__":
                      <remote username> 
                      <remote password>                      
                      <project_id>                     
-                     <build status>
+                     <version>
                      <build_number>
                      <revision_number>                     
                      <jar_file_path>
@@ -117,7 +127,7 @@ if __name__ == "__main__":
             hostname = sys.argv[1]
             username = sys.argv[2]
             password = sys.argv[3]
-            status = sys.argv[4]
+            version = sys.argv[4]
             project_id = sys.argv[5]        
             build_number = sys.argv[6]
             revision_number = sys.argv[7]                    
@@ -128,10 +138,9 @@ if __name__ == "__main__":
     uploader = AuthenticatedHandler(username,password,hostname)
     uploader.do_upload_build(hostname,
                              project_id, 
-                             status,
+                             version,
                              revision_number,
                              build_number,
                              jar_file,
                              jad_file,
                              description)
-      

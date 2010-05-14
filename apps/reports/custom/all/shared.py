@@ -401,6 +401,7 @@ def get_data_by_chw(case):
                 data_by_chw[chw_id][id] = map
     return data_by_chw
 
+
 def get_wards():
     ''' Get a list of all wards'''
     wards = []
@@ -456,13 +457,18 @@ def get_case_info(context, chw_data, enddate, active):
             form_type = CaseFormIdentifier.objects.get(form_identifier=
                                                        form_id.id).form_type
             for form in form_info:
+                temp_form_type = form_type
                 context['chw_name'] = form["meta_username"]
                 timeend = form["meta_timeend"]
+                if form_type == 'follow':
+                    referral = get_value(form, 'referral_id')
+                    if referral and referral != '':
+                        temp_form_type = 'referral'
                 if datetime.date(timeend) < enddate:
                     form_dates.append(timeend)
-                if timeend > fttd[form_type] and enddate > datetime.date(
+                if timeend > fttd[temp_form_type] and enddate > datetime.date(
                                                                     timeend):
-                    fttd[form_type] = timeend
+                    fttd[temp_form_type] = timeend
         status = get_status(fttd, active, enddate)
         if not len(form_dates) == 0:
             all_data.append({'case_id': id, 'total_visits': len(form_dates),
@@ -569,8 +575,9 @@ def get_last(form_dates):
 def get_status(fttd, active, enddate):
     ''' Returns whether active, late, or closed'''
     if fttd['open'] > fttd['close'] or only_follow(fttd):
-        if datetime.date(fttd['open']) >= active or datetime.date(
-                                                    fttd['follow']) >= active:
+        if datetime.date(fttd['open']) >= active or \
+            datetime.date(fttd['follow']) >= active or \
+            datetime.date(fttd['referral']) >= active:
             if referral_late(fttd, enddate, 3):
                 return 'Late (Referral)'
             else:
@@ -603,7 +610,8 @@ def referral_late(form_type_to_date, enddate, days_late):
 def only_follow(fttd):
     ''' for cases where there was no open form but there was a follow form'''
     mindate = datetime(2000, 1, 1)
-    if fttd['open'] == mindate and fttd['follow'] > mindate:
+    if fttd['open'] == mindate and fttd['follow'] > mindate or \
+                                    fttd['referral'] > mindate:
         return True
     else:
         return False
@@ -617,6 +625,7 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
         count_of_active = 0
         count_last_week = 0
         days_late_list = []
+        ref_days_late_list = []
         chw_name = ''
         hcbpid = chw_id
         #if 'prov_name' in user_data:
@@ -628,26 +637,28 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
             (chw_name, form_type_to_date, last_week) = \
                 get_form_type_to_date_last_week(map, enddate, mindate)
             count_last_week += last_week
-            # if the most recent open form was submitted more recently than  
-            # the most recent close form then this case is open
-            if form_type_to_date['open'] > form_type_to_date['close'] or \
-                only_follow(form_type_to_date):
+            status = get_status(form_type_to_date, active, enddate)
+            if status != 'Closed':
                 count_of_open += 1
-                if datetime.date(form_type_to_date['open']) >= active or \
-                    datetime.date(form_type_to_date['follow']) >= active:
-                    count_of_active += 1
-                else:
-                    days_late = get_days_late(form_type_to_date, active)
-                    days_late_list.append(days_late)
+            if status == 'Active':
+                count_of_active += 1
+            if status == 'Late (Routine)':
+                days_late = get_days_late(form_type_to_date, active)
+                days_late_list.append(days_late)
+            if status == 'Late (Referral)':
+                ref_days_late = get_ref_days_late(form_type_to_date, enddate)
+                ref_days_late_list.append(ref_days_late)
         percentage = get_percentage(count_of_open, count_of_active)
         if percentage >= 90: over_ninety = True
         else: over_ninety = False
         avg_late = get_avg_late(days_late_list) 
+        ref_avg_late = get_avg_late(ref_days_late_list)
         data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
                     count_of_active, 'open': count_of_open, 
                     'percentage': percentage, 'last_week': 
-                    count_last_week, 'avg_late': avg_late,
-                    'over_ninety': over_ninety})
+                    count_last_week, 'avg_late': avg_late,  
+                    'ref_avg_late': ref_avg_late, 'over_ninety': over_ninety,
+                    'hcbpid': hcbpid})
     return data
 
 def get_form_type_to_date_last_week(map, enddate, mindate):
@@ -661,18 +672,24 @@ def get_form_type_to_date_last_week(map, enddate, mindate):
         cfi = CaseFormIdentifier.objects.get(form_identifier=form_id.id)
         form_type = cfi.form_type
         for form in form_info:
+            temp_form_type = form_type
+            if form_type == 'follow':
+                referral = get_value(form, 'referral_id')
+                if referral and referral != '':
+                    temp_form_type = 'referral'
             # I'm assuming that all the forms in this case will have 
             # the same chw name (since they all have the same chw id)
             chw_name = form["meta_username"]
             timeend = form["meta_timeend"]
             time_diff = enddate - datetime.date(timeend)
-            if time_diff <= timedelta(days=7) and time_diff >= timedelta(days=0):
+            if time_diff <= timedelta(days=7) and time_diff >= \
+                timedelta(days=0):
                 last_week += 1
             # for each form type get the date of the most recently 
             # submitted form
-            if timeend > form_type_to_date[form_type] and enddate > \
+            if timeend > form_type_to_date[temp_form_type] and enddate > \
                 datetime.date(timeend):
-                form_type_to_date[form_type] = timeend
+                form_type_to_date[temp_form_type] = timeend
     return (chw_name, form_type_to_date, last_week)
 
 def get_days_late(form_type_to_date, active):
@@ -682,6 +699,15 @@ def get_days_late(form_type_to_date, active):
         most_recent = form_type_to_date['open']
     time_diff = active - datetime.date(most_recent)
     return time_diff.days
+
+def get_ref_days_late(form_type_to_date, enddate):
+    '''Returns the number of days past the active date for a late referral'''
+    # can I assume that if something is late for referral that the last form was 
+    # a form that triggered a referral?
+    most_recent = form_type_to_date['referral']
+    time_diff = enddate - datetime.date(most_recent)
+    # subtract the grace period
+    return time_diff.days - 3
 
 def get_avg_late(days_late_list):
     ''' given a list of days late, return the average number of days'''

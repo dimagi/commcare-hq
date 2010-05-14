@@ -79,7 +79,7 @@ class Membership(models.Model):
     is_active = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return str(self.member_type) + str(self.member_id) + str(self.member_object)
+        return "%s (%s, %s) %s" % (self.member_object, self.member_type, self.member_id, self.domain)
 
 ##############################################################################################################
 
