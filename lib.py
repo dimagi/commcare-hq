@@ -34,27 +34,27 @@ def rlistdir(start_path, paths=[], prepend='', ignore_hidden=True):
     
 
 # DEPRECATED - delete once the new add_to_jar is tested
-def old_add_to_jar(jar_file, path_to_add):
-    '''adds files under /path_to_add to jar_file, return path to the new JAR'''
-    if not os.path.isdir(path_to_add):
-        raise "Trying to add non-existant directory '%s' to JAR" % str(path_to_add)
-        
-    if not jar_file.endswith('.jar') or not os.path.isfile(jar_file):
-        raise "'%s' isn't a JAR file" % jar_file
-
-    tmpjar = os.path.join(tmp.mkdtemp(), os.path.basename(jar_file))
-    shutil.copy2(jar_file, tmpjar)
-    
-    zf = ZipFile(tmpjar, 'a')
-    
-    for f in rlistdir(path_to_add):
-        full_path = os.path.join(path_to_add, f)
-        if os.path.isdir(full_path): continue
-        zf.write(full_path, str(f))
-
-    zf.close
-    
-    return tmpjar
+# def old_add_to_jar(jar_file, path_to_add):
+#     '''adds files under /path_to_add to jar_file, return path to the new JAR'''
+#     if not os.path.isdir(path_to_add):
+#         raise "Trying to add non-existant directory '%s' to JAR" % str(path_to_add)
+#         
+#     if not jar_file.endswith('.jar') or not os.path.isfile(jar_file):
+#         raise "'%s' isn't a JAR file" % jar_file
+# 
+#     tmpjar = os.path.join(tmp.mkdtemp(), os.path.basename(jar_file))
+#     shutil.copy2(jar_file, tmpjar)
+#     
+#     zf = ZipFile(tmpjar, 'a')
+#     
+#     for f in rlistdir(path_to_add):
+#         full_path = os.path.join(path_to_add, f)
+#         if os.path.isdir(full_path): continue
+#         zf.write(full_path, str(f))
+# 
+#     zf.close
+#     
+#     return tmpjar
 
 
 def add_to_jar(jar_file, path_to_add):
@@ -119,11 +119,12 @@ def modify_jad(jad_file, jar_file):
     return tmpjad
     
     
-def create_zip(target, files):
-    ''' create zip from files list, returns created zip file'''
+def create_zip(target, jar_file, jad_file):
+    ''' create zip from the jar & jad '''
     zf = ZipFile(target, 'w')
-    for f in files:
-        zf.write(f)
+    
+    zf.write(jar_file, os.path.basename(jar_file))
+    zf.write(jad_file, os.path.basename(jad_file))
     
     zf.close()
     return target

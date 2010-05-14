@@ -199,7 +199,7 @@ def _create_build(build):
     shutil.copy2(new_tmp_jad, new_jad)
         
     # create a zip
-    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), [new_jar, new_jad])
+    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
     
     # clean up tmp files
     os.remove(new_tmp_jar)
