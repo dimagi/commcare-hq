@@ -74,7 +74,6 @@ def add_to_jar(jar_file, path_to_add):
     
     # first, add all the resource set files
     files = rlistdir(path_to_add)    
-    print "files", files
     
     for f in files:
         full_path = os.path.join(path_to_add, f)
@@ -83,11 +82,9 @@ def add_to_jar(jar_file, path_to_add):
         
     # now add the JAR files, taking care not to add filenames that already exist in the resource set
     existing_files = newjar.namelist()
-    print "existing_files", existing_files
     
     for f in oldjar.infolist():
         if f.filename in existing_files: 
-            print "EXISTING FILE: ", f.filename
             continue
         buffer = oldjar.read(f.filename)
         newjar.writestr(f, buffer)
