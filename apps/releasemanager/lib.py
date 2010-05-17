@@ -19,10 +19,11 @@ from subprocess import Popen, PIPE
 # from xformmanager.models import MetaDataValidationError
 # from xformmanager.xformdef import FormDef, ElementDef
 
-def rlistdir(start_path, paths=[], prepend=''):
+def rlistdir(start_path, paths=[], prepend='', ignore_hidden=True):
     ''' list dirs recursively '''
     
     for f in os.listdir(start_path):
+        if ignore_hidden and f.startswith('.'): continue
         full_path = os.path.join(start_path, f)
         if os.path.isdir(full_path):
             rlistdir(full_path, paths, f)
@@ -32,28 +33,67 @@ def rlistdir(start_path, paths=[], prepend=''):
     return paths
     
 
+# DEPRECATED - delete once the new add_to_jar is tested
+# def old_add_to_jar(jar_file, path_to_add):
+#     '''adds files under /path_to_add to jar_file, return path to the new JAR'''
+#     if not os.path.isdir(path_to_add):
+#         raise "Trying to add non-existant directory '%s' to JAR" % str(path_to_add)
+#         
+#     if not jar_file.endswith('.jar') or not os.path.isfile(jar_file):
+#         raise "'%s' isn't a JAR file" % jar_file
+# 
+#     tmpjar = os.path.join(tmp.mkdtemp(), os.path.basename(jar_file))
+#     shutil.copy2(jar_file, tmpjar)
+#     
+#     zf = ZipFile(tmpjar, 'a')
+#     
+#     for f in rlistdir(path_to_add):
+#         full_path = os.path.join(path_to_add, f)
+#         if os.path.isdir(full_path): continue
+#         zf.write(full_path, str(f))
+# 
+#     zf.close
+#     
+#     return tmpjar
+
+
 def add_to_jar(jar_file, path_to_add):
     '''adds files under /path_to_add to jar_file, return path to the new JAR'''
     if not os.path.isdir(path_to_add):
         raise "Trying to add non-existant directory '%s' to JAR" % str(path_to_add)
-        
+
     if not jar_file.endswith('.jar') or not os.path.isfile(jar_file):
         raise "'%s' isn't a JAR file" % jar_file
 
-    tmpjar = os.path.join(tmp.mkdtemp(), os.path.basename(jar_file))
-    shutil.copy2(jar_file, tmpjar)
+    newjar_filename = os.path.join(tmp.mkdtemp(), os.path.basename(jar_file))
+
+    oldjar = ZipFile(jar_file, 'r')
+    newjar = ZipFile(newjar_filename, 'w')
     
-    zf = ZipFile(tmpjar, 'a')
+    # Here we do some juggling, since ZipFile doesn't have a delete method
     
-    for f in rlistdir(path_to_add):
+    # first, add all the resource set files
+    files = rlistdir(path_to_add)    
+    
+    for f in files:
         full_path = os.path.join(path_to_add, f)
         if os.path.isdir(full_path): continue
-        zf.write(full_path, str(f))
-
-    zf.close
+        newjar.write(full_path, str(f))
+        
+    # now add the JAR files, taking care not to add filenames that already exist in the resource set
+    existing_files = newjar.namelist()
     
-    return tmpjar
-
+    for f in oldjar.infolist():
+        if f.filename in existing_files: 
+            continue
+        buffer = oldjar.read(f.filename)
+        newjar.writestr(f, buffer)
+    
+    newjar.close()
+    oldjar.close()
+    
+    return newjar_filename
+        
 
 def modify_jad(jad_file, jar_file):
     # read JAD to dict
@@ -79,11 +119,12 @@ def modify_jad(jad_file, jar_file):
     return tmpjad
     
     
-def create_zip(target, files):
-    ''' create zip from files list, returns created zip file'''
+def create_zip(target, jar_file, jad_file):
+    ''' create zip from the jar & jad '''
     zf = ZipFile(target, 'w')
-    for f in files:
-        zf.write(f)
+    
+    zf.write(jar_file, os.path.basename(jar_file))
+    zf.write(jad_file, os.path.basename(jad_file))
     
     zf.close()
     return target

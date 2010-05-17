@@ -190,8 +190,6 @@ def _create_build(build):
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
-
-
     new_tmp_jar = lib.add_to_jar(jar, resources)    
     new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
     shutil.copy2(new_tmp_jar, new_jar)
@@ -200,11 +198,10 @@ def _create_build(build):
     new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
     shutil.copy2(new_tmp_jad, new_jad)
         
-    
     # create a zip
-    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), [new_jar, new_jad])
+    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
     
-    # # clean up tmp files
+    # clean up tmp files
     os.remove(new_tmp_jar)
     os.remove(new_tmp_jad)
             
