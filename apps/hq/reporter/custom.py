@@ -360,3 +360,20 @@ def hbc_monthly_summary(report_schedule, run_frequency):
             reporter.transport_email('', report_schedule.recipient_user, 
                             params={"email_subject": "CommCareHQ HBC Monthly Summary Report %s-%s" %\
                                     (ward, enddate), "attachment": attachment })
+
+def chw_monthly_summary(report_schedule, run_frequency):
+    '''Summary of patient information for a chw'''
+    from hq import reporter
+    (startdate, enddate) = reporter.get_daterange(run_frequency)
+    cases = Case.objects.all()
+    for case in cases:
+        data_by_chw = get_data_by_chw(case)
+        # only send report for cases with data
+        if data_by_chw:
+            data = get_active_open_by_chw(data_by_chw, startdate, enddate)
+            rendered_text = render_to_string("custom/all/chw_summary_email.html",
+                                             {'data': data})
+            subject = 'CommCareHQ CHW Summary Report -- %s' % case.name
+            reporter.transport_email(rendered_text, 
+                                     report_schedule.recipient_user, 
+                                     params={"email_subject":subject})

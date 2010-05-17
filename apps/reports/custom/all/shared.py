@@ -651,14 +651,15 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
         percentage = get_percentage(count_of_open, count_of_active)
         if percentage >= 90: over_ninety = True
         else: over_ninety = False
-        avg_late = get_avg_late(days_late_list) 
+        avg_late = get_avg_late(days_late_list)
         ref_avg_late = get_avg_late(ref_days_late_list)
         data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
                     count_of_active, 'open': count_of_open, 
                     'percentage': percentage, 'last_week': 
                     count_last_week, 'avg_late': avg_late,  
                     'ref_avg_late': ref_avg_late, 'over_ninety': over_ninety,
-                    'hcbpid': hcbpid})
+                    'hcbpid': hcbpid, 'num_late': days_late_list, 
+                    'num_ref_late': ref_days_late_list})
     return data
 
 def get_form_type_to_date_last_week(map, enddate, mindate):
