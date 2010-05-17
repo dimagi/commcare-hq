@@ -324,7 +324,7 @@ def update_reporterprofile(req, rep, chw_id, chw_username):
                                   guid = str(uuid.uuid1()).replace('-',''))
         # reporters created through the webui automatically have the same
         # domain and organization as the creator
-        profile.domain = request.user.selected_domain
+        profile.domain = req.user.selected_domain
          
     profile.chw_id = chw_id
     profile.chw_username = chw_username
