@@ -2,23 +2,27 @@
 <table>
 	<thead>
 	<tr>
-		<th>Community Health Worker ID</th>
 		<th>Community Health Worker Name</th>
 		<th>Total active/Total open</th>
 		<th>Visits last week</th>
-		<th>Average days late (routine)</th>
-		<th>Average days late (referral)</th>
+		<th>Routine: Number late/Average days late</th>
+		<th>Referral: Number late/Average days late</th>
 	</tr>
 	</thead>
 	{% for chw_data in data %}
 	
 	<tr class="{% cycle 'odd' 'even' %}" {% if not chw_data.over_ninety %} style="color:red" {% endif %}>
-		<td>{{ chw_data.hcbpid }}</td>
 		<td>{{ chw_data.chw_name }}</td>
 		<td>{{ chw_data.active }}/{{ chw_data.open }} ({{ chw_data.percentage }}%)</td>
 		<td>{{ chw_data.last_week }}</td>
-		<td>{{ chw_data.avg_late }}</td>
-		<td>{{ chw_data.ref_avg_late }}</td>
+		<td>{% if chw_data.num_late %}
+		{{ chw_data.num_late|length }} late : {{ chw_data.avg_late }} days 
+		{% else %} - {% endif %}
+		</td>
+		<td>{% if chw_data.num_ref_late %}
+		{{ chw_data.num_ref_late|length }} late : {{ chw_data.ref_avg_late }} days
+		{% else %} - {% endif %}
+		</td>
 	</tr>
 	{% endfor %}
 </table>
