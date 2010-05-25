@@ -35,7 +35,15 @@ from django.forms.models import modelformset_factory
 import mimetypes
 import urllib
 
-# FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+from django_digest.decorators import *
+
+
+@httpdigest
+def digest_test(request):
+    xml = open('digest_response_test.xml').read()
+    return HttpResponse(xml, mimetype="text/xml") 
+
+
 
 @login_and_domain_required
 def projects(request, template_name="projects.html"):
