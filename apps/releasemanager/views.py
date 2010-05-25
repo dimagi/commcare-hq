@@ -40,7 +40,9 @@ from django_digest.decorators import *
 
 @httpdigest
 def digest_test(request):
-    xml = open('digest_response_test.xml').read()
+    # just for testing
+    from digest_response_test import *
+    # xml = open('digest_response_test.xml').read()
     return HttpResponse(xml, mimetype="text/xml") 
 
 
