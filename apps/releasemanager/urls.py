@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 import settings
 
 urlpatterns = patterns( '', #'releasemanager.views',
+    (r'^releasemanager/digest_test?$', 'releasemanager.views.digest_test'),
     (r'^releasemanager/?$', 'releasemanager.views.projects'),
 
     (r'^releasemanager/jarjad/?$', 'releasemanager.views.jarjad'),
