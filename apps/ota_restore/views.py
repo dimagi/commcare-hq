@@ -22,7 +22,7 @@ def restore(request):
     <restoredata>
         <registration>
             <username>%s</username>
-        <registration>
+        </registration>
     ''' % username
     
     for f in os.listdir(atts_dir):
