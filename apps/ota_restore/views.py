@@ -20,8 +20,8 @@ def restore(request):
     
     out = '''
     <restoredata>
-        <username>ctsims</username>
-    '''
+        <username>%s</username>
+    ''' % username
     
     for f in os.listdir(atts_dir):
         if not f.endswith('.xml'): continue
