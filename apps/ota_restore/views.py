@@ -20,7 +20,9 @@ def restore(request):
     
     out = '''
     <restoredata>
-        <username>%s</username>
+        <registration>
+            <username>%s</username>
+        <registration>
     ''' % username
     
     for f in os.listdir(atts_dir):
