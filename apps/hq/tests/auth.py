@@ -1,13 +1,10 @@
 import hashlib
 import logging
 from django.test import TestCase
-from django.test.client import Client
 from django.contrib.auth.models import User
 from domain.models import Domain
-from hq.models import Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from receiver.models import Submission
-from reporters.models import Reporter
 
 class AuthenticationTestCase(TestCase):
     def setUp(self):
@@ -17,10 +14,6 @@ class AuthenticationTestCase(TestCase):
         user, domain = create_user_and_domain(username = self.username,
                                               password = self.password, 
                                               domain_name=self.domain_name)
-        # we are explicitly testing non-traditionally logged-in authentication
-        # self.client.login(username=self.username,password=self.password)
-        org = Organization(name='mockorg', domain=domain)
-        org.save()
 
     def testBasicAuth(self):
         """This is a really junky way to submit a RAW text/xml submission via the client test API        
