@@ -205,7 +205,9 @@ class MetaTestCase(unittest.TestCase):
 
     def testEmptySubmission(self):
         logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
+        self.assertEqual(0, Metadata.objects.count())
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml", self.domain)
+        self.assertEqual(1, Metadata.objects.count())
         # raises a Metadata.DoesNotExist error on fail
         metadata = Metadata.objects.get()
         # empty submissions do not create rows in the data tables
