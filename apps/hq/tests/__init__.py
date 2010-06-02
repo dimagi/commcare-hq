@@ -4,4 +4,3 @@ import unittest
 from basic import *
 #from reportingTests import *
 from views import *
-from auth import *
