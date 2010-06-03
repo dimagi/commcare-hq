@@ -1,4 +1,3 @@
-xml = '''
 <restoredata>
    <registration>
     <username>ctsims</username>
@@ -92,4 +91,3 @@ xml = '''
    	</update>
    </case>
 </restoredata>
-'''

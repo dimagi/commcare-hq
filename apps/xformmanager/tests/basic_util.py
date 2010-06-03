@@ -31,6 +31,8 @@ class UtilTestCase(unittest.TestCase):
         (schema,err, has_error) = form_translate( fin.read() )
         if has_error:
             self.fail(err)
+        self.assertTrue("Parsing form..." in err)
+        self.assertTrue("Demo Form" in err)
         
     def testTranslateVersionedXFormToSchema(self):
         """ Test basic xform to schema translation"""
@@ -38,6 +40,8 @@ class UtilTestCase(unittest.TestCase):
         (schema,err, has_error) = form_translate( fin.read() )
         if has_error:
             self.fail(err)
+        self.assertTrue("Parsing form..." in err)
+        self.assertTrue("Demo Form" in err)
 
     def _testErrors(self, schema_file, instance_file, id):
         su = SU()

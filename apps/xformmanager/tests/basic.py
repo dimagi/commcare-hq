@@ -1,4 +1,4 @@
-from django.db import connection, transaction, DatabaseError
+from django.db import connection
 
 from xformmanager.manager import XFormManager
 from xformmanager.tests.util import *
