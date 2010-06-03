@@ -8,25 +8,22 @@ and it only knows about the data structures in xformdef.py
 
 import re
 import os
-import sys
 import logging
-import settings
 import string
-import shutil
-import tempfile
 from datetime import datetime, timedelta
 
 from stat import S_ISREG, ST_MODE
 from lxml import etree
-from MySQLdb import IntegrityError
 
-from django.db import connection, transaction, DatabaseError
+from django.conf import settings
+from django.db import connection, transaction
 
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
-from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
-from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
+from receiver.models import SubmissionHandlingType
+from xformmanager.util import case_insensitive_attribute, get_xml_string,\
+    format_table_name, formatted_join, sanitize, case_insensitive_iter
 
 
 # The maximum length a field is allowed to be.  Column names will get truncated
@@ -680,13 +677,13 @@ class XFormDBTablePopulator(XFormProcessor):
 
     def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', \
                                              parent_table_name='', parent_id=0):
+      field_value_dict = {}
       if data_tree is None and elementdef:
           self.errors.missing.append( "Missing element: %s" % elementdef.name )
           return
       local_field_value_dict = {};
       next_query = Query(parent_table_name)
       if len(elementdef.child_elements)== 0:
-          field_value_dict = {}
           if elementdef.is_repeatable :
               try:
                   field_value_dict = self._get_formatted_field_and_value(elementdef,data_tree.text)
