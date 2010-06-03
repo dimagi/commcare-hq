@@ -7,6 +7,7 @@
 
 import datetime
 from decimal import Decimal
+from django.contrib.contenttypes.models import ContentType
 
 def run():
     from django.contrib.auth.models import Group
@@ -36,26 +37,56 @@ def run():
     hq_domain_1.name = u'Pathfinder'
     hq_domain_1.description = u''
     hq_domain_1.timezone = None
+    hq_domain_1.is_active = True
     hq_domain_1.save()
 
     hq_domain_2 = Domain()
     hq_domain_2.name = u'BRAC'
     hq_domain_2.description = u''
     hq_domain_2.timezone = None
+    hq_domain_2.is_active = True
     hq_domain_2.save()
 
     hq_domain_3 = Domain()
     hq_domain_3.name = u'Grameen'
     hq_domain_3.description = u''
     hq_domain_3.timezone = None
+    hq_domain_3.is_active = True
     hq_domain_3.save()
 
     hq_domain_4 = Domain()
     hq_domain_4.name = u'MVP'
     hq_domain_4.description = u''
     hq_domain_4.timezone = None
+    hq_domain_4.is_active = True
     hq_domain_4.save()
 
+    from domain.models import Membership
+    
+    # Pathfinder
+    domain_membership_1 = Membership()
+    domain_membership_1.domain = hq_domain_1
+    domain_membership_1.member_type = ContentType.objects.get(app_label="auth", model="user")
+    domain_membership_1.member_id = 3L
+    domain_membership_1.is_active = True
+    domain_membership_1.save()
+
+    # BRAC
+    domain_membership_2 = Membership()
+    domain_membership_2.domain = hq_domain_2
+    domain_membership_2.member_type = ContentType.objects.get(app_label="auth", model="user")
+    domain_membership_2.member_id = 5L
+    domain_membership_2.is_active = True
+    domain_membership_2.save()
+
+    # Grameen
+    domain_membership_3 = Membership()
+    domain_membership_3.domain = hq_domain_3
+    domain_membership_3.member_type = ContentType.objects.get(app_label="auth", model="user")
+    domain_membership_3.member_id = 4L
+    domain_membership_3.is_active = True
+    domain_membership_3.save()
+    
     from hq.models import OrganizationType
 
     hq_organizationtype_1 = OrganizationType()
@@ -428,6 +459,8 @@ def run():
     hq_extuser_2.reporter = None
     hq_extuser_2.save()
 
+    hq_extuser_2.domain_membership.add(domain_membership_1)
+
     hq_extuser_3 = User()
     hq_extuser_3.username = u'gradmin'
     hq_extuser_3.first_name = u''
@@ -447,6 +480,8 @@ def run():
     hq_extuser_3.reporter = None
     hq_extuser_3.save()
 
+    hq_extuser_3.domain_membership.add(domain_membership_3)
+
     hq_extuser_4 = User()
     hq_extuser_4.username = u'brian'
     hq_extuser_4.first_name = u''
@@ -465,6 +500,8 @@ def run():
     hq_extuser_4.organization = None
     hq_extuser_4.reporter = None
     hq_extuser_4.save()
+
+    hq_extuser_4.domain_membership.add(domain_membership_2)
 
     hq_extuser_5 = User()
     hq_extuser_5.username = u'gayo'
