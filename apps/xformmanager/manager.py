@@ -1,16 +1,23 @@
 from __future__ import absolute_import
 
+import os
 import uuid
+import logging
 import subprocess
 import copy
-from subprocess import PIPE
+import tempfile
+import shutil
 
-from xformmanager.storageutility import * 
+from django.conf import settings
+
+# from xformmanager.storageutility import  
 from xformmanager.xformdef import FormDef
 from xformmanager.copy import prepare_migration_objects, migrate
-from xformmanager.models import MetaDataValidationError, Metadata
+from xformmanager.models import MetaDataValidationError, Metadata,\
+    ElementDefModel
 from xformmanager.util import table_exists
 from receiver.models import Attachment
+from xformmanager.storageutility import StorageUtility
 
 class XFormManager(object):
     """A central location for managing xforms.  This object includes 

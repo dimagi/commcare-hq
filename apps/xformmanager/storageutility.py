@@ -89,8 +89,6 @@ class StorageUtility(object):
         f.close()
         return status
     
-    
-   	
     @transaction.commit_on_success
     def _save_form_data_matching_formdef(self, data_stream_pointer, formdef, formdefmodel, attachment):
         """ returns True on success """
@@ -528,42 +526,42 @@ class XFormDBTableCreator(XFormProcessor):
     
     def _create_instance_tables_query_inner_loop(self, elementdef, parent_id, 
                                                   parent_name='', parent_table_name=''):
-      """ This is 'handle' instead of 'create'(_children_tables) because not only 
-          are we creating children tables, we are also gathering/passing 
-          children/field information back to the parent. 
-      """
-      
-      if not elementdef: return
-      local_fields = [];
-      
-      next_query = ''
-      if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
-          return (next_query, self._db_field_definition_string(elementdef) )
-      for child in elementdef.child_elements:
-          # put in a check for root.isRepeatable
-          next_parent_name = formatted_join(parent_name, elementdef.name)
-          if child.is_repeatable :
-              # repeatable elements must generate a new table
-              if parent_id == '':
-                  ed = ElementDefModel(form_id=self.formdefmodel.id, xpath=child.xpath, 
-                                       table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name) ) #should parent_name be next_parent_name?
-                  ed.save()
-                  ed.parent = ed
-              else:
-                  ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
-                                  table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name ) ) #next_parent_name
-              ed.save()
-              query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
-              next_query = next_query + query
-          else: 
-            if len(child.child_elements) > 0 :
-                (q, f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name) #next-parent-name
-            else:
-                local_fields.append( self._db_field_definition_string(child) )
-                (q,f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
-            next_query = next_query + q
-            local_fields = local_fields + f
-      return (next_query, local_fields)
+        """ This is 'handle' instead of 'create'(_children_tables) because not only 
+            are we creating children tables, we are also gathering/passing 
+            children/field information back to the parent. 
+        """
+        
+        if not elementdef: return
+        local_fields = [];
+        
+        next_query = ''
+        if elementdef.is_repeatable and len(elementdef.child_elements)== 0 :
+            return (next_query, self._db_field_definition_string(elementdef) )
+        for child in elementdef.child_elements:
+            # put in a check for root.isRepeatable
+            next_parent_name = formatted_join(parent_name, elementdef.name)
+            if child.is_repeatable :
+                # repeatable elements must generate a new table
+                if parent_id == '':
+                    ed = ElementDefModel(form_id=self.formdefmodel.id, xpath=child.xpath, 
+                                         table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name) ) #should parent_name be next_parent_name?
+                    ed.save()
+                    ed.parent = ed
+                else:
+                    ed = ElementDefModel(parent_id=parent_id, form=self.formdefmodel, xpath=child.xpath, 
+                                    table_name = format_table_name( formatted_join(parent_name, child.name), self.formdef.version, self.formdef.domain_name ) ) #next_parent_name
+                ed.save()
+                query = self.queries_to_create_instance_tables(child, ed.id, parent_name, parent_table_name )
+                next_query = next_query + query
+            else: 
+                if len(child.child_elements) > 0 :
+                    (q, f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id,  parent_name=formatted_join( next_parent_name, child.name ), parent_table_name=parent_table_name) #next-parent-name
+                else:
+                    local_fields.append( self._db_field_definition_string(child) )
+                    (q,f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
+                next_query = next_query + q
+                local_fields = local_fields + f
+        return (next_query, local_fields)
 
     def _db_field_definition_string(self, elementdef):
         """ generates the sql string to conform to the expected data type """
@@ -648,97 +646,97 @@ class XFormDBTablePopulator(XFormProcessor):
 
         
     def queries_to_populate_instance_tables(self, data_tree, elementdef, parent_name='', parent_table_name='', parent_id=0):
-      if data_tree is None and elementdef:
-          self.errors.missing.append( "Missing element: %s" % elementdef.name )
-          return
-      
-      table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version, domain=self.formdefmodel.domain)
-      if len( parent_table_name ) > 0:
-          # todo - make sure this is thread-safe (in case someone else is updating table). ;)
-          # currently this assumes that we update child elements at exactly the same time we update parents =b
-          cursor = connection.cursor()
-          s = "SELECT id FROM " + str(parent_table_name) + " order by id DESC"
-          logging.debug(s)
-          cursor.execute(s)
-          row = cursor.fetchone()
-          if row is not None:
-              # this is really sketchy - the ID is not yet created so we assume this
-              # will be the next one inserted.
-              # TODO: fix properly with real refactoring
-              parent_id = row[0] + 1 
-          else:
-              parent_id = 1
-      
-      query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, \
-                                                        parent_name=parent_name, parent_table_name=table_name, \
-                                                        parent_id=parent_id)
-      query.parent_id = parent_id
-      return query
+        if data_tree is None and elementdef:
+            self.errors.missing.append( "Missing element: %s" % elementdef.name )
+            return
+        
+        table_name = get_registered_table_name( elementdef.xpath, self.formdef.target_namespace, self.formdef.version, domain=self.formdefmodel.domain)
+        if len( parent_table_name ) > 0:
+            # todo - make sure this is thread-safe (in case someone else is updating table). ;)
+            # currently this assumes that we update child elements at exactly the same time we update parents =b
+            cursor = connection.cursor()
+            s = "SELECT id FROM " + str(parent_table_name) + " order by id DESC"
+            logging.debug(s)
+            cursor.execute(s)
+            row = cursor.fetchone()
+            if row is not None:
+                # this is really sketchy - the ID is not yet created so we assume this
+                # will be the next one inserted.
+                # TODO: fix properly with real refactoring
+                parent_id = row[0] + 1 
+            else:
+                parent_id = 1
+        
+        query = self._populate_instance_tables_inner_loop(data_tree=data_tree, elementdef=elementdef, \
+                                                          parent_name=parent_name, parent_table_name=table_name, \
+                                                          parent_id=parent_id)
+        query.parent_id = parent_id
+        return query
 
     def _populate_instance_tables_inner_loop(self, data_tree, elementdef, parent_name='', \
                                              parent_table_name='', parent_id=0):
-      field_value_dict = {}
-      if data_tree is None and elementdef:
-          self.errors.missing.append( "Missing element: %s" % elementdef.name )
-          return
-      local_field_value_dict = {};
-      next_query = Query(parent_table_name)
-      if len(elementdef.child_elements)== 0:
-          if elementdef.is_repeatable :
-              try:
-                  field_value_dict = self._get_formatted_field_and_value(elementdef,data_tree.text)
-              except TypeError, e:
-                  self.errors.bad_type.append( unicode(e) )
-          return Query( parent_table_name, field_value_dict )
-      for def_child in elementdef.child_elements:
-        data_node = None
-        
-        # todo - make sure this works in a case-insensitive way
-        # find the data matching the current elementdef
-        # todo - put in a check for root.isRepeatable
-        next_parent_name = formatted_join(parent_name, elementdef.name)
-        if def_child.is_repeatable :
-            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
-                query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
-                                                                 parent_table_name, parent_id)
-                if next_query is not None:
-                    next_query.child_queries = next_query.child_queries + [ query ]
-                else:
-                    next_query = query
-        else:
-            # if there are children (which are not repeatable) then flatten the table
-            for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
-                data_node = data_child
-                break;
-            if data_node is None:
-                # no biggie - repeatable and irrelevant fields in the schema 
-                # do not show up in the instance
-                self.errors.missing.append( def_child.name )
-                continue
-            if( len(def_child.child_elements)>0 ):
-                # here we are propagating, not onlyt the list of fields and values, but aso the child queries
-                query = self._populate_instance_tables_inner_loop(data_tree=data_node, \
-                                                                  elementdef=def_child, \
-                                                                  parent_name=parent_name, \
-                                                                  parent_table_name=parent_table_name)
-                next_query.child_queries = next_query.child_queries + query.child_queries
-                local_field_value_dict.update( query.field_value_dict )
+        field_value_dict = {}
+        if data_tree is None and elementdef:
+            self.errors.missing.append( "Missing element: %s" % elementdef.name )
+            return
+        local_field_value_dict = {};
+        next_query = Query(parent_table_name)
+        if len(elementdef.child_elements)== 0:
+            if elementdef.is_repeatable :
+                try:
+                    field_value_dict = self._get_formatted_field_and_value(elementdef,data_tree.text)
+                except TypeError, e:
+                    self.errors.bad_type.append( unicode(e) )
+            return Query( parent_table_name, field_value_dict )
+        for def_child in elementdef.child_elements:
+            data_node = None
+            
+            # todo - make sure this works in a case-insensitive way
+            # find the data matching the current elementdef
+            # todo - put in a check for root.isRepeatable
+            next_parent_name = formatted_join(parent_name, elementdef.name)
+            if def_child.is_repeatable :
+                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+                    query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
+                                                                     parent_table_name, parent_id)
+                    if next_query is not None:
+                        next_query.child_queries = next_query.child_queries + [ query ]
+                    else:
+                        next_query = query
             else:
-                # if there are no children, then add values to the table
-                if data_node.text is not None :
-                    try:
-                        field_value_dict = self._get_formatted_field_and_value(def_child, data_node.text)
-                    except TypeError, e:
-                        self.errors.bad_type.append( unicode(e) )
-                    local_field_value_dict.update( field_value_dict )
-                query = self._populate_instance_tables_inner_loop(data_node, def_child, \
-                                                                  next_parent_name, parent_table_name)
-                next_query.child_queries = next_query.child_queries + query.child_queries 
-                local_field_value_dict.update( query.field_value_dict )
-      q = Query( parent_table_name, local_field_value_dict )
-      q.child_queries = q.child_queries + [ next_query ]
-      return q
-    
+                # if there are children (which are not repeatable) then flatten the table
+                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
+                    data_node = data_child
+                    break;
+                if data_node is None:
+                    # no biggie - repeatable and irrelevant fields in the schema 
+                    # do not show up in the instance
+                    self.errors.missing.append( def_child.name )
+                    continue
+                if( len(def_child.child_elements)>0 ):
+                    # here we are propagating, not onlyt the list of fields and values, but aso the child queries
+                    query = self._populate_instance_tables_inner_loop(data_tree=data_node, \
+                                                                      elementdef=def_child, \
+                                                                      parent_name=parent_name, \
+                                                                      parent_table_name=parent_table_name)
+                    next_query.child_queries = next_query.child_queries + query.child_queries
+                    local_field_value_dict.update( query.field_value_dict )
+                else:
+                    # if there are no children, then add values to the table
+                    if data_node.text is not None :
+                        try:
+                            field_value_dict = self._get_formatted_field_and_value(def_child, data_node.text)
+                        except TypeError, e:
+                            self.errors.bad_type.append( unicode(e) )
+                        local_field_value_dict.update( field_value_dict )
+                    query = self._populate_instance_tables_inner_loop(data_node, def_child, \
+                                                                      next_parent_name, parent_table_name)
+                    next_query.child_queries = next_query.child_queries + query.child_queries 
+                    local_field_value_dict.update( query.field_value_dict )
+        q = Query( parent_table_name, local_field_value_dict )
+        q.child_queries = q.child_queries + [ next_query ]
+        return q
+
     def _get_formatted_field_and_value(self, elementdef, raw_value):
         """ returns a dictionary of key-value pairs """
         label = self._hack_to_get_cchq_working( sanitize(elementdef.name) )
