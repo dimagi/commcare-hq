@@ -88,18 +88,22 @@ def new_jarjad(request, template_name="jarjad.html"):
     context = {}
     form = JarjadForm()    
     if request.method == 'POST':
-        form = JarjadForm(request.POST, request.FILES)                
+        form = JarjadForm(request.POST, request.FILES)        
         if form.is_valid():
             try:                      
                 jj = form.save(commit=False)
+        
                 jj.uploaded_by=request.user
                 jj.description = urllib.unquote(jj.description)
-                    
+
                 jj.save_file(request.FILES['jad_file_upload'])
-                jj.save_file(request.FILES['jar_file_upload'])
-                    
+                jj.save_file(request.FILES['jar_file_upload'])            
+
+                jad = lib.jad_to_dict(open(jj.jad_file).read())
+                jj.version = jad['MIDlet-Version']                
+
                 jj.save()
-            
+        
                 # _log_build_upload(request, newbuild)
                 return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
             except Exception, e:

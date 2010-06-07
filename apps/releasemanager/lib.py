@@ -95,12 +95,16 @@ def add_to_jar(jar_file, path_to_add):
     return newjar_filename
         
 
-def modify_jad(jad_file, jar_file):
-    # read JAD to dict
+def jad_to_dict(jad_contents):
     jad = {}
-    for line in open(jad_file).readlines():
+    for line in jad_contents.strip().split("\n"):
         key, val = line.split(':',1)
         jad[key] = val.strip()
+    
+    return jad
+    
+def modify_jad(jad_file, jar_file):
+    jad = jad_to_dict(open(jad_file).read())
     
     # modify JAD data 
     jad['MIDlet-Jar-Size'] = os.path.getsize(jar_file)

@@ -8,7 +8,7 @@
 		<th>Build #</th>
 		<th>Revision #</th>
 		<th>Uploaded By</th>
-		<th>Status</th>
+		<th>Version</th>
 		<th>Files</th>
 		<!-- <th>Build Server URL</th> -->
 		<th></th>
@@ -21,7 +21,7 @@
 			<td>{{item.build_number}}</td>
 			<td>{{item.revision_number}}</td>
 	        <td>{{item.uploaded_by}}</td>
-	        <td>{{item.status}}</td>        
+	        <td>{{item.version}}</td>        
 	        <td>
 				<a href="{% download_url item.jar_file %}">{% filename item.jar_file %}</a><br />
 	            <a href="{% download_url item.jad_file %}" onmouseout="hideTooltip()" 

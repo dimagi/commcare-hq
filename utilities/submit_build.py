@@ -45,7 +45,6 @@ class AuthenticatedHandler(object):
     def do_upload_build(self,
                         hostname,
                         project_id, 
-                        version,
                         revision_number,
                         build_number,
                         jar_file,
@@ -69,7 +68,6 @@ class AuthenticatedHandler(object):
                                   '-F project=%s' % project_id,                                  
                                   '-F build_number=%s' % build_number,
                                   '-F revision_number=%s' % revision_number,                                  
-                                  '-F version=%s' % version,
                                   '-F description=%s' % urllib.quote(description),                                  
                                   '--request', 'POST', self.get_url(self.hostname)]
             
@@ -99,7 +97,6 @@ if __name__ == "__main__":
         password = os.environ['password']
         
         project_id = os.environ['project_id']        
-        version = os.environ['version']
         revision_number = os.environ['revision_number']
         build_number = os.environ['build_number']
         jar_file = os.environ['jar_file_path']
@@ -107,7 +104,7 @@ if __name__ == "__main__":
         description = os.environ['description']  
     except Exception, e:
         #no environmental variables, check to see if the arguments are there in the cmdline
-        if len(sys.argv) < 11:
+        if len(sys.argv) < 10:
             print e
             print """\tUsage: 
                 submit_build.py
@@ -115,7 +112,6 @@ if __name__ == "__main__":
                      <remote username> 
                      <remote password>                      
                      <project_id>                     
-                     <version>
                      <build_number>
                      <revision_number>                     
                      <jar_file_path>
@@ -127,18 +123,16 @@ if __name__ == "__main__":
             hostname = sys.argv[1]
             username = sys.argv[2]
             password = sys.argv[3]
-            version = sys.argv[4]
-            project_id = sys.argv[5]        
-            build_number = sys.argv[6]
-            revision_number = sys.argv[7]                    
-            jar_file = sys.argv[8]
-            jad_file = sys.argv[9]
-            description = ' '.join(sys.argv[10:])
+            project_id = sys.argv[4]        
+            build_number = sys.argv[5]
+            revision_number = sys.argv[6]                    
+            jar_file = sys.argv[7]
+            jad_file = sys.argv[8]
+            description = ' '.join(sys.argv[9:])
 
     uploader = AuthenticatedHandler(username,password,hostname)
     uploader.do_upload_build(hostname,
                              project_id, 
-                             version,
                              revision_number,
                              build_number,
                              jar_file,
