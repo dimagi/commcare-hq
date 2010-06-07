@@ -3,8 +3,8 @@
 {% if items %}
 <table>
 	<thead>
-		<th>Resource Set</th>
 		<th>Description</th>
+		<th>Resource Set</th>
 		<th>JAD/JAR</th>
 		<th>Created At</th>
 		<th>Downloads</th>
@@ -13,8 +13,8 @@
 	{% for item in items %}
 
 	    <tr class="{% cycle 'odd' 'even' %}">
-			<td>{{item.resource_set.name}}</td>
 			<td>{{item.description}}</td>
+			<td>{{item.resource_set.name}}</td>
 			<td>{{item.jarjad.description}}</td>
 	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
 	        <td>

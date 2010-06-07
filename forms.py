@@ -11,7 +11,7 @@ class JarjadForm(forms.ModelForm):
     
     class Meta:
         model = Jarjad
-        exclude = ('jar_file', 'jad_file','uploaded_by','is_release')
+        exclude = ('jar_file', 'jad_file','uploaded_by','is_release', 'version')
            
         
 class BuildForm(forms.ModelForm):
