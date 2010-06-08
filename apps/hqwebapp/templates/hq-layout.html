@@ -17,8 +17,10 @@
 {% block page_stylesheets %}{% endblock %}
 {% endblock %}
     <!-- javascripts (global, app, page) -->
-    <script type="text/javascript" src="/static/webapp/javascripts/jquery-1.3.2.min.js"></script>{% for js in javascripts %}
-    <script type="text/javascript" src="{{ js }}"></script>{% endfor %}
+    <script type="text/javascript" src="/static/hqwebapp/javascripts/jquery-1.3.2.min.js"></script>
+	{% for js in javascripts %}
+    	<script type="text/javascript" src="{{ js }}"></script>
+	{% endfor %}
 {% block javascripts %}{% endblock %}
 </head>
 <body>
