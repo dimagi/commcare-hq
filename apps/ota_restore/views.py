@@ -19,13 +19,8 @@ def restore(request):
     
     atts_dir = settings.RAPIDSMS_APPS['receiver']['attachments_path']
     
-    out = '''
-    <restoredata>
-        <registration>
-            <username>%s</username>
-        </registration>
-    ''' % username
-    
+    cases_list = {}
+        
     for f in os.listdir(atts_dir):
         if not f.endswith('.xml'): continue
         path = atts_dir + f
@@ -34,12 +29,30 @@ def restore(request):
         if search_str in contents and '<case>' in contents:
             dom = parse(path)
             cases = dom.getElementsByTagName("case")
+
             for case in cases:
-                out += case.toprettyxml()
-            
-    out += "</restoredata>"
+                date_modified = case.getElementsByTagName("date_modified")[0].firstChild.data
+                case_id = case.getElementsByTagName("case_id")[0].firstChild.data
+
+                key = "%s:%s" % (date_modified, case_id)
+                cases_list[key] = case
+                
+                
+    # create the xml, sorted by timestamps
     
-    return HttpResponse(out, mimetype="text/xml")
+    xml = '''
+    <restoredata>
+        <registration>
+            <username>%s</username>
+        </registration>
+    ''' % username
+    
+    for case in sorted(cases_list.keys()):
+        xml += cases_list[case].toprettyxml()
+
+    xml += "</restoredata>"
+    
+    return HttpResponse(xml, mimetype="text/xml")
     
     
 @httpdigest
