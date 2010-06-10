@@ -313,8 +313,8 @@ def _form_translate(input_data, operation):
     # java -jar form_translate.jar <operation> < form.xml > output
     #
     # You can pass in a filename or a full string/stream of xml data
-    logging.debug ("form_translate %s: begin subprocess - java -jar form_translate.jar %s < input file > " \
-                   % (operation, operation))
+    logging.debug ("form_translate %s: begin subprocess - java -jar %s %s < input file > " \
+                   % (operation, settings.XFORMMANAGER_FORM_TRANSLATE_JAR, operation))
     p = subprocess.Popen(["java","-jar",
                           settings.XFORMMANAGER_FORM_TRANSLATE_JAR,
                           operation], 
