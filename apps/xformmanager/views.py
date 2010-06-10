@@ -396,7 +396,7 @@ def submit_data(request, formdef_id, template='submit_data.html'):
         form = SubmitDataForm(request.POST, request.FILES)        
         if form.is_valid():            
             
-            xmlfile = request.FILES['file'].read()            
+            xmlfile = request.FILES['file'].read()
             checksum = hashlib.md5(xmlfile).hexdigest()
                                     
             new_submission = submitprocessor.new_submission(request.META, checksum, request.user.selected_domain)        
@@ -610,13 +610,20 @@ def data(request, formdef_id, template_name="data.html", context={}, use_blackli
         # does not show up as a filter link - todo: clean up later
         context['filtered_by'] = clean_filters.keys()[0]
     
-    if use_blacklist:
-        blacklist_users = BlacklistedUser.for_domain(request.user.selected_domain)
-        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
-                              blacklist=blacklist_users, column_filters=column_filters)
-    else:
-        rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
-                              column_filters=column_filters)
+
+    # commenting out blacklist test
+    rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+                          column_filters=column_filters)
+    # if use_blacklist:
+    #     blacklist_users = BlacklistedUser.for_domain(request.user.selected_domain)
+    #     rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+    #                           blacklist=blacklist_users, column_filters=column_filters)
+    # else:
+    #     rows = xform.get_rows(sort_column=sort_column, sort_descending=sort_descending, 
+    #                           column_filters=column_filters)
+    
+    # /end commenting out blacklist
+    
     context["sort_index"] = columns.index(sort_column)
     context['columns'] = columns 
     context['form_name'] = xform.form_name

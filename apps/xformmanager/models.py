@@ -257,7 +257,7 @@ class FormDefModel(models.Model):
            get_rows for documentation of the parameters.'''
         
         # Note that the data view is dependent on id being first
-        sql = " SELECT su.id as 'submision_id', su.submit_time, s.* FROM %s s " % self.table_name + \
+        sql = " SELECT su.id as submision_id, su.submit_time, s.* FROM %s s " % self.table_name + \
               " JOIN xformmanager_metadata m ON m.raw_data=s.id " + \
               " JOIN receiver_attachment a ON m.attachment_id=a.id " + \
               " JOIN receiver_submission su ON a.submission_id=su.id " + \

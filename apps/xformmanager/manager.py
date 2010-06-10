@@ -322,11 +322,11 @@ def _form_translate(input_data, operation):
                           stdout=subprocess.PIPE,stdin=subprocess.PIPE,
                           stderr=subprocess.PIPE)
     logging.debug ("form_translate %s: begin communicate with subprocess" % operation)
-    
+
     p.stdin.write(input_data)
     p.stdin.flush()
     p.stdin.close()
-    
+
     output = p.stdout.read()    
     error = p.stderr.read()
     

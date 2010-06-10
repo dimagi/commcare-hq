@@ -418,6 +418,28 @@ class XFormDBTableCreator(XFormProcessor):
 
     # Data types taken from mysql. 
     # This should really draw from django built-in utilities which are database independent. 
+    XSD_TO_PGSQL_TYPES = { # Postgresql
+        'string':'VARCHAR(255)',
+        'integer':'INTEGER',
+        'int':'INTEGER',
+        'decimal':'DECIMAL(5,2)',
+        'double':'DOUBLE PRECISION',
+        'float':'DOUBLE PRECISION',
+        'datetime':'TIMESTAMP', # string
+        'date':'DATE', # string
+        'time':'TIME', # string
+        'gyear':'INTEGER',
+        'gmonth':'INTEGER',
+        'gday':'INTEGER',
+        'gyearmonth':'INTEGER',
+        'gmonthday':'INTEGER',
+        'boolean':'BOOLEAN',
+        'base64binary':'DOUBLE PRECISION', #i don't know...
+        'hexbinary':'DOUBLE PRECISION', #..meh.
+        'anyuri':'VARCHAR(200)', # string
+        'default':'VARCHAR(255)',
+    } 
+
     XSD_TO_MYSQL_TYPES = {
         'string':'VARCHAR(255)',
         'integer':'INT(11)',
@@ -498,12 +520,20 @@ class XFormDBTableCreator(XFormProcessor):
                 if len(field)>0:
                     queries = queries + str(field)
         
+        # remove ? for encoding test
+        queries = queries.replace("?", "__")
+        
         # we don't really need a parent_id in our top-level table...
         # should be NOT NULL?
         if parent_name is not '':
             if settings.DATABASE_ENGINE=='mysql' :
                 queries = queries + " parent_id INT(11), "
                 queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + \
+                                    format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
+                                    "(id) ON DELETE SET NULL" 
+            elif settings.DATABASE_ENGINE.startswith('postgresql') :
+                queries = queries + " parent_id INTEGER "
+                queries = queries + " REFERENCES " + \
                                     format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
                                     "(id) ON DELETE SET NULL" 
             else:
@@ -566,6 +596,7 @@ class XFormDBTableCreator(XFormProcessor):
                 (q,f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
             next_query = next_query + q
             local_fields = local_fields + f
+      print "next_query:'%s'\nlocal_fields:%s" % (next_query, local_fields)
       return (next_query, local_fields)
 
     def _db_field_definition_string(self, elementdef):
@@ -588,16 +619,24 @@ class XFormDBTableCreator(XFormProcessor):
         field = self._truncate(label) + " " + self._get_db_type( elementdef.type ) + ", "
         return field
 
+
     def _get_db_type(self, type):
         type = type.lower()
-        if settings.DATABASE_ENGINE=='mysql' :
+        if settings.DATABASE_ENGINE=='mysql':
             if type in self.XSD_TO_MYSQL_TYPES: 
                 return self.XSD_TO_MYSQL_TYPES[type]
             return self.XSD_TO_MYSQL_TYPES['default']
+
+        elif settings.DATABASE_ENGINE.startswith('postgresql'):
+            if type in self.XSD_TO_PGSQL_TYPES: 
+                return self.XSD_TO_PGSQL_TYPES[type]
+            return self.XSD_TO_PGSQL_TYPES['default']
+
         else:
             if type in self.XSD_TO_DEFAULT_TYPES: 
                 return self.XSD_TO_DEFAULT_TYPES[type]
             return self.XSD_TO_DEFAULT_TYPES['default']
+        
         
     def _truncate(self, field_name):
         '''Truncates a field name to _MAX_FIELD_NAME_LENTH characters, which 
