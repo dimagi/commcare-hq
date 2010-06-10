@@ -596,7 +596,6 @@ class XFormDBTableCreator(XFormProcessor):
                 (q,f) = self._create_instance_tables_query_inner_loop(elementdef=child, parent_id=parent_id, parent_name=next_parent_name, parent_table_name=parent_table_name ) #next-parent-name
             next_query = next_query + q
             local_fields = local_fields + f
-      print "next_query:'%s'\nlocal_fields:%s" % (next_query, local_fields)
       return (next_query, local_fields)
 
     def _db_field_definition_string(self, elementdef):
