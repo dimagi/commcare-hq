@@ -33,6 +33,7 @@ $(function() {
 <!-- Registration request form -->  
 <div class="span-11" style="margin-left:auto; margin-right:auto; float:none">
 <form class="sfb clear" name="form" method="post" action="{% url domain_registration_request kind=kind %}">
+{% csrf_token %}
 <h3>Request a new domain</h3>
 {% if form.non_field_errors %}
   <div class="non_field_errors">

@@ -20,6 +20,7 @@
 <!-- Form -->  
 <div class="span-11" style="margin-left:auto; margin-right:auto; float:none">
 <form class="sfb" name="form" method="post" action="{% url admin_own_account_update %}">
+{% csrf_token %}
 <h3>Update account information</h3>
 {% if form.non_field_errors %}
   <div class="non_field_errors">

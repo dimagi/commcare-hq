@@ -19,7 +19,7 @@
 <hr class="space"/>
 <div class="span-8 clear" style="margin-left:auto; margin-right:auto; float:none">
 <form class="sfb" name="form" method="post" action="{% url domain_select %}">
-
+{% csrf_token %}
 <h3>Select a domain</h3>
 {% if form.non_field_errors %}
   <div class="non_field_errors">
