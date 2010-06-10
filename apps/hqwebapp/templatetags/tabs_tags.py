@@ -13,9 +13,19 @@ from django.utils.importlib import import_module
 # share state. to avoid this confusion, explode with an explanation
 # unless this seemingly-arbitrary rule is followed.
 if not __name__.startswith("django."):
-    raise ImportError(
-        "The tabs_tags module must be imported via the " +\
-        "django.templatetags.tabs_tags package.")
+    # because django 1.2 no longer has this requirement this whole thing
+    # is rendered unnecessary.  comment and code below is relevant for 
+    # 1.1 or earlier
+    pass
+    # python considers each module name to be a distinct module, with its
+    # own scope, even when they're the same file. since the {% load %} tag
+    # loads this module via django.templatetags, we must do the same, to
+    # share state. to avoid this confusion, explode with an explanation
+    # unless this seemingly-arbitrary rule is followed.
+    # raise ImportError(
+    #     "The tabs_tags module must be imported via the " +\
+    #     "django.templatetags.tabs_tags package.")
+
 
 register = template.Library()
 
