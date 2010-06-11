@@ -366,7 +366,7 @@ def form_list(request, domain_name):
     
     xml = "<forms>\n"
     for form in forms:
-        xml += '\t<form url="http://%s/xforms/%s">%s</form>\n' % (url_base, form.id, form.form_name)
+        xml += '\t<form url="http://%s/xforms/%s/form.xhtml">%s</form>\n' % (url_base, form.id, form.form_name)
     xml += "</forms>"
     
     return HttpResponse(xml, mimetype="text/xml")
