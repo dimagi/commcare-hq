@@ -27,6 +27,7 @@ from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
+from dbutils import is_configured_mysql, is_configured_postgres
 
 
 # The maximum length a field is allowed to be.  Column names will get truncated
@@ -303,7 +304,7 @@ class StorageUtility(object):
     def _table_exists(self, table_name):
         '''Check if a table exists'''
         cursor = connection.cursor()
-        if settings.DATABASE_ENGINE.startswith('postgresql'):
+        if is_configured_postgres():
             cursor.execute("select * from pg_tables where schemaname='public' and tablename='%s'" % table_name)
         else:
             cursor.execute("show tables like '%s'" % table_name)
@@ -312,8 +313,12 @@ class StorageUtility(object):
     def _drop_table(self, table_name):
         '''Drop a table'''
         cursor = connection.cursor()
-        cursor.execute("drop table %s" % table_name)
-        
+        if is_configured_postgres():
+            # cursor.execute("DROP TABLE %s" % table_name)
+            cursor.execute("DROP TABLE %s CASCADE" % table_name)
+        else:
+            cursor.execute("DROP TABLE %s" % table_name)
+    
     #temporary measure to get target form
     # todo - fix this to be more efficient, so we don't parse the file twice
     def get_xmlns_from_instance(self, stream):
@@ -377,14 +382,17 @@ class Query(object):
             return
         
         cursor = connection.cursor()
-        if settings.DATABASE_ENGINE=='mysql':
-            cursor.execute(queries, values)
+        cursor.execute(queries, values)
+        if is_configured_mysql():
             query = "SELECT LAST_INSERT_ID();"
-            cursor.execute(query)
+        elif is_configured_postgres():
+            # hat tips: 
+            # http://archives.postgresql.org/pgsql-general/2008-08/msg01044.php
+            # http://en.wikibooks.org/wiki/Converting_MySQL_to_PostgreSQL
+            query = "SELECT CURRVAL(pg_get_serial_sequence('%s','id'));" % self.table_name
         else:
-            cursor.execute(queries, values)
             query = "SELECT LAST_INSERT_ROWID()"
-            cursor.execute(query)
+        cursor.execute(query)                           
         row = cursor.fetchone()
         if row is not None:
             return row[0]
@@ -511,10 +519,10 @@ class XFormDBTableCreator(XFormProcessor):
         if not fields: return next_query
         
         queries = ''
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_mysql():
             queries = "CREATE TABLE "+ table_name +" ( id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, "
         else:
-            queries = "CREATE TABLE "+ table_name +" ( id INTEGER PRIMARY KEY, "
+            queries = "CREATE TABLE "+ table_name +" ( id SERIAL NOT NULL, "
         
         if len(fields[0]) == 1:
             queries = queries + str(fields)
@@ -529,12 +537,12 @@ class XFormDBTableCreator(XFormProcessor):
         # we don't really need a parent_id in our top-level table...
         # should be NOT NULL?
         if parent_name is not '':
-            if settings.DATABASE_ENGINE=='mysql' :
+            if is_configured_mysql():
                 queries = queries + " parent_id INT(11), "
                 queries = queries + " FOREIGN KEY (parent_id) REFERENCES " + \
                                     format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
                                     "(id) ON DELETE SET NULL" 
-            elif settings.DATABASE_ENGINE.startswith('postgresql') :
+            elif is_configured_postgres():
                 queries = queries + " parent_id INTEGER "
                 queries = queries + " REFERENCES " + \
                                     format_table_name(parent_table_name, self.formdef.version, self.formdef.domain_name) + \
@@ -548,6 +556,8 @@ class XFormDBTableCreator(XFormProcessor):
 
         
         # most of the time, we rely on global mysql config in my.conf/ini
+        if is_configured_postgres():
+            queries = queries + ", CONSTRAINT %s_pkey PRIMARY KEY (id)" % table_name
         end_query = ");"
         
         # we only specify default engine and character set if it's clear that
@@ -624,12 +634,12 @@ class XFormDBTableCreator(XFormProcessor):
 
     def _get_db_type(self, type):
         type = type.lower()
-        if settings.DATABASE_ENGINE=='mysql':
+        if is_configured_mysql():
             if type in self.XSD_TO_MYSQL_TYPES: 
                 return self.XSD_TO_MYSQL_TYPES[type]
             return self.XSD_TO_MYSQL_TYPES['default']
 
-        elif settings.DATABASE_ENGINE.startswith('postgresql'):
+        elif is_configured_postgres():
             if type in self.XSD_TO_PGSQL_TYPES: 
                 return self.XSD_TO_PGSQL_TYPES[type]
             return self.XSD_TO_PGSQL_TYPES['default']
@@ -817,7 +827,7 @@ class XFormDBTablePopulator(XFormProcessor):
                                     (type,text,str(typefunc)) )
             elif type == "datetime" :
                 text = string.replace(text,'T',' ')
-                if settings.DATABASE_ENGINE!='mysql' :
+                if is_configured_mysql():
                     # truncate microseconds
                     index = text.rfind('.')
                     if index != -1:

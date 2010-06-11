@@ -29,10 +29,12 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
             traceback_string = '\n'.join(traceback.format_tb(tb))
             # we use 'xform_traceback' insetad of traceback since
             # dan's custom logger uses 'traceback'
-            logging.error(str(e) + ". %s" % \
+            logging.error("Problem in XFormManager processing: " + str(e) + ". %s" % \
                           instance.display_string(),
                           extra={'file_name':xml_file_name, \
                                  'xform_traceback':traceback_string} )
+            # print traceback_string
+            
     else:
         pass
         

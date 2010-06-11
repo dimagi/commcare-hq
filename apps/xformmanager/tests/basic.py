@@ -9,6 +9,7 @@ from datahq.apps.domain.models import Domain
 from decimal import Decimal
 from datetime import datetime, date, time
 import unittest
+from dbutils import is_realsql, is_configured_realsql, is_configured_mysql
 
 class BasicTestCase(unittest.TestCase):
     
@@ -38,7 +39,7 @@ class BasicTestCase(unittest.TestCase):
         """ 
         cursor = connection.cursor()
         create_xsd_and_populate("2_types.xsd", "2_types.xml", self.domain)
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_mysql():
             cursor.execute("DESCRIBE schema_basicdomain_xml_types")
             row = cursor.fetchall()
             self.assertEquals(row[9][1],"varchar(255)")
@@ -58,12 +59,12 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[9],"userid0")
         self.assertEquals(row[10],111)
         self.assertEquals(row[11],222)
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[12],Decimal("3.20"))
         else:
             self.assertEquals( str(float(row[8])), "3.2" )
         self.assertEquals(row[13],2002.09)
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[14],date(2002,9,24) )
             self.assertEquals(row[15],time(12,24,48))
             self.assertEquals(row[16],datetime(2007,12,31,23,59,59) )
@@ -144,7 +145,7 @@ class BasicTestCase(unittest.TestCase):
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30) )
             self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30) )
         else:
@@ -153,7 +154,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEquals(row[0][5],1)
         self.assertEquals(row[1][1],"userid2")
         self.assertEquals(row[1][2],"deviceid2")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[1][3],datetime(2009,11,12,11,11,11) )
             self.assertEquals(row[1][4],datetime(2009,11,12,11,16,11) )
         else:

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import connection
 from datahq.apps.domain.models import Domain
 from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from dbutils import is_configured_realsql
 
 class RepeatTestCase(unittest.TestCase):
     
@@ -69,7 +70,7 @@ class RepeatTestCase(unittest.TestCase):
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30) )
             self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30) )
         else:
@@ -78,7 +79,7 @@ class RepeatTestCase(unittest.TestCase):
         self.assertEquals(row[0][5],1)
         self.assertEquals(row[1][1],"userid2")
         self.assertEquals(row[1][2],"deviceid2")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[1][3],datetime(2009,11,12,11,11,11) )
             self.assertEquals(row[1][4],datetime(2009,11,12,11,16,11) )
         else:
@@ -89,7 +90,7 @@ class RepeatTestCase(unittest.TestCase):
         row = cursor.fetchall()
         self.assertEquals(row[0][1],"userid0")
         self.assertEquals(row[0][2],"deviceid0")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30) )
             self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30) )
         else:
@@ -98,7 +99,7 @@ class RepeatTestCase(unittest.TestCase):
         self.assertEquals(row[0][5],1)
         self.assertEquals(row[1][1],"userid2")
         self.assertEquals(row[1][2],"deviceid2")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if is_configured_realsql():
             self.assertEquals(row[1][3],datetime(2009,11,12,11,11,11) )
             self.assertEquals(row[1][4],datetime(2009,11,12,11,16,11) )
         else:
