@@ -37,6 +37,6 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
         pass
         
 # Register to receive signals from receiver
-print "connecting post save for attachments"
+# print "connecting post save for attachments"
 post_save.connect(process, sender=Attachment)
 
