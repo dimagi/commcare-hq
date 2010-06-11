@@ -49,8 +49,7 @@ class XFormManager(object):
         except IndexError:
             # POSTed file has no extension
             type = "xform"
-        filename_on_disk = self._save_schema_stream_to_file(stream, type)
-        return filename_on_disk
+        return self._save_schema_stream_to_file(stream, type)
 
     def save_form_data(self, attachment):
         """Given an attachment attempt to match it to a known (registered)
@@ -78,27 +77,28 @@ class XFormManager(object):
         # other failures should propagate up the stack.
         return True, None
 
-    def create_schema_from_file(self, new_file_name, domain=None):
+    def create_schema_from_file(self, xsd_file_name, domain=None, xform_file_name=None):
         """Given a xsd schema, create the django models and database
            tables reqiured to submit data to that form."""
         # process xsd file to FormDef object
-        fout = open(new_file_name, 'r')
+        fout = open(xsd_file_name, 'r')
         formdef = FormDef(fout, domain=domain)
         fout.close()
         formdefmodel = self.su.add_schema(formdef)
-        formdefmodel.xsd_file_location = new_file_name
+        formdefmodel.xsd_file_location = xsd_file_name
+        formdefmodel.xform_file_location = xform_file_name
         formdefmodel.save()
         return formdefmodel
 
     def add_schema_manually(self, schema, type, domain=None):
         """Manually register a schema."""
-        file_name = self._save_schema_string_to_file(schema, type)
-        return self.create_schema_from_file(file_name, domain)
+        xsd_file_name, xform_file_name = self._save_schema_string_to_file(schema, type)
+        return self.create_schema_from_file(xsd_file_name, domain, xform_file_name)
 
     def add_schema(self, file_name, input_stream, domain=None):
         """ we keep this api open for the unit tests """
-        file_name = self.save_schema_POST_to_file(input_stream, file_name)
-        return self.create_schema_from_file(file_name, domain)
+        xsd_file_name, xform_filename = self.save_schema_POST_to_file(input_stream, file_name)
+        return self.create_schema_from_file(xsd_file_name, domain, xform_filename)
     
     
     def repost_schema(self, form):
@@ -132,8 +132,8 @@ class XFormManager(object):
         file_to_post = temp_xform_path if form.xform_file_location else temp_xsd_path
         type = "xform" if form.xform_file_location else "xsd"
         file_stream = open(file_to_post, "r")
-        fileback = self._save_schema_stream_to_file(file_stream, type)
-        new_form = self.create_schema_from_file(fileback, form_model_copy.domain)
+        xsd_file, xform_file = self._save_schema_stream_to_file(file_stream, type)
+        new_form = self.create_schema_from_file(xsd_file, form_model_copy.domain, xform_file)
         
         # migrate properties
         for property in ["submit_time", "submit_ip", "bytes_received", "form_display_name", 
@@ -225,21 +225,24 @@ class XFormManager(object):
            file and also saves that.  If the type is already xsd, just saves
            it directly to disk.
            
-           Returns the path to the newly created file."""
+           Returns a tuple of the path to the newly created files as:
+           [xsd, xform].  Xform might be Null if an xsd was passed in."""
         transaction_str = str(uuid.uuid1())
         new_file_name = self._base_xsd_file_name(transaction_str)
+        xform_full_path = None
         if type.lower() != "xsd":
             # assume this is an xhtml/xform file
             # first save the raw xform
             xform_filename = new_file_name + str(".xform")
-            full_name = self._save_raw_data_to_file(xform_filename, input_data)
+            xform_full_path = self._save_raw_data_to_file(xform_filename, input_data)
             schema,err,has_error = form_translate( input_data )
             if has_error:
                 raise IOError, "Could not convert xform to schema." + \
                                " Please verify that this is a valid xform file."
         else:
             schema = input_data
-        return self._save_raw_data_to_file(new_file_name, schema)
+        xsd_full_path = self._save_raw_data_to_file(new_file_name, schema)
+        return [xsd_full_path, xform_full_path]
     
     def _save_raw_data_to_file(self, filename_base, data):
         """Save raw data to the xform manager's storage area.
