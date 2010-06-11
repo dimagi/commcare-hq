@@ -298,12 +298,15 @@ class StorageUtility(object):
             if self._table_exists(edd.table_name):
                 self._drop_table(edd.table_name)
             else: 
-                logging.warn("Tried to delete %s table, but it wasn't there!" % edd.table_name)
+                logging.error("Tried to delete %s table, but it wasn't there!" % edd.table_name)
 
     def _table_exists(self, table_name):
         '''Check if a table exists'''
         cursor = connection.cursor()
-        cursor.execute("show tables like '%s'" % table_name)
+        if settings.DATABASE_ENGINE.startswith('postgresql'):
+            cursor.execute("select * from pg_tables where schemaname='public' and tablename='%s'" % table_name)
+        else:
+            cursor.execute("show tables like '%s'" % table_name)
         return len(cursor.fetchall()) == 1
         
     def _drop_table(self, table_name):

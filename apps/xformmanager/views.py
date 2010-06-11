@@ -128,7 +128,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
             xformmanager.remove_schema(form_id)
             logging.debug("Schema %s deleted ", form_id)
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
-            return HttpResponseRedirect("../register")
+            return HttpResponseRedirect(reverse('xformmanager.views.dashboard'))
     context['form_name'] = form.form_display_name
     return render_to_response(request, template, context)
 
