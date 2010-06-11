@@ -680,7 +680,7 @@ class FormDataGroup(models.Model):
             if column.groups.count() == 1:
                 column.delete()
         super(FormDataGroup, self).delete(*args, **kwargs)
-        
+    
     def update_view(self):
         """Update the sql view object associated with this.  This will
            create (or replace) the existing view and rebuild it based
@@ -753,8 +753,12 @@ class FormDataGroup(models.Model):
                                      "select_statement": full_select_statement }
         
         cursor = connection.cursor()
-        cursor.execute(view_creation_statement)
-        transaction.commit_unless_managed()
+        try: 
+            cursor.execute(view_creation_statement)
+            transaction.commit_unless_managed()
+        except:
+            transaction.rollback_unless_managed()
+            raise
         
     
     @classmethod
@@ -814,7 +818,6 @@ class FormDataGroup(models.Model):
             # name and data type it will be used with this.
             try:
                 column_group = self.columns.get(name=name, data_type=type)
-                
             except FormDataColumn.DoesNotExist:
                 # add a second check for the name, so we don't have duplicate 
                 # names inside a single form definition which will make queries

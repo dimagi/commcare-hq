@@ -100,7 +100,7 @@ def new_attachment(submission, payload, content_type, attach_uri, outfilename, *
     """Simple wrapper method to save an attachment.
     This probably should be an override of the constructor for attachment"""
     new_attach = Attachment()
-    new_attach.submission = submission    
+    new_attach.submission = submission
     new_attach.filesize = len(payload)
     new_attach.checksum = hashlib.md5(payload).hexdigest()    
     new_attach.attachment_content_type = content_type    

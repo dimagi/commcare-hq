@@ -354,8 +354,7 @@ def log_duplicates(sender, instance, created, **kwargs): #get sender, instance, 
     '''A django post-save event that logs duplicate submissions to the
        handling log.'''
     # only log dupes on newly created attachments, not all of them
-    if not created:
-        return
+    if not created:   return
     if instance.is_duplicate():
         try:
             error = "Got a duplicate attachment: %s." %\
