@@ -505,7 +505,7 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         return render_to_response(request, template_name, context)
    
 def get_xform(request, formdef_id):
-    xform = get_object_or_404(FormDefModel, id=1)
+    xform = get_object_or_404(FormDefModel, id=formdef_id)
     response = HttpResponse(mimetype='application/xml')
     fin = open(xform.xform_file_location ,'r')
     txt = fin.read()
