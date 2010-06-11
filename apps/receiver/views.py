@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseNotFound
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
@@ -355,13 +355,18 @@ def new_annotation(request):
 
 # ODK API
 def form_list(request, domain_name):
-    domain_id = Domain.objects.get(name=domain_name)
+    url_base = request.get_host()
+    
+    try:
+        domain_id = Domain.objects.get(name=domain_name)
+    except Domain.DoesNotExist:
+        return HttpResponseNotFound("Domain Not Found")
+
     forms = FormDefModel.objects.all().filter(domain=domain_id)
     
     xml = "<forms>\n"
     for form in forms:
-        xml += '\t<form url="/xforms/show/%s">%s</form>\n' % (form.id, form.form_name)
-
+        xml += '\t<form url="http://%s/xforms/%s">%s</form>\n' % (url_base, form.id, form.form_name)
     xml += "</forms>"
     
     return HttpResponse(xml, mimetype="text/xml")
