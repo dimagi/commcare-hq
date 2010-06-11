@@ -504,8 +504,6 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
         context['xform_item'] = xform
         return render_to_response(request, template_name, context)
    
-@login_and_domain_required
-@authenticate_schema
 def get_xform(request, formdef_id):
     xform = get_object_or_404(FormDefModel, id=1)
     response = HttpResponse(mimetype='application/xml')
