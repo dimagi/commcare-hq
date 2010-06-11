@@ -2,6 +2,10 @@ from django.conf.urls.defaults import *
 
 
 urlpatterns = patterns('',                       
+    
+    # ODK API
+    url(r'^receiver/submit/(?P<domain_name>.*)/formList/?$', 'receiver.views.form_list', name='form_list'),
+
     url(r'^receiver/submit/$', 'receiver.views.raw_submit', name='raw_submit'),
     url(r'^receiver/submit/(?P<domain_name>.*)$', 'receiver.views.domain_submit', name='domain_submit'),
     url(r'^receiver/resubmit/(?P<domain_name>.*)$', 'receiver.views.domain_resubmit', name='domain_resubmit'),

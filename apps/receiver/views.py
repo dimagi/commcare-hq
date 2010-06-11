@@ -37,6 +37,9 @@ import os
 import string
 import submitprocessor
 
+# for ODK API
+from xformmanager.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
+from domain.models import *
 
 @login_and_domain_required
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
@@ -348,3 +351,17 @@ def new_annotation(request):
         return HttpResponse("Success!")
     else:
         return HttpResponse("No Data!")
+        
+
+# ODK API
+def form_list(request, domain_name):
+    domain_id = Domain.objects.get(name=domain_name)
+    forms = FormDefModel.objects.all().filter(domain=domain_id)
+    
+    xml = "<forms>\n"
+    for form in forms:
+        xml += '\t<form url="/xforms/show/%s">%s</form>\n' % (form.id, form.form_name)
+
+    xml += "</forms>"
+    
+    return HttpResponse(xml, mimetype="text/xml")
