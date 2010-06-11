@@ -85,6 +85,7 @@ class FormDefModel(models.Model):
     # META fields to be placed here eventually
     #settings.XSD_REPOSITORY_PATH
     xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XFORMMANAGER_SCHEMA_PATH, max_length=255, null=True)
+    xform_file_location = models.FilePathField(_('Raw XSD'), path=settings.XFORMMANAGER_SCHEMA_PATH, max_length=255, null=True)
     
     # we should just call this table_name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
@@ -102,13 +103,7 @@ class FormDefModel(models.Model):
     class Meta:
         unique_together = ("domain", "target_namespace", "version")
 
-    def _get_xform_file_location(self):
-        loc = self.xsd_file_location + str(".xform")
-        if os.path.exists(loc):
-            return loc
-        return None
     
-    xform_file_location = property(_get_xform_file_location)
     
     def get_attachment(self, instance_id):
         """Attempt to get the attachment object from the instance

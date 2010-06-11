@@ -37,12 +37,13 @@ def dashboard(request, template='register_and_list_xforms.html'):
             # user has already confirmed registration 
             # process saved file without bothering with validation
             try:
-                formdefmodel = _register_xform(request, \
-                                    request.session['schema_file'], \
-                                    request.session['display_name'], \
-                                    request.session['REMOTE_ADDR'], \
-                                    request.session['file_size']                                
-                                    )
+                formdefmodel = _register_xform(request,
+                                               request.session['schema_file'],
+                                               request.session['display_name'],
+                                               request.session['REMOTE_ADDR'],
+                                               request.session['file_size'],
+                                               request.session['xform_file'])                                
+
             except Exception, e:
                 logging.error(unicode(e))
                 context['errors'] = unicode(e)
@@ -56,22 +57,24 @@ def dashboard(request, template='register_and_list_xforms.html'):
             if form.is_valid():
                 xformmanager = XFormManager()
                 try:
-                    file_name = xformmanager.save_schema_POST_to_file(\
-                                request.FILES['file'], request.FILES['file'].name
-                                )
+                    xsd_file_name, xform_file_name = \
+                        xformmanager.save_schema_POST_to_file(\
+                            request.FILES['file'], request.FILES['file'].name
+                        )
                 except Exception, e:
                     # typically this error is because we could not translate xform to schema
                     logging.error(unicode(e))
                     context['errors'] = unicode(e)
                     transaction.rollback()
                 else:
-                    is_valid, exception = xformmanager.validate_schema(file_name)
+                    is_valid, exception = xformmanager.validate_schema(xsd_file_name)
                     if is_valid:
                         try:
-                            formdefmodel = _register_xform(request, file_name, \
+                            formdefmodel = _register_xform(request, xsd_file_name, \
                                                form.cleaned_data['form_display_name'], \
                                                request.META['REMOTE_ADDR'], \
-                                               request.FILES['file'].size
+                                               request.FILES['file'].size, 
+                                               xform_file_name
                                                )                            
                         except Exception, e:
                             logging.error(unicode(e))
@@ -100,7 +103,8 @@ def dashboard(request, template='register_and_list_xforms.html'):
                                                           context)
                                 
                         context['file_name'] = request.FILES['file'].name
-                        request.session['schema_file'] = file_name
+                        request.session['schema_file'] = xsd_file_name
+                        request.session['xform_file'] = xform_file_name
                         request.session['display_name'] = form.cleaned_data['form_display_name']
                         request.session['REMOTE_ADDR'] = request.META['REMOTE_ADDR']
                         request.session['file_size'] = request.FILES['file'].size
@@ -374,10 +378,12 @@ def create_form_data_group_from_xmlns(req):
 
 
 
-def _register_xform(request, file_name, display_name, remote_addr, file_size):
+def _register_xform(request, file_name, display_name, remote_addr, file_size, xform_file_name):
     """ does the actual creation and saving of the formdef model """
     xformmanager = XFormManager()
-    formdefmodel = xformmanager.create_schema_from_file(file_name, request.user.selected_domain)
+    formdefmodel = xformmanager.create_schema_from_file(file_name, 
+                                                        request.user.selected_domain, 
+                                                        xform_file_name)
     formdefmodel.submit_ip = remote_addr
     formdefmodel.bytes_received =  file_size
     formdefmodel.form_display_name = display_name                
@@ -497,7 +503,18 @@ def single_xform(request, formdef_id, template_name="single_xform.html"):
     else:    
         context['xform_item'] = xform
         return render_to_response(request, template_name, context)
-        
+   
+@login_and_domain_required
+@authenticate_schema
+def get_xform(request, formdef_id):
+    xform = get_object_or_404(FormDefModel, id=1)
+    response = HttpResponse(mimetype='application/xml')
+    fin = open(xform.xform_file_location ,'r')
+    txt = fin.read()
+    fin.close()
+    response.write(txt) 
+    return response
+     
 @login_and_domain_required
 @authenticate_schema
 def single_instance(request, formdef_id, instance_id, template_name="single_instance.html"):
