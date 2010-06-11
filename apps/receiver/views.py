@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseNotFound
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
@@ -37,6 +37,9 @@ import os
 import string
 import submitprocessor
 
+# for ODK API
+from xformmanager.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
+from domain.models import *
 
 @login_and_domain_required
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
@@ -348,3 +351,22 @@ def new_annotation(request):
         return HttpResponse("Success!")
     else:
         return HttpResponse("No Data!")
+        
+
+# ODK API
+def form_list(request, domain_name):
+    url_base = request.get_host()
+    
+    try:
+        domain_id = Domain.objects.get(name=domain_name)
+    except Domain.DoesNotExist:
+        return HttpResponseNotFound("Domain Not Found")
+
+    forms = FormDefModel.objects.all().filter(domain=domain_id)
+    
+    xml = "<forms>\n"
+    for form in forms:
+        xml += '\t<form url="http://%s/xforms/%s">%s</form>\n' % (url_base, form.id, form.form_name)
+    xml += "</forms>"
+    
+    return HttpResponse(xml, mimetype="text/xml")
