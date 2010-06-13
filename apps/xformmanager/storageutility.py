@@ -797,7 +797,7 @@ class XFormDBTablePopulator(XFormProcessor):
         """ returns a dictionary of key-value pairs """
         label = self._hack_to_get_cchq_working( sanitize(elementdef.name) )
         #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
-        if elementdef.type[0:5] == 'list.':
+        if elementdef.type is not None and elementdef.type[0:5] == 'list.':
             values = raw_value.split()
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None and simple_type.multiselect_values is not None:
@@ -807,7 +807,10 @@ class XFormDBTablePopulator(XFormProcessor):
                     if v in simple_type.multiselect_values:
                         field_value.update( { label + "_" + v : '1' } )
                 return field_value
-        return { label : self._db_format(elementdef.type, raw_value) }
+        
+        # default to type string for anything we don't explicitly understand
+        type = "string" if elementdef.type is None else elementdef.type
+        return { label : self._db_format(type, raw_value) }
 
     def _db_format(self, type, text):
         if type is None:
