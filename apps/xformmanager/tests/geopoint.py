@@ -25,6 +25,16 @@ class BasicTestCase(unittest.TestCase):
         """Test form definition with geopoint"""
         filename = replace_in_file(self.instance_filename, "REPLACE_ME", 
                                    "%s %s %s %s" % (LAT, LON, ALT, ACC))
+        create_xsd_and_populate("data/geopoint/geopoint_form.xhtml",
+                                filename,
+                                self.domain)
+        self._check_row()
+        
+    
+    def testSaveGeoFormDataFromXsd(self):
+        """Test form definition with geopoint"""
+        filename = replace_in_file(self.instance_filename, "REPLACE_ME", 
+                                   "%s %s %s %s" % (LAT, LON, ALT, ACC))
         create_xsd_and_populate("data/geopoint/geopoint_form.xsd",
                                 filename,
                                 self.domain)
@@ -36,7 +46,7 @@ class BasicTestCase(unittest.TestCase):
         filename = replace_in_file(self.instance_filename, 
                                    "<GPSCOORDS_data>REPLACE_ME</GPSCOORDS_data>", 
                                    "")
-        create_xsd_and_populate("data/geopoint/geopoint_form.xsd",
+        create_xsd_and_populate("data/geopoint/geopoint_form.xhtml",
                                 filename,
                                 self.domain)
         self._check_row(None, None, None, None)
@@ -46,7 +56,7 @@ class BasicTestCase(unittest.TestCase):
         """Test form definition with geopoint - EXTRA FIELDS"""
         filename = replace_in_file(self.instance_filename, "REPLACE_ME", 
                                    "%s" % (LAT))
-        create_xsd_and_populate("data/geopoint/geopoint_form.xsd",
+        create_xsd_and_populate("data/geopoint/geopoint_form.xhtml",
                                 filename,
                                 self.domain)
         self._check_row(LAT, None, None, None)
@@ -68,7 +78,7 @@ class BasicTestCase(unittest.TestCase):
         
         # unfortunately this doesn't fail hard, so we just check for the 
         # lack of a row to confirm that it didn't succeed
-        form = create_xsd_and_populate("data/geopoint/geopoint_form.xsd",
+        form = create_xsd_and_populate("data/geopoint/geopoint_form.xhtml",
                                 filename,
                                 self.domain)
         cursor = connection.cursor()

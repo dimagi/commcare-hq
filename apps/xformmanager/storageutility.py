@@ -629,7 +629,7 @@ class XFormDBTableCreator(XFormProcessor):
                     column_type = self._get_db_type( 'boolean' )
                     field += "%s %s, " % (column_name, column_type)
             return field
-        elif elementdef.type == const.XSD_GEOPOINT_TYPE:
+        elif is_geopoint_type(elementdef.type):
             # special case geopoint data, which comes in with up to four 
             # space-delimited numbers, lat, lon, altitude, and accuracy.
             field = ""
@@ -824,7 +824,7 @@ class XFormDBTablePopulator(XFormProcessor):
                     if v in simple_type.multiselect_values:
                         field_value.update( { label + "_" + v : '1' } )
                 return field_value
-        elif type == const.XSD_GEOPOINT_TYPE:
+        elif is_geopoint_type(type):
             values = raw_value.split(" ")
             field_values = {}
             # we assume that we get UP TO 4 fields in the following order:
@@ -940,4 +940,7 @@ def remove_metadata(meta):
     meta.attachment.unhandled(get_instance_data_handle_type())
     meta.delete()
 
-    
+def is_geopoint_type(type):
+    # whether a type is a geopoint
+    # for now this is reasonably dumb
+     return const.XSD_GEOPOINT_TYPE in type
