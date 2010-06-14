@@ -19,6 +19,7 @@
 <!-- Login form -->  
 <div class="span-9 clear" style="margin-left:auto; margin-right:auto; float:none">
 <form class="sfb" name="form" method="post" action="{% url login %}">
+	{% csrf_token %}
 <h3>Login</h3>
 {% if form.non_field_errors %}
   <div class="non_field_errors">
