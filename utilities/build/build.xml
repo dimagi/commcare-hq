@@ -84,6 +84,8 @@
 
 	
 	<target name="django-tests-all" depends="compile">	
+		<py-run script="${antdepends.dir}/update_xform_translate_path.py" pythonpath="${antdepends.dir}" optimize="0">
+		</py-run>
 		<py-run script="${project.dir}/manage.py" pythonpath="${project.dir}" optimize="0">
 			<arg value="test" />
 		</py-run>
