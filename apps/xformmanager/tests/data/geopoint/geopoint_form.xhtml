@@ -1,0 +1,158 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+	xmlns="http://www.w3.org/2002/xforms"
+	xmlns:ev="http://www.w3.org/2001/xml-events"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jr="http://openrosa.org/javarosa">
+
+<h:head>
+	<h:title>SarahDemo</h:title>
+	<meta jr:name="SarahDemo"/>
+	<model>
+
+	<instance>
+		<data version="2" uiVersion="2" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://app.datahq.org/moz/SarahDemo">
+			<Meta>
+				<DeviceID>FIXME</DeviceID>
+				<TimeStart>1</TimeStart>
+				<TimeEnd>2</TimeEnd>
+				<username>FIXME</username>
+				<chw_id>FIXME</chw_id>
+				<uid>11111</uid>
+				<CommCareVersion>1.0</CommCareVersion>
+			</Meta>
+			<DATETODAY_data />
+			<NAME_data />
+			<AGE_data />
+			<AUTOSTAMP_data />
+			<GENDER_data />
+			<LANG_data />
+			<COLORS_data />
+			<GPSCOORDS_data />
+		</data>
+	</instance>
+
+	<bind id="hidden1" nodeset="/data/Meta/DeviceID" type="xsd:string" jr:preload="property" jr:preloadParams="DeviceID"/>
+	<bind id="hidden2" nodeset="/data/Meta/TimeStart" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="start"/>
+	<bind id="hidden3" nodeset="/data/Meta/TimeEnd" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="end"/>
+	<bind id="hidden4" nodeset="/data/Meta/username" type="xsd:string" jr:preload="meta" jr:preloadParams="UserName"/>
+	<bind id="hidden5" nodeset="/data/Meta/chw_id" type="xsd:string" jr:preload="meta" jr:preloadParams="UserID"/>
+	<bind id="hidden6" nodeset="/data/Meta/uid" type="xsd:string" jr:preload="uid" jr:preloadParams="general"/>
+	<bind nodeset="/data/DATETODAY_data" type="xsd:date" />
+	<bind nodeset="/data/NAME_data" type="xsd:string" />
+	<bind nodeset="/data/AGE_data" type="xsd:integer" />
+	<bind nodeset="/data/AUTOSTAMP_data" type="xsd:dateTime" calculate="if(/data/AGE_data != '', now(), '')" />
+	<bind nodeset="/data/GENDER_data" type="xsd:select1" />
+	<bind nodeset="/data/LANG_data" type="xsd:select1" />
+	<bind nodeset="/data/COLORS_data" type="xsd:select" />
+	<bind nodeset="/data/GPSCOORDS_data" type="geopoint" />
+
+	<itext>
+		<translation lang="English" default="">
+			<text id="DATETODAY">
+				<value>Enter today's date.</value>
+			</text>
+			<text id="NAME">
+				<value>Enter your name.</value>
+			</text>
+			<text id="AGE">
+				<value>How old are you?</value>
+			</text>
+			<text id="GENDER">
+				<value>What is your gender?</value>
+			</text>
+			<text id="GENDER_item_0">
+				<value>Male</value>
+			</text>
+			<text id="GENDER_item_1">
+				<value>Female</value>
+			</text>
+			<text id="LANG">
+				<value>What language do you primarily speak?</value>
+			</text>
+			<text id="LANG_item_0">
+				<value>Portuguese</value>
+			</text>
+			<text id="LANG_item_1">
+				<value>Elomwe</value>
+			</text>
+			<text id="LANG_item_2">
+				<value>Echuabo</value>
+			</text>
+			<text id="LANG_item_3">
+				<value>Cisena</value>
+			</text>
+			<text id="LANG_item_4">
+				<value>Cinyuana</value>
+			</text>
+			<text id="LANG_item_5">
+				<value>Emakhuwa)</value>
+			</text>
+			<text id="COLORS">
+				<value>What are your two favorite colors?</value>
+			</text>
+			<text id="COLORS_item_0">
+				<value>Red</value>
+			</text>
+			<text id="COLORS_item_1">
+				<value>Orange</value>
+			</text>
+			<text id="COLORS_item_2">
+				<value>Yellow</value>
+			</text>
+			<text id="COLORS_item_3">
+				<value>Green</value>
+			</text>
+			<text id="COLORS_item_4">
+				<value>Blue</value>
+			</text>
+			<text id="COLORS_item_5">
+				<value>Purple</value>
+			</text>
+			<text id="GPSCOORDS">
+				<value>Take GPS coordinates (Make sure you have a good view of the sky).</value>
+			</text>
+		</translation>
+	</itext>
+	</model>
+</h:head>
+
+
+<h:body>
+
+<input ref ="DATETODAY_data">
+	<label ref="jr:itext('DATETODAY')"/>
+</input>
+<input ref ="NAME_data">
+	<label ref="jr:itext('NAME')"/>
+</input>
+<input ref ="AGE_data">
+	<label ref="jr:itext('AGE')"/>
+</input>
+<select1 ref ="GENDER_data">
+	<label ref="jr:itext('GENDER')"/>
+	<item><label ref="jr:itext('GENDER_item_0')" /><value>Male</value></item>
+	<item><label ref="jr:itext('GENDER_item_1')" /><value>Female</value></item>
+</select1>
+<select1 ref ="LANG_data">
+	<label ref="jr:itext('LANG')"/>
+	<item><label ref="jr:itext('LANG_item_0')" /><value>Portuguese</value></item>
+	<item><label ref="jr:itext('LANG_item_1')" /><value>Elomwe</value></item>
+	<item><label ref="jr:itext('LANG_item_2')" /><value>Echuabo</value></item>
+	<item><label ref="jr:itext('LANG_item_3')" /><value>Cisena</value></item>
+	<item><label ref="jr:itext('LANG_item_4')" /><value>Cinyuana</value></item>
+	<item><label ref="jr:itext('LANG_item_5')" /><value>Emakhuwa)</value></item>
+</select1>
+<select ref ="COLORS_data">
+	<label ref="jr:itext('COLORS')"/>
+	<item><label ref="jr:itext('COLORS_item_0')" /><value>Red</value></item>
+	<item><label ref="jr:itext('COLORS_item_1')" /><value>Orange</value></item>
+	<item><label ref="jr:itext('COLORS_item_2')" /><value>Yellow</value></item>
+	<item><label ref="jr:itext('COLORS_item_3')" /><value>Green</value></item>
+	<item><label ref="jr:itext('COLORS_item_4')" /><value>Blue</value></item>
+	<item><label ref="jr:itext('COLORS_item_5')" /><value>Purple</value></item>
+</select>
+<input ref ="GPSCOORDS_data">
+	<label ref="jr:itext('GPSCOORDS')"/>
+</input>
+</h:body>
+</h:html>

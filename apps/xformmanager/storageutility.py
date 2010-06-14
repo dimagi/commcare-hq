@@ -23,6 +23,7 @@ from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
 
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
+import datahq.apps.xformmanager.const as const
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
@@ -619,7 +620,7 @@ class XFormDBTableCreator(XFormProcessor):
             # it to a string
             logging.error("No data type found in element: %s! will use a string data type" % elementdef)
             elementdef.type = "string"
-        if elementdef.type[0:5] == 'list.':
+        elif elementdef.type[0:5] == 'list.':
             field = ''
             simple_type = self.formdef.types[elementdef.type]
             if simple_type is not None:
@@ -627,6 +628,16 @@ class XFormDBTableCreator(XFormProcessor):
                     column_name = self._truncate(label + "_" + value)
                     column_type = self._get_db_type( 'boolean' )
                     field += "%s %s, " % (column_name, column_type)
+            return field
+        elif elementdef.type == const.XSD_GEOPOINT_TYPE:
+            # special case geopoint data, which comes in with up to four 
+            # space-delimited numbers, lat, lon, altitude, and accuracy.
+            field = ""
+            for suffix in const.GEOPOINT_COLUMNS:
+                column_name = self._truncate(label + "_" + suffix)
+                # TODO: is 'double' a reasonable choice for this data?
+                column_type = self._get_db_type( 'double' ) 
+                field += "%s %s, " % (column_name, column_type)
             return field
         field = self._truncate(label) + " " + self._get_db_type( elementdef.type ) + ", "
         return field
@@ -794,12 +805,18 @@ class XFormDBTablePopulator(XFormProcessor):
         return q
 
     def _get_formatted_field_and_value(self, elementdef, raw_value):
-        """ returns a dictionary of key-value pairs """
+        """ 
+        returns a dictionary of key-value pairs 
+        """
         label = self._hack_to_get_cchq_working( sanitize(elementdef.name) )
-        #don't sanitize value yet, since numbers/dates should not be sanitized in the same way
-        if elementdef.type is not None and elementdef.type[0:5] == 'list.':
+        
+        # default to type string for anything we don't explicitly understand
+        type = "string" if elementdef.type is None else elementdef.type
+        
+        # don't sanitize value yet, since numbers/dates should not be sanitized in the same way
+        if type[0:5] == 'list.':
             values = raw_value.split()
-            simple_type = self.formdef.types[elementdef.type]
+            simple_type = self.formdef.types[type]
             if simple_type is not None and simple_type.multiselect_values is not None:
                 field_value = {}
                 for v in values:
@@ -807,9 +824,24 @@ class XFormDBTablePopulator(XFormProcessor):
                     if v in simple_type.multiselect_values:
                         field_value.update( { label + "_" + v : '1' } )
                 return field_value
+        elif type == const.XSD_GEOPOINT_TYPE:
+            values = raw_value.split(" ")
+            field_values = {}
+            # we assume that we get UP TO 4 fields in the following order:
+            # lat lon altitude accuracy
+            # if we don't get them in this order we will store things in the 
+            # wrong place
+            if len(values) > 4:
+                raise Exception("We can only handle a geopoint type with up to 4 values! " \
+                                "%s has too many" % raw_value)
+            index = 0
+            for value in values:
+                column = label + "_" + const.GEOPOINT_COLUMNS[index]
+                field_values[column] = value
+                index += 1
+            return field_values
         
-        # default to type string for anything we don't explicitly understand
-        type = "string" if elementdef.type is None else elementdef.type
+        
         return { label : self._db_format(type, raw_value) }
 
     def _db_format(self, type, text):
