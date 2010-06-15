@@ -102,25 +102,24 @@ def jad_to_dict(jad_contents):
         jad[key] = val.strip()
     
     return jad
-    
-def modify_jad(jad_file, jar_file):
+
+
+def modify_jad(jad_file, modify_dict):
     jad = jad_to_dict(open(jad_file).read())
-    
-    # modify JAD data 
-    jad['MIDlet-Jar-Size'] = os.path.getsize(jar_file)
-    jad['MIDlet-Jar-URL']  = os.path.basename(jar_file)
+
+    for i in modify_dict:
+        jad[i] = modify_dict[i]
 
     # create new JAD
     new_content = ''
     for i in jad:
         new_content += "%s: %s\n" % (i, jad[i])
-    
-    x, tmpjad = tmp.mkstemp() 
-    f = open(tmpjad, 'w')
+
+    f = open(jad_file, 'w')
     f.write(new_content)
     f.close()
-    
-    return tmpjad
+
+    return jad_file
     
     
 def create_zip(target, jar_file, jad_file):
