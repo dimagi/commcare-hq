@@ -150,8 +150,23 @@ def builds(request, template_name="builds.html"):
 
 @login_and_domain_required
 def build_set_release(request, id, set_to):
-    if set_to == "true" or set_to == "false":
-        Build.objects.filter(id=id).update(is_release=(set_to == "true"))
+    build = Build.objects.get(id=id)
+    
+    if set_to == "true":
+        build.is_release=True
+        lib.modify_jad(build.jad_file, {
+                                        'CommCare-Release' : 'true', 
+                                        'Released-on' : datetime.datetime.now().strftime("%Y-%b-%d %H:%M")
+                                        })
+    elif set_to == "false":
+        build.is_release=False
+        lib.modify_jad(build.jad_file, {
+                                        'CommCare-Release' : 'false', 
+                                        'Released-on' : ''
+                                        })
+    
+    build.save()
+    
     return HttpResponseRedirect(reverse('releasemanager.views.builds'))
 
 
@@ -165,6 +180,8 @@ def new_build(request, template_name="builds.html"):
             b = form.save(commit=False)
             b.jar_file, b.jad_file, b.zip_file = _create_build(b)
             b.save()
+            lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
+            
             return HttpResponseRedirect(reverse('releasemanager.views.builds'))
 
     context['form'] = form
@@ -197,16 +214,19 @@ def _create_build(build):
     new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
     shutil.copy2(new_tmp_jar, new_jar)
 
-    new_tmp_jad = lib.modify_jad(jad, new_jar)
     new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
-    shutil.copy2(new_tmp_jad, new_jad)
-        
+    shutil.copy2(jad, new_jad)
+    lib.modify_jad(new_jad, {
+                                'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
+                                'MIDlet-Jar-URL' : os.path.basename(new_jar),
+                            })
+         
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
     
     # clean up tmp files
     os.remove(new_tmp_jar)
-    os.remove(new_tmp_jad)
+    # os.remove(new_tmp_jad)
             
     return new_jar, new_jad, new_zip
 
