@@ -167,6 +167,10 @@ def build_set_release(request, id, set_to):
     
     build.save()
     
+    # rezip with the new file
+    os.remove(build.zip_file)
+    lib.create_zip(build.zip_file, build.jar_file, build.jad_file)
+    
     return HttpResponseRedirect(reverse('releasemanager.views.builds'))
 
 
@@ -192,14 +196,6 @@ def _create_build(build):
     jad = build.jarjad.jad_file
     buildname = build.resource_set.name
 
-    #### Deprecate zip support ####
-    # # get the resources: load & zip if zip file, hg clone otherwise
-    # if build.resource_set.url.endswith('.zip'):
-    #     resource_zip = lib.grab_from(build.resource_set.url)
-    #     resources = lib.unzip(resource_zip)
-    # else:
-    #     resources = lib.clone_from(build.resource_set.url)
-
     resources = lib.clone_from(build.resource_set.url)
 
     ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
@@ -220,7 +216,6 @@ def _create_build(build):
                                 'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
                                 'MIDlet-Jar-URL' : os.path.basename(new_jar),
                             })
-         
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
     
