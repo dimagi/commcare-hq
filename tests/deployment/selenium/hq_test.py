@@ -8,10 +8,13 @@ import time
 
 local   = {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]}
 dev     = {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]}
+data     = {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org", "BRAC"]}
 staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "BRAC"]}
 
 # point selenium at:
-sites = dev
+sites = staging
+print "running with params:", sites
+
 
 class testingPost(unittest.TestCase):
 
@@ -31,9 +34,9 @@ class testingPost(unittest.TestCase):
         sel.type("id_password", passw)
         sel.click("//button[@type='submit']")
         
-        if sites == dev:
-            # redirects to domain selection, so just click through
-            sel.wait_for_page_to_load("30000")
+        # redirects to domain selection, so just click through
+        sel.wait_for_page_to_load("30000")
+        if sel.is_text_present("Select a domain"):
             sel.click("//button[@type='submit']")
         
         # testing creation of xform
