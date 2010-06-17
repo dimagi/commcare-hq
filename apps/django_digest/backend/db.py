@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django import get_version
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import signals
@@ -40,24 +41,26 @@ def get_connection():
 
     if not _connection:
         # django1.2 compatibility modification (http://stackoverflow.com/questions/3026647/getting-a-keyerror-in-db-backend-of-django-digest)
-        _connection = backend.DatabaseWrapper({
-                        'HOST': settings.DATABASE_HOST,
-                        'NAME': settings.DATABASE_NAME,
-                        'OPTIONS': settings.DATABASE_OPTIONS,
-                        'PASSWORD': settings.DATABASE_PASSWORD,
-                        'PORT': settings.DATABASE_PORT,
-                        'USER': settings.DATABASE_USER,
-                        'TIME_ZONE': settings.TIME_ZONE,
-                        })
-        # _connection = backend.DatabaseWrapper({
-        #         'DATABASE_HOST': settings.DATABASE_HOST,
-        #         'DATABASE_NAME': settings.DATABASE_NAME,
-        #         'DATABASE_OPTIONS': settings.DATABASE_OPTIONS,
-        #         'DATABASE_PASSWORD': settings.DATABASE_PASSWORD,
-        #         'DATABASE_PORT': settings.DATABASE_PORT,
-        #         'DATABASE_USER': settings.DATABASE_USER,
-        #         'TIME_ZONE': settings.TIME_ZONE,
-        #         })
+        if get_version() < '1.2':
+            _connection = backend.DatabaseWrapper({
+                    'DATABASE_HOST': settings.DATABASE_HOST,
+                    'DATABASE_NAME': settings.DATABASE_NAME,
+                    'DATABASE_OPTIONS': settings.DATABASE_OPTIONS,
+                    'DATABASE_PASSWORD': settings.DATABASE_PASSWORD,
+                    'DATABASE_PORT': settings.DATABASE_PORT,
+                    'DATABASE_USER': settings.DATABASE_USER,
+                    'TIME_ZONE': settings.TIME_ZONE,
+                    })
+        else:
+            _connection = backend.DatabaseWrapper({
+                            'HOST': settings.DATABASE_HOST,
+                            'NAME': settings.DATABASE_NAME,
+                            'OPTIONS': settings.DATABASE_OPTIONS,
+                            'PASSWORD': settings.DATABASE_PASSWORD,
+                            'PORT': settings.DATABASE_PORT,
+                            'USER': settings.DATABASE_USER,
+                            'TIME_ZONE': settings.TIME_ZONE,
+                            })
 
     return _connection
 

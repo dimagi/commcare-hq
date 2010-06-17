@@ -4,7 +4,7 @@ from django import template, get_version
 
 register = template.Library()
 
-if get_version().startswith('1.1'):
+if get_version() < '1.2':
     @register.simple_tag
     def csrf_token():
         return ""
