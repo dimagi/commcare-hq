@@ -12,7 +12,7 @@ data     = {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org
 staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "BRAC"]}
 
 # point selenium at:
-sites = staging
+sites = dev
 print "running with params:", sites
 
 
@@ -33,14 +33,14 @@ class testingPost(unittest.TestCase):
         sel.type("id_username", user)
         sel.type("id_password", passw)
         sel.click("//button[@type='submit']")
+        sel.wait_for_page_to_load("30000")
         
         # redirects to domain selection, so just click through
-        sel.wait_for_page_to_load("30000")
         if sel.is_text_present("Select a domain"):
             sel.click("//button[@type='submit']")
-        
+            sel.wait_for_page_to_load("30000")
+
         # testing creation of xform
-        sel.wait_for_page_to_load("30000")
         sel.click("link=XForms")
         time.sleep(3)
         if sel.is_text_present("Sample Form 1"):
