@@ -35,7 +35,7 @@ def format_table_name(name, version=None, domain_name=None, prefix="schema_"):
     # key, and if it's > than 64 characters truncates it.  Technically we could get
     # away with just doing -1, but this way the pkey's look like pkeys in the database
     # This is a quick fix made on 6/17 and this code should really be cleaned better
-    return ("%s%s" % (prefix, sanitize(name, MAX_MYSQL_TABLE_NAME_LENGTH - len(prefix) - 4))).lower()
+    return ("%s%s" % (prefix, sanitize(name, MAX_MYSQL_TABLE_NAME_LENGTH - len(prefix) - 5))).lower()
 
 def table_exists( table_name):
     """Returns whether a table exists."""
