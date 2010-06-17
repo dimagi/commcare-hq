@@ -30,7 +30,12 @@ def format_table_name(name, version=None, domain_name=None, prefix="schema_"):
         name = "%s_%s" % ( name, version )
     if domain_name:
         prefix = "%s%s_" % (prefix, domain_name)
-    return ("%s%s" % (prefix, sanitize(name))).lower()
+    
+    # this magical -5 is because postgres uses _pkey as an auto-name for the primary
+    # key, and if it's > than 64 characters truncates it.  Technically we could get
+    # away with just doing -1, but this way the pkey's look like pkeys in the database
+    # This is a quick fix made on 6/17 and this code should really be cleaned better
+    return ("%s%s" % (prefix, sanitize(name, MAX_MYSQL_TABLE_NAME_LENGTH - len(prefix) - 4))).lower()
 
 def table_exists( table_name):
     """Returns whether a table exists."""
@@ -83,13 +88,13 @@ def get_xml_string(stream_pointer):
     return xml_string
 
 # todo: put all sorts of useful db fieldname sanitizing stuff in here
-def sanitize(name):
+def sanitize(name, limit=MAX_LENGTH):
     # Accordin to the django documentation, this function should provide all the sanitation we need
     # In practice, all this function does is add quotes =b
     # return backend.DatabaseOperations().quote_name(name)
     start = 0
-    if len(name) >= MAX_LENGTH:
-        start = len(name)-MAX_LENGTH
+    if len(name) >= limit:
+        start = len(name)-limit
     truncated_name = name[start:len(name)]
     sanitized_name = truncated_name.replace("-","_").replace("/","_").replace(":","").replace(".","_").lower()
     if sanitized_name.lower() == "where" or sanitized_name.lower() == "when":
