@@ -5,10 +5,12 @@ from django.http import HttpResponse
 
 import os
 import settings
+import time, datetime
 
 from django_digest.decorators import *
 
 from xml.dom.minidom import parse
+from receiver.models import Submission
 
 
 @httpdigest
@@ -27,11 +29,27 @@ def restore(request):
         contents = open(path).read()
 
         if search_str in contents and '<case>' in contents:
+                        
+            transaction_uuid = f.replace('-xform.xml', '')
+            try:
+                submit_date = Submission.objects.get(transaction_uuid=transaction_uuid).submit_time
+            except:
+                submit_date = None
+
+            
             dom = parse(path)
             cases = dom.getElementsByTagName("case")
 
             for case in cases:
                 date_modified = case.getElementsByTagName("date_modified")[0].firstChild.data
+                
+                if submit_date is not None:
+                    d_mod, ms = date_modified.split('.')
+                    xform_time = datetime.datetime.strptime(d_mod, '%Y-%m-%dT%H:%M:%S')
+
+                    if abs(xform_time - submit_date).days >= 14:
+                        date_modified = datetime.datetime.strftime(submit_date, '%Y-%m-%dT%H:%M:%S')
+                
                 case_id = case.getElementsByTagName("case_id")[0].firstChild.data
 
                 key = "%s:%s" % (date_modified, case_id)
