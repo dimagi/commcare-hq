@@ -15,8 +15,8 @@ from receiver.models import Submission
 
 @httpdigest
 def restore(request):
-    # username = request.user.username
-    username = 'derik'
+    username = request.user.username
+    # username = 'derik'
     search_str = "<username>%s</username>" % username
     
     atts_dir = settings.RAPIDSMS_APPS['receiver']['attachments_path']
