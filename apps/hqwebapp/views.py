@@ -24,7 +24,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from domain.decorators import login_and_domain_required
 from webutils import render_to_response
 
-import shared_code.hqutils as utils
+import datahq.shared_code.hqutils as utils
 
 from xformmanager.models import *
 # from hq.models import *
