@@ -12,7 +12,7 @@ data     = {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org
 staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "BRAC"]}
 
 # point selenium at:
-sites = dev
+sites = local
 print "running with params:", sites
 
 
