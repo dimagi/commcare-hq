@@ -1,0 +1,35 @@
+{% extends base_template %}
+{% block title %}Phone {{ phone }}{% endblock %}
+{% block content %}
+<div class="span-24">
+{% if phone.users %}
+<h3>Users on {{ phone }}</h3>
+<table>
+<thead>
+    <th>Username</th>
+    <th>Status</th>
+    <th>Registered on</th>
+    <th>Linked User</th>    
+</thead>
+<tbody>
+{% for phone_user in phone.users.all %}
+<tr>
+    <td><a href="{% url phone.views.single_user phone_user.id %}">{{phone_user.username}}</a></td>
+    <td>{{ phone_user.get_status_display }}</td>
+    <td>{{ phone_user.registered_on }}</td>
+    <td>
+    {% if phone_user.user %}
+    <a href="{% url phone.views.single_django_user phone_user.user.id %}">{{ phone_user.user }}</a>
+    {% else %}
+    No django users. (<a href="{% url phone.views.create_user phone_user.id %}">create one</a> or <a href="{% url phone.views.link_user phone_user.id %}">link one</a>) 
+    {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<h3>No known users for this phone</h3>
+{% endif %}
+</div>
+{% endblock %}
