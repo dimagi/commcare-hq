@@ -46,7 +46,7 @@ class PhoneUserInfo(models.Model):
     status = models.CharField(max_length=20, choices=USER_INFO_STATUS)
     
     # the username and password are from the phone, not the user account
-    username = models.CharField(max_length=32)
+    username = models.CharField(max_length=32, blank=True)
     password = models.CharField(max_length=32, null=True) 
     uuid = models.CharField(max_length=32, null=True)
     registered_on = models.DateField(default=datetime.today)
@@ -90,10 +90,10 @@ def create_phone_and_user(sender, instance, created, **kwargs):
                  domain = instance.attachment.submission.domain)[0]
     
     try:
-        PhoneUserInfo.objects.get(phone=phone, username=instance.username)
+        PhoneUserInfo.objects.get(phone=phone, username="%s" % instance.username)
     except PhoneUserInfo.DoesNotExist:
         # create it if we couldn't find it 
-        PhoneUserInfo.objects.create(phone=phone,username=instance.username,
+        PhoneUserInfo.objects.create(phone=phone,username="%s" % instance.username,
                                      status="auto_created")
 
 post_save.connect(create_phone_and_user, sender=Metadata)
