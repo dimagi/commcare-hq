@@ -26,8 +26,10 @@ def restore(request):
     for f in os.listdir(atts_dir):
         if not f.endswith('.xml'): continue
         path = atts_dir + f
-        contents = open(path).read()
 
+        contents = open(path, "r").read()
+        contents = contents.decode('utf-8','ignore')
+        
         if search_str in contents and '<case>' in contents:
                         
             transaction_uuid = f.replace('-xform.xml', '')
