@@ -89,7 +89,7 @@ def new_jarjad(request, template_name="jarjad.html"):
         if form.is_valid():
             try:                      
                 jj = form.save(commit=False)
-        
+
                 jj.uploaded_by=request.user
                 jj.description = urllib.unquote(jj.description)
 
@@ -100,7 +100,7 @@ def new_jarjad(request, template_name="jarjad.html"):
                 jj.version = jad['MIDlet-Version']                
 
                 jj.save()
-        
+
                 # _log_build_upload(request, newbuild)
                 return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
             except Exception, e:
@@ -116,7 +116,7 @@ def new_jarjad(request, template_name="jarjad.html"):
     if xml_mode:
         return HttpResponseBadRequest("FAIL")
     else:
-        render_to_response(request, template_name, context)
+        return render_to_response(request, template_name, context)
     
     
 
