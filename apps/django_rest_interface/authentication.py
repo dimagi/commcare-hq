@@ -5,7 +5,6 @@ MORE INFO AT: http://code.google.com/p/django-rest-interface/wiki/RestifyDjango
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 import md5, time, random
-from hq.authentication import get_username_password, get_auth_dict
 
 def djangouser_auth(username, password):
     """
@@ -172,7 +171,7 @@ class HttpDigestAuthentication(Authentication):
             return False
         
         # Extract auth parameters from request
-        amap = get_auth_dict(auth)
+        amap = _get_auth_dict(auth)
         try:
             username = amap['username']
             authpath = amap['uri']
@@ -237,8 +236,36 @@ class HQAuthentication(Authentication):
         return {'WWW-Authenticate' : 'Basic realm="%s"' % self.realm}
     
     def is_authenticated(self, request):
-        username, password = get_username_password(request)
-        if username and password:
-            return self.authfunc(username=username, password=password)
-        return False
+        """
+        Checks whether a request comes from an authorized user.
+        """
+        if not request.META.has_key('HTTP_AUTHORIZATION'):
+            return False
+        (authmeth, auth) = request.META['HTTP_AUTHORIZATION'].split(' ', 1)
+        if authmeth.lower() != 'hq':
+            return False
+        # Extract auth parameters from request
+        amap = _get_auth_dict(auth)
+        try:
+            username = amap['username']
+            password = amap['password']
+        except:
+            return False
+        return self.authfunc(username=username, password=password)
 
+def _get_auth_dict(auth_string):
+    """
+    Splits WWW-Authenticate and HTTP_AUTHORIZATION strings
+    into a dictionaries, e.g.
+    {
+        nonce  : "951abe58eddbb49c1ed77a3a5fb5fc2e"',
+        opaque : "34de40e4f2e4f4eda2a3952fd2abab16"',
+        realm  : "realm1"',
+        qop    : "auth"'
+    }
+    """
+    amap = {}
+    for itm in auth_string.split(", "):
+        (k, v) = [s.strip() for s in itm.split("=", 1)]
+        amap[k] = v.replace('"', '')
+    return amap

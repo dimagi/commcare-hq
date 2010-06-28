@@ -35,7 +35,6 @@ from django.forms.models import modelformset_factory
 import mimetypes
 import urllib
 
-# FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 
 @login_and_domain_required
 def projects(request, template_name="projects.html"):
@@ -89,18 +88,22 @@ def new_jarjad(request, template_name="jarjad.html"):
     context = {}
     form = JarjadForm()    
     if request.method == 'POST':
-        form = JarjadForm(request.POST, request.FILES)                
+        form = JarjadForm(request.POST, request.FILES)        
         if form.is_valid():
             try:                      
                 jj = form.save(commit=False)
+        
                 jj.uploaded_by=request.user
                 jj.description = urllib.unquote(jj.description)
-                    
+
                 jj.save_file(request.FILES['jad_file_upload'])
-                jj.save_file(request.FILES['jar_file_upload'])
-                    
+                jj.save_file(request.FILES['jar_file_upload'])            
+
+                jad = lib.jad_to_dict(open(jj.jad_file).read())
+                jj.version = jad['MIDlet-Version']                
+
                 jj.save()
-            
+        
                 # _log_build_upload(request, newbuild)
                 return HttpResponse("SUCCESS") if xml_mode else HttpResponseRedirect(reverse('releasemanager.views.jarjad'))
             except Exception, e:
@@ -147,8 +150,27 @@ def builds(request, template_name="builds.html"):
 
 @login_and_domain_required
 def build_set_release(request, id, set_to):
-    if set_to == "true" or set_to == "false":
-        Build.objects.filter(id=id).update(is_release=(set_to == "true"))
+    build = Build.objects.get(id=id)
+    
+    if set_to == "true":
+        build.is_release=True
+        lib.modify_jad(build.jad_file, {
+                                        'CommCare-Release' : 'true', 
+                                        'Released-on' : datetime.datetime.now().strftime("%Y-%b-%d %H:%M")
+                                        })
+    elif set_to == "false":
+        build.is_release=False
+        lib.modify_jad(build.jad_file, {
+                                        'CommCare-Release' : 'false', 
+                                        'Released-on' : ''
+                                        })
+    
+    build.save()
+    
+    # rezip with the new file
+    os.remove(build.zip_file)
+    lib.create_zip(build.zip_file, build.jar_file, build.jad_file)
+    
     return HttpResponseRedirect(reverse('releasemanager.views.builds'))
 
 
@@ -162,6 +184,8 @@ def new_build(request, template_name="builds.html"):
             b = form.save(commit=False)
             b.jar_file, b.jad_file, b.zip_file = _create_build(b)
             b.save()
+            lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
+            
             return HttpResponseRedirect(reverse('releasemanager.views.builds'))
 
     context['form'] = form
@@ -171,14 +195,6 @@ def _create_build(build):
     jar = build.jarjad.jar_file
     jad = build.jarjad.jad_file
     buildname = build.resource_set.name
-
-    #### Deprecate zip support ####
-    # # get the resources: load & zip if zip file, hg clone otherwise
-    # if build.resource_set.url.endswith('.zip'):
-    #     resource_zip = lib.grab_from(build.resource_set.url)
-    #     resources = lib.unzip(resource_zip)
-    # else:
-    #     resources = lib.clone_from(build.resource_set.url)
 
     resources = lib.clone_from(build.resource_set.url)
 
@@ -194,16 +210,18 @@ def _create_build(build):
     new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
     shutil.copy2(new_tmp_jar, new_jar)
 
-    new_tmp_jad = lib.modify_jad(jad, new_jar)
     new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
-    shutil.copy2(new_tmp_jad, new_jad)
-        
+    shutil.copy2(jad, new_jad)
+    lib.modify_jad(new_jad, {
+                                'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
+                                'MIDlet-Jar-URL' : os.path.basename(new_jar),
+                            })
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
     
     # clean up tmp files
     os.remove(new_tmp_jar)
-    os.remove(new_tmp_jad)
+    # os.remove(new_tmp_jad)
             
     return new_jar, new_jad, new_zip
 

@@ -1,3 +1,5 @@
+import logging
+
 from receiver.models import SubmissionHandlingType
 
 # some constants used by the submission handler
@@ -31,5 +33,4 @@ def create_phone_user(attachment):
                                                                    method=REGISTRATION_HANDLER)[0]
         attachment.submission.handled(handle_type)
     except Exception, e:
-        print e
-        
+        logging.error(e)

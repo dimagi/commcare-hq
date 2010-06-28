@@ -106,7 +106,7 @@ def get_django_user_object(phone_info):
     user.last_name  = ''
     user.email = ""
     user.is_staff = False # Can't log in to admin site
-    user.is_active = False # Activated upon receipt of confirmation
+    user.is_active = True # Activated upon receipt of confirmation
     user.is_superuser = False # Certainly not, although this makes login sad
     user.last_login =  datetime.datetime(1970,1,1)
     user.date_joined = datetime.datetime.utcnow()

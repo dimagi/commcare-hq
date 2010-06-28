@@ -11,7 +11,7 @@ class JarjadForm(forms.ModelForm):
     
     class Meta:
         model = Jarjad
-        exclude = ('jar_file', 'jad_file','uploaded_by','is_release')
+        exclude = ('jar_file', 'jad_file','uploaded_by','is_release', 'version')
            
         
 class BuildForm(forms.ModelForm):
@@ -22,7 +22,7 @@ class BuildForm(forms.ModelForm):
 
 
 class ResourceSetForm(forms.ModelForm):
-    name = forms.SlugField(error_message="name should include only letters, numbers, underscores and hyphens")
+    name = forms.SlugField()
 
     class Meta:
         model = ResourceSet

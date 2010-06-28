@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from hq.authentication import get_username_password
 from hq.utils import get_dates
 
 
@@ -33,15 +31,6 @@ class HqMiddleware(object):
         _thread_locals.user = getattr(request, 'user', None)
         if request.user and not request.user.is_anonymous():
             self._set_local_vars(request, request.user)
-        else:
-            # attempt our custom authentication only if regular auth fails
-            # (and request.user == anonymousUser
-            username, password = get_username_password(request)
-            if username and password:
-                user = authenticate(username=username, password=password)
-                if user is not None:
-                    request.user = user
-                    self._set_local_vars(request, user)
         # do the same for start and end dates.  at some point our views
         # can just start accessing these properties on the request assuming
         # our middleware is running  

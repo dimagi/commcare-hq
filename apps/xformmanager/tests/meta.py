@@ -1,10 +1,16 @@
-from django.db import connection, transaction, DatabaseError
-from xformmanager.tests.util import *
-from xformmanager.models import Metadata, MetaDataValidationError
-from xformmanager.manager import XFormManager, FormDefError
+from django.db import connection
+from django.conf import settings
+
+# from xformmanager.tests.util import 
+from xformmanager.models import Metadata, FormDefModel
+from xformmanager.manager import XFormManager
 from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 import unittest
 from datetime import datetime, timedelta 
+from xformmanager.tests.util import clear_data, create_xsd_and_populate,\
+    populate
+from domain.models import Domain
+import logging
 
 class MetaTestCase(unittest.TestCase):
     
@@ -205,10 +211,9 @@ class MetaTestCase(unittest.TestCase):
 
     def testEmptySubmission(self):
         logging.warn("EXPECTING A 'No metadata found' ERROR NOW:")
+        self.assertEqual(0, Metadata.objects.count())
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml", self.domain)
-        # raises a Metadata.DoesNotExist error on fail
-        metadata = Metadata.objects.get()
-        # empty submissions do not create rows in the data tables
+        self.assertEqual(1, Metadata.objects.count())
     
     def tearDown(self):
         # duplicates setUp, but at least we know we're being clean

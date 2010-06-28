@@ -17,8 +17,8 @@ from cookielib import *
 from urlparse import urlparse
 
 #serverhost = 'localhost'  #for you local developers on apache
-serverhost = 'localhost:8000' #for you local developers using runserver
-# serverhost = 'test.commcarehq.org' #for the actual server
+#serverhost = 'localhost:8000' #for you local developers using runserver
+serverhost = 'test.commcarehq.org' #for the actual server
 curl_command = 'curl' #make sure curl is in your path
 
 

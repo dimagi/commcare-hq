@@ -28,9 +28,13 @@ class UtilTestCase(unittest.TestCase):
     def testTranslateXFormToSchema(self):
         """ Test basic xform to schema translation"""
         fin = open(os.path.join(os.path.dirname(__file__),"basic.xform"),'r')
-        (schema,err, has_error) = form_translate( fin.read() )
+        (schema, err, has_error) = form_translate( fin.read() )
         if has_error:
             self.fail(err)
+        if "Unable to access jarfile" in err:
+            self.fail(err)
+        self.assertTrue("Parsing form..." in err)
+        self.assertTrue("Demo Form" in err)
         
     def testTranslateVersionedXFormToSchema(self):
         """ Test basic xform to schema translation"""
@@ -38,6 +42,8 @@ class UtilTestCase(unittest.TestCase):
         (schema,err, has_error) = form_translate( fin.read() )
         if has_error:
             self.fail(err)
+        self.assertTrue("Parsing form..." in err)
+        self.assertTrue("Demo Form" in err)
 
     def _testErrors(self, schema_file, instance_file, id):
         su = SU()

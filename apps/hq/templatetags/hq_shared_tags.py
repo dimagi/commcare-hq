@@ -1,8 +1,13 @@
 from datetime import datetime, timedelta
-from django import template
+from django import template, get_version
 
 
 register = template.Library()
+
+if get_version() < '1.2':
+    @register.simple_tag
+    def csrf_token():
+        return ""
 
 @register.filter
 def dict_lookup(dict, key):
