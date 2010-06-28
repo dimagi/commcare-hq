@@ -8,13 +8,14 @@ import datetime
 class JarjadForm(forms.ModelForm):
     jad_file_upload = forms.FileField()    
     jar_file_upload = forms.FileField()
-    
     class Meta:
         model = Jarjad
         exclude = ('jar_file', 'jad_file','uploaded_by','is_release', 'version')
            
         
 class BuildForm(forms.ModelForm):
+    
+    register_forms = forms.BooleanField(required=False, help_text="Do a best effort registration of forms on HQ")
         
     class Meta:
         model = Build

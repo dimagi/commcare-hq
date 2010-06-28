@@ -5,8 +5,7 @@ from xformmanager.xformdef import FormDef
 from xformmanager.manager import form_translate
 
 import buildmanager.xformvalidator
-from buildmanager.exceptions import BuildError
-
+from buildmanager.exceptions import XsdConversionError, FormDefCreationError
 
 
 def validate(xform_filename):
@@ -30,17 +29,17 @@ def validate_xml(xml_body, display_name="your xform", do_hq_validation=True):
        or thows an exception on failure."""
     output, errorstream, has_error = form_translate(xml_body)
     if has_error:
-        raise BuildError("Could not convert xform (%s) to schema.  Your error is %s" % 
-                         (display_name, errorstream))
+        raise XsdConversionError("Could not convert xform (%s) to schema.  Your error is %s" % 
+                                   (display_name, errorstream))
     # if no errors, we should have a valid schema in the output
     # check the meta block, by creating a formdef object and inspecting it
     formdef = FormDef(StringIO(output))
     if not formdef:
-        raise BuildError("Could not get a valid form definition from the xml file: %s"
-                          % form_display)
+        raise FormDefCreationError("Could not get a valid form definition from the xml file: %s"
+                                   % formdef)
     
     if do_hq_validation:    
-        #formdef.validate() throws errors on poor validation
+        #formdef.validate() throws FormDefErrors on poor validation
         formdef.validate()
     
     # if we made it here we're all good

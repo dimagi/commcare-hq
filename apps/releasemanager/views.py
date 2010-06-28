@@ -13,12 +13,6 @@ from xformmanager.manager import readable_form, csv_dump
 
 import releasemanager.lib as lib
 
-# from buildmanager.exceptions import BuildError
-# from buildmanager.models import *
-# from buildmanager.forms import *
-# from buildmanager.jar import validate_jar
-# from buildmanager import xformvalidator
-
 from releasemanager.forms import *
 
 from rapidsms.webui.utils import render_to_response
@@ -34,6 +28,9 @@ from django.forms.models import modelformset_factory
 
 import mimetypes
 import urllib
+from xformmanager.xformdef import FormDef
+from buildmanager.exceptions import BuildError, XsdConversionError,\
+    FormDefCreationError
 
 
 @login_and_domain_required
@@ -177,18 +174,58 @@ def build_set_release(request, id, set_to):
 @login_and_domain_required
 def new_build(request, template_name="builds.html"):
     context = {}
-    form = BuildForm()    
+    buildform = BuildForm()    
     if request.method == 'POST':
-        form = BuildForm(request.POST)
-        if form.is_valid():
-            b = form.save(commit=False)
-            b.jar_file, b.jad_file, b.zip_file = _create_build(b)
+        buildform = BuildForm(request.POST)
+        if buildform.is_valid():
+            b = buildform.save(commit=False)
+            b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(b)
             b.save()
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
             
-            return HttpResponseRedirect(reverse('releasemanager.views.builds'))
+            xsd_conversion_errors = [(form, errors) for form, errors in form_errors.items() \
+                                     if isinstance(errors, XsdConversionError)]
+            formdef_creation_errors = [(form, errors) for form, errors in form_errors.items() \
+                                       if isinstance(errors, FormDefCreationError)]
+            validation_errors = [(form, errors) for form, errors in form_errors.items() \
+                                 if isinstance(errors, FormDef.FormDefError) \
+                                    and errors.category == FormDef.FormDefError.ERROR]
+            validation_warnings = [(form, errors) for form, errors in form_errors.items() \
+                                 if isinstance(errors, FormDef.FormDefError) \
+                                    and errors.category == FormDef.FormDefError.WARNING]
+            registration_errors = {}
+            if buildform.cleaned_data["register_forms"]:
+                # FormDefErrors that are only warnings are allowable.  All other errors
+                # are not.
+                good_forms_list = [formname for formname, errors in form_errors.items()\
+                                            if errors is None or \
+                                                (isinstance(errors, FormDef.FormDefError) and \
+                                                 errors.category == FormDef.FormDefError.WARNING)]
+                
+                registration_errors = lib.register_forms(b, good_forms_list)
+            success_forms = [form for form, errors in form_errors.items() if errors is None]
+            failed_registered = [form for form, errors in form_errors.items() if errors is not None]
+            success_forms = [form for form in success_forms if form not in failed_registered]
+            print {"build": b,
+                                       "success_forms": success_forms,
+                                       "xsd_conversion_errors": xsd_conversion_errors,
+                                       "formdef_creation_errors": formdef_creation_errors,
+                                       "validation_errors": validation_errors,
+                                       "validation_warnings": validation_warnings,
+                                       "registration_errors": registration_errors
+                                       }
+            return render_to_response(request, "release_confirmation.html", 
+                                      {"build": b,
+                                       "success_forms": success_forms,
+                                       "xsd_conversion_errors": xsd_conversion_errors,
+                                       "formdef_creation_errors": formdef_creation_errors,
+                                       "validation_errors": validation_errors,
+                                       "validation_warnings": validation_warnings,
+                                       "registration_errors": registration_errors
+                                       })
+            
 
-    context['form'] = form
+    context['form'] = buildform
     return render_to_response(request, template_name, context)
 
 def _create_build(build):
@@ -197,7 +234,13 @@ def _create_build(build):
     buildname = build.resource_set.name
 
     resources = lib.clone_from(build.resource_set.url)
-
+    
+    errors = lib.validate_resources(resources)
+    
+    for key, value in errors.items():
+        if value: 
+            logging.debug("Form validation error while realeasing build.  Form: %s, e: %s" % (key, value))
+    
     ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
     new_id = (1 + ids[0].id) if len(ids) > 0 else 1
     
@@ -222,8 +265,8 @@ def _create_build(build):
     # clean up tmp files
     os.remove(new_tmp_jar)
     # os.remove(new_tmp_jad)
-            
-    return new_jar, new_jad, new_zip
+    
+    return new_jar, new_jad, new_zip, errors
 
 
 @login_and_domain_required

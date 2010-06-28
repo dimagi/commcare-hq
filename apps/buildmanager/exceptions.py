@@ -1,5 +1,8 @@
+class FormValidationError(Exception):
+    """The base class for form validation errors"""
+    pass
 
-class BuildError(Exception):
+class BuildError(FormValidationError):
     """Generic error for the Build Manager to throw.  Also
        supports wrapping a collection of other errors."""
     
@@ -19,3 +22,9 @@ class BuildError(Exception):
 
     def __str__(self):
         return unicode(self).encode('utf-8')
+    
+class XsdConversionError(FormValidationError):
+    pass
+
+class FormDefCreationError(FormValidationError):
+    pass
