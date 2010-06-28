@@ -1,15 +1,27 @@
 import sys
 import os
 import urllib2
+import tempfile 
 import shutil
 import re
-
+from django.middleware.common import *
 import tempfile as tmp
 from zipfile import ZipFile 
 from cStringIO import StringIO
 
 from subprocess import Popen, PIPE
+from buildmanager import xformvalidator
+from django.conf import settings
+from buildmanager.jar import extract_xforms
 
+from xformmanager.models import FormDefModel
+from buildmanager.exceptions import BuildError
+from xformmanager.manager import XFormManager
+from buildmanager.models import UNKNOWN_IP
+import logging
+import traceback
+from xformmanager.xformdef import FormDef
+from releasemanager.exceptions import XFormConflictError, FormReleaseError
 # import re
 # import logging
 
@@ -192,15 +204,104 @@ def get_bitly_url_for(url):
         bitly_login  = settings.RAPIDSMS_APPS['releasemanager']['bitly_login']
         bitly_apikey = settings.RAPIDSMS_APPS['releasemanager']['bitly_apikey']
     except:
-        return false
+        return False
 
     bitly_url = "http://api.bit.ly/v3/shorten?login=dmgi&apiKey=R_af7d5c0d899197fe43e18acceebd5cdb&uri=%s&format=txt" % url
     
     u = urllib2.urlopen(bitly_url)
     short_url = u.read().strip()
     
-    if short_url == '': return false
+    if short_url == '': return False
     
     return short_url
     
-        
+
+def validate_resources(resources):
+    """
+    Validate a list of resources, currently by trying to parse everything
+    like an xform and then register it.  Returns a dictionary of resource names
+    with values either None if validaiton was successful, otherwise the 
+    exception that was thrown during validation.
+    """
+    errors = {}
+    for file in os.listdir(resources):
+        if file.endswith(".xml") or file.endswith(".xhtml"):
+            try:
+                xformvalidator.validate(os.path.join(resources, file))
+                errors[file] = None
+                logging.debug("%s validates successfully" % file) 
+            except Exception, e:
+                errors[file] = e
+    return errors
+
+def register_forms(build, good_forms):
+    """Try to register the forms from jar_file."""
+    # this was copied and modified from buildmanager models. 
+    errors = {}
+    to_skip = []
+    to_register = []
+    path = tempfile.tempdir
+    xforms = extract_xforms(build.jar_file, path)
+    for form in xforms:
+        if os.path.basename(form) not in good_forms:
+            logging.debug("skipping %s, not a good form" % form)
+            continue
+        try:
+            formdef = xformvalidator.validate(form)
+            modelform = FormDefModel.get_model(formdef.target_namespace,
+                                               build.resource_set.domain, 
+                                               formdef.version)
+            if modelform:
+                # if the model form exists we must ensure it is compatible
+                # with the version we are trying to release
+                existing_formdef = modelform.to_formdef()
+                differences = existing_formdef.get_differences(formdef)
+                if differences.is_empty():
+                    # this is all good
+                    to_skip.append(form)
+                else:
+                    raise XFormConflictError(("Schema %s is not compatible with %s."  
+                                              "Because of the following differences:" 
+                                              "%s"
+                                              "You must update your version number!")
+                                                    % (existing_formdef, formdef, differences))
+            else:
+                # this must be registered
+                to_register.append(form)
+        except FormDef.FormDefError, e:
+            # we'll allow warnings through
+            if e.category == FormDef.FormDefError.WARNING:  pass
+            else:                                           errors[form] = e
+        except Exception, e:
+            info = sys.exc_info()
+            logging.error("Error preprocessing form in build manager: %s\n%s" % \
+                          (e, traceback.print_tb(info[2])))
+            errors[form] = e
+    if errors:
+        return errors
+    # finally register
+    manager = XFormManager()
+    # TODO: we need transaction management
+    for form in to_register:
+        try:
+            formdefmodel = manager.add_schema(os.path.basename(form),
+                                              open(form, "r"),
+                                              build.resource_set.domain)
+            
+            # TODO, find better values for these?
+            formdefmodel.submit_ip = UNKNOWN_IP
+            user = None
+            formdefmodel.uploaded_by = user
+            formdefmodel.bytes_received =  len(form)
+            formdefmodel.form_display_name = os.path.basename(form)
+            formdefmodel.save()
+            errors[form] = None                
+        except Exception, e:
+            # log the error with the stack, otherwise this is hard to track down
+            info = sys.exc_info()
+            logging.error("Error registering form in build manager: %s\n%s" % \
+                          (e, traceback.print_tb(info[2])))
+            errors[form] = FormReleaseError("%s" % e)
+    return errors
+    
+
