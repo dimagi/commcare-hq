@@ -34,7 +34,7 @@ for table, column in table_columns:
         new_path = cur_path.replace('commcarehq_dev', 'commcarehq_staging')
         print "%s => %s" % (cur_path, new_path)
     
-        shutil.copy(cur_path, new_path)
+        shutil.move(cur_path, new_path)
     
         q = "UPDATE %s SET %s='%s' WHERE ID=%s" % (table, column, new_path, r[0])
         print q 
