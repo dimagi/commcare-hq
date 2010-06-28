@@ -306,6 +306,8 @@ def provider_summary(report_schedule, run_frequency):
     # this is a hack to ensure that the monthly reports are sent on the last day of the month
     today = datetime.now().date()
     tomorrow = today + timedelta(days=1)
+    case = Case.objects.get(name="Pathfinder_1")
+    blacklist = BlacklistedUser.for_domain(case.domain)
     # if it's the last day of the month then send the report
     if tomorrow.day == 1:
         from hq import reporter
@@ -313,27 +315,31 @@ def provider_summary(report_schedule, run_frequency):
         puis = PhoneUserInfo.objects.all()
         if puis != None:
             for pui in puis:
-                provider = pui.username + pui.phone.device_id
-                additional_data = pui.additional_data
-                user_id = ""
-                if additional_data != None and 'hcbpid' in additional_data:
-                    user_id = additional_data['hcbpid']
+                if pui.username not in blacklist:
+                    provider = pui.username + pui.phone.device_id
+                    additional_data = pui.additional_data
+                    user_id = ""
+                    if additional_data != None and 'hcbpid' in additional_data:
+                        user_id = additional_data['hcbpid']
+                    
+                    output = StringIO()
+                    doc = SimpleDocTemplate(output)
+                    data_list = get_provider_data_by_case("Pathfinder_1", 
+                                                          provider, startdate, 
+                                                          enddate)
+                    get_provider_summary_pdf(startdate.month, startdate.year, 
+                                             provider, data_list, doc)
+                    
+                    output.seek(0)
+                    content = output.read()
+                    attachment = [{'filename': "CommCareHQ Summary by Provider Report %s_%s.pdf" %\
+                                (user_id, enddate), 'content': content, 'mimetype': 
+                                'application/pdf'}]
                 
-                output = StringIO()
-                doc = SimpleDocTemplate(output)
-                data_list = get_provider_data_by_case("Pathfinder_1", provider, startdate, enddate)
-                get_provider_summary_pdf(startdate.month, startdate.year, 
-                                         provider, data_list, doc)
-                
-                output.seek(0)
-                content = output.read()
-                attachment = [{'filename': "CommCareHQ Summary by Provider Report %s_%s.pdf" %\
-                            (user_id, enddate), 'content': content, 'mimetype': 
-                            'application/pdf'}]
-            
-                reporter.transport_email('', report_schedule.recipient_user, 
-                                params={"email_subject": "CommCareHQ Summary by Provider Report %s_%s" %\
-                                    (user_id, enddate), "attachment": attachment })
+                    reporter.transport_email('', report_schedule.recipient_user, 
+                                    params={"email_subject": "CommCareHQ Summary by Provider Report %s_%s" %\
+                                        (user_id, enddate), "attachment": 
+                                        attachment })
 
 def hbc_monthly_summary(report_schedule, run_frequency):
     """Summary of total patient information within each ward"""
@@ -370,7 +376,8 @@ def chw_monthly_summary(report_schedule, run_frequency):
         data_by_chw = get_data_by_chw(case)
         # only send report for cases with data
         if data_by_chw:
-            data = get_active_open_by_chw(data_by_chw, startdate, enddate)
+            domain = case.domain
+            data = get_active_open_by_chw(data_by_chw, startdate, enddate, domain)
             rendered_text = render_to_string("custom/all/chw_summary_email.html",
                                              {'data': data})
             subject = 'CommCareHQ CHW Summary Report -- %s' % case.name

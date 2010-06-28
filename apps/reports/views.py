@@ -154,7 +154,7 @@ def sum_chw(request):
          str(enddate.year)
     all_data['startdate_active'] = str(active.month) + "/" + str(active.day) +\
         "/" + str(active.year)
-    all_data['data'] = get_active_open_by_chw(data_by_chw, active, enddate)
+    all_data['data'] = get_active_open_by_chw(data_by_chw, active, enddate, domain)
     return render_to_response(request, "custom/all/chw_summary.html", all_data)
 
 @login_and_domain_required
@@ -220,6 +220,8 @@ def hbc_monthly_sum(request):
 def select_prov(request):
     '''Given a ward, select the provider and date for the report'''
     context = {}
+    domain = request.user.selected_domain
+    blacklist = BlacklistedUser.for_domain(domain)
     ward = ""
     if request:
         for item in request.POST.items():
@@ -229,10 +231,12 @@ def select_prov(request):
     puis = PhoneUserInfo.objects.all()
     if puis != None:
         for pui in puis:
-            additional_data = pui.additional_data
-            if additional_data != None and "ward" in additional_data:
-                if ward == additional_data["ward"]:
-                    providers[pui.username + pui.phone.device_id] = pui.username
+            if pui.username not in blacklist:
+                additional_data = pui.additional_data
+                if additional_data != None and "ward" in additional_data:
+                    if ward == additional_data["ward"]:
+                        providers[pui.username + pui.phone.device_id] = \
+                            pui.username
     context["providers"] = providers
 
     year = datetime.now().date().year
