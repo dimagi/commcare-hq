@@ -370,7 +370,8 @@ def chw_monthly_summary(report_schedule, run_frequency):
         data_by_chw = get_data_by_chw(case)
         # only send report for cases with data
         if data_by_chw:
-            data = get_active_open_by_chw(data_by_chw, startdate, enddate)
+            domain = case.domain
+            data = get_active_open_by_chw(data_by_chw, startdate, enddate, domain)
             rendered_text = render_to_string("custom/all/chw_summary_email.html",
                                              {'data': data})
             subject = 'CommCareHQ CHW Summary Report -- %s' % case.name

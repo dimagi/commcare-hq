@@ -4,6 +4,7 @@ from reports.custom.pathfinder import ProviderSummaryData, WardSummaryData, HBCM
 import calendar
 from phone.models import PhoneUserInfo, Phone
 from StringIO import StringIO
+from hq.models import BlacklistedUser
 try:
     from reportlab.pdfgen import canvas
     from reportlab.platypus import *
@@ -191,18 +192,20 @@ def get_ward_chw_data_list(startdate, enddate, ward):
     except Case.DoesNotExist:
         return '''Sorry, it doesn't look like the forms that this report 
                   depends on have been uploaded.'''
+    blacklist = BlacklistedUser.for_domain(case.domain)
     data_by_chw = get_data_by_chw(case)
     
     puis = PhoneUserInfo.objects.all()
     if puis != None:
         for pui in puis:
-            chw_id = pui.username + pui.phone.device_id
-            chw_data = None
-            if chw_id in data_by_chw:
-                chw_data = data_by_chw[chw_id]
-            chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
-            if chw_obj.ward == ward:
-                chw_data_list.append(chw_obj)
+            if pui.username not in blacklist:
+                chw_id = pui.username + pui.phone.device_id
+                chw_data = None
+                if chw_id in data_by_chw:
+                    chw_data = data_by_chw[chw_id]
+                chw_obj = WardSummaryData(case, chw_id, chw_data, startdate, enddate)
+                if chw_obj.ward == ward:
+                    chw_data_list.append(chw_obj)
     return chw_data_list
     
 def get_provider_summary_data(startdate, enddate, month, year, provider):
@@ -617,8 +620,9 @@ def only_follow(fttd):
         return False
     
 
-def get_active_open_by_chw(data_by_chw, active, enddate):
+def get_active_open_by_chw(data_by_chw, active, enddate, domain):
     data = []
+    blacklist = BlacklistedUser.for_domain(domain)
     for chw_id, chw_data in data_by_chw.items():
         user_data = get_user_data(chw_id)
         count_of_open = 0
@@ -653,7 +657,8 @@ def get_active_open_by_chw(data_by_chw, active, enddate):
         else: over_ninety = False
         avg_late = get_avg_late(days_late_list)
         ref_avg_late = get_avg_late(ref_days_late_list)
-        data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
+        if chw_name not in blacklist:
+            data.append({'chw': chw_id, 'chw_name': chw_name, 'active':
                     count_of_active, 'open': count_of_open, 
                     'percentage': percentage, 'last_week': 
                     count_last_week, 'avg_late': avg_late,  
