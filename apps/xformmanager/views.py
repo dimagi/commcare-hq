@@ -511,6 +511,7 @@ def get_xform(request, formdef_id):
     txt = fin.read()
     fin.close()
     response.write(txt) 
+    response['Content-Length'] = len(txt)
     return response
      
 @login_and_domain_required
