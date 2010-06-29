@@ -19,6 +19,12 @@ def ota_restore(request):
     username = request.user.username
     # username = 'derik'
     
+    registration_xml = ''' 
+        <registration>
+            <username>%s</username>
+        </registration>
+    ''' % username
+    
     cases_list = {}
 
     atts = Metadata.objects.filter(username=username)        
@@ -36,7 +42,13 @@ def ota_restore(request):
             
         dom = parse(path)
         cases = dom.getElementsByTagName("case")
-
+        
+        registration = dom.getElementsByTagName("registration")
+        
+        if len(registration) > 0:
+            registration_xml = registration[0].toxml()
+            # print registration_xml
+        
         for case in cases:
             date_modified = case.getElementsByTagName("date_modified")[0].firstChild.data
             
@@ -55,12 +67,8 @@ def ota_restore(request):
                 
     # create the xml, sorted by timestamps
     
-    xml = '''
-    <restoredata>
-        <registration>
-            <username>%s</username>
-        </registration>
-    ''' % username
+    xml = '<restoredata>\n%s' % registration_xml
+
     
     for case in sorted(cases_list.keys()):
         xml += cases_list[case].toprettyxml()
