@@ -48,13 +48,7 @@ def ota_restore(request):
             
         dom = parse(path)
         cases = dom.getElementsByTagName("case")
-        
-        registration = dom.getElementsByTagName("registration")
-        
-        if len(registration) > 0:
-            registration_xml = registration[0].toxml()
-            # print registration_xml
-        
+                
         for case in cases:
             date_modified = case.getElementsByTagName("date_modified")[0].firstChild.data
             
