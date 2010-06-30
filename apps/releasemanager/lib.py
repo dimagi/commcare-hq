@@ -10,18 +10,18 @@ from zipfile import ZipFile
 from cStringIO import StringIO
 
 from subprocess import Popen, PIPE
-from buildmanager import xformvalidator
+from releasemanager import xformvalidator
 from django.conf import settings
-from buildmanager.jar import extract_xforms
+from releasemanager.jar import extract_xforms
 
 from xformmanager.models import FormDefModel
-from buildmanager.exceptions import BuildError
+
 from xformmanager.manager import XFormManager
-from buildmanager.models import UNKNOWN_IP
 import logging
 import traceback
 from xformmanager.xformdef import FormDef
 from releasemanager.exceptions import XFormConflictError, FormReleaseError
+
 # import re
 # import logging
 
@@ -30,6 +30,8 @@ from releasemanager.exceptions import XFormConflictError, FormReleaseError
 
 # from xformmanager.models import MetaDataValidationError
 # from xformmanager.xformdef import FormDef, ElementDef
+
+UNKNOWN_IP = "0.0.0.0"
 
 def rlistdir(start_path, paths=[], prepend='', ignore_hidden=True):
     ''' list dirs recursively '''
