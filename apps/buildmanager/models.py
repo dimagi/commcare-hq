@@ -587,4 +587,3 @@ class BuildDownload(models.Model):
     def __unicode__(self):
         return "%s download for build %s.  Request: %s" %\
                 (self.type, self.build, self.log)
-     

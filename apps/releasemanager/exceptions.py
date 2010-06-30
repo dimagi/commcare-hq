@@ -1,3 +1,5 @@
+# from buildmanager.exceptions import FormValidationError
+
 class FormValidationError(Exception):
     """The base class for form validation errors"""
     pass
@@ -27,4 +29,10 @@ class XsdConversionError(FormValidationError):
     pass
 
 class FormDefCreationError(FormValidationError):
+    pass
+    
+class FormReleaseError(FormValidationError):
+    pass
+
+class XFormConflictError(FormValidationError):
     pass
