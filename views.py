@@ -11,8 +11,6 @@ from domain.decorators import login_and_domain_required
 from requestlogger.models import RequestLog
 from xformmanager.manager import readable_form, csv_dump
 
-import releasemanager.lib as lib
-
 from releasemanager.forms import *
 
 from rapidsms.webui.utils import render_to_response
@@ -29,8 +27,9 @@ from django.forms.models import modelformset_factory
 import mimetypes
 import urllib
 from xformmanager.xformdef import FormDef
-from buildmanager.exceptions import BuildError, XsdConversionError,\
-    FormDefCreationError
+
+from releasemanager.exceptions import *
+import releasemanager.lib as lib
 
 
 @login_and_domain_required
@@ -264,7 +263,6 @@ def _create_build(build):
     
     # clean up tmp files
     os.remove(new_tmp_jar)
-    # os.remove(new_tmp_jad)
     
     return new_jar, new_jad, new_zip, errors
 
@@ -289,8 +287,13 @@ def resource_set_set_release(request, id, set_to):
 
 @login_and_domain_required
 def new_resource_set(request, template_name="resource_sets.html"):
-    context = {}
+    domain = request.user.selected_domain
     form = ResourceSetForm()    
+
+    context = {'form' : form, 'items': {}}
+    context['items']['unreleased'] = ResourceSet.objects.filter(is_release=False, domain=domain).order_by('-created_at')
+    context['items']['released']   = ResourceSet.objects.filter(is_release=True, domain=domain).order_by('-created_at')
+
     if request.method == 'POST':
         form = ResourceSetForm(request.POST)
         if form.is_valid():
