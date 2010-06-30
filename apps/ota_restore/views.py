@@ -9,9 +9,10 @@ import time, datetime
 
 from django_digest.decorators import *
 
-from xml.dom.minidom import parse
+from xml.dom.minidom import parse, parseString
 from receiver.models import Submission
 from xformmanager.models import Metadata
+from phone.models import PhoneUserInfo
 
     
 @httpdigest
@@ -19,13 +20,18 @@ def ota_restore(request):
     username = request.user.username
     # username = 'derik'
     
-    registration_xml = ''' 
-        <registration>
-            <username>%s</username>
-        </registration>
-    ''' % username
-    
     cases_list = {}
+    
+    try:
+        reg = PhoneUserInfo.objects.get(username=username).attachment.get_contents()
+        registration_xml = parseString(reg).getElementsByTagName("n0:registration")[0].toxml()    
+    except PhoneUserInfo.DoesNotExist:
+        registration_xml = ''' 
+            <registration>
+                <username>%s</username>
+            </registration>
+        ''' % username
+        
 
     atts = Metadata.objects.filter(username=username)        
 
