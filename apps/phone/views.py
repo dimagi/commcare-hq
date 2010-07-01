@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
-from shared_code.webutils import render_to_response
+from datahq.shared_code.webutils import render_to_response
 
 from phone.forms import UserForm, UserSelectionForm
 from phone.models import Phone, PhoneBackup, PhoneUserInfo
