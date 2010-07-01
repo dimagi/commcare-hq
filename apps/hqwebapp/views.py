@@ -1,3 +1,4 @@
+from datetime import timedelta
 # from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
@@ -47,8 +48,11 @@ def dashboard(request, template_name="hqwebapp/dashboard.html"):
     # {program: { user: {day: count}}}
     program_data_structure = {}
     program_totals = {}
+    # add one to the upper bound of the metadata, to include the last day if 
+    # necessary
+    date_upperbound = enddate + timedelta(days=1)
     time_bound_metadatas = Metadata.objects.filter(timeend__gt=startdate)\
-        .filter(timeend__lt=enddate)\
+        .filter(timeend__lt=date_upperbound)\
         .filter(formdefmodel__domain=request.user.selected_domain)
         
     # get a list of programs --> user mappings
