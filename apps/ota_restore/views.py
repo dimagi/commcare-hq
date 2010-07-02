@@ -23,7 +23,7 @@ def ota_restore(request):
     cases_list = {}
     
     try:
-        reg = PhoneUserInfo.objects.get(username=username).attachment.get_contents()
+        reg = PhoneUserInfo.objects.get(username=username).exclude(attachment_id=Null)[0].attachment.get_contents()
         registration_xml = parseString(reg).getElementsByTagName("n0:registration")[0].toxml()    
     except PhoneUserInfo.DoesNotExist:
         registration_xml = ''' 
