@@ -180,6 +180,7 @@ def new_build(request, template_name="builds.html"):
             b = buildform.save(commit=False)
             b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(b)
             b.save()
+            
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
             
             xsd_conversion_errors = [(form, errors) for form, errors in form_errors.items() \

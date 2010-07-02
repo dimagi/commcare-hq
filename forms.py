@@ -19,11 +19,11 @@ class BuildForm(forms.ModelForm):
         
     class Meta:
         model = Build
-        exclude = ('domain', 'is_release', 'created_at', 'jar_file', 'jad_file', 'zip_file')
+        exclude = ('domain', 'is_release', 'created_at', 'jar_file', 'jad_file', 'zip_file', 'description')
 
 
 class ResourceSetForm(forms.ModelForm):
-    name = forms.SlugField()
+    # name = forms.SlugField()
 
     class Meta:
         model = ResourceSet

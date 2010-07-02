@@ -10,10 +10,15 @@
 	{% if items %}
 	
 		{% for item in items %}
-			{{item.resource_set.name}} :: {{item.description}} :: 
+			{{item.resource_set.name}} - 
+			<a href="{% download_url item.jad_file %}">Latest Build</a> 
+			(<a href="{% download_url item.zip_file %}">ZIP</a>) -
+			Latest Release
+			<!-- :: {{item.description}} ::  
 			<a href="{% download_url item.jar_file %}">Download JAR</a> | 
 	        <a href="{% download_url item.jad_file %}">Download JAD</a> | 
-			<a href="{% download_url item.zip_file %}">Download ZIP</a><br />
+			-->
+			<br />
 		{%endfor%}
 	
 	{% else %}
