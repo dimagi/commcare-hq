@@ -206,14 +206,6 @@ def new_build(request, template_name="builds.html"):
             success_forms = [form for form, errors in form_errors.items() if errors is None]
             failed_registered = [form for form, errors in form_errors.items() if errors is not None]
             success_forms = [form for form in success_forms if form not in failed_registered]
-            print {"build": b,
-                                       "success_forms": success_forms,
-                                       "xsd_conversion_errors": xsd_conversion_errors,
-                                       "formdef_creation_errors": formdef_creation_errors,
-                                       "validation_errors": validation_errors,
-                                       "validation_warnings": validation_warnings,
-                                       "registration_errors": registration_errors
-                                       }
             return render_to_response(request, "release_confirmation.html", 
                                       {"build": b,
                                        "success_forms": success_forms,
