@@ -18,11 +18,22 @@ from phone.models import PhoneUserInfo
 @httpdigest
 def ota_restore(request):
     username = request.user.username
-    # username = 'derik'
+    username = 'derik'
     
     cases_list = {}
-    
+        
     try:
+        user_count = len(PhoneUserInfo.objects.filter(username=username).values("username","user_id").distinct())
+
+        # check for multiple entries w/ different user_id
+        if user_count > 1:
+            return HttpResponse("<error>Username '%s' is attached to multiple users</error>" % username, mimetype="text/xml")
+
+        # or no entries at all
+        elif user_count < 1:
+            return HttpResponse("<error>Username '%s' not registered</error>" % username, mimetype="text/xml")
+        
+        # OK. Go on.
         reg = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)[0].attachment.get_contents()
         registration_xml = parseString(reg).getElementsByTagName("n0:registration")[0].toxml()    
     except PhoneUserInfo.DoesNotExist:
