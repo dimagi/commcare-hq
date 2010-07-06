@@ -37,7 +37,26 @@ def projects(request, template_name="projects.html"):
     domain = request.user.selected_domain
     
     context = {'form' : BuildForm(), 'items': {}}
-    context['items'] = Build.objects.filter(is_release=True).filter(resource_set__domain=domain).order_by('-created_at')
+    resource_sets = {} ; release = {} ; unrelease = {}
+        
+    # wrestle w/ django's poor ORM, only to be subsequently crushed by its ridiculous templating system
+    for rs in ResourceSet.objects.filter(domain=domain):
+        r = Build.objects.filter(resource_set=rs).filter(is_release=True).order_by('-created_at')
+        if len(r) > 0: release[rs.id] = r[0]
+        
+        r = Build.objects.filter(resource_set=rs).filter(is_release=False).order_by('-created_at')
+        if len(r) > 0: unrelease[rs.id] = r[0]
+        
+        # don't include resource sets that haven't been used in a build yet
+        if release.has_key(rs.id) or unrelease.has_key(rs.id):
+            resource_sets[rs.id] = rs.name
+            
+    
+    context['resource_sets'] = sorted(resource_sets.iteritems(), key=lambda (k,v): (v,k))    # sort by name
+    context['release'] = release
+    context['unrelease'] = unrelease
+        
+    # context['items'] = Build.objects.filter(is_release=True).filter(resource_set__domain=domain).order_by('-created_at')
 
     return render_to_response(request, template_name, context)
     
@@ -236,23 +255,24 @@ def _create_build(build):
     ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
     new_id = (1 + ids[0].id) if len(ids) > 0 else 1
     
+    buildname_slug = re.sub('[\W_]+', '-', buildname)
     # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
-    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname, str(new_id))
+    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname_slug, str(new_id))
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
 
     new_tmp_jar = lib.add_to_jar(jar, resources)    
-    new_jar = str(os.path.join(new_path, "%s.jar" % buildname))
+    new_jar = str(os.path.join(new_path, "%s.jar" % buildname_slug))
     shutil.copy2(new_tmp_jar, new_jar)
 
-    new_jad = str(os.path.join(new_path, "%s.jad" % buildname))
+    new_jad = str(os.path.join(new_path, "%s.jad" % buildname_slug))
     shutil.copy2(jad, new_jad)
     lib.modify_jad(new_jad, {
                                 'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
                                 'MIDlet-Jar-URL' : os.path.basename(new_jar),
                             })
     # create a zip
-    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname), new_jar, new_jad)
+    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname_slug), new_jar, new_jad)
     
     # clean up tmp files
     os.remove(new_tmp_jar)

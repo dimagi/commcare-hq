@@ -1,28 +1,35 @@
 {% extends "rm_base.html" %}
 {% load i18n %}
-
+{% load hq_shared_tags %}
 {% load paths %}
 {% block title %}{% trans "Projects" %}{% endblock %}
 
 {% block releasemanager_content %}
 
 <div class="span-16 prepend-2">
-	{% if items %}
-	
-		{% for item in items %}
-			{{item.resource_set.name}} - 
-			<a href="{% download_url item.jad_file %}">Latest Build</a> 
-			(<a href="{% download_url item.zip_file %}">ZIP</a>) -
-			Latest Release
-			<!-- :: {{item.description}} ::  
-			<a href="{% download_url item.jar_file %}">Download JAR</a> | 
-	        <a href="{% download_url item.jad_file %}">Download JAD</a> | 
-			-->
-			<br />
-		{%endfor%}
-	
-	{% else %}
-		No builds found
-	{% endif %}
+	<table style="border: 0px">
+	{% for id, name in resource_sets %}
+		<tr>
+			<td><b>{{ name }}</b></td>
+			<td>
+				{% with release|dict_lookup:id as r %}
+					{% ifnotequal r None %}
+						<a href="{% download_url r.jad_file %}">Latest Release</a>
+						(<a href="{% download_url r.zip_file %}">zip</a>)
+					{% endifnotequal %}
+				{% endwith %}
+			</td>
+			<td>
+				{% with unrelease|dict_lookup:id as r %}
+					{% ifnotequal r None %}
+						<a href="{% download_url r.jad_file %}">Latest Build</a>
+						(<a href="{% download_url r.zip_file %}">zip</a>)
+					{% endifnotequal %}
+				{% endwith %}
+			</td>
+		</tr>
+	{%endfor%}
+	</table>
 </div>
+
 {%endblock%}
