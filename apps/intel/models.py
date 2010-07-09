@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.db import connection
 
-from xformmanager.models import Metadata, FormDefModel, ElementDefModel
+from xformmanager.models import Metadata, FormDefModel, ElementDefModel, FormDataGroup
 # from domain.models import Membership
 # from django.contrib.auth.models import User
 
@@ -93,30 +93,33 @@ def all_chws():
     
     return chws
     
-# and this one too..
-def attachments_for(table):
+
+def attachments_for(view):
     atts = {}
-    form_def = ElementDefModel.objects.get(table_name=table).form
-    for a in Metadata.objects.filter(formdefmodel=form_def):
+    
+    group = FormDataGroup.objects.get(view_name=view)
+    
+    for a in Metadata.objects.filter(formdefmodel__in = group.forms.all()):
         atts[a.raw_data] = a.attachment
-        # if a.attachment.most_recent_annotation() is not None:
-        #     atts[a.raw_data] = a.attachment
 
     return atts
 
 
 def registrations_by(group_by):
+    # sampledata_case_id
     sql = ''' 
-        SELECT clinic_id, count(sampledata_case_id)
+        SELECT clinic_id, count(*)
         FROM %s, intel_userclinic
         WHERE meta_username = intel_userclinic.username
         GROUP BY %s
     ''' % (REGISTRATION_TABLE, group_by)
+    print sql
     return _result_to_dict(_rawquery(sql))
 
 def hi_risk_by(group_by):
+    # sampledata_case_id
     sql = ''' 
-        SELECT clinic_id, count(sampledata_case_id)
+        SELECT clinic_id, count(*)
         FROM %s, intel_userclinic
         WHERE sampledata_hi_risk = 'yes' and meta_username = intel_userclinic.username
         GROUP BY %s
@@ -124,8 +127,9 @@ def hi_risk_by(group_by):
     return _result_to_dict(_rawquery(sql))
 
 def followup_by(group_by):
+    # safe_pregnancy_case_id
     sql = ''' 
-        SELECT clinic_id, count(safe_pregnancy_case_id)
+        SELECT clinic_id, count(*)
         FROM %s, intel_userclinic
         WHERE meta_username = intel_userclinic.username
         GROUP BY %s
@@ -200,6 +204,6 @@ def hq_risk_sql(clinic_id):
                 OR NULLIF(sampledata_card_results_blood_group, 'apositive') 
                 OR NULLIF(sampledata_card_results_blood_group, 'abpositive') 
                 OR NULLIF(sampledata_card_results_blood_group, 'bpositive')) AS rare_blood
-        FROM schema_intel_grameen_safe_motherhood_registration_v0_3, intel_userclinic 
+        FROM %s, intel_userclinic 
         WHERE meta_username = intel_userclinic.username AND meta_username <> 'admin' AND intel_userclinic.clinic_id = %s;
-        ''' % clinic_id
+        ''' % (REGISTRATION_TABLE, clinic_id)
