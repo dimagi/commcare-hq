@@ -357,7 +357,7 @@ def hq_risk(request, template_name="hq_risk.html"):
       "x_axis_label": "High Risk Indicators", 
       "width": 800, 
       "interval_ranges": "", 
-      "table_name": "schema_intel_grameen_safe_motherhood_registration_v0_3", 
+      "table_name": REGISTRATION_TABLE,
       "display_type": "histogram-multifield-sorted",
       "height": 450, 
     })
