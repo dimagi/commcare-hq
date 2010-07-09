@@ -113,8 +113,8 @@ def registrations_by(group_by):
         WHERE meta_username = intel_userclinic.username
         GROUP BY %s
     ''' % (REGISTRATION_TABLE, group_by)
-    print sql
     return _result_to_dict(_rawquery(sql))
+
 
 def hi_risk_by(group_by):
     # sampledata_case_id
@@ -125,6 +125,7 @@ def hi_risk_by(group_by):
         GROUP BY %s
     ''' % (REGISTRATION_TABLE, group_by)
     return _result_to_dict(_rawquery(sql))
+
 
 def followup_by(group_by):
     # safe_pregnancy_case_id
