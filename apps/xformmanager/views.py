@@ -3,6 +3,7 @@ import logging
 import traceback
 import hashlib
 import csv
+import re
 from StringIO import StringIO
 import util as xutils
 from django.http import Http404
@@ -177,6 +178,9 @@ def new_form_data_group(req):
                     form_validation = "You must choose at least one form!"
                 else:
                     new_group = form.save(commit=False)
+                    
+                    new_group.view_name = "view_" + re.sub('[\W_]+', '_', new_group.display_name.lower())
+                    
                     new_group.domain = req.user.selected_domain
                     # TODO: better handling of the name attribute.  
                     new_group.name = get_unique_value(FormDataGroup.objects, "name", new_group.display_name)
