@@ -1,4 +1,6 @@
 from django import template
+from django.template.defaultfilters import stringfilter
+
 from xformmanager.models import FormDataPointer
 
 register = template.Library()
@@ -35,8 +37,12 @@ def form_data_lookup(column, form, editing=False):
         to_return = '<select name="%s">%s</select>' % (select_name, "".join(expanded_choices))
         return to_return 
         
-                                             
-            
+
+@register.filter
+@stringfilter
+def truncate_namespace(namespace):
+    # "http://dev.commcarehq.org/bla/bla/bob/loblaw" => "bla/bla/bob/loblaw", so names will it in the table
+    return namespace.split("/", 3)[3] 
         
         
         

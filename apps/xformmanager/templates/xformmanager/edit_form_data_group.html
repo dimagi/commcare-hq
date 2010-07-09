@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load xform_tags %}
 {% block title %}New Form Data Group{% endblock %}
 {% block hq-stylesheets %}
 <link rel="stylesheet" href="{{MEDIA_URL}}/hq/javascripts/jquery-ui/jquery-ui-1.7.2.custom.css" />
@@ -29,12 +30,12 @@ columns used by this group.</h4>
 {% endif %}
 <select id="formdefs" class="multiselect" multiple="multiple" name="formdefs" style="width:940px; height:400px;">
 {% for formdef in selected_forms %}
-    <option value="{{ formdef.id }}" selected="True">{{ formdef.target_namespace }}
+    <option value="{{ formdef.id }}" selected="True">x{{ formdef.target_namespace|truncate_namespace }}
              {% if formdef.version %} | {{ formdef.version }}{% endif %}
     </option>
 {% endfor %}
 {% for formdef in all_forms %}
-    <option value="{{ formdef.id }}">{{ formdef.target_namespace }}
+    <option value="{{ formdef.id }}">{{ formdef.target_namespace|truncate_namespace }}
              {% if formdef.version %} | {{ formdef.version }}{% endif %}
     </option>
 {% endfor %}
