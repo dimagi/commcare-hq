@@ -196,8 +196,10 @@ def new_form_data_group(req):
                     new_group.update_view()
                     
                     # when done, take them to the edit page for further tweaking
-                    return HttpResponseRedirect(reverse('xformmanager.views.edit_form_data_group', 
-                                            kwargs={"group_id": new_group.id }))
+                    return HttpResponseRedirect(reverse('xformmanager.views.manage_groups'))
+                    
+                    # return HttpResponseRedirect(reverse('xformmanager.views.edit_form_data_group', 
+                    #                         kwargs={"group_id": new_group.id }))
                     
                         
             else: 
