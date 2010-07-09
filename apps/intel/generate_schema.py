@@ -13,7 +13,7 @@ from django.db import models
 '''
 
 inspect = os.popen(cmd, 'r').read()
-inspect = inspect.replace("id = models.IntegerField()\n", "# id = models.IntegerField()\n")
+inspect = inspect.replace(" id = models.IntegerField()\n", " # id = models.IntegerField()\n")
 
 tables = inspect.split("\n\n")
 
