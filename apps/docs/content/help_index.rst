@@ -5,7 +5,7 @@
 .. _Troubleshooting: help_misc
 .. _Contact: help_misc
 .. _XForms: help_xforms
-.. _XForms: api
+.. _Api: api
 
 .. This period is necessary. The title doesn't show up unless we have something before it.
 .. This is a django bug. The patch is here: http://code.djangoproject.com/ticket/4881
