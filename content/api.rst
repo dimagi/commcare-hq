@@ -7,7 +7,11 @@
 ===================
 COMMCAREHQ REST API
 ===================
-If there are additional formats you would like us to support, feel free to email us at commcarehq-support@dimagi.com.
+
+The most-up-to-date specification on what api calls are supported can be found in xml format at: http://dev.commcarehq.org/api. If there are additional formats you would like us to support, feel free to email us at commcarehq-support@dimagi.com.
+
+CommCareHQ Data API 
+-------------------
 
 http://dev.commcarehq.org/api
 
