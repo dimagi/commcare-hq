@@ -4,7 +4,10 @@ import urllib2
 import tempfile 
 import shutil
 import re
+import shlex
+
 from django.middleware.common import *
+
 import tempfile as tmp
 from zipfile import ZipFile 
 from cStringIO import StringIO
@@ -22,14 +25,6 @@ import traceback
 from xformmanager.xformdef import FormDef
 from releasemanager.exceptions import XFormConflictError, FormReleaseError
 
-# import re
-# import logging
-
-# from buildmanager import xformvalidator
-# from buildmanager.exceptions import BuildError
-
-# from xformmanager.models import MetaDataValidationError
-# from xformmanager.xformdef import FormDef, ElementDef
 
 UNKNOWN_IP = "0.0.0.0"
 
@@ -235,6 +230,7 @@ def validate_resources(resources):
             except Exception, e:
                 errors[file] = e
     return errors
+    
 
 def register_forms(build, good_forms):
     """Try to register the forms from jar_file."""
@@ -307,3 +303,27 @@ def register_forms(build, good_forms):
     return errors
     
 
+def sign_jar(jar_file, jad_file):
+    ''' run jadTool on the newly created JAR '''
+    jad_tool    = settings.RAPIDSMS_APPS['releasemanager']['jadtool_path']
+    key_store   = settings.RAPIDSMS_APPS['releasemanager']['key_store']
+    key_alias   = settings.RAPIDSMS_APPS['releasemanager']['key_alias']
+    store_pass  = settings.RAPIDSMS_APPS['releasemanager']['store_pass']
+    key_pass    = settings.RAPIDSMS_APPS['releasemanager']['key_pass']
+    
+    cmd = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
+                    (jad_tool, jar_file, key_alias, key_store, store_pass, key_pass, jad_file, jad_file)
+    
+    p = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE, shell=False)
+    err = p.stderr.read().strip()
+    if err != '': raise err
+
+    jad_file = modify_jad(jad_file, {
+                "MIDlet-Permissions": "javax.microedition.media.control.RecordControl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.file.read",
+                "MIDlet-Permissions-Opt": "javax.microedition.media.protocol.Datasource,javax.microedition.media.control.RecordControl,javax.microedition.media.control.VideoControl.getSnapshot,javax.microedition.media.Player,javax.microedition.media.Manager"
+                })
+                
+    return jar_file, jad_file
+    
+    
+    
