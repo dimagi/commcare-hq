@@ -171,7 +171,7 @@ def create_zip(target, jar_file, jad_file):
 
 
 def clone_from(url):
-    if re.match(r'http:\/\/.*bitbucket.org\/', url) is not None:
+    if re.match(r'https?:\/\/.*bitbucket.org\/', url) is not None:
         # hg won't clone to an existing directory, and tempfile won't return just a name without creating a dir
         # so just delete the new tmp dir and let hg recreate it in clone
         tmpdir = tmp.mkdtemp()
