@@ -311,12 +311,17 @@ def sign_jar(jar_file, jad_file):
     store_pass  = settings.RAPIDSMS_APPS['releasemanager']['store_pass']
     key_pass    = settings.RAPIDSMS_APPS['releasemanager']['key_pass']
     
-    cmd = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
+    step_one = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
                     (jad_tool, jar_file, key_alias, key_store, store_pass, key_pass, jad_file, jad_file)
     
-    p = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE, shell=False)
-    err = p.stderr.read().strip()
-    if err != '': raise err
+    step_two = "java -jar %s -addcert -alias %s -keystore %s -storepass %s -inputjad %s -outputjad %s" % \
+                    (jad_tool, key_alias, key_store, store_pass, jad_file, jad_file)
+    
+    for step in (step_one, step_two):
+        p = Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
+        err = p.stderr.read().strip()
+        if err != '': raise err
+
 
     jad_file = modify_jad(jad_file, {
                 "MIDlet-Permissions": "javax.microedition.media.control.RecordControl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.file.read",
