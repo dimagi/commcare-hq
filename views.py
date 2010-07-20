@@ -19,7 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.http import *
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
 from django.forms.models import modelformset_factory
@@ -197,7 +197,7 @@ def new_build(request, template_name="builds.html"):
         buildform = BuildForm(request.POST)
         if buildform.is_valid():
             b = buildform.save(commit=False)
-            b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(b)
+            b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(request, b)
             b.save()
             
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
@@ -238,50 +238,6 @@ def new_build(request, template_name="builds.html"):
 
     context['form'] = buildform
     return render_to_response(request, template_name, context)
-
-def _create_build(build):
-    jar = build.jarjad.jar_file
-    jad = build.jarjad.jad_file
-    buildname = build.resource_set.name
-
-    resources = lib.clone_from(build.resource_set.url)
-    
-    errors = lib.validate_resources(resources)
-    
-    for key, value in errors.items():
-        if value: 
-            logging.debug("Form validation error while realeasing build.  Form: %s, e: %s" % (key, value))
-    
-    ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
-    new_id = (1 + ids[0].id) if len(ids) > 0 else 1
-    
-    buildname_slug = re.sub('[\W_]+', '-', buildname)
-    # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
-    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname_slug, str(new_id))
-    if not os.path.isdir(new_path):
-        os.makedirs(new_path)
-
-    new_tmp_jar = lib.add_to_jar(jar, resources)    
-    new_jar = str(os.path.join(new_path, "%s.jar" % buildname_slug))
-    shutil.copy2(new_tmp_jar, new_jar)
-
-    new_jad = str(os.path.join(new_path, "%s.jad" % buildname_slug))
-    shutil.copy2(jad, new_jad)
-    lib.modify_jad(new_jad, {
-                                'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
-                                'MIDlet-Jar-URL' : os.path.basename(new_jar),
-                            })
-
-    if "staging.commcarehq" in request.get_host().lower():
-        lib.sign_jar(new_jar, new_jad)
-    
-    # create a zip
-    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname_slug), new_jar, new_jad)
-    
-    # clean up tmp files
-    os.remove(new_tmp_jar)
-    
-    return new_jar, new_jad, new_zip, errors
 
 
 @login_and_domain_required
@@ -326,3 +282,48 @@ def new_resource_set(request, template_name="resource_sets.html"):
 
     context['form'] = form
     return render_to_response(request, template_name, context)
+
+
+def _create_build(request, build):
+    jar = build.jarjad.jar_file
+    jad = build.jarjad.jad_file
+    buildname = build.resource_set.name
+
+    resources = lib.clone_from(build.resource_set.url)
+
+    errors = lib.validate_resources(resources)
+
+    for key, value in errors.items():
+        if value: 
+            logging.debug("Form validation error while realeasing build.  Form: %s, e: %s" % (key, value))
+
+    ids = Build.objects.order_by('-id').filter(resource_set=build.resource_set)
+    new_id = (1 + ids[0].id) if len(ids) > 0 else 1
+
+    buildname_slug = re.sub('[\W_]+', '-', buildname)
+    # str() to converts the names to ascii from unicode - zip has problems with unicode filenames
+    new_path = os.path.join(BUILD_PATH, build.resource_set.domain.name, buildname_slug, str(new_id))
+    if not os.path.isdir(new_path):
+        os.makedirs(new_path)
+
+    new_tmp_jar = lib.add_to_jar(jar, resources)    
+    new_jar = str(os.path.join(new_path, "%s.jar" % buildname_slug))
+    shutil.copy2(new_tmp_jar, new_jar)
+
+    new_jad = str(os.path.join(new_path, "%s.jad" % buildname_slug))
+    shutil.copy2(jad, new_jad)
+    lib.modify_jad(new_jad, {
+                                'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
+                                'MIDlet-Jar-URL' : os.path.basename(new_jar),
+                            })
+
+    if "staging.commcarehq" in request.get_host().lower():
+        lib.sign_jar(new_jar, new_jad)
+
+    # create a zip
+    new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname_slug), new_jar, new_jad)
+
+    # clean up tmp files
+    os.remove(new_tmp_jar)
+
+    return new_jar, new_jad, new_zip, errors
