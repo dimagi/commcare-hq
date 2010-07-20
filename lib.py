@@ -324,11 +324,9 @@ def sign_jar(jar_file, jad_file):
 
 
     jad_file = modify_jad(jad_file, {
-                "MIDlet-Permissions": "javax.microedition.media.control.RecordControl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.file.read",
-                "MIDlet-Permissions-Opt": "javax.microedition.media.protocol.Datasource,javax.microedition.media.control.RecordControl,javax.microedition.media.control.VideoControl.getSnapshot,javax.microedition.media.Player,javax.microedition.media.Manager"
+                "MIDlet-Permissions" : "javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.ssl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.comm,javax.microedition.io.Connector.http,javax.microedition.io.Connector.https"
                 })
                 
     return jar_file, jad_file
-    
     
     
