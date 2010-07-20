@@ -317,7 +317,7 @@ def _create_build(request, build):
                                 'MIDlet-Jar-URL' : os.path.basename(new_jar),
                             })
 
-    if "staging.commcarehq" in request.get_host().lower():
+    if "staging.commcarehq" in request.get_host().lower() or "localhost" in request.get_host().lower():
         lib.sign_jar(new_jar, new_jad)
 
     # create a zip
