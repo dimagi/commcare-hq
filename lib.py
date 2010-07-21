@@ -89,7 +89,7 @@ def jad_to_dict(jad_contents):
     return jad
 
 
-def modify_jad(jad_file, modify_dict):
+def modify_jad(jad_file, modify_dict, jar_file):
     jad = jad_to_dict(open(jad_file).read())
 
     for i in modify_dict:
@@ -103,7 +103,8 @@ def modify_jad(jad_file, modify_dict):
     f = open(jad_file, 'w')
     f.write(new_content)
     f.close()
-
+    
+    sign_jar(jar_file, jad_file)
     return jad_file
     
     
