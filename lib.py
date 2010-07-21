@@ -89,7 +89,7 @@ def jad_to_dict(jad_contents):
     return jad
 
 
-def modify_jad(jad_file, modify_dict, jar_file):
+def modify_jad(jad_file, modify_dict):
     jad = jad_to_dict(open(jad_file).read())
 
     for i in modify_dict:
@@ -104,7 +104,6 @@ def modify_jad(jad_file, modify_dict, jar_file):
     f.write(new_content)
     f.close()
     
-    sign_jar(jar_file, jad_file)
     return jad_file
     
     
@@ -311,6 +310,9 @@ def sign_jar(jar_file, jad_file):
     key_alias   = settings.RAPIDSMS_APPS['releasemanager']['key_alias']
     store_pass  = settings.RAPIDSMS_APPS['releasemanager']['store_pass']
     key_pass    = settings.RAPIDSMS_APPS['releasemanager']['key_pass']
+    
+    # remove traces of former jar signings, if any
+    jad_file = modify_jad(jad_file, { "MIDlet-Certificate" : "", "MIDlet-Jar-RSA-SHA1" : "", "MIDlet-Permissions" : "" })
     
     step_one = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
                     (jad_tool, jar_file, key_alias, key_store, store_pass, key_pass, jad_file, jad_file)
