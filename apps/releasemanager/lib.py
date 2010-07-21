@@ -316,6 +316,10 @@ def sign_jar(jar_file, jad_file):
     store_pass  = settings.RAPIDSMS_APPS['releasemanager']['store_pass']
     key_pass    = settings.RAPIDSMS_APPS['releasemanager']['key_pass']
     
+    # prevent linux unicode errors
+    jar_file = str(jar_file)
+    jad_file = str(jad_file)
+    
     # remove traces of former jar signings, if any
     modify_jad(jad_file, { 
                             "MIDlet-Certificate-1-1" : None, 
