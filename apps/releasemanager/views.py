@@ -172,14 +172,16 @@ def build_set_release(request, id, set_to):
         lib.modify_jad(build.jad_file, {
                                         'CommCare-Release' : 'true', 
                                         'Released-on' : datetime.datetime.now().strftime("%Y-%b-%d %H:%M")
-                                        }, build.jar_file)
+                                        })
+        lib.sign_jar(build.jar_file, build.jad_file)
         
     elif set_to == "false":
         build.is_release=False
         lib.modify_jad(build.jad_file, {
                                         'CommCare-Release' : 'false', 
                                         'Released-on' : ''
-                                        }, build.jar_file)
+                                        })
+        lib.sign_jar(build.jar_file, build.jad_file)
         
     build.save()
     
@@ -202,6 +204,7 @@ def new_build(request, template_name="builds.html"):
             b.save()
             
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id }, b.jar_file)
+            lib.sign_jar(b.jar_file, b.jad_file)
             
             xsd_conversion_errors = [(form, errors) for form, errors in form_errors.items() \
                                      if isinstance(errors, XsdConversionError)]
@@ -316,11 +319,10 @@ def _create_build(request, build):
     lib.modify_jad(new_jad, {
                                 'MIDlet-Jar-Size' : os.path.getsize(new_jar), 
                                 'MIDlet-Jar-URL' : os.path.basename(new_jar),
-                             }, build.jar_file)
+                             })
 
-    # now signing in modify_jad
     # # if "staging.commcarehq" in request.get_host().lower() or "localhost" in request.get_host().lower():
-    # lib.sign_jar(new_jar, new_jad)
+    lib.sign_jar(new_jar, new_jad)
 
     # create a zip
     new_zip = lib.create_zip(os.path.join(new_path, "%s.zip" % buildname_slug), new_jar, new_jad)
