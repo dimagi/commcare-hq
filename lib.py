@@ -90,6 +90,10 @@ def jad_to_dict(jad_contents):
 
 
 def modify_jad(jad_file, modify_dict):
+    ''' 
+        Modify JAD contents. key:value pairs are read from modify_dict
+        If value is None the key is deleted from the JAD
+    '''
     jad = jad_to_dict(open(jad_file).read())
 
     for i in modify_dict:
@@ -98,7 +102,8 @@ def modify_jad(jad_file, modify_dict):
     # create new JAD
     new_content = ''
     for i in jad:
-        new_content += "%s: %s\n" % (i, jad[i])
+        if jad[i] is not None:
+            new_content += "%s: %s\n" % (i, jad[i])
 
     f = open(jad_file, 'w')
     f.write(new_content)
@@ -313,11 +318,11 @@ def sign_jar(jar_file, jad_file):
     
     # remove traces of former jar signings, if any
     modify_jad(jad_file, { 
-                            "MIDlet-Certificate-1-1" : "", 
-                            "MIDlet-Certificate-1-2" : "", 
-                            "MIDlet-Certificate-1-3" : "", 
-                            "MIDlet-Jar-RSA-SHA1" : "", 
-                            "MIDlet-Permissions" : "" 
+                            "MIDlet-Certificate-1-1" : None, 
+                            "MIDlet-Certificate-1-2" : None, 
+                            "MIDlet-Certificate-1-3" : None, 
+                            "MIDlet-Jar-RSA-SHA1" : None, 
+                            "MIDlet-Permissions" : None 
                         })
     
     step_one = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
