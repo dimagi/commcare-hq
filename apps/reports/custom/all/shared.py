@@ -450,8 +450,6 @@ def get_start_end(month, year):
 
 def get_case_info(context, chw_data, enddate, active):
     ''' Gives information about each case of a chw'''
-    # Eventually should check everything in last 6 months instead of beginning of 2010
-    cutoff = datetime(2010, 1, 1).date()
     all_data = []
     for id, map in chw_data.items():
         form_dates = []
@@ -475,12 +473,11 @@ def get_case_info(context, chw_data, enddate, active):
                                                                     timeend):
                     fttd[temp_form_type] = timeend
         status = get_status(fttd, active, enddate)
-        last = get_last(form_dates)
-        if not len(form_dates) == 0 and cutoff < enddate and cutoff < \
-                                                            last.date():
+        if not len(form_dates) == 0:
             all_data.append({'case_id': id, 'total_visits': len(form_dates),
                              'start_date': get_first(form_dates), 
-                             'last_visit': last, 'status': status})
+                             'last_visit': get_last(form_dates), 'status': 
+                             status})
     context['all_data'] = all_data
 
 def get_counts(current_count, excused_count, late_count, verylate_count,
@@ -626,8 +623,6 @@ def only_follow(fttd):
 def get_active_open_by_chw(data_by_chw, active, enddate, domain):
     data = []
     blacklist = BlacklistedUser.for_domain(domain)
-    # Eventually should check everything in last 6 months instead of beginning of 2010
-    cutoff = datetime(2010, 1, 1).date()
     for chw_id, chw_data in data_by_chw.items():
         user_data = get_user_data(chw_id)
         count_of_open = 0
@@ -652,19 +647,11 @@ def get_active_open_by_chw(data_by_chw, active, enddate, domain):
             if status == 'Active':
                 count_of_active += 1
             if status == 'Late (Routine)':
-                days_late, most_recent = get_days_late(form_type_to_date, 
-                                                       active)
-                if enddate > cutoff and most_recent.date() > cutoff:
-                    days_late_list.append(days_late)
-                else:
-                    count_of_open -= 1
+                days_late = get_days_late(form_type_to_date, active)
+                days_late_list.append(days_late)
             if status == 'Late (Referral)':
                 ref_days_late = get_ref_days_late(form_type_to_date, enddate)
-                if enddate > cutoff and form_type_to_date['referral'].date()\
-                                                                 > cutoff:
-                    ref_days_late_list.append(ref_days_late)
-                else:
-                    count_of_open -= 1
+                ref_days_late_list.append(ref_days_late)
         percentage = get_percentage(count_of_open, count_of_active)
         if percentage >= 90: over_ninety = True
         else: over_ninety = False
@@ -717,7 +704,7 @@ def get_days_late(form_type_to_date, active):
     if form_type_to_date['open'] > most_recent:
         most_recent = form_type_to_date['open']
     time_diff = active - datetime.date(most_recent)
-    return time_diff.days, most_recent
+    return time_diff.days
 
 def get_ref_days_late(form_type_to_date, enddate):
     '''Returns the number of days past the active date for a late referral'''
