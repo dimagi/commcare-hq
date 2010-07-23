@@ -25,10 +25,9 @@ curl_command = 'curl' #make sure curl is in your path
 # but curl seems to be required for django to correctly handle multipart forms
 use_curl = False
 
-filename = r'C:\Users\czue\source\hq\data\dodoma_reg.xml'
-#filename = os.path.join(os.getcwd(), 'test-data', 'multipart-1.post')
+filename = os.path.join(os.getcwd(), 'test-data', 'intel_reg_new_case_id.xml')
 
-domain_name = "demo"
+domain_name = "grameen" # "demo"
 content_type = "text/xml"
 #content_type = "multipart/form-data; boundary=newdivider"
 
@@ -53,6 +52,8 @@ try:
         results = p.stdout.read()
         print "curl gets back:\n%s\nAnd errors:\n%s" % (results, errors)
     else:
+        print "connect %s" % up.netloc
+        print "POST %s" % up.path
         conn = httplib.HTTPConnection(up.netloc)
         conn.request('POST', up.path, data, dict)
         resp = conn.getresponse()
