@@ -62,7 +62,7 @@ class ElementDef(object):
             self.xpath = xpath + XPATH_SEPARATOR + input_node.get('name')
         else: 
             self.xpath = input_node.get('name')
-    
+
     def find_child(self, child):
         """ Looks for child among child_elements of self.
         Equivalence is currently based on short_name. """
@@ -200,7 +200,6 @@ class FormDef(ElementDef):
         """
         
         root = etree.XML(string)
-
         self.version = case_insensitive_attribute(root, "version")
         self.uiversion = case_insensitive_attribute(root, "uiversion")
         self.target_namespace = case_insensitive_attribute(root, 'targetNamespace')
