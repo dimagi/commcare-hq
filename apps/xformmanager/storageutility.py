@@ -337,7 +337,7 @@ class Query(object):
         new_id = -1
         if len( self.field_value_dict ) > 0:
             query_string = "INSERT INTO " + self.table_name + " (";
-    
+
             for field in self.field_value_dict:
                 query_string = query_string + field + ", "
             query_string = self._trim2chars( query_string )
