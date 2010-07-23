@@ -92,7 +92,6 @@ def report(request, format):
     chws = [filter_chw] if filter_chw else chws_for(showclinic)
     
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
-    
     if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
 
     # filter by a specific risk indicator (for links from the HQ view "High Risk" page)
@@ -115,6 +114,7 @@ def report(request, format):
     # Django's retarded template language forces this items{} dict,
     # so might as well use it to stitch in visits & attachments
     atts = attachments_for(REGISTRATION_TABLE)    
+
     items = []
     for i in rows:
         at = atts[i.id] if atts.has_key(i.id) else None
