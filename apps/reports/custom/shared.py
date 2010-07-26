@@ -129,7 +129,7 @@ class Mother(object):
             reg_form_data = old_reg_forms[0]
         else:
             reg_form_data = None
-            
+
         # set the registration data, if present
         if reg_form_data: 
             self.mother_name = reg_form_data["sampledata_mother_name"]

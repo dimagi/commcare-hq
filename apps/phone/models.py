@@ -85,7 +85,7 @@ def create_phone_and_user(sender, instance, created, **kwargs):
     phone = Phone.objects.get_or_create\
                 (device_id = instance.deviceid,
                  domain = instance.attachment.submission.domain)[0]
-    
+
     try:
         PhoneUserInfo.objects.get(phone=phone, username=instance.username)
     except PhoneUserInfo.DoesNotExist:
