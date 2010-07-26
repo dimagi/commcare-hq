@@ -18,14 +18,14 @@
     <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css?{% now "U" %}" />    
 {% endblock %}
 
-{% load url_for %}
+{% load format_tags %}
 {% load hq_shared_tags %}
 {% block content %}
 {% load hq_shared_tags %}
 <script type="text/javascript" src="{{MEDIA_URL}}/receiver/javascripts/annotations.js?{% now "U" %}"></script>
-<h2>Mother Summary for {{ mother.mother_name }}</h2>
+<h2>Mother Summary for {{ mother.sampledata_mother_name }}</h2>
 {% if attach_id %}
-	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog', '{{ mother.mother_name }}:');">
+	<div class="annotationtrigger js_link" style="text-align: center" onclick="show_annotations({{ attach_id }}, '#dialog', '{{ mother.sampledata_mother_name }}:');">
 		<button class="follow-up">Follow Up</button>
 	</div>
 	<br /><br />
@@ -58,11 +58,11 @@
 		<div class="internal">
 			<table>
 				<tr><td colspan="2" align="center"><h3>General Info</h3></td></tr>
-				<tr><td align="right">Age</td><td>{{ mother.mother_age}}</td></tr>
-				<tr><td align="right">Height</td><td>{{ mother.mother_height}}</td></tr>
-				<tr><td align="right">Attending CHW</td><td>{{ mother.chw }}</td></tr>
-				<tr><td align="right">Partner Name/Occupation</td><td>{{ mother.partner_occupation }}</td></tr>
-				<tr><td align="right">Phone</td><td>{{ mother.phone }}</td></tr>				
+				<tr><td align="right">Age</td><td>{{ mother.sampledata_mother_age}}</td></tr>
+				<tr><td align="right">Height</td><td>{{ mother.sampledata_mother_height}}</td></tr>
+				<tr><td align="right">Attending CHW</td><td>{{ mother.meta_username }}</td></tr>
+				<tr><td align="right">Partner Name/Occupation</td><td>{{ mother.sampledata_partner_occupation }}</td></tr>
+				<tr><td align="right">Phone</td><td>{{ mother.sampledata_phone }}</td></tr>				
 			</table>
 		</div>
 	</div>
@@ -70,8 +70,8 @@
 		<div class="internal">
 			<table>
 				<tr><td colspan="2" align="center"><h3>Pregnancy Info</h3></td></tr>
-				<tr><td align="right">Months Pregnant:</td><td>{{ mother.months_pregnant }}</td></tr>
-				{% ifequal mother.hi_risk "yes" %}
+				<tr><td align="right">Months Pregnant:</td><td>{{ mother.sampledata_months_pregnant }}</td></tr>
+				{% ifequal mother.sampledata_hi_risk "yes" %}
 					<tr style="color: red"><td align="right">Hi Risk:</td><td>Yes</td></tr>
 					<tr><td colspan="2" style="text-align: center"><b>High Risk Factors</b></td></tr>
 					{% for f in risk_factors %}
@@ -91,12 +91,12 @@
 		<div class="span-12 prepend-6 last">
 			<div class="internal">	
 				<table>
-					<tr><td align="right">Previous Pregnancies:</td><td>{{ mother.previous_pregnancies }}</td></tr>
-				    <tr><td align="right">Previous Deliveries:</td><td>{{ mother.previous_deliveries }}</td></tr>
-				    <tr><td align="right">Previous Terminations:</td><td>{{ mother.previous_terminations }}</td></tr>
-				    <tr><td align="right">Previous Newborn Death:</td><td>{{ mother.previous_newborn_death }}</td></tr>
-				    <tr><td align="right">Previous C-Section:</td><td>{{ mother.previous_csection }}</td></tr>
-				    <tr><td align="right">Previous Bleeding:</td><td>{{ mother.previous_bleeding }}</td></tr>
+					<tr><td align="right">Previous Pregnancies:</td><td>{{ mother.sampledata_previous_pregnancies }}</td></tr>
+				    <tr><td align="right">Previous Deliveries:</td><td>{{ mother.sampledata_previous_deliveries }}</td></tr>
+				    <tr><td align="right">Previous Terminations:</td><td>{{ mother.sampledata_previous_terminations }}</td></tr>
+				    <tr><td align="right">Previous Newborn Death:</td><td>{{ mother.sampledata_previous_newborn_death }}</td></tr>
+				    <tr><td align="right">Previous C-Section:</td><td>{{ mother.sampledata_previous_csection }}</td></tr>
+				    <tr><td align="right">Previous Bleeding:</td><td>{{ mother.sampledata_previous_bleeding }}</td></tr>
 				</table>
 			</div>
 		</div>
@@ -108,15 +108,18 @@
 	<h3>All Data</h3>
 	<table>
 	    <thead><th>Name</th><th>Value</th></thead>
-	{% for attr, display in attrs %}
-	<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
-	{% endfor %}
+		{% for attr in attrs %}
+			<tr><td class="prompt">{% attr_name attr %}</td> <td class="value">{{ mother|attribute_lookup:attr }}</td></tr>
+		{% endfor %}
+		<!-- {% for attr, display in attrs %}
+			<tr><td class="prompt">{{ display }}</td> <td class="value">{{ mother|attribute_lookup:attr}}</td></tr>
+		{% endfor %} -->
 	</table>
 </div>
 
 <div class="modal_dialog" id="dialog" style="display: none;">
-<a href="#" class="jqmClose">Close</a>
-Please wait while that loads... 
+	<a href="#" class="jqmClose">Close</a>
+	Please wait while that loads... 
 </div>
 {% endblock %}
 

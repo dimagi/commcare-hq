@@ -17,7 +17,7 @@
     <link type="text/css" rel="stylesheet" href="/static/receiver/stylesheets/annotations.css?{% now "U" %}" />    
 {% endblock %}
 
-{% load url_for %}
+{% load format_tags %}
 {% block content %}
 	{% ifnotequal page "single" %}
 		<form action="/intel/{{ page }}" method="get" style="padding-left: 15px">

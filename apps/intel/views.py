@@ -1,50 +1,28 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest, QueryDict
-from django.shortcuts import get_object_or_404
-from django.template import RequestContext
-from django.core.exceptions import *
-
-from rapidsms.webui.utils import render_to_response
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import redirect_to_login
-from django.contrib.auth.models import User
-
-# from django.utils.translation import ugettext_lazy as _
-# from django.db.models.query_utils import Q
-# from xformmanager.models import *
-#from graphing import dbhelper
-# from django.utils.encoding import *
-# from hq.models import *
-
-import hq.utils as utils
-from domain.decorators import login_and_domain_required
-
-# from transformers.csv import UnicodeWriter
-# from StringIO import StringIO
-
-# from datetime import timedelta
-# from django.db import transaction
-# import uuid
-
-from graphing.models import *
 import logging
-# import hashlib
 import settings
-# import traceback
 import sys
 import os
 import string
 
-import reports.util as util
-from reports.models import Case #, SqlReport
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRequest, QueryDict
+from django.shortcuts import get_object_or_404
+from django.template import RequestContext
+from django.core.exceptions import *
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
+from django.contrib.auth.models import User
 
-# from reports.custom.all.shared import get_data_by_chw, get_case_info
-# from reports.custom.shared import Mother
+from rapidsms.webui.utils import render_to_response
+from domain.decorators import login_and_domain_required
 
+# import reports.util as util
+# from reports.models import Case
+import hq.utils as utils
+
+from graphing.models import *
 from hi_risk import *
-
-# import intel.queries as queries
 from intel.models import *
+
 
 # A note about user authorization
 # The current system enforces user auth, and provides a plain path for where users go, depending on their role
@@ -93,7 +71,7 @@ def report(request, format):
     
     rows = registrations().filter(meta_username__in=chws).order_by('sampledata_mother_name')
     if hi_risk_only: rows = rows.filter(sampledata_hi_risk='yes')
-
+            
     # filter by a specific risk indicator (for links from the HQ view "High Risk" page)
     if request.GET.has_key('filter'):
         filt = "%s.%s" % (REGISTRATION_TABLE, HI_RISK_INDICATORS[request.GET['filter']]['where'])
@@ -107,7 +85,16 @@ def report(request, format):
     if search != '':
         rows = rows.filter(sampledata_mother_name__icontains=search)
 
-
+    
+    # fix missing case_id (see bug report #9601)
+    def fix_case_id(row):
+        if row.sampledata_case_id is None:
+            row.sampledata_case_id = row.sampledata_case_create_external_id
+        return row
+    
+    rows = map(fix_case_id, rows)
+    # /fix
+    
     visits = clinic_visits(clinic_id=showclinic, chw_name=filter_chw)
     
     # finally, pack it up and ship to the template/CSV
@@ -184,30 +171,28 @@ def mother_details(request):
     chw, case_id = request.GET['case_id'].split('|')
     mother_name = request.GET['mother_name']
     
-    mother_id = registrations().get(sampledata_mother_name=mother_name, sampledata_case_id=case_id, meta_username=chw).id
-    
     context = {'clinic' : _get_clinic(request), 'page': "single"}
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
-        
-    case = get_object_or_404(Case, name="Grameen Safe Pregnancies")
 
-    data = case.get_data_map_for_case(request.GET["case_id"])
-    mom = Mother(case, case_id, data)
-
-    if mom.mother_name != mother_name:
-        return HttpResponse("ID %s points to more than one person (mom.mother_name: %s, mother_name: %s)" % (request.GET["case_id"], mom.mother_name, mother_name))
-
-    attrs = [name for name in dir(mom) if not name.startswith("_")]
-    attrs.remove("data_map")
-    display_attrs = [attr.replace("_", " ") for attr in attrs]
+    try:
+        mom = registrations().get(sampledata_mother_name=mother_name, sampledata_case_id=case_id, meta_username=chw)
+    except IntelGrameenMotherRegistration.DoesNotExist: # check for malparsed new form
+        mom = registrations().get(sampledata_mother_name=mother_name, sampledata_case_create_external_id=case_id, meta_username=chw)
     
+    mom.sampledata_months_pregnant = int(mom.sampledata_weeks_pregnant) / 4
+    
+    attrs = []
+    for attr in dir(mom):
+        if attr.startswith("sampledata_") and not attr.startswith("sampledata_case_"):
+            attrs.append(attr)
+
+    context['attrs'] = sorted(attrs)
     context['mother'] = mom
-    context['attrs'] = zip(attrs, display_attrs)
     
     # get attachment ID for SMS Sending UI
     atts = attachments_for(REGISTRATION_TABLE)
-    context['attach_id'] = atts[mother_id].id
-    
+    context['attach_id'] = atts[mom.id].id
+
     context['risk_factors'] = get_hi_risk_factors_for(mom)  #reasons
 
     return render_to_response(request, "mother_details.html", context)
