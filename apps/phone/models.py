@@ -87,7 +87,9 @@ def create_phone_and_user(sender, instance, created, **kwargs):
                  domain = instance.attachment.submission.domain)[0]
 
     try:
-        PhoneUserInfo.objects.get(phone=phone, username=instance.username)
+        # PhoneUserInfo.objects.get(phone=phone, username=instance.username)
+        # per Cory's chat
+        PhoneUserInfo.objects.get(phone=phone, uuid=instance.uid)
     except PhoneUserInfo.DoesNotExist:
         # create it if we couldn't find it 
         PhoneUserInfo.objects.create(phone=phone,username=instance.username,
