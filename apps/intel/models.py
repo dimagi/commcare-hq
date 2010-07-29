@@ -93,7 +93,7 @@ def get_chw_registrations_table(clinic_id = None):
     userclinics = UserClinic.objects.exclude(id=1).filter(is_chw=True)
 
     if clinic_id is not None:
-        userclinics = userclinics.filter(id=clinic_id)
+        userclinics = userclinics.filter(clinic=clinic_id)
 
     for uc in userclinics:
         username = uc.username
