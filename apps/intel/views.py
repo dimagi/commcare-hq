@@ -232,7 +232,7 @@ def chart(request, template_name="chart.html"):
     context['height'] = graph.height
     context['datatable'] = graph.convert_data_to_table(context['chart_data'])
         
-    context['chw_reg_rows'] = _get_chw_registrations_table(context['clinic']['id'])
+    context['chw_reg_rows'] = get_chw_registrations_table(context['clinic']['id'])
 
     context['total_hi_risk'] = 0 ; context['total_registrations'] = 0 ; context['total_follow_up'] = 0
     
@@ -299,7 +299,7 @@ def hq_chart(request, template_name="hq_chart.html"):
         context['clinics'].append({'name': c, 'reg': d['reg'][c.id], 'hi_risk': d['hi_risk'][c.id], 'follow': d['follow'][c.id], 'visits': visits})    
   
     # get per CHW table for show/hide
-    context['chw_reg_rows'] = _get_chw_registrations_table()
+    context['chw_reg_rows'] = get_chw_registrations_table()
     
     return render_to_response(request, template_name, context)
 
@@ -368,7 +368,7 @@ def hq_risk(request, template_name="hq_risk.html"):
     context['indicators'].sort(key=lambda x:x[1], reverse=True) # sort by value, making sure Total is first item in the process
     
     # get per CHW table for show/hide
-    context['chw_reg_rows'] = _get_chw_registrations_table()
+    context['chw_reg_rows'] = get_chw_registrations_table()
         
     return render_to_response(request, template_name, context)
     
@@ -381,24 +381,6 @@ def _get_graphgroup_children(graph_group):
     return ret
     
 
-def _get_chw_registrations_table(clinic_id = None):   
-    rows = [] ; cu = {}
-    for i in UserClinic.objects.all(): cu[i.username] = { 'clinic': i.clinic.name, 'clinic_id': i.clinic.id }
-    
-    for chw in all_chws():
-        if clinic_id is not None and cu[chw]['clinic_id'] != clinic_id: continue
-        rows.append ({
-            'name' : chw,
-            'reg'   : registrations().filter(meta_username=chw).count(),
-            'risk'  : hi_risk().filter(meta_username=chw).count(),
-            'follow': follow_up().filter(meta_username=chw).count(),
-            'visits': len(clinic_visits(chw_name=chw)),
-            'clinic': cu[chw]['clinic'],
-            'clinic_id': cu[chw]['clinic_id']
-        })
-    
-    return rows
-    
 
 def _get_clinic(request):
     try:

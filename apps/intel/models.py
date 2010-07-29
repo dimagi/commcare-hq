@@ -26,7 +26,8 @@ class Clinic(models.Model):
 class UserClinic(models.Model):
     username = models.CharField(max_length=255)
     clinic = models.ForeignKey(Clinic, null=True, blank=True)
-
+    is_chw = models.BooleanField(default=False)
+    
     def __unicode__(self):
         return "User: %s Clinic: %s" % (self.username, self.clinic.name)
 
@@ -80,19 +81,59 @@ def follow_up():
 # TODO: see if Django allows explicitly joining on the query (as we do in registrations_by())
 def chws_for(clinic_id):
     chws = []
-    for i in Clinic.objects.get(id=clinic_id).userclinic_set.values_list('username'):
-        chws.append(i[0])
+    for i in Clinic.objects.get(id=clinic_id).userclinic_set.values_list('username', 'is_chw'):
+        if i[1]: chws.append(i[0])
     
     return chws
 
+# new
+def get_chw_registrations_table(clinic_id = None):   
+    rows = []
 
-def all_chws():
-    chws = []
-    for i in registrations().values('meta_username').distinct():
-        chws.append(i['meta_username'])
-    
-    return chws
-    
+    userclinics = UserClinic.objects.exclude(id=1).filter(is_chw=True)
+
+    if clinic_id is not None:
+        userclinics = userclinics.filter(id=clinic_id)
+
+    for uc in userclinics:
+        username = uc.username
+        rows.append ({
+            'name' : username,
+            'reg'   : registrations().filter(meta_username=username).count(),
+            'risk'  : hi_risk().filter(meta_username=username).count(),
+            'follow': follow_up().filter(meta_username=username).count(),
+            'visits': len(clinic_visits(chw_name=username)),
+            'clinic': uc.clinic.name,
+            'clinic_id': uc.clinic.id
+        })
+
+    return rows
+
+# def all_chws():
+#     chws = []
+#     for i in registrations().values('meta_username').distinct():
+#         chws.append(i['meta_username'])
+#     
+#     return chws
+# # old
+# def get_chw_registrations_table(clinic_id = None):   
+#     rows = [] ; cu = {}
+#     for i in UserClinic.objects.all(): cu[i.username] = { 'clinic': i.clinic.name, 'clinic_id': i.clinic.id }
+# 
+#     for chw in all_chws():
+#         if clinic_id is not None and cu[chw]['clinic_id'] != clinic_id: continue
+#         rows.append ({
+#             'name' : chw,
+#             'reg'   : registrations().filter(meta_username=chw).count(),
+#             'risk'  : hi_risk().filter(meta_username=chw).count(),
+#             'follow': follow_up().filter(meta_username=chw).count(),
+#             'visits': len(clinic_visits(chw_name=chw)),
+#             'clinic': cu[chw]['clinic'],
+#             'clinic_id': cu[chw]['clinic_id']
+#         })
+# 
+#     return rows
+
 
 def attachments_for(view):
     atts = {}

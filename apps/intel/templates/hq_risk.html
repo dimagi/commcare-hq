@@ -31,7 +31,7 @@
 			<td align="top">
 				<div class="top-bar" style="text-align:left; background-color: #fff; height: {{ height }}px; ">
 				{% for c in clinics %}
-					<a href="?clinic={{ c.id }}" style="color: {% ifequal c showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ c.name }}</a>
+					<a href="?clinic={{ c.id }}" style="color: {% ifequal c showclinic %} #ff6100 {% else %} #000 {% endifequal %}">{{ c.name }}</a><br />
 				{% endfor %}
 				</div>
 			</td>
