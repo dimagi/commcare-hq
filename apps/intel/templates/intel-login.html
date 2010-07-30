@@ -1,5 +1,7 @@
 {% extends "intel-layout.html" %}
 
+{% load hq_shared_tags %}
+
 {% block title %}login{% endblock title %}
 {% block page_stylesheets %}
 <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
@@ -19,7 +21,7 @@
 <!-- Login form -->  
 <center>
 <form name="form" method="post" action="{% url login %}" id="login_form" style="height:300px"> <!-- class="sfb" -->
-
+{% csrf_token %}
 <!-- intel requirement - a single field login -->  
   {% if field.errors %}
     <div class="field_errors">
