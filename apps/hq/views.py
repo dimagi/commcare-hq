@@ -108,6 +108,11 @@ def dashboard(request, template_name="hq/dashboard.html"):
     unregistered_totals_by_date = {}
     for date in dates:  unregistered_totals_by_date[date] = 0
     for meta in unregistered_metas:
+
+        # ignore users deleted via phone_users. their xforms aren't removed, so check if the xform user has a corresponding user in PhoneInfo
+        if len(PhoneUserInfo.objects.filter(username=meta.username, phone__domain=request.user.selected_domain)) == 0:
+            continue
+
         if meta.username not in unregistered_map:
             user_date_map = {}
             for date in dates:   user_date_map[date] = 0
