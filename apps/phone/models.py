@@ -88,8 +88,8 @@ def create_phone_and_user(sender, instance, created, **kwargs):
 
     try:
         # PhoneUserInfo.objects.get(phone=phone, username=instance.username)
-        # per Cory's chat
-        PhoneUserInfo.objects.get(phone=phone, uuid=instance.uid)
+        # switch to determine by UUID. awaits Clayton's testing.
+        PhoneUserInfo.objects.get(uuid=instance.uid)
     except PhoneUserInfo.DoesNotExist:
         # create it if we couldn't find it 
         PhoneUserInfo.objects.create(phone=phone,username=instance.username,
