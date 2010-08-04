@@ -201,10 +201,14 @@ def get_post_redirect(request, get_callback, post_callback,
     are specified then none will be called.
     """
     if request.method == "GET":  
-        if get_template_name:  return get_callback(request, get_template_name)
-        else:                  return get_callback(request)
+        if get_template_name:  
+            return get_callback(request, get_template_name)
+        else:                  
+            return get_callback(request)
     elif request.method == "POST": 
-        if post_template_name: return post_callback(request, post_template_name)        
-        else:                  return post_callback(request)
+        if post_template_name: 
+            return post_callback(request, post_template_name)        
+        else:                  
+            return post_callback(request)
     raise Exception("Request method could not be matched.  Expected a GET or a POST.")        
     
