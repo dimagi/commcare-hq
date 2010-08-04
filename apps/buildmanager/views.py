@@ -268,10 +268,10 @@ def translation_csv(req, id):
 def readable_xform(req, template_name="buildmanager/readable_form_creator.html"):
     """Get a readable xform"""
     
-    def get(req, template_name):
+    def get(req, template_name=template_name):
         return render_to_response(req, template_name, {})
     
-    def post(req, template_name):
+    def post(req, template_name=template_name):
         xform_body = req.POST["xform"]
         try:
             result, errors, has_error = readable_form(xform_body)
