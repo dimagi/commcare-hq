@@ -287,7 +287,7 @@ def readable_xform(req, template_name="buildmanager/readable_form_creator.html")
                                                            })
         
     
-    return get_post_redirect(request, get, post)
+    return get_post_redirect(req, get, post)
 
 def validator(req, template_name="buildmanager/validator.html"):
     """Validate an xform"""
