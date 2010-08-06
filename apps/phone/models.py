@@ -93,7 +93,7 @@ def create_phone_and_user(sender, instance, created, **kwargs):
     except PhoneUserInfo.DoesNotExist:
         try:
             # perhaps by UUID then?
-            PhoneUserInfo.objects.get(uuid=instance.uid)
+            PhoneUserInfo.objects.get(uuid=instance.chw_id)
         except PhoneUserInfo.DoesNotExist:
             # definitely not there
             PhoneUserInfo.objects.create(phone=phone,username=instance.username,
