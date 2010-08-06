@@ -86,14 +86,18 @@ def create_phone_and_user(sender, instance, created, **kwargs):
                 (device_id = instance.deviceid,
                  domain = instance.attachment.submission.domain)[0]
 
+
     try:
+        # simple lookup
         PhoneUserInfo.objects.get(phone=phone, username=instance.username)
-        # switch to determine by UUID. awaits Clayton's testing.
-        # PhoneUserInfo.objects.get(uuid=instance.uid)
     except PhoneUserInfo.DoesNotExist:
-        # create it if we couldn't find it 
-        PhoneUserInfo.objects.create(phone=phone,username=instance.username,
-                                     status="auto_created")
+        try:
+            # perhaps by UUID then?
+            PhoneUserInfo.objects.get(uuid=instance.uid)
+        except PhoneUserInfo.DoesNotExist:
+            # definitely not there
+            PhoneUserInfo.objects.create(phone=phone,username=instance.username,
+                                         status="auto_created")
 
 post_save.connect(create_phone_and_user, sender=Metadata)
     
