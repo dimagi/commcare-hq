@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRe
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
-from django.shortcuts import render_to_response
+from webutils import render_to_response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
