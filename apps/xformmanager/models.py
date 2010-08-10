@@ -379,10 +379,10 @@ class Metadata(models.Model):
     # (TODO - replace with an appropriate comparator object, so that the code is less brittle )
 
     # instead of 'username' we should really be using chw_id
-    required_fields = [ 'deviceid','timestart','timeend','username' ]
+    required_fields = [ 'deviceid','timestart','timeend', 'uid' ]
     
     # these are all the fields that we accept (though do not require)
-    fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid']
+    fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid','instance_guid']
     
     # CZUE: 10-29-2009 I think formname and formversion should now be removed?
     formname = models.CharField(max_length=255, null=True)

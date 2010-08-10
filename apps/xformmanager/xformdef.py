@@ -257,11 +257,11 @@ class FormDef(ElementDef):
         extra_fields = []
         duplicate_fields = []
         found_fields = []
-        missing_fields.extend(xfm.models.Metadata.fields)
+        missing_fields.extend(xfm.models.Metadata.required_fields)
         
         # hackily remove some stuff we no longer want to require
-        missing_fields.remove('formname')
-        missing_fields.remove('formversion')
+        # missing_fields.remove('formname')
+        # missing_fields.remove('formversion')
         for field in element.child_elements:
             field_name = field.short_name.lower()
             if field_name in missing_fields:
