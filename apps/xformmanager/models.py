@@ -382,7 +382,7 @@ class Metadata(models.Model):
     required_fields = [ 'deviceid','timestart','timeend', 'uid' ]
     
     # these are all the fields that we accept (though do not require)
-    fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid','instance_guid']
+    fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid']
     
     # CZUE: 10-29-2009 I think formname and formversion should now be removed?
     formname = models.CharField(max_length=255, null=True)
@@ -430,34 +430,14 @@ class Metadata(models.Model):
             logging.error("Submitted form (%s) is empty!" % target_namespace)
             return
         # find meta node
-        for data_child in case_insensitive_iter(data_tree, '{'+target_namespace+'}'+ "Meta" ):
+        meta_tag = "%s_%s" % (data_tree.tag, "Meta" )
+        # meta_tag = '%s_meta' % target_namespace
+        for data_child in case_insensitive_iter(data_tree, meta_tag):
             meta_tree = data_child
             break;
         if meta_tree is None:
             logging.error("No metadata found for %s" % target_namespace )
             return
-        
-        """ we do not use this for now since we are still sorting out whether to have
-        uid or guid or whatever
-        # <parse by schema tree>
-        # this method silently discards metadata which it does not anticipate
-        for field in Metadata.fields:
-            data_element = None
-            for data_child in case_insensitive_iter(meta_tree, '{'+target_namespace+'}'+ field ):
-                data_element = data_child
-                break;
-            if data_element is None:
-                logging.error("Submitted form (%s) is missing metadata field (%s)" % \
-                            (target_namespace, field) )
-                continue
-            if data_element.text is None: 
-                logging.error( ("Metadata %s in form (%s) should not be null!" % \
-                             (field, target_namespace)) )
-                continue
-            value = format_field(self, field, data_element.text)
-            setattr( self,field,value )
-        # </parse by schema tree>
-        """
         
         # <parse by instance tree>
         # this routine silently ignores metadata fields which are poorly formatted
@@ -465,7 +445,7 @@ class Metadata(models.Model):
         for element in meta_tree:
             # element.tag is for example <FormName>
             # todo: this comparison should be made much less brittle - replace with a comparator object?
-            tag = self._strip_namespace( element.tag ).lower()
+            tag = self._strip_namespace( meta_tree.tag, element.tag ).lower()
             if tag in Metadata.fields:
                 # must find out the type of an element field
                 value = format_field(self, tag, element.text)
@@ -549,10 +529,12 @@ class Metadata(models.Model):
                                                          self.attachment.display_string(),
                                                          null_msg, missing_msg)) 
 
-    def _strip_namespace(self, tag):
-        i = tag.find('}')
-        tag = tag[i+1:len(tag)]
-        return tag
+    def _strip_namespace(self, parent_tag, child_tag):
+        if child_tag.startswith(parent_tag):
+            child_tag = child_tag[len(parent_tag):]
+        while child_tag.startswith("_"):
+            child_tag = child_tag[1:]
+        return child_tag
 
 
 class FormDataPointer(models.Model):

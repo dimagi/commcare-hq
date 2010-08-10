@@ -22,6 +22,9 @@ class MetaTestCase(unittest.TestCase):
         mockdomain = Domain.objects.get_or_create(name='metadomain')[0]
         self.domain = mockdomain
         
+    def tearDown(self):
+        # duplicates setUp, but at least we know we're being clean
+        clear_data()
 
     def testMetaData_1(self):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", self.domain)
@@ -54,7 +57,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[2],"worker")
         self.assertEquals(row[3],3)
         """
-        
+
     def testMetaData_2(self):
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_1.xml", self.domain)
         cursor = connection.cursor()
@@ -214,7 +217,4 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual(0, Metadata.objects.count())
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_nothing.xml", self.domain)
         self.assertEqual(1, Metadata.objects.count())
-    
-    def tearDown(self):
-        # duplicates setUp, but at least we know we're being clean
-        clear_data()
+

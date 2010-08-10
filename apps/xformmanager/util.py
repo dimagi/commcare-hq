@@ -120,14 +120,29 @@ def join_if_exists(parent_name, child_name):
         return str(parent_name) + "_" + str(child_name)
     return str(child_name)
 
-def case_insensitive_iter(data_tree, tag):
+def case_insensitive_iter(data_tree, tag, prefix=""):
     """ An iterator for lxml etree which is case-insensitive """
+    def format_tag(prefix, suffix):
+        # format a tag so that it honors full namespacing
+        # turns {somexmlns}prefix, {somexmlns}suffix
+        # into  {somexmlns}prefix_suffix
+        # this should fix the dupe checker bug
+        
+        if not prefix: return
+        
+        suffix = suffix[suffix.index("}") + 1:].lower()
+        full = "%s_%s" % (prefix, suffix)
+        return full.lower()
+    
     if tag == "*":
         tag = None
-    if tag is None or data_tree.tag.lower() == tag.lower():
+    if tag is None or format_tag(prefix,data_tree.tag.lower()) == tag.lower():
+        data_tree.tag = format_tag(prefix,data_tree.tag.lower())
+        yield data_tree
+    elif data_tree.tag.lower() == tag.lower():
         yield data_tree
     for d in data_tree: 
-        for e in case_insensitive_iter(d,tag):
+        for e in case_insensitive_iter(d,tag, prefix=data_tree.tag):
             yield e 
 
 def get_unique_value(query_set, field_name, value, sep="_"):
