@@ -53,7 +53,7 @@
                                 "url":  "/ajax/messaging/send_message",
                                 "data": {
                                     "uid":  reporter_id,
-                                    "text": message,
+                                    "text": message
                                 },
                                 "success": function() { sms_done("success"); location.reload(); },
                                 "error":   function() { sms_done("error"); }
@@ -73,7 +73,7 @@
                         "url":  "/receiver/annotations/new/",
                         "data": {
                             "attach_id":  attach_id,
-                            "text": message,
+                            "text": message
                         },
                         "success": function() { annotation_done("success"); },
                         "error":   function() { annotation_done("error"); }
