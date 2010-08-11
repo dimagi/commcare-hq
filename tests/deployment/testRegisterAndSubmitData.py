@@ -205,8 +205,7 @@ class DomainTestCase(unittest.TestCase):
     def _verifySubmission(self, resultstring, num_attachments):
         """Verify that a raw xform submission is submitted and the correct reply comes back in.  This also checks to make sure that the attachments are parsed out correctly"""
         
-        # this should == xformmanager.SUCCESSFUL_SUBMISSION
-        rescount = resultstring.count("Thanks!")
+        rescount = resultstring.count("<OpenRosaStatusCode>2000</OpenRosaStatusCode>")
         attachment_count = '[no attachment]'
         #self.assertEqual(1,rescount)
         if rescount != 1:
@@ -594,4 +593,3 @@ if __name__ == "__main__":
 
         
             
-        
