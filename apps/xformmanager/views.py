@@ -27,6 +27,7 @@ import hashlib
 import logging
 import sys
 import traceback
+import unicodedata
 
 @login_and_domain_required
 @transaction.commit_manually
@@ -554,9 +555,12 @@ def single_instance_csv(request, formdef_id, instance_id):
     for row in data:
         w.writerow(row)
     output.seek(0)
+    output_name = unicodedata.normalize('NFKD', xform.form_display_name).encode('ascii','ignore')
+    output_name = output_name[:20]
+    output_name = output_name.replace(' ','_')
     response = HttpResponse(output.read(),
                         mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( xform.form_display_name, instance_id)
+    response["content-disposition"] = 'attachment; filename="%s-%s-%s.csv"' % ( output_name, xform.version, instance_id)
     return response
 
 
