@@ -501,6 +501,7 @@ def run():
     hq_extuser_4.reporter = None
     hq_extuser_4.save()
 
+    hq_extuser_4.domain_membership.add(domain_membership_1)
     hq_extuser_4.domain_membership.add(domain_membership_2)
 
     hq_extuser_5 = User()
