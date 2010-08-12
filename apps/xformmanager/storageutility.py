@@ -696,7 +696,7 @@ class XFormDBTablePopulator(XFormProcessor):
             # todo - put in a check for root.isRepeatable
             next_parent_name = formatted_join(parent_name, elementdef.name)
             if def_child.is_repeatable :
-                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ def_child.name ):
+                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                     query = self.queries_to_populate_instance_tables(data_child, def_child, next_parent_name, \
                                                                      parent_table_name, parent_id)
                     if next_query is not None:
@@ -705,7 +705,7 @@ class XFormDBTablePopulator(XFormProcessor):
                         next_query = query
             else:
                 # if there are children (which are not repeatable) then flatten the table
-                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ def_child.name):
+                for data_child in case_insensitive_iter(data_tree, '{'+self.formdef.target_namespace+'}'+ self._data_name( elementdef.name, def_child.name) ):
                     data_node = data_child
                     break;
                 if data_node is None:
@@ -782,7 +782,11 @@ class XFormDBTablePopulator(XFormProcessor):
         else:
             return text.strip()
 
-    
+    def _data_name(self, parent_name, child_name):
+        if child_name[0:len(parent_name)].lower() == parent_name.lower():
+            child_name = child_name[len(parent_name)+1:len(child_name)]
+        return child_name
+
 class XFormErrors(Exception):
     '''Exception to make dealing with xform query errors easier.'''
    

@@ -440,8 +440,7 @@ class Metadata(models.Model):
             logging.error("Submitted form (%s) is empty!" % target_namespace)
             return
         # find meta node
-        meta_tag = "%s_%s" % (data_tree.tag, "Meta" )
-        for data_child in case_insensitive_iter(data_tree, meta_tag):
+        for data_child in case_insensitive_iter(data_tree, '{'+target_namespace+'}'+ "Meta" ):
             meta_tree = data_child
             break;
         if meta_tree is None:
@@ -476,7 +475,7 @@ class Metadata(models.Model):
         for element in meta_tree:
             # element.tag is for example <FormName>
             # todo: this comparison should be made much less brittle - replace with a comparator object?
-            tag = self._strip_namespace( meta_tree.tag, element.tag ).lower()
+            tag = self._strip_namespace( element.tag ).lower()
             if tag in Metadata.fields:
                 # must find out the type of an element field
                 value = format_field(self, tag, element.text)
@@ -558,12 +557,11 @@ class Metadata(models.Model):
                                                          self.attachment.display_string(),
                                                          null_msg, missing_msg)) 
 
-    def _strip_namespace(self, parent_tag, child_tag):
-        if child_tag.startswith(parent_tag):
-            child_tag = child_tag[len(parent_tag):]
-        while child_tag.startswith("_"):
-            child_tag = child_tag[1:]
-        return child_tag
+    def _strip_namespace(self, tag):
+        i = tag.find('}')
+        tag = tag[i+1:len(tag)]
+        return tag
+
 
 class FormDataPointer(models.Model):
     """Stores a single reference to a pointer of data inside a form.
@@ -637,7 +635,7 @@ class FormDataGroup(models.Model):
     domain = models.ForeignKey(Domain)
         
     # Name is the internal name.  when generated from a collection of
-    # forms it is thefor xmlns.  This should generally not be changed
+    # forms it is the xmlns.  This should generally not be changed
     name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
     
