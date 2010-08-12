@@ -10,7 +10,7 @@ from decimal import Decimal
 from datetime import datetime, date, time
 import unittest
 
-class DuplicateTestCase(unittest.TestCase):
+class BasicTestCase(unittest.TestCase):
     
     def setUp(self):
         clear_data()
@@ -25,7 +25,5 @@ class DuplicateTestCase(unittest.TestCase):
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM %s" % form.form_name)
         row = cursor.fetchone()
-        self.assertEquals(row[len(row) - 4],"y")
-        self.assertEquals(row[len(row) - 3],"x")
-        self.assertEquals(row[len(row) - 2],"z")
+        self.assertEquals(row[len(row) - 2],"y")
         
