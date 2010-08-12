@@ -13,4 +13,8 @@
 		</referral>
 	</case>
 	<referral>y</referral>
+	<outer>
+		<inner>x</inner>
+	</outer>
+	<inner>z</inner>
 </brac>

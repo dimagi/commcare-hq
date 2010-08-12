@@ -35,6 +35,14 @@
 					</complexType>
 				</element>
 				<element name="referral" minOccurs="0" type="_brac_referral" />
+				<element name="outer" minOccurs="0">
+					<complexType>
+						<sequence>
+							<element name="inner" minOccurs="0" type="_brac_referral" />
+						</sequence>
+					</complexType>
+				</element>
+				<element name="inner" minOccurs="0" type="_brac_referral" />
 		</sequence>
 		</complexType>
 	</element>
