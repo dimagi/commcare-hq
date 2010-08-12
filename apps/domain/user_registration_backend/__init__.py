@@ -347,9 +347,9 @@ To login, navigate to the following link:
 %s
 """
     text_content = text_content % (domain_name, username, password, link)
-    cm(text_content)
+    #cm(text_content)
     html_content = ''.join(['<p>' + x + '</p>' for x in text_content.strip().split('\n')])
-    cm(html_content)
+    #cm(html_content)
 
     subject = 'New CommCareHQ account'
     
