@@ -8,6 +8,9 @@
 Are you sure you want to delete {{type}} "{{object.id}}"? This will also delete any attachments.
 
 <form action="" method="post">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <div>
 <input type="hidden" name="confirm_delete" value="yes" />
 <input type="submit" value="{% trans "Yes, I'm sure" %}" />

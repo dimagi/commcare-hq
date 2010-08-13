@@ -26,6 +26,9 @@
 {% endwith %}
 
 <form action="" method="POST">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <table>
    <thead>
     <tr>
