@@ -14,19 +14,28 @@
 	{% if resource_set %}
 		Showing builds for resource set <tt>{{resource_set.name}}</tt>. (<a href="{% url releasemanager.views.builds %}">Show all builds</a>)
 	{% endif %}
-	<p>
-		<h3>Releases</h3>
-		{% with items.released as items %}
-			{% include "partials/list_build.html" %}
-		{% endwith %}
-	</p>
-	<br />
 	
-	<p>
-		<h3>Unreleased</h3>
-		{% with items.unreleased as items %}
-			{% include "partials/list_build.html" %}
-		{% endwith %}
-	</p>
 
+	{% if items.released %}
+		<p>
+			{% with items.released as items %}
+				{% include "partials/list_build.html" %}
+			{% endwith %}
+		</p>
+	{% else %}
+		<p><h3>No Builds Released Yet</h3></p>
+	{% endif %}
+		
+ 	{% if items.unreleased %}
+		<p>
+			<div align="center"><button onclick="$('#the-unreleased').toggle(300)">View Unreleased Builds</button></div>
+			<br />
+			<div id="the-unreleased" style="display:none;">
+				{% with items.unreleased as items %}
+					{% include "partials/list_build.html" %}
+				{% endwith %}
+			</div>
+		</p>
+	{% endif %}
+	
 {%endblock%}

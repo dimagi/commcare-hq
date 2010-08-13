@@ -17,19 +17,27 @@
 	{{errors}}
 		
 	<br />
-	<p>
-		<h3>Releases</h3>
-		{% with items.released as items %}
-			{% include "partials/list_resource_set.html" %}
-		{% endwith %}
-	</p>
-	<br />
 	
-	<p>
-		<h3>Unreleased</h3>
-		{% with items.unreleased as items %}
-			{% include "partials/list_resource_set.html" %}
-		{% endwith %}
-	</p>
-
+	{% if items.released %}
+		<p>
+			{% with items.released as items %}
+				{% include "partials/list_resource_set.html" %}
+			{% endwith %}
+		</p>
+	{% else %}
+		<p><h3>No Resource Sets Released Yet</h3></p>
+	{% endif %}
+		
+ 	{% if items.unreleased %}
+		<p>
+			<div align="center"><button onclick="$('#the-unreleased').toggle(300)">View Unreleased Resource Sets</button></div>
+			<br />
+			<div id="the-unreleased" style="display:none;">
+				{% with items.unreleased as items %}
+					{% include "partials/list_resource_set.html" %}
+				{% endwith %}
+			</div>
+		</p>
+	{% endif %}
+	
 {%endblock%}
