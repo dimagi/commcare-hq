@@ -11,21 +11,29 @@
 		{{form.as_ul}}
 		<input type="submit" value="Submit" />
 	</form>
-		
-	<br />
-	<p>
-		<h3>Visible</h3>(Users can select these files when creating their own builds)<br />
-		{% with items.released as items %}
-			{% include "partials/list_jarjad.html" %}
-		{% endwith %}
-	</p>
-	<br />
 	
-	<p>
-		<h3>Hidden</h3>
-		{% with items.unreleased as items %}
-			{% include "partials/list_jarjad.html" %}
-		{% endwith %}
-	</p>
+	<br /><br />
+	
+	{% if items.released %}
+		<p>
+			{% with items.released as items %}
+				{% include "partials/list_jarjad.html" %}
+			{% endwith %}
+		</p>
+	{% else %}
+		<p><h3>No Binaries Released Yet</h3></p>
+	{% endif %}
+		
+ 	{% if items.unreleased %}
+		<p>
+			<div align="center"><button onclick="$('#the-unreleased').toggle(300)">View Unreleased Binaries</button></div>
+			<br />
+			<div id="the-unreleased" style="display:none;">
+				{% with items.unreleased as items %}
+					{% include "partials/list_jarjad.html" %}
+				{% endwith %}
+			</div>
+		</p>
+	{% endif %}
 
 {%endblock%}

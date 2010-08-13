@@ -145,7 +145,7 @@ def builds(request, template_name="builds.html"):
     Build.verify_all_files(delete_missing=True)
     
     form = BuildForm()
-    form.fields["resource_set"].queryset = ResourceSet.objects.filter(domain=domain)
+    form.fields["resource_set"].queryset = ResourceSet.objects.filter(domain=domain, is_release=True)
     
     context = {'items': {}, 'form' : form}
         
@@ -195,12 +195,12 @@ def build_set_release(request, id, set_to):
 @login_and_domain_required
 def new_build(request, template_name="builds.html"):
     context = {}
-    buildform = BuildForm()    
     if request.method == 'POST':
         buildform = BuildForm(request.POST)
         if buildform.is_valid():
             b = buildform.save(commit=False)
             b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(request, b)
+            b.is_release = True
             b.save()
             
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
@@ -238,8 +238,26 @@ def new_build(request, template_name="builds.html"):
                                        "validation_warnings": validation_warnings,
                                        "registration_errors": registration_errors
                                        })
-            
+                                                   
+    # if you can read this, form data wasn't submitted or wasn't valid
+    # so display a new form, with error messages
+    if buildform is None: 
+        buildform = BuildForm() 
 
+    domain = request.user.selected_domain
+    buildform.fields["resource_set"].queryset = ResourceSet.objects.filter(domain=domain, is_release=True)
+    
+    context['items'] = {}
+    resource_set = request.GET['resource_set'] if request.GET.has_key('resource_set') else False
+    if resource_set:
+        context['resource_set'] = ResourceSet.objects.get(id=resource_set)
+        
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set=resource_set).filter(resource_set__domain=domain).order_by('-created_at')
+    else:
+        context['items']['unreleased'] = Build.objects.filter(is_release=False).filter(resource_set__domain=domain).order_by('-created_at')
+        context['items']['released']   = Build.objects.filter(is_release=True).filter(resource_set__domain=domain).order_by('-created_at')
+    
     context['form'] = buildform
     return render_to_response(request, template_name, context)
 
@@ -277,6 +295,9 @@ def new_resource_set(request, template_name="resource_sets.html"):
             r = form.save(commit=False)
             r.domain = request.user.selected_domain
 
+            # per Brian's request, set resource sets as released by default
+            r.is_release = True
+            
             # resource_zip = lib.grab_from(r.url)
             # r.resource_dir = os.path.join(RESOURCE_PATH, r.name)
             # resources = lib.unzip(resource_zip, r.resource_dir)
