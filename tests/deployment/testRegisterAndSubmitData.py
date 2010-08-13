@@ -446,11 +446,13 @@ class TestSimpleSubmits(unittest.TestCase):
             filestr= fin.read()
             fin.close()            
             # -F file=@schemas\2_types.xsd --request POST http://test.commcarehq.org/xforms/
-            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command, '--progress-bar', '--header','Content-type:multipart/mixed; boundary=newdivider', '--header', 'Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            print ' '.join([curl_command, '--progress-bar', '--header','"Content-type:multipart/mixed; boundary=newdivider"', '--header', '"Content-length:%s"' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/Pathfinder/' % serverhost])
             results = p.stdout.read()                
             #self._verifySubmission(results,3)
                         
-            p = subprocess.Popen([curl_command,'--header','Content-type:multipart/mixed; boundary=newdivider', '--header', '"Content-length:%s' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            p = subprocess.Popen([curl_command, '--progress-bar', '--header','"Content-type:multipart/mixed; boundary=newdivider"', '--header', '"Content-length:%s"' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC/' % serverhost],stdout=PIPE,stderr=PIPE,shell=False)
+            print ' '.join([curl_command, '--progress-bar', '--header','"Content-type:multipart/mixed; boundary=newdivider"', '--header', '"Content-length:%s"' % len(filestr), '--data-binary', '@%s' % fullpath, '--request', 'POST', 'http://%s/receiver/submit/BRAC/' % serverhost])
             results = p.stdout.read()
             #self._verifySubmission(results,3)
 
