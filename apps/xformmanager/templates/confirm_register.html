@@ -1,5 +1,6 @@
 {% extends "xformmanager_base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 {% block title %}Are you sure?{% endblock %}
 {% block mgr_content %}
 
@@ -12,10 +13,11 @@ It contains the following issues:
 	
 	<p/><p/><p/>
 	<form action="" method="post">
-	<div>
-	<input type="hidden" name="confirm_register" value="yes" />
-	<input type="submit" value="{% trans "Yes, I'm sure" %}" />
-	</div>
+		{% csrf_token %}
+		<div>
+			<input type="hidden" name="confirm_register" value="yes" />
+			<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+		</div>
 	</form>
 </strong>
 </ul>
