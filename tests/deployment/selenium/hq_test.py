@@ -7,7 +7,7 @@ import time
 
 
 local   = {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]}
-test = {"http://test.commcarehq.org": ["brian", "test", "test.commcarehq.org", "Pathfinder"]}
+test = {"http://test.commcarehq.org": ["pfadmin", "commcare123", "test.commcarehq.org", "Pathfinder"]}
 dev     = {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]}
 data     = {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org", "BRAC"]}
 staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "Pathfinder"]}
