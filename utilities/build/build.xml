@@ -128,7 +128,8 @@
 			Remove to fix intermittent failures.
 		-->	
 		<!--
-			<py-run script="${selenium.dir}/hq_test.py" pythonpath="${selenium.dir}">			
+			<py-run script="${selenium.dir}/hq_test.py" pythonpath="${selenium.dir}">
+				<arg value="test" />
 			</py-run>
 		-->
 	</target>

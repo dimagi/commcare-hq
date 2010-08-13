@@ -6,16 +6,24 @@ import sys
 import time
 
 
-local   = {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]}
-test = {"http://test.commcarehq.org": ["pfadmin", "commcare123", "test.commcarehq.org", "Pathfinder"]}
-dev     = {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]}
-data     = {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org", "BRAC"]}
-staging = {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "Pathfinder"]}
+targets = {
+    "local"   : {"http://localhost:8000":     ["brian", "test", "localhost:8000", "Pathfinder"]},
+    "test"    : {"http://test.commcarehq.org": ["brian", "test", "test.commcarehq.org", "Pathfinder"]},
+    "dev"     : {"http://dev.commcarehq.org": ["brian", "test", "dev.commcarehq.org", "BRAC"]},
+    "data"    : {"http://data.commcarehq.org": ["brian", "test", "data.commcarehq.org", "BRAC"]},
+    "staging" : {"http://staging.commcarehq.org": ["brian", "test", "staging.commcarehq.org", "Pathfinder"]}
+}
 
-# point selenium at:
-sites = test
-print "running with params:", sites
+# see if an environment was supplied
+if len(sys.argv) != 2 or not targets.has_key(sys.argv[1]):
+    print "\nUSAGE: python hq_test.py <target>"
+    print "<target> can be any of ", targets.keys(), "\n"
+    sys.exit()
+    
+sites = targets[sys.argv[1]]
+del sys.argv[1] # otherwise it throws off unittest, which looks for its own CL args
 
+print "Running tests on:", sites
 
 class testingPost(unittest.TestCase):
 
@@ -30,7 +38,7 @@ class testingPost(unittest.TestCase):
         # get to the login page
         sel.open("/no_permissions?next=/")
         sel.click("link=Log in to CommcareHQ")
-        sel.wait_for_page_to_load("30000")
+        sel.wait_for_page_to_load("40000")
         sel.type("id_username", user)
         sel.type("id_password", passw)
         sel.click("//button[@type='submit']")
@@ -41,6 +49,7 @@ class testingPost(unittest.TestCase):
             sel.click("//button[@type='submit']")
             sel.wait_for_page_to_load("30000")
 
+        sel.wait_for_page_to_load("30000")
         # testing creation of xform
         sel.click("link=XForms")
         time.sleep(3)
@@ -93,6 +102,7 @@ class testingPost(unittest.TestCase):
         time.sleep(3)
         # sel.click("link=%s" % submission_number)
         sel.open("/receiver/review/%s" % submission_number)
+        time.sleep(3)
         sel.wait_for_page_to_load("30000")
         try: 
             self.failUnless(sel.is_text_present("view form data"), "xml submission was parsed and matched to form")
@@ -124,7 +134,7 @@ class testingPost(unittest.TestCase):
             self.verificationErrors.append(str(e))
  
 if __name__ == "__main__":
-    for key, value in sites.items():
+    for key, value in sites.items():    
         server = key
         user = value[0]
         passw = value[1]
