@@ -2,6 +2,9 @@
 {% block title %}Delete Group{% endblock %}
 {% block content %}
 <form method="POST">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <h3 class="error">Are you sure you want to delete this data group?
 This action cannot be undone.  Your data will not be deleted but you will
 have to re-create this group, and any reports that depend on it will no

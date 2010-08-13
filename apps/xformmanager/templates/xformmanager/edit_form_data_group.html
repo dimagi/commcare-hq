@@ -17,6 +17,8 @@ $(function(){
 {% endblock %}
 {% block content %}
 <form method="POST">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
 <table style="border:none;">
 {{ group_form.as_table }}
 </table>

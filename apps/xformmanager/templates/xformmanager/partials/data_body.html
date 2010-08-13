@@ -35,6 +35,9 @@
 </div>
 <br>
 <form action="{% url xformmanager.views.delete_data xform.id %}" method="POST">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <div class="big-table">
 <table>
     <thead>
