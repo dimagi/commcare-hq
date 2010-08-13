@@ -1,6 +1,5 @@
 {% load paths %}
 
-{% if items %}
 <table>
 	<thead>
 		<th>Description</th>
@@ -27,7 +26,6 @@
 	            <a href="{% download_url item.jad_file %}" onmouseout="hideTooltip()" 
 						onmouseover="showTooltip(event,'{{ item.jad_content|linebreaks }}');return false">{% filename item.jad_file %}</a><br />
 	        </td>
-			<!-- <td><a href="{{item.get_zip_downloadurl}}">Zip Archive</a></td> -->
 	        <td>
 				{% if item.is_release %}
 	           		<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'false'%}');">Hide</button>
@@ -39,6 +37,3 @@
 
 	{%endfor%}
 </table>
-{% else %}
-	No items found
-{% endif %}
