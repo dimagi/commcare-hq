@@ -34,8 +34,17 @@ def ota_restore(request):
             return HttpResponse("<error>Username '%s' not registered</error>" % username, mimetype="text/xml")
         
         # OK. Go on.
-        reg = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)[0].attachment.get_contents()
-        registration_xml = parseString(reg).getElementsByTagName("n0:registration")[0].toxml()    
+        phoneuser = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)
+        print phoneuser[0].id
+        
+        if len(phoneuser) == 0: raise PhoneUserInfo.DoesNotExist
+        
+        reg = phoneuser[0].attachment.get_contents()
+        if reg is None:
+            return HttpResponse("<error>Cannot find attachment_id %s</error>" % phoneuser[0].attachment.id, mimetype="text/xml")
+
+        registration_xml = parseString(reg).getElementsByTagNameNS("*", "registration")[0].toxml()
+
     except PhoneUserInfo.DoesNotExist:
         registration_xml = ''' 
             <registration>
