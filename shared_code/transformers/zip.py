@@ -2,7 +2,7 @@ import os, tempfile, zipfile, tarfile, logging
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 
-def get_zipfile(file_list):
+def get_zipfile(file_list, zip_name="datahq.zip"):
     """
     Create a ZIP file on disk and transmit it in chunks of 8KB,                 
     without loading the whole file into memory.        
@@ -18,7 +18,7 @@ def get_zipfile(file_list):
     archive.close()
     wrapper = FileWrapper(temp)
     response = HttpResponse(wrapper, content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=commcarehq.zip'
+    response['Content-Disposition'] = 'attachment; filename=%s' % zip_name
     response['Content-Length'] = temp.tell()
     # this seek is required for 'response' to work
     temp.seek(0)    
