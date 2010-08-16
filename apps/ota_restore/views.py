@@ -18,7 +18,7 @@ from phone.models import PhoneUserInfo
 @httpdigest
 def ota_restore(request):
     username = request.user.username
-    username = 'derik'
+    # username = 'derik'
     
     cases_list = {}
         
