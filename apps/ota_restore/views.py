@@ -10,7 +10,7 @@ import time, datetime
 from django_digest.decorators import *
 
 from xml.dom.minidom import parse, parseString
-from receiver.models import Submission
+from receiver.models import Submission, Attachment
 from xformmanager.models import Metadata
 from phone.models import PhoneUserInfo
 
@@ -18,38 +18,32 @@ from phone.models import PhoneUserInfo
 @httpdigest
 def ota_restore(request):
     username = request.user.username
-    # username = 'derik'
+    username = 'derik'
     
     cases_list = {}
         
     try:
-        user_count = len(PhoneUserInfo.objects.filter(username=username).values("username","user_id").distinct())
-
-        # check for multiple entries w/ different user_id
-        if user_count > 1:
-            return HttpResponse("<error>Username '%s' is attached to multiple users</error>" % username, mimetype="text/xml")
-
-        # or no entries at all
-        elif user_count < 1:
-            return HttpResponse("<error>Username '%s' not registered</error>" % username, mimetype="text/xml")
+        pu = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)
         
-        # OK. Go on.
-        phoneuser = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)
-        
-        if len(phoneuser) == 0: raise PhoneUserInfo.DoesNotExist
-        
-        reg = phoneuser[0].attachment.get_contents()
-        if reg is None:
-            return HttpResponse("<error>Cannot find attachment_id %s</error>" % phoneuser[0].attachment.id, mimetype="text/xml")
+        if len(pu) > 1:
+            return HttpResponse("<error>Username '%s' attached to multiple phones</error>" % username, mimetype="text/xml")
 
-        registration_xml = parseString(reg).getElementsByTagNameNS("*", "registration")[0].toxml()
-
+        elif len(pu) < 1:
+            return HttpResponse("<error>No phone linked to username '%s'</error>" % username, mimetype="text/xml")
+        
+        # OK, go on.
+        reg = pu[0].attachment.get_contents()
+        
+        if reg == None:
+            return HttpResponse("<error>Attachment %s empty or non-existant</error>" % pu[0].attachment, mimetype="text/xml")
+        
+        registration_xml = parseString(reg).getElementsByTagName("n0:registration")[0].toxml()
+        
     except PhoneUserInfo.DoesNotExist:
-        registration_xml = ''' 
-            <registration>
-                <username>%s</username>
-            </registration>
-        ''' % username
+        return HttpResponse("<error>No PhoneUser entry or entry without attachment for user '%s'</error>" % username, mimetype="text/xml")
+
+    except Attachment.DoesNotExist:
+        return HttpResponse("<error>Attachment not found: %s</error>" % pu[0].attachment_id, mimetype="text/xml")
         
 
     atts = Metadata.objects.filter(username=username)        
