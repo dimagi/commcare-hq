@@ -9,12 +9,16 @@ def get_zipfile(file_list, zip_name="datahq.zip"):
     """
     temp = tempfile.TemporaryFile()
     archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
-    for file in file_list:
-        file = file.encode("utf-8")
-        if os.path.exists(file):
-            archive.write(file, os.path.basename(file))
+    for path in file_list:
+        try:
+            path, filename = path
+        except:
+            filename = ''
+        path = path.encode("utf-8")
+        if os.path.exists(path):
+            archive.write(path, filename if filename else os.path.basename(path))
         else:
-            logging.warn("zipfile could not find %s" % file)
+            logging.warn("zipfile could not find %s" % path)
     archive.close()
     wrapper = FileWrapper(temp)
     response = HttpResponse(wrapper, content_type='application/zip')

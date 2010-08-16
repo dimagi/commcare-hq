@@ -693,35 +693,42 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     return render_to_response(request, template, context)
 
 def get_temp_csv(elem):
-    temp = tempfile.NamedTemporaryFile(prefix=elem.table_name+'_', suffix=".csv")
-    writer = csv.writer(temp)
-    writer.writerow(elem.get_column_names())
-    for row in elem.get_rows():
-        writer.writerow(row)
+    temp = tempfile.NamedTemporaryFile()
+    format_csv(elem.get_rows(), elem.get_column_names(), '', file=temp)
     # this isn't that nice, but closing temp would delete it
     # and we need to make sure the file has been written to:
     temp.flush()
     return temp
-    
+
 @login_and_domain_required
 @authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
     root = xsd.element
-    tempfiles = []
+    if ElementDefModel.objects.filter(parent=root).count():
+        tempfiles = []
+        
+        def make_filename(table_name):
+            if table_name == root.table_name:
+                return "root.csv"
+            else:
+                start = len(root.table_name) + 1
+                return table_name[start:] + ".csv"
+                
+        visited = set()
+        current = ElementDefModel.objects.filter(id=root.id)
     
-    visited = set()
-    current = ElementDefModel.objects.filter(id=root.id)
-    
-    while current.count():
-        for element in current:
-            if element not in visited:
-                tempfiles.append(get_temp_csv(element))
-                visited.add(element)
-        current = ElementDefModel.objects.filter(parent=current)
+        while current.count():
+            for element in current:
+                if element not in visited:
+                    tempfiles.append( (get_temp_csv(element), make_filename(element.table_name)) )
+                    visited.add(element)
+            current = ElementDefModel.objects.filter(parent=current)
     
     
-    return get_zipfile([temp.name for temp in tempfiles], "%s.zip" % xsd.form_name)
+        return get_zipfile([(temp.name, filename) for (temp, filename) in tempfiles], "%s.zip" % xsd.form_name)
+    else:
+        return format_csv(root.get_rows(), root.get_column_names(), xsd.form_name)
 
 
 def readable_xform(req):

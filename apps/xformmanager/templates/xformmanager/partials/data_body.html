@@ -15,11 +15,11 @@
 {% endif %}
 <br/>
 
-<a href="{% url xformmanager.views.single_xform xform.id %}">more information about this schema</a>
+<a href="{% url xformmanager.views.single_xform xform.id %}">More information about this schema</a>
 <br>
-<a href="{% url xformmanager.views.export_xml xform.id %}">download zip file of xml submissions</a>
+<a href="{% url xformmanager.views.export_xml xform.id %}">Download zip file of xml submissions</a>
 <br>
-<a href="{% url xformmanager.views.export_csv xform.id %}">download csv file</a>
+<a href="{% url xformmanager.views.export_csv xform.id %}">Download csv file</a>
 <br>
 {% if errors %}
     <p class="error">{{ errors }}</p>
