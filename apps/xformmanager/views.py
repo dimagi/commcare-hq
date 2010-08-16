@@ -19,7 +19,7 @@ from webutils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
 from xformmanager.manager import XFormManager
 from xformmanager.models import FormDataGroup, FormDataPointer, FormDataColumn, \
-    FormDefModel, Metadata
+    FormDefModel, ElementDefModel, Metadata
 from xformmanager.templatetags.xform_tags import NOT_SET
 from xformmanager.util import get_unique_value
 from xformmanager.xformdef import FormDef
@@ -27,6 +27,7 @@ import hashlib
 import logging
 import sys
 import traceback
+import tempfile, csv
 
 @login_and_domain_required
 @transaction.commit_manually
@@ -691,11 +692,36 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context['formdef_id'] = formdef_id
     return render_to_response(request, template, context)
 
+def get_temp_csv(elem):
+    temp = tempfile.NamedTemporaryFile(prefix=elem.table_name+'_', suffix=".csv")
+    writer = csv.writer(temp)
+    writer.writerow(elem.get_column_names())
+    for row in elem.get_rows():
+        writer.writerow(row)
+    # this isn't that nice, but closing temp would delete it
+    # and we need to make sure the file has been written to:
+    temp.flush()
+    return temp
+    
 @login_and_domain_required
 @authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
-    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
+    root = xsd.element
+    tempfiles = []
+    
+    visited = set()
+    current = ElementDefModel.objects.filter(id=root.id)
+    
+    while current.count():
+        for element in current:
+            if element not in visited:
+                tempfiles.append(get_temp_csv(element))
+                visited.add(element)
+        current = ElementDefModel.objects.filter(parent=current)
+    
+    
+    return get_zipfile([temp.name for temp in tempfiles], "%s.zip" % xsd.form_name)
 
 
 def readable_xform(req):
