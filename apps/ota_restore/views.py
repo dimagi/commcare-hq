@@ -35,7 +35,6 @@ def ota_restore(request):
         
         # OK. Go on.
         phoneuser = PhoneUserInfo.objects.filter(username=username).filter(attachment__isnull=False)
-        print phoneuser[0].id
         
         if len(phoneuser) == 0: raise PhoneUserInfo.DoesNotExist
         
