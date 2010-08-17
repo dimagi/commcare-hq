@@ -19,7 +19,7 @@ from webutils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
 from xformmanager.manager import XFormManager
 from xformmanager.models import FormDataGroup, FormDataPointer, FormDataColumn, \
-    FormDefModel, Metadata
+    FormDefModel, ElementDefModel, Metadata
 from xformmanager.templatetags.xform_tags import NOT_SET
 from xformmanager.util import get_unique_value
 from xformmanager.xformdef import FormDef
@@ -27,6 +27,8 @@ import hashlib
 import logging
 import sys
 import traceback
+import tempfile, csv
+import unicodedata
 
 @login_and_domain_required
 @transaction.commit_manually
@@ -554,9 +556,12 @@ def single_instance_csv(request, formdef_id, instance_id):
     for row in data:
         w.writerow(row)
     output.seek(0)
+    output_name = unicodedata.normalize('NFKD', xform.form_display_name).encode('ascii','ignore')
+    output_name = output_name[:20]
+    output_name = output_name.replace(' ','_')
     response = HttpResponse(output.read(),
                         mimetype='application/ms-excel')
-    response["content-disposition"] = 'attachment; filename="%s-%s.csv"' % ( xform.form_display_name, instance_id)
+    response["content-disposition"] = 'attachment; filename="%s-%s-%s.csv"' % ( output_name, xform.version, instance_id)
     return response
 
 
@@ -691,11 +696,43 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context['formdef_id'] = formdef_id
     return render_to_response(request, template, context)
 
+def get_temp_csv(elem):
+    temp = tempfile.NamedTemporaryFile()
+    format_csv(elem.get_rows(), elem.get_column_names(), '', file=temp)
+    # this isn't that nice, but closing temp would delete it
+    # and we need to make sure the file has been written to:
+    temp.flush()
+    return temp
+
 @login_and_domain_required
 @authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
-    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
+    root = xsd.element
+    if ElementDefModel.objects.filter(parent=root).count():
+        tempfiles = []
+        
+        def make_filename(table_name):
+            if table_name == root.table_name:
+                return "root.csv"
+            else:
+                start = len(root.table_name) + 1
+                return table_name[start:] + ".csv"
+                
+        visited = set()
+        current = ElementDefModel.objects.filter(id=root.id)
+    
+        while current.count():
+            for element in current:
+                if element not in visited:
+                    tempfiles.append( (get_temp_csv(element), make_filename(element.table_name)) )
+                    visited.add(element)
+            current = ElementDefModel.objects.filter(parent=current)
+    
+    
+        return get_zipfile([(temp.name, filename) for (temp, filename) in tempfiles], "%s.zip" % xsd.form_name)
+    else:
+        return format_csv(root.get_rows(), root.get_column_names(), xsd.form_name)
 
 
 def readable_xform(req):

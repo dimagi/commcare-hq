@@ -65,7 +65,8 @@ class ProgramMembership(models.Model):
         return str(self.member_type) + str(self.member_id) + str(self.member_object)
 
 # monkey-patch users.  See domain/models.py for details
-User.add_to_class('program_membership', 
-                  generic.GenericRelation( ProgramMembership, content_type_field='program_member_type', 
-                                           object_id_field='program_member_id' ) )
+if not hasattr(User, "program_membership"):
+    User.add_to_class('program_membership', 
+                      generic.GenericRelation( ProgramMembership, content_type_field='program_member_type', 
+                                               object_id_field='program_member_id' ) )
 

@@ -4,7 +4,7 @@ MORE INFO AT: http://code.google.com/p/django-rest-interface/wiki/RestifyDjango
 
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _
-import md5, time, random
+import hashlib, time, random
 from hqwebapp.authentication import get_username_password, get_auth_dict
 
 def djangouser_auth(username, password):
@@ -83,7 +83,7 @@ def digest_password(realm, username, password):
     """
     Construct the appropriate hashcode needed for HTTP digest
     """
-    return md5.md5("%s:%s:%s" % (username, realm, password)).hexdigest()
+    return hashlib.md5("%s:%s:%s" % (username, realm, password)).hexdigest()
 
 class HttpDigestAuthentication(Authentication):
     """
@@ -133,12 +133,12 @@ class HttpDigestAuthentication(Authentication):
             Hexadecimal request counter
         """
         ha1 = self.authfunc(realm, username)
-        ha2 = md5.md5('%s:%s' % (http_method, fullpath)).hexdigest()
+        ha2 = hashlib.md5('%s:%s' % (http_method, fullpath)).hexdigest()
         if qop:
             chk = "%s:%s:%s:%s:%s:%s" % (ha1, nonce, nc, cnonce, qop, ha2)
         else:
             chk = "%s:%s:%s" % (ha1, nonce, ha2)
-        computed_response = md5.md5(chk).hexdigest()
+        computed_response = hashlib.md5(chk).hexdigest()
         return computed_response
     
     def challenge_headers(self, stale=''):
@@ -146,9 +146,9 @@ class HttpDigestAuthentication(Authentication):
         Returns the http headers that ask for appropriate
         authorization.
         """
-        nonce  = md5.md5(
+        nonce  = hashlib.md5(
             "%s:%s" % (time.time(), random.random())).hexdigest()
-        opaque = md5.md5(
+        opaque = hashlib.md5(
             "%s:%s" % (time.time(), random.random())).hexdigest()
         self.nonce[nonce] = None
         parts = {'realm': self.realm, 'qop': 'auth',

@@ -68,7 +68,109 @@ class ElementDefModel(models.Model):
 
     def __unicode__(self):
         return self.table_name
+        
+    def _get_cursor(self, column_filters=[], sort_column="id", sort_descending=True):
+        '''Gets a cursor associated with a query against this table.  See
+           get_rows for documentation of the parameters.'''
 
+        # Note that the data view is dependent on id being first
+        if not self.parent:
+            sql = " SELECT su.id as submission_id, su.submit_time, s.* FROM %s s " % self.table_name + \
+                  " JOIN xformmanager_metadata m ON m.raw_data=s.id " + \
+                  " JOIN receiver_attachment a ON m.attachment_id=a.id " + \
+                  " JOIN receiver_submission su ON a.submission_id=su.id " + \
+                  " WHERE m.formdefmodel_id=%s " % self.form.pk
+        else:
+            sql = "SELECT * from %s" % self.table_name
+        # add filtering
+        if column_filters:
+            for filter in column_filters:
+                if len(filter) != 3:
+                    raise TypeError("_get_cursor expects column_filters of length 3 " + \
+                        "e.g.['pk','=','3'] (only %s given)" % len(filter))
+                if isinstance( filter[2],basestring ):
+                    # strings need to be quoted
+                    if filter[0] == 'submit_time':
+                        to_append = " AND su.%s %s '%s' " % tuple( filter )
+                    else:
+                        to_append = " AND s.%s %s '%s' " % tuple( filter )
+                else:
+                    # force non-strings to strings
+                    filter[2] = unicode(filter[2]) 
+                    to_append = " AND s.%s %s %s " % tuple( filter )
+                sql = sql + to_append
+
+        sql = sql + get_sort_string(sort_column, sort_descending)
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        return cursor
+    
+    def get_rows(self, column_filters=[], sort_column="id", sort_descending=True,
+                 blacklist=[]):
+        '''Get rows associated with this form's schema.
+           The column_filters parameter should take in column_name, operation,
+           value triplets to be used in a where clause.  (e.g. ['pk','=','3']) 
+           The default parameters return all the rows in the schema, sorted 
+           by id, descending.'''
+           
+        username_col = self.get_username_column() 
+        if username_col:
+            for blacklisted_user in blacklist:
+                column_filters.append((username_col, "<>", blacklisted_user))
+        return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
+    
+    def get_column_names(self):
+        '''Get the column names associated with this form's schema.'''
+        return get_column_names(self._get_cursor())
+
+    def get_data_column_names(self):
+        '''Get the column names associated with this form's schema and
+           ONLY the schema, no attachment/receiver/anything else.'''
+        return get_column_names_from_table(self.table_name)
+
+    def get_data_column_types(self):
+        '''Get the column types associated with this form's schema and
+           ONLY the schema.'''
+        return get_column_types_from_table(self.table_name)
+
+    def get_display_columns(self):
+        '''
+        Get all columns, in order, as display strings.
+        '''
+        # all this currently does is remove "meta" from the beginning 
+        # of anything and replace underscores with spaces
+        cols = self.get_column_names()
+        to_return = []
+        for col in cols:
+            if col.startswith("meta_"):
+                col = col[5:]
+            to_return.append(col.replace("_", " "))
+        return to_return
+    
+    def get_username_column(self):
+        '''Get the column where usernames are stored.  This is used by the
+           blacklist.  Returns nothing if no username column is known or
+           found.'''
+        # TODO: not hard code this.
+        column = "meta_username"
+        if column in self.get_column_names():
+            return column
+    
+    def get_row(self, id):
+        '''Get a row, by ID.'''
+        list = self.get_rows([['id','=',id]])
+        if len(list) == 1:
+            return list[0]
+        elif not list:
+            return None
+        else:
+            raise Exception("Multiple values for id %s found in form %s" % (id, self ))
+            
+    @property
+    def column_count(self):
+        '''Get the number of columns in this form's schema 
+          (not including repeats)'''
+        return len(self._get_cursor().description)
 class FormDefModel(models.Model):
     # a bunch of these fields have null=True to make unit testing easier
     # also, because creating a form defintion shouldn't be dependent on receiving form through server
@@ -103,7 +205,7 @@ class FormDefModel(models.Model):
     class Meta:
         unique_together = ("domain", "target_namespace", "version")
 
-    
+
     
     def get_attachment(self, instance_id):
         """Attempt to get the attachment object from the instance
@@ -208,107 +310,6 @@ class FormDefModel(models.Model):
         '''Get a DbHelper connected to this form'''
         return dbhelper.DbHelper(self.table_name, self.form_display_name)
     
-    @property
-    def table_name(self):
-        '''Get the table name used by this form'''
-        return self.element.table_name
-    
-    
-    
-    @property
-    def column_count(self):
-        '''Get the number of columns in this form's schema 
-          (not including repeats)'''
-        return len(self._get_cursor().description)
-    
-        
-    def get_row(self, id):
-        '''Get a row, by ID.'''
-        list = self.get_rows([['id','=',id]])
-        if len(list) == 1:
-            return list[0]
-        elif not list:
-            return None
-        else:
-            raise Exception("Multiple values for id %s found in form %s" % (id, self ))
-        
-    def get_rows(self, column_filters=[], sort_column="id", sort_descending=True,
-                 blacklist=[]):
-        '''Get rows associated with this form's schema.
-           The column_filters parameter should take in column_name, operation,
-           value triplets to be used in a where clause.  (e.g. ['pk','=','3']) 
-           The default parameters return all the rows in the schema, sorted 
-           by id, descending.'''
-           
-        username_col = self.get_username_column() 
-        if username_col:
-            for blacklisted_user in blacklist:
-                column_filters.append((username_col, "<>", blacklisted_user))
-        return self._get_cursor(column_filters, sort_column, sort_descending).fetchall()
-        
-    
-    def _get_cursor(self, column_filters=[], sort_column="id", sort_descending=True):
-        '''Gets a cursor associated with a query against this table.  See
-           get_rows for documentation of the parameters.'''
-        
-        # Note that the data view is dependent on id being first
-        sql = " SELECT su.id as submision_id, su.submit_time, s.* FROM %s s " % self.table_name + \
-              " JOIN xformmanager_metadata m ON m.raw_data=s.id " + \
-              " JOIN receiver_attachment a ON m.attachment_id=a.id " + \
-              " JOIN receiver_submission su ON a.submission_id=su.id " + \
-              " WHERE m.formdefmodel_id=%s " % self.pk
-        # add filtering
-        if column_filters:
-            for filter in column_filters:
-                if len(filter) != 3:
-                    raise TypeError("_get_cursor expects column_filters of length 3 " + \
-                        "e.g.['pk','=','3'] (only %s given)" % len(filter))
-                if isinstance( filter[2],basestring ):
-                    # strings need to be quoted
-                    if filter[0] == 'submit_time':
-                        to_append = " AND su.%s %s '%s' " % tuple( filter )
-                    else:
-                        to_append = " AND s.%s %s '%s' " % tuple( filter )
-                else:
-                    # force non-strings to strings
-                    filter[2] = unicode(filter[2]) 
-                    to_append = " AND s.%s %s %s " % tuple( filter )
-                sql = sql + to_append
-        
-        sql = sql + get_sort_string(sort_column, sort_descending)
-        cursor = connection.cursor()
-        cursor.execute(sql)
-        return cursor
-    
-    def get_column_names(self):
-        '''Get the column names associated with this form's schema.'''
-        return get_column_names(self._get_cursor())
-
-    def get_data_column_names(self):
-        '''Get the column names associated with this form's schema and
-           ONLY the schema, no attachment/receiver/anything else.'''
-        return get_column_names_from_table(self.table_name)
-
-    def get_data_column_types(self):
-        '''Get the column types associated with this form's schema and
-           ONLY the schema.'''
-        return get_column_types_from_table(self.table_name)
-
-    def get_display_columns(self):
-        '''
-        Get all columns, in order, as display strings.
-        '''
-        # all this currently does is remove "meta" from the beginning 
-        # of anything and replace underscores with spaces
-        cols = self.get_column_names()
-        to_return = []
-        for col in cols:
-            if col.startswith("meta_"):
-                col = col[5:]
-            to_return.append(col.replace("_", " "))
-        return to_return
-        
-    
     def __unicode__(self):
         return self.form_name
     
@@ -326,14 +327,7 @@ class FormDefModel(models.Model):
         # we can probably get rid of it, actually
         return self.domain
     
-    def get_username_column(self):
-        '''Get the column where usernames are stored.  This is used by the
-           blacklist.  Returns nothing if no username column is known or
-           found.'''
-        # TODO: not hard code this.
-        column = "meta_username"
-        if column in self.get_column_names():
-            return column
+
                 
     
     def export(self):
@@ -372,7 +366,39 @@ class FormDefModel(models.Model):
         except Submission.DoesNotExist:
             return None
         
+    # pointers to methods of Element to preserve old API
+    @property
+    def _get_cursor(self):
+        return self.element._get_cursor
+    @property
+    def get_rows(self):
+        return self.element.get_rows
+    @property
+    def get_column_names(self):
+        return self.element.get_column_names
+    @property
+    def get_data_column_names(self):
+        return self.element.get_data_column_names
+    @property
+    def get_data_column_types(self):
+        return self.element.get_data_column_types
+    @property
+    def get_display_columns(self):
+        return self.element.get_display_columns
+    @property
+    def get_username_column(self):
+        return self.element.get_username_column
+    @property
+    def get_row(self):
+        return self.element.get_row
+    @property
+    def table_name(self):
+        return self.element.table_name
+    @property
+    def column_count(self):
+        return self.element.column_count
 
+    
 class Metadata(models.Model):
     # DO NOT change the name of these fields or attributes - they map to each other
     # in fact, you probably shouldn't even change the order
@@ -383,6 +409,7 @@ class Metadata(models.Model):
     
     # these are all the fields that we accept (though do not require)
     fields = ['deviceid','timestart','timeend','username','formname','formversion','chw_id','uid']
+    
     
     # CZUE: 10-29-2009 I think formname and formversion should now be removed?
     formname = models.CharField(max_length=255, null=True)
