@@ -378,7 +378,7 @@ class FormDefModel(models.Model):
         return self.element.get_column_names
     @property
     def get_data_column_names(self):
-        return self.element.get_column_names
+        return self.element.get_data_column_names
     @property
     def get_data_column_types(self):
         return self.element.get_data_column_types
