@@ -200,7 +200,7 @@ def new_build(request, template_name="builds.html"):
         if buildform.is_valid():
             b = buildform.save(commit=False)
             b.jar_file, b.jad_file, b.zip_file, form_errors = _create_build(request, b)
-            b.is_release = True
+            b.is_release = False
             b.save()
             
             lib.modify_jad(b.jad_file, {'Build-Number' : b.id })
