@@ -15,6 +15,9 @@ urlpatterns = patterns( '', #'releasemanager.views',
     (r'^releasemanager/resource_sets/?$', 'releasemanager.views.resource_sets'),
     (r'^releasemanager/new_resource_set/?$', 'releasemanager.views.new_resource_set'),
     (r'^releasemanager/resources_set/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.resource_set_set_release'),
+
+    (r'^validator/?$', 'releasemanager.views.validator'),
+    (r'^readable_xform/?$', 'releasemanager.views.readable_xform'),
     
     url(r'^releasemanager/download/(?P<path>.*)$', 
             'django.views.static.serve', 

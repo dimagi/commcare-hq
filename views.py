@@ -27,9 +27,10 @@ from django.forms.models import modelformset_factory
 import mimetypes
 import urllib
 from xformmanager.xformdef import FormDef
-
 from releasemanager.exceptions import *
 import releasemanager.lib as lib
+
+from releasemanager import xformvalidator
 
 
 @login_and_domain_required
@@ -352,3 +353,58 @@ def _create_build(request, build):
     os.remove(new_tmp_jar)
 
     return new_jar, new_jad, new_zip, errors
+
+
+
+###### VALIDATOR CODE #######
+
+def readable_xform(req, template_name="readable_form_creator.html"):
+    """Get a readable xform"""
+
+    def get(req, template_name=template_name):
+        return render_to_response(req, template_name, {})
+
+    def post(req, template_name=template_name):
+        xform_body = req.POST["xform"]
+        try:
+            result, errors, has_error = readable_form(xform_body)
+            return render_to_response(req, template_name, {"success": True, 
+                                                           "message": "Your form was successfully validated!",
+                                                           "xform": xform_body,
+                                                           "readable_form": result
+                                                           })
+        except Exception, e:
+            return render_to_response(req, template_name, {"success": False, 
+                                                           "message": "Failure to generate readable xform! %s" % e,
+                                                           "xform": xform_body
+                                                           })
+
+
+    return get_post_redirect(req, get, post)
+
+def validator(req, template_name="validator.html"):
+    """Validate an xform"""
+
+    def get(req, template_name):
+        return render_to_response(req, template_name, {})
+
+    def post(req, template_name):
+        xform_body = req.POST["xform"]
+        hq_validation = True if "hq-validate" in req.POST else False
+        try:
+            xformvalidator.validate_xml(xform_body, do_hq_validation=hq_validation)
+            return render_to_response(req, template_name, {"success": True, 
+                                                           "message": "Your form was successfully validated!",
+                                                           "xform": xform_body
+                                                           })
+        except Exception, e:
+            return render_to_response(req, template_name, {"success": False, 
+                                                           "message": "Validation Fail! %s" % e,
+                                                           "xform": xform_body
+                                                           })
+
+
+    # invoke the correct function...
+    # this should be abstracted away
+    if   req.method == "GET":  return get(req, template_name)
+    elif req.method == "POST": return post(req, template_name)        
