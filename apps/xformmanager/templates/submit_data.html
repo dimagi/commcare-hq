@@ -23,6 +23,8 @@
 <div id="xform-register-block">
 	<h1>Submit XML Data Directly to CommCareHQ</h1>
 	<form action="" method="POST" enctype="multipart/form-data">
+		{% load hq_shared_tags %}
+		{% csrf_token %}
 		<table>
 			{{ upload_form.as_ul}}
 		</table>

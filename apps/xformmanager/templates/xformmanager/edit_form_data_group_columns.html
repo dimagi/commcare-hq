@@ -13,6 +13,9 @@ $(document).ready(function(){
 <h1>{{ group.display_name }}</h1>
 <h3>View Name: {{ group.view_name }}</h3>
 <form method="POST">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <h4>Below you can modify and delete the mapped columns for the individual forms.  Use the boxes 
 to select which column should be used in each form for the shared view.  You can also delete any
 columns you don't want to see.</h4>

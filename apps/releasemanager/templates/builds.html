@@ -10,7 +10,8 @@
 		<input type="submit" value="Submit" />
 	</form>
 	{{errors}}
-	<br />
+	<br />	
+	<p>Note: <strong>New builds are set as "Unreleased" by default</strong>. If you create a new build, you need to manually set it as "Release"</p>
 	{% if resource_set %}
 		Showing builds for resource set <tt>{{resource_set.name}}</tt>. (<a href="{% url releasemanager.views.builds %}">Show all builds</a>)
 	{% endif %}

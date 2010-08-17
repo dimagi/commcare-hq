@@ -8,10 +8,12 @@
 Are you sure you want to delete the schema called "{{form_name}}"? All of the associated data will be removed as well.
 
 <form action="" method="post">
-<div>
-<input type="hidden" name="confirm_delete" value="yes" />
-<input type="submit" value="{% trans "Yes, I'm sure" %}" />
-</div>
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	<div>
+		<input type="hidden" name="confirm_delete" value="yes" />
+		<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+	</div>
 </form>
 
 {% endblock %}

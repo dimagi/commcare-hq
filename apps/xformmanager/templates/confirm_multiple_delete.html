@@ -17,6 +17,9 @@
 	
 	<p/><p/><p/>
 	<form action="" method="post">
+		{% load hq_shared_tags %}
+		{% csrf_token %}
+		
 	<div>
 	<input type="hidden" name="confirm_delete" value="yes" />
 	<input type="submit" value="{% trans "Yes, I'm sure" %}" />

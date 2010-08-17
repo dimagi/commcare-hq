@@ -78,6 +78,9 @@
 Whenever you change a form, be sure to update the xmlns, as this is the <strong>only</strong> mechanism by which CommCareHQ identifies form submissions.
 If you change a form and do not update the xmlns, CommCareHQ will try to map new submissions on to the old form - often resulting in lost or misinterpreted data. 
 <form action="" method="POST" enctype="multipart/form-data">
+	{% load hq_shared_tags %}
+	{% csrf_token %}
+	
 <br>
 <ul style="margin-left:-30px"><!-- I don't know why this is getting indented, so just hack it backwards -->
 {{ upload_form.as_ul }}
