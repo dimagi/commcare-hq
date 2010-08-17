@@ -678,12 +678,98 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
     context['formdef_id'] = formdef_id
     return render_to_response(request, template, context)
 
+def get_temp_csv(elem):
+    temp = tempfile.NamedTemporaryFile()
+    format_csv(elem.get_rows(), elem.get_column_names(), '', file=temp)
+    # this isn't that nice, but closing temp would delete it
+    # and we need to make sure the file has been written to:
+    temp.flush()
+    return temp
+
 @login_and_domain_required
 @authenticate_schema
 def export_csv(request, formdef_id):
     xsd = get_object_or_404( FormDefModel, pk=formdef_id)
-    return format_csv(xsd.get_rows(), xsd.get_column_names(), xsd.form_name)
+    root = xsd.element
+    if ElementDefModel.objects.filter(parent=root).count():
+        tempfiles = []
+        
+        def make_filename(table_name):
+            if table_name == root.table_name:
+                return "root.csv"
+            else:
+                start = len(root.table_name) + 1
+                return table_name[start:] + ".csv"
+                
+        visited = set()
+        current = ElementDefModel.objects.filter(id=root.id)
     
+        while current.count():
+            for element in current:
+                if element not in visited:
+                    tempfiles.append( (get_temp_csv(element), make_filename(element.table_name)) )
+                    visited.add(element)
+            current = ElementDefModel.objects.filter(parent=current)
+    
+    
+        return get_zipfile([(temp.name, filename) for (temp, filename) in tempfiles], "%s.zip" % xsd.form_name)
+    else:
+        return format_csv(root.get_rows(), root.get_column_names(), xsd.form_name)
+
+
+def readable_xform(req):
+    """Get a readable xform"""
+    
+    def get(req):
+        return render_to_response(req, "xformmanager/readable_form_creator.html", {})
+    
+    def post(req, template_name="xformmanager/readable_form_creator.html"):
+        xform_body = req.POST["xform"]
+        try:
+            result, errors, has_error = readable_form(xform_body)
+            return render_to_response(req, "xformmanager/readable_form_creator.html", 
+                                      {"success": True, 
+                                       "message": "Your form was successfully validated!",
+                                       "xform": xform_body,
+                                       "readable_form": result
+                                       })
+        except Exception, e:
+            return render_to_response(req, "xformmanager/readable_form_creator.html", 
+                                      {"success": False, 
+                                       "message": "Failure to generate readable xform! %s" % e,
+                                       "xform": xform_body
+                                       })
+        
+    
+    return get_post_redirect(req, get, post)
+
+def validator(req, template_name="xformmanager/validator.html"):
+    """Validate an xform"""
+    
+    def get(req, template_name):
+        return render_to_response(req, template_name, {})
+    
+    def post(req, template_name):
+        xform_body = req.POST["xform"]
+        hq_validation = True if "hq-validate" in req.POST else False
+        try:
+            xformvalidator.validate_xml(xform_body, do_hq_validation=hq_validation)
+            return render_to_response(req, template_name, {"success": True, 
+                                                           "message": "Your form was successfully validated!",
+                                                           "xform": xform_body
+                                                           })
+        except Exception, e:
+            return render_to_response(req, template_name, {"success": False, 
+                                                           "message": "Validation Fail! %s" % e,
+                                                           "xform": xform_body
+                                                           })
+        
+    
+    # invoke the correct function...
+    # this should be abstracted away
+    if   req.method == "GET":  return get(req, template_name)
+    elif req.method == "POST": return post(req, template_name)        
+
 def get_csv_from_form(formdef_id, form_id=0, filter=''):
     try:
         xsd = FormDefModel.objects.get(id=formdef_id)
