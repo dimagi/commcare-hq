@@ -26,7 +26,7 @@ def render_to_response(req, template_name, dictionary=None, **kwargs):
     }
     
     # A NEW KIND OF LUNACY: inspect the stack to find out
-    # which rapidsms app this function is being called from
+    # which app this function is being called from
     tb = traceback.extract_stack(limit=2)
     sep = os.sep
     if sep == '\\':
