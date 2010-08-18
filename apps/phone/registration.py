@@ -41,14 +41,20 @@ class Registration(object):
         element = ElementTree.XML(xml_payload)
         
         for basic_tag in BASIC_TAGS:   setattr(self, basic_tag, None)
+
         for child in element:
+            
+            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+            if child.tag.startswith("{"): child.tag = child.tag.split('}')[1]
+                
             if child.tag in BASIC_TAGS:
                 setattr(self, child.tag, child.text)
+                
             elif child.tag == ADDITIONAL_DATA_TAG:
                 self.additional_data = {}
                 for generic_data in child:
                     self.additional_data[generic_data.items()[0][1]] = generic_data.text
-        
+            
         if self.date:
             # the expected format is "2010-03-23"
             # self.date = \
@@ -58,6 +64,7 @@ class Registration(object):
 @transaction.commit_on_success
 def create_registration_objects(attachment):
     reg = Registration(attachment)
+    
     # we make these django users for future authentication purposes
     # and generic 'user grouping' functionality
     phone = Phone.objects.get_or_create(device_id=reg.registering_phone_id,
