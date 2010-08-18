@@ -51,21 +51,24 @@ class testingPost(unittest.TestCase):
 
         sel.wait_for_page_to_load("30000")
         # testing creation of xform
+        
         sel.click("link=XForms")
-        time.sleep(3)
+
+        time.sleep(5)
         if sel.is_text_present("Sample Form 1"):
             self.delete_xform(sel)
-        time.sleep(3)
+
+        time.sleep(5)
+        
         path = os.path.join(sys.path[0], "sample_form.xhtml")
         sel.type("id_file", path)
         sel.type("id_form_display_name", "Sample Form 1")
-        time.sleep(3)
+
         sel.click("//div[@id='xform-register-block']/form/ul/li[3]/input")
         sel.wait_for_page_to_load("30000")
-        time.sleep(3)
+
         sel.click("//input[@value=\"Yes, I'm sure\"]")
         sel.wait_for_page_to_load("30000")
-        time.sleep(3)
         
         try: self.failUnless(sel.is_text_present("Sample Form 1"), "New form showed in XForm Listing")
         except AssertionError, e: self.verificationErrors.append(str(e))
@@ -78,13 +81,15 @@ class testingPost(unittest.TestCase):
         submission_number = post(serverhost, domain, temp_file_name)
         sel.click("link=Submissions")
         sel.wait_for_page_to_load("30000")
-        time.sleep(3)
+
         # sel.click("link=%s" % submission_number)
         sel.open("/receiver/review/%s" % submission_number)
         sel.wait_for_page_to_load("30000")
         time.sleep(2)
+
         sel.click("link=view full raw submission")
         time.sleep(2)
+
         file = None
         try:
             file = open(temp_file_name, 'r')
@@ -99,10 +104,10 @@ class testingPost(unittest.TestCase):
         #test to see if form has been processed
         sel.open("/receiver/review")
         sel.wait_for_page_to_load("30000")
-        time.sleep(3)
+
         # sel.click("link=%s" % submission_number)
         sel.open("/receiver/review/%s" % submission_number)
-        time.sleep(3)
+
         sel.wait_for_page_to_load("30000")
         try: 
             self.failUnless(sel.is_text_present("view form data"), "xml submission was parsed and matched to form")
@@ -123,7 +128,9 @@ class testingPost(unittest.TestCase):
         sel.wait_for_page_to_load("30000")
         sel.click("//div[@onclick=\"show_forms('http://dev.commcarehq.org/BRAC/CHP/coakley', '#formlist');\"]")
         sel.click("//div[@onclick=\"show_forms('http://dev.commcarehq.org/BRAC/CHP/coakley', '#formlist');\"]")
-        time.sleep(2)
+
+        time.sleep(5) # wait for popup to pop up
+        
         sel.click("link=drop this form")
         sel.wait_for_page_to_load("30000")
         sel.click("//input[@value=\"Yes, I'm sure\"]")
