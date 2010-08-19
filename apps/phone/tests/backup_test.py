@@ -40,4 +40,3 @@ class BackupTestCase(unittest.TestCase):
                             (submission=backup.attachment.submission)
         self.assertEqual(APP_NAME, way_handled.handled.app)
         self.assertEqual(BACKUP_HANDLER, way_handled.handled.method)
-        

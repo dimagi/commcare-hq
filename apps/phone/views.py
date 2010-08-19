@@ -80,6 +80,19 @@ def link_user(request, user_id):
                               {"phone_user": phone_user,
                                "user_selection_form": user_selection_form })
 
+@login_and_domain_required
+def delete_user(request, user_id):
+    phone_user = get_object_or_404(PhoneUserInfo, id=user_id, phone__domain=request.user.selected_domain)
+
+    phone_user.delete()
+    
+    if phone_user.user is not None:
+        PhoneUserInfo.objects.filter(user=phone_user.user).delete()
+        phone_user.user.delete()
+        
+    return HttpResponseRedirect(reverse('phone_index'))
+    
+    
 def restore(request, backup_id):
     """Get a backup file by id"""
     backup = get_object_or_404(PhoneBackup,id=backup_id)
