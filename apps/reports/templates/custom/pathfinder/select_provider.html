@@ -5,7 +5,7 @@
 {% block content %}
 <h2>Select Report Parameters</h2>
 
-<form action="{% url reports.views.sum_provider %}" method="post">
+<form action="{% url reports.views.sum_provider %}" method="get">
 Month: <select name="month">
 <option value="01">January</option>
 <option value="02">February</option>

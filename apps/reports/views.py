@@ -180,7 +180,7 @@ def sum_provider(request):
 
     provider = None
     if request:
-        for item in request.POST.items():
+        for item in request.GET.items():
             if item[0] == 'provider':
                 provider=item[1]
     (month, year, startdate, enddate) = get_mon_year(request)
@@ -196,7 +196,7 @@ def sum_ward(request):
     (month, year, startdate, enddate) = get_mon_year(request)
     ward = ""
     if request:
-        for item in request.POST.items():
+        for item in request.GET.items():
             if item[0] == 'ward':
                 ward = item[1]
     context = get_ward_summary_data(startdate, enddate, month, year, ward)
@@ -209,7 +209,7 @@ def hbc_monthly_sum(request):
     (month, year, startdate, enddate) = get_mon_year(request)
     ward = ""
     if request:
-        for item in request.POST.items():
+        for item in request.GET.items():
             if item[0] == 'ward':
                 ward = item[1]
     context = get_hbc_summary_data(startdate, enddate, month, year, ward)
@@ -224,7 +224,7 @@ def select_prov(request):
     blacklist = BlacklistedUser.for_domain(domain)
     ward = ""
     if request:
-        for item in request.POST.items():
+        for item in request.GET.items():
             if item[0] == 'ward':
                 ward = item[1]
     providers = {}

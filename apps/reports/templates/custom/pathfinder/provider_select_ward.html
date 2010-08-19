@@ -1,6 +1,6 @@
 <h2>Select Report Parameters</h2>
 
-<form action="{% url reports.views.select_prov %}" method="post">
+<form action="{% url reports.views.select_prov %}" method="get">
 Ward: <select name="ward">
 {% for ward in wards %}
 <option value="{{ ward }}">{{ ward }}</option>

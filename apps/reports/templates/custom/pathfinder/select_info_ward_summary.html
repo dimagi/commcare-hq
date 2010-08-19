@@ -1,6 +1,6 @@
 <h2>Select Report Parameters</h2>
 
-<form action="{% url reports.views.sum_ward %}" method="post">
+<form action="{% url reports.views.sum_ward %}" method="get">
 
 Ward: <select name="ward">
 {% for ward in wards %}

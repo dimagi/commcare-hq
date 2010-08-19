@@ -423,7 +423,7 @@ def get_mon_year(request):
     year = ""
     month = ""
     if request:
-        for item in request.POST.items():
+        for item in request.GET.items():
             if item[0] == 'year':
                 year = int(item[1])
             if item[0] == 'month':
