@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+# from django.contrib.auth.decorators import user_passes_test
+
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 
 from rapidsms.webui.utils import render_to_response, UnicodeWriter
 
@@ -9,7 +11,7 @@ from transformers.csv import format_csv
 from models import Case, SqlReport
 from xformmanager.models import FormDefModel
 from hq.utils import paginate, get_dates_reports
-from domain.decorators import login_and_domain_required
+from domain.decorators import login_and_domain_required, require_domain
 
 import util
 from custom.all.shared import *
@@ -175,6 +177,10 @@ def individual_chw(request, domain_id, case_id, chw_id, enddate, active):
     return render_to_response(request, "custom/all/individual_chw.html", 
                               context)
 
+
+# Pathfinder reports
+
+@require_domain("pathfinder")
 def sum_provider(request):
     '''View a single provider summary report'''
 
@@ -191,6 +197,8 @@ def sum_provider(request):
                               "custom/pathfinder/sum_by_provider_report.html",
                               context)
 
+
+@require_domain("pathfinder")
 def sum_ward(request):
     '''View the ward summary report'''
     (month, year, startdate, enddate) = get_mon_year(request)
@@ -204,6 +212,8 @@ def sum_ward(request):
                               "custom/pathfinder/ward_summary_report.html", 
                               context)
 
+
+@require_domain("pathfinder")
 def hbc_monthly_sum(request):
     ''' View the hbc monthly summary report'''
     (month, year, startdate, enddate) = get_mon_year(request)
@@ -217,6 +227,8 @@ def hbc_monthly_sum(request):
                               "custom/pathfinder/hbc_summary_report.html", 
                               context)
     
+
+@require_domain("pathfinder")
 def select_prov(request):
     '''Given a ward, select the provider and date for the report'''
     context = {}
@@ -248,6 +260,8 @@ def select_prov(request):
                               "custom/pathfinder/select_provider.html", 
                               context)
     
+    
+@require_domain("pathfinder")
 def ward_sum_csv(request, month, year, ward):
     ''' Creates CSV file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
@@ -269,6 +283,8 @@ def ward_sum_csv(request, month, year, ward):
                                         % ( ward, month, year)
     return response
 
+
+@require_domain("pathfinder")
 def sum_prov_csv(request, chw_id, month, year):
     ''' Creates CSV file of summary by provider report'''
     case_name = "Pathfinder_1"
@@ -308,6 +324,8 @@ def sum_prov_csv(request, chw_id, month, year):
                                         % ( username, month, year)
     return response
 
+
+@require_domain("pathfinder")
 def hbc_sum_csv(request, month, year, ward):
     '''Creates csv file of HBC monthly summary report'''
     case_name = "Pathfinder_1" 
@@ -345,6 +363,8 @@ def hbc_sum_csv(request, month, year, ward):
                                         % ( ward, month, year)
     return response
 
+
+@require_domain("pathfinder")
 def ward_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of ward summary report'''
     (startdate, enddate) = get_start_end(month, year)
@@ -356,6 +376,8 @@ def ward_sum_pdf(request, month, year, ward):
     get_ward_summary_pdf(startdate, enddate, month, year, ward, doc)
     return response
 
+
+@require_domain("pathfinder")
 def hbc_sum_pdf(request, month, year, ward):
     ''' Creates PDF file of HBC monthly summary report'''
     (startdate, enddate) = get_start_end(month, year)
@@ -369,6 +391,8 @@ def hbc_sum_pdf(request, month, year, ward):
     get_hbc_monthly_pdf(month, year, chw_obj, ward, doc)
     return response
 
+
+@require_domain("pathfinder")
 def sum_prov_pdf(request, chw_id, month, year):
     '''Creates PDF file of summary by provider report'''
     case_name = "Pathfinder_1"
