@@ -83,7 +83,6 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
                 return _redirect_for_login_or_domain( request, redirect_field_name, l_domain_select_url )
             
             elif require_domain is not None and user.selected_domain.name.lower() != require_domain.lower():
-                print "require_domain ", require_domain
                 return _redirect_for_login_or_domain( request, redirect_field_name, l_domain_select_url )
             
             # User's login and domain have been validated - it's safe to call the view function
