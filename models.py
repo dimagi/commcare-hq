@@ -3,13 +3,20 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import post_save
-from django.template.loader import render_to_string
 import datetime
 import settings
 
-#this is hacky until the email backend is incorporated fully
-from hq.reporter.agents import *
+#preliminary checks for settings variables
+
+if not hasattr(settings, "LOGTRACKER_ALERT_EMAILS"):
+    raise Exception("Error, Logtracker must have the property LOGTRACKER_ALERT_EMAILS as a list of emails in your settings file")
+
+if not hasattr(settings, "LOGTRACKER_LOG_THRESHOLD"):
+    raise Exception("Error, Logtracker must have an integer LOGTRACKER_LOG_THRESHOLD property in your settings file.")
+
+if not hasattr(settings, "LOGTRACKER_ALERT_THRESHOLD"):
+    raise Exception("Error, Logtracker must have an integer LOGTRACKER_ALERT_THRESHOLD property in your settings file.")
+
 
 class LogTrack(models.Model):
     """
@@ -46,29 +53,4 @@ class LogTrack(models.Model):
         verbose_name = _("Log Tracker")
 
 
-# Signal registration is done here in the models instead of the views because
-# everytime someone hits a view and that messes up the process registration
-# whereas models is loaded once
-def sendAlert(sender, instance, created, *args, **kwargs): #get sender, instance, created    
-    # only send emails on newly created logs, not all of them
-    if not created:
-        return 
-    
-    #set a global threshold to say if anything is a logging.ERROR, chances are
-    #we always want an alert.
-    if instance.level >= int(settings.RAPIDSMS_APPS['logtracker']['alert_threshold']):
-        eml = EmailAgent()    
-        context = {}
-        context['log'] = instance    
-        rendered_text = render_to_string("logtracker/alert_display.html", context)
-        # Send it to an email address baked into the settings/ini file.
-        # restrict the subject to 78 characters to comply with the RFC
-        title = ("[Commcare-hq Alert] " + instance.message)[:78]
-        # newlines makey title mad
-        title = title.replace("\n", ",")
-        eml.send_email(title,
-                       settings.RAPIDSMS_APPS['logtracker']['default_alert_email'], 
-                       rendered_text)
-            
-# Register to receive signals from LogTrack
-post_save.connect(sendAlert, sender=LogTrack)
+import signals
