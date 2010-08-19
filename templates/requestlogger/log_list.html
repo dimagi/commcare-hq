@@ -1,0 +1,7 @@
+{% extends base_template %}
+{% load i18n %} 
+{% block content %}
+
+Here are your requests
+{% include "requestlogger/partials/log_table.html" %}
+{% endblock %}
