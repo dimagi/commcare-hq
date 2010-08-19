@@ -13,7 +13,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth.models import User
 
 from rapidsms.webui.utils import render_to_response
-from domain.decorators import login_and_domain_required
+from domain.decorators import require_domain
 
 # import reports.util as util
 # from reports.models import Case
@@ -33,7 +33,7 @@ from intel.models import *
 # The idea is to make it easier to maintain/debug
 # and allow users who wish to, to get to know the system further than their restricted paths
 
-@login_and_domain_required
+@require_domain("grameen")
 def homepage(request):
     context = { 'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
@@ -41,7 +41,7 @@ def homepage(request):
     return render_to_response(request, "home.html", context)
 
 
-@login_and_domain_required
+@require_domain("grameen")
 def report(request, format):
     context = {'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
@@ -146,7 +146,7 @@ def report(request, format):
     else:
         return render_to_response(request, "report.html", context)
     
-@login_and_domain_required
+@require_domain("grameen")
 def record_visit(request):
     ClinicVisit(
         mother_name=request.POST['mother_name'], 
@@ -157,7 +157,7 @@ def record_visit(request):
     
     return HttpResponseRedirect(request.POST['return_to'])
 
-@login_and_domain_required
+@require_domain("grameen")
 def delete_visit(request):
     ClinicVisit(
         id=request.POST['id']
@@ -166,7 +166,7 @@ def delete_visit(request):
     return HttpResponseRedirect(request.POST['return_to'])
     
     
-@login_and_domain_required    
+@require_domain("grameen")    
 def mother_details(request):
     chw, case_id = request.GET['case_id'].split('|')
     mother_name = request.GET['mother_name']
@@ -199,7 +199,7 @@ def mother_details(request):
 
 
 # Chart Methods
-@login_and_domain_required
+@require_domain("grameen")
 def chart(request, template_name="chart.html"):    
     context = {'page' : "chart" , 'clinic' : _get_clinic(request)}
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
@@ -247,7 +247,7 @@ def chart(request, template_name="chart.html"):
     
     
 # per clinic UI
-@login_and_domain_required
+@require_domain("grameen")
 def hq_chart(request, template_name="hq_chart.html"):
     context = { 'page': "hq_chart", 'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
@@ -304,7 +304,7 @@ def hq_chart(request, template_name="hq_chart.html"):
     return render_to_response(request, template_name, context)
 
 
-@login_and_domain_required
+@require_domain("grameen")
 def hq_risk(request, template_name="hq_risk.html"):
     context = { 'page' : "hq_risk", 'clinic' : _get_clinic(request) }
     context['hq_mode'] = (context['clinic']['name'] == 'HQ')
