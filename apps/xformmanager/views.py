@@ -727,7 +727,7 @@ def export_csv(request, formdef_id):
                 if element not in visited:
                     tempfiles.append( (get_temp_csv(element), make_filename(element.table_name)) )
                     visited.add(element)
-            current = ElementDefModel.objects.filter(parent=current)
+            current = ElementDefModel.objects.filter(parent__in=current)
     
     
         return get_zipfile([(temp.name, filename) for (temp, filename) in tempfiles], "%s.zip" % xsd.form_name)
