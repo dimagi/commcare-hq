@@ -8,7 +8,7 @@ from datetime import datetime
 from django.conf import settings
 from django.db import connection
 import unittest
-from shared_code.dbutils import is_configured_realsql
+from shared_code.dbutils import is_configured_realsql, is_configured_postgres, is_configured_mysql
 
 class VersionedTestCase(unittest.TestCase):
     def setUp(self):
@@ -125,7 +125,10 @@ class VersionedTestCase(unittest.TestCase):
                 row = cursor.fetchall()
                 self.assertEquals(row[0][1],"userid0")
                 self.assertEquals(row[0][2],"deviceid0")
-                if is_configured_realsql():
+                if is_configured_postgres():
+                    self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30,300000) )
+                    self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30,300000) )
+                elif is_configured_mysql():
                     self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30) )
                     self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30) )
                 else:
@@ -165,7 +168,10 @@ class VersionedTestCase(unittest.TestCase):
             row = cursor.fetchall()
             self.assertEquals(row[0][1],"userid0")
             self.assertEquals(row[0][2],"deviceid0")
-            if is_configured_realsql():
+            if is_configured_postgres():
+                self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30,300000) )
+                self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30,300000) )
+            elif is_configured_mysql():
                 self.assertEquals(row[0][3],datetime(2009,10,9,11,4,30) )
                 self.assertEquals(row[0][4],datetime(2009,10,9,11,9,30) )
             else:
