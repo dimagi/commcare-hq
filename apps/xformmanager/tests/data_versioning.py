@@ -79,9 +79,6 @@ class DataVersioningTestCase(unittest.TestCase):
         original_list = [self.original_formdef, fd2_dup, fd3_add, fd4_del, fd5_mod] 
                                           
         dom = Domain.objects.all()[0]
-        print "START"
-        print unicode(original_list)
-        print unicode(dom)
         group = FormDataGroup.from_forms(original_list, dom)
         self.assertEqual(5, len(group.forms.all()))
         for form in group.forms.all():
