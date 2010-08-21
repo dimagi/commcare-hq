@@ -23,9 +23,9 @@ from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse
 from domain.decorators import login_and_domain_required
-from webutils import render_to_response
+from corehq.shared_code.webutils import render_to_response
 
-import datahq.shared_code.hqutils as utils
+import corehq.shared_code.hqutils as utils
 
 from xformmanager.models import *
 # from hq.models import *

@@ -1,15 +1,15 @@
-from datahq.apps.xformmanager.models import FormDefModel, Metadata
+from xformmanager.models import FormDefModel, Metadata
 from datetime import datetime
 from django.conf import settings
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from datahq.apps.django_rest_interface import util
-from datahq.apps.django_rest_interface.resource import Resource
-from datahq.shared_code.transformers.csv import get_csv_from_django_query, format_csv
-from datahq.shared_code.transformers.zip import get_zipfile, get_tarfile
-from datahq.apps.xformmanager.xformdef import FormDef
+from django_rest_interface import util
+from django_rest_interface.resource import Resource
+from corehq.shared_code.transformers.csv import get_csv_from_django_query, format_csv
+from corehq.shared_code.transformers.zip import get_zipfile, get_tarfile
+from xformmanager.xformdef import FormDef
 import logging
 import os
 

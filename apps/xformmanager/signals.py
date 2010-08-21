@@ -1,7 +1,7 @@
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
-from datahq.apps.receiver.models import Attachment
+from receiver.models import Attachment
 from django.db.models.signals import post_save
 import logging
 import sys

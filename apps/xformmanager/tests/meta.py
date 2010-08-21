@@ -1,10 +1,10 @@
-from datahq.apps.domain.models import Domain
-from datahq.apps.receiver.models import SubmissionHandlingOccurrence, Attachment, \
+from domain.models import Domain
+from receiver.models import SubmissionHandlingOccurrence, Attachment, \
     Submission
-from datahq.apps.xformmanager.manager import XFormManager, FormDefError
-from datahq.apps.xformmanager.models import Metadata, MetaDataValidationError, \
+from xformmanager.manager import XFormManager, FormDefError
+from xformmanager.models import Metadata, MetaDataValidationError, \
     FormDefModel
-from datahq.apps.xformmanager.tests.util import clear_data, \
+from xformmanager.tests.util import clear_data, \
     create_xsd_and_populate, populate
 from datetime import datetime, timedelta
 from django.conf import settings

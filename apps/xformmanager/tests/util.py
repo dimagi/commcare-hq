@@ -1,12 +1,12 @@
 import logging
 import os
 
-from datahq.apps.domain.models import Domain
-from datahq.apps.xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
-from datahq.apps.xformmanager.manager import XFormManager
-from datahq.apps.xformmanager.storageutility import StorageUtility
-from datahq.apps.receiver.models import Submission, Attachment
-from datahq.apps.receiver.tests.util import get_full_path, makeNewEntry
+from domain.models import Domain
+from xformmanager.models import FormDataColumn, FormDataGroup, FormDataPointer
+from xformmanager.manager import XFormManager
+from xformmanager.storageutility import StorageUtility
+from receiver.models import Submission, Attachment
+from receiver.tests.util import get_full_path, makeNewEntry
 
 
 def clear_data():

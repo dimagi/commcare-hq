@@ -2,9 +2,9 @@ import unittest
 from datetime import datetime
 from django.conf import settings
 from django.db import connection
-from datahq.apps.domain.models import Domain
-from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
-from dbutils import is_configured_realsql
+from domain.models import Domain
+from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from shared_code.dbutils import is_configured_realsql
 
 class RepeatTestCase(unittest.TestCase):
     

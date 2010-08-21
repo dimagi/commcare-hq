@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRe
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.core.exceptions import *
-from webutils import render_to_response
+from corehq.shared_code.webutils import render_to_response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 from xformmanager.manager import XFormManager
 # this import is just so we can get StorageUtility.XFormError
 from xformmanager.storageutility import StorageUtility
-from transformers.zip import get_zipfile
+from corehq.shared_code.transformers.zip import get_zipfile
 
 from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
 
@@ -26,7 +26,7 @@ from receiver.submitresponse import SubmitResponse
 from django.contrib.auth.models import User
 
 from domain.decorators import login_and_domain_required
-from hqutils import paginate
+from corehq.shared_code.hqutils import paginate
 
 
 import logging

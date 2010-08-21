@@ -1,12 +1,12 @@
 from django.db import connection
 from django.conf import settings
 
-from datahq.apps.domain.models import Domain
-from datahq.apps.receiver.models import SubmissionHandlingOccurrence
-from datahq.apps.xformmanager.models import Metadata
-from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
-from datahq.apps.xformmanager.storageutility import StorageUtility
-from datahq.apps.xformmanager.manager import XFormManager
+from domain.models import Domain
+from receiver.models import SubmissionHandlingOccurrence
+from xformmanager.models import Metadata
+from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from xformmanager.storageutility import StorageUtility
+from xformmanager.manager import XFormManager
 
 import unittest
 

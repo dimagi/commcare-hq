@@ -13,7 +13,7 @@ from receiver.models import Attachment
 # # the scheduler is a really bad place for this class to live
 # from scheduler.fields import PickledObjectField
 
-from datahq.shared_code.djangoplus.fields import PickledObjectField
+from corehq.shared_code.djangoplus.fields import PickledObjectField
 from xformmanager.models import Metadata
 import xformmanager.xmlrouter as xmlrouter
 

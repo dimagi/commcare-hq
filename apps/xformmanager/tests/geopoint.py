@@ -1,11 +1,11 @@
 from django.db import connection
 
-from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
 
 import os
 import unittest
-from datahq.util.test import replace_in_file
-from datahq.apps.domain.models import Domain
+from corehq.util.test import replace_in_file
+from domain.models import Domain
 
 LAT = 10.001666666666667
 LON = 11.001666666666667

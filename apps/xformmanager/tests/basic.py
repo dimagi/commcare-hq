@@ -1,15 +1,15 @@
 from django.db import connection
 from django.conf import settings
 
-from datahq.apps.xformmanager.manager import XFormManager
-from datahq.apps.xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
-from datahq.apps.xformmanager.models import FormDefModel, Metadata, ElementDefModel
-from datahq.apps.domain.models import Domain
+from xformmanager.manager import XFormManager
+from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
+from xformmanager.models import FormDefModel, Metadata, ElementDefModel
+from domain.models import Domain
 
 from decimal import Decimal
 from datetime import datetime, date, time
 import unittest
-from dbutils import is_realsql, is_configured_realsql, is_configured_mysql
+from shared_code.dbutils import is_realsql, is_configured_realsql, is_configured_mysql
 
 class BasicTestCase(unittest.TestCase):
     

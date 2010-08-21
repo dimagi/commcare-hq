@@ -10,12 +10,12 @@ import logging
 
 from django.conf import settings
 
-from datahq.apps.xformmanager.storageutility import StorageUtility
-from datahq.apps.xformmanager.xformdef import FormDef
-from datahq.apps.xformmanager.copy import prepare_migration_objects, migrate
-from datahq.apps.xformmanager.models import MetaDataValidationError, Metadata, ElementDefModel
-from datahq.apps.xformmanager.util import table_exists
-from datahq.apps.receiver.models import Attachment
+from xformmanager.storageutility import StorageUtility
+from xformmanager.xformdef import FormDef
+from xformmanager.copy import prepare_migration_objects, migrate
+from xformmanager.models import MetaDataValidationError, Metadata, ElementDefModel
+from xformmanager.util import table_exists
+from receiver.models import Attachment
 
 class XFormManager(object):
     """A central location for managing xforms.  This object includes 

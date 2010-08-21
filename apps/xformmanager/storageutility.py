@@ -23,12 +23,12 @@ from MySQLdb import IntegrityError
 from django.db import connection, transaction, DatabaseError
 
 from xformmanager.models import ElementDefModel, FormDefModel, Metadata
-import datahq.apps.xformmanager.const as const
+import xformmanager.const as const
 from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
-from dbutils import is_configured_mysql, is_configured_postgres
+from shared_code.dbutils import is_configured_mysql, is_configured_postgres
 
 
 # The maximum length a field is allowed to be.  Column names will get truncated

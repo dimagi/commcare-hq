@@ -1,7 +1,7 @@
 from StringIO import StringIO
-from datahq.apps.xformmanager import xformvalidator
-from datahq.apps.xformmanager.manager import readable_form
-from dbutils import get_column_names
+from xformmanager import xformvalidator
+from xformmanager.manager import readable_form
+from shared_code.dbutils import get_column_names
 from django.core.urlresolvers import reverse
 from django.db import transaction, connection
 from django.db.models import signals
@@ -10,12 +10,12 @@ from django.http import HttpResponseRedirect, HttpResponse, \
 from django.shortcuts import get_object_or_404
 from domain.decorators import login_and_domain_required
 from domain.models import Domain
-from hqutils import paginate, get_table_display_properties, get_post_redirect
+from corehq.shared_code.hqutils import paginate, get_table_display_properties, get_post_redirect
 from receiver import submitprocessor
 from receiver.models import Attachment
-from transformers.csv import UnicodeWriter, format_csv
-from transformers.zip import get_zipfile
-from webutils import render_to_response
+from corehq.shared_code.transformers.csv import UnicodeWriter, format_csv
+from corehq.shared_code.transformers.zip import get_zipfile
+from corehq.shared_code.webutils import render_to_response
 from xformmanager.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
 from xformmanager.manager import XFormManager
 from xformmanager.models import FormDataGroup, FormDataPointer, FormDataColumn, \
