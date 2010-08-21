@@ -758,7 +758,6 @@ class FormDataGroup(models.Model):
         
         cursor = connection.cursor()
         try: 
-            print "SQL: "  + view_creation_statement
             cursor.execute(view_creation_statement)
             transaction.commit_unless_managed()
         except:
