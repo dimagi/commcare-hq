@@ -1,4 +1,4 @@
-import logging
+import logging, sys, traceback
 
 from receiver.models import SubmissionHandlingType
 
@@ -33,4 +33,6 @@ def create_phone_user(attachment):
                                                                    method=REGISTRATION_HANDLER)[0]
         attachment.submission.handled(handle_type)
     except Exception, e:
-        logging.error(e)
+        type, value, tb = sys.exc_info()
+        traceback_string = "\n\nTRACEBACK: " + '\n'.join(traceback.format_tb(tb))
+        logging.error(unicode(traceback_string))
