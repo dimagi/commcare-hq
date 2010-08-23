@@ -7,10 +7,14 @@ sys.path.append('..')
 
 sys.path.append(os.path.join(filedir))
 sys.path.append(os.path.join(filedir,'apps'))
+
+#corehq
+sys.path.append(os.path.join(filedir,'corehq'))
+sys.path.append(os.path.join(filedir,'corehq','apps'))
+
+#rapidsms
 sys.path.append(os.path.join(filedir,'rapidsms'))
 sys.path.append(os.path.join(filedir,'rapidsms','apps'))
-
-#rapidsms lib stuff
 sys.path.append(os.path.join(filedir,'rapidsms','lib'))
 sys.path.append(os.path.join(filedir,'rapidsms','lib','rapidsms'))
 sys.path.append(os.path.join(filedir,'rapidsms','lib','rapidsms','webui'))

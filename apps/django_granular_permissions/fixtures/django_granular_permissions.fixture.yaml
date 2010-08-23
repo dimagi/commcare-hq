@@ -1,4 +1,0 @@
-- fields: {content_type: 11, group: null, name: admin, object_id: 1, user: 2}
-  model: django_granular_permissions.permission
-  pk: 1
-
