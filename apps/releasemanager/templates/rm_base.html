@@ -1,0 +1,24 @@
+{% extends base_template %}
+
+{% block hq-stylesheets %}
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/pygments.css" />
+	<link rel="stylesheet" href="{{MEDIA_URL}}/hq/stylesheets/tooltip.css" />
+{% endblock %}
+
+{% block javascripts %}
+	<script type="text/javascript" src="{{MEDIA_URL}}/hq/javascripts/tooltip.js"></script>
+{% endblock %}
+
+{% block content %}
+	<div id="subheading">
+		<ul>
+			<li><a href="{% url releasemanager.views.projects %}"><b>Projects</b></a></li>
+			<li>&nbsp;</li>
+			<li><a href="{% url releasemanager.views.builds %}"><b>Builds</b></a></li>  
+			<li><a href="{% url releasemanager.views.jarjad %}">Mobile Client Binary</a></li>  
+			<li><a href="{% url releasemanager.views.resource_sets %}">Resource Sets</a></li>  
+		</ul>
+	</div>
+	{% block releasemanager_content %}
+	{% endblock %}
+{% endblock %}

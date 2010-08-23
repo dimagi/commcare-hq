@@ -1,0 +1,28 @@
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Created At</th>
+		<th>URL</th>
+		<th></th>
+		<th></th>
+	</thead>
+	{% for item in items %}
+
+	    <tr class="{% cycle 'odd' 'even' %}">
+			<td>{{item.name}}</td>
+	        <td>{{item.created_at|date}} {{item.created_at|time}}</td>
+	        <td>
+	            <a href="{{item.url}}">{{item.url}}</a>
+	        </td>
+	        <td>
+				{% if item.is_release %}
+	           		<button onclick="location.assign('{% url releasemanager.views.resource_set_set_release item.id 'false'%}');">Remove from Releases</button>
+				{% else %}
+					<button onclick="location.assign('{% url releasemanager.views.resource_set_set_release item.id 'true'%}');">Release</button>
+	            {% endif %}
+	        </td>
+			<td><a href="{% url releasemanager.views.builds %}?resource_set={{ item.id }}">Builds</td>
+	    </tr>
+
+	{%endfor%}
+</table>

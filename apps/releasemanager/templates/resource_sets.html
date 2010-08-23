@@ -1,0 +1,43 @@
+{% extends "rm_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Builds" %}{% endblock %}
+
+{% block releasemanager_content %}
+	<h2>{% trans "Add New Resource Set" %}</h2>
+	
+	<form action="{% url releasemanager.views.new_resource_set %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
+		<style>
+		#id_url { width: 300px; }
+		#id_name { width: 200px; }
+		</style>
+		{{form.as_ul}}
+		<input type="submit" value="Submit" />
+	</form>
+	{{errors}}
+		
+	<br />
+	
+	{% if items.released %}
+		<p>
+			{% with items.released as items %}
+				{% include "partials/list_resource_set.html" %}
+			{% endwith %}
+		</p>
+	{% else %}
+		<p><h3>No Resource Sets Released Yet</h3></p>
+	{% endif %}
+		
+ 	{% if items.unreleased %}
+		<p>
+			<div align="center"><button onclick="$('#the-unreleased').toggle(300)">View Unreleased Resource Sets</button></div>
+			<br />
+			<div id="the-unreleased" style="display:none;">
+				{% with items.unreleased as items %}
+					{% include "partials/list_resource_set.html" %}
+				{% endwith %}
+			</div>
+		</p>
+	{% endif %}
+	
+{%endblock%}
