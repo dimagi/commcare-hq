@@ -118,17 +118,16 @@ def dashboard(request, template_name="hqwebapp/dashboard.html"):
     for user, data in unregistered_map.items():
         grand_totals[user] = sum([value for value in data.values()])
     
-    context = RequestContext(request)
-    context.update({"program_data": program_data_structure,
+    context = {"program_data": program_data_structure,
                                "program_totals": program_totals,
                                "unregistered_data": unregistered_map,
                                "unregistered_totals": grand_totals,
                                "dates": dates,
                                "startdate": startdate,
-                               "enddate": enddate})
+                               "enddate": enddate}
     
     
-    return render_to_response(template_name, context)
+    return render_to_response(request, template_name, context)
 
 
 
