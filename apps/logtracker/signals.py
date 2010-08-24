@@ -4,6 +4,9 @@ import settings
 from models import LogTrack
 from django.template.loader import render_to_string
 
+from django.core.mail.message import EmailMessage
+from django.core.mail import SMTPConnection
+
 
 def sendAlert(sender, instance, created, *args, **kwargs): #get sender, instance, created    
     # only send emails on newly created logs, not all of them
@@ -18,7 +21,24 @@ def sendAlert(sender, instance, created, *args, **kwargs): #get sender, instance
         # Send it to an email address baked into the settings/ini file.
         # restrict the subject to 78 characters to comply with the RFC
         title = ("[Log Tracker] " + instance.message)[:78]
-        # newlines makey title mad
+        # newlines makey title mad        
         title = title.replace("\n", ",")
-        send_mail(title, rendered_text, settings.EMAIL_LOGIN, settings.LOGTRACKER_ALERT_EMAILS, fail_silently=True)
+        
+        conn = SMTPConnection(username=settings.EMAIL_LOGIN,
+                                   port=settings.EMAIL_SMTP_PORT,
+                                   host=settings.EMAIL_SMTP_HOST,
+                                   password=settings.EMAIL_PASSWORD,
+                                   use_tls=True,
+                                   fail_silently=False)
+        
+        msg = EmailMessage(subject=title, #subj 
+                           body=rendered_text, #body
+                           from_email=settings.EMAIL_LOGIN, #from
+                           to=settings.LOGTRACKER_ALERT_EMAILS,#to
+                           connection=conn
+                           )
+        
+        msg.content_subtype = "html"
+        msg.send(fail_silently=False)
+        #send_mail(title, rendered_text, settings.EMAIL_LOGIN, settings.LOGTRACKER_ALERT_EMAILS, fail_silently=True)
 post_save.connect(sendAlert, sender=LogTrack)

@@ -26,6 +26,18 @@ from domain.decorators import login_and_domain_required
 from corehq.shared_code.webutils import render_to_response
 
 import corehq.shared_code.hqutils as utils
+#imports fromthe django login
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.utils.http import urlquote, base36_to_int
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
+from django.contrib.sites.models import Site, RequestSite
+from django.contrib.auth.forms import AuthenticationForm
+import re
+
+from auditor.models import AuditEvent
+from auditor.decorators import log_access
 
 from xformmanager.models import *
 # from hq.models import *
@@ -38,6 +50,7 @@ from phone.models import PhoneUserInfo
 
 
 @login_and_domain_required
+@log_access
 def dashboard(request, template_name="hqwebapp/dashboard.html"):
     startdate, enddate = utils.get_dates(request, 7)
     
@@ -105,14 +118,17 @@ def dashboard(request, template_name="hqwebapp/dashboard.html"):
     for user, data in unregistered_map.items():
         grand_totals[user] = sum([value for value in data.values()])
     
-    return render_to_response(request, template_name, 
-                              {"program_data": program_data_structure,
+    context = RequestContext(request)
+    context.update({"program_data": program_data_structure,
                                "program_totals": program_totals,
                                "unregistered_data": unregistered_map,
                                "unregistered_totals": grand_totals,
                                "dates": dates,
                                "startdate": startdate,
                                "enddate": enddate})
+    
+    
+    return render_to_response(template_name, context)
 
 
 
@@ -144,13 +160,88 @@ def no_permissions(request):
     template_name="hq/no_permission.html"
     return render_to_response(request, template_name, {})
 
-def login(req, template_name="login_and_password/login.html"):
-    # this view, and the one below, is overridden because 
-    # we need to set the base template to use somewhere  
-    # somewhere that the login page can access it.
-    req.base_template = settings.BASE_TEMPLATE 
-    return django_login(req, **{"template_name" : template_name})
 
-def logout(req, template_name="hqwebapp/loggedout.html"):
-    req.base_template = settings.BASE_TEMPLATE 
-    return django_logout(req, **{"template_name" : template_name})
+@csrf_protect
+@never_cache
+def login(request, template_name="login_and_password/login.html",
+          redirect_field_name=REDIRECT_FIELD_NAME,
+          authentication_form=AuthenticationForm):
+    """Displays the login form and handles the login action."""
+
+    redirect_to = request.REQUEST.get(redirect_field_name, '')
+    request.base_template = settings.BASE_TEMPLATE
+    if request.method == "POST":
+        form = authentication_form(data=request.POST)
+        if form.is_valid():
+            # Light security check -- make sure redirect_to isn't garbage.
+            if not redirect_to or ' ' in redirect_to:
+                redirect_to = settings.LOGIN_REDIRECT_URL
+            
+            # Heavier security check -- redirects to http://example.com should 
+            # not be allowed, but things like /view/?param=http://example.com 
+            # should be allowed. This regex checks if there is a '//' *before* a
+            # question mark.
+            elif '//' in redirect_to and re.match(r'[^\?]*//', redirect_to):
+                    redirect_to = settings.LOGIN_REDIRECT_URL
+            
+            # Okay, security checks complete. Log the user in.            
+            auth_login(request, form.get_user())
+
+            if request.session.test_cookie_worked():
+                request.session.delete_test_cookie()
+            
+            #audit the login
+            AuditEvent.objects.audit_login(request, form.get_user(), True)
+            return HttpResponseRedirect(redirect_to)
+        else: #failed login            
+            usr = User.objects.all().get(username=form.data['username'])
+            AuditEvent.objects.audit_login(request, usr, False)
+        
+
+    else:
+        form = authentication_form(request)
+    
+    request.session.set_test_cookie()
+    
+    if Site._meta.installed:
+        current_site = Site.objects.get_current()
+    else:
+        current_site = RequestSite(request)
+    
+    return render_to_response(request, template_name, {
+        'form': form,
+        redirect_field_name: redirect_to,
+        'site': current_site,
+        'site_name': current_site.name,
+    })
+
+def logout(request, next_page=None, template_name="hqwebapp/loggedout.html", redirect_field_name=REDIRECT_FIELD_NAME):
+    "Logs out the user and displays 'You are logged out' message."
+    request.base_template = settings.BASE_TEMPLATE 
+    from django.contrib.auth import logout
+    AuditEvent.objects.audit_logout(request, request.user)
+    logout(request)    
+    if next_page is None:
+        redirect_to = request.REQUEST.get(redirect_field_name, '')
+        if redirect_to:
+            return HttpResponseRedirect(redirect_to)
+        else:
+            return render_to_response(request, template_name, {
+                'title': _('Logged out')
+            })
+    else:
+        # Redirect to this page until the session has been cleared.
+        return HttpResponseRedirect(next_page or request.path)
+
+
+#
+#def login(req, template_name="login_and_password/login.html"):
+#    # this view, and the one below, is overridden because 
+#    # we need to set the base template to use somewhere  
+#    # somewhere that the login page can access it.
+#    req.base_template = settings.BASE_TEMPLATE 
+#    return django_login(req, **{"template_name" : template_name})
+#
+#def logout(req, template_name="hqwebapp/loggedout.html"):
+#    req.base_template = settings.BASE_TEMPLATE 
+#    return django_logout(req, **{"template_name" : template_name})
