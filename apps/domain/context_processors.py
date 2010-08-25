@@ -1,4 +1,4 @@
-from domain.decorators import SESSION_KEY_SELECTED_DOMAIN
+from corehq.apps.domain.decorators import SESSION_KEY_SELECTED_DOMAIN
 
 # Currently unused - formerly, we put domain info directly into the template context. Now it's in the user object.
 # Keeping around for now, as a shell to be used if we do want to put domain info directly back into the template context.

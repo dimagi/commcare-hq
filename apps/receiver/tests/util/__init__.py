@@ -3,7 +3,7 @@
    the receiver unit tests
 """
 import os
-from receiver import submitprocessor 
+from corehq.apps.receiver import submitprocessor 
 from corehq.apps.domain.models import Domain
 import hashlib
 

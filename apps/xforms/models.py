@@ -13,12 +13,12 @@ from django.db.models.signals import post_save
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
-from corehq.shared_code.dbutils import get_column_names, get_column_types_from_table, get_column_names_from_table
+from corehq.util.dbutils import get_column_names, get_column_types_from_table, get_column_names_from_table
 from corehq.apps.receiver.models import Submission, Attachment
-from xforms.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
-from xforms.xformdef import FormDef
+from corehq.apps.xforms.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
+from corehq.apps.xforms.xformdef import FormDef
 
-import corehq.shared_code.dbhelper as dbhelper
+import corehq.util.dbhelper as dbhelper
 
 class ElementDefModel(models.Model):
     # this class is really not used
@@ -186,8 +186,8 @@ class FormDefModel(models.Model):
     
     # META fields to be placed here eventually
     #settings.XSD_REPOSITORY_PATH
-    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.xforms_SCHEMA_PATH, max_length=255, null=True)
-    xform_file_location = models.FilePathField(_('Raw XSD'), path=settings.xforms_SCHEMA_PATH, max_length=255, null=True)
+    xsd_file_location = models.FilePathField(_('Raw XSD'), path=settings.XFORMS_SCHEMA_PATH, max_length=255, null=True)
+    xform_file_location = models.FilePathField(_('Raw XSD'), path=settings.XFORMS_SCHEMA_PATH, max_length=255, null=True)
     
     # we should just call this table_name
     form_name = models.CharField(_('Fully qualified form name'),max_length=255, unique=True)
@@ -937,5 +937,5 @@ class FormGroup():
         
         self.version_string = ",".join(["%s" % version for version in self.versions])
         
-import xforms.bootstrap
-import xforms.signals
+import corehq.apps.xforms.bootstrap
+import corehq.apps.xforms.signals

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import unittest
-from receiver.submitresponse import SubmitResponse
+from corehq.apps.receiver.submitresponse import SubmitResponse
 
 
 class SubmitResponseTestCase(unittest.TestCase):

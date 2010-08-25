@@ -7,8 +7,8 @@ import cStringIO
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
-from receiver.models import Submission
-from corehq.shared_code.transformers.zip import TarCompressor
+from corehq.apps.receiver.models import Submission
+from corehq.util.transformers.zip import TarCompressor
 from corehq.lib.django_rest_interface import util
 
 # TODO - pull out authentication stuff into some generic wrapper

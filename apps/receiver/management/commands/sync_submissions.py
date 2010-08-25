@@ -5,8 +5,8 @@ deletes local xforms and submissions, and loads the data
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from corehq.lib.django_rest_interface import util as rest_util
-from receiver.management.commands.generate_submissions import generate_submissions
-from receiver.management.commands.load_submissions import load_submissions
+from corehq.apps.receiver.management.commands.generate_submissions import generate_submissions
+from corehq.apps.receiver.management.commands.load_submissions import load_submissions
 
 class Command(LabelCommand):
     help = "Synchronizes CommCareHQ with a specified remote server."

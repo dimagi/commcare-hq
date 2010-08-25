@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 
 import corehq.lib.django_tables as tables
 
-from domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
-from domain.models import Domain
+from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
+from corehq.apps.domain.models import Domain
 
 ########################################################################################################
 #

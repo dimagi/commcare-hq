@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 # from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
@@ -22,10 +23,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.shared_code.webutils import render_to_response
 
-import corehq.shared_code.hqutils as utils
 #imports fromthe django login
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import REDIRECT_FIELD_NAME
@@ -34,10 +32,12 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache
 from django.contrib.sites.models import Site, RequestSite
 from django.contrib.auth.forms import AuthenticationForm
-import re
 
-from auditor.models import AuditEvent
-from auditor.decorators import log_access
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.util.webutils import render_to_response
+import corehq.util.hqutils as utils
+from corehq.apps.auditor.models import AuditEvent
+from corehq.apps.auditor.decorators import log_access
 
 from corehq.apps.xforms.models import *
 # from hq.models import *

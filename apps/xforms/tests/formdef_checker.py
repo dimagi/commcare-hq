@@ -1,6 +1,6 @@
 import unittest
 import copy
-from xforms.xformdef import FormDef, ElementDef, Differences
+from corehq.apps.xforms.xformdef import FormDef, ElementDef, Differences
 
 
 class CompatibilityTestCase(unittest.TestCase):

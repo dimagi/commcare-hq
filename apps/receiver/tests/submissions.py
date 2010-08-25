@@ -1,6 +1,6 @@
 import unittest
-from receiver.models import Submission, Attachment
-from receiver.tests.util import *
+from corehq.apps.receiver.models import Submission, Attachment
+from corehq.apps.receiver.tests.util import *
 
 class ProcessingTestCase(unittest.TestCase):
 

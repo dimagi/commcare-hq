@@ -14,8 +14,8 @@
         <td>{{ form.date_created }}</td>
         <td>{{ form.submission_count }}</td>
         <td>{{ form.time_of_last_instance|date }}</td>
-        <td><a href="{% url xforms.views.data form.id %}">view data</a></td>
-        <td><a href="{% url xforms.views.remove_xform form.id %}">{% trans "drop this form" %}</a></td>
+        <td><a href="{% url corehq.apps.xforms.views.data form.id %}">view data</a></td>
+        <td><a href="{% url corehq.apps.xforms.views.remove_xform form.id %}">{% trans "drop this form" %}</a></td>
     </tr>
     {% endfor %}
 </tbody>

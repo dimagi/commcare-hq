@@ -1,6 +1,6 @@
 import unittest
 
-import xforms.xmlrouter as xmlrouter
+import corehq.apps.xforms.xmlrouter as xmlrouter
 
 counter = 0
 attachment = "dummy_attach"

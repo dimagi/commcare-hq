@@ -2,6 +2,6 @@
 {% block title %}Form Data Groups{% endblock %}
 {% block content %}
 <h2>All Form Groups</h2>
-<p><a href="{% url xforms.views.new_form_data_group %}">new group</td></a></p>
+<p><a href="{% url corehq.apps.xforms.views.new_form_data_group %}">new group</td></a></p>
 {% include "xforms/partials/form_data_group_list_table.html" %}
 {% endblock %}

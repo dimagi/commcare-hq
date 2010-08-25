@@ -10,14 +10,14 @@ import logging
 
 from django.conf import settings
 
-from xforms.storageutility import StorageUtility
-from xforms.xformdef import FormDef
-from xforms.copy import prepare_migration_objects, migrate
-from xforms.models import MetaDataValidationError, Metadata, ElementDefModel
-from xforms.util import table_exists
+from corehq.apps.xforms.storageutility import StorageUtility
+from corehq.apps.xforms.xformdef import FormDef
+from corehq.apps.xforms.copy import prepare_migration_objects, migrate
+from corehq.apps.xforms.models import MetaDataValidationError, Metadata, ElementDefModel
+from corehq.apps.xforms.util import table_exists
 from corehq.apps.receiver.models import Attachment
 
-class xforms(object):
+class XFormManager(object):
     """A central location for managing xforms.  This object includes 
        functionality to upload, insert into, and delete XForms.  The forms
        are translated into database tables where submission data is flattened
@@ -278,7 +278,7 @@ class xforms(object):
     def _get_storage_directory(self):
         """Where this app keeps its files, which is specified in the config
            local.ini as 'xsd_repository_path'"""
-        return settings.xforms_SCHEMA_PATH
+        return settings.XFORMS_SCHEMA_PATH
         
     def _xsd_file_name(self, base_name):
         return self.get_full_storage_location(self._get_storage_directory(), 
@@ -317,9 +317,9 @@ def _form_translate(input_data, operation):
     #
     # You can pass in a filename or a full string/stream of xml data
     logging.debug ("form_translate %s: begin subprocess - java -jar %s %s < input file > " \
-                   % (operation, settings.xforms_FORM_TRANSLATE_JAR, operation))
+                   % (operation, settings.XFORMS_FORM_TRANSLATE_JAR, operation))
     p = subprocess.Popen(["java","-jar",
-                          settings.xforms_FORM_TRANSLATE_JAR,
+                          settings.XFORMS_FORM_TRANSLATE_JAR,
                           operation], 
                           shell=False, 
                           stdout=subprocess.PIPE,stdin=subprocess.PIPE,

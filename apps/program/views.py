@@ -4,9 +4,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 
-from corehq.shared_code.webutils import render_to_response
+from corehq.util.webutils import render_to_response
 
-from corehq.shared_code.hqutils import get_post_redirect
+from corehq.util.hqutils import get_post_redirect
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.program.models import Program, ProgramMembership
 from corehq.apps.program.forms import ProgramForm

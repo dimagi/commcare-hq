@@ -12,8 +12,8 @@ from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from corehq.lib.django_rest_interface import util as rest_util
-from xforms.management.commands.util import submit_schema
-from xforms.models import FormDefModel
+from corehq.apps.xforms.management.commands.util import submit_schema
+from corehq.apps.xforms.models import FormDefModel
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (

@@ -22,11 +22,11 @@ from MySQLdb import IntegrityError
 
 from django.db import connection, transaction, DatabaseError
 
-from xforms.models import ElementDefModel, FormDefModel, Metadata
-import xforms.const as const
-from xforms.util import *
-from xforms.xformdef import FormDef
-from xforms.xmlrouter import process
+from corehq.apps.xforms.models import ElementDefModel, FormDefModel, Metadata
+import corehq.apps.xforms.const as const
+from corehq.apps.xforms.util import *
+from corehq.apps.xforms.xformdef import FormDef
+from corehq.apps.xforms.xmlrouter import process
 from corehq.apps.receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 from corehq.util.dbutils import is_configured_mysql, is_configured_postgres
 

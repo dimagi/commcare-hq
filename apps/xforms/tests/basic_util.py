@@ -1,10 +1,10 @@
 import unittest
 import os
-#from xforms.tests.util import 
-from xforms.storageutility import XFormDBTablePopulator
-from xforms.storageutility import StorageUtility as SU
-from xforms.manager import xforms as XFM
-from xforms.manager import form_translate
+#from corehq.apps.xforms.tests.util import 
+from corehq.apps.xforms.storageutility import XFormDBTablePopulator
+from corehq.apps.xforms.storageutility import StorageUtility as SU
+from corehq.apps.xforms.manager import XFormManager as XFM
+from corehq.apps.xforms.manager import form_translate
 
 class UtilTestCase(unittest.TestCase):
             

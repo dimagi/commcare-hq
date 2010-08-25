@@ -1,6 +1,6 @@
 import unittest
-from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
-from receiver.tests.util import *
+from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
+from corehq.apps.receiver.tests.util import *
 
 class DeletionTestCase(unittest.TestCase):
 

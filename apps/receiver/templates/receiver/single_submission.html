@@ -11,7 +11,7 @@
 	   	<ul>
 	   	{% for attach in attachments %}
 	   		<li>
-	   		<a href="{% url receiver.views.single_attachment attach.id%}"> Attachment {{attach.id}}</a>
+	   		<a href="{% url corehq.apps.receiver.views.single_attachment attach.id%}"> Attachment {{attach.id}}</a>
 	   		</li>
 	   	{% endfor %}
 	   	</ul>
@@ -33,11 +33,11 @@
 <div id="actions">
 <br>
     <ul>
-    <li><a href="{%url receiver.views.single_submission submission.id %}?get_original">{% trans "view full raw submission" %}</a></li>           
+    <li><a href="{%url corehq.apps.receiver.views.single_submission submission.id %}?get_original">{% trans "view full raw submission" %}</a></li>           
     
     {% include "receiver/partials/submission_actions.html" %}
     <li>
-    <a href="{% url receiver.views.delete_submission submission.id %}">
+    <a href="{% url corehq.apps.receiver.views.delete_submission submission.id %}">
         {% trans "delete this submission" %}</a>
     </li>
     </ul>

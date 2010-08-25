@@ -6,16 +6,16 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from corehq.apps.domain.models import Domain
-from phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
+from corehq.apps.phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
     REGISTRATION_XMLNS
 from corehq.apps.receiver.models import Attachment
 
 # # the scheduler is a really bad place for this class to live
 # from scheduler.fields import PickledObjectField
 
-from corehq.shared_code.djangoplus.fields import PickledObjectField
+from corehq.util.djangoplus.fields import PickledObjectField
 from corehq.apps.xforms.models import Metadata
-import xforms.xmlrouter as xmlrouter
+import corehq.apps.xforms.xmlrouter as xmlrouter
 
 class Phone(models.Model):
     """A phone (device)."""
@@ -28,7 +28,7 @@ class Phone(models.Model):
 
 USER_INFO_STATUS = (    
     ('auto_created',     'Automatically created from form submission.'),   
-    ('phone_registered', 'Registered from phone'),    
+    ('phone_registered', 'Registered from corehq.apps.phone'),    
     ('site_edited',     'Manually added or edited from the HQ website.'),    
 )
 

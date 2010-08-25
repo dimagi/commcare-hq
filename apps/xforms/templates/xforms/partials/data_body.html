@@ -5,9 +5,9 @@
     <h3>FILTERED BY
         {{filters}}
     {% if sort_params %}
-        <a href="{% url xforms.views.data xform.id %}?{{sort_params}}">(Click here to remove filters)</a>
+        <a href="{% url corehq.apps.xforms.views.data xform.id %}?{{sort_params}}">(Click here to remove filters)</a>
     {% else %}
-        <a href="{% url xforms.views.data xform.id %}">(Click here to remove filters)</a>
+        <a href="{% url corehq.apps.xforms.views.data xform.id %}">(Click here to remove filters)</a>
     {% endif %}
     </h3>
 
@@ -15,11 +15,11 @@
 {% endif %}
 <br/>
 
-<a href="{% url xforms.views.single_xform xform.id %}">More information about this schema</a>
+<a href="{% url corehq.apps.xforms.views.single_xform xform.id %}">More information about this schema</a>
 <br>
-<a href="{% url xforms.views.export_xml xform.id %}">Download zip file of xml submissions</a>
+<a href="{% url corehq.apps.xforms.views.export_xml xform.id %}">Download zip file of xml submissions</a>
 <br>
-<a href="{% url xforms.views.export_csv xform.id %}">Download csv file</a>
+<a href="{% url corehq.apps.xforms.views.export_csv xform.id %}">Download csv file</a>
 <br>
 {% if errors %}
     <p class="error">{{ errors }}</p>
@@ -34,7 +34,7 @@
 <a href="{%url xforms.views.plain_data xform.id %}">view fullscreen</a>
 </div>
 <br>
-<form action="{% url xforms.views.delete_data xform.id %}" method="POST">
+<form action="{% url corehq.apps.xforms.views.delete_data xform.id %}" method="POST">
 <div class="big-table">
 <table>
     <thead>

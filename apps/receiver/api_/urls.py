@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 # this module is called api_ because importing from "api.resources" 
 # conflicts with the builtin python namespace
-from receiver.api_.resources import *
+from corehq.apps.receiver.api_.resources import *
 
 urlpatterns = patterns('',
    # Retrieve all forms submitted to a specific schema

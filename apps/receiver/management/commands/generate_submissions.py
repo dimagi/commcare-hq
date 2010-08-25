@@ -16,7 +16,7 @@ from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from corehq.lib.django_rest_interface import util as rest_util
-from receiver.models import Submission
+from corehq.apps.receiver.models import Submission
 
 class Command(LabelCommand):
     option_list = LabelCommand.option_list + (

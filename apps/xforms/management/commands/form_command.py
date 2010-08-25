@@ -12,8 +12,8 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 
 from corehq.lib.django_rest_interface import util as rest_util
-from xforms.manager import xforms
-from xforms.models import FormDefModel
+from corehq.apps.xforms.manager import xforms
+from corehq.apps.xforms.models import FormDefModel
 from corehq.apps.domain.models import Domain
 
 class FormCommand(BaseCommand):

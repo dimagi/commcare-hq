@@ -3,7 +3,7 @@ import logging
 from django.test import TestCase
 from django.contrib.auth.models import User
 from corehq.apps.domain.models import Domain
-from datahq.util.test import create_user_and_domain
+from corehq.util.test import create_user_and_domain
 from corehq.apps.receiver.models import Submission
 
 class AuthenticationTestCase(TestCase):

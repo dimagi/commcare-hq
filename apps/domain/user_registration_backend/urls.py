@@ -7,10 +7,10 @@ default backend.
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 
-from domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.lib.django_user_registration.views import activate
 from corehq.lib.django_user_registration.views import register
-from domain.user_registration_backend import activate_by_form, register_with_possible_errors, register_admin_does_all
+from corehq.apps.domain.user_registration_backend import activate_by_form, register_with_possible_errors, register_admin_does_all
 
 
 urlpatterns = patterns('',

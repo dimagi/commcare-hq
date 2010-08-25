@@ -1,9 +1,9 @@
 from django.db import connection
 from django.conf import settings
 
-from xforms.manager import xforms
-from xforms.tests.util import clear_data, create_xsd_and_populate, populate
-from xforms.models import FormDefModel, Metadata, ElementDefModel
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.tests.util import clear_data, create_xsd_and_populate, populate
+from corehq.apps.xforms.models import FormDefModel, Metadata, ElementDefModel
 from corehq.apps.domain.models import Domain
 
 from decimal import Decimal
@@ -263,7 +263,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(2, cursor.fetchone()[0])
         
         # repost - numbers should be the same, but the ids should all be different
-        manager = xforms()
+        manager = XFormManager()
         new_form = manager.repost_schema(form)
         self.assertEqual(1, FormDefModel.objects.count())
         

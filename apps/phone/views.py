@@ -3,11 +3,11 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
-from corehq.shared_code.webutils import render_to_response
+from corehq.util.webutils import render_to_response
 
-from phone.forms import UserForm, UserSelectionForm
-from phone.models import Phone, PhoneBackup, PhoneUserInfo
-from phone.registration import get_django_user_object
+from corehq.apps.phone.forms import UserForm, UserSelectionForm
+from corehq.apps.phone.models import Phone, PhoneBackup, PhoneUserInfo
+from corehq.apps.phone.registration import get_django_user_object
 from corehq.apps.domain.decorators import login_and_domain_required
 
 @login_and_domain_required

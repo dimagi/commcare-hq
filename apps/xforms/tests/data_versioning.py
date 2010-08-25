@@ -5,8 +5,8 @@ from django.db import connection
 from corehq.util.dbutils import get_column_names
 
 from corehq.apps.domain.models import Domain
-from xforms.tests.util import clear_data, clear_group_data, create_xsd_and_populate
-from xforms.models import FormDataGroup, FormDataColumn, FormDataPointer
+from corehq.apps.xforms.tests.util import clear_data, clear_group_data, create_xsd_and_populate
+from corehq.apps.xforms.models import FormDataGroup, FormDataColumn, FormDataPointer
 
 class DataVersioningTestCase(unittest.TestCase):
     """This class tests the creating of the form data management objects

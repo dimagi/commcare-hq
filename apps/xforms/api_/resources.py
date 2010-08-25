@@ -1,4 +1,4 @@
-from xforms.models import FormDefModel, Metadata
+from corehq.apps.xforms.models import FormDefModel, Metadata
 from datetime import datetime
 from django.conf import settings
 from django.core import serializers
@@ -7,9 +7,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from corehq.lib.django_rest_interface import util
 from corehq.lib.django_rest_interface.resource import Resource
-from corehq.shared_code.transformers.csv import get_csv_from_django_query, format_csv
-from corehq.shared_code.transformers.zip import get_zipfile, get_tarfile
-from xforms.xformdef import FormDef
+from corehq.util.transformers.csv import get_csv_from_django_query, format_csv
+from corehq.util.transformers.zip import get_zipfile, get_tarfile
+from corehq.apps.xforms.xformdef import FormDef
 import logging
 import os
 

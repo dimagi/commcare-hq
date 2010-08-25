@@ -6,7 +6,7 @@
 {% block releasemanager_content %}
 	<h2>{% trans "Add New Resource Set" %}</h2>
 	
-	<form action="{% url releasemanager.views.new_resource_set %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
+	<form action="{% url corehq.apps.releasemanager.views.new_resource_set %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
 		<style>
 		#id_url { width: 300px; }
 		#id_name { width: 200px; }

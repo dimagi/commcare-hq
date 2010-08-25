@@ -2,9 +2,9 @@ import logging
 import os
 
 from corehq.apps.domain.models import Domain
-from xforms.models import FormDataColumn, FormDataGroup, FormDataPointer
-from xforms.manager import xforms
-from xforms.storageutility import StorageUtility
+from corehq.apps.xforms.models import FormDataColumn, FormDataGroup, FormDataPointer
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.storageutility import StorageUtility
 from corehq.apps.receiver.models import Submission, Attachment
 from corehq.apps.receiver.tests.util import get_full_path, makeNewEntry
 
@@ -51,7 +51,7 @@ def create_xsd(xsd_file_name, domain=None, path=None):
     if xsd_file_name is None:
         return None
     f = open(xsd_file_path,"r")
-    manager = xforms()
+    manager = XFormManager()
     formdefmodel = manager.add_schema(xsd_file_name, f, domain)
     f.close()
     # fake out the form submission

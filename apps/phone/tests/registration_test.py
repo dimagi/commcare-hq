@@ -3,8 +3,8 @@ import os
 from datetime import date
 
 from corehq.apps.domain.models import Domain
-from phone.models import Phone, PhoneUserInfo
-from phone.processor import APP_NAME, REGISTRATION_HANDLER
+from corehq.apps.phone.models import Phone, PhoneUserInfo
+from corehq.apps.phone.processor import APP_NAME, REGISTRATION_HANDLER
 from corehq.apps.receiver.models import SubmissionHandlingOccurrence
 from corehq.apps.xforms.tests.util import populate
 

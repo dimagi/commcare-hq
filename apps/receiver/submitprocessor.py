@@ -8,7 +8,7 @@ import uuid
 import email
 from django.conf import settings
 from django.db import transaction
-from receiver.models import Submission, Attachment, _XFORM_URI 
+from corehq.apps.receiver.models import Submission, Attachment, _XFORM_URI 
 
 def get_submission_path():
     return settings.RECEIVER_SUBMISSION_PATH

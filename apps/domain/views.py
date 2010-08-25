@@ -14,14 +14,14 @@ from django.template import RequestContext
 
 import corehq.lib.django_tables as tables
 
-from domain import Permissions
-from domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
-from domain.models import Domain, Membership, RegistrationRequest
-from domain.user_registration_backend.forms import AdminRegistersUserForm
+from corehq.apps.domain import Permissions
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
+from corehq.apps.domain.models import Domain, Membership, RegistrationRequest
+from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from corehq.lib.django_user_registration.models import RegistrationProfile
 
-from corehq.shared_code.webutils import render_to_response
+from corehq.util.webutils import render_to_response
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator

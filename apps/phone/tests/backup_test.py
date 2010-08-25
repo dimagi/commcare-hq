@@ -1,8 +1,8 @@
 import unittest
 import os
 
-from phone.models import Phone, PhoneBackup
-from phone.processor import BACKUP_HANDLER, APP_NAME
+from corehq.apps.phone.models import Phone, PhoneBackup
+from corehq.apps.phone.processor import BACKUP_HANDLER, APP_NAME
 from corehq.apps.receiver.models import SubmissionHandlingOccurrence
 from corehq.apps.xforms.tests.util import populate
 

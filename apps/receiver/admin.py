@@ -1,5 +1,5 @@
 from django.contrib import admin
-from receiver.models import *
+from corehq.apps.receiver.models import *
 
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('id','submit_time','submit_ip','bytes_received','domain')

@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 from corehq.apps.domain.models import Membership
-from phone.models import Phone, PhoneUserInfo
+from corehq.apps.phone.models import Phone, PhoneUserInfo
 # this import is silly and the referenced method should be moved to a shared utility location
 from corehq.apps.xforms.util import get_unique_value
 from xml.etree import ElementTree

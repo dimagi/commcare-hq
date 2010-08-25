@@ -1,9 +1,9 @@
 import logging
 from xml.etree import ElementTree
 
-from phone.xmlutils import get_tag
-from phone.models import PhoneBackup, Phone
-from phone.processor import BACKUP_XMLNS
+from corehq.apps.phone.xmlutils import get_tag
+from corehq.apps.phone.models import PhoneBackup, Phone
+from corehq.apps.phone.processor import BACKUP_XMLNS
 
 # some constants used by the xml parser 
 PROPERTIES_TAG = "properties"

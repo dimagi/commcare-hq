@@ -9,7 +9,7 @@
 <tbody>
     {% for group in groups %}
     <tr class="{% cycle 'odd' 'even' %}">
-        <td><a href="{% url xforms.views.form_data_group group.id %}">{{ group.display_name }}</td>
+        <td><a href="{% url corehq.apps.xforms.views.form_data_group group.id %}">{{ group.display_name }}</td>
         <td>{{ group.view_name }}</td>
         <td>{{ group.created|date }}</td>
         <td>{{ group.forms.count }}</td>

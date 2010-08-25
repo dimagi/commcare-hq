@@ -12,11 +12,11 @@ from django.shortcuts import redirect, render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 
-from domain import Permissions
-from domain.decorators import login_and_domain_required, domain_admin_required
-from domain.models import Domain, Membership, RegistrationRequest
-from domain.forms import RegistrationRequestForm # Reuse to capture new user info
-from domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm, UserRegistersSelfForm, AdminRegistersUserForm
+from corehq.apps.domain import Permissions
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.models import Domain, Membership, RegistrationRequest
+from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
+from corehq.apps.domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm, UserRegistersSelfForm, AdminRegistersUserForm
 from corehq.lib.django_user_registration import signals
 from corehq.lib.django_user_registration.backends import get_backend
 from corehq.lib.django_user_registration.backends.default import DefaultBackend
@@ -353,7 +353,7 @@ To login, navigate to the following link:
 
     subject = 'New CommCareHQ account'
     
-    from domain.views import send_HTML_email
+    from corehq.apps.domain.views import send_HTML_email
 
     send_HTML_email(subject, recipient, text_content, html_content)
 

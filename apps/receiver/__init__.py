@@ -2,7 +2,7 @@ import logging
 
 from django.http import HttpResponse
                 
-from receiver.submitresponse import SubmitResponse
+from corehq.apps.receiver.submitresponse import SubmitResponse
 
 
 def duplicate_attachment(way_handled, additional_params):

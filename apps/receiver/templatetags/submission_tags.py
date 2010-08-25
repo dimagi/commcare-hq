@@ -1,7 +1,7 @@
 from django import template
 from django.core.urlresolvers import reverse
 
-from receiver.models import Attachment
+from corehq.apps.receiver.models import Attachment
 
 register = template.Library()
 

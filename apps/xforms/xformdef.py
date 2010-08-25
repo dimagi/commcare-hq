@@ -1,6 +1,6 @@
-from xforms.util import *
+from corehq.apps.xforms.util import *
 # unfortunately, have to do something like this because of semi-circular dependencies
-import xforms as xfm
+import corehq.apps.xforms as xfm
 from lxml import etree
 import logging
 

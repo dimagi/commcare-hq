@@ -1,6 +1,12 @@
+import hashlib
+import logging
+import sys
+import traceback
+import tempfile, csv
+import unicodedata
 from StringIO import StringIO
-from xforms import xformvalidator
-from xforms.manager import readable_form
+from corehq.apps.xforms import xformvalidator
+from corehq.apps.xforms.manager import readable_form
 from corehq.util.dbutils import get_column_names
 from django.core.urlresolvers import reverse
 from django.db import transaction, connection
@@ -10,25 +16,19 @@ from django.http import HttpResponseRedirect, HttpResponse, \
 from django.shortcuts import get_object_or_404
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.shared_code.hqutils import paginate, get_table_display_properties, get_post_redirect
+from corehq.util.hqutils import paginate, get_table_display_properties, get_post_redirect
 from corehq.apps.receiver import submitprocessor
 from corehq.apps.receiver.models import Attachment
-from corehq.shared_code.transformers.csv import UnicodeWriter, format_csv
-from corehq.shared_code.transformers.zip import get_zipfile
-from corehq.shared_code.webutils import render_to_response
-from xforms.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
-from xforms.manager import xforms
-from xforms.models import FormDataGroup, FormDataPointer, FormDataColumn, \
+from corehq.util.transformers.csv import UnicodeWriter, format_csv
+from corehq.util.transformers.zip import get_zipfile
+from corehq.util.webutils import render_to_response
+from corehq.apps.xforms.forms import RegisterXForm, SubmitDataForm, FormDataGroupForm
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.models import FormDataGroup, FormDataPointer, FormDataColumn, \
     FormDefModel, ElementDefModel, Metadata
-from xforms.templatetags.xform_tags import NOT_SET
-from xforms.util import get_unique_value
-from xforms.xformdef import FormDef
-import hashlib
-import logging
-import sys
-import traceback
-import tempfile, csv
-import unicodedata
+from corehq.apps.xforms.templatetags.xform_tags import NOT_SET
+from corehq.apps.xforms.util import get_unique_value
+from corehq.apps.xforms.xformdef import FormDef
 
 @login_and_domain_required
 @transaction.commit_manually
@@ -57,7 +57,7 @@ def dashboard(request, template='register_and_list_xforms.html'):
             # validate and attempt to process schema
             form = RegisterXForm(request.POST, request.FILES)
             if form.is_valid():
-                xforms = xforms()
+                xforms = XFormManager()
                 try:
                     xsd_file_name, xform_file_name = \
                         xforms.save_schema_POST_to_file(\
@@ -130,7 +130,7 @@ def remove_xform(request, form_id=None, template='confirm_delete.html'):
     form = get_object_or_404(FormDefModel, pk=form_id)
     if request.method == "POST":
         if request.POST["confirm_delete"]: # The user has already confirmed the deletion.
-            xforms = xforms()
+            xforms = XFormManager()
             xforms.remove_schema(form_id)
             logging.debug("Schema %s deleted ", form_id)
             #self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj_display)})                    
@@ -382,7 +382,7 @@ def create_form_data_group_from_xmlns(req):
 
 def _register_xform(request, file_name, display_name, remote_addr, file_size, xform_file_name):
     """ does the actual creation and saving of the formdef model """
-    xforms = xforms()
+    xforms = XFormManager()
     formdefmodel = xforms.create_schema_from_file(file_name, 
                                                         request.user.selected_domain, 
                                                         xform_file_name)
@@ -435,7 +435,7 @@ def reregister_xform(request, domain_name, template='register_and_list_xforms.ht
             domain = Domain.objects.get(name=domain_name)
             type = metadata["HTTP_SCHEMA_TYPE"]
             schema = request.raw_post_data
-            xforms = xforms()
+            xforms = XFormManager()
             formdefmodel = xforms.add_schema_manually(schema, type, domain)
         except IOError, e:
             logging.error("xforms.manager: " + unicode(e) )
@@ -682,7 +682,7 @@ def delete_data(request, formdef_id, template='confirm_multiple_delete.html'):
                 context['xform_data'] = metadata
         elif 'confirm_delete' in request.POST: 
             # user has confirmed deletion. Proceed.
-            xforms = xforms()
+            xforms = XFormManager()
             for id in request.session['xform_data']:
                 xforms.remove_data(formdef_id, id)
             logging.debug("Instances %s of schema %s were deleted.", \

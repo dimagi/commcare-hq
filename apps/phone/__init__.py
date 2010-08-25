@@ -12,7 +12,7 @@ def backup_response(way_handled, additional_params):
        of the xform, in this case as a valid backup file.
     '''
     try:
-        from phone.models import PhoneBackup
+        from corehq.apps.phone.models import PhoneBackup
         
         # Backups should only ever be posting as a single file
         # We don't know what it means if they're not

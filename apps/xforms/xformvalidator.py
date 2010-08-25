@@ -1,8 +1,8 @@
 import os
 from StringIO import StringIO
 
-from xforms.xformdef import FormDef
-from xforms.manager import form_translate
+from corehq.apps.xforms.xformdef import FormDef
+from corehq.apps.xforms.manager import form_translate
 
 def validate(xform_filename):
     '''Validates an xform from a passed in file.  Returns the 

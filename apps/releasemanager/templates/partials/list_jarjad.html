@@ -28,9 +28,9 @@
 	        </td>
 	        <td>
 				{% if item.is_release %}
-	           		<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'false'%}');">Hide</button>
+	           		<button onclick="location.assign('{% url corehq.apps.releasemanager.views.jarjad_set_release item.id 'false'%}');">Hide</button>
 				{% else %}
-					<button onclick="location.assign('{% url releasemanager.views.jarjad_set_release item.id 'true'%}');">Make Visible</button>
+					<button onclick="location.assign('{% url corehq.apps.releasemanager.views.jarjad_set_release item.id 'true'%}');">Make Visible</button>
 	            {% endif %}
 	        </td>
 	    </tr>

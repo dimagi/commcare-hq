@@ -5,7 +5,7 @@
 
 {% block releasemanager_content %}
 <h1>Results of registration for {{build}}</h1>
-<h3><a href="{% url releasemanager.views.builds %}">&lt; Back to build list</a></h3>
+<h3><a href="{% url corehq.apps.releasemanager.views.builds %}">&lt; Back to build list</a></h3>
 {% if success_forms %}
     <h3 class="success">The following forms were successfully registered</h3>
         <ul>
@@ -49,5 +49,5 @@
     {% endfor %}
             </table>
 {% endif %}
-<h3><a href="{% url releasemanager.views.builds %}">&lt; Back to build list</a></h3>
+<h3><a href="{% url corehq.apps.releasemanager.views.builds %}">&lt; Back to build list</a></h3>
 {%endblock%}

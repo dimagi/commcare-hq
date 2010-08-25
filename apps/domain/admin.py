@@ -1,6 +1,6 @@
 from django.contrib import admin
 #from django.contrib.contenttypes import generic
-from domain.models import Domain, Membership, RegistrationRequest, Settings
+from corehq.apps.domain.models import Domain, Membership, RegistrationRequest, Settings
 
 # GenericTabularInline works exactly backwards - it binds the generic info to the domain displayed,
 # and lets us select the domain FK. "Regular" TabularInline binds the displayed domain to the FK

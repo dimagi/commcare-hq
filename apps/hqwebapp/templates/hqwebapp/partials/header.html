@@ -11,11 +11,11 @@
       {% endif %}
       &nbsp;&nbsp;<a href="{% url admin_own_account_main %}">Account Settings</a>&nbsp;&nbsp; |          
       {% comment %}########## no docs in datahq for now #########
-      &nbsp;&nbsp;<a href="{% url docs.views.index 'help_index' %}">Help</a>&nbsp;&nbsp; |
+      &nbsp;&nbsp;<a href="{% url corehq.apps.docs.views.index 'help_index' %}">Help</a>&nbsp;&nbsp; |
       {% endcomment %}          
-      &nbsp;&nbsp;<a href="{% url hqwebapp.views.logout %}">{% trans "Log out" %}</a>          
+      &nbsp;&nbsp;<a href="{% url corehq.apps.hqwebapp.views.logout %}">{% trans "Log out" %}</a>          
       
   {%else%}
-      <a href="{% url hqwebapp.views.login %}">{% trans "Log in" %}</a>
+      <a href="{% url corehq.apps.hqwebapp.views.login %}">{% trans "Log in" %}</a>
   {%endif%}
 </div>

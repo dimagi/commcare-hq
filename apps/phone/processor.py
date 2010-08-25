@@ -15,7 +15,7 @@ def create_backup(attachment):
     """Create a backup from a file and attachment"""
     # for the time being, this needs to be in here because of cyclical 
     # references
-    from phone.backup import create_backup_objects
+    from corehq.apps.phone.backup import create_backup_objects
     create_backup_objects(attachment)
     
     # also tell the submission it was handled, so we can override the custom response
@@ -24,7 +24,7 @@ def create_backup(attachment):
     
 def create_phone_user(attachment):
     """Create a phone user from a file and attachment"""
-    from phone.registration import create_registration_objects
+    from corehq.apps.phone.registration import create_registration_objects
     try:
         create_registration_objects(attachment)
         

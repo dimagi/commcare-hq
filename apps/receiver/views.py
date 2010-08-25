@@ -1,34 +1,4 @@
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseNotFound
-from django.http import HttpResponseRedirect, Http404
-from django.template import RequestContext
-from django.core.exceptions import *
-from corehq.shared_code.webutils import render_to_response
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import redirect_to_login
-from django.utils.translation import ugettext_lazy as _
-from django.db.models.query_utils import Q
-from django.core.urlresolvers import reverse
-from corehq.apps.xforms.manager import xforms
-# this import is just so we can get StorageUtility.XFormError
-from corehq.apps.xforms.storageutility import StorageUtility
-from corehq.shared_code.transformers.zip import get_zipfile
-
-from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
-
-from datetime import timedelta, datetime
-from django.db import transaction
 import mimetypes
-
-from receiver.models import *
-from receiver.models import _XFORM_URI as XFORM_URI
-from receiver.submitresponse import SubmitResponse
-from django.contrib.auth.models import User
-
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.shared_code.hqutils import paginate
-
-
 import logging
 import hashlib
 import traceback
@@ -36,10 +6,37 @@ import sys
 import os
 import string
 import submitprocessor
+from datetime import timedelta, datetime
+
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponseRedirect, Http404
+from django.template import RequestContext
+from django.core.exceptions import *
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.views import redirect_to_login
+from django.utils.translation import ugettext_lazy as _
+from django.db.models.query_utils import Q
+from django.core.urlresolvers import reverse
+
+from corehq.apps.xforms.manager import XFormManager
+# this import is just so we can get StorageUtility.XFormError
+from corehq.apps.xforms.storageutility import StorageUtility
+from corehq.apps.receiver.models import *
+from corehq.apps.receiver.models import _XFORM_URI as XFORM_URI
+from corehq.apps.receiver.submitresponse import SubmitResponse
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.util.webutils import render_to_response
+from corehq.util.transformers.zip import get_zipfile
+from corehq.util.hqutils import paginate
 
 # for ODK API
 from corehq.apps.xforms.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
 from corehq.apps.domain.models import *
+
+from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
 
 @login_and_domain_required
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):
@@ -249,7 +246,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
     context = {}
     if request.method == "POST":
-        xforms = xforms()
+        xforms = XFormManager()
         count = 0
         
         def _process(submission, action):

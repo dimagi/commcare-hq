@@ -7,7 +7,7 @@
 	<h2>{% trans "Submit New Mobile Client Binary" %}</h2>
 	(JAR/JAD files are submitted via utilities/submit_build.py. This form is here for testing reasons.)
 	
-	<form action="{% url releasemanager.views.new_jarjad %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
+	<form action="{% url corehq.apps.releasemanager.views.new_jarjad %}" method="POST" accept-charset="utf-8" enctype="multipart/form-data">
 		{{form.as_ul}}
 		<input type="submit" value="Submit" />
 	</form>

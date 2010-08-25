@@ -1,10 +1,10 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiver.models import SubmissionHandlingOccurrence, Attachment, \
     Submission
-from xforms.manager import xforms, FormDefError
-from xforms.models import Metadata, MetaDataValidationError, \
+from corehq.apps.xforms.manager import XFormManager, FormDefError
+from corehq.apps.xforms.models import Metadata, MetaDataValidationError, \
     FormDefModel
-from xforms.tests.util import clear_data, \
+from corehq.apps.xforms.tests.util import clear_data, \
     create_xsd_and_populate, populate
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -150,7 +150,7 @@ class MetaTestCase(unittest.TestCase):
         # register schema
         create_xsd_and_populate("data/pf_followup.xsd", domain=self.domain)
         # xformmanagger resubmission
-        xforms = xforms()
+        xforms = XFormManager()
         status = xforms.save_form_data(submission.xform)
         self.assertEquals(status,True)
     

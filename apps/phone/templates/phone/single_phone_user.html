@@ -14,11 +14,11 @@
 {% else %}
 	No user information set.  Choose an option below to set user information:
 	<p>
-		<button onclick="location.assign('{% url phone.views.create_user phone_user.id %}');" style="margin:10px">Automatically Create User</button>
-		<button onclick="location.assign('{% url phone.views.link_user phone_user.id %}');" style="margin:10px">Link Existing User</button>
+		<button onclick="location.assign('{% url corehq.apps.phone.views.create_user phone_user.id %}');" style="margin:10px">Automatically Create User</button>
+		<button onclick="location.assign('{% url corehq.apps.phone.views.link_user phone_user.id %}');" style="margin:10px">Link Existing User</button>
 	</p>
 {% endif %}
-<a 	href="{% url phone.views.delete_user phone_user.id %}" 
+<a 	href="{% url corehq.apps.phone.views.delete_user phone_user.id %}" 
 	onclick="return confirm('This will permanently delete the user. Are you sure?');"
 	style="font-weight: bold; color: red"
 	>Delete User</a>

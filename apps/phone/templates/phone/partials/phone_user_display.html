@@ -14,7 +14,7 @@
     {% endfor %}
     </ul>
     {% if phone_user.attachment %}
-    <li><a href="{% url receiver.views.single_attachment phone_user.attachment.id%}">Registration XML</a></li>
+    <li><a href="{% url corehq.apps.receiver.views.single_attachment phone_user.attachment.id%}">Registration XML</a></li>
     {% endif %}
 {% endifequal %}    
 </ul>

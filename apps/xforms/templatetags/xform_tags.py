@@ -1,5 +1,5 @@
 from django import template
-from xforms.models import FormDataPointer
+from corehq.apps.xforms.models import FormDataPointer
 
 register = template.Library()
 

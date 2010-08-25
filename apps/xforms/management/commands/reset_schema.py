@@ -5,7 +5,7 @@ and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.lib.django_rest_interface import util as rest_util
-from xforms.management.commands import util
+from corehq.apps.xforms.management.commands import util
 from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 
 class Command(BaseCommand):
@@ -23,6 +23,6 @@ class Command(BaseCommand):
         
 # we make these functions global so they can be reused by other scripts
 def reset_schema():
-    from xforms.storageutility import StorageUtility
+    from corehq.apps.xforms.storageutility import StorageUtility
     su = StorageUtility()
     su.clear(remove_submissions=True)

@@ -1,11 +1,11 @@
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
+import sys
+import logging
+import traceback
 from corehq.apps.receiver.models import Attachment
 from django.db.models.signals import post_save
-import logging
-import sys
-import traceback
 
 def process(sender, instance, created, **kwargs): #get sender, instance, created
     # only process newly created xforms, not all of them
@@ -13,7 +13,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
     if not instance.is_xform(): return
     
     # yuck, this import is in here because they depend on each other
-    from manager import xforms
+    from manager import XFormManager
     xml_file_name = instance.filepath
     logging.debug("PROCESS: Loading xml data from " + xml_file_name)
     
@@ -21,7 +21,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
     if not instance.is_duplicate():
         # TODO: make this a singleton?  Re-instantiating the manager every
         # time seems wasteful
-        manager = xforms()
+        manager = XFormManager()
         try:
             manager.save_form_data(instance)
         except Exception, e:

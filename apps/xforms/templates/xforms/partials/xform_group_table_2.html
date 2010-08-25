@@ -19,7 +19,7 @@ in the table.
 <tbody>
     {% for form in forms %}
     <tr class="{% cycle 'odd' 'even' %}">
-        <td><a href="{% url xforms.views.data form.id %}">{{ form.form_display_name }}</td>
+        <td><a href="{% url corehq.apps.xforms.views.data form.id %}">{{ form.form_display_name }}</td>
         <td>{{ form.target_namespace }}</td>
         <td>{{ form.version }}</td>
         <td>{{ form.date_created }}</td>

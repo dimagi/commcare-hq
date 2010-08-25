@@ -1,6 +1,6 @@
 from django.db import connection
 
-from xforms.tests.util import clear_data, create_xsd_and_populate, populate
+from corehq.apps.xforms.tests.util import clear_data, create_xsd_and_populate, populate
 
 import os
 import unittest

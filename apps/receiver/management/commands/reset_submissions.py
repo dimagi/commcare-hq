@@ -6,7 +6,7 @@ Be VERY VERY careful when using this!
 """
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
+from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 from corehq.lib.django_rest_interface import util as rest_util
 
 class Command(BaseCommand):

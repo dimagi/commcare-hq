@@ -1,9 +1,9 @@
 from corehq.apps.domain.models import Domain
-from xforms.manager import xforms
-from xforms.models import Metadata
-from xforms.tests.util import create_xsd_and_populate, \
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.models import Metadata
+from corehq.apps.xforms.tests.util import create_xsd_and_populate, \
     populate, clear_data, get_file
-from xforms.xformdef import FormDef
+from corehq.apps.xforms.xformdef import FormDef
 from datetime import datetime
 from django.conf import settings
 from django.db import connection
@@ -72,7 +72,7 @@ class VersionedTestCase(unittest.TestCase):
                self.assertEquals(row[12],1159)
                self.assertEquals(row[13],2002)
            finally:
-               manager = xforms()
+               manager = XFormManager()
                manager.remove_schema(formdefmodel.id)
     
     def testSaveFormData_8(self):
@@ -102,7 +102,7 @@ class VersionedTestCase(unittest.TestCase):
             self.assertEquals(row[1][2],1)
             self.assertEquals(row[2][2],1)
         finally:
-            manager = xforms()
+            manager = XFormManager()
             manager.remove_schema(formdefmodel.id)
 
     def testSaveFormData_9(self):
@@ -145,7 +145,7 @@ class VersionedTestCase(unittest.TestCase):
                     self.assertEquals(row[1][4],"2009-11-12 11:16:11" )
                 self.assertEquals(row[1][5],1)
         finally:
-            manager = xforms()
+            manager = XFormManager()
             manager.remove_schema(formdefmodel.id)
             manager.remove_schema(formdefmodel_2.id)
             manager.remove_schema(formdefmodel_3.id)
@@ -188,7 +188,7 @@ class VersionedTestCase(unittest.TestCase):
                 self.assertEquals(row[1][4],"2009-11-12 11:16:11" )
             self.assertEquals(row[1][5],1)
         finally:
-            manager = xforms()
+            manager = XFormManager()
             manager.remove_schema(formdefmodel.id)
             manager.remove_schema(formdefmodel_2.id)
             manager.remove_schema(formdefmodel_3.id)

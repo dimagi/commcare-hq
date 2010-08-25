@@ -1,5 +1,5 @@
 from django.contrib import admin
-from xforms.models import *
+from corehq.apps.xforms.models import *
 
 
 

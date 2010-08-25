@@ -4,15 +4,15 @@ server, one at a time.  Useful if you have remapped your xform processing
 logic and need to migrate all your forms to the new logic in place.
 """
 
-from xforms.management.commands.form_command import FormCommand
-from xforms.manager import xforms
-from xforms.models import FormDefModel
+from corehq.apps.xforms.management.commands.form_command import FormCommand
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.models import FormDefModel
 
 class Command(FormCommand):
     
     def handle(self, *app_labels, **options):
         form, domain = self.get_form_and_domain(**options)
-        manager = xforms()
+        manager = XFormManager()
         
         if form:
             print "Migrating Single form: %s." % form

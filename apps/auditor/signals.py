@@ -4,7 +4,7 @@ from django.db.models import Q
 import logging
 from datetime import datetime
 import settings
-from corehq.shared_code.threadlocals import get_current_user
+from corehq.util.threadlocals import get_current_user
 from models import *
 
 

@@ -3,10 +3,10 @@ from django.conf import settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiver.models import SubmissionHandlingOccurrence
-from xforms.models import Metadata
-from xforms.tests.util import clear_data, create_xsd_and_populate, populate
-from xforms.storageutility import StorageUtility
-from xforms.manager import xforms
+from corehq.apps.xforms.models import Metadata
+from corehq.apps.xforms.tests.util import clear_data, create_xsd_and_populate, populate
+from corehq.apps.xforms.storageutility import StorageUtility
+from corehq.apps.xforms.manager import XFormManager
 
 import unittest
 
@@ -98,7 +98,7 @@ class RemoveTestCase(unittest.TestCase):
         instance_5 = populate("5_singlerepeat.xml", self.domain)
         formdefmodel_6 = create_xsd_and_populate("6_nestedrepeats.xsd", domain=self.domain)
         instance_6 = populate("6_nestedrepeats.xml", self.domain)
-        xforms = xforms()
+        xforms = XFormManager()
 
         num_handled = SubmissionHandlingOccurrence.objects.all().count()
         self.assertEquals(2,num_handled)

@@ -1,7 +1,7 @@
 from django.conf import settings
 import django.core.exceptions
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 _SESSION_KEY_SELECTED_DOMAIN = '_domain_selected_domain'
 

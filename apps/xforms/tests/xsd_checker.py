@@ -1,5 +1,5 @@
-from xforms.tests.util import *
-from xforms.xformdef import FormDef
+from corehq.apps.xforms.tests.util import *
+from corehq.apps.xforms.xformdef import FormDef
 from decimal import Decimal
 from datetime import *
 import unittest

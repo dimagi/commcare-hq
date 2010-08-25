@@ -44,7 +44,7 @@ def auth_pages_path(page):
 
 
 urlpatterns = patterns( 
-        'domain.views',        
+        'corehq.apps.domain.views',        
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
                         
         url(r'^domain/select/$', 'select', name='domain_select'),

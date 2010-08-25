@@ -46,6 +46,6 @@ columns used by this group.</h4>
 </form>
 {% if group %}
 <h2>You can also...</h2>
-<p><a href="{% url xforms.views.edit_form_data_group_columns group.id %}" class="notice">edit group columns</a>  <a href="{% url xforms.views.delete_form_data_group group.id %}" class="error">delete this data group</a></p>
+<p><a href="{% url corehq.apps.xforms.views.edit_form_data_group_columns group.id %}" class="notice">edit group columns</a>  <a href="{% url corehq.apps.xforms.views.delete_form_data_group group.id %}" class="error">delete this data group</a></p>
 {% endif %}
 {% endblock %}

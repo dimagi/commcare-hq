@@ -2,22 +2,22 @@ from django.conf.urls.defaults import *
 import settings
 
 urlpatterns = patterns( '', #'releasemanager.views',
-    (r'^releasemanager/?$', 'releasemanager.views.projects'),
+    (r'^releasemanager/?$', 'corehq.apps.releasemanager.views.projects'),
 
-    (r'^releasemanager/jarjad/?$', 'releasemanager.views.jarjad'),
-    (r'^releasemanager/new_jarjad/?$', 'releasemanager.views.new_jarjad'),
-    (r'^releasemanager/jarjad/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.jarjad_set_release'),
+    (r'^releasemanager/jarjad/?$', 'corehq.apps.releasemanager.views.jarjad'),
+    (r'^releasemanager/new_jarjad/?$', 'corehq.apps.releasemanager.views.new_jarjad'),
+    (r'^releasemanager/jarjad/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'corehq.apps.releasemanager.views.jarjad_set_release'),
 
-    (r'^releasemanager/builds/?$', 'releasemanager.views.builds'),
-    (r'^releasemanager/new_build/?$', 'releasemanager.views.new_build'),
-    (r'^releasemanager/build/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.build_set_release'),
+    (r'^releasemanager/builds/?$', 'corehq.apps.releasemanager.views.builds'),
+    (r'^releasemanager/new_build/?$', 'corehq.apps.releasemanager.views.new_build'),
+    (r'^releasemanager/build/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'corehq.apps.releasemanager.views.build_set_release'),
 
-    (r'^releasemanager/resource_sets/?$', 'releasemanager.views.resource_sets'),
-    (r'^releasemanager/new_resource_set/?$', 'releasemanager.views.new_resource_set'),
-    (r'^releasemanager/resources_set/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'releasemanager.views.resource_set_set_release'),
+    (r'^releasemanager/resource_sets/?$', 'corehq.apps.releasemanager.views.resource_sets'),
+    (r'^releasemanager/new_resource_set/?$', 'corehq.apps.releasemanager.views.new_resource_set'),
+    (r'^releasemanager/resources_set/(?P<id>\d+)/set_release/(?P<set_to>.*)$', 'corehq.apps.releasemanager.views.resource_set_set_release'),
 
-    (r'^validator/?$', 'releasemanager.views.validator'),
-    (r'^readable_xform/?$', 'releasemanager.views.readable_xform'),
+    (r'^validator/?$', 'corehq.apps.releasemanager.views.validator'),
+    (r'^readable_xform/?$', 'corehq.apps.releasemanager.views.readable_xform'),
     
     url(r'^releasemanager/download/(?P<path>.*)$', 
             'django.views.static.serve', 

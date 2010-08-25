@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
 from corehq.util.test import create_user_and_domain
-from receiver.tests.util import get_full_path, makeNewEntry
+from corehq.apps.receiver.tests.util import get_full_path, makeNewEntry
 
 class ViewsTestCase(TestCase):
     

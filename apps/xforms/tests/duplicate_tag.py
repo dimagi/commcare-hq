@@ -1,9 +1,8 @@
 from django.db import connection
 from django.conf import settings
 
-from xforms.manager import xforms
-from xforms.tests.util import clear_data, create_xsd_and_populate, populate
-from xforms.models import FormDefModel, Metadata, ElementDefModel
+from corehq.apps.xforms.tests.util import clear_data, create_xsd_and_populate, populate
+from corehq.apps.xforms.models import FormDefModel, Metadata, ElementDefModel
 from corehq.apps.domain.models import Domain
 
 from decimal import Decimal

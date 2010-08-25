@@ -1,4 +1,4 @@
-{% extends "xforms_base.html" %}
+{% extends "xformmanager_base.html" %}
 {% load i18n %}
 {% block title %}Upload your xforms here{% endblock %}
 {% block javascripts %}
@@ -93,12 +93,12 @@ If you change a form and do not update the xmlns, CommCareHQ will try to map new
 </div>
 <div class="span-12 last">
 <h2>You can also...</h2>
-<h3><a href="{% url xforms.views.manage_groups %}">Manage XForm Groups</a></h3>
+<h3><a href="{% url corehq.apps.xforms.views.manage_groups %}">Manage XForm Groups</a></h3>
 <p>Group several XForms together for a unified view of data across forms or form versions.</p>
-<h3><a href="{% url xforms.views.validator %}">Validate an XForm</a></h3>
+<h3><a href="{% url corehq.apps.xforms.views.validator %}">Validate an XForm</a></h3>
 <p>Instantly check any XForm for validity without registering it.  We can validate against both regular
 and Data HQ compliant forms.</p>
-<h3><a href="{% url xforms.views.readable_xform %}">Get a Readable XForm</a></h3>
+<h3><a href="{% url corehq.apps.xforms.views.readable_xform %}">Get a Readable XForm</a></h3>
 <p>Paste an XForm - get a human-friendly readable view of that form.</p>
 </div>  
 
