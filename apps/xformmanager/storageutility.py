@@ -28,7 +28,7 @@ from xformmanager.util import *
 from xformmanager.xformdef import FormDef
 from xformmanager.xmlrouter import process
 from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
-from shared_code.dbutils import is_configured_mysql, is_configured_postgres
+from corehq.util.dbutils import is_configured_mysql, is_configured_postgres
 
 
 # The maximum length a field is allowed to be.  Column names will get truncated

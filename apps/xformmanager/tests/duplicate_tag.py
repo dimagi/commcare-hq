@@ -9,7 +9,7 @@ from domain.models import Domain
 from decimal import Decimal
 from datetime import datetime, date, time
 import unittest
-from shared_code.dbutils import is_realsql, is_configured_realsql, is_configured_mysql
+from corehq.util.dbutils import is_realsql, is_configured_realsql, is_configured_mysql
 
 class BasicTestCase(unittest.TestCase):
     

@@ -1,7 +1,7 @@
 from StringIO import StringIO
 from xformmanager import xformvalidator
 from xformmanager.manager import readable_form
-from shared_code.dbutils import get_column_names
+from corehq.util.dbutils import get_column_names
 from django.core.urlresolvers import reverse
 from django.db import transaction, connection
 from django.db.models import signals

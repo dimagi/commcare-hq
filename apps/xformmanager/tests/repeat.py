@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import connection
 from domain.models import Domain
 from xformmanager.tests.util import clear_data, create_xsd_and_populate, populate
-from shared_code.dbutils import is_configured_realsql, is_configured_postgres, is_configured_mysql
+from corehq.util.dbutils import is_configured_realsql, is_configured_postgres, is_configured_mysql
 
 class RepeatTestCase(unittest.TestCase):
     
