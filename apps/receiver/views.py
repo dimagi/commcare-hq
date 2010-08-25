@@ -9,9 +9,9 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
-from xformmanager.manager import XFormManager
+from xforms.manager import xforms
 # this import is just so we can get StorageUtility.XFormError
-from xformmanager.storageutility import StorageUtility
+from xforms.storageutility import StorageUtility
 from corehq.shared_code.transformers.zip import get_zipfile
 
 from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
@@ -38,7 +38,7 @@ import string
 import submitprocessor
 
 # for ODK API
-from xformmanager.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
+from xforms.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
 from domain.models import *
 
 @login_and_domain_required
@@ -249,7 +249,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
     '''
     context = {}
     if request.method == "POST":
-        xformmanager = XFormManager()
+        xforms = xforms()
         count = 0
         
         def _process(submission, action):
@@ -266,7 +266,7 @@ def orphaned_data(request, template_name="receiver/show_orphans.html"):
             elif action == 'resubmit':
                 status = False
                 try:
-                    status = xformmanager.save_form_data(submission.xform)
+                    status = xforms.save_form_data(submission.xform)
                 except StorageUtility.XFormError, e:
                     # if xform doesn't match schema, that's ok
                     return (False, "Expected problem: %s" % e)

@@ -14,8 +14,8 @@ from receiver.models import Attachment
 # from scheduler.fields import PickledObjectField
 
 from corehq.shared_code.djangoplus.fields import PickledObjectField
-from xformmanager.models import Metadata
-import xformmanager.xmlrouter as xmlrouter
+from xforms.models import Metadata
+import xforms.xmlrouter as xmlrouter
 
 class Phone(models.Model):
     """A phone (device)."""

@@ -8,7 +8,7 @@ from django.db import transaction
 from domain.models import Membership
 from phone.models import Phone, PhoneUserInfo
 # this import is silly and the referenced method should be moved to a shared utility location
-from xformmanager.util import get_unique_value
+from xforms.util import get_unique_value
 from xml.etree import ElementTree
 
 

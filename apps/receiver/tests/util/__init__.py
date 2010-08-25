@@ -1,5 +1,5 @@
 """We put utility code in a separate package so that other tests 
-   (such as xformmanager's) can use it without triggering 
+   (such as xforms's) can use it without triggering 
    the receiver unit tests
 """
 import os

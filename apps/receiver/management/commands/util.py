@@ -1,4 +1,4 @@
-""" Utility functions used by various xformmanager.management.commands """
+""" Utility functions used by various xforms.management.commands """
 import logging
 from django.utils import simplejson
 from urlparse import urlparse

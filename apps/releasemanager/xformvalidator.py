@@ -1,8 +1,8 @@
 import os
 from StringIO import StringIO
 
-from xformmanager.xformdef import FormDef
-from xformmanager.manager import form_translate
+from xforms.xformdef import FormDef
+from xforms.manager import form_translate
 
 from releasemanager.exceptions import XsdConversionError, FormDefCreationError
 

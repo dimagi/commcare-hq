@@ -247,7 +247,7 @@ class Attachment(models.Model):
         by having something in the xform manager that knows about this.
         '''
         # this method, and the one below are semi-dependant on the 
-        # xformmanager app.  if that app is not running, this will
+        # xforms app.  if that app is not running, this will
         # never be true but will still resolve.
         if self.get_linked_metadata():
             return True
@@ -318,7 +318,7 @@ class Annotation(models.Model):
 class SubmissionHandlingType(models.Model):
     '''A way in which a submission can be handled.  Contains a reference
        to both an app, that did the handling, and a method, representing
-       how the app did something.  For example, one app could be "xformmanager" 
+       how the app did something.  For example, one app could be "xforms" 
        and a way of handling could be "saved_form_data".
        If app.methodname is a valid python method, receiver will attempt
        to call it with the handling occurrence and a dictionary of additional

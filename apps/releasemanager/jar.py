@@ -10,8 +10,8 @@ from StringIO import StringIO
 from releasemanager import xformvalidator
 from releasemanager.exceptions import BuildError
 
-from xformmanager.models import MetaDataValidationError
-from xformmanager.xformdef import FormDef, ElementDef
+from xforms.models import MetaDataValidationError
+from xforms.xformdef import FormDef, ElementDef
 
 def extract_xforms( filename, dir ):
     '''Extracts the xforms from a jar file to a given directory.  

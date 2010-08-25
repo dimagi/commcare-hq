@@ -39,7 +39,7 @@ import re
 from auditor.models import AuditEvent
 from auditor.decorators import log_access
 
-from xformmanager.models import *
+from xforms.models import *
 # from hq.models import *
 # from graphing import dbhelper
 # from graphing.models import *

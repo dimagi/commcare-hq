@@ -17,12 +17,12 @@ from releasemanager import xformvalidator
 from django.conf import settings
 from releasemanager.jar import extract_xforms
 
-from xformmanager.models import FormDefModel
+from xforms.models import FormDefModel
 
-from xformmanager.manager import XFormManager
+from xforms.manager import xforms
 import logging
 import traceback
-from xformmanager.xformdef import FormDef
+from xforms.xformdef import FormDef
 from releasemanager.exceptions import XFormConflictError, FormReleaseError
 
 
@@ -283,7 +283,7 @@ def register_forms(build, good_forms):
     if errors:
         return errors
     # finally register
-    manager = XFormManager()
+    manager = xforms()
     # TODO: we need transaction management
     for form in to_register:
         try:

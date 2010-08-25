@@ -6,7 +6,7 @@ from domain.models import Domain
 from phone.models import Phone, PhoneUserInfo
 from phone.processor import APP_NAME, REGISTRATION_HANDLER
 from receiver.models import SubmissionHandlingOccurrence
-from xformmanager.tests.util import populate
+from xforms.tests.util import populate
 
 class RegistrationTestCase(unittest.TestCase):
     

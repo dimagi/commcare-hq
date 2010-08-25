@@ -9,7 +9,7 @@ from hq.utils import build_url
 from domain.models import Domain
 from domain.decorators import login_and_domain_required
 from requestlogger.models import RequestLog
-from xformmanager.manager import readable_form, csv_dump
+from xforms.manager import readable_form, csv_dump
 
 from releasemanager.forms import *
 
@@ -26,7 +26,7 @@ from django.forms.models import modelformset_factory
 
 import mimetypes
 import urllib
-from xformmanager.xformdef import FormDef
+from xforms.xformdef import FormDef
 from releasemanager.exceptions import *
 import releasemanager.lib as lib
 
