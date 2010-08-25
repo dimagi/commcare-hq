@@ -11,7 +11,7 @@ import cStringIO
 from urlparse import urlparse
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
-from django_rest_interface import util as rest_util
+from corehq.lib.django_rest_interface import util as rest_util
 from xformmanager.management.commands.util import submit_schema
 from xformmanager.models import FormDefModel
 

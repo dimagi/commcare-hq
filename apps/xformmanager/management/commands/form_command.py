@@ -11,7 +11,7 @@ from optparse import make_option
 
 from django.core.management.base import BaseCommand
 
-from django_rest_interface import util as rest_util
+from corehq.lib.django_rest_interface import util as rest_util
 from xformmanager.manager import XFormManager
 from xformmanager.models import FormDefModel
 from domain.models import Domain

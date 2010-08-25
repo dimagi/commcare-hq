@@ -12,14 +12,14 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template import RequestContext
 
-import django_tables as tables
+import corehq.lib.django_tables as tables
 
 from domain import Permissions
 from domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from domain.models import Domain, Membership, RegistrationRequest
 from domain.user_registration_backend.forms import AdminRegistersUserForm
-from user_registration.models import RegistrationProfile
+from corehq.lib.django_user_registration.models import RegistrationProfile
 
 from corehq.shared_code.webutils import render_to_response
 

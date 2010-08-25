@@ -9,7 +9,7 @@ from django.core import management
 from django.test import TestCase
 from django.utils.hashcompat import sha_constructor
 
-from user_registration.models import RegistrationProfile
+from django_user_registration.models import RegistrationProfile
 
 
 class RegistrationModelTests(TestCase):

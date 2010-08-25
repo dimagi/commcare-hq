@@ -10,12 +10,12 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.test import Client
 from django.test import TestCase
 
-from user_registration import forms
-from user_registration import signals
-from user_registration.admin import RegistrationAdmin
-from user_registration.backends import get_backend
-from user_registration.backends.default import DefaultBackend
-from user_registration.models import RegistrationProfile
+from django_user_registration import forms
+from django_user_registration import signals
+from django_user_registration.admin import RegistrationAdmin
+from django_user_registration.backends import get_backend
+from django_user_registration.backends.default import DefaultBackend
+from django_user_registration.models import RegistrationProfile
 
 
 class _MockRequestClient(Client):
@@ -112,7 +112,7 @@ class DefaultRegistrationBackendTests(TestCase):
         and set ``ACCOUNT_ACTIVATION_DAYS`` if it's not set already.
 
         """
-        from user_registration.backends.default import DefaultBackend
+        from django_user_registration.backends.default import DefaultBackend
         self.backend = DefaultBackend()
         self.old_activation = getattr(settings, 'ACCOUNT_ACTIVATION_DAYS', None)
         if self.old_activation is None:

@@ -13,8 +13,8 @@ handled.
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 
-from user_registration.views import activate
-from user_registration.views import register
+from django_user_registration.views import activate
+from django_user_registration.views import register
 
 
 urlpatterns = patterns('',

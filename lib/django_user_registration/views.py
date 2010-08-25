@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from user_registration.backends import get_backend
+from django_user_registration.backends import get_backend
 
 
 def activate(request, backend,

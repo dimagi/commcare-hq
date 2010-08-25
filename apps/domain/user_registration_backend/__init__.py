@@ -17,10 +17,10 @@ from domain.decorators import login_and_domain_required, domain_admin_required
 from domain.models import Domain, Membership, RegistrationRequest
 from domain.forms import RegistrationRequestForm # Reuse to capture new user info
 from domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm, UserRegistersSelfForm, AdminRegistersUserForm
-from user_registration import signals
-from user_registration.backends import get_backend
-from user_registration.backends.default import DefaultBackend
-from user_registration.models import RegistrationProfile
+from corehq.lib.django_user_registration import signals
+from corehq.lib.django_user_registration.backends import get_backend
+from corehq.lib.django_user_registration.backends.default import DefaultBackend
+from corehq.lib.django_user_registration.models import RegistrationProfile
 
 ########################################################################################################    
     

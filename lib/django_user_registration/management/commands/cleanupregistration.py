@@ -9,7 +9,7 @@ contains the actual logic for determining which accounts are deleted.
 
 from django.core.management.base import NoArgsCommand
 
-from user_registration.models import RegistrationProfile
+from django_user_registration.models import RegistrationProfile
 
 
 class Command(NoArgsCommand):
