@@ -7,9 +7,9 @@ from django.shortcuts import get_object_or_404
 from corehq.shared_code.webutils import render_to_response
 
 from corehq.shared_code.hqutils import get_post_redirect
-from domain.decorators import login_and_domain_required, domain_admin_required
-from program.models import Program, ProgramMembership
-from program.forms import ProgramForm
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.program.models import Program, ProgramMembership
+from corehq.apps.program.forms import ProgramForm
 
 @login_and_domain_required
 @domain_admin_required

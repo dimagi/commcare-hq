@@ -15,7 +15,7 @@ from xforms.xformdef import FormDef
 from xforms.copy import prepare_migration_objects, migrate
 from xforms.models import MetaDataValidationError, Metadata, ElementDefModel
 from xforms.util import table_exists
-from receiver.models import Attachment
+from corehq.apps.receiver.models import Attachment
 
 class xforms(object):
     """A central location for managing xforms.  This object includes 

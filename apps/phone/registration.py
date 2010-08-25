@@ -5,10 +5,10 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
-from domain.models import Membership
+from corehq.apps.domain.models import Membership
 from phone.models import Phone, PhoneUserInfo
 # this import is silly and the referenced method should be moved to a shared utility location
-from xforms.util import get_unique_value
+from corehq.apps.xforms.util import get_unique_value
 from xml.etree import ElementTree
 
 

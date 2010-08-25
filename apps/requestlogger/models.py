@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 
 import os

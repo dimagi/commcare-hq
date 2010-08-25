@@ -14,7 +14,7 @@ from django.core.management.base import BaseCommand
 from corehq.lib.django_rest_interface import util as rest_util
 from xforms.manager import xforms
 from xforms.models import FormDefModel
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 class FormCommand(BaseCommand):
     option_list = BaseCommand.option_list + (

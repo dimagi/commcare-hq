@@ -5,7 +5,7 @@ MORE INFO AT: http://code.google.com/p/django-rest-interface/wiki/RestifyDjango
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 import hashlib, time, random
-from hqwebapp.authentication import get_username_password, get_auth_dict
+from corehq.apps.hqwebapp.authentication import get_username_password, get_auth_dict
 
 def djangouser_auth(username, password):
     """

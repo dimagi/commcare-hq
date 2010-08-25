@@ -9,9 +9,9 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query_utils import Q
 from django.core.urlresolvers import reverse
-from xforms.manager import xforms
+from corehq.apps.xforms.manager import xforms
 # this import is just so we can get StorageUtility.XFormError
-from xforms.storageutility import StorageUtility
+from corehq.apps.xforms.storageutility import StorageUtility
 from corehq.shared_code.transformers.zip import get_zipfile
 
 from uploadhandler import LegacyXFormUploadParsingHandler, LegacyXFormUploadBlobHandler
@@ -25,7 +25,7 @@ from receiver.models import _XFORM_URI as XFORM_URI
 from receiver.submitresponse import SubmitResponse
 from django.contrib.auth.models import User
 
-from domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.shared_code.hqutils import paginate
 
 
@@ -38,8 +38,8 @@ import string
 import submitprocessor
 
 # for ODK API
-from xforms.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
-from domain.models import *
+from corehq.apps.xforms.models import FormDefModel #FormDataGroup, FormDataPointer, FormDataColumn, , Metadata
+from corehq.apps.domain.models import *
 
 @login_and_domain_required
 def show_dupes(request, submission_id, template_name="receiver/show_dupes.html"):

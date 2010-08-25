@@ -1,8 +1,8 @@
 from django.db import connection
 from django.conf import settings
 
-from domain.models import Domain
-from receiver.models import SubmissionHandlingOccurrence
+from corehq.apps.domain.models import Domain
+from corehq.apps.receiver.models import SubmissionHandlingOccurrence
 from xforms.models import Metadata
 from xforms.tests.util import clear_data, create_xsd_and_populate, populate
 from xforms.storageutility import StorageUtility
@@ -31,13 +31,13 @@ class RemoveTestCase(unittest.TestCase):
         su = StorageUtility()
         su.clear()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_formdefmodel")
+        cursor.execute("SELECT * from xforms_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xforms_elementdefmodel")
+        cursor.execute("SELECT * from xforms_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xforms_metadata")
+        cursor.execute("SELECT * from xforms_metadata")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
@@ -51,10 +51,10 @@ class RemoveTestCase(unittest.TestCase):
         su = StorageUtility()
         su.remove_schema(schema_remdomain_model.id)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_formdefmodel")
+        cursor.execute("SELECT * from xforms_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xforms_elementdefmodel")
+        cursor.execute("SELECT * from xforms_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':
@@ -81,10 +81,10 @@ class RemoveTestCase(unittest.TestCase):
         self.assertTrue(attachment.submission.is_orphaned())
         # TODO fix the db call to be more standard here
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_formdefmodel")
+        cursor.execute("SELECT * from xforms_formdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        cursor.execute("SELECT * FROM xforms_elementdefmodel")
+        cursor.execute("SELECT * from xforms_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
         if settings.DATABASE_ENGINE == 'mysql':

@@ -12,9 +12,9 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.conf import settings
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from corehq.shared_code.dbutils import get_column_names, get_column_types_from_table, get_column_names_from_table
-from receiver.models import Submission, Attachment
+from corehq.apps.receiver.models import Submission, Attachment
 from xforms.util import case_insensitive_iter, format_field, format_table_name, get_unique_value, get_sort_string
 from xforms.xformdef import FormDef
 
@@ -425,8 +425,8 @@ class Metadata(models.Model):
     chw_id = models.CharField(max_length=255, null=True)
     #unique id
     uid = models.CharField(max_length=32, null=True)
-    # foreign key to the associated attachment (from receiver app)
-    # this is currently required. if we decide to decouple this from receiver,
+    # foreign key to the associated attachment (from corehq.apps.receiver app)
+    # this is currently required. if we decide to decouple this from corehq.apps.receiver,
     # then remember to link metadata.delete() to submission.unhandled() 
     attachment = models.ForeignKey(Attachment, related_name="form_metadata")
     # foreign key to the row in the manually generated data table

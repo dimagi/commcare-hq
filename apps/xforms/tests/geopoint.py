@@ -5,7 +5,7 @@ from xforms.tests.util import clear_data, create_xsd_and_populate, populate
 import os
 import unittest
 from corehq.util.test import replace_in_file
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 LAT = 10.001666666666667
 LON = 11.001666666666667

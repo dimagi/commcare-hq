@@ -1,5 +1,5 @@
-from domain.models import Domain
-from receiver.models import SubmissionHandlingOccurrence, Attachment, \
+from corehq.apps.domain.models import Domain
+from corehq.apps.receiver.models import SubmissionHandlingOccurrence, Attachment, \
     Submission
 from xforms.manager import xforms, FormDefError
 from xforms.models import Metadata, MetaDataValidationError, \
@@ -30,7 +30,7 @@ class MetaTestCase(unittest.TestCase):
         create_xsd_and_populate("data/brac_chw.xsd", "data/brac_chw_1.xml", self.domain)
         populate("data/brac_chw_1.xml", domain=self.domain)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_metadata where formname='BRAC CHW visiting CHP'" )
+        cursor.execute("SELECT * from xforms_metadata where formname='BRAC CHW visiting CHP'" )
         row = cursor.fetchone()
         self.assertEquals(row[1],"BRAC CHW visiting CHP")
         self.assertEquals(row[2],"0.0.1")
@@ -61,7 +61,7 @@ class MetaTestCase(unittest.TestCase):
     def testMetaData_2(self):
         create_xsd_and_populate("data/brac_chp.xsd", "data/brac_chp_1.xml", self.domain)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_metadata where formname='BRACCHPHomeVisit'" )
+        cursor.execute("SELECT * from xforms_metadata where formname='BRACCHPHomeVisit'" )
         row = cursor.fetchone()
         self.assertEquals(row[1],"BRACCHPHomeVisit")
         self.assertEquals(row[2],"0.0.1")
@@ -87,7 +87,7 @@ class MetaTestCase(unittest.TestCase):
         populate("data/mvp_mother_reg_2.xml", domain=self.domain)
         populate("data/mvp_mother_reg_3.xml", domain=self.domain)
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM xforms_metadata order by id")
+        cursor.execute("SELECT * from xforms_metadata order by id")
         row = cursor.fetchall()
         
         latest_attachment_id = ( Attachment.objects.latest('id') ).id

@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from corehq.shared_code.hqutils import build_url
 
 _XFORM_URI = 'xform'

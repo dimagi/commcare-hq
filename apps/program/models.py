@@ -8,7 +8,7 @@ from django.contrib.contenttypes import generic
 
 
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 class Program(models.Model):
     """

@@ -8,7 +8,7 @@ from corehq.shared_code.webutils import render_to_response
 from phone.forms import UserForm, UserSelectionForm
 from phone.models import Phone, PhoneBackup, PhoneUserInfo
 from phone.registration import get_django_user_object
-from domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required
 
 @login_and_domain_required
 def index(request):

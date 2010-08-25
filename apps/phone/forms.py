@@ -1,7 +1,7 @@
 from django import forms 
 from django.contrib.auth.models import User
 
-from domain.forms import DomainBoundModelChoiceField
+from corehq.apps.domain.forms import DomainBoundModelChoiceField
 
 class UserForm(forms.ModelForm):
     """

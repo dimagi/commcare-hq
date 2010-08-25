@@ -1,6 +1,6 @@
 import logging, sys, traceback
 
-from receiver.models import SubmissionHandlingType
+from corehq.apps.receiver.models import SubmissionHandlingType
 
 # some constants used by the submission handler
 APP_NAME = "phone"

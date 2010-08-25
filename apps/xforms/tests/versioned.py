@@ -1,4 +1,4 @@
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from xforms.manager import xforms
 from xforms.models import Metadata
 from xforms.tests.util import create_xsd_and_populate, \

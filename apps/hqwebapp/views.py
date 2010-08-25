@@ -22,7 +22,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse
-from domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.shared_code.webutils import render_to_response
 
 import corehq.shared_code.hqutils as utils
@@ -39,14 +39,14 @@ import re
 from auditor.models import AuditEvent
 from auditor.decorators import log_access
 
-from xforms.models import *
+from corehq.apps.xforms.models import *
 # from hq.models import *
 # from graphing import dbhelper
 # from graphing.models import *
-from receiver.models import *
-from domain.decorators import login_and_domain_required, domain_admin_required
-from program.models import Program
-from phone.models import PhoneUserInfo
+from corehq.apps.receiver.models import *
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.program.models import Program
+from corehq.apps.phone.models import PhoneUserInfo
 
 
 @login_and_domain_required

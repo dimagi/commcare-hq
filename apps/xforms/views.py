@@ -8,11 +8,11 @@ from django.db.models import signals
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from domain.decorators import login_and_domain_required
-from domain.models import Domain
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.shared_code.hqutils import paginate, get_table_display_properties, get_post_redirect
-from receiver import submitprocessor
-from receiver.models import Attachment
+from corehq.apps.receiver import submitprocessor
+from corehq.apps.receiver.models import Attachment
 from corehq.shared_code.transformers.csv import UnicodeWriter, format_csv
 from corehq.shared_code.transformers.zip import get_zipfile
 from corehq.shared_code.webutils import render_to_response

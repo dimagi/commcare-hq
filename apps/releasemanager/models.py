@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 
 FILE_PATH       = settings.RAPIDSMS_APPS['releasemanager']['file_path']
 JARJAD_PATH     = os.path.join(FILE_PATH, "jarjad")

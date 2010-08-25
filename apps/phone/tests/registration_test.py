@@ -2,11 +2,11 @@ import unittest
 import os
 from datetime import date
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from phone.models import Phone, PhoneUserInfo
 from phone.processor import APP_NAME, REGISTRATION_HANDLER
-from receiver.models import SubmissionHandlingOccurrence
-from xforms.tests.util import populate
+from corehq.apps.receiver.models import SubmissionHandlingOccurrence
+from corehq.apps.xforms.tests.util import populate
 
 class RegistrationTestCase(unittest.TestCase):
     

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.http import HttpResponse
 
-from receiver.submitresponse import SubmitResponse
+from corehq.apps.receiver.submitresponse import SubmitResponse
 
 SUCCESSFUL_SUBMISSION = "Thanks!"
 

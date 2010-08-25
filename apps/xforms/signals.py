@@ -1,7 +1,7 @@
 # process is here instead of views because in views it gets reloaded
 # everytime someone hits a view and that messes up the process registration
 # whereas models is loaded once
-from receiver.models import Attachment
+from corehq.apps.receiver.models import Attachment
 from django.db.models.signals import post_save
 import logging
 import sys
@@ -38,7 +38,7 @@ def process(sender, instance, created, **kwargs): #get sender, instance, created
     else:
         pass
         
-# Register to receive signals from receiver
+# Register to receive signals from corehq.apps.receiver
 # print "connecting post save for attachments"
 post_save.connect(process, sender=Attachment)
 

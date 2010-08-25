@@ -27,7 +27,7 @@ import xforms.const as const
 from xforms.util import *
 from xforms.xformdef import FormDef
 from xforms.xmlrouter import process
-from receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
+from corehq.apps.receiver.models import SubmissionHandlingOccurrence, SubmissionHandlingType
 from corehq.util.dbutils import is_configured_mysql, is_configured_postgres
 
 

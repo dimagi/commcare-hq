@@ -17,12 +17,12 @@ from releasemanager import xformvalidator
 from django.conf import settings
 from releasemanager.jar import extract_xforms
 
-from xforms.models import FormDefModel
+from corehq.apps.xforms.models import FormDefModel
 
-from xforms.manager import xforms
+from corehq.apps.xforms.manager import xforms
 import logging
 import traceback
-from xforms.xformdef import FormDef
+from corehq.apps.xforms.xformdef import FormDef
 from releasemanager.exceptions import XFormConflictError, FormReleaseError
 
 

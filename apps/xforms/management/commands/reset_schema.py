@@ -6,7 +6,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.lib.django_rest_interface import util as rest_util
 from xforms.management.commands import util
-from receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
+from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (

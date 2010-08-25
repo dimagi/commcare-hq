@@ -3,7 +3,7 @@
 
 
 from django.contrib import admin
-from program.models import Program, ProgramMembership
+from corehq.apps.program.models import Program, ProgramMembership
 
 
 class ProgramMembershipInline(admin.TabularInline):

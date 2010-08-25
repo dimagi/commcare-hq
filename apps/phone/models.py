@@ -5,16 +5,16 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
     REGISTRATION_XMLNS
-from receiver.models import Attachment
+from corehq.apps.receiver.models import Attachment
 
 # # the scheduler is a really bad place for this class to live
 # from scheduler.fields import PickledObjectField
 
 from corehq.shared_code.djangoplus.fields import PickledObjectField
-from xforms.models import Metadata
+from corehq.apps.xforms.models import Metadata
 import xforms.xmlrouter as xmlrouter
 
 class Phone(models.Model):

@@ -10,7 +10,7 @@ from django.forms.util import ErrorDict
 from django.utils.functional import curry
 from django.utils.translation.trans_null import _
 from resource import ResourceBase, load_put_and_files, reverse, HttpMethodNotAllowed
-from receiver import FormReceiver
+from corehq.apps.receiver import FormReceiver
 
 class InvalidModelData(Exception):
     """

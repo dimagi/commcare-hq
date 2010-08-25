@@ -3,8 +3,8 @@ import os
 
 from phone.models import Phone, PhoneBackup
 from phone.processor import BACKUP_HANDLER, APP_NAME
-from receiver.models import SubmissionHandlingOccurrence
-from xforms.tests.util import populate
+from corehq.apps.receiver.models import SubmissionHandlingOccurrence
+from corehq.apps.xforms.tests.util import populate
 
 class BackupTestCase(unittest.TestCase):
     
