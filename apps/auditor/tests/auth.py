@@ -2,6 +2,7 @@ from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
 from auditor.models import AuditEvent, ModelActionAudit, AccessAudit
 import unittest
+import settings
 
 class authenticationTestCase(unittest.TestCase):
     def setUp(self):
@@ -48,17 +49,27 @@ class authenticationTestCase(unittest.TestCase):
     
     def testLogin(self):
         print "testLogin"
-        start_count = AccessAudit.objects.all().count()
-        
-        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'mockmock'})        
-        
-        login_count = AccessAudit.objects.all().count()
-        
-        self.assertEqual(start_count+1, login_count)
-        
-        response = self.client.post('/accounts/logout/', {})
-        
-        logout_count = AccessAudit.objects.all().count()
-        
+        start_count = AccessAudit.objects.all().count()        
+        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'mockmock'})                
+        login_count = AccessAudit.objects.all().count()     
+        self.assertEqual(start_count+1, login_count)        
+          
+        response = self.client.post('/accounts/logout/', {})        
+        logout_count = AccessAudit.objects.all().count()        
         self.assertEqual(start_count+2, logout_count)
         
+        
+    def testFailedLogin(self):
+        print "testFailedLogin"
+        start_count = AccessAudit.objects.all().count()        
+        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'asdfsdaf'})                
+        access = AccessAudit.objects.order_by('-event_date')[0]
+        
+        self.assertEquals('failed', access.access_type)
+        login_count = AccessAudit.objects.all().count()     
+        self.assertEqual(start_count+1, login_count)
+    
+    def testAuditViews(self):
+        for v in settings.AUDIT_VIEWS:
+            pass
+    
