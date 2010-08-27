@@ -1,6 +1,6 @@
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
-from auditor.models import AuditEvent, ModelActionAudit, AccessAudit
+from corehq.apps.auditor.models import AuditEvent, ModelActionAudit, AccessAudit
 import unittest
 
 class authenticationTestCase(unittest.TestCase):

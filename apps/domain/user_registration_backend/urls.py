@@ -19,7 +19,7 @@ urlpatterns = patterns('',
                        # handle this possibility. Had to rewrite it.
                        url(r'^register/invite_user/$',
                            register_with_possible_errors,
-                           { 'backend': 'domain.user_registration_backend.UserRegistersSelfBackend',
+                           { 'backend': 'corehq.apps.domain.user_registration_backend.UserRegistersSelfBackend',
                              'template_name':'domain/user_registration/registration_invite_form.html' },
                            name='registration_invite_user'),
                         
@@ -47,7 +47,7 @@ urlpatterns = patterns('',
                        # at activation time, we can't use the default 'activate.' Had to rewrite it.             
                        url(r'^activate/user_inputs_data/(?P<activation_key>\w+)/$',
                            activate_by_form,
-                           { 'backend': 'domain.user_registration_backend.UserRegistersSelfBackend' },
+                           { 'backend': 'corehq.apps.domain.user_registration_backend.UserRegistersSelfBackend' },
                            name='registration_activate_user_inputs_data'),                                                   
                                                                    
                        url(r'^activate/complete(?:/(?P<caller>\w+))?(?:/(?P<account>\w+))?/$',

@@ -1,7 +1,7 @@
 from django.conf import settings
 import django.core.exceptions
 import logging
-from auditor.models import AuditEvent
+from corehq.apps.auditor.models import AuditEvent
 
 class AuditMiddleware(object):
     def __init__(self):
