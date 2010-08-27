@@ -192,9 +192,14 @@ def login(request, template_name="login_and_password/login.html",
             #audit the login
             AuditEvent.objects.audit_login(request, form.get_user(), True)
             return HttpResponseRedirect(redirect_to)
-        else: #failed login            
-            usr = User.objects.all().get(username=form.data['username'])
-            AuditEvent.objects.audit_login(request, usr, False)
+        else: #failed login
+            failed= form.data['username']            
+            try:
+                usr = User.objects.all().get(username=form.data['username'])                   
+            except:
+                usr = None                                
+            AuditEvent.objects.audit_login(request, usr, False, username_attempt = failed)
+            
         
 
     else:

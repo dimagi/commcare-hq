@@ -28,6 +28,15 @@ class AuditEvent(models.Model):
     event_class = models.CharField(max_length=32, db_index=True, editable=False) #allow user defined classes
     description = models.CharField(max_length=160)
     
+    @property
+    def summary(self):
+        try:
+            ct = ContentType.objects.get(model=self.event_class.lower())
+            return ct.model_class().objects.get(id=self.id).summary
+        except Exception, e:
+            return ""
+            
+            
     
     def __unicode__(self):
         return "[%s] %s" % (self.event_class, self.description)
@@ -61,6 +70,11 @@ class ModelActionAudit(AuditEvent):
     object_type = models.ForeignKey(ContentType, verbose_name='Case linking content type', blank=True, null=True)
     object_uuid = models.CharField('object_uuid', max_length=32, db_index=True, blank=True, null=True)
     content_object = generic.GenericForeignKey('object_type', 'object_uuid')    
+
+    @property
+    def summary(self):
+        return "%s ID: %s" % (self.object_type, self.object_uuid)
+
     
     @classmethod
     def audit_save(cls, model_class, instance, user):
@@ -82,6 +96,11 @@ class NavigationEventAudit(AuditEvent):
     view = models.CharField(max_length=255) #the fully qualifid view name
     headers = models.TextField(null=True, blank=True) #the request.META?
     session_key = models.CharField(_('session key'), max_length=40) 
+    
+    @property
+    def summary(self):
+        return "%s from %s" % (self.request_path, self.ip_address)
+    
     
         
     @classmethod
@@ -116,8 +135,13 @@ class AccessAudit(AuditEvent):
     ip_address = models.IPAddressField()
     session_key = models.CharField(_('session key'), max_length=40)    
     
+    @property
+    def summary(self):
+        return "%s from %s" % (self.access_type, self.ip_address)
+    
+    
     @classmethod
-    def audit_login(cls, request, user, success):
+    def audit_login(cls, request, user, success, username_attempt=None, *args, **kwargs):
         '''Creates an instance of a Access log.
         '''
         audit = cls.create_audit(cls, user)        
@@ -126,8 +150,11 @@ class AccessAudit(AuditEvent):
             audit.access_type = 'login'
             audit.description = "Login Success"
         else:
-            audit.access_type = 'failed'
-            audit.description = "Login Failure"
+            audit.access_type = 'failed'            
+            if username_attempt != None:
+                audit.description = "Login Failure: %s" % (username_attempt)
+            else:
+                audit.description = "Login Failure"        
         
         audit.session_key = request.session.session_key
         audit.save()
@@ -168,5 +195,7 @@ class ModelAuditEvent(models.Model):
     
     user = models.ForeignKey(User)
     accessed = models.DateTimeField(default = getdate())
+    
+    
 
 import signals
