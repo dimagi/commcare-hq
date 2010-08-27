@@ -1,5 +1,5 @@
 from django.contrib import admin
-from auditor.models import * 
+from corehq.apps.auditor.models import * 
 from django.contrib.auth.models import User
 
 
