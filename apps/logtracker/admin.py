@@ -11,8 +11,8 @@ import datetime
 
 
 import django
-from logtracker.models import *
-from logtracker.handlers import *
+from models import *
+from handlers import *
 
 from django.contrib import admin
 

@@ -31,7 +31,7 @@
 {% endwith %}
 </div>
 <div class="span-12 last" style="text-align:right;">
-<a href="{%url xforms.views.plain_data xform.id %}">view fullscreen</a>
+<a href="{%url corehq.apps.xforms.views.plain_data xform.id %}">view fullscreen</a>
 </div>
 <br>
 <form action="{% url corehq.apps.xforms.views.delete_data xform.id %}" method="POST">

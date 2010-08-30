@@ -4,5 +4,5 @@ DATABASE_NAME = ':memory:'
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django_digest'
+    'corehq.lib.django_digest'
     )

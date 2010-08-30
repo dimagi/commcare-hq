@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.core import signals
 from django.db import backend, connection as global_connection, IntegrityError
 
-from django_digest.models import UserNonce, PartialDigest
+from corehq.lib.django_digest.models import UserNonce, PartialDigest
 
 _connection = None
 _l = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ INSERT INTO django_digest_usernonce (user_id, nonce, count, last_used_at)
   VALUES (%s, %s, %s, %s)
 """
 
-from django_digest.models import (_after_authenticate as update_partial_digests,
+from corehq.lib.django_digest.models import (_after_authenticate as update_partial_digests,
                                   _review_partial_digests as review_partial_digests)
 
 class AccountStorage(object):

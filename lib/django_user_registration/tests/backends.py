@@ -74,7 +74,7 @@ class BackendRetrievalTests(TestCase):
         passed a valid backend.
 
         """
-        self.failUnless(isinstance(get_backend('user_registration.backends.default.DefaultBackend'),
+        self.failUnless(isinstance(get_backend('django_user_registration.backends.default.DefaultBackend'),
                                    DefaultBackend))
 
     def test_backend_error_invalid(self):
@@ -84,7 +84,7 @@ class BackendRetrievalTests(TestCase):
 
         """
         self.assertRaises(ImproperlyConfigured, get_backend,
-                          'user_registration.backends.doesnotexist.NonExistentBackend')
+                          'django_user_registration.backends.doesnotexist.NonExistentBackend')
 
     def test_backend_attribute_error(self):
         """
@@ -93,7 +93,7 @@ class BackendRetrievalTests(TestCase):
         
         """
         self.assertRaises(ImproperlyConfigured, get_backend,
-                          'user_registration.backends.default.NonexistentBackend')
+                          'django_user_registration.backends.default.NonexistentBackend')
 
 
 class DefaultRegistrationBackendTests(TestCase):

@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse
 
 from decorator import decorator
 
-from django_digest import HttpDigestAuthenticator
+from corehq.lib.django_digest import HttpDigestAuthenticator
 
 def _httpdigest(authenticator, f, *args, **kwargs):
     # 'f' might be a function, in which case args[0] is 'request'

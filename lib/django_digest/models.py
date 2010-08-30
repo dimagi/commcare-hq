@@ -5,7 +5,7 @@ from django.db.models.signals import post_save
 
 from python_digest import calculate_partial_digest
 
-from django_digest.utils import get_backend, get_setting, DEFAULT_REALM
+from utils import get_backend, get_setting, DEFAULT_REALM
 
 class UserNonce(models.Model):
     user = models.ForeignKey(User)
@@ -25,7 +25,7 @@ _postponed_partial_digests = {}
 
 def _get_logins(user, method_name):
     login_factory = get_backend('DIGEST_LOGIN_FACTORY',
-                                'django_digest.DefaultLoginFactory')
+                                'corehq.lib.django_digest.DefaultLoginFactory')
     method = getattr(login_factory, method_name, None)
     if method:
         return set(method(user))

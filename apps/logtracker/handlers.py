@@ -4,7 +4,7 @@
 #http://code.google.com/p/django-logging
 
 from logging import Handler
-from logtracker.models import *
+from models import *
 import traceback
 
 logrecord_keys = ['msecs', 'args', 'name', 'thread', 'created', 'process', 'threadName', 'module', 'filename', 'levelno', 'processName', 'lineno', 'exc_info', 'exc_text', 'pathname', 'funcName', 'relativeCreated', 'levelname', 'msg']

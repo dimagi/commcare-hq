@@ -14,12 +14,12 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.utils.functional import LazyObject
 
-from django_digest import HttpDigestAuthenticator
-from django_digest.backend.db import AccountStorage
-from django_digest.decorators import httpdigest
-from django_digest.middleware import HttpDigestMiddleware
-from django_digest.models import PartialDigest
-from django_digest.utils import get_setting, get_backend, DEFAULT_REALM
+from corehq.lib.django_digest import HttpDigestAuthenticator
+from backend.db import AccountStorage
+from decorators import httpdigest
+from middleware import HttpDigestMiddleware
+from models import PartialDigest
+from utils import get_setting, get_backend, DEFAULT_REALM
 
 @contextmanager
 def patch(namespace, **values):
@@ -86,17 +86,17 @@ class UtilsTest(TestCase):
 
     def test_get_backend(self):
         with patch(settings,
-                   A_PRESENT_BACKEND_SETTING='django_digest.tests.DummyBackendClass',
+                   A_PRESENT_BACKEND_SETTING='corehq.lib.django_digest.tests.DummyBackendClass',
                    AN_ABSENT_BACKEND_SETTING=NotImplemented):
             self.assertEqual(
                 DummyBackendClass,
                 type(get_backend('A_PRESENT_BACKEND_SETTING',
-                                 'django_digest.tests.OtherDummyBackendClass')))
+                                 'corehq.lib.django_digest.tests.OtherDummyBackendClass')))
 
             self.assertEqual(
                 OtherDummyBackendClass,
                 type(get_backend('AN_ABSENT_BACKEND_SETTING',
-                                 'django_digest.tests.OtherDummyBackendClass')))
+                                 'corehq.lib.django_digest.tests.OtherDummyBackendClass')))
 
 
 class DjangoDigestTests(TestCase):
@@ -382,7 +382,7 @@ class DummyLoginFactory(object):
 class ModelsTests(TestCase):
     def test_unconfirmed_partial_digests(self):
         with patch(settings,
-                   DIGEST_LOGIN_FACTORY='django_digest.tests.DummyLoginFactory'):
+                   DIGEST_LOGIN_FACTORY='corehq.lib.django_digest.tests.DummyLoginFactory'):
             with patch(DummyLoginFactory, confirmed_logins=['user', 'wierdo'],
                        unconfirmed_logins=['email@example.com', 'other@example.com']):
                 user = User.objects.create_user(username='TestUser',

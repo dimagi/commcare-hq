@@ -9,7 +9,7 @@ from django.utils.importlib import import_module
 
 import python_digest
 
-from django_digest.utils import get_backend, get_setting, DEFAULT_REALM
+from utils import get_backend, get_setting, DEFAULT_REALM
 
 _l = logging.getLogger(__name__)
 
@@ -37,9 +37,9 @@ class HttpDigestAuthenticator(object):
         self.realm = realm or get_setting('DIGEST_REALM', DEFAULT_REALM)
         self.timeout = timeout or get_setting('DIGEST_NONCE_TIMEOUT_IN_SECONDS', 5*60)
         self._account_storage = (account_storage or get_backend(
-                'DIGEST_ACCOUNT_BACKEND', 'django_digest.backend.db.AccountStorage'))
+                'DIGEST_ACCOUNT_BACKEND', 'corehq.lib.django_digest.backend.db.AccountStorage'))
         self._nonce_storage = (nonce_storage or get_backend(
-                'DIGEST_NONCE_BACKEND', 'django_digest.backend.db.NonceStorage'))
+                'DIGEST_NONCE_BACKEND', 'corehq.lib.django_digest.backend.db.NonceStorage'))
         self.secret_key = get_setting('SECRET_KEY')
 
     @staticmethod

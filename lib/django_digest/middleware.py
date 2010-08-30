@@ -1,5 +1,5 @@
-from django_digest import HttpDigestAuthenticator
-from django_digest.utils import get_setting
+from corehq.lib.django_digest import HttpDigestAuthenticator
+from utils import get_setting
 
 class HttpDigestMiddleware(object):
     def __init__(self, require_authentication=None, authenticator=None):
