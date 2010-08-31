@@ -8,44 +8,12 @@ sys.path.append('..')
 sys.path.append(os.path.join(filedir))
 sys.path.append(os.path.join(filedir,'apps'))
 
-#corehq
-sys.path.append(os.path.join(filedir,'corehq'))
-sys.path.append(os.path.join(filedir,'corehq','apps'))
-
-#rapidsms
-sys.path.append(os.path.join(filedir,'rapidsms'))
-sys.path.append(os.path.join(filedir,'rapidsms','apps'))
-sys.path.append(os.path.join(filedir,'rapidsms','lib'))
-sys.path.append(os.path.join(filedir,'rapidsms','lib','rapidsms'))
-sys.path.append(os.path.join(filedir,'rapidsms','lib','rapidsms','webui'))
-
-  
-
-import rapidsms
-
-# these cannot go in local.ini since local.ini is not python
-# cannot go in lib/rapidsms/webui/settings.py since that's rapidsms
-# cannot go in a local settings.py because we would need to duplicate
-# all thes ettings in lib/rapidsms/webui/settings.py, and at some point
-# when rapidsms's settings.py diverges, we would start getting weird 
-# errors because we have 2 settings
-# we cannot include lib/rapidsms/webui/settings.py in a local settings.py
-# either (or at least i haven't figured out how).
-# so here's our intermediate hack
-import os
-root = os.path.dirname(__file__)
-if not os.path.isdir(os.path.join(root,'data')):
-    os.mkdir(os.path.join(root,'data'))
-if not os.path.isdir(os.path.join(root,'data','submissions')):
-    os.mkdir(os.path.join(root,'data','submissions'))
-if not os.path.isdir(os.path.join(root,'data','attachments')):
-    os.mkdir(os.path.join(root,'data','attachments'))
-if not os.path.isdir(os.path.join(root,'data','schemas')):
-    os.mkdir(os.path.join(root,'data','schemas'))
+try:
+    import settings # Assumed to be in the same directory.
+except ImportError:
+    import sys
+    sys.stderr.write("Error: Can't find the file 'settings.py' in the directory containing %r. It appears you've customized things.\nYou'll have to run django-admin.py, passing it your settings module.\n(If the file settings.py does indeed exist, it's causing an ImportError somehow.)\n" % __file__)
+    sys.exit(1)
 
 if __name__ == "__main__":
-    #print "rapidsms'ing"
-    #print sys.argv
-    #os.environ["RAPIDSMS_INI"] = 'hqsetup.ini'
-    os.environ["RAPIDSMS_HOME"] = os.path.abspath(os.path.dirname(__file__))
     rapidsms.manager.start(sys.argv)
