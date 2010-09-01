@@ -28,15 +28,15 @@ import unittest
 import cStringIO
 from urlparse import urlparse
 
-from receiver.models import Submission
-from receiver.management.commands.generate_submissions import generate_submissions
-from receiver.management.commands.load_submissions import load_submissions
-from xformmanager.management.commands.sync_schema import generate_schemata, load_schemata
-from xformmanager.tests.util import create_xsd_and_populate, populate
+from corehq.apps.receiver.models import Submission
+from corehq.apps.receiver.management.commands.generate_submissions import generate_submissions
+from corehq.apps.receiver.management.commands.load_submissions import load_submissions
+from corehq.apps.xforms.management.commands.sync_schema import generate_schemata, load_schemata
+from corehq.apps.xforms.tests.util import create_xsd_and_populate, populate
 from django_rest_interface import util as rest_util
-from xformmanager.models import FormDefModel, Metadata
-from xformmanager.manager import XFormManager
-from xformmanager.xformdef import FormDef
+from corehq.apps.xforms.models import FormDefModel, Metadata
+from corehq.apps.xforms.manager import XFormManager
+from corehq.apps.xforms.xformdef import FormDef
 
 """ TESTS """
 class TestSync(unittest.TestCase):

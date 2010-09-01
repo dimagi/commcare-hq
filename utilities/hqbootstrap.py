@@ -31,7 +31,7 @@ def run():
     from django.contrib.auth.models import Message
 
 
-    from domain.models import Domain
+    from corehq.apps.domain.models import Domain
 
     hq_domain_1 = Domain()
     hq_domain_1.name = u'Pathfinder'
@@ -61,7 +61,7 @@ def run():
     hq_domain_4.is_active = True
     hq_domain_4.save()
 
-    from domain.models import Membership
+    from corehq.apps.domain.models import Membership
     
     # Pathfinder
     domain_membership_1 = Membership()
@@ -130,16 +130,16 @@ def run():
 
 
 
-    from receiver.models import Submission
+    from corehq.apps.receiver.models import Submission
 
 
-    from receiver.models import Attachment
+    from corehq.apps.receiver.models import Attachment
 
 
-    from receiver.models import SubmissionHandlingType
+    from corehq.apps.receiver.models import SubmissionHandlingType
 
 
-    from receiver.models import SubmissionHandlingOccurrence
+    from corehq.apps.receiver.models import SubmissionHandlingOccurrence
 
 
     from reporters.models import Role
@@ -364,13 +364,13 @@ def run():
     from reports.models import CaseFormIdentifier
 
 
-    from xformmanager.models import ElementDefModel
+    from corehq.apps.xforms.models import ElementDefModel
 
 
-    from xformmanager.models import FormDefModel
+    from corehq.apps.xforms.models import FormDefModel
 
 
-    from xformmanager.models import Metadata
+    from corehq.apps.xforms.models import Metadata
 
 
     from hq.models import ReporterProfile

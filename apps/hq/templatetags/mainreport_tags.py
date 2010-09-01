@@ -7,9 +7,9 @@ from types import ListType,TupleType
 
 from hq.models import *
 
-import xformmanager.adapter.querytools as qtools
+import corehq.apps.xformmanager.adapter.querytools as qtools
 import hq.utils as utils
-from xformmanager.models import *
+from corehq.apps.xforms.models import *
 import time
 from datetime import timedelta
 import graphing.dbhelper as dbhelper

@@ -4,8 +4,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.db import connection
 
-from xformmanager.models import Metadata, FormDefModel, ElementDefModel, FormDataGroup
-# from domain.models import Membership
+from corehq.apps.xforms.models import Metadata, FormDefModel, ElementDefModel, FormDataGroup
+# from corehq.apps.domain.models import Membership
 # from django.contrib.auth.models import User
 
 from intel.schema_models import *

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4
+# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
+from django.core.management import execute_manager
 import sys, os
-filedir = os.path.dirname(__file__)
-sys.path.append('..')
 
+filedir = os.path.dirname(__file__)
 sys.path.append(os.path.join(filedir))
 sys.path.append(os.path.join(filedir,'apps'))
 
@@ -16,4 +16,4 @@ except ImportError:
     sys.exit(1)
 
 if __name__ == "__main__":
-    rapidsms.manager.start(sys.argv)
+    execute_manager(settings)

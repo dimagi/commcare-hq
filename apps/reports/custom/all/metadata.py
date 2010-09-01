@@ -2,7 +2,7 @@ from django.template.loader import render_to_string
 
 import settings 
 
-from xformmanager.models import Metadata
+from corehq.apps.xforms.models import Metadata
 from hq.utils import paginate, get_table_display_properties, get_query_set
 
 

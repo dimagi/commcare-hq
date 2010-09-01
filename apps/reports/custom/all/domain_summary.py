@@ -1,8 +1,8 @@
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from xformmanager.models import FormDefModel, Metadata
-from receiver.models import Submission, Attachment
+from corehq.apps.xforms.models import FormDefModel, Metadata
+from corehq.apps.receiver.models import Submission, Attachment
 from hq.models import BlacklistedUser
 
 def domain_summary(request, domain=None, detail_view=True):

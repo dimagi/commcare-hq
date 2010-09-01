@@ -23,12 +23,12 @@ from django.core.management.commands.syncdb import Command
 
 def run():
     print "starting migration"
-    from receiver.models import Submission, Attachment
-    from xformmanager.models import FormDefModel, ElementDefModel, Metadata
+    from corehq.apps.receiver.models import Submission, Attachment
+    from corehq.apps.xforms.models import FormDefModel, ElementDefModel, Metadata
     # this part of the script walks through all the registered
     # form definitions and deletes them.
     
-    from xformmanager.storageutility import StorageUtility
+    from corehq.apps.xforms.storageutility import StorageUtility
     from graphing import dbhelper
     
     

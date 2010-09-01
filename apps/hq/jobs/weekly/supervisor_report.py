@@ -1,4 +1,4 @@
-from django_extensions.management.jobs import WeeklyJob
+from corehq.lib.django_extensions.management.jobs import WeeklyJob
 import hq.reporter as reporter
 
 class Job(WeeklyJob):

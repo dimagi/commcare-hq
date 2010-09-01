@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import Organization, ReporterProfile
 from hq.tests.util import create_user_and_domain
 from reporters.models import Reporter

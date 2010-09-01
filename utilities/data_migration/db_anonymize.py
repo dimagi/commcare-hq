@@ -9,7 +9,7 @@
 import random
 from MySQLdb import ProgrammingError
 from django.db import connection
-from xformmanager.models import FormDefModel, Metadata
+from corehq.apps.xforms.models import FormDefModel, Metadata
 
 name_changes = {}
 

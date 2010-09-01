@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.db import connection
 import settings
 
-from xformmanager.models import Metadata, FormDefModel, ElementDefModel
+from corehq.apps.xforms.models import Metadata, FormDefModel, ElementDefModel
 from reports.models import Case, SqlReport
 from reports.util import get_whereclause
 from shared import monitoring_report, Mother

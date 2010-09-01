@@ -17,7 +17,7 @@ from rapidsms.i18n import ugettext_from_locale as _t
 from rapidsms.i18n import ugettext_noop as _
 from reporters.models import Reporter
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import Organization, ReporterProfile
 from hq.reporter.custom import get_delinquent_context_from_statdict
 from reports.sms.util import forms_submitted

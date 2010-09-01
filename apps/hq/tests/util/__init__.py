@@ -3,7 +3,7 @@
 """
 
 import hashlib
-from domain.models import Domain, Membership
+from corehq.apps.domain.models import Domain, Membership
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from hq.models import ReporterProfile

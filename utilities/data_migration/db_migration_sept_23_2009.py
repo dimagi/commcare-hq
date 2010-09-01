@@ -20,10 +20,10 @@ CHANGE_SCHEMA_LOCATION = False
 """ """""""""""""""""" """
 
 from django.db import connection
-from xformmanager.models import ElementDefModel, FormDefModel
+from corehq.apps.xforms.models import ElementDefModel, FormDefModel
 
 
-from xformmanager.storageutility import get_registered_table_name
+from corehq.apps.xforms.storageutility import get_registered_table_name
 from django.db import connection
 
 def run():

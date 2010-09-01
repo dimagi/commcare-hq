@@ -10,12 +10,12 @@ This is somewhat redundant with functionality already existent in the apps/repor
 a basic metadata query.
 """
 
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import Organization, ReporterProfile, BlacklistedUser
-from receiver.models import Submission
+from corehq.apps.receiver.models import Submission
 from reporters.models import Reporter, ReporterGroup
 from datetime import datetime, timedelta
-from xformmanager.models import Metadata
+from corehq.apps.xforms.models import Metadata
 
 
 def build_filtered_metadataquery(intervalstart, intervalend, domain=None, reportergroup=None, reporterprofile=None, formdefs=[]):

@@ -12,8 +12,8 @@ import json
 
 def run():
     print "starting"
-    from receiver.models import Submission
-    from xformmanager.models import FormDefModel
+    from corehq.apps.receiver.models import Submission
+    from corehq.apps.xforms.models import FormDefModel
     # this part of the script walks through all the registered
     # form definitions and bundles them with the original xsd
     # schema for resubmission

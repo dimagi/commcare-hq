@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.test.client import Client
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
 from hq.tests.util import create_user_and_domain
 

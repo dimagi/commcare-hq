@@ -36,7 +36,7 @@ def run():
     cursor.execute("SELECT user_ptr_id, domain_id FROM hq_extuser")
     rows = cursor.fetchall()
     
-    from domain.models import Domain, Membership
+    from corehq.apps.domain.models import Domain, Membership
     from django.contrib.auth.models import User
     from django.contrib.contenttypes.models import ContentType
     
@@ -58,7 +58,7 @@ def run():
     except Exception, e:
         print "Problem updating the form group table!  Your error is %s" % e
     
-    from xformmanager.models import FormDataGroup
+    from corehq.apps.xforms.models import FormDataGroup
     default_domain = Domain.objects.all()[0]
     try:
         # by default set the domain to be the domain of the first form.

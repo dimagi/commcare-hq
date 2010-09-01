@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.template.loader import render_to_string
 
-from xformmanager.models import Metadata
+from corehq.apps.xforms.models import Metadata
 from graphing.dbhelper import DbHelper
 from hq.utils import get_dates
 from hq.models import BlacklistedUser

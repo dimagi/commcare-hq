@@ -6,10 +6,10 @@ import reporters.app as reporters_app
 from django.db import connection, transaction
 
 from reporters.models import ReporterGroup, PersistantBackend
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import Organization, ReporterProfile
-from receiver.models import Submission, Attachment
-from xformmanager.tests.util import *
+from corehq.apps.receiver.models import Submission, Attachment
+from corehq.apps.xforms.tests.util import *
 from reports.sms.brac import *
 from hq.tests.util import *
 

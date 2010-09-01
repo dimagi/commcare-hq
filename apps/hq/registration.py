@@ -2,10 +2,10 @@ from django import template
 from django.contrib.contenttypes.models import ContentType
 from types import ListType,TupleType
 
-from xformmanager.models import *
+from corehq.apps.xforms.models import *
 from hq.models import *
 from reporters.models import Reporter, ReporterGroup
-import xformmanager.adapter.querytools as qtools
+import corehq.apps.xforms.adapter.querytools as qtools
 import hq.utils as utils        
 import uuid
 import string

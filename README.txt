@@ -3,8 +3,7 @@ Commcare-HQ Overall project structure.
 
 apps/
 	Django apps that you will make
-	
-	
+
 libs/
 	Any third party libs (presumably python) that you'll need to reference
 	
@@ -20,5 +19,7 @@ projects/
 projects/templates/
 	for each project, there needs to be templates unique to managing the templates for the main content portions.
 	within the confines of the application you're working in, you can make templates local and relative to the application you create.
-	
+
+corehq/
+	submodule reference to the core hq apps, libs, and utilities
 	 

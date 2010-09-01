@@ -4,8 +4,8 @@ import logging
 from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 
-from xformmanager.models import FormDefModel
-from domain.models import Domain
+from corehq.apps.xforms.models import FormDefModel
+from corehq.apps.domain.models import Domain
 from hq.dbutil import get_column_names
 
 

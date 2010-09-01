@@ -11,8 +11,8 @@ from django.utils import simplejson
 #import json
 
 setup_environ(settings)
-from receiver.models import Submission
-from xformmanager.models import FormDefData
+from corehq.apps.receiver.models import Submission
+from corehq.apps.xforms.models import FormDefData
  
 # this part of the script walks through all the registered
 # form definitions and bundles them with the original xsd

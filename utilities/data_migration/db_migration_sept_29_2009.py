@@ -5,7 +5,7 @@
 # adds unsalted_password to hq.models.ExtUser
 
 from django.db import connection
-from receiver.models import Submission
+from corehq.apps.receiver.models import Submission
 from hq.models import ExtUser
 
 def run():

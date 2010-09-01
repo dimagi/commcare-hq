@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
 from transformers.xml import xmlify
 from transformers.http import responsify
-from xformmanager.models import FormDefModel, Metadata
+from corehq.apps.xforms.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
 from hq.reporter.api_.reports import Report, DataSet, Values
 from hq.reporter.metadata import get_username_count, get_timespan
-from domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required
 
 # TODO - clean up index/value once we hash out this spec more properly
 # TODO - pull out authentication stuff into some generic wrapper

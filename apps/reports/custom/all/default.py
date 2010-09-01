@@ -1,6 +1,6 @@
 from blacklist import blacklist as inner_blacklist
 from metadata import metadata as inner_metadata
-from domain_summary import domain_summary as inner_domain_summary
+from corehq.apps.domain_summary import domain_summary as inner_domain_summary
 from chw_summary import chw_summary as inner_chw_summary
 
 

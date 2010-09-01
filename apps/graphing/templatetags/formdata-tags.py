@@ -1,6 +1,6 @@
 from django import template
 from django.core.urlresolvers import reverse
-from xformmanager.models import *
+from corehq.apps.xforms.models import *
 
 
 from django.contrib.contenttypes.models import ContentType
@@ -9,7 +9,7 @@ from types import ListType,TupleType
 from hq.models import *
 import graphing.dbhelper as dbhelper  
 
-import xformmanager.adapter.querytools as qtools
+import corehq.apps.xformmanager.adapter.querytools as qtools
 
 
 register = template.Library()

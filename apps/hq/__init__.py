@@ -1,5 +1,5 @@
 import logging
-from receiver.submitresponse import SubmitResponse
+from corehq.apps.receiver.submitresponse import SubmitResponse
 
 SUCCESSFUL_REGISTRATION = "Successful registration"
 

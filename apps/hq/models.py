@@ -2,9 +2,9 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 
-from domain.models import Domain 
+from corehq.apps.domain.models import Domain 
 from reporters.models import Reporter, ReporterGroup
-import xformmanager.xmlrouter as xmlrouter
+import corehq.apps.xforms.xmlrouter as xmlrouter
 
 
 class OrganizationType(models.Model):

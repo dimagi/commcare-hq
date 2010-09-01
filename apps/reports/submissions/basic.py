@@ -6,9 +6,9 @@ create: 10/23/2009
 Notes:
 A place where oft reused queries off receiver.submission can be referenced.
 """
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import Organization
-from receiver.models import Submission, Attachment, SubmissionHandlingType, SubmissionHandlingOccurrence
+from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingType, SubmissionHandlingOccurrence
 from datetime import datetime, timedelta
 import sets
 

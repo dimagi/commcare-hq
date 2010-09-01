@@ -27,14 +27,14 @@ from django.contrib.contenttypes.models import ContentType
 
 from rapidsms.webui.utils import render_to_response, paginated
 
-from xformmanager.models import *
+from corehq.apps.xforms.models import *
 from hq.models import *
 from graphing import dbhelper
 from graphing.models import *
-from receiver.models import *
-from domain.decorators import login_and_domain_required, domain_admin_required
-from program.models import Program
-from phone.models import PhoneUserInfo
+from corehq.apps.receiver.models import *
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.program.models import Program
+from corehq.apps.phone.models import PhoneUserInfo
     
 import hq.utils as utils
 import hq.reporter as reporter

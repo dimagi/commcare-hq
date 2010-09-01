@@ -1,12 +1,12 @@
 import unittest
 import os
 
-from receiver.models import Submission, Attachment
+from corehq.apps.receiver.models import Submission, Attachment
 from reports.models import *
-from xformmanager.tests.util import *
-from xformmanager.models import *
-from xformmanager.storageutility import StorageUtility
-from domain.models import Domain
+from corehq.apps.xforms.tests.util import *
+from corehq.apps.xforms.models import *
+from corehq.apps.xforms.storageutility import StorageUtility
+from corehq.apps.domain.models import Domain
 #from django.test import TestCase
 
 class CaseTestCase(unittest.TestCase):

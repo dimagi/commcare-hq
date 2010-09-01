@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 from hq.tests.util import create_user_and_domain
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from graphing.models import *
 
 

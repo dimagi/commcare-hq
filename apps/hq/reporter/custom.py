@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from django.template import Template, Context
 from django.template.loader import render_to_string
-from domain.models import Domain
+from corehq.apps.domain.models import Domain
 from hq.models import *
-from receiver.models import Submission, Attachment
+from corehq.apps.receiver.models import Submission, Attachment
 from reports.custom.all.domain_summary import DomainSummary
 from reports.custom.all.shared import *
-from xformmanager.models import *
+from corehq.apps.xforms.models import *
 import graphing.dbhelper as dbhelper
 import hq.utils as utils
 import inspector as repinspector
