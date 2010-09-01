@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 
 from corehq.apps.domain.models import Domain
 
-FILE_PATH       = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+FILE_PATH       = settings.RELEASE_FILE_PATH
 JARJAD_PATH     = os.path.join(FILE_PATH, "jarjad")
 BUILD_PATH      = os.path.join(FILE_PATH, "builds")
 RESOURCE_PATH   = os.path.join(FILE_PATH, "resources")

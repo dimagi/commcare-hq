@@ -8,7 +8,7 @@ import logging
 import settings
 
 # this is a really bad place for this class to live, but reference it here for now
-from scheduler.fields import PickledObjectField
+from corehq.util.djangoplus.fields import PickledObjectField
 
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
