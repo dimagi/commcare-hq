@@ -1,5 +1,5 @@
 from django.contrib import admin
-from releasemanager.models import *
+from corehq.apps.releasemanager.models import Jarjad, ResourceSet, Build
 
 admin.site.register(Jarjad)
 admin.site.register(ResourceSet)

@@ -2,7 +2,7 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import os
-from rapidsms.webui.utils import render_to_response
+from corehq.util.webutils import render_to_response
 
 def index(request, topic, template_name="docs/index.html"):
     context = {}

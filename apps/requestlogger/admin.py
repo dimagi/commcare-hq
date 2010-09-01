@@ -2,6 +2,6 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django.contrib import admin
-from requestlogger.models import *
+from corehq.apps.requestlogger.models import RequestLog
 
 admin.site.register(RequestLog)

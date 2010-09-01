@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.http import HttpRequest
 
-from requestlogger.models import RequestLog
+from corehq.apps.requestlogger.models import RequestLog
 
 import logging
 

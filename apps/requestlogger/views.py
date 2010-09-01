@@ -1,10 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-from rapidsms.webui.utils import render_to_response
+from corehq.util.webutils import render_to_response
 
-from requestlogger.decorators import log_request                   
-from requestlogger.models import RequestLog
+from corehq.apps.requestlogger.decorators import log_request
+from corehq.apps.requestlogger.models import RequestLog
 
 
 @login_required()

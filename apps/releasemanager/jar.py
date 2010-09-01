@@ -7,8 +7,8 @@ import shutil
 import logging
 from StringIO import StringIO
 
-from releasemanager import xformvalidator
-from releasemanager.exceptions import BuildError
+from corehq.apps.releasemanager import xformvalidator
+from corehq.apps.releasemanager.exceptions import BuildError
 
 from corehq.apps.xforms.models import MetaDataValidationError
 from corehq.apps.xforms.xformdef import FormDef, ElementDef

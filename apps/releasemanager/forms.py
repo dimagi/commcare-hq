@@ -2,8 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django import forms
-from releasemanager.models import *
 import datetime
+from corehq.apps.releasemanager.models import ResourceSet, Build, Jarjad
 
 class JarjadForm(forms.ModelForm):
     jad_file_upload = forms.FileField()    

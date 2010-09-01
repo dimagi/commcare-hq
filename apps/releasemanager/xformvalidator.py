@@ -4,7 +4,7 @@ from StringIO import StringIO
 from corehq.apps.xforms.xformdef import FormDef
 from corehq.apps.xforms.manager import form_translate
 
-from releasemanager.exceptions import XsdConversionError, FormDefCreationError
+from corehq.apps.releasemanager.exceptions import XsdConversionError, FormDefCreationError
 
 
 def validate(xform_filename):

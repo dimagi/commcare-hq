@@ -404,7 +404,7 @@ class ModelsTests(TestCase):
             with patch(DummyLoginFactory,
                        confirmed_logins=['user', 'email@example.com'],
                        unconfirmed_logins=['wierdo']):
-                from django_digest.backend.db import review_partial_digests
+                from corehq.lib.django_digest.backend.db import review_partial_digests
                 review_partial_digests(user)
     
             self.assertEqual(

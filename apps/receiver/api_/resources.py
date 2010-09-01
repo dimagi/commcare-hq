@@ -14,6 +14,8 @@ from corehq.lib.django_rest_interface import util
 # TODO - pull out authentication stuff into some generic wrapper
 
 # api/receiver/(?P<domain_id>\d+)
+from corehq.apps.domain.models import Domain
+
 def get_submissions(request, domain_id=0):
     """ Takes a POST containing a tar of all MD5's
     and returns a tar of all missing submissions

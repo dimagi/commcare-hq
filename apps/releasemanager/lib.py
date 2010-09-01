@@ -13,17 +13,17 @@ from zipfile import ZipFile
 from cStringIO import StringIO
 
 from subprocess import Popen, PIPE
-from releasemanager import xformvalidator
+from corehq.apps.releasemanager import xformvalidator
 from django.conf import settings
-from releasemanager.jar import extract_xforms
+from corehq.apps.releasemanager.jar import extract_xforms
 
 from corehq.apps.xforms.models import FormDefModel
 
-from corehq.apps.xforms.manager import xforms
+#from corehq.apps.xforms.manager import xforms
 import logging
 import traceback
 from corehq.apps.xforms.xformdef import FormDef
-from releasemanager.exceptions import XFormConflictError, FormReleaseError
+from corehq.apps.releasemanager.exceptions import XFormConflictError, FormReleaseError
 
 
 UNKNOWN_IP = "0.0.0.0"

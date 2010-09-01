@@ -5,15 +5,15 @@ import shutil
 import time
 
 from django.contrib.auth.models import User
-from hq.utils import build_url
+#from hq.utils import build_url
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import login_and_domain_required
-from requestlogger.models import RequestLog
+from corehq.apps.requestlogger.models import RequestLog
 from corehq.apps.xforms.manager import readable_form, csv_dump
 
-from releasemanager.forms import *
+from corehq.apps.releasemanager.forms import *
 
-from rapidsms.webui.utils import render_to_response
+from corehq.util.webutils import render_to_response
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -27,10 +27,10 @@ from django.forms.models import modelformset_factory
 import mimetypes
 import urllib
 from corehq.apps.xforms.xformdef import FormDef
-from releasemanager.exceptions import *
-import releasemanager.lib as lib
+from corehq.apps.releasemanager.exceptions import *
+import corehq.apps.releasemanager.lib as lib
 
-from releasemanager import xformvalidator
+from corehq.apps.releasemanager import xformvalidator
 
 
 @login_and_domain_required
