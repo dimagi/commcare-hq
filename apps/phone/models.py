@@ -10,9 +10,6 @@ from corehq.apps.phone.processor import create_backup, create_phone_user, BACKUP
     REGISTRATION_XMLNS
 from corehq.apps.receiver.models import Attachment
 
-# # the scheduler is a really bad place for this class to live
-# from scheduler.fields import PickledObjectField
-
 from corehq.util.djangoplus.fields import PickledObjectField
 from corehq.apps.xforms.models import Metadata
 import corehq.apps.xforms.xmlrouter as xmlrouter
