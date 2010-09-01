@@ -50,7 +50,6 @@ from corehq.apps.phone.models import PhoneUserInfo
 
 
 @login_and_domain_required
-@log_access
 def dashboard(request, template_name="hqwebapp/dashboard.html"):
     startdate, enddate = utils.get_dates(request, 7)
     
