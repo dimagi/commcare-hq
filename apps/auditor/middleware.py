@@ -26,7 +26,11 @@ class AuditMiddleware(object):
         way to manage audit events rather than using the decorator.
         """
         
-        fqview = "%s.%s" % (view_func.__module__, view_func.func_name)        
+        if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
+            fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
+        else:
+            #just assess it from the classname for the class based view
+            fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)
         if (fqview.startswith('django.contrib.admin') or fqview.startswith('reversion.admin')) and self.log_admin:
             AuditEvent.objects.audit_view(request, request.user, view_func)
         else:        
