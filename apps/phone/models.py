@@ -47,7 +47,7 @@ class PhoneUserInfo(models.Model):
     password = models.CharField(max_length=32, null=True) 
     uuid = models.CharField(max_length=32, null=True)
     registered_on = models.DateField(default=datetime.today)
-    additional_data = PickledObjectField(null=True, blank=True)
+    additional_data = models.TextField(null=True, blank=True)
     
     class Meta:
         unique_together = ("phone", "username")

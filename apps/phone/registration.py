@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import json
 import datetime, time
 
 from django.contrib.auth.models import User
@@ -51,9 +52,10 @@ class Registration(object):
                 setattr(self, child.tag, child.text)
                 
             elif child.tag == ADDITIONAL_DATA_TAG:
-                self.additional_data = {}
+                additional_data = {}
                 for generic_data in child:
-                    self.additional_data[generic_data.items()[0][1]] = generic_data.text
+                    additional_data[generic_data.items()[0][1]] = generic_data.text
+                self.additional_data = json.dumps(additional_data)
             
         if self.date:
             # the expected format is "2010-03-23"

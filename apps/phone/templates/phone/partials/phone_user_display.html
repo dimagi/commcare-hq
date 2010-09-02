@@ -7,11 +7,7 @@
 {% ifequal phone_user.status "phone_registered" %}
     <li>Additional Data:</li>
     <ul>
-    {% for key, value in phone_user.additional_data.items %}
-    <li>{{ key }}: {{ value }}</li>
-    {% empty %}
-    <li>None</li>
-    {% endfor %}
+    <li>phone_user.additional_data</li>
     </ul>
     {% if phone_user.attachment %}
     <li><a href="{% url corehq.apps.receiver.views.single_attachment phone_user.attachment.id%}">Registration XML</a></li>
