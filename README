@@ -1,0 +1,5 @@
+CoreHQ
+A library for xform processing in django.
+
+corehq/ - the main set of apps and code for corehq - should be referenced as corehq.*
+lib/ - third party code and apps to be in the pythonpath.
