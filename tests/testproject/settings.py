@@ -222,6 +222,11 @@ DIGEST_ENFORCE_NONCE_COUNT = False
 
 # import local settings if we find them
 try:
+    #try to see if there's an environmental variable set for local_settings
+    import sys, os
+    if os.environ.has_key('SETTINGS_LOCAL'):
+        localpath = os.path.dirname(os.environ['SETTINGS_LOCAL'])
+        sys.path.insert(0, localpath)
     from settings_local import *
 except ImportError:
     pass
