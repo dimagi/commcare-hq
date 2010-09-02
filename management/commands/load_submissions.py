@@ -5,7 +5,7 @@ import tarfile
 from optparse import make_option
 from django.core.management.base import LabelCommand, CommandError
 from corehq.apps.receiver.management.commands.util import submit_form
-from corehq.lib.django_rest_interface import util as rest_util
+from django_rest_interface import util as rest_util
 
 class Command(LabelCommand):
     help = "Load data into CommCareHQ.\n" + \
