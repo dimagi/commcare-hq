@@ -99,6 +99,11 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
 
 login_and_domain_required = login_and_domain_required_ex()
 
+# when requiring a specific domain
+def require_domain(domain):
+    return login_and_domain_required_ex(require_domain=domain)
+
+
 ########################################################################################################
 #
 # Auth's login_required decorator is broken - it tries to get LOGIN_URL too early, which messes up

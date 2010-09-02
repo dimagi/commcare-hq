@@ -21,7 +21,7 @@ urlpatterns = patterns( '', #'releasemanager.views',
     
     url(r'^releasemanager/download/(?P<path>.*)$', 
             'django.views.static.serve', 
-            {'document_root': settings.RAPIDSMS_APPS['releasemanager']['file_path']}, 
+            {'document_root': settings.RELEASE_FILE_PATH},
             name="download_link"),
 
     # (r'^projects/?$', 'buildmanager.views.all_projects'),
