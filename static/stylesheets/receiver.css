@@ -1,0 +1,70 @@
+.orphan {
+	color: red;
+	font-weight: bold;
+}
+
+.duplicate {
+    color: orange;
+    font-weight: bold;
+}
+
+.deleted {
+    color: blue;
+    font-weight: bold;
+}
+
+
+/* These make the lists look nice (inline) inside tables.  Used for 
+   the "Actions" column on the receiver page.  */ 
+.table-list ul
+{
+    list-style-type: none;
+    padding: 0;
+}
+
+.table-list ul li
+{
+	display: inline;
+    padding-right: 10px;
+}
+
+#actions ul {
+    padding-left: 0px;
+}
+
+#actions li {
+	border-color: #999999; 
+    border-style: solid; 
+    border-width: 2px;
+    display: inline;
+	font-size: 125%;
+    padding-left: 10px;
+    margin-right: 5px;
+    padding: 5px;
+}
+
+.summary-info ul
+{
+    list-style-type: none;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.summary-info li
+{
+    margin-top: 10px;
+    padding-left: 0px;
+    padding-right: 20px;
+}
+
+
+/* this is the little block where attachments appear on the 
+   submissions page */
+   
+div.attachmentsblock {               
+    color: #787878;
+    border: 1px solid black;
+    padding:12px;
+    float:right;
+}
+   

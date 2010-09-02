@@ -1,0 +1,18 @@
+{% extends base_template %}
+{% load i18n %}
+{% block title %}{{type}}: {{object.id}}{% endblock %}
+{% block content %}
+
+<h2>{% trans "Are you sure? " %}</h2>
+
+Are you sure you want to delete {{type}} "{{object.id}}"? This will also delete any attachments.
+
+<form action="" method="post">
+<div>
+<input type="hidden" name="confirm_delete" value="yes" />
+<input type="submit" value="{% trans "Yes, I'm sure" %}" />
+</div>
+</form>
+
+{% endblock %}
+
