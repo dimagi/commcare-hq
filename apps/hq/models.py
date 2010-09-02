@@ -2,8 +2,7 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.domain.models import Domain 
-from reporters.models import Reporter, ReporterGroup
+from corehq.apps.domain.models import Domain
 import corehq.apps.xforms.xmlrouter as xmlrouter
 
 
@@ -18,12 +17,51 @@ class OrganizationType(models.Model):
         verbose_name = _("Organization Type")
 
 
+class Organization(models.Model):
+    # this should be renamed to "Group" if that term wasn't highly
+    # overloaded already.  These really aren't organizations.
+    '''An Organization.  Organizations are associated with domains.  They also
+       have parent/child hierarchies.  Currently an organization can have at
+       most 1 parent.  Top-level organizations don't have a parent.
+       Organizations also have members and supervisors.'''
+
+    name = models.CharField(max_length=32, unique=True) #something's messed up with this (CZUE 6/9/2009: I didn't write this comment - what's messed up??)
+    domain = models.ForeignKey(Domain)
+    description = models.CharField(max_length=255, null=True, blank=True)
+    organization_type = models.ManyToManyField(OrganizationType)
+    parent = models.ForeignKey("Organization", null=True, blank=True, related_name="children")
+
+    # membership and supervision is modeled by rapidsms reporters
+    # and groups
+    # TODO: replace with new RapidSMS
+    # members = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="members")
+    # supervisors = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="supervisors")
+
+    class Meta:
+        verbose_name = _("Organization")
+
+    def __unicode__(self):
+        return self.name
+
+    def get_supervisors(self):
+        if self.supervisors is None:
+            return ReporterProfile.objects.none()
+        reps = self.supervisors.reporters.all()
+        return ReporterProfile.objects.filter(reporter__in=reps)
+
+    def get_members(self):
+        if self.members is None:
+            return ReporterProfile.objects.none()
+        members = self.members.reporters.all()
+        return ReporterProfile.objects.filter(reporter__in=members)
+
 class ReporterProfile(models.Model):
     '''The profile for a reporter object.  For attaching some of our
        own metadata-type information to RapidSMS reporters.  This is 
        loosely modeled on how django user profiles work.'''    
-    
-    reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")    
+
+    # TODO: refactor for the new rapidsms
+    # reporter = models.ForeignKey(Reporter, unique=True, related_name="profile")
     chw_id = models.CharField(max_length=32, null=True, blank=True, help_text="integer id")
     chw_username = models.CharField(max_length=32, null=True, blank=True, help_text="chw_username in the app")
     domain = models.ForeignKey(Domain)
@@ -98,43 +136,6 @@ class ReporterProfile(models.Model):
 #    class Meta:
 #        verbose_name = _("Extended User")
 #        
-
-class Organization(models.Model):
-    # this should be renamed to "Group" if that term wasn't highly
-    # overloaded already.  These really aren't organizations.
-    '''An Organization.  Organizations are associated with domains.  They also 
-       have parent/child hierarchies.  Currently an organization can have at 
-       most 1 parent.  Top-level organizations don't have a parent.  
-       Organizations also have members and supervisors.'''
-    
-    name = models.CharField(max_length=32, unique=True) #something's messed up with this (CZUE 6/9/2009: I didn't write this comment - what's messed up??) 
-    domain = models.ForeignKey(Domain)
-    description = models.CharField(max_length=255, null=True, blank=True)
-    organization_type = models.ManyToManyField(OrganizationType)
-    parent = models.ForeignKey("Organization", null=True, blank=True, related_name="children")
-    
-    # membership and supervision is modeled by rapidsms reporters
-    # and groups
-    members = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="members")
-    supervisors = models.ForeignKey(ReporterGroup, null=True, blank=True, related_name="supervisors")
-    
-    class Meta:
-        verbose_name = _("Organization")
-    
-    def __unicode__(self):
-        return self.name
-    
-    def get_supervisors(self):
-        if self.supervisors is None:
-            return ReporterProfile.objects.none()
-        reps = self.supervisors.reporters.all()
-        return ReporterProfile.objects.filter(reporter__in=reps)
-    
-    def get_members(self):
-        if self.members is None:
-            return ReporterProfile.objects.none()
-        members = self.members.reporters.all()
-        return ReporterProfile.objects.filter(reporter__in=members)
 
 REPORT_CLASS = (
     ('siteadmin', 'General Site Admin'),

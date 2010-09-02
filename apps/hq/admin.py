@@ -1,7 +1,6 @@
 from django.contrib import admin
 from hq.models import * 
 from django.contrib.auth.models import Group, User
-from reporters.models import Reporter
 
 class OrganizationTypeAdmin(admin.ModelAdmin):
     list_display = ('id','name','description','domain')

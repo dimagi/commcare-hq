@@ -1,6 +1,5 @@
 from corehq.apps.xforms.models import *
 from hq.models import *
-from reporters.models import Reporter, ReporterGroup
 import hq.utils as utils        
 
 import datetime

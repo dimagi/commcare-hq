@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 
+"""
+REMOVING THIS TEMPORARILY DURING HQ REFACTOR
+
 from reporters.models import Reporter
 from hq.middleware.hq import get_current_domain
 from django.db import models
@@ -22,3 +25,4 @@ def reporter():
         # it has to return everything for now.
         # return Reporter.objects.none()
         return manager.all()
+"""

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django.contrib.auth.models import User
-from hq.utils import get_dates
+from corehq.util.hqutils import get_dates
 
 
 try:

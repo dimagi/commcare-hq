@@ -4,7 +4,7 @@ from datetime import datetime
 from django.http import HttpResponse
 from django.template.defaultfilters import slugify
 from django.db import connection
-from rapidsms.webui.utils import UnicodeWriter
+from corehq.util.transformers.csv import UnicodeWriter
 
 def get_csv_from_django_query(qs, fields=None):
     model = qs.model

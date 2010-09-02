@@ -1,8 +1,8 @@
 import operator
 from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
-from transformers.xml import xmlify
-from transformers.http import responsify
+from corehq.util.transformers.xml import xmlify
+from corehq.util.transformers.http import responsify
 from corehq.apps.xforms.models import FormDefModel, Metadata
 from hq.models import ReporterProfile
 from hq.reporter.api_.reports import Report, DataSet, Values

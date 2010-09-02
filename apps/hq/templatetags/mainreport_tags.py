@@ -7,7 +7,7 @@ from types import ListType,TupleType
 
 from hq.models import *
 
-import corehq.apps.xformmanager.adapter.querytools as qtools
+import corehq.apps.xforms.adapter.querytools as qtools
 import hq.utils as utils
 from corehq.apps.xforms.models import *
 import time

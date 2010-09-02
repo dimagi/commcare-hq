@@ -25,7 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 
 
-from rapidsms.webui.utils import render_to_response, paginated
+from corehq.util.webutils import render_to_response, paginated
 
 from corehq.apps.xforms.models import *
 from hq.models import *

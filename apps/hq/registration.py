@@ -4,7 +4,8 @@ from types import ListType,TupleType
 
 from corehq.apps.xforms.models import *
 from hq.models import *
-from reporters.models import Reporter, ReporterGroup
+# TODO replace with new RapidSMS
+# from reporters.models import Reporter, ReporterGroup
 import corehq.apps.xforms.adapter.querytools as qtools
 import hq.utils as utils        
 import uuid
@@ -45,7 +46,9 @@ def autoregister_reporters(domain):
         chw_id = allmetas_for_domain.filter(username=prof)[0].chw_id
         
         newProf = ReporterProfile(chw_id=chw_id, chw_username=prof, domain=domain, guid=str(uuid.uuid1()).replace('-',''))
-                
+
+        """
+        # TODO: replace with new RapidSMS
         #create a new Reporter
         rep = Reporter()                
         alias, fn, ln = Reporter.parse_name("%s %s" % ("chw", prof))        
@@ -56,7 +59,7 @@ def autoregister_reporters(domain):
         
         newProf.reporter = rep        
         newProf.save()
-        
+        """"
         
         
         

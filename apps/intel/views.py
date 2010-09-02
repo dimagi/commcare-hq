@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth.models import User
 
-from rapidsms.webui.utils import render_to_response
+from corehq.util.webutils import render_to_response
 from corehq.apps.domain.decorators import require_domain
 
 # import reports.util as util
