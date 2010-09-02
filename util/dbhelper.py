@@ -31,13 +31,13 @@ def get_dategroup_expr(date_colname, startdate, enddate):
         date_func = ''
         retclause = '%s(%s,%s)'
         
-        if settings.DATABASE_ENGINE == 'mysql':
+        if settings.XFORMS_DATABASE_ENGINE == 'mysql':
             #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
             date_func = "DATE_FORMAT"
             #date_colname
             #self.date_columns[self.default_date_column_id]
             retclause = retclause % (date_func,date_colname,format_string)
-        elif settings.DATABASE_ENGINE == 'sqlite3':
+        elif settings.XFORMS_DATABASE_ENGINE == 'sqlite3':
             #strftime('%Y-%m-%d', timecol)
             date_func = "strftime"
             retclause = retclause % (date_func,format_string,date_colname)
@@ -53,12 +53,12 @@ def get_date_expr(date_colname,startdate, enddate):
     date_func = ''
     retclause = '%s(%s,%s)'
     
-    if settings.DATABASE_ENGINE == 'mysql':
+    if settings.XFORMS_DATABASE_ENGINE == 'mysql':
         #DATE_FORMAT(timecol,'%m') #or %%m to escape out the %
         date_func = "DATE_FORMAT"
         #self.date_columns[self.default_date_column_id]
         retclause = retclause % (date_func,date_colname,format_string)
-    elif settings.DATABASE_ENGINE == 'sqlite3':
+    elif settings.XFORMS_DATABASE_ENGINE == 'sqlite3':
         #strftime('%Y-%m-%d', timecol)
         date_func = "strftime"
         #self.date_columns[self.default_date_column_id]

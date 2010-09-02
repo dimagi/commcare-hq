@@ -35,7 +35,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[1],"BRAC CHW visiting CHP")
         self.assertEquals(row[2],"0.0.1")
         self.assertEquals(row[3],"P6PH9SR0TKCO6RVDL4YML1D2Y")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if settings.XFORMS_DATABASE_ENGINE=='mysql' :
             self.assertEquals(row[4],datetime(2008,1,8,11,55,49))
             self.assertEquals(row[5],datetime(2008,1,8,12,8,39))
         else:
@@ -66,7 +66,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEquals(row[1],"BRACCHPHomeVisit")
         self.assertEquals(row[2],"0.0.1")
         self.assertEquals(row[3],"WK13O6ST8SWZVXLAI68B9YZWK")
-        if settings.DATABASE_ENGINE=='mysql' :
+        if settings.XFORMS_DATABASE_ENGINE=='mysql' :
             self.assertEquals(row[4],datetime(2009,4,30,11,17,25))
             self.assertEquals(row[5],datetime(2009,4,30,11,21,29))
         else:

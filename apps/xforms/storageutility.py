@@ -565,10 +565,10 @@ class XFormDBTableCreator(XFormProcessor):
         # we are already doing something against the global config
         # (i.e. we're settings database_options in settings.py)
         if hasattr(settings,'DATABASE_OPTIONS') and \
-            'init_command' in settings.DATABASE_OPTIONS:
-                if 'innodb' in settings.DATABASE_OPTIONS['init_command'].lower():
+            'init_command' in settings.XFORMS_DATABASE_OPTIONS:
+                if 'innodb' in settings.XFORMS_DATABASE_OPTIONS['init_command'].lower():
                     end_query = ") ENGINE=InnoDB;"
-                elif 'myisam' in settings.DATABASE_OPTIONS['init_command'].lower():
+                elif 'myisam' in settings.XFORMS_DATABASE_OPTIONS['init_command'].lower():
                     end_query = ") ENGINE=MyISAM;"
         queries = queries + end_query + next_query
         return queries

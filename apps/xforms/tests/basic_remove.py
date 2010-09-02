@@ -40,7 +40,7 @@ class RemoveTestCase(unittest.TestCase):
         cursor.execute("SELECT * from xforms_metadata")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        if settings.DATABASE_ENGINE == 'mysql':
+        if settings.XFORMS_DATABASE_ENGINE == 'mysql':
             cursor.execute("show tables like 'schema_remdomain_%'")
             row = cursor.fetchone()
             self.assertEquals(row,None)
@@ -57,7 +57,7 @@ class RemoveTestCase(unittest.TestCase):
         cursor.execute("SELECT * from xforms_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        if settings.DATABASE_ENGINE == 'mysql':
+        if settings.XFORMS_DATABASE_ENGINE == 'mysql':
             cursor.execute("show tables like 'schema_remdomain_xml_basic%'")
             row = cursor.fetchone()
             self.assertEquals(row,None)
@@ -87,7 +87,7 @@ class RemoveTestCase(unittest.TestCase):
         cursor.execute("SELECT * from xforms_elementdefmodel")
         row = cursor.fetchone()
         self.assertEquals(row,None)
-        if settings.DATABASE_ENGINE == 'mysql':
+        if settings.XFORMS_DATABASE_ENGINE == 'mysql':
             cursor.execute("show tables like 'schema_remdomain_xml_nestedrepeats%'")
             row = cursor.fetchone()
             self.assertEquals(row,None)
@@ -122,7 +122,7 @@ class RemoveTestCase(unittest.TestCase):
         count = Metadata.objects.all().count()
         self.assertEquals(0,count)
         # test raw data deletion
-        if settings.DATABASE_ENGINE == 'mysql':
+        if settings.XFORMS_DATABASE_ENGINE == 'mysql':
             cursor = connection.cursor()
             cursor.execute("SELECT * FROM schema_remdomain_xml_singlerepeat")
             row = cursor.fetchall()
