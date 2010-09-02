@@ -67,11 +67,13 @@ def _setup_xform_settings(settings):
             #this is hacky too, we're just assuming default until we get a more strategic multidb setup.
         default_db = settings.DATABASES['default']
         settings.XFORMS_DATABASE_ENGINE=default_db['ENGINE'].split('.')[-1]
-        settings.XFORMS_DATABASE_OPTIONS = default_db['OPTIONS']        
+        if default_db.has_key('OPTIONS'):
+            settings.XFORMS_DATABASE_OPTIONS = default_db['OPTIONS']        
     else:
         logging.error("You are using an older version of django, please upgrade")        
         settings.XFORMS_DATABASE_ENGINE=settings.DATABASE_ENGINE
         settings.XFORMS_DATABASE_OPTIONS = settings.DATABASE_OPTIONS        
+    print settings.XFORMS_DATABASE_ENGINE
     
 
 def _is_configured(config_func):

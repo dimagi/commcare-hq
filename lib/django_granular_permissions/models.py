@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
-from corehq.lib.django_granular_permissions import MetaClass, MetaObject
+from django_granular_permissions import MetaClass, MetaObject
 
 if VERSION[0]=='newforms-admin' or VERSION[0]>0:
     class Permission(models.Model):

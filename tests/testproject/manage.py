@@ -3,11 +3,11 @@ from django.core.management import execute_manager
 import sys
 import os
 filedir = os.path.dirname(__file__)
-coredir = os.path.join(filedir, '..', '..', '..')
+coredir = os.path.join(filedir, '..', '..')
 sys.path.append(coredir)
 sys.path.append(os.path.join(coredir,'corehq'))
 sys.path.append(os.path.join(coredir,'corehq','apps'))
-sys.path.append(os.path.join(coredir,'corehq','lib'))
+sys.path.append(os.path.join(coredir,'lib'))
 sys.path.append(os.path.join(coredir,'corehq','util'))
 
 try:

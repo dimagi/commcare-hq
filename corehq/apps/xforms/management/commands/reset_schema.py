@@ -4,7 +4,7 @@ and associated tables. It also deletes the contents of XFORM_SUBMISSION_PATH.
 """
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from corehq.lib.django_rest_interface import util as rest_util
+from django_rest_interface import util as rest_util
 from corehq.apps.xforms.management.commands import util
 from corehq.apps.receiver.models import Submission, Attachment, SubmissionHandlingOccurrence
 

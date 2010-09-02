@@ -5,8 +5,8 @@ from django.core import serializers
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from corehq.lib.django_rest_interface import util
-from corehq.lib.django_rest_interface.resource import Resource
+from django_rest_interface import util
+from django_rest_interface.resource import Resource
 from corehq.util.transformers.csv import get_csv_from_django_query, format_csv
 from corehq.util.transformers.zip import get_zipfile, get_tarfile
 from corehq.apps.xforms.xformdef import FormDef

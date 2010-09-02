@@ -2,7 +2,7 @@ import re
 from django import forms
 from django.contrib.auth.models import User
 
-import corehq.lib.django_tables as tables
+import django_tables as tables
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import Domain

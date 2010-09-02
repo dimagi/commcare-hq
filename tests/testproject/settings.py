@@ -9,17 +9,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-#these should be set in your settings_local file
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    }
-}
+#Database settings should be stored in your settings_local file
 
 
 # Local time zone for this installation. Choices can be found here:
@@ -96,11 +86,11 @@ DEFAULT_APPS = (
 )
 
 HQ_APPS = (    
-    'corehq.lib.django_rest_interface',
+    'django_rest_interface',
     'django_digest',
-    'corehq.lib.django_granular_permissions',
-    'corehq.lib.django_tables',
-    'corehq.lib.django_user_registration',
+    'django_granular_permissions',
+    'django_tables',
+    'django_user_registration',
     'corehq.apps.domain',
     'corehq.apps.receiver',
     'corehq.apps.hqwebapp',
@@ -204,11 +194,11 @@ AUDIT_VIEWS = [
 
 AUDIT_MODEL_SAVE = [
                     'django.contrib.auth.models.User', 
-                    'corehq.apps.xforms.models.Metadata',
-                    'corehq.apps.xforms.models.FormDefModel',
-                    'corehq.apps.receiver.models.Submission',                    
-                    'corehq.apps.domain.models.Domain',
-                    'corehq.apps.domain.models.Membership',               
+#                    'corehq.apps.xforms.models.Metadata',
+#                    'corehq.apps.xforms.models.FormDefModel',
+#                    'corehq.apps.receiver.models.Submission',                    
+#                    'corehq.apps.domain.models.Domain',
+#                    'corehq.apps.domain.models.Membership',               
 ]
 AUDIT_ADMIN_VIEWS = []
 

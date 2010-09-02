@@ -3,7 +3,7 @@ from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.lib.django_user_registration.models import RegistrationProfile
+from django_user_registration.models import RegistrationProfile
 
 
 class RegistrationAdmin(admin.ModelAdmin):
