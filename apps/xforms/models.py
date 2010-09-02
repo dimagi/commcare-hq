@@ -735,9 +735,9 @@ class FormDataGroup(models.Model):
                 # otherwise we just select an empty string into that 
                 # column.
                 try:
-                    column_name = column.fields.get(form=form).column_name
+                    column_name = "CAST('%s' as TEXT)" % column.fields.get(form=form).column_name
                 except FormDataPointer.DoesNotExist:
-                    column_name = "''" # in sql this will look like ''
+                    column_name = "NULL" # in sql this will look like ''
                 form_columns.append(column_name)
             select_statement = "SELECT %s FROM %s" % \
                                  (", ".join(form_columns), form.table_name)

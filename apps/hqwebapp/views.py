@@ -44,7 +44,7 @@ from corehq.apps.xforms.models import *
 # from graphing import dbhelper
 # from graphing.models import *
 from corehq.apps.receiver.models import *
-from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.program.models import Program
 from corehq.apps.phone.models import PhoneUserInfo
 

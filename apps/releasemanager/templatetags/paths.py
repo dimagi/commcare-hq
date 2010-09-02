@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 
 register = template.Library()
 
-FILE_PATH = settings.RAPIDSMS_APPS['releasemanager']['file_path']
+FILE_PATH = settings.RELEASE_FILE_PATH
 
 @register.simple_tag
 def download_url(path):

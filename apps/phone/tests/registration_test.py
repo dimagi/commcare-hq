@@ -1,5 +1,6 @@
-import unittest
 import os
+import json
+import unittest
 from datetime import date
 
 from corehq.apps.domain.models import Domain
@@ -56,7 +57,7 @@ class RegistrationTestCase(unittest.TestCase):
                          "district": "district 9",
                          "region":   "ally",
                          "ward":     "collins"}
-        additional_data = user_info.additional_data
+        additional_data = json.loads(user_info.additional_data)
         for key in expected_data:
             self.assertTrue(key in additional_data, 
                             "Key %s should be set in the additional data" % key)
