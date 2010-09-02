@@ -1,0 +1,22 @@
+<ul>
+    <li>Username: {{ phone_user.username }}</li>
+    <li>Phone: {{ phone_user.phone }}</li>
+    <li>Registered on: {{ phone_user.registered_on }}</li>
+    <li>Status: {{ phone_user.get_status_display }}</li>
+    
+{% ifequal phone_user.status "phone_registered" %}
+    <li>Additional Data:</li>
+    <ul>
+    <li>phone_user.additional_data</li>
+    </ul>
+    {% if phone_user.attachment %}
+    <li><a href="{% url corehq.apps.receiver.views.single_attachment phone_user.attachment.id%}">Registration XML</a></li>
+    {% endif %}
+{% endifequal %}    
+</ul>
+    {% comment %}
+    These fields are left out
+    user = models.ForeignKey(User, null=True, related_name="phone_registrations")
+    password = models.CharField(max_length=32, null=True) 
+    uuid = models.CharField(max_length=32, null=True)
+    {% endcomment %}
