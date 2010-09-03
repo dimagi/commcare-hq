@@ -97,7 +97,7 @@ HQ_APPS = (
     'corehq.apps.program',
     'corehq.apps.phone',
     'corehq.apps.logtracker',
-    'corehq.apps.auditor',    
+    'corehq.apps.auditor',
     'corehq.apps.xforms',
 )
 
@@ -181,7 +181,7 @@ AUDIT_VIEWS = [
                'corehq.apps.xforms.views.export_csv',
                'corehq.apps.xforms.views.readable_xform',
                'corehq.apps.xforms.views.get_csv_from_form',
-               'corehq.apps.xforms.views.data',               
+               'corehq.apps.xforms.views.data',
                'corehq.apps.receiver.views.single_attachment',
                'corehq.apps.receiver.views.single_submission',
                'corehq.apps.receiver.views.domain_submit',
@@ -189,16 +189,16 @@ AUDIT_VIEWS = [
                'corehq.apps.receiver.views.orphaned_data',
                'corehq.apps.receiver.views.delete_submission',
                'corehq.apps.receiver.views.show_submits',
-               'corehq.apps.receiver.views.show_dupes',               
+               'corehq.apps.receiver.views.show_dupes',
 ]
 
 AUDIT_MODEL_SAVE = [
-                    'django.contrib.auth.models.User', 
-#                    'corehq.apps.xforms.models.Metadata',
-#                    'corehq.apps.xforms.models.FormDefModel',
-#                    'corehq.apps.receiver.models.Submission',                    
-#                    'corehq.apps.domain.models.Domain',
-#                    'corehq.apps.domain.models.Membership',               
+                    'django.contrib.auth.models.User',
+                    'corehq.apps.xforms.models.Metadata',
+                    'corehq.apps.xforms.models.FormDefModel',
+                    'corehq.apps.receiver.models.Submission',
+                    'corehq.apps.domain.models.Domain',
+                    'corehq.apps.domain.models.Membership',
 ]
 AUDIT_ADMIN_VIEWS = []
 

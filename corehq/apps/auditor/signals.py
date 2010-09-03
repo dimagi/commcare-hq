@@ -11,6 +11,12 @@ from models import *
 
 def audit_save(sender, instance, created, **kwargs):
     usr = get_current_user()
+    #really stupid sanity check for unit tests when threadlocals doesn't update and user model data is updated.
+    if usr != None:
+        try:
+            User.objects.get(id=usr.id)
+        except:
+            usr = None
     AuditEvent.objects.audit_save(sender, instance, usr)
 
 if hasattr(settings, 'AUDIT_MODEL_SAVE'):
