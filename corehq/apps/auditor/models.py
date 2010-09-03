@@ -79,7 +79,7 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def audit_save(cls, model_class, instance, user):
         audit = cls.create_audit(cls, user)
-        audit.description += "Save %s" % (model_class.__name__) 
+        audit.description += "Save %s" % (model_class.__name__)
         audit.content_object = instance        
         audit.save()   
 setattr(AuditEvent.objects, 'audit_save', ModelActionAudit.audit_save)

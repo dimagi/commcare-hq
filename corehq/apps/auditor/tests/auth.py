@@ -3,17 +3,19 @@ from django.contrib.auth.models import User, AnonymousUser
 from corehq.apps.auditor.models import AuditEvent, ModelActionAudit, AccessAudit
 import unittest
 import settings
+from corehq.util.threadlocals import _thread_locals
+
 
 class authenticationTestCase(unittest.TestCase):
     def setUp(self):
-        print "Starting up tests"
-#        AuditEvent.objects.all().delete()
+        if hasattr(_thread_locals, 'user'):
+            delattr(_thread_locals, 'user')
+        User.objects.all().delete()
+        AuditEvent.objects.all().delete()
         self.client = Client()
-        
         self._createUser()
             
     def _createUser(self):
-        User.objects.all().delete()
         print "Creating Mock User"
         model_count = ModelActionAudit.objects.all().count()
         total_count = AuditEvent.objects.all().count()        
@@ -23,7 +25,7 @@ class authenticationTestCase(unittest.TestCase):
         usr.set_password('mockmock')
         usr.first_name='mocky'
         usr.last_name = 'mock'
-        usr.save()        
+        usr.save()
 
         model_count2 = ModelActionAudit.objects.all().count()
         total_count2 = AuditEvent.objects.all().count()
