@@ -5,11 +5,12 @@ import logging
 from datetime import datetime
 import settings
 from corehq.util.threadlocals import get_current_user
+from django.db import transaction
 from models import *
 
 
-def audit_save(sender, instance, **kwargs):
-    usr = get_current_user()        
+def audit_save(sender, instance, created, **kwargs):
+    usr = get_current_user()
     AuditEvent.objects.audit_save(sender, instance, usr)
 
 if hasattr(settings, 'AUDIT_MODEL_SAVE'):
