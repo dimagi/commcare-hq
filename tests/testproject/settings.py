@@ -1,4 +1,5 @@
 # Django settings for datahq project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -114,18 +115,33 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 LOGIN_REDIRECT_URL='/'
 
 #Relative paths to the settings.py
+CUR_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.abspath(os.path.join(CUR_DIR,"..",".."))
+
 ####### Receiver Settings #######
-RECEIVER_SUBMISSION_PATH="data/submissions"
-RECEIVER_ATTACHMENT_PATH="data/attachments"
-RECEIVER_EXPORT_PATH="data"
+RECEIVER_SUBMISSION_PATH=os.path.join(BASE_DIR,"data","submissions")
+RECEIVER_ATTACHMENT_PATH=os.path.join(BASE_DIR,"data","attachments")
+RECEIVER_EXPORT_PATH=os.path.join(BASE_DIR,"data")
 
 ####### XForms Settings #######
-XFORMS_SCHEMA_PATH="data/schemas"
-XFORMS_EXPORT_PATH="data/exports"
-XFORMS_FORM_TRANSLATE_JAR="lib/form_translate.jar"
+XFORMS_SCHEMA_PATH=os.path.join(BASE_DIR,"data","schemas")
+XFORMS_EXPORT_PATH=os.path.join(BASE_DIR,"data","exports")
+XFORMS_FORM_TRANSLATE_JAR=os.path.join(BASE_DIR,"lib","form_translate.jar")
+
+# create data directories required by xforms app
+import os
+root = os.path.dirname(__file__)
+if not os.path.isdir(os.path.join(root,'data')):
+    os.mkdir(os.path.join(root,'data'))
+if not os.path.isdir(os.path.join(root,'data','submissions')):
+    os.mkdir(os.path.join(root,'data','submissions'))
+if not os.path.isdir(os.path.join(root,'data','attachments')):
+    os.mkdir(os.path.join(root,'data','attachments'))
+if not os.path.isdir(os.path.join(root,'data','schemas')):
+    os.mkdir(os.path.join(root,'data','schemas'))
 
 #####Encryption Keys######
-KEYSTORE_PATH='data/keystore'
+KEYSTORE_PATH=os.path.join(BASE_DIR,"data","keystore")
 
 
 ####### Domain settings  #######
@@ -213,7 +229,7 @@ DIGEST_ENFORCE_NONCE_COUNT = False
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
-    import sys, os
+    import sys
     if os.environ.has_key('SETTINGS_LOCAL'):
         localpath = os.path.dirname(os.environ['SETTINGS_LOCAL'])
         sys.path.insert(0, localpath)
