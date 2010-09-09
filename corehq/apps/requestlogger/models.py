@@ -1,18 +1,15 @@
-from django.db import models
-from django.contrib.auth.models import User
-from corehq.apps.domain.models import Domain
-
-
 import os
+import json
 import logging
 import settings
-
-from corehq.util.djangoplus.fields import PickledObjectField
-
 from datetime import datetime
+
+from django.db import models
+from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
+from corehq.apps.domain.models import Domain
 
 REQUEST_TYPES = (    
     ('GET', 'Get'),    
@@ -35,8 +32,8 @@ class RequestLog(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
 
     # Some pickled fields for having access to the raw info
-    headers = PickledObjectField(_('Request Headers'))
-    parameters = PickledObjectField(_('Request Parameters'))
+    headers = models.TextField(_('Request Headers'))
+    parameters = models.TextField(_('Request Parameters'))
     
     def __unicode__(self):
         return "%s to %s at %s from %s" % (self.method, self.url, 
@@ -66,12 +63,12 @@ class RequestLog(models.Model):
             # in a loss of information 
             to_return = {}
             for key, value in obj.items(): 
-                to_return[key] = str(value)
+                to_return[key] = unicode(value)
             return to_return
         
-        log.headers = _convert_to_dict(request.META)
+        log.headers = json.dumps(_convert_to_dict(request.META))
         if request.method == "GET":
-            log.parameters = _convert_to_dict(request.GET)
+            log.parameters = json.dumps(_convert_to_dict(request.GET))
         else:
-            log.parameters = _convert_to_dict(request.POST)
+            log.parameters = json.dumps(_convert_to_dict(request.POST))
         return log
