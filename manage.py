@@ -7,6 +7,10 @@ import sys, os
 filedir = os.path.dirname(__file__)
 sys.path.append(os.path.join(filedir))
 sys.path.append(os.path.join(filedir,'apps'))
+sys.path.append(os.path.join(filedir,'submodules'))
+sys.path.append(os.path.join(filedir,'submodules','core-hq-src'))
+sys.path.append(os.path.join(filedir,'submodules','core-hq-src','corehq'))
+sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
 
 try:
     import settings # Assumed to be in the same directory.
