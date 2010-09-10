@@ -12,7 +12,7 @@ class Migration(SchemaMigration):
         db.create_table('receiver_submission', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('submit_time', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
-            ('transaction_uuid', self.gf('django.db.models.fields.CharField')(default=UUID('d969b10c-bc52-11df-9532-5cff350164a3'), max_length=36)),
+            ('transaction_uuid', self.gf('django.db.models.fields.CharField')(default='6a8fd8c4-bc5c-11df-8c8b-5cff350164a3', max_length=36)),
             ('domain', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['domain.Domain'], null=True)),
             ('submit_ip', self.gf('django.db.models.fields.IPAddressField')(max_length=15)),
             ('checksum', self.gf('django.db.models.fields.CharField')(max_length=32)),
@@ -179,7 +179,7 @@ class Migration(SchemaMigration):
             'raw_post': ('django.db.models.fields.FilePathField', [], {'max_length': '255', 'null': 'True', 'match': "'.*\\\\.postdata$'", 'path': "'/home/rowena/workspace/core-hq/data/submissions'"}),
             'submit_ip': ('django.db.models.fields.IPAddressField', [], {'max_length': '15'}),
             'submit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "UUID('d969b10c-bc52-11df-9532-5cff350164a3')", 'max_length': '36'})
+            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "'6a91b464-bc5c-11df-8c8b-5cff350164a3'", 'max_length': '36'})
         },
         'receiver.submissionhandlingoccurrence': {
             'Meta': {'object_name': 'SubmissionHandlingOccurrence'},
