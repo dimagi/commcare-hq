@@ -36,8 +36,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.util.webutils import render_to_response
 import corehq.util.hqutils as utils
-from corehq.apps.auditor.models import AuditEvent
-from corehq.apps.auditor.decorators import log_access
+#from corehq.apps.auditor.models import AuditEvent
+#from corehq.apps.auditor.decorators import log_access
 
 from corehq.apps.xforms.models import *
 # from hq.models import *
