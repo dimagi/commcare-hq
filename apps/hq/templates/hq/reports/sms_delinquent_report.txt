@@ -1,4 +1,0 @@
-{% spaceless %}{{threshold}} Day Idle Warning
-{% for reporterprofile in delinquent_reporterprofiles %}{{reporterprofile.chw_username}}
-{% endfor %}
-{%endspaceless%}
