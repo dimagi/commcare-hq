@@ -3,12 +3,16 @@ from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
 from corehq.util.test import create_user_and_domain
 from corehq.apps.receiver.tests.util import get_full_path, makeNewEntry
+from corehq.apps.receiver.models import Submission
 
 class ViewsTestCase(TestCase):
     
     def setUp(self):
         create_user_and_domain()
-        self.client.login(username='brian',password='test')
+        true = self.client.login(username='brian',password='test')
+        allsubmits = Submission.objects.all()
+        for submit in allsubmits:
+            submit.delete()
 
     def testBasicViews(self):
         domain = Domain.objects.get(name='mockdomain')
