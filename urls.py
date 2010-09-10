@@ -23,9 +23,8 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.phone.urls')),
     (r'', include('corehq.apps.receiver.urls')),
     (r'', include('corehq.apps.releasemanager.urls')),
-    (r'user_registration', include("django_user_registration.urls")),
     (r'', include('corehq.apps.xforms.urls')),
-    (r'', include('graphing.urls')),
+    (r'user_registration', include("django_user_registration.urls")),
 )
 
 # magic static media server (idea + implementation lifted from rapidsms)
