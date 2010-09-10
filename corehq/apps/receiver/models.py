@@ -21,8 +21,13 @@ _RECEIVER = "receiver"
 class Submission(models.Model):
     '''A Submission object.  Represents an instance of someone POST-ing something
        to our site.'''
+
+    def make_uuid():
+        """ This superfluous-looking function is necessary in order for "manage.py test" to work under South """
+        return str(uuid.uuid1())
+
     submit_time = models.DateTimeField(_('Submission Time'), default = datetime.now)
-    transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=uuid.uuid1())    
+    transaction_uuid = models.CharField(_('Submission Transaction ID'), max_length=36, default=make_uuid)
     domain = models.ForeignKey(Domain, null=True)    
     submit_ip = models.IPAddressField(_('Submitting IP Address'))    
     checksum = models.CharField(_('Content MD5 Checksum'),max_length=32)    
@@ -36,7 +41,8 @@ class Submission(models.Model):
         ordering = ('-submit_time',)
         verbose_name = _("Submission Log")        
         get_latest_by = "submit_time"
-    
+
+
     @property
     def num_attachments(self):
         return Attachment.objects.all().filter(submission=self).count()

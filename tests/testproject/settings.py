@@ -100,6 +100,8 @@ HQ_APPS = (
     'corehq.apps.logtracker',
     'corehq.apps.auditor',
     'corehq.apps.xforms',
+    'releasemanager',
+    'requestlogger',
 )
 
 TEMPLATE_DIRS = (
@@ -127,6 +129,9 @@ RECEIVER_EXPORT_PATH=os.path.join(BASE_DIR,"data")
 XFORMS_SCHEMA_PATH=os.path.join(BASE_DIR,"data","schemas")
 XFORMS_EXPORT_PATH=os.path.join(BASE_DIR,"data","exports")
 XFORMS_FORM_TRANSLATE_JAR=os.path.join(BASE_DIR,"lib","form_translate.jar")
+
+####### ReleaseManager settings  #######
+RELEASE_FILE_PATH="data/release"
 
 # create data directories required by xforms app
 import os
@@ -236,3 +241,10 @@ try:
     from settings_local import *
 except ImportError:
     pass
+
+DJANGO_LOG_FILE = "/var/log/datahq/datahq.django.log"
+LOG_SIZE = 1000000
+LOG_LEVEL   = "ERROR"
+LOG_FILE    = "/var/log/datahq/datahq.log"
+LOG_FORMAT  = "[%(name)s]: %(message)s"
+

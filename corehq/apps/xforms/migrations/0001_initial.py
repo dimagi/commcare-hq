@@ -39,7 +39,7 @@ class Migration(SchemaMigration):
             ('target_namespace', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('version', self.gf('django.db.models.fields.IntegerField')(null=True)),
             ('uiversion', self.gf('django.db.models.fields.IntegerField')(null=True)),
-            ('date_created', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2010, 9, 9, 16, 43, 36, 95236))),
+            ('date_created', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2010, 9, 9, 17, 53, 41, 256938))),
             ('element', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['xforms.ElementDefModel'], unique=True, null=True)),
         ))
         db.send_create_signal('xforms', ['FormDefModel'])
@@ -248,7 +248,7 @@ class Migration(SchemaMigration):
             'raw_post': ('django.db.models.fields.FilePathField', [], {'max_length': '255', 'null': 'True', 'match': "'.*\\\\.postdata$'", 'path': "'/home/rowena/workspace/core-hq/data/submissions'"}),
             'submit_ip': ('django.db.models.fields.IPAddressField', [], {'max_length': '15'}),
             'submit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "UUID('eb00de2c-bc52-11df-8f82-5cff350164a3')", 'max_length': '36'})
+            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "'b5848ec4-bc5c-11df-bd48-5cff350164a3'", 'max_length': '36'})
         },
         'xforms.elementdefmodel': {
             'Meta': {'unique_together': "(('xpath', 'form'),)", 'object_name': 'ElementDefModel'},
@@ -289,7 +289,7 @@ class Migration(SchemaMigration):
         'xforms.formdefmodel': {
             'Meta': {'unique_together': "(('domain', 'target_namespace', 'version'),)", 'object_name': 'FormDefModel'},
             'bytes_received': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
-            'date_created': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2010, 9, 9, 16, 43, 36, 108333)'}),
+            'date_created': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2010, 9, 9, 17, 53, 41, 272798)'}),
             'domain': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['domain.Domain']", 'null': 'True', 'blank': 'True'}),
             'element': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['xforms.ElementDefModel']", 'unique': 'True', 'null': 'True'}),
             'form_display_name': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True'}),
