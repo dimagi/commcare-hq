@@ -26,7 +26,7 @@ class Migration(SchemaMigration):
             ('username', self.gf('django.db.models.fields.CharField')(max_length=32)),
             ('password', self.gf('django.db.models.fields.CharField')(max_length=32, null=True)),
             ('uuid', self.gf('django.db.models.fields.CharField')(max_length=32, null=True)),
-            ('registered_on', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2010, 9, 9, 16, 43, 22, 593118))),
+            ('registered_on', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2010, 9, 9, 17, 53, 23, 170))),
             ('additional_data', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal('phone', ['PhoneUserInfo'])
@@ -128,7 +128,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'}),
             'phone': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'users'", 'to': "orm['phone.Phone']"}),
-            'registered_on': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2010, 9, 9, 16, 43, 22, 600647)'}),
+            'registered_on': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime(2010, 9, 9, 17, 53, 23, 10975)'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'phone_registrations'", 'null': 'True', 'to': "orm['auth.User']"}),
             'username': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
@@ -170,7 +170,7 @@ class Migration(SchemaMigration):
             'raw_post': ('django.db.models.fields.FilePathField', [], {'max_length': '255', 'null': 'True', 'match': "'.*\\\\.postdata$'", 'path': "'/home/rowena/workspace/core-hq/data/submissions'"}),
             'submit_ip': ('django.db.models.fields.IPAddressField', [], {'max_length': '15'}),
             'submit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "UUID('e2f563c4-bc52-11df-bd27-5cff350164a3')", 'max_length': '36'})
+            'transaction_uuid': ('django.db.models.fields.CharField', [], {'default': "'aaa0c554-bc5c-11df-a890-5cff350164a3'", 'max_length': '36'})
         }
     }
 
