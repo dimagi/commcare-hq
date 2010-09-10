@@ -1,0 +1,2 @@
+recursive-include couchforms/_design *
+recursive-include couchforms/static *

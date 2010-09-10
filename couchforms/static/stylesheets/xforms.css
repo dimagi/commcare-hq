@@ -1,0 +1,13 @@
+.xform_data {
+    font-size: 85%;	
+}
+.xform_data ul {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 0px;
+}
+
+.xform_data ul li {
+    margin-left: 0px;
+    
+}
