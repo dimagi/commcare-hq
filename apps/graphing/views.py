@@ -1,31 +1,5 @@
 # Create your views here.
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect, Http404
-from django.template import RequestContext
-from django.core.exceptions import *
-
-from corehq.util.transformers.csv import UnicodeWriter
-from corehq.util.webutils import render_to_response
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import redirect_to_login
-from django.utils.translation import ugettext_lazy as _
-from django.db.models.query_utils import Q
-from corehq.apps.xforms.models import *
-from graphing import dbhelper
-from django.utils.encoding import *
-from hq.models import *
-
-import hq.utils as utils
-from corehq.apps.domain.decorators import login_and_domain_required
-
-from StringIO import StringIO
-
-from datetime import timedelta
-from django.db import transaction
 import uuid
-
-from models import *
 import logging
 import hashlib
 import settings
@@ -33,6 +7,30 @@ import traceback
 import sys
 import os
 import string
+from datetime import timedelta
+
+from StringIO import StringIO
+
+from django.core.exceptions import *
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
+from django.db.models.query_utils import Q
+from django.db import transaction
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect, Http404
+from django.template import RequestContext
+from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import *
+
+from corehq.util.transformers.csv import UnicodeWriter
+from corehq.util.webutils import render_to_response
+from corehq.apps.xforms.models import *
+from corehq.apps.hqwebapp.models import *
+from corehq.apps.domain.decorators import login_and_domain_required
+import corehq.apps.hqwebapp.utils as utils
+
+from graphing import dbhelper
+from models import *
 
 
 @login_and_domain_required
