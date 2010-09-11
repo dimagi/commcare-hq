@@ -12,7 +12,7 @@ import datetime
 
 import django
 from models import *
-from handlers import *
+from loghandlers import *
 
 from django.contrib import admin
 
