@@ -23,11 +23,11 @@ curl_command = 'curl' #make sure curl is in your path
 
 # you can turn curl on and off here.  The alternative is standard python posts
 # but curl seems to be required for django to correctly handle multipart forms
-use_curl = False
+use_curl = True
 
-filename = os.path.join(os.getcwd(), 'test-data', 'intel_reg_new_case_id.xml')
+filename = os.path.join(os.getcwd(), 'test-data', 'instance.xml')
 
-domain_name = "grameen" # "demo"
+domain_name = "test" # "demo"
 content_type = "text/xml"
 #content_type = "multipart/form-data; boundary=newdivider"
 

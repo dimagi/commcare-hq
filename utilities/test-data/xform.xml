@@ -1,0 +1,321 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>BRAC Form</h:title>
+    <meta jr:name="brac_visit_chp_0.0.1"/>
+    <model>
+
+		<itext>
+			<translation lang="English">
+				<text id="yes">
+					<value>Yes</value>
+				</text>
+				<text id="no">
+					<value>No</value>
+				</text>
+				<text id="ChpName">
+					<value>Name of CHP</value>
+				</text>
+				<text id="ChpId">
+					<value>CHP ID</value>
+				</text>
+				<text id="groupName">
+					<value>Name of the group</value>
+				</text>
+				
+				<text id="availability">
+				<value form="long"> Was the CHP available when you visited?</value>
+				<value form="short">CHP availability</value>
+				</text>
+				
+				<text id="Num_house">
+					<value form="long">Number of household visited?</value>
+					<value form="short">Numb.Visited houses</value>
+				</text>
+				<text id="microf_meeting">
+					<value form="long">How many microfinance meeting have you attended with CHP?</value>
+					<value form="short">Meeting attended</value>
+				</text>
+				
+				<text id="microf_participant_count">
+					<value form="long">Number of participants came for microfinance meeting?</value>
+					<value form="short">Numb. Participants</value>
+				</text>
+				
+				<text id="topic">
+					<value form="long">Which topic was taught in the meeting?</value>
+					<value form="short">Topic</value>
+				</text>
+				
+				<text id="comm_meeting">
+					<value form="long">Number of community meeting you are attended with CHP?</value>
+					<value form="short">Meeting attended</value>
+				</text>
+				
+				<text id="comm_participants_count">
+					<value form="long">Number of Participants came for Community meeting?</value>
+					<value form="short">Numb. Participants</value>
+				</text>
+				
+				<text id="comm_Topic">
+					<value form="long">Which topic was taught at the community meeting?</value>
+					<value form="short">Topic</value>
+				</text>
+				
+				<text id="Tuberculosis">
+					<value form="long">Number of Tuberculosis referral given</value>
+					<value form="short">Numb. TB referrals</value>
+				</text>
+				
+				<text id="Malaria">
+					<value form="long">Number of Malaria referral given</value>
+					<value form="short">Numb. Malaria referrals</value>
+				</text>
+				
+				<text id="Pante-natal_Care">
+					<value form="long">Number of referral did you give for Pregnant Women for Ante-natal Care</value>
+					<value form="short">Numb. Ante-natal referrals</value>
+				</text>
+				
+				<text id="pregnant_TT">
+					<value form="long">Number of referral Pregnant Women for TT given?</value>
+					<value form="short">Numb. TT for preg women referrals</value>
+				</text>
+				<text id="BCG_Polio">
+					<value form="long">Number of information found on BCG, Polio</value>
+					<value form="short">BCG_Polio</value>
+				</text>
+				
+				<text id="Dpt_1">
+					<value form="long">Number of information found on DPT-1, Polio</value>
+					<value form="short">DPT-1 Polio</value>
+				</text>
+				
+				<text id="Dpt_2">
+					<value form="long">Number of information found on DPT-2, Polio</value>
+					<value form="short">Numb.DPT-2 polio</value>
+				</text>
+				
+				<text id="Dpt_3">
+					<value form="long">Number of information found on DPT-3, Polio</value>
+					<value form="short">Numb.DPT-3 polio</value>
+				</text>
+				
+				<text id="measles">
+					<value form="long">Number of information found on Measles, Polio</value>
+					<value form="short">Numb. measles polio</value>
+				</text>
+				
+				<text id="total_amount">
+					<value form="long">What is the total amount of Health Commodities issued in Tsh??</value>
+					<value form="short">Total amount in Tsh</value>
+				</text>
+				</translation>
+
+			<translation lang="Swahili" default="true">
+				<text id="yes">
+					<value>Ndiyo</value>
+				</text>
+				<text id="no">
+					<value>Hapana</value>
+				</text>
+				
+				<text id="ChpName">
+					<value>Jina la CHP</value>
+				</text>
+				<text id="ChpId">
+					<value>Namba ya CHP</value>
+				</text>
+				<text id="groupName">
+					<value>Jina la Kikundi</value>
+				</text>
+			
+				<text id="Num_house">
+					<value form="long">Umetembelea nyumba ngapi pamoja na CHP?</value>
+					<value form="short">Idadi ulizotembelea na CHP</value>
+				</text>
+				<text id="microf_meeting">
+					<value form="long">Umefanya mikutano mingapi leo na kikundi cha microfinance kwa huyu CHP?</value>
+					<value form="short">Idadi ya mikutano ya micro leo</value>
+				</text>
+				
+				<text id="microf_participant_count">
+					<value form="long">Watu wangapi wamehudhuria leo kwenye kikundi cha microfinance?</value>
+					<value form="short">Idadi ya watu</value>
+				</text>
+				
+				<text id="topic">
+					<value form="long">Umefundisha somo gani?</value>
+					<value form="short">Somo</value>
+				</text>
+				
+				<text id="comm_meeting">
+					<value form="long">Umefanya mikutano mingapi kwenye jamii ulipomtembelea CHP?</value>
+					<value form="short">Mikutano kwenye jamii</value>
+				</text>
+				
+				<text id="comm_participants_count">
+					<value form="long">Watu wangapi wamehudhuria leo kwenye huo mkutano wa jamii?</value>
+					<value form="short">Idadi ya watu kwenye jamii</value>
+				</text>
+				
+				<text id="comm_Topic">
+					<value form="long">Umefundisha somo gani kwenye jamii leo?</value>
+					<value form="short">Somo</value>
+				</text>
+				
+				<text id="Tuberculosis">
+					<value form="long">Rufaa - Tuberculosis</value>
+					<value form="short">Idadi ya rufaa za TB</value>
+				</text>
+				
+				<text id="Malaria">
+					<value form="long">Rufaa - Malaria</value>
+					<value form="short">Idadi ya rufaa za Malaria</value>
+				</text>
+				
+				<text id="Pante-natal_Care">
+					<value form="long">Rufaa - Pregnant Women for Ante-natal Care</value>
+					<value form="short">Idadi ya rufaa za Ante-natal</value>
+				</text>
+				
+				<text id="pregnant_TT">
+					<value form="long">Rufaa - Pregnant Women for TT</value>
+					<value form="short">Rufaa za TT for preg women</value>
+				</text>
+				<text id="BCG_Polio">
+					<value form="long">Taarifa ya chanjo - BCG, Polio</value>
+					<value form="short">Idadi: BCG_Polio</value>
+				</text>
+				
+				<text id="Dpt_1">
+					<value form="long">Taarifa ya chanjo - DPT-1, Polio</value>
+					<value form="short">Idadi: DPT-1 Polio</value>
+				</text>
+				
+				<text id="Dpt_2">
+					<value form="long">Taarifa ya chanjo - DPT-2, Polio</value>
+					<value form="short">Idadi: DPT-2 polio</value>
+				</text>
+				
+				<text id="Dpt_3">
+					<value form="long">Taarifa ya chanjo - DPT-3, Polio</value>
+					<value form="short">Idadi: DPT-3 polio</value>
+				</text>
+				
+				<text id="measles">
+					<value form="long">Taarifa ya chanjo - Measles, Polio</value>
+					<value form="short">Idadi: measles polio</value>
+				</text>
+				
+				<text id="total_amount">
+					<value form="long">Jumla ya fedha ya huduma ya vifaa vya kiafya vinavyouzwa Tsh?</value>
+					<value form="short">Jumla ya kiasi Tsh</value>
+				</text>
+				
+				<text id="availability">
+				<value form="long"> CHP uliyemtembelea umemkuta?</value>
+				<value form="short">Umemkuta?</value>
+				</text>
+				</translation>
+				</itext>
+
+		<instance>
+			<brac xmlns="http://dev.commcarehq.org/BRAC/CHW/CHWVisit_v0.0.1" version="1" uiVersion="1">
+				<Meta>
+					<formName>BRAC CHW visiting CHP</formName>
+					<formVersion>0.0.1</formVersion>
+					<CommCareVersion/>
+					<DeviceID />
+					<TimeStart />
+					<TimeEnd />
+					<username />
+					<chw_id />
+					<uid />
+				</Meta>
+				<ChpName />
+				<ChpId />
+				<availability />
+				<groupName />
+				<Num_house />
+				<microf_meeting />
+				<microf_participant_count />
+				<comm_meeting />
+				<comm_participants_count />
+				<comm_Topic />
+				<Tuberculosis />
+				<Malaria />
+				<Pante-natal_Care />
+				<pregnant_TT />
+				<BCG_Polio />
+				<Dpt_1 />
+				<Dpt_2 />
+				<Dpt_3 />
+				<measles />
+				<total_amount />
+			</brac>
+		</instance>
+		
+		<bind id="hidden1" nodeset="/brac/Meta/DeviceID" type="xsd:string" jr:preload="property" jr:preloadParams="DeviceID" />
+		<bind id="hidden4" nodeset="/brac/Meta/username" type="xsd:string" jr:preload="context" jr:preloadParams="UserName" />
+		<bind id="hidden5" nodeset="/brac/Meta/chw_id" type="xsd:string" jr:preload="context" jr:preloadParams="UserID" />
+		<bind id="hidden2" nodeset="/brac/Meta/TimeStart" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+		<bind id="hidden3" nodeset="/brac/Meta/TimeEnd" type="xsd:dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+		<bind id="hidden6" nodeset="/brac/Meta/uid" type="xsd:string" jr:preload="uid" jr:preloadParams="general" />
+		<bind id="hidden7" nodeset="/brac/Meta/CommCareVersion" type="xsd:string" jr:preload="property" jr:preloadParams="cc_version" />
+		
+		<bind id="ChpName" nodeset="/brac/ChpName" required="true()" />
+		<bind id="ChpId" nodeset="/brac/ChpId" type="xsd:int" required="true()" />
+		<bind id="groupName" nodeset="/brac/groupName" required="true()" />
+		<bind id="availability" nodeset="/brac/availability" required="true()" />
+		<bind id="Num_house" nodeset="/brac/Num_house" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="microf_meeting" nodeset="/brac/microf_meeting" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="microf_participant_count" nodeset="/brac/microf_participant_count" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="comm_meeting" nodeset="/brac/comm_meeting" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="comm_participants_count" nodeset="/brac/comm_participants_count" required="true()" type="xsd:int" relevant="/brac/availability = 'y'" /> 
+		<bind id="comm_Topic" nodeset="/brac/comm_Topic" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Tuberculosis" nodeset="/brac/Tuberculosis" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Malaria" nodeset="/brac/Malaria" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Pante-natal_Care" nodeset="/brac/Pante-natal_Care" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="pregnant_TT" nodeset="/brac/pregnant_TT" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="BCG_Polio" nodeset="/brac/BCG_Polio" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Dpt_1" nodeset="/brac/Dpt_1" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Dpt_2" nodeset="/brac/Dpt_2" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" /> 
+		<bind id="Dpt_3" nodeset="/brac/Dpt_3" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" />
+		<bind id="measles" nodeset="/brac/measles" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" />
+		<bind id="total_amount" nodeset="/brac/total_amount" type="xsd:int" required="true()" relevant="/brac/availability = 'y'" />
+</model>
+</h:head>			
+<h:body>
+
+	<input bind="ChpName"><label ref="jr:itext('ChpName')"></label></input>
+	<input bind="ChpId"><label ref="jr:itext('ChpId')"></label></input>
+	<input bind="groupName"><label ref="jr:itext('groupName')"></label></input>
+	<select1 ref="/brac/availability">
+		<label ref="jr:itext('availability')"></label> 
+		<item><label ref="jr:itext('yes')"></label><value>y</value></item>
+		<item><label ref="jr:itext('no')"></label><value>n</value></item>
+	</select1>
+	
+	<input bind="Num_house"><label ref="jr:itext('Num_house')"></label></input>
+	<input bind="microf_meeting"><label ref="jr:itext('microf_meeting')"></label></input>
+	<input bind="microf_participant_count"><label ref="jr:itext('microf_participant_count')"></label></input>
+	<input bind="comm_meeting"><label ref="jr:itext('comm_meeting')"></label></input>
+	<input bind="comm_participants_count"><label ref="jr:itext('comm_participants_count')"></label></input>
+	<input bind="comm_Topic"><label ref="jr:itext('comm_Topic')"></label></input>
+	<input bind="Tuberculosis"><label ref="jr:itext('Tuberculosis')"></label></input>
+	<input bind="Malaria"><label ref="jr:itext('Malaria')"></label></input>
+	<input bind="Pante-natal_Care"><label ref="jr:itext('Pante-natal_Care')"></label></input>
+	<input bind="pregnant_TT"><label ref="jr:itext('pregnant_TT')"></label></input>
+	<input bind="BCG_Polio"><label ref="jr:itext('BCG_Polio')"></label></input>
+	<input bind="Dpt_1"><label ref="jr:itext('Dpt_1')"></label></input>
+	<input bind="Dpt_2"><label ref="jr:itext('Dpt_2')"></label></input>
+	<input bind="Dpt_3"><label ref="jr:itext('Dpt_3')"></label></input>
+	<input bind="measles"><label ref="jr:itext('measles')"></label></input>
+	<input bind="total_amount"><label ref="jr:itext('total_amount')"></label></input>
+	
+</h:body>
+</h:html>
