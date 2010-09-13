@@ -24,6 +24,9 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.receiver.urls')),
     (r'', include('corehq.apps.releasemanager.urls')),
     (r'', include('corehq.apps.xforms.urls')),
+    (r'', include('rapidsms.contrib.messagelog.urls')),
+    (r'', include('rapidsms.contrib.messaging.urls')),
+    (r'', include('rapidsms.contrib.httptester.urls')),
     (r'user_registration', include("django_user_registration.urls")),
 )
 
