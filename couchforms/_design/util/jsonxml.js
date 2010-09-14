@@ -332,6 +332,6 @@ var xmlJsonClass = {
     }
 };
 
-exports.xmlJsonClass = xmlJsonClass  
+exports.xmlJsonClass = xmlJsonClass;
 exports.xml2json = xmlJsonClass["xml2json"];
 exports.hello = xmlJsonClass["hello"];

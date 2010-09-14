@@ -1,9 +1,10 @@
 function(doc, req) {
     var e4xmlJsonClass = require("util/jsone4xml").e4xmlJsonClass;
     var base64Class = require("util/base64").Base64;
+    var dateFormat = require("util/dateFormat").dateFormat;
     
     
-    e4xmlJsonClass.hello()
+    e4xmlJsonClass.hello();
     base64Class.hello();
     
     if (doc) {
@@ -52,7 +53,7 @@ function(doc, req) {
     doc["#doc_type"] = "XForm";
     // This magic tag lets our xforms be exportable by namespace from the couchexport app
     doc["#export_tag"] = "@xmlns";
-    
+    doc["#received_on"] = dateFormat(Date(), "isoUtcDateTime");
     // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
     if (doc["Meta"]) {
         doc["meta"] = doc["Meta"];

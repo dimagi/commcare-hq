@@ -303,4 +303,4 @@ var e4xmlJsonClass = {
     }
 };
 
-exports.e4xmlJsonClass = e4xmlJsonClass  
+exports.e4xmlJsonClass = e4xmlJsonClass;
