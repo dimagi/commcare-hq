@@ -3,7 +3,10 @@ import sys
 import logging
 import traceback
 from django.utils import simplejson
-from MySQLdb import IntegrityError
+try:
+    from MySQLdb import IntegrityError
+except:
+    pass
 
 from django.db import models, connection, transaction
 from datetime import datetime

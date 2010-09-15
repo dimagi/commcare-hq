@@ -18,7 +18,10 @@ from datetime import datetime, timedelta
 
 from stat import S_ISREG, ST_MODE
 from lxml import etree
-from MySQLdb import IntegrityError
+try:
+    from MySQLdb import IntegrityError
+except:
+    pass
 
 from django.db import connection, transaction, DatabaseError
 
