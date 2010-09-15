@@ -50,7 +50,7 @@ class authenticationTestCase(unittest.TestCase):
     
     
     def testLogin(self):
-        print "testLogin"
+        print "testLogin"                
         start_count = AccessAudit.objects.all().count()        
         response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'mockmock'})                
         login_count = AccessAudit.objects.all().count()     
@@ -58,7 +58,7 @@ class authenticationTestCase(unittest.TestCase):
           
         response = self.client.post('/accounts/logout/', {})        
         logout_count = AccessAudit.objects.all().count()        
-        self.assertEqual(start_count+2, logout_count)
+        self.assertEqual(start_count+1, logout_count)
         
         
     def testFailedLogin(self):
