@@ -9,14 +9,13 @@ Getting Started
 
 We recommend using virtualenv
 
-Setup virtual env wrapper::
-
-> easy_install virtualenvwrapper
-> export WORKON_HOME=$HOME/.virtualenvs
-> source /usr/local/bin/virtualenvwrapper.sh
-> mkvirtualenv --no-site-packages <envname>
-> #this will create your env and put you into that env
-> #if you want to switch virtualenvs type workon <virtualenv>
+Setup virtual env wrapper:
+ - easy_install virtualenvwrapper
+ - export WORKON_HOME=$HOME/.virtualenvs
+ - source /usr/local/bin/virtualenvwrapper.sh
+ - mkvirtualenv --no-site-packages <envname>
+ - #this will create your env and put you into that env
+ - #if you want to switch virtualenvs type workon <virtualenv>
 
 
 Install dependencies:
