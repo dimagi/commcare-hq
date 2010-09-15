@@ -36,8 +36,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.util.webutils import render_to_response
 import corehq.util.hqutils as utils
-#from corehq.apps.auditor.models import AuditEvent
-#from corehq.apps.auditor.decorators import log_access
+from corehq.apps.auditor.models import AuditEvent
 
 from corehq.apps.xforms.models import *
 # from hq.models import *
@@ -117,13 +116,15 @@ def dashboard(request, template_name="hqwebapp/dashboard.html"):
     for user, data in unregistered_map.items():
         grand_totals[user] = sum([value for value in data.values()])
     
-    context = {"program_data": program_data_structure,
+    context= RequestContext(request)
+    context.update({"program_data": program_data_structure,
                                "program_totals": program_totals,
                                "unregistered_data": unregistered_map,
                                "unregistered_totals": grand_totals,
                                "dates": dates,
                                "startdate": startdate,
-                               "enddate": enddate}
+                               "enddate": enddate})
+    
     
     
     return render_to_response(request, template_name, context)
@@ -164,13 +165,13 @@ def no_permissions(request):
 def login(request, template_name="login_and_password/login.html",
           redirect_field_name=REDIRECT_FIELD_NAME,
           authentication_form=AuthenticationForm):
-    """Displays the login form and handles the login action."""
-
+    """Displays the login form and handles the login action.
+    This is copied directly from django.contrib.auth, but modified with auditing and other custom hq feature requirements."""    
     redirect_to = request.REQUEST.get(redirect_field_name, '')
     request.base_template = settings.BASE_TEMPLATE
     if request.method == "POST":
-        form = authentication_form(data=request.POST)
-        if form.is_valid():
+        form = authentication_form(data=request.POST)        
+        if form.is_valid():            
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to or ' ' in redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
@@ -184,23 +185,23 @@ def login(request, template_name="login_and_password/login.html",
             
             # Okay, security checks complete. Log the user in.            
             auth_login(request, form.get_user())
-
+            
             if request.session.test_cookie_worked():
                 request.session.delete_test_cookie()
             
-            #audit the login
-            #TODO: fix auditor+south
-            #AuditEvent.objects.audit_login(request, form.get_user(), True)
+            #audit the login            
+            AuditEvent.objects.audit_login(request, form.get_user(), True)
+            
+            #continue with standard django method
             return HttpResponseRedirect(redirect_to)
         else: #failed login
             failed= form.data['username']            
             try:
                 usr = User.objects.all().get(username=form.data['username'])                   
             except:
-                usr = None                                
-            #TODO: fix auditor+south
-            #AuditEvent.objects.audit_login(request, usr, False, username_attempt = failed)
-            
+                usr = None
+            #audit/log the failed login
+            AuditEvent.objects.audit_login(request, usr, False, username_attempt = failed)            
         
 
     else:
@@ -211,14 +212,15 @@ def login(request, template_name="login_and_password/login.html",
     if Site._meta.installed:
         current_site = Site.objects.get_current()
     else:
-        current_site = RequestSite(request)
+        current_site = RequestSite(request)        
     
-    return render_to_response(request, template_name, {
+    context = {
         'form': form,
         redirect_field_name: redirect_to,
         'site': current_site,
         'site_name': current_site.name,
-    })
+    }
+    return render_to_response(request, template_name, context)
 
 def logout(request, next_page=None, template_name="hqwebapp/loggedout.html", redirect_field_name=REDIRECT_FIELD_NAME):
     "Logs out the user and displays 'You are logged out' message."

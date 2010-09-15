@@ -67,14 +67,14 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'urls'
 
 
-TEMPLATE_CONTEXT_PROCESSORS = [
+TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
-    "corehq.util.context_processors.base_template" # sticks the base template inside all responses
-]
+    "corehq.util.context_processors.base_template", # sticks the base template inside all responses    
+)
 
 
 DEFAULT_APPS = (
@@ -84,6 +84,10 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'south',
+    
+    #'gunicorn',
+    #'devserver',    
+    
 )
 
 HQ_APPS = (    
