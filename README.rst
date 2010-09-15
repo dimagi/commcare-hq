@@ -10,6 +10,7 @@ Getting Started
 We recommend using virtualenv
 
 Setup virtual env wrapper::
+
 > easy_install virtualenvwrapper
 > export WORKON_HOME=$HOME/.virtualenvs
 > source /usr/local/bin/virtualenvwrapper.sh
@@ -17,15 +18,18 @@ Setup virtual env wrapper::
 > #this will create your env and put you into that env
 > #if you want to switch virtualenvs type workon <virtualenv>
 
-Install dependencies::
+
+Install dependencies:
+
 pip install -U -r requirements.txt
 
-Other packages needed for download::
+Other packages needed for download:
  - CouchDB
  - keyczar (http://code.google.com/p/keyczar/)
  - A search engine for haystack (like Solr)
  - memcached for use with johnny_cache
  - postgresql (mysql and sqlite are neither supported nor recommended)
+ 
 
 Directory Structure
 --------------------
