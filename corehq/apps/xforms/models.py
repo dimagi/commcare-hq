@@ -3,10 +3,6 @@ import sys
 import logging
 import traceback
 from django.utils import simplejson
-try:
-    from MySQLdb import IntegrityError
-except:
-    pass
 
 from django.db import models, connection, transaction
 from datetime import datetime
@@ -242,12 +238,8 @@ class FormDefModel(models.Model):
         fdd.version = formdef.version
         fdd.uiversion = formdef.uiversion
         fdd.domain = formdef.domain
+        fdd.save()
         
-        try:
-            fdd.save()
-        except IntegrityError, e:
-            raise IntegrityError( ("Schema %s already exists." % fdd.target_namespace ) + \
-                                   " Did you remember to update your version number?")
         ed = ElementDefModel()
         ed.xpath=formdef.root.xpath
         ed.table_name = table_name
