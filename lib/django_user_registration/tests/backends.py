@@ -237,7 +237,7 @@ class DefaultRegistrationBackendTests(TestCase):
     def test_form_class(self):
         """
         Test that the default form class returned is
-        ``user_registration.forms.RegistrationForm``.
+        ``user_registration.new_xforms.RegistrationForm``.
 
         """
         self.failUnless(self.backend.get_form_class(_mock_request()) is forms.RegistrationForm)

@@ -238,7 +238,7 @@ def validate_resources(resources):
     
 
 def register_forms(build, good_forms):
-    """Try to register the forms from jar_file."""
+    """Try to register the new_xforms from jar_file."""
     # this was copied and modified from buildmanager models. 
     errors = {}
     to_skip = []

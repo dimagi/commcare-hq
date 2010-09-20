@@ -16,7 +16,7 @@ from corehq.apps.xforms.xformdef import FormDef, ElementDef
 def extract_xforms( filename, dir ):
     '''Extracts the xforms from a jar file to a given directory.  
        Assumes that all xforms will be at the root of the jar.
-       Returns a list of the extracted forms with absolute paths'''
+       Returns a list of the extracted new_xforms with absolute paths'''
     
     # hat tip: http://code.activestate.com/recipes/465649/
     zf = zipfile.ZipFile( filename )
@@ -66,7 +66,7 @@ def validate_jar(filename, include_xforms=True):
         # will wrap all the other ones.
         errors = []
         if include_xforms:
-            # now run through each of the forms and try to convert to 
+            # now run through each of the new_xforms and try to convert to
             # a schema, as well as adding all kinds of validation checks
             for xform in xforms:
                 try:

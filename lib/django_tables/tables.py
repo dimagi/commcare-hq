@@ -213,7 +213,7 @@ class BaseTable(object):
         self.order_by = order_by
 
         # Make a copy so that modifying this will not touch the class
-        # definition. Note that this is different from forms, where the
+        # definition. Note that this is different from new_xforms, where the
         # copy is made available in a ``fields`` attribute. See the
         # ``Table`` class docstring for more information.
         self.base_columns = copy.deepcopy(type(self).base_columns)
