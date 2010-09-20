@@ -31,12 +31,7 @@ register = template.Library()
 
 class Tab(object):
     def __init__(self, callback, caption=None):
-        if isinstance(callback, basestring):
-            module = '.'.join(callback.split('.')[:-1])
-            view = callback.split('.')[-1]
-            self.callback = getattr(import_module(module), view)
-        else:
-            self.callback = callback
+        self.callback = callback
         self._caption = caption
         self._view = None
 

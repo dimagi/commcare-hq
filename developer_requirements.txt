@@ -1,0 +1,26 @@
+Django >= 1.2
+
+#source HG checkouts because pypi version is broken
+hg+http://bitbucket.org/akoha/django-digest
+
+#python libraries
+pyasn1
+simplejson
+#pycrypto
+#pysolr
+#python-memcached #for use with johnny_cache
+fabric
+
+#dimagi code
+dimagi-utils
+
+#django projects
+werkzeug #for debugging
+django-extensions
+django-devserver
+johnny-cache
+#django-haystack
+django-tracking
+
+
+
