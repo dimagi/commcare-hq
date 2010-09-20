@@ -8,11 +8,11 @@ from django.db.models.signals import post_save
 from corehq.apps.domain.models import Domain
 from corehq.apps.phone.processor import create_backup, create_phone_user, BACKUP_XMLNS, \
     REGISTRATION_XMLNS
-from corehq.apps.receiver.models import Attachment
+#from corehq.apps.receiver.models import Attachment
 
 from corehq.util.djangoplus.fields import PickledObjectField
-from corehq.apps.xforms.models import Metadata
-import corehq.apps.xforms.xmlrouter as xmlrouter
+from couchforms.models import Metadata
+#import corehq.apps.xforms.xmlrouter as xmlrouter
 
 class Phone(models.Model):
     """A phone (device)."""
@@ -38,7 +38,7 @@ class PhoneUserInfo(models.Model):
     user = models.ForeignKey(User, null=True, related_name="phone_registrations")
     phone = models.ForeignKey(Phone, related_name="users")
     
-    attachment = models.OneToOneField(Attachment, null=True)    
+#    attachment = models.OneToOneField(Attachment, null=True)
     
     status = models.CharField(max_length=20, choices=USER_INFO_STATUS)
     
@@ -65,7 +65,7 @@ class PhoneBackup(models.Model):
     
     # TODO: Should this  be moved to its own app since it's not core
     # phone user functionality?
-    attachment = models.ForeignKey(Attachment)    
+#    attachment = models.ForeignKey(Attachment)
     phone = models.ForeignKey(Phone)
 
     def __unicode__(self):
@@ -103,5 +103,5 @@ post_save.connect(create_phone_and_user, sender=Metadata)
     
 # register our backup and registration methods, like a signal, 
 # in the models file to make sure this always gets bootstrapped.
-xmlrouter.register(BACKUP_XMLNS, create_backup)
-xmlrouter.register(REGISTRATION_XMLNS, create_phone_user)
+#xmlrouter.register(BACKUP_XMLNS, create_backup)
+#xmlrouter.register(REGISTRATION_XMLNS, create_phone_user)
