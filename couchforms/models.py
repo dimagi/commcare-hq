@@ -72,34 +72,36 @@ class Metadata(object):
                      ("clinic_id", "time_start", "time_end",
                       "username", "user_id","uid")])
 
-class CXFormInstance(Document):
+class XFormInstance(Document):
     """An XForms instance."""
-    
+    @property
+    def _form(self):
+        return self[const.TAG_FORM]
     @property
     def type(self):
-        return self.all_properties().get(const.TAG_TYPE, "")
+        return self._form.get(const.TAG_TYPE, "")
         
     @property
     def version(self):
-        return self.all_properties().get(const.TAG_VERSION, "")
+        return self._form.get(const.TAG_VERSION, "")
         
     @property
     def uiversion(self):
-        return self.all_properties().get(const.TAG_UIVERSION, "")
+        return self._form.get(const.TAG_UIVERSION, "")
     
     @property
     def namespace(self):
-        return self.all_properties().get(const.TAG_NAMESPACE, "")
+        return self._form.get(const.TAG_NAMESPACE, "")
     
     @property
     def metadata(self):
-        if (const.TAG_META) in self.all_properties():
-            meta_block = self.all_properties()[const.TAG_META]
+        if (const.TAG_META) in self._form:
+            meta_block = self._form[const.TAG_META]
             meta = Metadata(meta_block)
             return meta
             
         return None
-        
+
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.namespace)
 

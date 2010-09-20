@@ -14,8 +14,9 @@ function(doc, req) {
     // Workaround: Mozilla Bug 336551
     // see https://developer.mozilla.org/en/E4X
     var content = req.body.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
-    var xml_content = new XML(content); 
-    doc = e4xmlJsonClass.xml2obj(xml_content);
+    var xml_content = new XML(content);
+    doc = {};
+    doc['form'] = e4xmlJsonClass.xml2obj(xml_content);
         
     // Because there is an xmlns in the form we can't reference these normally 
     // like .uuid therefore we have to use the *:: annotation, which searches 
@@ -50,15 +51,13 @@ function(doc, req) {
     var attachments = { "form.xml" : { "content_type":"text/xml", "data": base64Class.encode(req.body) } };      
     doc["_attachments"] = attachments;
     
-    doc["#doc_type"] = "XForm";
+    doc["doc_type"] = "XFormInstance";
     // This magic tag lets our xforms be exportable by namespace from the couchexport app
-    doc["#export_tag"] = "@xmlns";
-    doc["#received_on"] = dateFormat(Date(), "isoUtcDateTime");
-    // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
-    if (doc["Meta"]) {
-        doc["meta"] = doc["Meta"];
-        doc["Meta"] = null;
-    } 
+    doc["#export_tag"] = "xmlns";
+    doc["xmlns"] = doc.form['@xmlns'];
+    doc["received_on"] = dateFormat(Date(), "isoUtcDateTime");
+
+
     var resp =  {"headers" : {"Content-Type" : "text/plain"},
                  "body" : uuid.toString()};
     return [doc, resp];

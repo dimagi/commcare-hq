@@ -1,6 +1,6 @@
 from dimagi.utils.post import post_data, post_authenticated_data
 from django.conf import settings
-from couchforms.models import CXFormInstance
+from couchforms.models import XFormInstance
 from dimagi.utils.logging import log_exception
 import logging
 
@@ -20,7 +20,7 @@ def post_xform_to_couch(instance):
     if not errors and not "error" in response:
         doc_id = response
         try:
-            xform = CXFormInstance.get(doc_id)
+            xform = XFormInstance.get(doc_id)
             return xform
         except Exception, e:
             logging.error("Problem accessing %s" % doc_id)
