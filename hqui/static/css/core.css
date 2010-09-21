@@ -1,4 +1,4 @@
-/*-  BASE STYLES
+t/*-  BASE STYLES
 ----------------------------------------------------------------------*/
 
 /*- self-clearing floats ----------*/
@@ -236,7 +236,7 @@ header {
     border-bottom: none;
 }
 #modules {
-    width: 150px;
+    width: 200px;
     padding: 1em;
 }
 #modules > ul > li{
