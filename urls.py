@@ -28,6 +28,7 @@ urlpatterns = patterns('',
     (r'', include('rapidsms.contrib.messaging.urls')),
     (r'', include('rapidsms.contrib.httptester.urls')),
     (r'user_registration', include("django_user_registration.urls")),
+    (r'^hq/', include('hqui.urls')),
 )
 
 # magic static media server (idea + implementation lifted from rapidsms)

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>CommCare HQ</title>
+        
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+        <script type="text/javascript">
+            $(function(){
+                $("#form-tabs").tabs({
+                }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
+
+                $("#applications").addClass('ui-widget ui-widget-content ui-corner-top');
+                $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
+                $("#form-view").addClass('ui-widget ui-widget-content ui-corner-br');
+                $("#form-tabs > ul").removeClass('ui-corner-all');
+                $("#forms").removeClass('ui-corners-all').addClass('ui-corners-bottom');
+    
+            });
+        </script>
+        <link rel="stylesheet" href="/static/hqui/css/main.css" />
+        
+    </head>
+    <body>
+        <div id="wrapper">
+            <header>
+                <div id="logo">
+                    CommCare HQ
+                </div>
+                <nav>
+                    <ul id="top-nav">
+                        <li class="selected">Forms</li>
+                        <li><a href='data'>Data</a></li>
+                        <li><a href='messages'>Messages</a></li>
+                        <li><a href='settings'>Users and Settings</a></li>
+                        <li><a href='logout'>Sign Out</a></li>
+                    </ul>
+                </nav>
+                <p id="logged-in">Signed in to Pathfinder as droberts</p>
+            </header>
+            <div id="main">
+                <div id="applications">
+                    Forms for Application
+                    <select>
+                        <option value="0" selected>Field CHW</option>
+                        <option value="1">CHW Coordinator</option>
+                        <option value="2">Clinic Worker</option>
+                        <option><a href="new_application">+ New Application</a></option>
+                    </select>
+                </div>
+                <div id="form-tabs">
+                    <ul>
+                        <li><a href='#forms'>Forms</a></li>
+                        <li><a href='#settings'>Settings</a></li>
+                        <li><a href='#release'>Release</a></li>
+                    </ul>
+                    <div id="forms">
+                        <div>
+                            <div id="modules">
+                                <h2>Pregnancy</h2>
+                                <ul>
+                                    <li><a href="#">Belly Size</a></li>
+                                    <li><a href="#">Mother Health</a></li>
+                                </ul>
+                                <h2>Newborn</h2>
+                                <ul>
+                                    <li><a href="#">Mother Health</a></li>
+                                    <li><a href="#">Newborn Health</a></li>
+                                    <li><a href="#">Newborn General</a></li>    
+                                </ul>
+                                <h2>General</h2>
+                                <ul>
+                                    <li><a href="#">Form 1</a></li>
+                                </ul>
+                                <h2><a href="#">+ New Module</a></h2>
+                            </div>
+                            <div id="form-view">
+                                What are the questions on this form?
+                            </div>
+                        </div>
+                    </div>
+                    <div id="settings"></div>
+                    <div id="release"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

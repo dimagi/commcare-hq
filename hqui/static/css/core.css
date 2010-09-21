@@ -1,0 +1,281 @@
+/*-  BASE STYLES
+----------------------------------------------------------------------*/
+
+/*- self-clearing floats ----------*/
+
+#main:after, .mod:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+
+/*- fluid images and objects ----------*/
+
+img,
+object,
+embed {max-width: 100%;}
+
+
+/*- optional vanity styles ----------*/
+/*
+::selection {background: #c80000;}
+::-moz-selection {background: #c80000;}
+
+img::selection {background: transparent;}
+img::-moz-selection {background: transparent;}
+
+@media only screen and (max-device-width: 480px) {
+
+	html {-webkit-text-size-adjust: none}
+	a {-webkit-tap-highlight-color: rgba(200,0,0,0.4);}
+
+}*/
+
+/*- Paul Irish's Bulletproof @font-face syntax: http://mky.be/font-face/bulletproof/ ----------*/
+
+@font-face {
+  font-family: 'Graublau Web';
+  src: url('GraublauWeb.eot');
+  src: local('☺'),
+         url('GraublauWeb.woff') format('woff'), url('GraublauWeb.ttf') format('truetype');
+}
+
+
+/*- LET'S GET STARTED!
+----------------------------------------------------------------------*/
+
+a {
+    color: #0067B1;
+    text-decoration: none;
+}
+a:hover {
+    color: #0067B1;
+    text-decoration: underline;
+}
+
+body {
+	background-color: #fff;
+	color: #000;
+	font: normal 12px Helvetica, Arial, Verdana, sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+abbr {
+	cursor: help;
+}
+
+#wrapper {
+    width: 1000px;
+    margin: auto;
+}
+#logo {
+    float: left;
+    background: url('../img/commcare-logo.png') no-repeat scroll 0 0 transparent;
+    width: 350px;
+    height: 70px;
+    text-indent: -10000%;
+}
+ul#top-nav{
+    list-style-type: none;
+    border-collapse: collapse;
+    font-size: 1.2em;
+}
+ul#top-nav li {
+    display: inline;
+}
+header {
+    padding-top: 10px;
+    height: 70px;
+}
+    header nav ul {
+        float: right;
+        padding-top: 20px;
+        padding-bottom: 0;
+        margin: 0;
+    }
+        header nav li {
+            padding: 0 11px 0 6px;
+            font-weight: bold;
+            font-size: 1.2em;
+            border-right: 2px solid #96989B;
+            margin: 0;
+        }
+        header nav li:last-child {
+            border-right: none;
+            padding-right: 0px;
+        }
+    header #logged-in {
+        clear: right;
+        float: right;
+        margin-top: 10px;
+        padding: 0;
+    }
+#main {
+    margin-top: 40px;
+}
+#main > div {
+}
+.sidebar-group {
+    display: table;
+    width: 100%;
+}
+.sidebar-group > * {
+    display: table-cell;
+}
+.sidebar-group > nav {
+    width: 200px;
+}
+/*#main {
+    clear: both;
+    border: 1px solid #8BD;
+    margin-top: 40px;
+}
+    #main > nav > h1 {
+        text-align: center;
+        vertical-align: middle;
+        padding: .5em;
+        color: #96989B;
+    }
+    #main > nav {
+        height: 70px;
+    }
+        #main > nav ul{
+            padding: 0;
+            font-weight: bold;
+            height: 1.5em;
+            padding-left: 250px;
+            border-bottom: 1px solid #8BD;
+            margin: 0;
+        }
+        #main > nav li{
+            text-align: center;
+            padding: 4px 15px;
+            height: 1.5em;
+            border: 1px solid #8BD;
+        }
+        #main > nav li.selected {
+            background-color: white;
+            border-bottom: 1px solid white;
+        }
+.sidebar-group {
+    display: table;
+    width: 100%;
+}
+    .sidebar-group > nav, .sidebar-group > div {
+        display: table-cell;
+    }
+    .sidebar-group > nav {
+        border-right: 1px solid #8BD;
+    }
+        .sidebar-group > nav > h1 {
+            text-align: center;
+        }
+        .sidebar-group > nav > ul {
+            list-style-type: none;
+            margin: 0;
+        }
+            .sidebar-group > nav > ul > li {
+                padding:.5em 20px;
+            }
+            .sidebar-group > nav > ul > li.selected {
+                background-color: #CCD;
+                border: 1px solid #96989B;
+                border-left: none;
+                border-right: none;
+            }
+
+#applications {
+    padding-top: 15px;
+    width: 200px;
+}
+
+#modules {
+        padding: 15px;
+}
+    #modules h1 {
+        text-align: center;
+    }
+    #modules > ul {
+        border-bottom: 1px solid #8BD;
+    }
+        #modules > ul > li.option > * {
+            display: block;
+            padding:.5em 20px;
+            border: 1px solid #8BD;
+            border-bottom: none;
+            text-indent: 0px;
+        }
+        #modules > ul > li.selected > p {
+            background-color: #CCD;
+            border: 1px solid #96989B;
+        }
+    
+            #modules li.forms-wrapper {
+                border: 1px solid #8BD;
+                border: none;
+                padding: 0 10px;        
+            }
+            #modules li.forms-wrapper > div {
+                border: 1px solid #8BD;
+                border-top: none;
+                border-bottom: none;
+            }
+*/
+#form-tabs {
+    border: none;
+    padding: 0px !important;
+}
+#forms {
+    padding: 0px;
+}
+#applications {
+    padding: 1em;
+    border-bottom: none;
+}
+#modules {
+    width: 150px;
+    padding: 1em;
+}
+#modules > ul > li{
+    margin-left: 2em;
+    margin-top: .5em;
+    list-style: disc outside;
+}
+#modules > ul {
+    margin-bottom: 1em;
+}
+
+/* make join #modules and #form-view horizontally */
+#forms > div {
+    display: table;
+    width: 100%;
+}
+#modules, #form-view {
+    display: table-cell;
+    border-top: none;
+}
+#form-view {
+    border-left: none;
+    padding: 1em;
+}
+
+/*.ui-sidetabs {
+    padding-right: 0;
+    border-right: 0;
+}
+.ui-sidetabs > .ui-tabs-nav {
+    padding: .2em;
+    padding-right: 0;
+}
+.ui-sidetabs > .ui-tabs-nav > li,
+.ui-sidetabs > .ui-tabs-nav > li.ui-tabs-selected {
+    width: 100%;
+    margin-bottom: .2em;
+    border-bottom: 1px solid #CCC !important;
+}
+.ui-sidetabs > .ui-tabs-nav > li > a {
+    width: 100%;
+}*/
