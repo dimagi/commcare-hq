@@ -21,3 +21,5 @@ class Application(Document):
     name = StringProperty()
     modules = ListProperty()
     trans = DictProperty()
+    def find_by_name(self, module_name, form_name=None):
+        pass

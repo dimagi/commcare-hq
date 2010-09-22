@@ -8,6 +8,21 @@ $(function(){
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corners-bottom');
     $('#applications select').change(function(){
-        $(document).attr('location', $(this).find('option:selected').attr('value'));
+        var url = $(this).find('option:selected').attr('value');
+        $(document).attr('location', url);
+    });
+
+    $(".button").button();
+    $("#ic_file").button();
+    $("input[type='submit']").button();
+    $("#new_app_dialog").dialog({autoOpen:false, modal:true});
+    $("#new_app").click(function(e){
+        e.preventDefault();
+        $("#new_app_dialog").dialog('open');
+    });
+    $("#new_module_dialog").dialog({autoOpen:false, modal:true});
+    $("#new_module").click(function(e){
+        e.preventDefault();
+        $("#new_module_dialog").dialog('open');
     });
 });

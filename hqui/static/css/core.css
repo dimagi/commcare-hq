@@ -240,9 +240,9 @@ header {
     padding: 1em;
 }
 #modules > ul > li{
-    margin-left: 2em;
-    margin-top: .5em;
-    list-style: disc outside;
+    padding: .25em;
+    padding-left: 2em;
+    list-style: none;
 }
 #modules > ul {
     margin-bottom: 1em;
@@ -279,3 +279,17 @@ header {
 .ui-sidetabs > .ui-tabs-nav > li > a {
     width: 100%;
 }*/
+form table td {
+    padding: .25em;
+}
+form table {
+    margin: 1em;
+}
+#modules h2.selected {
+}
+#modules ul.selected {
+    background-color: #eee;
+}
+#modules li.selected {
+    background-color: #ccc;
+}
