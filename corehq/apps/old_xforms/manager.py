@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import uuid
-import subprocess
 import copy
 import shutil
 import os
@@ -291,51 +290,3 @@ class FormDefError(SyntaxError):
     """ Generic error for xforms.Manager """
     pass
 
-def form_translate(input_data):
-    '''Translates an xform into an xsd file'''
-    return _form_translate(input_data, "schema")
-
-def readable_form(input_data):
-    '''Gets a readable display of an xform'''
-    return _form_translate(input_data, "summary")
-
-
-def csv_dump(input_data):
-    '''Get the csv translation file from an xform'''
-    return _form_translate(input_data, "csvdump")
-
-def _form_translate(input_data, operation):
-    """Utility for interacting with the form_translate jar, which provides 
-       functionality for a number of different useful form tools including 
-       converting a form to an xsd file, turning a form into a more readable
-       format, and generating a list of translations as an exportable .csv
-       file."""
-    
-    # In case you're trying to produce this behavior on the command line for
-    # rapid testing, the command that eventually gets called is: 
-    # java -jar form_translate.jar <operation> < form.xml > output
-    #
-    # You can pass in a filename or a full string/stream of xml data
-    logging.debug ("form_translate %s: begin subprocess - java -jar %s %s < input file > " \
-                   % (operation, settings.XFORMS_FORM_TRANSLATE_JAR, operation))
-    p = subprocess.Popen(["java","-jar",
-                          settings.XFORMS_FORM_TRANSLATE_JAR,
-                          operation], 
-                          shell=False, 
-                          stdout=subprocess.PIPE,stdin=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
-    logging.debug ("form_translate %s: begin communicate with subprocess" % operation)
-
-    p.stdin.write(input_data)
-    p.stdin.flush()
-    p.stdin.close()
-
-    output = p.stdout.read()    
-    error = p.stderr.read()
-    
-    # error has data even when things go perfectly, so return both
-    # the full stream and a boolean indicating whether there was an
-    # error.  This should be fixed in a cleaner way.
-    has_error = "exception" in error.lower() 
-    logging.debug ("form_translate %s: finish communicate with subprocess" % operation)
-    return (output,error, has_error)
