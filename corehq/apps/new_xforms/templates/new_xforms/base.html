@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>CommCare HQ</title>
+        
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="/static/new_xforms/js/main.js"></script>
+        <link rel="stylesheet" href="/static/new_xforms/css/main.css" />
+ 	    <script type="text/javascript" src="/static/new_xforms/js/jquery.beautyOfCode.js"></script>
+
+	    <script type="text/javascript">
+	        $.beautyOfCode.init({
+                defaults: { gutter: false },
+                brushes: ['Xml']
+	        });
+	    </script>
+    </head>
+    <body>
+        <div id="wrapper">
+            <header>
+                <div id="logo">
+                    CommCare HQ
+                </div>
+                <nav>
+                    <ul id="top-nav">
+                        <li class="selected">Forms</li>
+                        <li><a href='data'>Data</a></li>
+                        <li><a href='messages'>Messages</a></li>
+                        <li><a href='settings'>Users and Settings</a></li>
+                        <li><a href='logout'>Sign Out</a></li>
+                    </ul>
+                </nav>
+                <p id="logged-in">Signed in to
+                    <strong>{{ domain|title }}</strong> as <strong>{{ user.username }}</strong>
+                </p>
+            </header>
+            <div id="main">
+            {% block content %}
+
+            {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>
