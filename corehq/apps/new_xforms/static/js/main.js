@@ -41,4 +41,42 @@ $(function(){
         e.preventDefault();
        this._dialog.dialog('open');
     });
+    // Module Config Edit
+    $('.editable .immutable').prev().hide();
+    //$('table .editable').last().find('.immutable').hide().prev().show();
+    $('tr.editable').click(function(e){
+        //e.preventDefault();
+        if($(this).hasClass('selected')) {return;}
+        var $row = $(this).closest('tr');
+        var $table = $(this).closest('table');
+        $('tr.editable').each(function(){
+            $(this).removeClass('selected');
+            $(this).find('.immutable').show().prev().hide();
+        });
+        $row.addClass('selected');
+        $row.find('.immutable').hide().prev().show();
+    });
+    $('.form a.submit').click(function(e){
+        e.preventDefault();
+        var $row = $(this).closest('tr');
+        var $form = $('<form method="post" action="' + $(this).attr('href') + '"></form>');
+        $row.find('[name]').each(function(){
+            var $input = $('<input type="text" />');
+            $input.attr('name', $(this).attr('name'));
+            $input.attr('value', $(this).attr('value'));
+            $input.hide();
+            $form.append($input);
+        });
+        $('body').append($form);
+        $form.submit();
+    });
+
+
+    $('select').each(function(){
+        var val = $(this).next('div.immutable').text();
+
+        $(this).find('option').removeAttr('selected');
+        $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
+
+    });
 });

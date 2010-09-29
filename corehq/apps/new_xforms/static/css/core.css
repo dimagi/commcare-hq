@@ -182,6 +182,10 @@ form table {
     margin: 1em;
 }
 #modules h2.selected {
+    background-color: #ccc;
+}
+#modules div.selected {
+    background-color: #ccc;
 }
 #modules ul.selected {
     background-color: #eee;
@@ -206,4 +210,26 @@ form table {
     font-style: italic;
     text-indent: 1em;
     margin-left: 1em;
+}
+
+table.config {
+    margin: 1em;
+}
+table.config td, table.config, th {
+    padding: 0em 1em;
+}
+table.config th {
+    text-align: left;
+}
+#form-view h3{
+    text-align: center;
+}
+
+input[type="text"] {
+    border: 1px solid #ccc;
+    width: 100px;
+    margin: 1px;
+}
+.code {
+    font-family: monospace !important;
 }

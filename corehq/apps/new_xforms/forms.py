@@ -10,3 +10,6 @@ class NewAppForm(forms.Form):
 
 class NewModuleForm(forms.Form):
     name = forms.CharField(max_length=50)
+
+class ModuleConfigForm(forms.Form):
+    pass

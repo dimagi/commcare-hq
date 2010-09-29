@@ -16,6 +16,7 @@ class Application(Document):
     domain = StringProperty()
     modules = ListProperty()
     trans = DictProperty()
+    langs = ListProperty()
     def get_modules(self):
         for i in range(len(self.modules)):
             yield Module(self, i)
@@ -27,17 +28,27 @@ class Application(Document):
 
 # The following classes are wrappers for the subparts of an application document
 class DictWrapper(object):
-    def __getitem__(self, key):
-        return self._dict[key]
-    def __setitem__(self, key, val):
-        self._dict[key] = val
-    def update(self, *args, **kwargs):
-        return self._dict.update(*args, **kwargs)
+#    def __getitem__(self, key):
+#        return self._dict[key]
+#    def __setitem__(self, key, val):
+#        self._dict[key] = val
+#    def update(self, *args, **kwargs):
+#        return self._dict.update(*args, **kwargs)
+#    def get(self, *args, **kwargs):
+#        return self._dict.get(*args, **kwargs)
     def __eq__(self, other):
         try:
             return (self.id == other.id) and (self.parent == other.parent)
         except:
             return False
+def _call_dict(fn):
+    def _fn(self, *args, **kwargs):
+        return getattr(self._dict, fn)(*args, **kwargs)
+    return _fn
+
+for fn in ('__getitem__', '__setitem__', '__contains__', 'update', 'get'):
+    setattr(DictWrapper, fn, _call_dict(fn))
+
 class Module(DictWrapper):
     def __init__(self, app, id):
         self.app = app
@@ -57,3 +68,11 @@ class Form(DictWrapper):
         self.parent = self.module
         self.id = int(id)
         self._dict = module['forms'][self.id]
+
+class Domain(object):
+    def __init__(self, name):
+        self.name = name
+    def get_app(self, app_id):
+        app = Application.get(app_id)
+        assert(app.domain == self.name)
+        return app

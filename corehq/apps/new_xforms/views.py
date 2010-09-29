@@ -6,21 +6,35 @@ from datetime import datetime
 #from collections import defaultdict
 
 from .models import Application, Module, Form, XForm
-from .forms import NewXFormForm, NewAppForm, NewModuleForm
+from corehq.apps.new_xforms.forms import NewXFormForm, NewAppForm, NewModuleForm, ModuleConfigForm
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from corehq.util.xforms import readable_form
+from corehq.apps.new_xforms.models import Domain
 
 def _tidy(name):
     return name.replace('_', ' ').title()
 def _compify(name):
     return name.replace(' ', '_').lower()
-def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', select_first=True):
+
+def back_to_main(domain, app_id='', module_id='', form_id='', edit=False, **kwargs):
+    args = [domain]
+    for x in app_id, module_id, form_id:
+        if x:
+            args.append(x)
+        else:
+            break
+    EDIT = "?edit=true" if edit else ""
+    return HttpResponseRedirect(
+        reverse('corehq.apps.new_xforms.views.module_view', args=args)
+        + EDIT
+    )
+def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', select_first=False):
     #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
     applications = Application.view('new_xforms/applications', startkey=[domain], endkey=[domain, {}]).all()
     app = module = form = None
     if app_id:
-        app = Application.get(app_id)
+        app = Domain(domain).get_app(app_id)
     elif applications and select_first:
         app = applications[0]
     if module_id:
@@ -62,6 +76,8 @@ def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new
     error = req.GET.get('error', '')
     context = _forms_context(req, domain, app_id, module_id, form_id)
     app = context['app']
+    if not app and context['applications']:
+        app = context['applications'][0]
     force_edit = False
     if (not context['applications']) or (app and not app.modules):
         edit = True
@@ -70,10 +86,25 @@ def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new
         'edit': edit,
         'force_edit': force_edit,
         'error':error,
+        'app': app,
     })
     return render_to_response(req, template, context)
 
-
+def module_view(req, domain, app_id, module_id, template='new_xforms/module_view.html'):
+    edit = (req.GET.get('edit', '') == 'true')
+    #error = req.GET.get('error', '')
+    context = _forms_context(req, domain, app_id, module_id)
+    details = [
+        {'type': 'case_detail_short', 'heading': 'Short Case Detail'},
+        {'type': 'ref_detail_short', 'heading': 'Short Referral Detail'},
+    ]
+    for detail in details:
+        detail['detail'] = context['module'].get(detail['type'], '')
+    context.update({
+        'edit': edit,
+        'details': details,
+    })
+    return render_to_response(req, template, context)
 def new_app(req, domain):
     if req.method == "POST":
         form = NewAppForm(req.POST)
@@ -106,15 +137,15 @@ def new_module(req, domain, app_id):
         if form.is_valid():
             cd = form.cleaned_data
             trans = cd['name']
-            app = Application.get(app_id)
+            app = Domain(domain).get_app(app_id)
             if trans in [m['trans']['en'] for m in app.modules]:
                 error = "module_exists"
             else:
                 module_id = len(app.modules)
-                app.modules.append({'trans': {'en': trans}, 'forms': []})
+                app.modules.append({'trans': {'en': trans}, 'forms': [], 'case_type': ''})
                 app.save()
                 return HttpResponseRedirect(
-                    reverse('corehq.apps.new_xforms.views.forms', args=[domain, app_id, module_id])
+                    reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
                     + "?edit=true"
                 )
         else:
@@ -142,7 +173,8 @@ def new_form(req, domain, app_id, module_id, template="new_xforms/new_form.html"
             # module and form are not copies, so modifying them modifies app
             form = {
                 'trans': {'en': cd['name']},
-                'xform_id': doc['_id']
+                'xform_id': doc['_id'],
+                'xmlns': doc['xmlns']
             }
             if context['form']:
                 context['form'].update(form)
@@ -166,14 +198,14 @@ def new_form(req, domain, app_id, module_id, template="new_xforms/new_form.html"
     return render_to_response(req, template, context)
 
 def delete_app(req, domain, app_id):
-    Application.get(app_id).delete()
+    Domain(domain).get_app(app_id).delete()
     return HttpResponseRedirect(
         reverse('corehq.apps.new_xforms.views.forms', args=[domain])
         + "?edit=true"
     )
 
 def delete_module(req, domain, app_id, module_id):
-    app = Application.get(app_id)
+    app = Domain(domain).get_app(app_id)
     del app.modules[int(module_id)]
     app.save()
     return HttpResponseRedirect(
@@ -182,7 +214,7 @@ def delete_module(req, domain, app_id, module_id):
     )
 
 def delete_form(req, domain, app_id, module_id, form_id):
-    app = Application.get(app_id)
+    app = Domain(domain).get_app(app_id)
     module = Module(app, module_id)
     del module['forms'][int(form_id)]
     app.save()
@@ -206,7 +238,67 @@ def _register_xform(display_name, attachment, domain):
     doc.save()
     doc.put_attachment(attachment, 'xform.xml', content_type='text/xml')
     return doc
-    
+
+
+# module config
+def edit_module_case_type(req, domain, app_id, module_id):
+    if req.method == "POST":
+        case_type = req.POST.get("case_type", None)
+        app = Domain(domain).get_app(app_id)
+        module = app.get_module(module_id)
+        module['case_type'] = case_type
+        app.save()
+    return HttpResponseRedirect(
+        reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
+        + "?edit=true"
+    )
+def edit_module_detail(req, domain, app_id, module_id):
+    if req.method == "POST":
+        column_id = int(req.POST.get('column_id', -1))
+        detail_type = req.POST.get('detail_type', '')
+
+        assert(detail_type in ('case_short', 'ref_short'))
+
+        column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format'))
+        app = Domain(domain).get_app(app_id)
+        module = app.get_module(module_id)
+
+        for detail in module['details']:
+            if detail['type'] == detail_type:
+                break
+        if detail['type'] != detail_type:
+            detail = {'type': detail_type}
+            module['details'].append(detail)
+
+
+        if(column_id == -1):
+            detail['columns'].append(column)
+        else:
+            detail['columns'][column_id] = column
+        app.save()
+
+    return HttpResponseRedirect(
+        reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
+        + "?edit=true"
+    )
+def delete_module_detail(req, domain, app_id, module_id):
+    if req.method == "POST":
+        column_id = int(req.POST['column_id'])
+        detail_type = req.POST['detail_type']
+        app = Domain(domain).get_app(app_id)
+        module = app.get_module(module_id)
+        for detail in module['details']:
+            if detail['type'] == detail_type:
+                del detail['columns'][column_id]
+        app.save()
+    return back_to_main(edit=True, **locals())
+
+def suite(req, domain, app_id, template='new_xforms/suite.xml'):
+    app = Domain(domain).get_app(app_id)
+    return render_to_response(req, template, {
+        'app': app
+    })
+
 # def post(request):
 #     def callback(doc):
 #         doc['submit_ip'] = request.META['REMOTE_ADDR']

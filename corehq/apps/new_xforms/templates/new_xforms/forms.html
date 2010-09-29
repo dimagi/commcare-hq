@@ -11,6 +11,20 @@
     {% endif %}
     <div id="applications">
         Application:
+        {% if edit and app %}
+            [<a class="delete_link" href="#">x</a>]
+            <div class="delete_dialog" title="Delete {{ app|nice }}?">
+                <form action="{% url corehq.apps.new_xforms.views.delete_app domain app.id %}" method="POST">
+                    <table>
+                        <tr>
+                            <td>Are you sure you want to delete application "{{ app|nice }}"
+                                and all its modules and forms?</td>
+                        </tr>
+                    </table>
+                    <input type="submit" value="Delete" />
+                </form>
+            </div>
+        {% endif %}
         {% if applications %}
             {% ifequal applications|length 1 %}
                 <strong>{{ applications.0|nice }}</strong>
@@ -29,20 +43,6 @@
             {% endifequal %}
         {% endif %}
         {% if edit %}
-            {% if app %}
-            [<a class="delete_link" href="#">-</a>]
-            <div class="delete_dialog" title="Delete {{ app|nice }}?">
-                <form action="{% url corehq.apps.new_xforms.views.delete_app domain app.id %}" method="POST">
-                    <table>
-                        <tr>
-                            <td>Are you sure you want to delete application "{{ app|nice }}"
-                                and all its modules and forms?</td>
-                        </tr>
-                    </table>
-                    <input type="submit" value="Delete" />
-                </form>
-            </div>
-            {% endif %}
             [<a id="new_app" href="#">+</a>]
 
             <div id="new_app_dialog" title="Create a New Application">
@@ -59,7 +59,7 @@
             <div id="edit">
                 {% if edit  %}
                     <a class="button"
-                       href="{% ifequal view_name "new_form" %}{% url corehq.apps.new_xforms.views.forms domain app.id module.id %}{% else %}./{% endifequal %}">
+                       href="{% ifequal view_name "new_form" %}{% url corehq.apps.new_xforms.views.module_view domain app.id module.id %}{% else %}./{% endifequal %}">
                         Done Editing
                     </a>
                 {% else %}
@@ -73,71 +73,75 @@
     <div id="form-tabs">
         <ul>
             <li><a href='#forms'>Forms</a></li>
-            <li><a href='#settings'>Settings</a></li>
+            <!--li><a href='#settings'>Settings</a></li-->
             <li><a href='#release'>Release</a></li>
         </ul>
         <div id="forms">
             <div>
                 <div id="modules">
-                    <h2 id="modules-header">Modules</h2>
+                <!--h2 id="modules-header">Modules</h2-->
+                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.forms domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app|nice }}</a></h2>
+                <ul>
                     {% with module as selected_module %}
                     {% for module in app.get_modules %}
-                    <div class="module">
-                    <h2 {% ifequal module.id selected_module.id %} class="selected"{% endifequal %}>
-                        {% if edit %}
-                            [<a class="delete_link" href="#"
-                                >-</a>]
-                            <div class="delete_dialog" title="Delete {{ module|nice }}?">
-                                <form action="{% url corehq.apps.new_xforms.views.delete_module domain app.id module.id %}" method="POST">
-                                    <table>
-                                        <tr><td>
-                                        Are you sure you want to delete module "{{ module|nice }}"
-                                        and all its forms from application "{{ app|nice }}"?
-                                        </td></tr>
-                                    </table>
-                                    <input type="submit" value="Delete" />
-                                </form>
-                            </div>
-                        {% endif %}
-                        {{ module|nice }}
-                    </h2>
-                    <ul {% ifequal module.id selected_module.id %} class="selected"{% endifequal %}>
-                        {% with form as selected_form %}
-                        {% for form in module.get_forms %}
-                        <li {% ifequal form selected_form %} class="selected"{% endifequal %}>
+                    <li class="module">
+                        <div {% ifequal module.id selected_module.id %}{% if not form %} class="selected"{% endif %}{% endifequal %}><!--[M]-->
                             {% if edit %}
-                            [<a class="delete_link" href="#"
-                                >-</a>]
-                            <div class="delete_dialog" title="Delete {{ form|nice }}?">
-                                <form action="{% url corehq.apps.new_xforms.views.delete_form domain app.id module.id form.id %}" method="POST">
-                                    <table>
-                                        <tr><td>
-                                        Are you sure you want to delete form "{{ form|nice }}"
-                                        from module "{{ module|nice }}"?
-                                        </td></tr>
-                                    </table>
-                                    <input type="submit" value="Delete" />
-                                </form>
-                            </div>
+                                [<a class="delete_link" href="#"
+                                    >x</a>]
+                                <div class="delete_dialog" title="Delete {{ module|nice }}?">
+                                    <form action="{% url corehq.apps.new_xforms.views.delete_module domain app.id module.id %}" method="POST">
+                                        <table>
+                                            <tr><td>
+                                            Are you sure you want to delete module "{{ module|nice }}"
+                                            and all its forms from application "{{ app|nice }}"?
+                                            </td></tr>
+                                        </table>
+                                        <input type="submit" value="Delete" />
+                                    </form>
+                                </div>
                             {% endif %}
-                            <a href="{% url corehq.apps.new_xforms.views.forms domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
-                                {{ form|nice }}
+                            <a href="{% url corehq.apps.new_xforms.views.module_view domain app.id module.id %}{% if edit %}?edit=true{% endif %}">
+                                {{ module|nice }}
                             </a>
-                        </li>
-                        {% endfor %}
-                        {% endwith %}
-                        {% if not module.forms %}
-                            <li> <p class="warning">No Forms</p></li>
-                        {% endif %}
-                        {% if edit %}
-                        <li>
-                            [<a href="{% url corehq.apps.new_xforms.views.new_form domain app.id module.id %}"
-                                >+</a>]
-                        </li>
-                        {% endif %}
+                        </div>
+                        <ul {% ifequal module.id selected_module.id %} class="selected"{% endifequal %}>
+                            {% with form as selected_form %}
+                            {% for form in module.get_forms %}
+                            <li {% ifequal form selected_form %} class="selected"{% endifequal %}><!--[F]-->
+                                {% if edit %}
+                                [<a class="delete_link" href="#"
+                                    >x</a>]
+                                <div class="delete_dialog" title="Delete {{ form|nice }}?">
+                                    <form action="{% url corehq.apps.new_xforms.views.delete_form domain app.id module.id form.id %}" method="POST">
+                                        <table>
+                                            <tr><td>
+                                            Are you sure you want to delete form "{{ form|nice }}"
+                                            from module "{{ module|nice }}"?
+                                            </td></tr>
+                                        </table>
+                                        <input type="submit" value="Delete" />
+                                    </form>
+                                </div>
+                                {% endif %}
+                                <a href="{% url corehq.apps.new_xforms.views.forms domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
+                                    {{ form|nice }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% endwith %}
+                            {% if not module.forms %}
+                                <li> <p class="warning">No Forms</p></li>
+                            {% endif %}
+                            {% if edit %}
+                            <li>
+                                [<a href="{% url corehq.apps.new_xforms.views.new_form domain app.id module.id %}"
+                                    >+</a>]
+                            </li>
+                            {% endif %}
 
-                    </ul>
-                    </div>
+                        </ul>
+                    </li>
                     {% endfor %}
                     {% endwith %}
                     {% if edit %}
@@ -152,6 +156,7 @@
 
                         </div>
                     {% endif %}
+                </ul>
                 </div>
                 <div id="form-view">
                     {% block form-view %}
@@ -159,20 +164,36 @@
                             {% if form %}
                                 <h3>{% if module %}{{ module|nice }} &gt; {% endif %}{{ form|nice }}</h3>
                                 {% if xform%}
-                                    ({{ xform.xmlns }})
-                                    <!--pre>{{ xform_contents }}</pre-->
-                                    <pre class="code"><code class="xml">{{ xform_contents }}</code></pre>
+                                    <table class="config">
+                                        <tr>
+                                            <th>XML Namespace</th>
+                                            <td><code>{{ xform.xmlns }}</code></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Requires</th>
+                                            <td>{{ form.requires }}</td>
+                                        </tr>
+                                    </table>
                                 {% else %}
                                     <p>This xform doesn't seem to exist. Would you like to create one with this name?</p>
                                     <a class="button" href="{% url corehq.apps.new_xforms.views.new_form domain app.id module.id %}?form_name={{ form.name }}">Create Form</a>
 
                                 {% endif %}
+                            {% else %}{% if module %}
+                                <h3>{{ module|nice }} Module Configurations</h3>
+                                <form action="">
+                                </form>
+                            {% else %}{% if app %}
+                                App settings will go here...
                             {% else %}
                                 {% if edit %}
                                     <h2 class="message">Continue editing at the left or click "Done Editing" above.</h2>
                                 {% else %}
                                     <h2 class="message">Select a form at the left.</h2>
                                 {% endif %}
+
+                            {% endif %}
+                            {% endif %}
                             {% endif %}
                         {% else %}
                             <h2 class="message">Begin by adding a module at the left.</h2>
@@ -180,9 +201,6 @@
                     {% endblock %}
                 </div>
             </div>
-        </div>
-        <div id="settings">
-            hello
         </div>
         <div id="release"></div>
     </div>
