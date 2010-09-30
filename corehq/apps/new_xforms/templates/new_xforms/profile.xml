@@ -1,0 +1,22 @@
+<profile version="1" update="jr://resource/profile.xml">
+    <property key="BackupMode" value="file_mode"/>
+    <property key="backup-url" value="file:///E:/CommCare.Backup"/>
+    <property key="restore-url" value="file:///E:/CommCare.Backup"/>
+    <property key="purge-freq" value="7" force="true"/>
+    <property key="PostURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
+    <property key="PostTestURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
+    <property key="cur_locale" value="en"/>
+    <property key="cc-send-procedure" value="cc-send-none" />
+
+    <features>
+        <checkoff active="false"/>
+        <reminders active="false">
+            <time>0</time>
+        </reminders>
+        <package active="false"/>
+    </features>
+
+    <suite><resource id="suite" version="1">
+        <location authority="local">{{ suite_location }}</location>
+    </resource></suite>
+</profile>

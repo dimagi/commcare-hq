@@ -27,7 +27,8 @@
   {% for detail in module.details %}
     <!-- Define the short detail model for household cases -->
     <detail id="m{{ module.id }}_{{ detail.type }}">
-        <title><text><locale id="commands.select"/></text></title>
+        <title><text><locale id="case.title"/></text></title>
+        <filter><case case-type="{{ module.case_type }}"/></filter>
         <model>
             <data>
                 {% for d in detail.columns %}
@@ -37,7 +38,7 @@
         </model>
      {% for d in detail.columns %}
         <field>
-            <header><text><locale id="select.header.{{ d.model }}_{{ d.field }}"/></text></header>
+            <header><text><locale id="select.header.{{ detail.type }}.{{ d.model }}.{{ d.field }}"/></text></header>
          {% ifequal d.format "plain" %}
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
@@ -48,20 +49,20 @@
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
                  <xpath function="
                   {% for key, val in d.enum.items %}
-                     if(/data/{{ d.model }}_{{ d.field }} = {{ key }}, ${{ val }},
+                     if(/data/{{ d.model }}_{{ d.field }} = '{{ key }}', ${{ key }},
                   {% endfor %}
-                     ''
+                     '?'
                   {% for _ in d.enum %}
                      )
                   {% endfor %}
                  ">
                   {% for key, val in d.enum.items %}
-                     <variable name="{{ val }}"><locale id="m{{ module.id }}.{{ d.model }}_{{ d.field }}.{{ val }}{% if d.format == "enum-image" %}.image{% endif %}"/></variable>
+                     <variable name="{{ key }}"><locale id="m{{ module.id }}.{{ d.model }}_{{ d.field }}.{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/></variable>
                   {% endfor %}
                  </xpath>
              </text></template>
          {% else %}{% ifequal d.format "years-ago" %}
-             <template><text><xpath function="string(int((today() - /data/{{ d.model }}_{{ d.field }}) div 365.25))"/></text></template>
+             <template><text><xpath function="string(int((today() - date(/data/{{ d.model }}_{{ d.field }})) div 365.25))"/></text></template>
          {% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}
 
         </field>
@@ -76,10 +77,12 @@
         <command id="m{{ module.id }}-f{{ form.id }}">
             <text><locale id="forms.m{{ module.id }}f{{ form.id }}"/></text>
         </command>
+     {% if form.requires == "case" or form.requires == "referral" %}
         <entity>
             <type>case</type>
             <reference>case</reference>
         </entity>
+     {% endif %}
      {% if form.requires == "referral" %}
         <entity>
             <type>referral</type>
@@ -87,20 +90,21 @@
         </entity>
         <details>
            <short id="m{{ module.id }}_ref_short"/>
-           <long id="m{{ module.id }}_ref_short"/> {# long = short #}
+           <long id="m{{ module.id }}_ref_long"/>
         </details>
-     {% else %}
+     {% endif %}
+     {% if form.requires == "case" or form.requires == "referral" %}
         <details>
            <short id="m{{ module.id }}_case_short"/>
-           <long id="m{{ module.id }}_case_short"/>     {# long = short #}
+           <long id="m{{ module.id }}_case_long"/>
         </details>
      {% endif %}
     </entry>
   {% endfor %}
  {% endfor %}
  {% for module in app.get_modules %}
-    <menu id="root">
-    	<text>{{ module|nice }}</text>
+    <menu id="m{{ module.id }}">
+    	<text><locale id="modules.m{{ module.id }}"/></text>
      {% for form in module.get_forms %}
     	<command id="m{{ module.id }}-f{{ form.id }}"/>
      {% endfor %}

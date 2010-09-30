@@ -22,6 +22,7 @@ class Application(Document):
             yield Module(self, i)
     def get_module(self, i):
         return Module(self, i)
+    @property
     def id(self):
         return self._id
 

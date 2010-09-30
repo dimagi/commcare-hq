@@ -4,8 +4,10 @@ $(function(){
 
     $("#applications").addClass('ui-widget ui-widget-content ui-corner-top');
     $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
+    $("#modules h2").addClass('ui-corner-all');
     $("#modules ul li").addClass('ui-corner-all');
-    $("#modules ul").addClass('ui-corner-all');
+    $("#modules ul li div").addClass('ui-corner-top');
+    $("#modules ul").addClass('ui-corner-bottom');
     //$("#form-view").addClass('ui-widget ui-widget-content ui-corner-br');
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
@@ -42,6 +44,15 @@ $(function(){
        this._dialog.dialog('open');
     });
     // Module Config Edit
+    $('select[name="format"]').change(function(){
+        var $enum = $(this).parent().next().find('input[name="enum"]');
+        if($(this).attr('value') == "enum") {
+            $enum.show();
+        }
+        else {
+            $enum.hide();
+        }
+    });
     $('.editable .immutable').prev().hide();
     //$('table .editable').last().find('.immutable').hide().prev().show();
     $('tr.editable').click(function(e){
@@ -54,7 +65,7 @@ $(function(){
             $(this).find('.immutable').show().prev().hide();
         });
         $row.addClass('selected');
-        $row.find('.immutable').hide().prev().show();
+        $row.find('.immutable').hide().prev().show().trigger('change');
     });
     $('.form a.submit').click(function(e){
         e.preventDefault();
@@ -79,4 +90,6 @@ $(function(){
         $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
 
     });
+
+
 });

@@ -147,15 +147,35 @@ header {
 #modules-header {
     text-align: center;
 }
+#modules h2 {
+    padding: .25em;
+}
 #modules ul li{
     padding: .25em;
     padding-left: 2em;
     list-style: none;
 }
+#modules ul li div {
+    padding: .25em;
+}
 #modules ul {
     margin-bottom: 1em;
 }
-
+#modules h2.selected {
+    background-color: #ccc;
+    border: 1px solid #bbb;
+}
+#modules div.selected {
+    background-color: #ccc;
+    border: 1px solid #bbb;
+}
+#modules ul.selected {
+    background-color: #eee;
+}
+#modules li.selected {
+    background-color: #ccc;
+    border: 1px solid #bbb;
+}
 
 /* make join #modules and #form-view horizontally */
 #forms > div {
@@ -181,19 +201,7 @@ form table td {
 form table {
     margin: 1em;
 }
-#modules h2.selected {
-    background-color: #ccc;
-}
-#modules div.selected {
-    background-color: #ccc;
-}
-#modules ul.selected {
-    background-color: #eee;
-}
-#modules li.selected {
-    background-color: #ccc;
-    border: 1px solid #bbb;
-}
+
 #edit {
     float: right;
     position: relative;

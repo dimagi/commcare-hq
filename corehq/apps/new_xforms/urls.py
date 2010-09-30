@@ -1,9 +1,9 @@
 from django.conf.urls.defaults import patterns
 
 urlpatterns = patterns('corehq.apps.new_xforms.views',
-    (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',         'forms'),
+    (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',         'form_view'),
     (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/$',                          'module_view'),
-    (r'view/(?P<app_id>\w+)/$',                                             'forms'),
+    (r'view/(?P<app_id>\w+)/$',                                             'app_view'),
     (r'view/$',                                                             'forms'),
 
     (r'new_module/(?P<app_id>\w+)/$',                                       'new_module'),
@@ -14,9 +14,22 @@ urlpatterns = patterns('corehq.apps.new_xforms.views',
     (r'delete_module/(?P<app_id>\w+)/(?P<module_id>\w+)/$',                 'delete_module'),
     (r'delete_form/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',  'delete_form'),
 
+    (r'edit_form_requires/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',
+                                                                            'edit_form_requires'),
+
     (r'edit_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',            'edit_module_detail'),
     (r'edit_module_case_type/(?P<app_id>\w+)/(?P<module_id>\w+)/$',         'edit_module_case_type'),
     (r'delete_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',          'delete_module_detail'),
 
-    (r'download/(?P<app_id>\w+)/suite.xml',                                 'suite'),
+    (r'edit_app_lang/(?P<app_id>\w+)/$',                                    'edit_app_lang'),
+    (r'delete_app_lang/(?P<app_id>\w+)/$',                                  'delete_app_lang'),
+
+
+    (r'download/(?P<app_id>\w+)/suite.xml$',                                'download_suite'),
+    (r'download/(?P<app_id>\w+)/profile.xml$',                              'download_profile'),
+    (r'download/(?P<app_id>\w+)/(?P<lang>\w+)/app_strings.txt$',            'download_app_strings'),
+    (r'download/(?P<app_id>\w+)/m(?P<module_id>\d+)/f(?P<form_id>\d+).xml$',
+                                                                            'download_xform'),
+    (r'download/(?P<app_id>\w+)/$',                                         'download'),
+
 )

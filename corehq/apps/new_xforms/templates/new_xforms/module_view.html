@@ -1,7 +1,7 @@
 {% extends "new_xforms/forms.html" %}
 {% load xforms_extras %}
 {% block form-view %}
-    <h3>{{ module|nice }} Module Configurations</h3>
+    <h3>{{ module|nice }}</h3>
     <table class="config">
         {% if edit %}
             <tr class="form editable">
@@ -101,6 +101,10 @@
                         <div class="immutable">{{ d.format }}</div>
                     </td>
                     <td>
+                        <input class="code" type="text" name="enum" value="{{ d.enum|format_enum }}" />
+                        <div class="immutable">{{ d.enum|format_enum }}</div>
+                    </td>
+                    <td>
                         <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}">
                         <input type="hidden" name="detail_type" value="{{ detail.type }}">
                         <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">
@@ -117,6 +121,8 @@
                     <td><code>{{ d.model }}</code></td>
                     <td><code>{{ d.field }}</code></td>
                     <td>{{ d.format }}</td>
+                    <td>{% if d.format == "enum"%}{{ d.enum|format_enum }}{% endif %}</td>
+
                 </tr>
             {% endif %}
         {% endfor %}
@@ -149,6 +155,10 @@
                     <div class="immutable"></div>
                 </td>
                 <td>
+                    <input class="code" type="text" name="enum"/>
+                    <div class="immutable"></div>
+                </td>
+                <td>
                     <input type="hidden" name="detail_type" value="{{ detail.type }}">
                     <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">Add</a>
                     <div class="immutable">
@@ -159,7 +169,7 @@
         {% endif %}
     </table>
     {% else %}
-        <p>Not configured</p>
+        <p class="warning">Not configured</p>
     {% endif %}
     {% endfor %}
 {% endblock %}

@@ -34,7 +34,7 @@
                         <option value="#" disabled="" selected="">No Application Selected</option>
                     {% endif %}
                     {% for a in applications %}
-                    <option value="{% url corehq.apps.new_xforms.views.forms domain a.id %}{#% if edit %}?edit=true{% endif %#}"
+                    <option value="{% url corehq.apps.new_xforms.views.app_view domain a.id %}{#% if edit %}?edit=true{% endif %#}"
                             {% ifequal a.id app.id %}selected=""{% endifequal %}>
                         {{ a|nice }}
                     </option>
@@ -80,7 +80,7 @@
             <div>
                 <div id="modules">
                 <!--h2 id="modules-header">Modules</h2-->
-                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.forms domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app|nice }}</a></h2>
+                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app|nice }}</a></h2>
                 <ul>
                     {% with module as selected_module %}
                     {% for module in app.get_modules %}
@@ -124,13 +124,13 @@
                                     </form>
                                 </div>
                                 {% endif %}
-                                <a href="{% url corehq.apps.new_xforms.views.forms domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
+                                <a href="{% url corehq.apps.new_xforms.views.form_view domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
                                     {{ form|nice }}
                                 </a>
                             </li>
                             {% endfor %}
                             {% endwith %}
-                            {% if not module.forms %}
+                            {% if not module.forms and not edit %}
                                 <li> <p class="warning">No Forms</p></li>
                             {% endif %}
                             {% if edit %}

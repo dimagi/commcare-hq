@@ -1,0 +1,31 @@
+    {% load xforms_extras %}
+    {% for module in app.get_modules %}
+        {% for detail in module.details %}
+            {% for d in detail.columns %}
+
+select.header.{{ detail.type }}.{{ d.model }}.{{ d.field }}={{ d.header }}
+
+                {% if d.format == "enum" %}
+                    {% for key, val in d.enum.items %}
+m{{ module.id }}.{{ d.model }}_{{ d.field }}.{{ key }}={{val}}
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    {% endfor %}
+
+    {% for module in app.get_modules %}
+modules.m{{ module.id }}={% translate module.trans lang app.langs %}
+        {% for form in module.get_forms %}
+
+forms.m{{ module.id }}f{{ form.id }}={% translate form.trans lang app.langs %}
+
+        {% endfor %}
+    {% endfor %}
+
+
+case.title=Case
+referral.title=Referral
+    {% for key, trans in app.translations.items %}
+{{ key }}={% translate trans lang app.langs %}
+    {% endfor %}

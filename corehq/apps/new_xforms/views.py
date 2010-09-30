@@ -11,6 +11,11 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from corehq.util.xforms import readable_form
 from corehq.apps.new_xforms.models import Domain
+from StringIO import StringIO
+from zipfile import ZipFile, ZIP_DEFLATED
+from urllib2 import urlopen
+
+IP = "192.168.7.108:8000"
 
 def _tidy(name):
     return name.replace('_', ' ').title()
@@ -25,12 +30,14 @@ def back_to_main(domain, app_id='', module_id='', form_id='', edit=False, **kwar
         else:
             break
     EDIT = "?edit=true" if edit else ""
+    view_name = ('forms', 'app_view', 'module_view', 'form_view')[len(args)-1]
     return HttpResponseRedirect(
-        reverse('corehq.apps.new_xforms.views.module_view', args=args)
+        reverse('corehq.apps.new_xforms.views.%s' % view_name, args=args)
         + EDIT
     )
 def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', select_first=False):
     #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
+    edit = (req.GET.get('edit', '') == 'true')
     applications = Application.view('new_xforms/applications', startkey=[domain], endkey=[domain, {}]).all()
     app = module = form = None
     if app_id:
@@ -69,10 +76,10 @@ def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', sele
 
         'new_app_form': NewAppForm(),
         'new_module_form': NewModuleForm(),
+        'edit': edit,
     }
 
 def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new_xforms/forms.html'):
-    edit = (req.GET.get('edit', '') == 'true')
     error = req.GET.get('error', '')
     context = _forms_context(req, domain, app_id, module_id, form_id)
     app = context['app']
@@ -83,28 +90,24 @@ def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new
         edit = True
         force_edit = True
     context.update({
-        'edit': edit,
         'force_edit': force_edit,
         'error':error,
         'app': app,
     })
     return render_to_response(req, template, context)
 
-def module_view(req, domain, app_id, module_id, template='new_xforms/module_view.html'):
-    edit = (req.GET.get('edit', '') == 'true')
-    #error = req.GET.get('error', '')
-    context = _forms_context(req, domain, app_id, module_id)
-    details = [
-        {'type': 'case_detail_short', 'heading': 'Short Case Detail'},
-        {'type': 'ref_detail_short', 'heading': 'Short Referral Detail'},
-    ]
-    for detail in details:
-        detail['detail'] = context['module'].get(detail['type'], '')
-    context.update({
-        'edit': edit,
-        'details': details,
-    })
+def form_view(req, domain, app_id, module_id, form_id, template="new_xforms/form_view.html"):
+    context = _forms_context(req, domain, app_id, module_id, form_id)
     return render_to_response(req, template, context)
+
+def module_view(req, domain, app_id, module_id, template='new_xforms/module_view.html'):
+    context = _forms_context(req, domain, app_id, module_id)
+    return render_to_response(req, template, context)
+
+def app_view(req, domain, app_id, template="new_xforms/app_view.html"):
+    context = _forms_context(req, domain, app_id)
+    return render_to_response(req, template, context)
+
 def new_app(req, domain):
     if req.method == "POST":
         form = NewAppForm(req.POST)
@@ -118,7 +121,7 @@ def new_app(req, domain):
                 app = Application(domain=domain, modules=[], trans={'en': trans})
                 app.save()
                 return HttpResponseRedirect(
-                    reverse('corehq.apps.new_xforms.views.forms', args=[domain, app['_id']])
+                    reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app['_id']])
                     + "?edit=true"
                 )
 
@@ -142,7 +145,17 @@ def new_module(req, domain, app_id):
                 error = "module_exists"
             else:
                 module_id = len(app.modules)
-                app.modules.append({'trans': {'en': trans}, 'forms': [], 'case_type': ''})
+                app.modules.append({
+                    'trans': {'en': trans},
+                    'forms': [],
+                    'case_type': '',
+                    'details': [
+                        {'type': 'case_short', 'columns': []},
+                        {'type': 'case_long', 'columns': []},
+                        {'type': 'ref_short', 'columns': []},
+                        {'type': 'ref_long', 'columns': []},
+                    ],
+                })
                 app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
@@ -154,7 +167,7 @@ def new_module(req, domain, app_id):
         error = "wtf"
 
     return HttpResponseRedirect(
-        reverse('corehq.apps.new_xforms.views.forms', args=[domain, app_id])
+        reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app_id])
         + "?edit=true" + ";error=%s" % error
     )
 def new_form(req, domain, app_id, module_id, template="new_xforms/new_form.html"):
@@ -184,7 +197,7 @@ def new_form(req, domain, app_id, module_id, template="new_xforms/new_form.html"
                 context['module']['forms'].append(form)
             context['app'].save()
             return HttpResponseRedirect(
-                reverse('corehq.apps.new_xforms.views.forms', args=[domain, app_id, module_id, form_id])
+                reverse('corehq.apps.new_xforms.views.form_view', args=[domain, app_id, module_id, form_id])
                 + "?edit=true"
             )
 
@@ -209,7 +222,7 @@ def delete_module(req, domain, app_id, module_id):
     del app.modules[int(module_id)]
     app.save()
     return HttpResponseRedirect(
-        reverse('corehq.apps.new_xforms.views.forms', args=[domain, app_id])
+        reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app_id])
         + "?edit=true"
     )
 
@@ -219,7 +232,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     del module['forms'][int(form_id)]
     app.save()
     return HttpResponseRedirect(
-        reverse('corehq.apps.new_xforms.views.forms', args=[domain, app_id])
+        reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app_id])
         + "?edit=true"
     )
 
@@ -257,11 +270,16 @@ def edit_module_detail(req, domain, app_id, module_id):
         column_id = int(req.POST.get('column_id', -1))
         detail_type = req.POST.get('detail_type', '')
 
-        assert(detail_type in ('case_short', 'ref_short'))
+        assert(detail_type in ('case_short', 'ref_short', 'case_long', 'ref_long'))
 
-        column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format'))
+        column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format', 'enum'))
         app = Domain(domain).get_app(app_id)
         module = app.get_module(module_id)
+
+        def _enum_to_dict(enum):
+            return dict((y.strip() for y in x.strip().split('=')) for x in enum.split(','))
+
+        column['enum'] = _enum_to_dict(column['enum'])
 
         for detail in module['details']:
             if detail['type'] == detail_type:
@@ -293,11 +311,81 @@ def delete_module_detail(req, domain, app_id, module_id):
         app.save()
     return back_to_main(edit=True, **locals())
 
-def suite(req, domain, app_id, template='new_xforms/suite.xml'):
+def edit_form_requires(req, domain, app_id, module_id, form_id):
+    if req.method == "POST":
+        requires = req.POST['requires']
+        app = Domain(domain).get_app(app_id)
+        form = app.get_module(module_id).get_form(form_id)
+        form['requires'] = requires
+        app.save()
+    return back_to_main(edit=True, **locals())
+
+def edit_app_lang(req, domain, app_id):
+    if req.method == "POST":
+        lang = req.POST['lang']
+        lang_id = int(req.POST.get('lang_id', -1))
+        app = Domain(domain).get_app(app_id)
+        if lang_id == -1:
+            app.langs.append(lang)
+        else:
+            app.langs[lang_id] = lang
+        app.save()
+    return back_to_main(edit=True, **locals())
+
+def delete_app_lang(req, domain, app_id):
+    if req.method == "POST":
+        lang_id = int(req.POST['lang_id'])
+        app = Domain(domain).get_app(app_id)
+        del app.langs[lang_id]
+        app.save()
+    return back_to_main(edit=True, **locals())
+
+def download_profile(req, domain, app_id, template='new_xforms/profile.xml'):
+    return render_to_response(req, template, {
+        'suite_location': 'http://%s/demo/forms/download/%s/suite.xml' % (IP, app_id)
+    })
+def download_suite(req, domain, app_id, template='new_xforms/suite.xml'):
     app = Domain(domain).get_app(app_id)
     return render_to_response(req, template, {
         'app': app
     })
+def download_app_strings(req, domain, app_id, lang, template='new_xforms/app_strings.txt'):
+    app = Domain(domain).get_app(app_id)
+    return render_to_response(req, template, {
+        'app': app,
+        'lang': lang
+    })
+def download_xform(req, domain, app_id, module_id, form_id):
+    xform_id = Domain(domain).get_app(app_id).get_module(module_id).get_form(form_id)['xform_id']
+    xform = XForm.get(xform_id)
+    xform_xml = xform.fetch_attachment('xform.xml')
+    return HttpResponse(xform_xml)
+
+def download(req, domain, app_id):
+    response = HttpResponse(mimetype="application/zip")
+    response['Content-Disposition'] = "filename=commcare_app.zip"
+    app = Domain(domain).get_app(app_id)
+    base = "http://%s/demo/forms/download/%s/" % (IP, app_id)
+    paths = ["profile.xml", "suite.xml"]
+    for lang in app.langs:
+        paths.append("%s/app_strings.txt" % lang)
+    for module in app.get_modules():
+        for form in module.get_forms():
+            paths.append("m%s/f%s.xml" % (module.id, form.id))
+    print paths
+    buffer = StringIO()
+    zipper = ZipFile(buffer, 'w', ZIP_DEFLATED)
+    for path in paths:
+        print path
+        zipper.writestr(path, urlopen(base + path).read())
+    zipper.close()
+    buffer.flush()
+    response.write(buffer.getvalue())
+    buffer.close()
+    return response
+
+
+
 
 # def post(request):
 #     def callback(doc):
