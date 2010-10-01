@@ -16,6 +16,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from urllib2 import urlopen
 
 IP = "192.168.7.108:8000"
+DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
 def _tidy(name):
     return name.replace('_', ' ').title()
@@ -24,8 +25,9 @@ def _compify(name):
 
 def back_to_main(domain, app_id='', module_id='', form_id='', edit=False, **kwargs):
     args = [domain]
+    print "module_id: %s" % module_id
     for x in app_id, module_id, form_id:
-        if x:
+        if x != '':
             args.append(x)
         else:
             break
@@ -149,12 +151,7 @@ def new_module(req, domain, app_id):
                     'trans': {'en': trans},
                     'forms': [],
                     'case_type': '',
-                    'details': [
-                        {'type': 'case_short', 'columns': []},
-                        {'type': 'case_long', 'columns': []},
-                        {'type': 'ref_short', 'columns': []},
-                        {'type': 'ref_long', 'columns': []},
-                    ],
+                    'details': [{'type': detail_type, 'columns': []} for detail_type in DETAIL_TYPES],
                 })
                 app.save()
                 return HttpResponseRedirect(
@@ -254,12 +251,27 @@ def _register_xform(display_name, attachment, domain):
 
 
 # module config
-def edit_module_case_type(req, domain, app_id, module_id):
+#def edit_module_case_type(req, domain, app_id, module_id):
+#    if req.method == "POST":
+#        case_type = req.POST.get("case_type", None)
+#        app = Domain(domain).get_app(app_id)
+#        module = app.get_module(module_id)
+#        module['case_type'] = case_type
+#        app.save()
+#    return HttpResponseRedirect(
+#        reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
+#        + "?edit=true"
+#    )
+def edit_module_attr(req, domain, app_id, module_id, attr):
     if req.method == "POST":
-        case_type = req.POST.get("case_type", None)
         app = Domain(domain).get_app(app_id)
         module = app.get_module(module_id)
-        module['case_type'] = case_type
+        if   "case_type" == attr:
+            case_type = req.POST.get("case_type", None)
+            module['case_type'] = case_type
+        elif "name" == attr:
+            name = req.POST.get("name", None)
+            module['trans']['en'] = name
         app.save()
     return HttpResponseRedirect(
         reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
@@ -270,17 +282,18 @@ def edit_module_detail(req, domain, app_id, module_id):
         column_id = int(req.POST.get('column_id', -1))
         detail_type = req.POST.get('detail_type', '')
 
-        assert(detail_type in ('case_short', 'ref_short', 'case_long', 'ref_long'))
+        assert(detail_type in DETAIL_TYPES)
 
         column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format', 'enum'))
         app = Domain(domain).get_app(app_id)
         module = app.get_module(module_id)
 
         def _enum_to_dict(enum):
-            return dict((y.strip() for y in x.strip().split('=')) for x in enum.split(','))
+            return dict((y.strip() for y in x.strip().split('=')) for x in enum.split(',')) if enum else None
 
-        column['enum'] = _enum_to_dict(column['enum'])
-
+        enum = _enum_to_dict(column['enum'])
+        if enum:
+            column['enum'] = enum
         for detail in module['details']:
             if detail['type'] == detail_type:
                 break
@@ -311,12 +324,29 @@ def delete_module_detail(req, domain, app_id, module_id):
         app.save()
     return back_to_main(edit=True, **locals())
 
-def edit_form_requires(req, domain, app_id, module_id, form_id):
+def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     if req.method == "POST":
-        requires = req.POST['requires']
         app = Domain(domain).get_app(app_id)
         form = app.get_module(module_id).get_form(form_id)
-        form['requires'] = requires
+        if   "requires" == attr:
+            requires = req.POST['requires']
+            form['requires'] = requires
+        elif "name" == attr:
+            name = req.POST['name']
+            form['trans']['en'] = name
+        elif "xform" == attr:
+            xform = req.FILES['xform']
+            doc = _register_xform(
+                display_name="",
+                attachment=xform,
+                domain=domain
+            )
+            form['xform_id'] = doc['_id']
+            form['xmlns'] = doc['xmlns']
+        elif "show_count" == attr:
+            show_count = req.POST['show_count']
+            form['show_count'] = True if show_count == "True" else False
+
         app.save()
     return back_to_main(edit=True, **locals())
 
@@ -339,6 +369,38 @@ def delete_app_lang(req, domain, app_id):
         del app.langs[lang_id]
         app.save()
     return back_to_main(edit=True, **locals())
+
+def swap(req, domain, app_id, key):
+    if req.method == "POST":
+        app = Domain(domain).get_app(app_id)
+        i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
+        assert(i < j)
+        if   "forms" == key:
+            module_id = int(req.POST['module_id'])
+            forms = app.modules[module_id]['forms']
+            forms.insert(i, forms.pop(j))
+            # I didn't think I'd have to do this, but it makes it work...
+            app.modules[module_id]['forms'] = forms
+        elif "modules" == key:
+            modules = app.modules
+            modules.insert(i, modules.pop(j))
+            app.modules = modules
+        elif "detail" == key:
+            module_id = int(req.POST['module_id'])
+            detail_type = req.POST['detail_type']
+            module = app.get_module(module_id)
+            detail = module['details'][DETAIL_TYPES.index(detail_type)]
+            columns = detail['columns']
+            columns.insert(i, columns.pop(j))
+            detail['columns'] = columns
+        elif "langs" == key:
+            langs = app.langs
+            langs.insert(i, langs.pop(j))
+            app.langs = langs
+        app.save()
+    return back_to_main(edit=True, **locals())
+
+
 
 def download_profile(req, domain, app_id, template='new_xforms/profile.xml'):
     return render_to_response(req, template, {

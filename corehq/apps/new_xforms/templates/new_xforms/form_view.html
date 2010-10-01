@@ -4,11 +4,22 @@
     <h3>{{ module|nice }} &gt; {{ form|nice }}</h3>
     {% if xform %}
         <table class="config">
-            <tr>
-                <th>XML Namespace</th>
-                <td><code>{{ form.xmlns }}</code></td>
-            </tr>
             {% if edit %}
+                <tr class="form editable">
+                    <th>Form Name</th>
+                    <td>
+                        <input type="text" name="name" />
+                        <div class="immutable">{% translate form.trans "en" app.langs %}</div>
+                    </td>
+                    <td>
+                        <a href="{% url corehq.apps.new_xforms.views.edit_form_attr domain app.id module.id form.id  'name' %}" class="submit button">
+                            Save
+                        </a>
+                        <div class="immutable">
+                            [<a href="#">edit</a>]
+                        </div>
+                    </td>
+                </tr>
                 <tr class="form editable">
                     <th>Requires</th>
                     <td>
@@ -20,7 +31,7 @@
                         <div class="immutable"><code>{{ form.requires }}</code></div>
                     </td>
                     <td>
-                        <a href="{% url corehq.apps.new_xforms.views.edit_form_requires domain app.id module.id form.id %}" class="submit button">
+                        <a href="{% url corehq.apps.new_xforms.views.edit_form_attr domain app.id module.id form.id  'requires' %}" class="submit button">
                             Save
                         </a>
                         <div class="immutable">
@@ -28,12 +39,63 @@
                         </div>
                     </td>
                 </tr>
+                <tr class="form editable">
+                    <th>Show Count</th>
+                    <td>
+                        <select class="code" name="show_count">
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                        </select>
+                        <div class="immutable"><code>{% if form.show_count %}True{% else %}False{% endif %}</code></div>
+                    </td>
+                    <td>
+                        <a href="{% url corehq.apps.new_xforms.views.edit_form_attr domain app.id module.id form.id  'show_count' %}" class="submit button">
+                            Save
+                        </a>
+                        <div class="immutable">
+                            [<a href="#">edit</a>]
+                        </div>
+                    </td>
+                </tr>
+                <tr class="form editable">
+                    <th>XForm</th>
+                    <td>
+                        <input type="file" name="xform" />
+                        <div class="immutable">
+                            <code>{{ form.xmlns }}</code>
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{% url corehq.apps.new_xforms.views.edit_form_attr domain app.id module.id form.id  'xform' %}" class="submit button">
+                            Upload
+                        </a>
+                        <div class="immutable">
+                            [<a href="#">replace</a>]
+                        </div>
+                    </td>
+                </tr>
             {% else %}
+                <tr>
+                    <th>Form Name</th>
+                    <td>
+                        {% translate form.trans "en" app.langs %}
+                    </td>
+                </tr>
                 <tr>
                     <th>Requires</th>
                     <td>
                         <code>{{ form.requires }}</code>
                     </td>
+                </tr>
+                <tr>
+                    <th>Show Count</th>
+                    <td>
+                        <code>{% if form.show_count %}True{% else %}False{% endif %}</code>
+                    </td>
+                </tr>
+                <tr>
+                    <th>XForm</th>
+                    <td><code>{{ form.xmlns }}</code></td>
                 </tr>
             {% endif %}
         </table>

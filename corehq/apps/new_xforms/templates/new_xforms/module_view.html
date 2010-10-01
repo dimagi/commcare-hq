@@ -4,6 +4,24 @@
     <h3>{{ module|nice }}</h3>
     <table class="config">
         {% if edit %}
+
+            <tr class="form editable">
+                <th>
+                    Module Name
+                </th>
+                <td>
+                    <input type="text" name="name" value="{% translate module.trans "en" app.langs %}" />
+                    <div class="immutable">{% translate module.trans "en" app.langs %}</div>
+                </td>
+                <td>
+                    <a href="{% url corehq.apps.new_xforms.views.edit_module_attr domain app.id module.id 'name' %}" class="submit button">
+                        Save
+                    </a>
+                    <div class="immutable">
+                        [<a href="#">edit</a>]
+                    </div>
+                </td>
+            </tr>
             <tr class="form editable">
                 <th>
                     Case Type
@@ -13,7 +31,7 @@
                     <div class="immutable"><code>{{ module.case_type }}</code></div>
                 </td>
                 <td>
-                    <a href="{% url corehq.apps.new_xforms.views.edit_module_case_type domain app.id module.id%}" class="submit button">
+                    <a href="{% url corehq.apps.new_xforms.views.edit_module_attr domain app.id module.id 'case_type'%}" class="submit button">
                         Save
                     </a>
                     <div class="immutable">
@@ -22,6 +40,12 @@
                 </td>
             </tr>
         {% else %}
+            <tr>
+                <th>Module Name</th>
+                <td>
+                    {% translate module.trans "en" app.langs %}
+                </td>
+            </tr>
             <tr>
                 <th>
                     Case Type
@@ -59,114 +83,125 @@
                 {% if edit %}<th></th>{% endif %}
             </tr>
         </thead>
-        {% for d in detail.columns %}
-            {% if edit %}
-                <tr class="editable detail-row form">
-                    <td>
-                        [<a class="delete_link" href="#">x</a>]
-                        <div class="delete_dialog" title="Delete Header?">
-                            <form method="post"
-                                action="{% url corehq.apps.new_xforms.views.delete_module_detail domain app.id module.id %}">
-                                <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}" />
-                                <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                                <input type="submit" value="Delete" />
-                            </form>
-                        </div>
-                    </td>
+        <tbody {% if edit %}class="sortable"{% endif %}>
+            <tr class="sort-action">
+                <td>
+                    <form method="post" action="{% url corehq.apps.new_xforms.views.swap domain app.id 'detail' %}">
+                        <input type="hidden" name="detail_type" value="{{ detail.type }}" />
+                        <input type="hidden" name="module_id" value="{{ module.id  }}" />
+                    </form>
+                </td>
+            </tr>
+            {% for d in detail.columns %}
+                {% if edit %}
+                    <tr class="editable detail-row form">
+                        <td class="index">{{ forloop.counter0 }}</td>
+                        <td>
+                            [<a class="delete_link" href="#">x</a>]
+                            <div class="delete_dialog" title="Delete Header?">
+                                <form method="post"
+                                    action="{% url corehq.apps.new_xforms.views.delete_module_detail domain app.id module.id %}">
+                                    <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}" />
+                                    <input type="hidden" name="detail_type" value="{{ detail.type }}" />
+                                    <input type="submit" value="Delete" />
+                                </form>
+                            </div>
+                        </td>
 
+                        <td>
+                            <input type="text" name="header" value="{{ d.header }}"/>
+                            <div class="immutable">{{ d.header }}</div>
+                        </td>
+                        <td>
+                            <select class="code" name="model">
+                                <option value="case">case</option>
+                                <option value="referral">referral</option>
+                            </select>
+                            <div class="immutable"><code>{{ d.model }}</code></div>
+                        </td>
+                        <td>
+                            <input class="code" type="text" name="field" value="{{ d.field }}"/>
+                            <div class="immutable"><code>{{ d.field }}</code></div>
+                        </td>
+                        <td>
+
+                            <select class="format" name="format">
+                                <option value="plain">Plain</option>
+                                <option value="date">Date</option>
+                                <option value="years-ago">Years Ago</option>
+                                <option value="enum">Enumeration</option>
+                                <option value="advanced">Advanced</option>
+                            </select>
+                            <div class="immutable">{{ d.format }}</div>
+                        </td>
+                        <td>
+                            <input class="code" type="text" name="enum" value="{{ d.enum|format_enum }}" />
+                            <div class="immutable">{{ d.enum|format_enum }}</div>
+                        </td>
+                        <td>
+                            <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}">
+                            <input type="hidden" name="detail_type" value="{{ detail.type }}">
+                            <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">
+                                Save
+                            </a>
+                            <div class="immutable">
+                                [<a href="#" class="edit-row">edit</a>]
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td>{{ d.header }}</td>
+                        <td><code>{{ d.model }}</code></td>
+                        <td><code>{{ d.field }}</code></td>
+                        <td>{{ d.format }}</td>
+                        <td>{% if d.format == "enum"%}{{ d.enum|format_enum }}{% endif %}</td>
+
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            {% if edit %}
+                <tr class="editable detail-row form sort-disabled">
+                    <td></td>
                     <td>
-                        <input type="text" name="header" value="{{ d.header }}"/>
-                        <div class="immutable">{{ d.header }}</div>
+                        <input type="text" name="header"/>
+                        <div class="immutable"></div>
                     </td>
                     <td>
                         <select class="code" name="model">
-                            <option value="case">case</option>
+                            <option value="case" selected="">case</option>
                             <option value="referral">referral</option>
                         </select>
-                        <div class="immutable"><code>{{ d.model }}</code></div>
+                        <div class="immutable"></div>
                     </td>
                     <td>
-                        <input class="code" type="text" name="field" value="{{ d.field }}"/>
-                        <div class="immutable"><code>{{ d.field }}</code></div>
+                        <input class="code" type="text" name="field"/>
+                        <div class="immutable"></div>
                     </td>
                     <td>
-
                         <select class="format" name="format">
-                            <option value="plain">Plain</option>
+                            <option value="plain" selected="">Plain</option>
                             <option value="date">Date</option>
                             <option value="years-ago">Years Ago</option>
                             <option value="enum">Enumeration</option>
                             <option value="advanced">Advanced</option>
                         </select>
-                        <div class="immutable">{{ d.format }}</div>
+                        <div class="immutable"></div>
                     </td>
                     <td>
-                        <input class="code" type="text" name="enum" value="{{ d.enum|format_enum }}" />
-                        <div class="immutable">{{ d.enum|format_enum }}</div>
+                        <input class="code" type="text" name="enum"/>
+                        <div class="immutable"></div>
                     </td>
                     <td>
-                        <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}">
                         <input type="hidden" name="detail_type" value="{{ detail.type }}">
-                        <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">
-                            Save
-                        </a>
+                        <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">Add</a>
                         <div class="immutable">
-                            [<a href="#" class="edit-row">edit</a>]
+                            [<a href="#" class="edit-row">add</a>]
                         </div>
                     </td>
                 </tr>
-            {% else %}
-                <tr>
-                    <td>{{ d.header }}</td>
-                    <td><code>{{ d.model }}</code></td>
-                    <td><code>{{ d.field }}</code></td>
-                    <td>{{ d.format }}</td>
-                    <td>{% if d.format == "enum"%}{{ d.enum|format_enum }}{% endif %}</td>
-
-                </tr>
             {% endif %}
-        {% endfor %}
-        {% if edit %}
-            <tr class="editable detail-row form">
-                <td></td>
-                <td>
-                    <input type="text" name="header"/>
-                    <div class="immutable"></div>
-                </td>
-                <td>
-                    <select class="code" name="model">
-                        <option value="case" selected="">case</option>
-                        <option value="referral">referral</option>
-                    </select>
-                    <div class="immutable"></div>
-                </td>
-                <td>
-                    <input class="code" type="text" name="field"/>
-                    <div class="immutable"></div>
-                </td>
-                <td>
-                    <select class="format" name="format">
-                        <option value="plain" selected="">Plain</option>
-                        <option value="date">Date</option>
-                        <option value="years-ago">Years Ago</option>
-                        <option value="enum">Enumeration</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
-                    <div class="immutable"></div>
-                </td>
-                <td>
-                    <input class="code" type="text" name="enum"/>
-                    <div class="immutable"></div>
-                </td>
-                <td>
-                    <input type="hidden" name="detail_type" value="{{ detail.type }}">
-                    <a class="submit button" href="{% url corehq.apps.new_xforms.views.edit_module_detail domain app.id module.id %}">Add</a>
-                    <div class="immutable">
-                        [<a href="#" class="edit-row">add</a>]
-                    </div>
-                </td>
-            </tr>
-        {% endif %}
+        </tbody>
     </table>
     {% else %}
         <p class="warning">Not configured</p>

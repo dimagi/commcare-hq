@@ -6,7 +6,7 @@
     <property key="PostURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
     <property key="PostTestURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
     <property key="cur_locale" value="en"/>
-    <property key="cc-send-procedure" value="cc-send-none" />
+    <!--property key="cc-send-procedure" value="cc-send-none" /-->
 
     <features>
         <checkoff active="false"/>

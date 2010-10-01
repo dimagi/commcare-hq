@@ -3,11 +3,11 @@
         {% for detail in module.details %}
             {% for d in detail.columns %}
 
-select.header.{{ detail.type }}.{{ d.model }}.{{ d.field }}={{ d.header }}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header={{ d.header }}
 
                 {% if d.format == "enum" %}
                     {% for key, val in d.enum.items %}
-m{{ module.id }}.{{ d.model }}_{{ d.field }}.{{ key }}={{val}}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}={{val}}
                     {% endfor %}
                 {% endif %}
             {% endfor %}
@@ -18,14 +18,17 @@ m{{ module.id }}.{{ d.model }}_{{ d.field }}.{{ key }}={{val}}
 modules.m{{ module.id }}={% translate module.trans lang app.langs %}
         {% for form in module.get_forms %}
 
-forms.m{{ module.id }}f{{ form.id }}={% translate form.trans lang app.langs %}
+forms.m{{ module.id }}f{{ form.id }}={% translate form.trans lang app.langs %}{% if form.show_count %} ${0}{% endif %}
 
         {% endfor %}
     {% endfor %}
 
 
-case.title=Case
-referral.title=Referral
+case_short.title=Case
+case_long.title=Case
+ref_short.title=Referral
+ref_long.title=Referral
+
     {% for key, trans in app.translations.items %}
 {{ key }}={% translate trans lang app.langs %}
     {% endfor %}

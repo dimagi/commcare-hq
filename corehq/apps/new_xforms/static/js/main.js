@@ -14,6 +14,27 @@ $(function(){
     $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
+    $('.sortable').sortable({
+        update: function(e, ui){
+            var to = -1;
+            var from = -1;
+            $(this).find('> * > .index').each(function(i){
+                if(to == -1) {
+                    if(i != $(this).text()) {
+                        to = i;
+                        from = $(this).text();
+                    }
+                }
+            });
+            //alert(to + " " + from)
+            $form = $(this).find('> .sort-action form');
+            $form.append('<input type="hidden" name="from" value="' + from + '"');
+            $form.append('<input type="hidden" name="to"   value="' + to   + '"');
+            $form.submit();
+        },
+        items: ">*:not(.sort-disabled)",
+    }).disableSelection();
+    $('.index, .sort-action').hide();
 
     $('#applications select').change(function(){
         var url = $(this).find('option:selected').attr('value');
@@ -70,19 +91,26 @@ $(function(){
     $('.form a.submit').click(function(e){
         e.preventDefault();
         var $row = $(this).closest('tr');
-        var $form = $('<form method="post" action="' + $(this).attr('href') + '"></form>');
+        var $form = $('<form method="post" action="' + $(this).attr('href') + '" enctype="multipart/form-data"></form>');
         $row.find('[name]').each(function(){
-            var $input = $('<input type="text" />');
-            $input.attr('name', $(this).attr('name'));
-            $input.attr('value', $(this).attr('value'));
-            $input.hide();
-            $form.append($input);
+            if($(this).attr('type') == 'file'){
+                var $input = $(this).clone();
+                $input.hide();
+                $form.append($input);
+            }
+            else {
+                var $input = $('<input type="text" />');
+                $input.attr('name', $(this).attr('name'));
+                $input.attr('value', $(this).attr('value'));
+                $input.hide();
+                $form.append($input);
+            }
         });
         $('body').append($form);
         $form.submit();
     });
 
-
+    // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){
         var val = $(this).next('div.immutable').text();
 
@@ -90,6 +118,11 @@ $(function(){
         $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
 
     });
+    $('input[type="text"]').each(function(){
+        var val = $(this).next('div.immutable').text();
+
+        $(this).attr('value', val);
+    })
 
 
 });

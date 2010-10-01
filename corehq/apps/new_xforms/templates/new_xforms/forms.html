@@ -81,10 +81,17 @@
                 <div id="modules">
                 <!--h2 id="modules-header">Modules</h2-->
                 <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app|nice }}</a></h2>
-                <ul>
+                <ul {% if edit %}class="sortable"{% endif %}>
+                    {% if edit %}
+                        <li class="sort-action">
+                            <form method="post" action="{% url corehq.apps.new_xforms.views.swap domain app.id 'modules' %}">
+                            </form>
+                        </li>
+                    {% endif %}
                     {% with module as selected_module %}
                     {% for module in app.get_modules %}
                     <li class="module">
+                        {% if edit %}<div class="index">{{ module.id }}</div>{% endif %}
                         <div {% ifequal module.id selected_module.id %}{% if not form %} class="selected"{% endif %}{% endifequal %}><!--[M]-->
                             {% if edit %}
                                 [<a class="delete_link" href="#"
@@ -105,10 +112,18 @@
                                 {{ module|nice }}
                             </a>
                         </div>
-                        <ul {% ifequal module.id selected_module.id %} class="selected"{% endifequal %}>
+                        <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
+                            {% if edit %}
+                                <li class="sort-action">
+                                    <form method="post" action="{% url corehq.apps.new_xforms.views.swap domain app.id 'forms' %}">
+                                        <input type="hidden" name="module_id" value="{{ module.id }}" />
+                                    </form>
+                                </li>
+                            {% endif %}
                             {% with form as selected_form %}
                             {% for form in module.get_forms %}
                             <li {% ifequal form selected_form %} class="selected"{% endifequal %}><!--[F]-->
+                                {% if edit %}<div class="index">{{ form.id }}</div>{% endif %}
                                 {% if edit %}
                                 [<a class="delete_link" href="#"
                                     >x</a>]
