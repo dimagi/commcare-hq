@@ -178,7 +178,7 @@ header {
 }
 
 /* make join #modules and #form-view horizontally */
-#forms > div {
+#modules-form-view-wrapper {
     display: table;
     width: 100%;
 }
@@ -240,4 +240,10 @@ input[type="text"] {
 }
 .code {
     font-family: monospace !important;
+}
+#langs {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    padding: 1em;
 }

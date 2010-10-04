@@ -13,11 +13,11 @@
         Application:
         {% if edit and app %}
             [<a class="delete_link" href="#">x</a>]
-            <div class="delete_dialog" title="Delete {{ app|nice }}?">
+            <div class="delete_dialog" title="Delete {{ app.name|trans:langs }}?">
                 <form action="{% url corehq.apps.new_xforms.views.delete_app domain app.id %}" method="POST">
                     <table>
                         <tr>
-                            <td>Are you sure you want to delete application "{{ app|nice }}"
+                            <td>Are you sure you want to delete application "{{ app.name|trans:langs }}"
                                 and all its modules and forms?</td>
                         </tr>
                     </table>
@@ -27,7 +27,7 @@
         {% endif %}
         {% if applications %}
             {% ifequal applications|length 1 %}
-                <strong>{{ applications.0|nice }}</strong>
+                <strong>{{ app.name|trans:langs }}</strong>
             {% else %}
                 <select>
                     {% if not app %}
@@ -36,7 +36,7 @@
                     {% for a in applications %}
                     <option value="{% url corehq.apps.new_xforms.views.app_view domain a.id %}{#% if edit %}?edit=true{% endif %#}"
                             {% ifequal a.id app.id %}selected=""{% endifequal %}>
-                        {{ a|nice }}
+                        {{ a.name|trans:langs }}
                     </option>
                     {% endfor %}
                 </select>
@@ -55,6 +55,7 @@
 
             </div>
         {% endif %}
+
         {% if not force_edit %}
             <div id="edit">
                 {% if edit  %}
@@ -63,7 +64,7 @@
                         Done Editing
                     </a>
                 {% else %}
-                    <a class="button" href="?edit=true">Edit</a>
+                    <a class="button" href="./?edit=true">Edit</a>
                 {% endif %}
             </div>
         {% endif %}
@@ -77,10 +78,19 @@
             <li><a href='#release'>Release</a></li>
         </ul>
         <div id="forms">
-            <div>
+            <div id="langs">
+                Language:
+                <select class="code">
+                    {% for lang in app.langs %}
+                    <option value="./?{% if edit %}edit=true;{% endif %}lang={{ lang }}"{% if lang == langs.0 %} selected=""{% endif %}>{{ lang }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+            <div id="modules-form-view-wrapper">
                 <div id="modules">
                 <!--h2 id="modules-header">Modules</h2-->
-                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app|nice }}</a></h2>
+                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name|trans:langs }}</a></h2>
                 <ul {% if edit %}class="sortable"{% endif %}>
                     {% if edit %}
                         <li class="sort-action">
@@ -96,12 +106,12 @@
                             {% if edit %}
                                 [<a class="delete_link" href="#"
                                     >x</a>]
-                                <div class="delete_dialog" title="Delete {{ module|nice }}?">
+                                <div class="delete_dialog" title="Delete {{ module.name|trans:langs }}?">
                                     <form action="{% url corehq.apps.new_xforms.views.delete_module domain app.id module.id %}" method="POST">
                                         <table>
                                             <tr><td>
-                                            Are you sure you want to delete module "{{ module|nice }}"
-                                            and all its forms from application "{{ app|nice }}"?
+                                            Are you sure you want to delete module "{{ module.name|trans:langs }}"
+                                            and all its forms from application "{{ app.name|trans:langs }}"?
                                             </td></tr>
                                         </table>
                                         <input type="submit" value="Delete" />
@@ -109,7 +119,7 @@
                                 </div>
                             {% endif %}
                             <a href="{% url corehq.apps.new_xforms.views.module_view domain app.id module.id %}{% if edit %}?edit=true{% endif %}">
-                                {{ module|nice }}
+                                {{ module.name|trans:langs }}
                             </a>
                         </div>
                         <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
@@ -127,12 +137,12 @@
                                 {% if edit %}
                                 [<a class="delete_link" href="#"
                                     >x</a>]
-                                <div class="delete_dialog" title="Delete {{ form|nice }}?">
+                                <div class="delete_dialog" title="Delete {{ form.name|trans:langs }}?">
                                     <form action="{% url corehq.apps.new_xforms.views.delete_form domain app.id module.id form.id %}" method="POST">
                                         <table>
                                             <tr><td>
-                                            Are you sure you want to delete form "{{ form|nice }}"
-                                            from module "{{ module|nice }}"?
+                                            Are you sure you want to delete form "{{ form.name|trans:langs }}"
+                                            from module "{{ module.name|trans:langs }}"?
                                             </td></tr>
                                         </table>
                                         <input type="submit" value="Delete" />
@@ -140,7 +150,7 @@
                                 </div>
                                 {% endif %}
                                 <a href="{% url corehq.apps.new_xforms.views.form_view domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
-                                    {{ form|nice }}
+                                    {{ form.name|trans:langs }}
                                 </a>
                             </li>
                             {% endfor %}
@@ -177,7 +187,7 @@
                     {% block form-view %}
                         {% if app.modules %}
                             {% if form %}
-                                <h3>{% if module %}{{ module|nice }} &gt; {% endif %}{{ form|nice }}</h3>
+                                <h3>{% if module %}{{ module.name|trans:langs }} &gt; {% endif %}{{ form.name|trans:langs }}</h3>
                                 {% if xform%}
                                     <table class="config">
                                         <tr>
@@ -195,7 +205,7 @@
 
                                 {% endif %}
                             {% else %}{% if module %}
-                                <h3>{{ module|nice }} Module Configurations</h3>
+                                <h3>{{ module.name|trans:langs }} Module Configurations</h3>
                                 <form action="">
                                 </form>
                             {% else %}{% if app %}

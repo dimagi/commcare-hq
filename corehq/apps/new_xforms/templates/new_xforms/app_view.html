@@ -1,7 +1,7 @@
 {% extends "new_xforms/forms.html" %}
 {% load xforms_extras %}
 {% block form-view %}
-    <h3>{{ app|nice }}</h3>
+    <h3>{{ app.name|trans:langs }}</h3>
     <h4>Supported Languages</h4>
     <table class="config">
         <tbody {% if edit %}class="sortable"{% endif %}>

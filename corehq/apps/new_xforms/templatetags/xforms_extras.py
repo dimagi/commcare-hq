@@ -19,8 +19,14 @@ def translate(t, lang, langs=[]):
             return t[lang]
 
 @register.filter
-def format_enum(enum):
+def trans(name, langs):
+    for lang in langs:
+        if lang in name:
+            return name[lang]
+
+@register.filter
+def format_enum(enum, langs):
     if enum:
-        return ', '.join(('='.join(pair) for pair in enum.items()))
+        return ', '.join(('='.join((key, trans(val, langs))) for key, val in enum.items()))
     else:
         return ""

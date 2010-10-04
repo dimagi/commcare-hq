@@ -1,7 +1,7 @@
 {% extends "new_xforms/forms.html" %}
 {% load xforms_extras %}
 {% block form-view %}
-    <h3>{{ module|nice }} &gt; {{ form|nice }}</h3>
+    <h3>{{ module.name|trans:langs }} &gt; {{ form.name|trans:langs }}</h3>
     {% if xform %}
         <table class="config">
             {% if edit %}
@@ -9,7 +9,7 @@
                     <th>Form Name</th>
                     <td>
                         <input type="text" name="name" />
-                        <div class="immutable">{% translate form.trans "en" app.langs %}</div>
+                        <div class="immutable">{{ form.name|trans:langs }}</div>
                     </td>
                     <td>
                         <a href="{% url corehq.apps.new_xforms.views.edit_form_attr domain app.id module.id form.id  'name' %}" class="submit button">
@@ -78,7 +78,7 @@
                 <tr>
                     <th>Form Name</th>
                     <td>
-                        {% translate form.trans "en" app.langs %}
+                        {{ form.name|trans:langs }}
                     </td>
                 </tr>
                 <tr>

@@ -3,11 +3,11 @@
         {% for detail in module.details %}
             {% for d in detail.columns %}
 
-m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header={{ d.header }}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header={{ d.header|trans:langs }}
 
                 {% if d.format == "enum" %}
                     {% for key, val in d.enum.items %}
-m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}={{val}}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}={{ val|trans:langs }}
                     {% endfor %}
                 {% endif %}
             {% endfor %}
@@ -15,10 +15,10 @@ m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parent
     {% endfor %}
 
     {% for module in app.get_modules %}
-modules.m{{ module.id }}={% translate module.trans lang app.langs %}
+modules.m{{ module.id }}={{ module.name|trans:langs }}
         {% for form in module.get_forms %}
 
-forms.m{{ module.id }}f{{ form.id }}={% translate form.trans lang app.langs %}{% if form.show_count %} ${0}{% endif %}
+forms.m{{ module.id }}f{{ form.id }}={{ form.name|trans:langs }}{% if form.show_count %} ${0}{% endif %}
 
         {% endfor %}
     {% endfor %}
@@ -30,5 +30,5 @@ ref_short.title=Referral
 ref_long.title=Referral
 
     {% for key, trans in app.translations.items %}
-{{ key }}={% translate trans lang app.langs %}
+{{ key }}={{ trans|trans:langs }}
     {% endfor %}

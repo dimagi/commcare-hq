@@ -1,7 +1,7 @@
 {% extends "new_xforms/forms.html" %}
 {% load xforms_extras %}
 {% block form-view %}
-    <h3>{{ module|nice }}</h3>
+    <h3>{{ module.name|trans:langs }}</h3>
     <table class="config">
         {% if edit %}
 
@@ -10,8 +10,8 @@
                     Module Name
                 </th>
                 <td>
-                    <input type="text" name="name" value="{% translate module.trans "en" app.langs %}" />
-                    <div class="immutable">{% translate module.trans "en" app.langs %}</div>
+                    <input type="text" name="name" value="{{ module.name|trans:langs }}" />
+                    <div class="immutable">{{ module.name|trans:langs }}</div>
                 </td>
                 <td>
                     <a href="{% url corehq.apps.new_xforms.views.edit_module_attr domain app.id module.id 'name' %}" class="submit button">
@@ -43,7 +43,7 @@
             <tr>
                 <th>Module Name</th>
                 <td>
-                    {% translate module.trans "en" app.langs %}
+                    {{ module.name|trans:langs }}
                 </td>
             </tr>
             <tr>
@@ -109,8 +109,8 @@
                         </td>
 
                         <td>
-                            <input type="text" name="header" value="{{ d.header }}"/>
-                            <div class="immutable">{{ d.header }}</div>
+                            <input type="text" name="header" value="{{ d.header|trans:langs }}"/>
+                            <div class="immutable">{{ d.header|trans:langs }}</div>
                         </td>
                         <td>
                             <select class="code" name="model">
@@ -125,18 +125,18 @@
                         </td>
                         <td>
 
-                            <select class="format" name="format">
-                                <option value="plain">Plain</option>
-                                <option value="date">Date</option>
-                                <option value="years-ago">Years Ago</option>
-                                <option value="enum">Enumeration</option>
-                                <option value="advanced">Advanced</option>
+                            <select class="format code" name="format">
+                                <option value="plain">plain</option>
+                                <option value="date">date</option>
+                                <option value="years-ago">years-ago</option>
+                                <option value="enum">enum</option>
+                                <option value="advanced">advanced</option>
                             </select>
-                            <div class="immutable">{{ d.format }}</div>
+                            <div class="immutable"><code>{{ d.format }}</code></div>
                         </td>
                         <td>
-                            <input class="code" type="text" name="enum" value="{{ d.enum|format_enum }}" />
-                            <div class="immutable">{{ d.enum|format_enum }}</div>
+                            <input type="text" name="enum" value="{{ d.enum|format_enum:langs }}" />
+                            <div class="immutable">{{ d.enum|format_enum:langs }}</div>
                         </td>
                         <td>
                             <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}">
@@ -151,11 +151,11 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td>{{ d.header }}</td>
+                        <td>{{ d.header|trans:langs }}</td>
                         <td><code>{{ d.model }}</code></td>
                         <td><code>{{ d.field }}</code></td>
-                        <td>{{ d.format }}</td>
-                        <td>{% if d.format == "enum"%}{{ d.enum|format_enum }}{% endif %}</td>
+                        <td><code>{{ d.format }}</code></td>
+                        <td>{% if d.format == "enum"%}{{ d.enum|format_enum:langs }}{% endif %}</td>
 
                     </tr>
                 {% endif %}
@@ -179,12 +179,12 @@
                         <div class="immutable"></div>
                     </td>
                     <td>
-                        <select class="format" name="format">
-                            <option value="plain" selected="">Plain</option>
-                            <option value="date">Date</option>
-                            <option value="years-ago">Years Ago</option>
-                            <option value="enum">Enumeration</option>
-                            <option value="advanced">Advanced</option>
+                        <select class="format code" name="format">
+                            <option value="plain" selected="">plain</option>
+                            <option value="date">date</option>
+                            <option value="years-ago">years-ago</option>
+                            <option value="enum">enum</option>
+                            <option value="advanced">advanced</option>
                         </select>
                         <div class="immutable"></div>
                     </td>

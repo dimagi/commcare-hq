@@ -15,7 +15,8 @@ from StringIO import StringIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from urllib2 import urlopen
 
-IP = "192.168.7.108:8000"
+#IP = "192.168.7.108:8000"
+IP = "192.168.0.121:8000"
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
 def _tidy(name):
@@ -23,7 +24,10 @@ def _tidy(name):
 def _compify(name):
     return name.replace(' ', '_').lower()
 
-def back_to_main(domain, app_id='', module_id='', form_id='', edit=False, **kwargs):
+def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=False, **kwargs):
+    params = {}
+    if edit:
+        params['edit'] = 'true'
     args = [domain]
     print "module_id: %s" % module_id
     for x in app_id, module_id, form_id:
@@ -31,15 +35,23 @@ def back_to_main(domain, app_id='', module_id='', form_id='', edit=False, **kwar
             args.append(x)
         else:
             break
-    EDIT = "?edit=true" if edit else ""
+    def urlize(params):
+        if params:
+            return '?' + ';'.join(["%s=%s" % (key,val) for key,val in params.items()])
+        else:
+            return ""
     view_name = ('forms', 'app_view', 'module_view', 'form_view')[len(args)-1]
     return HttpResponseRedirect(
         reverse('corehq.apps.new_xforms.views.%s' % view_name, args=args)
-        + EDIT
+        + urlize(params)
     )
 def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', select_first=False):
     #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
     edit = (req.GET.get('edit', '') == 'true')
+    lang = req.GET.get('lang',
+       req.COOKIES.get('lang', 'default')
+    )
+
     applications = Application.view('new_xforms/applications', startkey=[domain], endkey=[domain, {}]).all()
     app = module = form = None
     if app_id:
@@ -79,6 +91,8 @@ def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', sele
         'new_app_form': NewAppForm(),
         'new_module_form': NewModuleForm(),
         'edit': edit,
+        'langs': [lang] + app.langs,
+        'lang': lang
     }
 
 def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new_xforms/forms.html'):
@@ -96,31 +110,37 @@ def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new
         'error':error,
         'app': app,
     })
-    return render_to_response(req, template, context)
+    response = render_to_response(req, template, context)
+    response.set_cookie('lang', context['lang'])
+    return response
 
 def form_view(req, domain, app_id, module_id, form_id, template="new_xforms/form_view.html"):
-    context = _forms_context(req, domain, app_id, module_id, form_id)
-    return render_to_response(req, template, context)
+    return forms(req, domain, app_id, module_id, form_id, template=template)
+    #context = _forms_context(req, domain, app_id, module_id, form_id)
+    #return render_to_response(req, template, context)
 
 def module_view(req, domain, app_id, module_id, template='new_xforms/module_view.html'):
-    context = _forms_context(req, domain, app_id, module_id)
-    return render_to_response(req, template, context)
+    return forms(req, domain, app_id, module_id, template=template)
+#    context = _forms_context(req, domain, app_id, module_id)
+#    return render_to_response(req, template, context)
 
 def app_view(req, domain, app_id, template="new_xforms/app_view.html"):
-    context = _forms_context(req, domain, app_id)
-    return render_to_response(req, template, context)
+#    context = _forms_context(req, domain, app_id)
+#    return render_to_response(req, template, context)
+    return forms(req, domain, app_id, template=template)
 
 def new_app(req, domain):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         form = NewAppForm(req.POST)
         if form.is_valid():
             cd = form.cleaned_data
-            trans = cd['name']
+            name = cd['name']
             all_apps = Application.view('new_xforms/applications', key=[domain]).all()
-            if trans in [a.trans['en'] for a in all_apps]:
+            if name in [a.name[lang] for a in all_apps]:
                 error="app_exists"
             else:
-                app = Application(domain=domain, modules=[], trans={'en': trans})
+                app = Application(domain=domain, modules=[], name={lang: name})
                 app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app['_id']])
@@ -137,18 +157,19 @@ def new_app(req, domain):
     )
 
 def new_module(req, domain, app_id):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         form = NewModuleForm(req.POST)
         if form.is_valid():
             cd = form.cleaned_data
-            trans = cd['name']
+            name = cd['name']
             app = Domain(domain).get_app(app_id)
-            if trans in [m['trans']['en'] for m in app.modules]:
+            if name in [m['name'][lang] for m in app.modules]:
                 error = "module_exists"
             else:
                 module_id = len(app.modules)
                 app.modules.append({
-                    'trans': {'en': trans},
+                    'name': {lang: name},
                     'forms': [],
                     'case_type': '',
                     'details': [{'type': detail_type, 'columns': []} for detail_type in DETAIL_TYPES],
@@ -168,21 +189,22 @@ def new_module(req, domain, app_id):
         + "?edit=true" + ";error=%s" % error
     )
 def new_form(req, domain, app_id, module_id, template="new_xforms/new_form.html"):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         form = NewXFormForm(req.POST, req.FILES)
 
         if form.is_valid():
             cd = form.cleaned_data
-            trans = cd['name']
+            name = cd['name']
             doc = _register_xform(
                 attachment=cd['file'],
-                display_name=trans,
+                display_name=name,
                 domain=domain
             )
             context = _forms_context(req, domain, app_id, module_id, select_first=False)
             # module and form are not copies, so modifying them modifies app
             form = {
-                'trans': {'en': cd['name']},
+                'name': {lang: cd['name']},
                 'xform_id': doc['_id'],
                 'xmlns': doc['xmlns']
             }
@@ -263,6 +285,7 @@ def _register_xform(display_name, attachment, domain):
 #        + "?edit=true"
 #    )
 def edit_module_attr(req, domain, app_id, module_id, attr):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         app = Domain(domain).get_app(app_id)
         module = app.get_module(module_id)
@@ -271,13 +294,14 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             module['case_type'] = case_type
         elif "name" == attr:
             name = req.POST.get("name", None)
-            module['trans']['en'] = name
+            module['name'][lang] = name
         app.save()
     return HttpResponseRedirect(
         reverse('corehq.apps.new_xforms.views.module_view', args=[domain, app_id, module_id])
         + "?edit=true"
     )
 def edit_module_detail(req, domain, app_id, module_id):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         column_id = int(req.POST.get('column_id', -1))
         detail_type = req.POST.get('detail_type', '')
@@ -289,11 +313,18 @@ def edit_module_detail(req, domain, app_id, module_id):
         module = app.get_module(module_id)
 
         def _enum_to_dict(enum):
-            return dict((y.strip() for y in x.strip().split('=')) for x in enum.split(',')) if enum else None
+            if not enum:
+                return {}
+            answ = {}
+            for s in enum.split(','):
+                key, val = (x.strip() for x in s.strip().split('='))
+                answ[key] = {}
+                answ[key][lang] = val
+            return answ
+            #return dict((y.strip() for y in x.strip().split('=')) for x in enum.split(',')) if enum else {}
 
-        enum = _enum_to_dict(column['enum'])
-        if enum:
-            column['enum'] = enum
+        column['enum'] = _enum_to_dict(column['enum'])
+        column['header'] = {lang: column['header']}
         for detail in module['details']:
             if detail['type'] == detail_type:
                 break
@@ -305,7 +336,14 @@ def edit_module_detail(req, domain, app_id, module_id):
         if(column_id == -1):
             detail['columns'].append(column)
         else:
-            detail['columns'][column_id] = column
+            realcol = detail['columns'][column_id]
+            for key in ('model', 'field', 'format'):
+                realcol[key] = column[key]
+
+            realcol['header'][lang] = column['header'][lang]
+
+            for key in column['enum']:
+                realcol['enum'][key][lang] = column['enum'][key][lang]
         app.save()
 
     return HttpResponseRedirect(
@@ -325,6 +363,7 @@ def delete_module_detail(req, domain, app_id, module_id):
     return back_to_main(edit=True, **locals())
 
 def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
+    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         app = Domain(domain).get_app(app_id)
         form = app.get_module(module_id).get_form(form_id)
@@ -333,7 +372,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
             form['requires'] = requires
         elif "name" == attr:
             name = req.POST['name']
-            form['trans']['en'] = name
+            form['name'][lang] = name
         elif "xform" == attr:
             xform = req.FILES['xform']
             doc = _register_xform(
@@ -415,7 +454,7 @@ def download_app_strings(req, domain, app_id, lang, template='new_xforms/app_str
     app = Domain(domain).get_app(app_id)
     return render_to_response(req, template, {
         'app': app,
-        'lang': lang
+        'langs': [lang] + app.langs,
     })
 def download_xform(req, domain, app_id, module_id, form_id):
     xform_id = Domain(domain).get_app(app_id).get_module(module_id).get_form(form_id)['xform_id']

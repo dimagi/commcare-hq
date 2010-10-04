@@ -3,6 +3,7 @@ $(function(){
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
 
     $("#applications").addClass('ui-widget ui-widget-content ui-corner-top');
+    $("#langs").addClass('ui-widget ui-widget-content');
     $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');
     $("#modules ul li").addClass('ui-corner-all');
@@ -12,6 +13,7 @@ $(function(){
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
     $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
+    $('.config').wrap('<div />').parent().addClass('ui-widget ui-widget-content ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.sortable').sortable({
@@ -33,14 +35,17 @@ $(function(){
             $form.submit();
         },
         items: ">*:not(.sort-disabled)",
-    }).disableSelection();
+    });
     $('.index, .sort-action').hide();
 
     $('#applications select').change(function(){
         var url = $(this).find('option:selected').attr('value');
         $(document).attr('location', url);
     });
-
+    $('#langs select').change(function(){
+        var url = $(this).find('option:selected').attr('value');
+        $(document).attr('location', url);
+    });
     $(".button").button();
     $("#ic_file").button();
     $("input[type='submit']").button();
@@ -113,10 +118,10 @@ $(function(){
     // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){
         var val = $(this).next('div.immutable').text();
-
-        $(this).find('option').removeAttr('selected');
-        $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
-
+        if(val) {
+            $(this).find('option').removeAttr('selected');
+            $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
+        }
     });
     $('input[type="text"]').each(function(){
         var val = $(this).next('div.immutable').text();
