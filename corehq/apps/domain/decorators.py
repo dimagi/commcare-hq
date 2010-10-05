@@ -1,9 +1,12 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.utils.http import urlquote
 
 ########################################################################################################
+from corehq.apps.domain.models import Domain, Membership
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -46,43 +49,27 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 # into _inner().
 
 def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,                                  
-                                  login_url = None,
-                                  domain_select_url = None ) :                                  
-
+                                  login_url = settings.LOGIN_URL) :
     def _outer( view_func ): 
-        def _inner(request, *args, **kwargs):
-                
-            #######################################################################                
-            #    
-            # Can't change vals in closure variables - need to use new locals      
-                              
-            if login_url is None:
-                l_login_url = settings.LOGIN_URL
-            else:
-                l_login_url = login_url
-                
-            if domain_select_url is None:
-                l_domain_select_url = settings.DOMAIN_SELECT_URL
-            else:
-                l_domain_select_url = domain_select_url
+        def _inner(request, domain, *args, **kwargs):
 
-            #######################################################################
-            # 
-            # The actual meat of the decorator
-            
             user = request.user
-            if not (user.is_authenticated() and user.is_active):
-                return _redirect_for_login_or_domain( request, redirect_field_name, l_login_url)
-
-            # If the user has an obviously-valid domain, it was already set in the domain middleware.
-            # If it's None, send the user to select a domain. If none are available to him/her,
-            # that'll be caught in the selection form.
-                        
-            if user.selected_domain is None:
-                return _redirect_for_login_or_domain( request, redirect_field_name, l_domain_select_url )
-            
-            # User's login and domain have been validated - it's safe to call the view function
-            return view_func(request, *args, **kwargs)
+            domain_name = domain
+            domain = Domain.objects.filter(name=domain)
+            memberships = Membership.objects.filter(
+                member_type = ContentType.objects.get_for_model(User),
+                member_id = user.id,
+                is_active=True,
+                domain=domain,
+                domain__is_active=True
+            )
+            if user.is_authenticated() and user.is_active:
+                if memberships.count():
+                    return view_func(request, domain_name, *args, **kwargs)
+                else:
+                    raise Http404
+            else:
+                return _redirect_for_login_or_domain( request, redirect_field_name, login_url)
 
         _inner.__name__ = view_func.__name__
         _inner.__doc__ = view_func.__doc__

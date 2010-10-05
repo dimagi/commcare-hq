@@ -28,7 +28,7 @@
    {% if detail.columns %}
     <!-- Define the short detail model for household cases -->
     <detail id="m{{ module.id }}_{{ detail.type }}">
-        <title><text><locale id="{{ detail.type }}.title"/></text></title>
+        <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
         <filter><case case-type="{{ module.case_type }}"/></filter>
         <model>
             <data>

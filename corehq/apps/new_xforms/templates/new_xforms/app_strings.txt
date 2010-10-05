@@ -23,11 +23,12 @@ forms.m{{ module.id }}f{{ form.id }}={{ form.name|trans:langs }}{% if form.show_
         {% endfor %}
     {% endfor %}
 
-
-case_short.title=Case
-case_long.title=Case
-ref_short.title=Referral
-ref_long.title=Referral
+    {% for module in app.get_modules %}
+m{{ module.id }}.case_short.title={{ module.case_name|trans:langs }}
+m{{ module.id }}.case_long.title={{ module.case_name|trans:langs }}
+m{{ module.id }}.ref_short.title={{ module.ref_name|trans:langs }}
+m{{ module.id }}.ref_long.title={{ module.ref_name|trans:langs }}
+    {% endfor %}
 
     {% for key, trans in app.translations.items %}
 {{ key }}={{ trans|trans:langs }}

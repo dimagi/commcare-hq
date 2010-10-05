@@ -27,7 +27,7 @@
         {% endif %}
         {% if applications %}
             {% ifequal applications|length 1 %}
-                <strong>{{ app.name|trans:langs }}</strong>
+                <strong>{{ app.name|trans:app.langs }}</strong>
             {% else %}
                 <select>
                     {% if not app %}
@@ -36,7 +36,7 @@
                     {% for a in applications %}
                     <option value="{% url corehq.apps.new_xforms.views.app_view domain a.id %}{#% if edit %}?edit=true{% endif %#}"
                             {% ifequal a.id app.id %}selected=""{% endifequal %}>
-                        {{ a.name|trans:langs }}
+                        {{ a.name|trans:app.langs }}
                     </option>
                     {% endfor %}
                 </select>

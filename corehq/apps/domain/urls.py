@@ -43,8 +43,9 @@ def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
 
-urlpatterns = patterns( 
-        'corehq.apps.domain.views',        
+urlpatterns =\
+    patterns('corehq.apps.domain.views',
+        (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
                         
         url(r'^domain/select/$', 'select', name='domain_select'),
@@ -65,14 +66,15 @@ urlpatterns = patterns(
         url(r'^domain/admin/user_list/$', 'user_list', name='domain_user_list'),
         url(r'^domain/admin/edit_user/(?P<user_id>\d{1,10})/$', 'edit_user', name='domain_edit_user'),
         url(r'^accounts/admin_own/$', 'admin_own_account_main', name='admin_own_account_main'),
-        url(r'^accounts/admin_own/update/$', 'admin_own_account_update', name='admin_own_account_update')) \
-        + patterns('django.contrib.auth.views',
+        url(r'^accounts/admin_own/update/$', 'admin_own_account_update', name='admin_own_account_update')
+    ) +\
+    patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
         url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html') ),                                                
         url(r'^accounts/password_reset_email/$', exception_safe_password_reset, auth_pages_path('password_reset_form.html'), name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
         url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm', auth_pages_path('password_reset_confirm.html') ),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
-        )
+    )
         
         

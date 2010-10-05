@@ -155,7 +155,7 @@ header {
     padding-left: 2em;
     list-style: none;
 }
-#modules ul li div {
+#modules > ul > li > div {
     padding: .25em;
 }
 #modules ul {
@@ -233,7 +233,7 @@ table.config th {
     text-align: center;
 }
 
-input[type="text"] {
+input[type="text"], input[type="password"]{
     border: 1px solid #ccc;
     width: 100px;
     margin: 1px;

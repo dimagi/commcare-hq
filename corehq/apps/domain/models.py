@@ -17,8 +17,7 @@ class Domain(models.Model):
        in the system.  Pretty much everything happens at the 
        domain-level, including user membership, permission to 
        see data, reports, charts, etc.'''
-       
-    
+
     name  = models.CharField(max_length = 64, unique=True)
     is_active = models.BooleanField(default=False)
     #description = models.CharField(max_length=255, null=True, blank=True)

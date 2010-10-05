@@ -39,6 +39,40 @@
                     </div>
                 </td>
             </tr>
+            <tr class="form editable">
+                <th>
+                    Case Name
+                </th>
+                <td>
+                    <input type="text" name="case_name" value="{{ module.case_name|trans:langs }}"/>
+                    <div class="immutable">{{ module.case_name|trans:langs }}</div>
+                </td>
+                <td>
+                    <a href="{% url corehq.apps.new_xforms.views.edit_module_attr domain app.id module.id 'case_name'%}" class="submit button">
+                        Save
+                    </a>
+                    <div class="immutable">
+                        [<a href="#">edit</a>]
+                    </div>
+                </td>
+            </tr>
+            <tr class="form editable">
+                <th>
+                    Referral Name
+                </th>
+                <td>
+                    <input type="text" name="ref_name" value="{{ module.ref_name|trans:langs }}"/>
+                    <div class="immutable">{{ module.ref_name|trans:langs }}</div>
+                </td>
+                <td>
+                    <a href="{% url corehq.apps.new_xforms.views.edit_module_attr domain app.id module.id 'ref_name'%}" class="submit button">
+                        Save
+                    </a>
+                    <div class="immutable">
+                        [<a href="#">edit</a>]
+                    </div>
+                </td>
+            </tr>
         {% else %}
             <tr>
                 <th>Module Name</th>
@@ -52,6 +86,22 @@
                 </th>
                 <td>
                     <code>{{ module.case_type }}</code>
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Case Name
+                </th>
+                <td>
+                    {{ module.case_name|trans:langs }}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Referral Name
+                </th>
+                <td>
+                    {{ module.ref_name|trans:langs }}
                 </td>
             </tr>
         {% endif %}
