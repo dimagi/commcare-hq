@@ -1,7 +1,9 @@
 *.pyc
 local.ini*
+localsettings.py
 .project
 .pydevproject
+.idea
 data/attachments/*
 data/submissions/*
 data/schemas/*

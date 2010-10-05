@@ -6,29 +6,22 @@ from corehq.util.modules import try_import
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+
 admin.autodiscover()
+
+
+
+domain_specific = patterns('',
+    (r'^forms/', include('corehq.apps.new_xforms.urls')),
+)
 
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
-    
-    # This is a bit kloogey - but since most of these urls don't span
-    # a single namespace (e.g. domain/ and accounts/ for domain app) 
-    # we just include the urls at the root.
-    # The correct solution is likely to break apart urls or harmonize
-    # apps so they all have proper prefixing.
-    (r'', include('corehq.apps.domain.urls')),
-    (r'', include('corehq.apps.hqwebapp.urls')),
-    (r'', include('corehq.apps.program.urls')),
-    (r'', include('corehq.apps.phone.urls')),
-    (r'', include('corehq.apps.receiver.urls')),
-    (r'', include('corehq.apps.releasemanager.urls')),
-    (r'', include('corehq.apps.xforms.urls')),
-    (r'', include('rapidsms.contrib.messagelog.urls')),
-    (r'', include('rapidsms.contrib.messaging.urls')),
-    (r'', include('rapidsms.contrib.httptester.urls')),
-    (r'user_registration', include("django_user_registration.urls")),
+    (r'^(?P<domain>\w+)/', include(domain_specific)),
 )
+
+
 
 # magic static media server (idea + implementation lifted from rapidsms)
 for module_name in settings.INSTALLED_APPS:
