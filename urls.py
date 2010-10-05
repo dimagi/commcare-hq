@@ -13,12 +13,16 @@ admin.autodiscover()
 
 domain_specific = patterns('',
     (r'^forms/', include('corehq.apps.new_xforms.urls')),
+    (r'^receiver', include('corehq.apps.new_receiver.urls')),
 )
 
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
     (r'^(?P<domain>\w+)/', include(domain_specific)),
+    (r'', include('corehq.apps.hqwebapp.urls')),
+    (r'', include('corehq.apps.domain.urls')),
+
 )
 
 

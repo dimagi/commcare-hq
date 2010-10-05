@@ -10,8 +10,8 @@ import time, datetime
 from django_digest.decorators import *
 
 from xml.dom.minidom import parse, parseString
-from corehq.apps.receiver.models import Submission, Attachment
-from corehq.apps.xforms.models import Metadata
+#from corehq.apps.receiver.models import Submission, Attachment
+#from corehq.apps.xforms.models import Metadata
 from phone.models import PhoneUserInfo
 
     
