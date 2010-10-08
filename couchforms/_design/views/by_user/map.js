@@ -22,7 +22,7 @@ function(doc) {
     function get_user_id(xform_doc) {
         if (doc.meta) return doc.meta.user_id; 
     }
-    if (doc["#doc_type"] == "XForm" && get_user_id(doc) != null) {
+    if (doc["doc_type"] == "XFormInstance" && get_user_id(doc) != null) {
         date = get_encounter_date(doc);
         if (!date) {
             date = Date();

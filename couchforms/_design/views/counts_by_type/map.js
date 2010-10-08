@@ -19,7 +19,7 @@ function(doc) {
 	    return parse_date(get_date_string(xform_doc));
 	}
     
-    if (doc["#doc_type"] == "XForm") {
+    if (doc["doc_type"] == "XFormInstance") {
         date = get_encounter_date(doc);
         if (!date) {
             date = Date();
