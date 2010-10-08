@@ -14,6 +14,8 @@ admin.autodiscover()
 domain_specific = patterns('',
     (r'^forms/', include('corehq.apps.new_xforms.urls')),
     (r'^receiver', include('corehq.apps.new_receiver.urls')),
+    (r'^data/', include('corehq.apps.new_data.urls')),
+    (r'^users/', include('corehq.apps.users.urls')),
 )
 
 urlpatterns = patterns('',
