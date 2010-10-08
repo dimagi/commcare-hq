@@ -13,6 +13,8 @@ sys.path.append(os.path.join(filedir,'submodules','core-hq-src','corehq'))
 sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
 sys.path.append(os.path.join(filedir,'submodules','rapidsms-src','lib'))
 sys.path.append(os.path.join(filedir,'submodules','couchforms-src'))
+sys.path.append(os.path.join(filedir,'submodules','couchexport-src'))
+
 #sys.path.append(os.path.join(filedir,'couchforms-src'))
 
 try:
