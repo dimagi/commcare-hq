@@ -1,9 +1,10 @@
 $(function(){
+
     $("#form-tabs").tabs({
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
 
-    $("#applications").addClass('ui-widget ui-widget-content ui-corner-top');
-    $("#langs").addClass('ui-widget ui-widget-content');
+    $("#title-bar").addClass('container ui-corner-top');
+    $("#main-content").addClass('container ui-corner-bottom');
     $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');
     $("#modules ul li").addClass('ui-corner-all');
@@ -13,9 +14,10 @@ $(function(){
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
     $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
-    $('.config').wrap('<div />').parent().addClass('ui-widget ui-widget-content ui-corner-all');
+    $('.config').wrap('<div />').parent().addClass('container ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
+    $('.container').addClass('ui-widget ui-widget-content');
     $('.sortable').sortable({
         update: function(e, ui){
             var to = -1;
@@ -28,17 +30,16 @@ $(function(){
                     }
                 }
             });
-            //alert(to + " " + from)
             $form = $(this).find('> .sort-action form');
             $form.append('<input type="hidden" name="from" value="' + from + '"');
             $form.append('<input type="hidden" name="to"   value="' + to   + '"');
             $form.submit();
         },
-        items: ">*:not(.sort-disabled)",
+        items: ">*:not(.sort-disabled)"
     });
     $('.index, .sort-action').hide();
 
-    $('#applications select').change(function(){
+    $('select.applications').change(function(){
         var url = $(this).find('option:selected').attr('value');
         $(document).attr('location', url);
     });
@@ -46,7 +47,7 @@ $(function(){
         var url = $(this).find('option:selected').attr('value');
         $(document).attr('location', url);
     });
-    $(".button").button();
+    $(".button").button().wrap('<span />');
     $("#ic_file").button();
     $("input[type='submit']").button();
     $("#error").dialog();
@@ -127,7 +128,7 @@ $(function(){
         var val = $(this).next('div.immutable').text();
 
         $(this).attr('value', val);
-    })
+    });
 
 
 });

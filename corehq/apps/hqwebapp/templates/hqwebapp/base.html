@@ -1,6 +1,69 @@
-{% extends base_template %}
-{% load i18n %}	
-{% block content %}
-{% block org_content %}
-{% endblock %}
-{% endblock %}
+{% load tabs_tags %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>CommCare HQ</title>
+        
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="/static/hqwebapp/js/main.js"></script>
+        <link rel="stylesheet" href="/static/hqwebapp/css/main.css" />
+        <link rel="shortcut icon" href="/static/hqwebapp/img/favicon.png" />
+
+        {% block head %}
+        {% endblock %}
+    </head>
+    <body>
+        <div id="wrapper">
+            <header>
+                <div id="logo">
+                    CommCare HQ
+                </div>
+                <nav>
+                    <ul id="top-nav">
+                    	{% block tabs %}
+                            {% if domain %}
+                                {% get_tabs as tabs %}
+                                <ul id="tabs">
+                                    {% for tab in tabs %}
+                                        {% if tab.is_active %}
+                                            <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
+                                        {% else %}
+                                            <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                            {% endif %}
+                            {% if user.is_authenticated %}
+                                <li><a href='/accounts/logout'>Sign Out</a></li>
+                            {% endif %}
+                            </ul>
+                        {% endblock %}
+{#                        {% for tab_id, tab_name in settings.TABS %}#}
+{#                            {% if tab_id == selected_tab %}#}
+{#                                <li class="selected">{{ tab_name }}</li>#}
+{#                            {% else %}#}
+{#                                <li><a href='/{{ domain }}/{{ tab_id }}/'>{{ tab_name }}</a></li>#}
+{#                            {% endif %}#}
+{#                        {% endfor %}#}
+                    </ul>
+                </nav>
+                {% if request.user.is_authenticated %}
+                    <p id="logged-in">
+                        Signed in
+                        {% if domain %}
+                            to <strong>{{ domain|title }}</strong>
+                        {% endif %}
+                        as <strong>{{ user.username }}</strong>
+                    </p>
+                {% endif %}
+            </header>
+            <div id="main">
+            {% block content %}
+
+            {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>

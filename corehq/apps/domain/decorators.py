@@ -51,9 +51,9 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,                                  
                                   login_url = settings.LOGIN_URL) :
     def _outer( view_func ): 
-        def _inner(request, domain, *args, **kwargs):
+        def _inner(req, domain, *args, **kwargs):
 
-            user = request.user
+            user = req.user
             domain_name = domain
             domain = Domain.objects.filter(name=domain)
             memberships = Membership.objects.filter(
@@ -65,11 +65,11 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
             )
             if user.is_authenticated() and user.is_active:
                 if memberships.count():
-                    return view_func(request, domain_name, *args, **kwargs)
+                    return view_func(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404
             else:
-                return _redirect_for_login_or_domain( request, redirect_field_name, login_url)
+                return _redirect_for_login_or_domain( req, redirect_field_name, login_url)
 
         _inner.__name__ = view_func.__name__
         _inner.__doc__ = view_func.__doc__

@@ -1,6 +1,7 @@
 {% extends base_template %}
 {% load xforms_extras %}
-
+{% block head %}
+{% endblock %}
 {% block content %}
     {% if error %}
     <div id="error">
@@ -9,15 +10,15 @@
         {% endifequal %}
     </div>
     {% endif %}
-    <div id="applications">
+    <div id="title-bar" class="container">
         Application:
         {% if edit and app %}
             [<a class="delete_link" href="#">x</a>]
-            <div class="delete_dialog" title="Delete {{ app.name|trans:langs }}?">
+            <div class="delete_dialog" title="Delete {{ app.name|trans:app.langs }}?">
                 <form action="{% url corehq.apps.new_xforms.views.delete_app domain app.id %}" method="POST">
                     <table>
                         <tr>
-                            <td>Are you sure you want to delete application "{{ app.name|trans:langs }}"
+                            <td>Are you sure you want to delete application "{{ app.name|trans:app.langs }}"
                                 and all its modules and forms?</td>
                         </tr>
                     </table>
@@ -29,14 +30,14 @@
             {% ifequal applications|length 1 %}
                 <strong>{{ app.name|trans:app.langs }}</strong>
             {% else %}
-                <select>
+                <select class="applications">
                     {% if not app %}
                         <option value="#" disabled="" selected="">No Application Selected</option>
                     {% endif %}
                     {% for a in applications %}
                     <option value="{% url corehq.apps.new_xforms.views.app_view domain a.id %}{#% if edit %}?edit=true{% endif %#}"
                             {% ifequal a.id app.id %}selected=""{% endifequal %}>
-                        {{ a.name|trans:app.langs }}
+                        {{ a.name|trans:a.langs }}
                     </option>
                     {% endfor %}
                 </select>
@@ -56,18 +57,16 @@
             </div>
         {% endif %}
 
-        {% if not force_edit %}
-            <div id="edit">
-                {% if edit  %}
-                    <a class="button"
-                       href="{% ifequal view_name "new_form" %}{% url corehq.apps.new_xforms.views.module_view domain app.id module.id %}{% else %}./{% endifequal %}">
-                        Done Editing
-                    </a>
-                {% else %}
-                    <a class="button" href="./?edit=true">Edit</a>
-                {% endif %}
-            </div>
-        {% endif %}
+        <div id="edit">
+            {% if edit  %}
+                <a class="button"
+                   href="{% ifequal view_name "new_form" %}{% url corehq.apps.new_xforms.views.module_view domain app.id module.id %}{% else %}./{% endifequal %}">
+                    Done Editing
+                </a>
+            {% else %}
+                <a class="button" href="./?edit=true">Edit</a>
+            {% endif %}
+        </div>
 
     </div>
     {% if app %}
@@ -78,7 +77,7 @@
             <li><a href='#release'>Release</a></li>
         </ul>
         <div id="forms">
-            <div id="langs">
+            <div id="langs" class="container">
                 Language:
                 <select class="code">
                     {% for lang in app.langs %}
@@ -90,7 +89,7 @@
             <div id="modules-form-view-wrapper">
                 <div id="modules">
                 <!--h2 id="modules-header">Modules</h2-->
-                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name|trans:langs }}</a></h2>
+                <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.new_xforms.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name|trans:langs}}</a></h2>
                 <ul {% if edit %}class="sortable"{% endif %}>
                     {% if edit %}
                         <li class="sort-action">
@@ -111,7 +110,7 @@
                                         <table>
                                             <tr><td>
                                             Are you sure you want to delete module "{{ module.name|trans:langs }}"
-                                            and all its forms from application "{{ app.name|trans:langs }}"?
+                                            and all its forms from application "{{ app.name|trans:app.langs }}"?
                                             </td></tr>
                                         </table>
                                         <input type="submit" value="Delete" />

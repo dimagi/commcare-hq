@@ -1,0 +1,21 @@
+{% extends base_template %}
+{% block content %}
+    <div id="title-bar" class="container">
+        <h2>Data</h2>
+    </div>
+    <div id="main-content" class="container">
+        <table>
+            {% for instance in instances %}
+                <tr>
+                    <td>
+                        {{ instance.xmlns }}
+                    </td>
+                    <td>
+                        {{ instance.received_on }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock %}

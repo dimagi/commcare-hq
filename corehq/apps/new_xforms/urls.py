@@ -5,6 +5,7 @@ urlpatterns = patterns('corehq.apps.new_xforms.views',
     (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/$',                          'module_view'),
     (r'view/(?P<app_id>\w+)/$',                                             'app_view'),
     (r'view/$',                                                             'forms'),
+    #(r'$',                                                                  'forms'),
 
     (r'new_module/(?P<app_id>\w+)/$',                                       'new_module'),
     (r'new_app/$',                                                          'new_app'),
@@ -32,6 +33,7 @@ urlpatterns = patterns('corehq.apps.new_xforms.views',
     (r'download/(?P<app_id>\w+)/(?P<lang>\w+)/app_strings.txt$',            'download_app_strings'),
     (r'download/(?P<app_id>\w+)/m(?P<module_id>\d+)/f(?P<form_id>\d+).xml$',
                                                                             'download_xform'),
+    (r'download/(?P<app_id>\w+)/CommCare.jad',                              'download_jad'),
     (r'download/(?P<app_id>\w+)/$',                                         'download'),
 
 )

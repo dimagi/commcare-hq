@@ -9,7 +9,7 @@ def translate(t, lang, langs=[]):
             return t[lang]
 
 @register.filter
-def trans(name, langs):
+def trans(name, langs=["default"]):
     for lang in langs:
         if lang in name:
             return name[lang]

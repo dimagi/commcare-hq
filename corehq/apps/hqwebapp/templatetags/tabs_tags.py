@@ -23,17 +23,18 @@ if not __name__.startswith("django."):
     # share state. to avoid this confusion, explode with an explanation
     # unless this seemingly-arbitrary rule is followed.
     # raise ImportError(
-    #     "The tabs_tags module must be imported via the " +\
+    #     "The   tabs_tags module must be imported via the " +\
     #     "django.templatetags.tabs_tags package.")
 
 
 register = template.Library()
 
 class Tab(object):
-    def __init__(self, callback, caption=None):
+    def __init__(self, callback, caption, domain):
         self.callback = callback
         self._caption = caption
         self._view = None
+        self.domain = domain
 
     @staticmethod
     def _looks_like(a, b):
@@ -76,8 +77,10 @@ class Tab(object):
         will silently ignore the exception, and return the value of the
         TEMPLATE_STRING_IF_INVALID setting.
         """
-
-        return reverse(self.callback)
+        try:
+            return reverse(self.callback)
+        except:
+            return reverse(self.callback, args=[self.domain])
 
     @property
     def caption(self):
@@ -87,15 +90,16 @@ class Tab(object):
 # adapted from ubernostrum's django-template-utils. it didn't seem
 # substantial enough to add a dependency, so i've just pasted it.
 class TabsNode(template.Node):
-    def __init__(self, tabs, varname):
-        self.tabs = tabs
+    def __init__(self, varname):
         self.varname = varname
         
     def render(self, context):
         request = Variable("request").resolve(context)
-        for tab in self.tabs:
-            tab.is_active = tab.url == request.get_full_path()
-        context[self.varname] = self.tabs
+        domain = Variable("domain").resolve(context)
+        tabs = [Tab(callback, caption, domain) for callback, caption in settings.TABS]
+        for tab in tabs:
+            tab.is_active = request.get_full_path().startswith(tab.url)
+        context[self.varname] = tabs
         return ""
 
 
@@ -106,7 +110,7 @@ def get_tabs(parser, token):
     named context variable. Returns nothing, via `ContextUpdatingNode`.
 
     Syntax::
-        {% get_tabs as [varname] %}
+        {% get_tabs [domain] as [varname] %}
 
     Example::
         {% get_tabs as tabs %}
@@ -123,5 +127,4 @@ def get_tabs(parser, token):
         raise template.TemplateSyntaxError(
             'The second argument to the {%% %s %%} tag must be "as"' % (tag_name))
 
-    tabs = [Tab(callback, caption) for callback, caption in settings.TABS]
-    return TabsNode(tabs, str(args[1]))
+    return TabsNode(str(args[1]))

@@ -92,12 +92,14 @@ def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', sele
         'lang': lang
     }
 @login_and_domain_required
-def forms(req, domain="demo", app_id='', module_id='', form_id='', template='new_xforms/forms.html'):
+def forms(req, domain, app_id='', module_id='', form_id='', template='new_xforms/forms.html'):
     error = req.GET.get('error', '')
     context = _forms_context(req, domain, app_id, module_id, form_id)
     app = context['app']
     if not app and context['applications']:
-        app = context['applications'][0]
+        app_id = context['applications'][0]._id
+        return back_to_main(**locals())
+
     force_edit = False
     if (not context['applications']) or (app and not app.modules):
         edit = True
@@ -125,7 +127,7 @@ def app_view(req, domain, app_id, template="new_xforms/app_view.html"):
 
 @login_and_domain_required
 def new_app(req, domain):
-    lang = req.COOKIES.get('lang', 'default')
+    lang = 'default'
     if req.method == "POST":
         form = NewAppForm(req.POST)
         if form.is_valid():
@@ -135,7 +137,7 @@ def new_app(req, domain):
             if name in [a.name.get(lang, "") for a in all_apps]:
                 error="app_exists"
             else:
-                app = Application(domain=domain, modules=[], name={lang: name})
+                app = Application(domain=domain, modules=[], name={lang: name}, langs=["default"])
                 app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app['_id']])
@@ -468,6 +470,15 @@ def download_xform(req, domain, app_id, module_id, form_id):
     return HttpResponse(xform_xml)
 
 @login_and_domain_required
+def download_jad(req, domain, app_id, template="new_xforms/CommCare.jad"):
+    app = Domain(domain).get_app(app_id)
+    return render_to_response(req, template, {
+        'domain': domain,
+        'app': app,
+        'IP': settings.REMOTE_ADDRESS,
+    })
+
+@login_and_domain_required
 def download(req, domain, app_id):
     response = HttpResponse(mimetype="application/zip")
     response['Content-Disposition'] = "filename=commcare_app.zip"
@@ -490,3 +501,5 @@ def download(req, domain, app_id):
     response.write(buffer.getvalue())
     buffer.close()
     return response
+
+#http://bit.ly/bhZ3by

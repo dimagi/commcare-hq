@@ -10,5 +10,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^accounts/login/$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
     (r'^$', 'redirect_to_default'),
+    # temporary hack
+    (r'^(?P<domain>\w+)/messages/$', 'messages'),
 )
 

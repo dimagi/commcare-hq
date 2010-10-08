@@ -118,16 +118,10 @@ header {
 }
 #main > div {
 }
-/*.sidebar-group {
-    display: table;
-    width: 100%;
+
+.container {
+    padding: 1em;
 }
-.sidebar-group > * {
-    display: table-cell;
-}
-.sidebar-group > nav {
-    width: 200px;
-}*/
 
 #form-tabs {
     padding: 0px !important;
@@ -136,7 +130,7 @@ header {
 #forms {
     padding: 0px;
 }
-#applications {
+#title-bar {
     padding: 1em;
     border-bottom: none;
 }
