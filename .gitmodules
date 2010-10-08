@@ -4,3 +4,6 @@
 [submodule "submodules/rapidsms-src"]
 	path = submodules/rapidsms-src
 	url = git://github.com/dimagi/rapidsms.git
+[submodule "submodules/couchforms-src"]
+	path = submodules/couchforms-src
+	url = git://github.com/dimagi/couchforms.git
