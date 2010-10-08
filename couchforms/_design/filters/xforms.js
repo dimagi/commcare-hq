@@ -3,5 +3,5 @@
  */
 function(doc, req)
 {   
-    return (doc["#doc_type"] == "XForm");
+    return (doc["doc_type"] == "XFormInstance");
 }
