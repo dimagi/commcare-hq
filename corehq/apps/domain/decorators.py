@@ -64,7 +64,7 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
                 domain__is_active=True
             )
             if user.is_authenticated() and user.is_active:
-                if memberships.count():
+                if memberships.count() or (user.is_superuser and domain.count()):
                     return view_func(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404
