@@ -11,22 +11,24 @@ function(doc) {
     function get_encounter_date(xform_doc) {
         function get_date_string(xform_doc) {
             // check some expected places for a date
-            if (xform_doc.encounter_date) return xform_doc.encounter_date;
-            if (xform_doc.meta && xform_doc.meta.TimeEnd) return xform_doc.meta.TimeEnd;
-            if (xform_doc.meta && xform_doc.meta.TimeStart) return xform_doc.meta.TimeStart;
+            var meta = xform_doc.form.Meta;
+            if (xform_doc.form.encounter_date) return xform_doc.form.encounter_date;
+            if (meta && meta.TimeEnd) return meta.TimeEnd;
+            if (meta && meta.TimeStart) return meta.TimeStart;
             return null;
         }
         return parse_date(get_date_string(xform_doc));
     }
     
     function get_user_id(xform_doc) {
-        if (doc.meta) return doc.meta.user_id; 
+        var meta = xform_doc.form.Meta;
+        if (meta) return meta.user_id;
     }
-    if (doc["doc_type"] == "XFormInstance" && get_user_id(doc) != null) {
+    if (doc.doc_type == "XFormInstance" && get_user_id(doc) != null) {
         date = get_encounter_date(doc);
         if (!date) {
             date = Date();
         }
-        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc["@xmlns"], doc.meta.clinic_id], 1);
+        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns, doc.form.Meta.clinic_id], 1);
     } 
 }
