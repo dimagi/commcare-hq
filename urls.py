@@ -10,18 +10,20 @@ from django.contrib import admin
 admin.autodiscover()
 
 
-
+from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 domain_specific = patterns('',
     (r'^forms/', include('corehq.apps.new_xforms.urls')),
     (r'^receiver', include('corehq.apps.new_receiver.urls')),
     (r'^data/', include('corehq.apps.new_data.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
+    (r'^', include(hqwebapp_domain_specific))
+
 )
 
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
-    (r'^(?P<domain>\w+)/', include(domain_specific)),
+    (r'^a/(?P<domain>\w+)/', include(domain_specific)),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
 
