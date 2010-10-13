@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 from django.conf import settings
 
 urlpatterns = patterns('corehq.apps.hqwebapp.views',
+    url(r'^homepage$', 'redirect_to_default', name='homepage'),
     (r'^serverup.txt$', 'server_up'),
     (r'^change_password/?$', 'password_change'),
     

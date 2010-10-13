@@ -11,6 +11,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from rapidsms.contrib.messaging.views import messaging
 
+
 def redirect_to_default(req):
     domains = Domain.active_for_user(req.user)
     if   0 == domains.count():
