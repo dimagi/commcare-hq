@@ -1,5 +1,6 @@
 from django.db import models
 from couchdbkit.ext.django.schema import *
+from django.core.urlresolvers import reverse
 
 class XForm(Document):
     display_name = StringProperty()
@@ -25,6 +26,8 @@ class Application(Document):
     @property
     def id(self):
         return self._id
+    def get_absolute_url(self):
+        return reverse('corehq.apps.new_xforms.views.app_view', args=[self.domain,  self.id])
 
 
 # The following classes are wrappers for the subparts of an application document

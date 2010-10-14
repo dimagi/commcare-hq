@@ -15,6 +15,7 @@ from StringIO import StringIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from urllib2 import urlopen
 from django.conf import settings
+from django.contrib.sites.models import Site
 
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
@@ -42,7 +43,7 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=False, *
         reverse('corehq.apps.new_xforms.views.%s' % view_name, args=args)
         + urlize(params)
     )
-def _forms_context(req, domain="demo", app_id='', module_id='', form_id='', select_first=False):
+def _forms_context(req, domain, app_id='', module_id='', form_id='', select_first=False):
     #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
     edit = (req.GET.get('edit', '') == 'true')
     lang = req.GET.get('lang',
@@ -439,12 +440,21 @@ def swap(req, domain, app_id, key):
         app.save()
     return back_to_main(edit=True, **locals())
 
+def _url_base():
+    return 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
 
+def _check_domain_app(domain, app_id):
+    Domain(domain).get_app(app_id)
 
 @login_and_domain_required
 def download_profile(req, domain, app_id, template='new_xforms/profile.xml'):
+    _check_domain_app(domain, app_id)
+    url_base = _url_base()
+    post_url = url_base + reverse('corehq.apps.receiver.views.post', args=[domain])
     return render_to_response(req, template, {
-        'suite_location': 'http://%s/demo/forms/download/%s/suite.xml' % (settings.REMOTE_ADDRESS, app_id)
+        'suite_location': url_base + reverse('corehq.apps.new_xforms.views.download_suite', args=[domain, app_id]),
+        'post_url': post_url,
+        'post_test_url': post_url,
     })
 
 @login_and_domain_required
@@ -472,34 +482,38 @@ def download_xform(req, domain, app_id, module_id, form_id):
 @login_and_domain_required
 def download_jad(req, domain, app_id, template="new_xforms/CommCare.jad"):
     app = Domain(domain).get_app(app_id)
+    url_base = _url_base()
+    profile_url = url_base + reverse('corehq.apps.new_xforms.views.download_profile', args=[domain, app_id])
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'IP': settings.REMOTE_ADDRESS,
+        'profile_url': profile_url,
+        'jar_url': url_base + '/static/new_xforms/CommCare.jar',
     })
 
-@login_and_domain_required
-def download(req, domain, app_id):
-    response = HttpResponse(mimetype="application/zip")
-    response['Content-Disposition'] = "filename=commcare_app.zip"
-    app = Domain(domain).get_app(app_id)
-    base = "http://%s/demo/forms/download/%s/" % (settings.REMOTE_ADDRESS, app_id)
-    paths = ["profile.xml", "suite.xml"]
-    for lang in app.langs:
-        paths.append("%s/app_strings.txt" % lang)
-    for module in app.get_modules():
-        for form in module.get_forms():
-            paths.append("m%s/f%s.xml" % (module.id, form.id))
-    print paths
-    buffer = StringIO()
-    zipper = ZipFile(buffer, 'w', ZIP_DEFLATED)
-    for path in paths:
-        print path
-        zipper.writestr(path, urlopen(base + path).read())
-    zipper.close()
-    buffer.flush()
-    response.write(buffer.getvalue())
-    buffer.close()
-    return response
+#@login_and_domain_required
+#def download(req, domain, app_id):
+#    url_base = _url_base()
+#    response = HttpResponse(mimetype="application/zip")
+#    response['Content-Disposition'] = "filename=commcare_app.zip"
+#    app = Domain(domain).get_app(app_id)
+#    root = url_base + reverse('corehq.apps.new_xforms.views.download', args=[domain, app_id])
+#    paths = ["profile.xml", "suite.xml"]
+#    for lang in app.langs:
+#        paths.append("%s/app_strings.txt" % lang)
+#    for module in app.get_modules():
+#        for form in module.get_forms():
+#            paths.append("m%s/f%s.xml" % (module.id, form.id))
+#    print paths
+#    buffer = StringIO()
+#    zipper = ZipFile(buffer, 'w', ZIP_DEFLATED)
+#    for path in paths:
+#        print path
+#        zipper.writestr(path, urlopen(root + path).read())
+#    zipper.close()
+#    buffer.flush()
+#    response.write(buffer.getvalue())
+#    buffer.close()
+#    return response
 
 #http://bit.ly/bhZ3by

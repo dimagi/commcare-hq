@@ -34,6 +34,6 @@ urlpatterns = patterns('corehq.apps.new_xforms.views',
     (r'download/(?P<app_id>\w+)/m(?P<module_id>\d+)/f(?P<form_id>\d+).xml$',
                                                                             'download_xform'),
     (r'download/(?P<app_id>\w+)/CommCare.jad',                              'download_jad'),
-    (r'download/(?P<app_id>\w+)/$',                                         'download'),
+    #(r'download/(?P<app_id>\w+)/$',                                         'download'),
 
 )

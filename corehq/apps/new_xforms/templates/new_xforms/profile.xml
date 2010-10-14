@@ -3,8 +3,8 @@
     <property key="backup-url" value="file:///E:/CommCare.Backup"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>
     <property key="purge-freq" value="7" force="true"/>
-    <property key="PostURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
-    <property key="PostTestURL" value="http://dev.commcarehq.org/demo/submit/" force="true"/>
+    <property key="PostURL" value="{{ post_url }}" force="true"/>
+    <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
     <property key="cur_locale" value="default"/>
     <!--property key="cc-send-procedure" value="cc-send-none" /-->
 
