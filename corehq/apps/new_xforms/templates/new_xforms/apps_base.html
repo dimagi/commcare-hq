@@ -35,7 +35,7 @@
                         <option value="#" disabled="" selected="">No Application Selected</option>
                     {% endif %}
                     {% for a in applications %}
-                    <option value="{{ a.get_absolute_url }}"
+                    <option value="{% url corehq.apps.new_xforms.views.app_view domain a.id %}"
                             {% ifequal a.id app.id %}selected=""{% endifequal %}>
                         {{ a.name|trans:a.langs }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
                     </option>

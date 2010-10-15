@@ -94,7 +94,7 @@
             </li>
             {% endfor %}
             {% endwith %}
-            {% if edit %}
+            {% if edit and app.doc_type == "Application" %}
                 [<a href="#" id="new_module">+</a>]
                 <div id="new_module_dialog" title="Create New Module">
                     <form action="{% url corehq.apps.new_xforms.views.new_module domain app.id %}" method="post">

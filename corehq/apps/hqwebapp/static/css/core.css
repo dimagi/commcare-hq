@@ -232,6 +232,9 @@ input[type="text"], input[type="password"]{
     width: 100px;
     margin: 1px;
 }
+input.wide {
+    width: 400px;
+}
 .code {
     font-family: monospace !important;
 }

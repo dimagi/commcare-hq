@@ -17,6 +17,6 @@
     </features>
 
     <suite><resource id="suite" version="1">
-        <location authority="remote">{{ suite_location }}</location>
+        <location authority="remote">{{ suite_url }}</location>
     </resource></suite>
 </profile>

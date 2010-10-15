@@ -9,13 +9,15 @@ from corehq.apps.new_xforms.forms import NewXFormForm, NewAppForm, NewModuleForm
 from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from corehq.apps.new_xforms.models import Domain
 from StringIO import StringIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from urllib2 import urlopen
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.views.static import serve
+from corehq.apps.remote_apps.models import RemoteApp
 
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
@@ -51,6 +53,7 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
     )
 
     applications = Application.view('new_xforms/applications', startkey=[domain], endkey=[domain, {}]).all()
+    applications += RemoteApp.view('remote_apps/by_domain', key=domain).all()
     app = module = form = None
     if app_id:
         app = Domain(domain).get_app(app_id)
@@ -134,11 +137,21 @@ def new_app(req, domain):
         if form.is_valid():
             cd = form.cleaned_data
             name = cd['name']
+            if " (remote)" == name[-9:]:
+                name = name[:-9]
+                doc_type = "RemoteApp"
+            else:
+                doc_type = "Application"
+
+
             all_apps = Application.view('new_xforms/applications', key=[domain]).all()
             if name in [a.name.get(lang, "") for a in all_apps]:
                 error="app_exists"
             else:
-                app = Application(domain=domain, modules=[], name={lang: name}, langs=["default"])
+                if doc_type == "Application":
+                    app = Application(domain=domain, modules=[], name={lang: name}, langs=["default"])
+                else:
+                    app = RemoteApp(domain=domain, name={lang: name}, langs=["default"])
                 app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.new_xforms.views.app_view', args=[domain, app['_id']])
@@ -410,6 +423,19 @@ def delete_app_lang(req, domain, app_id):
     return back_to_main(edit=True, **locals())
 
 @login_and_domain_required
+def edit_app_attr(req, domain, app_id, attr):
+    lang = req.COOKIES.get('lang', 'default')
+    if req.method == "POST":
+        app = Domain(domain).get_app(app_id)
+        if   "suite_url" == attr:
+            if app.doc_type not in ("RemoteApp",):
+                raise Exception("App type %s does not support suite urls" % app.doc_type)
+            app['suite_url'] = req.POST['suite_url']
+            app.save()
+    return back_to_main(edit=True, **locals())
+
+
+@login_and_domain_required
 def swap(req, domain, app_id, key):
     if req.method == "POST":
         app = Domain(domain).get_app(app_id)
@@ -446,25 +472,27 @@ def _url_base():
 def _check_domain_app(domain, app_id):
     Domain(domain).get_app(app_id)
 
-@login_and_domain_required
 def download_profile(req, domain, app_id, template='new_xforms/profile.xml'):
-    _check_domain_app(domain, app_id)
+    app = Domain(domain).get_app(app_id)
     url_base = _url_base()
     post_url = url_base + reverse('corehq.apps.receiver.views.post', args=[domain])
+    if 'suite_url' in app and app['suite_url']:
+        suite_url = app['suite_url']
+    else:
+        suite_url = url_base + reverse('corehq.apps.new_xforms.views.download_suite', args=[domain, app_id])
     return render_to_response(req, template, {
-        'suite_location': url_base + reverse('corehq.apps.new_xforms.views.download_suite', args=[domain, app_id]),
+        'suite_url': suite_url,
         'post_url': post_url,
         'post_test_url': post_url,
     })
 
-@login_and_domain_required
 def download_suite(req, domain, app_id, template='new_xforms/suite.xml'):
     app = Domain(domain).get_app(app_id)
     return render_to_response(req, template, {
         'app': app
     })
 
-@login_and_domain_required
+
 def download_app_strings(req, domain, app_id, lang, template='new_xforms/app_strings.txt'):
     app = Domain(domain).get_app(app_id)
     return render_to_response(req, template, {
@@ -472,24 +500,34 @@ def download_app_strings(req, domain, app_id, lang, template='new_xforms/app_str
         'langs': [lang] + app.langs,
     })
 
-@login_and_domain_required
 def download_xform(req, domain, app_id, module_id, form_id):
     xform_id = Domain(domain).get_app(app_id).get_module(module_id).get_form(form_id)['xform_id']
     xform = XForm.get(xform_id)
     xform_xml = xform.fetch_attachment('xform.xml')
     return HttpResponse(xform_xml)
 
-@login_and_domain_required
 def download_jad(req, domain, app_id, template="new_xforms/CommCare.jad"):
     app = Domain(domain).get_app(app_id)
     url_base = _url_base()
-    profile_url = url_base + reverse('corehq.apps.new_xforms.views.download_profile', args=[domain, app_id])
-    return render_to_response(req, template, {
+    if 'profile_url' in app and app['profile_url']:
+        profile_url = app['profile_url']
+    else:
+        profile_url = url_base + reverse('corehq.apps.new_xforms.views.download_profile', args=[domain, app_id])
+    response = render_to_response(req, template, {
         'domain': domain,
         'app': app,
         'profile_url': profile_url,
-        'jar_url': url_base + '/static/new_xforms/CommCare.jar',
+        'jar_url': url_base + reverse('corehq.apps.new_xforms.views.download_jar', args=[domain, app_id]),
     })
+    response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
+    return response
+
+def download_jar(req, domain, app_id):
+    view,args,kwargs = resolve('/static/new_xforms/CommCare.jar')
+    print view, args, kwargs
+    response = view(req, *args, **kwargs)
+    response['Content-Type'] = "application/java-archive"
+    return response
 
 #@login_and_domain_required
 #def download(req, domain, app_id):

@@ -6,7 +6,8 @@ from django.core.urlresolvers import reverse
 
 class RemoteApp(Document):
     domain = StringProperty()
-    url = StringProperty()
+    profile_url = StringProperty()
+    suite_url = StringProperty()
     name = DictProperty()
 
     @classmethod

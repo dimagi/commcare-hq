@@ -13,16 +13,19 @@ from rapidsms.contrib.messaging.views import messaging
 
 
 def redirect_to_default(req, domain=None):
-    if domain:
-        domains = Domain.objects.filter(name=domain)
+    if not req.user.is_authenticated():
+        url = reverse('corehq.apps.hqwebapp.views.login')
     else:
-        domains = Domain.active_for_user(req.user)
-    if   0 == domains.count():
-        return render_to_response(req, "hqwebapp/no_permission.html", {})
-    elif 1 == domains.count():
-        url = reverse('corehq.apps.new_xforms.views.forms', args=[domains[0].name])
-    else:
-        url = settings.DOMAIN_SELECT_URL
+        if domain:
+            domains = Domain.objects.filter(name=domain)
+        else:
+            domains = Domain.active_for_user(req.user)
+        if   0 == domains.count():
+            return render_to_response(req, "hqwebapp/no_permission.html", {})
+        elif 1 == domains.count():
+            url = reverse('corehq.apps.new_xforms.views.forms', args=[domains[0].name])
+        else:
+            url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
 
 
