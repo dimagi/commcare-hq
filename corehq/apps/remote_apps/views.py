@@ -1,9 +1,7 @@
 # Create your views here.
-from django.http import HttpResponse
 from corehq.util.webutils import render_to_response
-from corehq.apps.remote_apps.models import RemoteApp
-from corehq.apps.app_manager.models import Application
 import corehq
+from corehq.apps.app_manager.models import RemoteApp
 
 def view(req, domain, template="remote_apps/apps.html"):
     apps = RemoteApp.view('remote_apps/by_domain').all()

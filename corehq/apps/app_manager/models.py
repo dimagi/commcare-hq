@@ -1,4 +1,3 @@
-from django.db import models
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 
@@ -13,13 +12,24 @@ class XFormGroup(Document):
     display_name = StringProperty()
     xmlns = StringProperty()
 
-class Application(Document):
+class VersionedDoc(Document):
     domain = StringProperty()
-    modules = ListProperty()
-    trans = DictProperty()
-    langs = ListProperty()
     copy_of = StringProperty()
     version = IntegerProperty()
+    short_url = StringProperty()
+    def save(self, **params):
+        if not self.short_url:
+            self.short_url = bitly.shorten(
+                reverse('corehq.apps.app_manager.views.download_jad', [self.domain, self._id])
+            )
+        self.version = self.version + 1 if self.version else 1
+        super(VersionedDoc, self).save()
+
+class Application(VersionedDoc):
+    modules = ListProperty()
+    trans = DictProperty()
+    name = DictProperty()
+    langs = ListProperty()
     def get_modules(self):
         for i in range(len(self.modules)):
             yield Module(self, i)
@@ -31,21 +41,32 @@ class Application(Document):
     def get_absolute_url(self):
         return reverse('corehq.apps.app_manager.views.app_view', args=[self.domain,  self.id])
 
-    def save(self, **params):
-        self.version = self.version + 1 if self.version else 1
-        super(Application, self).save()
+class RemoteApp(VersionedDoc):
+    profile_url = StringProperty()
+    suite_url = StringProperty()
+    name = DictProperty()
+
+    @classmethod
+    def get_app(cls, domain, app_id):
+        # raise error if domain doesn't exist
+        Domain.objects.get(name=domain)
+        app = RemoteApp.get(app_id)
+        if app.domain != domain:
+            raise Exception("App %s not in domain %s" % (app_id, domain))
+        return app
+
+    @property
+    def id(self):
+        return self._id
+
+    def get_absolute_url(self):
+        return reverse('corehq.apps.remote_apps.views.app_view', args=[self.domain, self.id])
+
+
 
 
 # The following classes are wrappers for the subparts of an application document
 class DictWrapper(object):
-#    def __getitem__(self, key):
-#        return self._dict[key]
-#    def __setitem__(self, key, val):
-#        self._dict[key] = val
-#    def update(self, *args, **kwargs):
-#        return self._dict.update(*args, **kwargs)
-#    def get(self, *args, **kwargs):
-#        return self._dict.get(*args, **kwargs)
     def __eq__(self, other):
         try:
             return (self.id == other.id) and (self.parent == other.parent)
@@ -84,5 +105,7 @@ class Domain(object):
         self.name = name
     def get_app(self, app_id):
         app = Application.get(app_id)
+        if app.doc_type != "Application":
+            app = RemoteApp.get(app_id)
         assert(app.domain == self.name)
         return app

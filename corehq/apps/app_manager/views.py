@@ -1,24 +1,18 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from corehq.util.webutils import render_to_response
 from BeautifulSoup import BeautifulStoneSoup
 from datetime import datetime
 
-from .models import Application, Module, Form, XForm
-from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm, ModuleConfigForm
+from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
 from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import Domain
-from StringIO import StringIO
-from zipfile import ZipFile, ZIP_DEFLATED
-from urllib2 import urlopen
+from corehq.apps.app_manager.models import Domain, RemoteApp, Application, Module, XForm, VersionedDoc
+
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.views.static import serve
-from corehq.apps.remote_apps.models import RemoteApp
-from couchdbkit.ext.django.schema import Document
 from copy import deepcopy
 
 
@@ -54,8 +48,11 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
        req.COOKIES.get('lang', 'default')
     )
 
-    applications = Application.view('app_manager/applications', startkey=[domain], endkey=[domain, '']).all()
-    applications += RemoteApp.view('remote_apps/by_domain', key=domain).all()
+    applications = []
+    str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+    for app in VersionedDoc.view('app_manager/applications', startkey=[domain], endkey=[domain, '']).all():
+        cls = str_to_cls[app.doc_type]
+        applications.append(cls(app.to_json()))
     app = module = form = None
     if app_id:
         app = Domain(domain).get_app(app_id)
@@ -113,7 +110,8 @@ def forms(req, domain, app_id='', module_id='', form_id='', template='app_manage
     if not app and context['applications']:
         app_id = context['applications'][0]._id
         return back_to_main(**locals())
-
+    if app.copy_of:
+        raise Http404
     force_edit = False
     if (not context['applications']) or (app and not app.modules):
         edit = True
@@ -572,7 +570,8 @@ def save_app(req, domain, app_id):
         saved_app = deepcopy(app.to_json())
         del saved_app['_id']
         del saved_app['_rev']
-        saved_app = Application(_d=saved_app)
+        cls = app.__class__
+        saved_app = cls(_d=saved_app)
         saved_app['copy_of'] = app._id
         saved_app.save()
         return back_to_main(**locals())
@@ -588,6 +587,7 @@ def revert_app(req, domain, app_id):
         app['_id'] = old_app._id
         app['version'] = old_app.version
         app['copy_of'] = None
-        app = Application(_d=app)
+        cls = old_app.__class__
+        app = cls(_d=app)
         app.save()
         return back_to_main(**locals())
