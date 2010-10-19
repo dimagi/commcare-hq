@@ -11,8 +11,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import Domain, RemoteApp, Application, Module, XForm, VersionedDoc
 
-from django.conf import settings
-from django.contrib.sites.models import Site
+from corehq.util.webutils import URL_BASE
 from copy import deepcopy
 
 
@@ -110,7 +109,7 @@ def forms(req, domain, app_id='', module_id='', form_id='', template='app_manage
     if not app and context['applications']:
         app_id = context['applications'][0]._id
         return back_to_main(**locals())
-    if app.copy_of:
+    if app and app.copy_of:
         raise Http404
     force_edit = False
     if (not context['applications']) or (app and not app.modules):
@@ -475,7 +474,7 @@ def swap(req, domain, app_id, key):
     return back_to_main(edit=True, **locals())
 
 def _url_base():
-    return 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
+    return URL_BASE
 
 def _check_domain_app(domain, app_id):
     Domain(domain).get_app(app_id)

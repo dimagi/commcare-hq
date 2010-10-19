@@ -1,5 +1,7 @@
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
+from corehq.util import bitly
+from corehq.util.webutils import URL_BASE
 
 class XForm(Document):
     display_name = StringProperty()
@@ -18,12 +20,13 @@ class VersionedDoc(Document):
     version = IntegerProperty()
     short_url = StringProperty()
     def save(self, **params):
-        if not self.short_url:
-            self.short_url = bitly.shorten(
-                reverse('corehq.apps.app_manager.views.download_jad', [self.domain, self._id])
-            )
         self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
+        if not self.short_url:
+            self.short_url = bitly.shorten(
+                URL_BASE + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
+            )
+            super(VersionedDoc, self).save()
 
 class Application(VersionedDoc):
     modules = ListProperty()

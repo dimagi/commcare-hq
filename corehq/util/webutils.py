@@ -6,6 +6,10 @@ from django.conf import settings
 from django.template import RequestContext
 from django.shortcuts import render_to_response as django_r_to_r
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.contrib.sites.models import Site
+
+
+URL_BASE = 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
 
 def render_to_response(req, template_name, dictionary=None, **kwargs):
     """Proxies calls to django.shortcuts.render_to_response, to avoid having

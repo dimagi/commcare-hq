@@ -86,10 +86,13 @@
                 <input type="submit" value="Make New Build" />
             </form>
 
-            <table>
+            <table class="config">
                 {% for saved_app in saved_apps %}
                     <tr>
                         <td>{{ saved_app.version }}</td>
+                        <td>
+                            (<a href="{{ saved_app.short_url }}">{{ saved_app.short_url }}</a>)
+                        </td>
                         <td>
                             <form action="{% url corehq.apps.app_manager.views.revert_app domain app.id %}" method="POST">
                                 <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
