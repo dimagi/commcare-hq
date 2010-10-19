@@ -2,7 +2,7 @@
 from django.http import HttpResponse
 from corehq.util.webutils import render_to_response
 from corehq.apps.remote_apps.models import RemoteApp
-from corehq.apps.new_xforms.models import Application
+from corehq.apps.app_manager.models import Application
 import corehq
 
 def view(req, domain, template="remote_apps/apps.html"):

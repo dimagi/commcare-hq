@@ -15,7 +15,7 @@ class JarjadForm(forms.ModelForm):
         
 class BuildForm(forms.ModelForm):
     
-    register_forms = forms.BooleanField(required=False, help_text="Do a best effort registration of new_xforms on HQ")
+    register_forms = forms.BooleanField(required=False, help_text="Do a best effort registration of app_manager on HQ")
         
     class Meta:
         model = Build
@@ -23,7 +23,7 @@ class BuildForm(forms.ModelForm):
 
 
 class ResourceSetForm(forms.ModelForm):
-    # name = new_xforms.SlugField()
+    # name = app_manager.SlugField()
 
     class Meta:
         model = ResourceSet

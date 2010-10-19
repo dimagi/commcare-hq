@@ -7,13 +7,14 @@
 
 {#################################################################################################################}
 
-{% block hq-stylesheets %}
+{% block head %}
 
-<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
+<script type="text/javascript" src="{{ MEDIA_URL }}/domain/js/login.js"></script>
 <link rel="stylesheet" href="{{MEDIA_URL}}/domain/javascripts/nyroModal/styles/nyroModal.css" type="text/css" media="screen" /> 
 <script type="text/javascript" src="{{MEDIA_URL}}/domain/javascripts/nyroModal/js/jquery.nyroModal-1.5.5.pack.js"></script> 
 
-{% endblock hq-stylesheets %}
+{% endblock %}
 
 {#################################################################################################################}           
 {% block content %}
@@ -27,12 +28,9 @@ $(function() {
 });
 </script>
 
-<hr class="space"/>
-<hr class="space"/>
 
-<!-- Registration request form -->  
-<div class="span-11" style="margin-left:auto; margin-right:auto; float:none">
-<form class="sfb clear" name="form" method="post" action="{% url domain_registration_request kind=kind %}">
+<div class="login-block">
+<form name="form" method="post" action="{% url domain_registration_request kind=kind %}">
 {% csrf_token %}
 <h3>Request a new domain</h3>
 {% if form.non_field_errors %}
@@ -48,18 +46,18 @@ $(function() {
     </div>
   {% endif %}
   {% ifnotequal field.name 'tos_confirmed' %}
-  <div class="span-4 clear"> <div style="float:right;">
+  <div class="form-label">
   {{ field.label_tag }}
-  </div></div>
-  <div class="span-2">
+  </div>
+  <div class="form-field">
   {{ field }}
   </div>
   {%else%}
-  <label for="id_tos_confirmed" style="width:300px">I have read and agree to the <a href="{%url tos%}" class="nyroModal" target="_blank">Terms of Service</a></label>
-  <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" style="width:30px; margin:4px 5px 30px 5px;"/>
+  <label for="id_tos_confirmed">I have read and agree to the <a href="{%url tos%}" class="nyroModal" target="_blank">Terms of Service</a></label>
+  <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" />
   {% endifnotequal %}
 {% endfor %}
-  
+
 <button type="submit">Submit</button>
 </form>
 </div>

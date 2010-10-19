@@ -1,6 +1,7 @@
 $(function(){
 
     $("#form-tabs").tabs({
+        cookie: {}
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
 
     $("#title-bar").addClass('container ui-corner-top');
@@ -31,8 +32,8 @@ $(function(){
                 }
             });
             $form = $(this).find('> .sort-action form');
-            $form.append('<input type="hidden" name="from" value="' + from + '"');
-            $form.append('<input type="hidden" name="to"   value="' + to   + '"');
+            $form.append('<input type="hidden" name="from" value="' + from + '" />');
+            $form.append('<input type="hidden" name="to"   value="' + to   + '" />');
             $form.submit();
         },
         items: ">*:not(.sort-disabled)"
@@ -126,8 +127,9 @@ $(function(){
     });
     $('input[type="text"]').each(function(){
         var val = $(this).next('div.immutable').text();
-
-        $(this).attr('value', val);
+        if(val) {
+            $(this).attr('value', val);
+        }
     });
 
 

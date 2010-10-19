@@ -1,0 +1,109 @@
+{% extends "app_manager/forms.html" %}
+{% load xforms_extras %}
+{% block form-view %}
+    <h3>{{ app.name|trans:langs }}</h3>
+    {% if app.doc_type == "Application" %}
+        <h4>Supported Languages</h4>
+        <table class="config">
+            <tbody {% if edit %}class="sortable"{% endif %}>
+                <tr class="sort-action">
+                    <td>
+                        <form method="post" action="{% url corehq.apps.app_manager.views.swap domain app.id 'langs' %}">
+                        </form>
+                    </td>
+                </tr>
+                {% if edit %}
+                    {% for lang in app.langs %}
+                        <tr class="form editable">
+                            <td class="index">
+                                {{ forloop.counter0 }}
+                            </td>
+                            <td>
+                                [<a class="delete_link" href="#">x</a>]
+                                <div class="delete_dialog" title="Remove Language">
+                                    <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
+                                        <p>Removing this language will not permanently delete any translations you have made for it.</p>
+                                        <input type="hidden" name="lang_id" value="{{ forloop.counter|add:-1 }}" />
+                                        <input type="submit" value="Remove" />
+                                    </form>
+                                </div>
+                            </td>
+                            <td>
+                                <input class="code" type="text" name="lang" value={{ lang }} />
+                                <div class="immutable"><code>{{ lang }}</code></div>
+                            </td>
+                            <td>
+                                <input type="hidden" name="lang_id" value="{{ forloop.counter|add:-1 }}" />
+                                <a href="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}" class="submit button">
+                                    Save
+                                </a>
+                                <div class="immutable">
+                                    [<a href="#">edit</a>]
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="form editable">
+                        <td>
+                        </td>
+                        <td>
+                            <input class="code" type="text" name="lang" />
+                            <div class="immutable"></div>
+                        </td>
+                        <td>
+                            <a href="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}" class="submit button">
+                                Add
+                            </a>
+                            <div class="immutable">
+                                [<a href="#">add</a>]
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    {% for lang in app.langs %}
+                        <tr>
+                            <td>
+                                 <code>{{ lang }}</code>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td>
+                                <p class="warning">No supported languages</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    {% endif %}
+    {% if app.doc_type == "RemoteApp" %}
+        <h4>Remote Setup</h4>
+        <table class="config">
+            {% if edit %}
+                <tr class="form editable">
+                    <th>Suite URL</th>
+                    <td>
+                        <input type="text" class="code wide" name="suite_url" />
+                        <div class="immutable"><code>{{ app.suite_url }}</code></div>
+                    </td>
+                    <td>
+                        <a href="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'suite_url' %}" class="submit button">
+                            Save
+                        </a>
+                        <div class="immutable">
+                            [<a href="#">edit</a>]
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <th>Suite URL</th>
+                    <td>
+                        {{ app.suite_url }}
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endif %}
+{% endblock %}

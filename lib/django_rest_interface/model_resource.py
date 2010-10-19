@@ -36,7 +36,7 @@ class Collection(ResourceBase):
         responder:
             the data format instance that creates HttpResponse
             objects from single or multiple model objects and
-            renders new_xforms
+            renders forms
         receiver:
             the data format instance that handles POST and
             PUT data

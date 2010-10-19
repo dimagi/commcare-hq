@@ -9,7 +9,7 @@ from corehq.apps.domain.models import Domain
 
 ########################################################################################################
 #
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-new_xforms
+# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-forms
 #
 # I'll put this in each app, so they can be standalone, but it should really go in some centralized 
 # part of the distro. 

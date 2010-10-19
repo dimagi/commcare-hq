@@ -46,6 +46,17 @@ img::-moz-selection {background: transparent;}
 /*- LET'S GET STARTED!
 ----------------------------------------------------------------------*/
 
+li {
+    list-style: none;
+}
+
+.shadow {
+	-moz-box-shadow: 1px 1px 8px #000;
+	-webkit-box-shadow: 1px 1px 8px #000;
+	box-shadow: 1px 1px 8px #000;
+}
+
+
 a {
     color: #0067B1;
     text-decoration: none;
@@ -195,11 +206,14 @@ form table td {
 form table {
     margin: 1em;
 }
-
+#title-bar {
+    min-height: 30px;
+}
+#choose-application {
+    float: left;
+}
 #edit {
     float: right;
-    position: relative;
-    top: -5px;
 }
 #empty {
     padding: 1em;

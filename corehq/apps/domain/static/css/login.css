@@ -1,0 +1,17 @@
+div.login-block {
+    border: 1px solid #ccc;
+    margin: auto;
+    width: 500px;
+    padding: 1.5em;
+}
+body {
+    font-size: .9em;
+}
+
+div.form-label {
+    float: left;
+}
+
+div.form-field {
+    margin-left: 200px;
+}

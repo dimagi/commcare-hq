@@ -1,21 +1,16 @@
 {% extends base_template %}
 
 {% block title %}login{% endblock title %}
-{% block hq-stylesheets %}
-    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
-{% endblock hq-stylesheets %}
-
-{#################################################################################################################}
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
+    <script src="{{ MEDIA_URL }}/domain/js/login.js"></script>
+{% endblock %}
 
 {% block content %}
-
-    {% if next %}
-        <h4>You will be transferred to your original destination after you log in</h4>
-    {% endif %}
-    <hr class="space"/>
-
-    <!-- Login form -->
-    <div class="span-9 clear">
+    <div class="login-block">
+        {% if next %}
+            <h4>You will be transferred to your original destination after you log in</h4>
+        {% endif %}
         <form class="sfb" name="form" method="post" action="{% url login %}">
             {% csrf_token %}
             <h3>Login</h3>
@@ -30,7 +25,7 @@
             {% endif %}
 
             <!-- See: http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html for
-   example of multiline text associated with each input field -->
+    example of multiline text associated with each input field -->
 
             {% for field in form.visible_fields %}
                 {% if field.errors %}
@@ -38,10 +33,10 @@
                         {{field.errors}}
                     </div>
                 {% endif %}
-                <div>
+                <div class="form-label">
                     {{ field.label_tag }}
                 </div>
-                <div>
+                <div class="form-field">
                     {{ field }}
                 </div>
             {% endfor %}
@@ -52,13 +47,7 @@
             <button type="submit">Submit</button>
         </form>
 
-    </div>
-    <!-- Login form -->
-
-    <div>or</div>
-
-    <div>
-        <a href="{% url domain_registration_request %}">Request a new domain</a>
-        <a href="{% url domain_registration_resend_confirm_email %}">Resend confirm email?</a>
+        <div><a href="{% url domain_registration_request %}">Request a new domain</a></div>
+        <div></div><a href="{% url domain_registration_resend_confirm_email %}">Resend confirm email?</a></div>
     </div>
 {% endblock content %}     

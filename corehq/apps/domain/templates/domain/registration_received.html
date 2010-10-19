@@ -5,18 +5,21 @@
 {% block title %}
 domain registration request received{% endblock title %}
 
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
+    <script type="text/javascript" src="{{MEDIA_URL}}/domain/js/login.js"></script>
+{% endblock %}
+
 {#################################################################################################################}
 
 {% block content %}
 
-<hr class="space"/>
-<hr class="space"/>
-<div class="prepend-2">
-<h3><strong>Domain registration request received</strong></h3>  
-<h4>Confirmation mail sent to {{email}}</h4>
-<h4>To complete your domain registration, follow the instructions in the email.</h4>
-<hr class="space"/>
-<h4><a href="{% url homepage %}">Homepage</h4>
+<div class="login-block">
+    <h3><strong>Domain registration request received</strong></h3>
+    <p>Confirmation mail sent to {{email}}</p>
+    <p>To complete your domain registration, follow the instructions in the email.</p>
+    <hr class="space"/>
+    <h4><a href="{% url homepage %}">Homepage</h4>
 </div>
 {% endblock content %}
 

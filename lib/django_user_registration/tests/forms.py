@@ -6,7 +6,7 @@ from django_user_registration import forms
 
 class RegistrationFormTests(TestCase):
     """
-    Test the default registration new_xforms.
+    Test the default registration forms.
 
     """
     def test_registration_form(self):
