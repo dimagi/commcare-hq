@@ -12,7 +12,7 @@ admin.autodiscover()
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 domain_specific = patterns('',
-    (r'^apps/remote/', include('corehq.apps.remote_apps.urls')),
+    #(r'^apps/remote/', include('corehq.apps.remote_apps.urls')),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^receiver', include('corehq.apps.receiver.urls')),
     (r'^data/', include('corehq.apps.new_data.urls')),
