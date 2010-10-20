@@ -19,7 +19,6 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
                                                                             'edit_form_attr'),
 
     (r'edit_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',            'edit_module_detail'),
-    #(r'edit_module_case_type/(?P<app_id>\w+)/(?P<module_id>\w+)/$',         'edit_module_case_type'),
     (r'edit_module_attr/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<attr>\w+)/$','edit_module_attr'),
     (r'delete_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',          'delete_module_detail'),
 
@@ -38,6 +37,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_jar'),
     #(r'download/(?P<app_id>\w+)/$',                                         'download'),
 
-    (r'save/(?P<app_id>\w+)/$',                                             'save_app'),
-    (r'revert/(?P<app_id>\w+)/$',                                           'revert_app'),
+    (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
+    (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),
+    (r'delete_copy/(?P<app_id>\w+)/$',                                      'delete_copy'),
 )

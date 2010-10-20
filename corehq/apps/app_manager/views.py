@@ -9,11 +9,9 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import Domain, RemoteApp, Application, Module, XForm, VersionedDoc
+from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app
 
 from corehq.util.webutils import URL_BASE
-from copy import deepcopy
-
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
@@ -54,12 +52,12 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
         applications.append(cls(app.to_json()))
     app = module = form = None
     if app_id:
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
     elif applications and select_first:
         app = applications[0]
     if module_id:
         module = app.get_module(module_id)
-    elif app and app.modules and select_first:
+    elif app and app.doc_type == "Application" and app.modules and select_first:
         module = app.get_module(0)
     if form_id:
         form = module.get_form(form_id)
@@ -76,11 +74,14 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
         #xform_contents, err, has_err = readable_form(xform_contents)
         xform_contents = ""
 
-    saved_apps = Application.view('app_manager/applications',
-        startkey=[domain, app_id, {}],
-        endkey=[domain, app_id],
-        descending=True
-    ).all()
+    if app:
+        saved_apps = (app.__class__).view('app_manager/applications',
+            startkey=[domain, app_id, {}],
+            endkey=[domain, app_id],
+            descending=True
+        ).all()
+    else:
+        saved_apps = []
 
     return {
         'domain': domain,
@@ -112,7 +113,7 @@ def forms(req, domain, app_id='', module_id='', form_id='', template='app_manage
     if app and app.copy_of:
         raise Http404
     force_edit = False
-    if (not context['applications']) or (app and not app.modules):
+    if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
         edit = True
         force_edit = True
     context.update({
@@ -182,7 +183,7 @@ def new_module(req, domain, app_id):
         if form.is_valid():
             cd = form.cleaned_data
             name = cd['name']
-            app = Domain(domain).get_app(app_id)
+            app = get_app(domain, app_id)
             if name in [m['name'].get(lang, "") for m in app.modules]:
                 error = "module_exists"
             else:
@@ -254,7 +255,7 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
 
 @login_and_domain_required
 def delete_app(req, domain, app_id):
-    Domain(domain).get_app(app_id).delete()
+    get_app(domain, app_id).delete()
     return HttpResponseRedirect(
         reverse('corehq.apps.app_manager.views.forms', args=[domain])
         + "?edit=true"
@@ -262,7 +263,7 @@ def delete_app(req, domain, app_id):
 
 @login_and_domain_required
 def delete_module(req, domain, app_id, module_id):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     del app.modules[int(module_id)]
     app.save()
     return HttpResponseRedirect(
@@ -272,7 +273,7 @@ def delete_module(req, domain, app_id, module_id):
 
 @login_and_domain_required
 def delete_form(req, domain, app_id, module_id, form_id):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     module = Module(app, module_id)
     del module['forms'][int(form_id)]
     app.save()
@@ -301,7 +302,7 @@ def _register_xform(display_name, attachment, domain):
 def edit_module_attr(req, domain, app_id, module_id, attr):
     lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         module = app.get_module(module_id)
         if   "case_type" == attr:
             case_type = req.POST.get("case_type", None)
@@ -324,7 +325,7 @@ def edit_module_detail(req, domain, app_id, module_id):
         assert(detail_type in DETAIL_TYPES)
 
         column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format', 'enum'))
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         module = app.get_module(module_id)
 
         def _enum_to_dict(enum):
@@ -371,7 +372,7 @@ def delete_module_detail(req, domain, app_id, module_id):
     if req.method == "POST":
         column_id = int(req.POST['column_id'])
         detail_type = req.POST['detail_type']
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         module = app.get_module(module_id)
         for detail in module['details']:
             if detail['type'] == detail_type:
@@ -383,7 +384,7 @@ def delete_module_detail(req, domain, app_id, module_id):
 def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         form = app.get_module(module_id).get_form(form_id)
         if   "requires" == attr:
             requires = req.POST['requires']
@@ -412,7 +413,7 @@ def edit_app_lang(req, domain, app_id):
     if req.method == "POST":
         lang = req.POST['lang']
         lang_id = int(req.POST.get('lang_id', -1))
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         if lang_id == -1:
             app.langs.append(lang)
         else:
@@ -424,7 +425,7 @@ def edit_app_lang(req, domain, app_id):
 def delete_app_lang(req, domain, app_id):
     if req.method == "POST":
         lang_id = int(req.POST['lang_id'])
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         del app.langs[lang_id]
         app.save()
     return back_to_main(edit=True, **locals())
@@ -433,7 +434,7 @@ def delete_app_lang(req, domain, app_id):
 def edit_app_attr(req, domain, app_id, attr):
     lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         if   "suite_url" == attr:
             if app.doc_type not in ("RemoteApp",):
                 raise Exception("App type %s does not support suite urls" % app.doc_type)
@@ -445,7 +446,7 @@ def edit_app_attr(req, domain, app_id, attr):
 @login_and_domain_required
 def swap(req, domain, app_id, key):
     if req.method == "POST":
-        app = Domain(domain).get_app(app_id)
+        app = get_app(domain, app_id)
         i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
         assert(i < j)
         if   "forms" == key:
@@ -477,10 +478,10 @@ def _url_base():
     return URL_BASE
 
 def _check_domain_app(domain, app_id):
-    Domain(domain).get_app(app_id)
+    get_app(domain, app_id)
 
 def download_profile(req, domain, app_id, template='app_manager/profile.xml'):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     url_base = _url_base()
     post_url = url_base + reverse('corehq.apps.receiver.views.post', args=[domain])
     if 'suite_url' in app and app['suite_url']:
@@ -488,33 +489,34 @@ def download_profile(req, domain, app_id, template='app_manager/profile.xml'):
     else:
         suite_url = url_base + reverse('corehq.apps.app_manager.views.download_suite', args=[domain, app_id])
     return render_to_response(req, template, {
+        'app': app,
         'suite_url': suite_url,
         'post_url': post_url,
         'post_test_url': post_url,
     })
 
 def download_suite(req, domain, app_id, template='app_manager/suite.xml'):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     return render_to_response(req, template, {
         'app': app
     })
 
 
 def download_app_strings(req, domain, app_id, lang, template='app_manager/app_strings.txt'):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     return render_to_response(req, template, {
         'app': app,
         'langs': [lang] + app.langs,
     })
 
 def download_xform(req, domain, app_id, module_id, form_id):
-    xform_id = Domain(domain).get_app(app_id).get_module(module_id).get_form(form_id)['xform_id']
+    xform_id = get_app(domain, app_id).get_module(module_id).get_form(form_id)['xform_id']
     xform = XForm.get(xform_id)
     xform_xml = xform.fetch_attachment('xform.xml')
     return HttpResponse(xform_xml)
 
 def download_jad(req, domain, app_id, template="app_manager/CommCare.jad"):
-    app = Domain(domain).get_app(app_id)
+    app = get_app(domain, app_id)
     url_base = _url_base()
     if 'profile_url' in app and app['profile_url']:
         profile_url = app['profile_url']
@@ -531,7 +533,6 @@ def download_jad(req, domain, app_id, template="app_manager/CommCare.jad"):
 
 def download_jar(req, domain, app_id):
     view,args,kwargs = resolve('/static/app_manager/CommCare.jar')
-    print view, args, kwargs
     response = view(req, *args, **kwargs)
     response['Content-Type'] = "application/java-archive"
     return response
@@ -541,7 +542,7 @@ def download_jar(req, domain, app_id):
 #    url_base = _url_base()
 #    response = HttpResponse(mimetype="application/zip")
 #    response['Content-Disposition'] = "filename=commcare_app.zip"
-#    app = Domain(domain).get_app(app_id)
+#    app = get_app(domain, app_id)
 #    root = url_base + reverse('corehq.apps.app_manager.views.download', args=[domain, app_id])
 #    paths = ["profile.xml", "suite.xml"]
 #    for lang in app.langs:
@@ -563,30 +564,25 @@ def download_jar(req, domain, app_id):
 
 
 @login_and_domain_required
-def save_app(req, domain, app_id):
+def save_copy(req, domain, app_id):
     if req.method == "POST":
-        app = Domain(domain).get_app(app_id)
-        saved_app = deepcopy(app.to_json())
-        del saved_app['_id']
-        del saved_app['_rev']
-        cls = app.__class__
-        saved_app = cls(_d=saved_app)
-        saved_app['copy_of'] = app._id
-        saved_app.save()
+        app = get_app(domain, app_id)
+        app.save_copy()
         return back_to_main(**locals())
 
 
 @login_and_domain_required
-def revert_app(req, domain, app_id):
+def revert_to_copy(req, domain, app_id):
     if req.method == "POST":
-        old_app = Domain(domain).get_app(app_id)
-
-        app = deepcopy(Domain(domain).get_app(req.POST['saved_app']).to_json())
-        app['_rev'] = old_app._rev
-        app['_id'] = old_app._id
-        app['version'] = old_app.version
-        app['copy_of'] = None
-        cls = old_app.__class__
-        app = cls(_d=app)
-        app.save()
+        app = get_app(domain, app_id)
+        copy = get_app(domain, req.POST['saved_app'])
+        app = app.revert_to_copy(copy)
         return back_to_main(**locals())
+
+@login_and_domain_required
+def delete_copy(req, domain, app_id):
+    if req.method == "POST":
+        app = get_app(domain, app_id)
+        copy = get_app(domain, req.POST['saved_app'])
+        app.delete_copy(copy)
+    return back_to_main(edit=True, **locals())

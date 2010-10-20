@@ -2,6 +2,9 @@ from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.util import bitly
 from corehq.util.webutils import URL_BASE
+from django.http import Http404
+from copy import deepcopy
+from corehq.apps.domain.models import Domain
 
 class XForm(Document):
     display_name = StringProperty()
@@ -14,11 +17,19 @@ class XFormGroup(Document):
     display_name = StringProperty()
     xmlns = StringProperty()
 
+class VersioningError(Exception):
+    pass
+
 class VersionedDoc(Document):
     domain = StringProperty()
     copy_of = StringProperty()
     version = IntegerProperty()
     short_url = StringProperty()
+
+    @property
+    def id(self):
+        return self._id
+
     def save(self, **params):
         self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
@@ -27,6 +38,46 @@ class VersionedDoc(Document):
                 URL_BASE + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
             )
             super(VersionedDoc, self).save()
+    def save_copy(self):
+        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version]).all()
+        if copies:
+            copy = copies[0]
+        else:
+            copy = deepcopy(self.to_json())
+            del copy['_id']
+            del copy['_rev']
+            del copy['short_url']
+            cls = self.__class__
+            copy = cls.wrap(copy)
+            copy['copy_of'] = self._id
+            copy.version -= 1
+            copy.save()
+        return copy
+    def revert_to_copy(self, copy):
+        """
+        Replaces couch doc with a copy of the backup ("copy").
+        Returns the another Application/RemoteApp referring to this
+        updated couch doc. The returned doc should be used in place of
+        the original doc, i.e. should be called as follows:
+            app = revert_to_copy(app, copy)
+        This is not ideal :(
+        """
+        if copy.copy_of != self._id:
+            raise VersioningError("%s is not a copy of %s" % (copy, self))
+        app = deepcopy(copy).to_json()
+        app['_rev'] = self._rev
+        app['_id'] = self._id
+        app['version'] = self.version
+        app['copy_of'] = None
+        cls = self.__class__
+        app = cls.wrap(app)
+        app.save()
+        return app
+
+    def delete_copy(self, copy):
+        if copy.copy_of != self._id:
+            raise VersioningError("%s is not a copy of %s" % (copy, self))
+        copy.delete()
 
 class Application(VersionedDoc):
     modules = ListProperty()
@@ -38,32 +89,11 @@ class Application(VersionedDoc):
             yield Module(self, i)
     def get_module(self, i):
         return Module(self, i)
-    @property
-    def id(self):
-        return self._id
-    def get_absolute_url(self):
-        return reverse('corehq.apps.app_manager.views.app_view', args=[self.domain,  self.id])
 
 class RemoteApp(VersionedDoc):
     profile_url = StringProperty()
     suite_url = StringProperty()
     name = DictProperty()
-
-    @classmethod
-    def get_app(cls, domain, app_id):
-        # raise error if domain doesn't exist
-        Domain.objects.get(name=domain)
-        app = RemoteApp.get(app_id)
-        if app.domain != domain:
-            raise Exception("App %s not in domain %s" % (app_id, domain))
-        return app
-
-    @property
-    def id(self):
-        return self._id
-
-    def get_absolute_url(self):
-        return reverse('corehq.apps.remote_apps.views.app_view', args=[self.domain, self.id])
 
 
 
@@ -103,12 +133,20 @@ class Form(DictWrapper):
         self.id = int(id)
         self._dict = module['forms'][self.id]
 
-class Domain(object):
-    def __init__(self, name):
-        self.name = name
-    def get_app(self, app_id):
-        app = Application.get(app_id)
-        if app.doc_type != "Application":
-            app = RemoteApp.get(app_id)
-        assert(app.domain == self.name)
-        return app
+class DomainError(Exception):
+    pass
+
+
+
+def get_app(domain, app_id):
+    app = VersionedDoc.get(app_id)
+
+    try:    Domain.objects.get(name=domain)
+    except: raise DomainError("domain %s does not exist" % domain)
+
+    if app.domain != domain:
+        raise DomainError("%s not in domain %s" % (app._id, domain))
+    cls = {'Application': Application, "RemoteApp": RemoteApp}[app.doc_type]
+    app = cls.wrap(app.to_json())
+    return app
+

@@ -1,4 +1,4 @@
-<profile version="1" update="jr://resource/profile.xml">
+<profile version="{{ app.version }}" update="jr://resource/profile.xml">
     <property key="BackupMode" value="file_mode"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>
@@ -16,7 +16,7 @@
         <package active="false"/>
     </features>
 
-    <suite><resource id="suite" version="1">
+    <suite><resource id="suite" version="{{ app.version }}">
         <location authority="remote">{{ suite_url }}</location>
     </resource></suite>
 </profile>

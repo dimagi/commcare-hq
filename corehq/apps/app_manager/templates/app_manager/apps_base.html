@@ -43,6 +43,9 @@
                         {% endfor %}
                     </select>
                 {% endifequal %}
+                {% if app %}
+                    v. {{ app.version }}
+                {% endif %}
             {% endif %}
             {% if edit %}
                 [<a id="new_app" href="#">+</a>]
@@ -82,13 +85,30 @@
             {% endblock %}
         </div>
         <div id="release">
-            <form action="{% url corehq.apps.app_manager.views.save_app domain app.id %}" method="post">
+            <form action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
                 <input type="submit" value="Make New Build" />
             </form>
 
             <table class="config">
+                <tr>
+                    {% if edit %}
+                        <th></th>
+                    {% endif %}
+                    <th>Version</th>
+                    <th>Short URL</th>
+                    <th></th>
+                </tr>
                 {% for saved_app in saved_apps %}
                     <tr>
+                        {% if edit %}
+                            <td>
+                                <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}" method="post">
+                                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                                    <input type="submit" value="x" />
+
+                                </form>
+                            </td>
+                        {% endif %}
                         <td>{{ saved_app.version }}</td>
                         <td>
                             {% if saved_app.short_url %}
@@ -96,10 +116,12 @@
                             {% endif %}
                         </td>
                         <td>
-                            <form action="{% url corehq.apps.app_manager.views.revert_app domain app.id %}" method="POST">
-                                <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                                <input type="submit" value="Revert" />
-                            </form>
+                            {% if saved_app.version != app.version %}
+                                <form action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post">
+                                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                                    <input type="submit" value="Revert" />
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
