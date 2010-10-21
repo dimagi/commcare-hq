@@ -5,9 +5,12 @@ from corehq.util.webutils import URL_BASE
 from django.http import Http404
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
+from BeautifulSoup import BeautifulStoneSoup
+from datetime import datetime
+
+DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
 class XForm(Document):
-    display_name = StringProperty()
     xmlns = StringProperty()
     submit_time = DateTimeProperty()
     domain = StringProperty()
@@ -84,17 +87,89 @@ class Application(VersionedDoc):
     trans = DictProperty()
     name = DictProperty()
     langs = ListProperty()
+
     def get_modules(self):
         for i in range(len(self.modules)):
             yield Module(self, i)
+
     def get_module(self, i):
         return Module(self, i)
+
+    @classmethod
+    def new_app(cls, domain, name, lang="default"):
+        app = cls(domain=domain, modules=[], name={lang: name}, langs=["default"])
+        app.save()
+        return app
+
+    def new_module(self, name, lang="default"):
+        self.modules.append({
+            'name': {lang: name},
+            'forms': [],
+            'case_type': '',
+            'case_name': {},
+            'ref_name': {},
+            'details': [{'type': detail_type, 'columns': []} for detail_type in DETAIL_TYPES],
+        })
+        self.save()
+        return self.get_module(len(self.modules)-1)
+    def delete_module(self, module_id):
+        del self.modules[int(module_id)]
+        self.save()
+
+    def new_detail_header(self, module_id, detail_type):
+        pass
+    def update_detail_header(self, module_id, detail_type):
+        pass
+
+    def new_form(self, module_id, name, attachment, lang="default"):
+        xform = _register_xform(self.domain, attachment=attachment)
+        module = self.get_module(module_id)
+        module['forms'].append({
+            'name': {lang: name},
+            'xform_id': xform._id,
+            'xmlns': xform.xmlns
+        })
+        form = module.get_form(len(module['forms'])-1)
+        self.save()
+        return form
+    def delete_form(self, module_id, form_id):
+        module = self.get_module(module_id)
+        del module['forms'][int(form_id)]
+        self.save()
+
+    def swap_langs(self, i, j):
+        langs = self.langs
+        langs.insert(i, langs.pop(j))
+        self.langs = langs
+        self.save()
+    def swap_modules(self, i, j):
+        modules = self.modules
+        modules.insert(i, modules.pop(j))
+        self.modules = modules
+        self.save()
+    def swap_details(self, module_id, detail_type, i, j):
+        module = self.get_module(module_id)
+        detail = module['details'][DETAIL_TYPES.index(detail_type)]
+        columns = detail['columns']
+        columns.insert(i, columns.pop(j))
+        detail['columns'] = columns
+        self.save()
+    def swap_forms(self, module_id, i, j):
+        forms = self.modules[module_id]['forms']
+        forms.insert(i, forms.pop(j))
+        self.modules[module_id]['forms'] = forms
+        self.save()
 
 class RemoteApp(VersionedDoc):
     profile_url = StringProperty()
     suite_url = StringProperty()
     name = DictProperty()
 
+    @classmethod
+    def new_app(cls, domain, name):
+        app = cls(domain=domain, name={lang: name}, langs=["default"])
+        app.save()
+        return app
 
 
 
@@ -125,6 +200,11 @@ class Module(DictWrapper):
             yield Form(self, i)
     def get_form(self, i):
         return Form(self, i)
+    def get_detail(self, detail_type):
+        for detail in self['details']:
+            if detail['type'] == detail_type:
+                break
+
 
 class Form(DictWrapper):
     def __init__(self, module, id):
@@ -150,3 +230,16 @@ def get_app(domain, app_id):
     app = cls.wrap(app.to_json())
     return app
 
+def _register_xform(domain, attachment):
+    if not isinstance(attachment, basestring):
+        attachment = attachment.read()
+    xform = XForm()
+    soup = BeautifulStoneSoup(attachment)
+    xform.xmlns = soup.find('instance').findChild()['xmlns']
+
+    xform.submit_time = datetime.utcnow()
+    xform.domain = domain
+
+    xform.save()
+    xform.put_attachment(attachment, 'xform.xml', content_type='text/xml')
+    return xform
