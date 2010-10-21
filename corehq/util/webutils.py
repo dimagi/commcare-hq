@@ -129,5 +129,26 @@ def web_message(req, msg, link=None):
             "link": link
     })
 
+def parse_int(arg_keys=[], kwarg_keys=[]):
+    """
+    A decorator to translate coerce arguments to be ints
 
+    >>> @parse_int([0,1])
+    >>> def add(x,y):
+    ...     return x + y
+    ...
+    >>> add("1", "2")
+    3
 
+    """
+    def _parse_int(fn):
+        def _fn(*args, **kwargs):
+            args = list(args)
+            kwargs = dict(kwargs)
+            for i in arg_keys:
+                args[i] = int(args[i])
+            for key in kwarg_keys:
+                kwargs[key] = int(kwargs[key])
+            return fn(*args, **kwargs)
+        return _fn
+    return _parse_int

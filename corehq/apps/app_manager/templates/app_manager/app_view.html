@@ -19,7 +19,7 @@
                                 {{ forloop.counter0 }}
                             </td>
                             <td>
-                                [<a class="delete_link" href="#">x</a>]
+                                <a class="delete_link" href="#">x</a>
                                 <div class="delete_dialog" title="Remove Language">
                                     <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
                                         <p>Removing this language will not permanently delete any translations you have made for it.</p>
@@ -38,7 +38,7 @@
                                     Save
                                 </a>
                                 <div class="immutable">
-                                    [<a href="#">edit</a>]
+                                    <a class="edit_link" href="#">edit</a>
                                 </div>
                             </td>
                         </tr>
@@ -55,7 +55,7 @@
                                 Add
                             </a>
                             <div class="immutable">
-                                [<a href="#">add</a>]
+                                <a class="new_link" href="#">add</a>
                             </div>
                         </td>
                     </tr>
@@ -92,7 +92,7 @@
                             Save
                         </a>
                         <div class="immutable">
-                            [<a href="#">edit</a>]
+                            <a class="edit_link" href="#">edit</a>
                         </div>
                     </td>
                 </tr>

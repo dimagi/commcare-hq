@@ -1,5 +1,14 @@
 $(function(){
 
+
+    $.prototype.iconify = function(icon) {
+        this.addClass('ui-icon ' + icon).css('float', 'left');
+    }
+    $('.delete_link').iconify('ui-icon-closethick');
+    $('.new_link').iconify('ui-icon-plusthick');
+    $('.edit_link').iconify('ui-icon-pencil');
+
+
     $("#form-tabs").tabs({
         cookie: {}
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
@@ -101,7 +110,7 @@ $(function(){
         var $form = $('<form method="post" action="' + $(this).attr('href') + '" enctype="multipart/form-data"></form>');
         $row.find('[name]').each(function(){
             if($(this).attr('type') == 'file'){
-                var $input = $(this).clone();
+                var $input = $(this);
                 $input.hide();
                 $form.append($input);
             }
@@ -131,6 +140,4 @@ $(function(){
             $(this).attr('value', val);
         }
     });
-
-
 });

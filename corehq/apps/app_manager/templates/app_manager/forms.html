@@ -29,8 +29,8 @@
                 {% if edit %}<div class="index">{{ module.id }}</div>{% endif %}
                 <div {% ifequal module.id selected_module.id %}{% if not form %} class="selected"{% endif %}{% endifequal %}><!--[M]-->
                     {% if edit %}
-                        [<a class="delete_link" href="#"
-                            >x</a>]
+                        <a class="delete_link" href="#"
+                            >x</a>
                         <div class="delete_dialog" title="Delete {{ module.name|trans:langs }}?">
                             <form action="{% url corehq.apps.app_manager.views.delete_module domain app.id module.id %}" method="POST">
                                 <table>
@@ -60,8 +60,8 @@
                     <li {% ifequal form selected_form %} class="selected"{% endifequal %}><!--[F]-->
                         {% if edit %}<div class="index">{{ form.id }}</div>{% endif %}
                         {% if edit %}
-                        [<a class="delete_link" href="#"
-                            >x</a>]
+                        <a class="delete_link" href="#"
+                            >x</a>
                         <div class="delete_dialog" title="Delete {{ form.name|trans:langs }}?">
                             <form action="{% url corehq.apps.app_manager.views.delete_form domain app.id module.id form.id %}" method="POST">
                                 <table>
@@ -85,8 +85,8 @@
                     {% endif %}
                     {% if edit %}
                     <li>
-                        [<a href="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}"
-                            >+</a>]
+                        <a class="new_link" href="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}"
+                            >+</a>
                     </li>
                     {% endif %}
 

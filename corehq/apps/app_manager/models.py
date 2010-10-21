@@ -1,7 +1,7 @@
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.util import bitly
-from corehq.util.webutils import URL_BASE
+from corehq.util.webutils import URL_BASE, parse_int
 from django.http import Http404
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
@@ -10,15 +10,88 @@ from datetime import datetime
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
+
 class XForm(Document):
+    domain = StringProperty()
     xmlns = StringProperty()
     submit_time = DateTimeProperty()
-    domain = StringProperty()
 
-class XFormGroup(Document):
+class XFormGroup(DocumentSchema):
     "Aggregate of all XForms with the same xmlns"
     display_name = StringProperty()
     xmlns = StringProperty()
+
+class IndexedSchema(DocumentSchema):
+    def with_id(self, i, parent):
+        self._i = i
+        self._parent = parent
+        return self
+    @property
+    def id(self):
+        return self._i
+    def __eq__(self, other):
+        return other and (self.id == other.id) and (self._parent == other._parent)
+
+class Form(IndexedSchema):
+    name        = DictProperty()
+    requires    = StringProperty()
+    xform_id    = StringProperty()
+    xmlns       = StringProperty()
+
+class DetailColumn(DocumentSchema):
+    header  = DictProperty()
+    model   = StringProperty()
+    field   = StringProperty()
+    format  = StringProperty()
+    enum    = DictProperty()
+
+class Detail(DocumentSchema):
+    type = StringProperty()
+    columns = SchemaListProperty(DetailColumn)
+
+    def append_column(self, column):
+        self.columns.append(column)
+    def update_column(self, column_id, column):
+        my_column = self.columns[column_id]
+
+        my_column.model  = column.model
+        my_column.field  = column.field
+        my_column.format = column.format
+
+        for lang in column.header:
+            my_column.header[lang] = column.header[lang]
+
+        for key in column.enum:
+            for lang in column.enum[key]:
+                my_column.enum[key][lang] = column.enum[key][lang]
+
+    def delete_column(self, column_id):
+        del self.columns[column_id]
+
+class Module(IndexedSchema):
+    name = DictProperty()
+    case_name = DictProperty()
+    ref_name = DictProperty()
+    forms = SchemaListProperty(Form)
+    details = SchemaListProperty(Detail)
+    case_type = StringProperty()
+
+    def get_forms(self):
+        l = len(self.forms)
+        for i, form in enumerate(self.forms):
+            yield form.with_id(i%l, self)
+    @parse_int([1])
+    def get_form(self, i):
+        return self.forms[i].with_id(i%len(self.forms), self)
+
+    def get_detail(self, detail_type):
+        for detail in self.details:
+            if detail.type == detail_type:
+                return detail
+        raise Exception("Module %s has no detail type %s" % (self, detail_type))
+
+
+
 
 class VersioningError(Exception):
     pass
@@ -83,82 +156,74 @@ class VersionedDoc(Document):
         copy.delete()
 
 class Application(VersionedDoc):
-    modules = ListProperty()
+    modules = SchemaListProperty(Module)
     trans = DictProperty()
     name = DictProperty()
-    langs = ListProperty()
+    langs = StringListProperty()
 
     def get_modules(self):
-        for i in range(len(self.modules)):
-            yield Module(self, i)
+        l = len(self.modules)
+        for i,module in enumerate(self.modules):
+            yield module.with_id(i%l, self)
 
+    @parse_int([1])
     def get_module(self, i):
-        return Module(self, i)
+        return self.modules[i].with_id(i%len(self.modules), self)
 
     @classmethod
     def new_app(cls, domain, name, lang="default"):
         app = cls(domain=domain, modules=[], name={lang: name}, langs=["default"])
-        app.save()
         return app
 
     def new_module(self, name, lang="default"):
-        self.modules.append({
-            'name': {lang: name},
-            'forms': [],
-            'case_type': '',
-            'case_name': {},
-            'ref_name': {},
-            'details': [{'type': detail_type, 'columns': []} for detail_type in DETAIL_TYPES],
-        })
-        self.save()
-        return self.get_module(len(self.modules)-1)
+        self.modules.append(
+            Module(
+                name={lang: name},
+                forms=[],
+                case_type='',
+                case_name={},
+                ref_name={},
+                details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
+            )
+        )
+        return self.get_module(-1)
     def delete_module(self, module_id):
         del self.modules[int(module_id)]
-        self.save()
-
-    def new_detail_header(self, module_id, detail_type):
-        pass
-    def update_detail_header(self, module_id, detail_type):
-        pass
 
     def new_form(self, module_id, name, attachment, lang="default"):
         xform = _register_xform(self.domain, attachment=attachment)
         module = self.get_module(module_id)
-        module['forms'].append({
-            'name': {lang: name},
-            'xform_id': xform._id,
-            'xmlns': xform.xmlns
-        })
-        form = module.get_form(len(module['forms'])-1)
-        self.save()
+        module['forms'].append(
+            Form(
+                name={lang: name},
+                xform_id=xform._id,
+                xmlns=xform.xmlns
+            )
+        )
+        form = module.get_form(-1)
         return form
     def delete_form(self, module_id, form_id):
         module = self.get_module(module_id)
         del module['forms'][int(form_id)]
-        self.save()
 
     def swap_langs(self, i, j):
         langs = self.langs
         langs.insert(i, langs.pop(j))
         self.langs = langs
-        self.save()
     def swap_modules(self, i, j):
         modules = self.modules
         modules.insert(i, modules.pop(j))
         self.modules = modules
-        self.save()
-    def swap_details(self, module_id, detail_type, i, j):
+    def swap_detail_columns(self, module_id, detail_type, i, j):
         module = self.get_module(module_id)
         detail = module['details'][DETAIL_TYPES.index(detail_type)]
         columns = detail['columns']
         columns.insert(i, columns.pop(j))
         detail['columns'] = columns
-        self.save()
     def swap_forms(self, module_id, i, j):
         forms = self.modules[module_id]['forms']
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
-        self.save()
 
 class RemoteApp(VersionedDoc):
     profile_url = StringProperty()
@@ -166,52 +231,9 @@ class RemoteApp(VersionedDoc):
     name = DictProperty()
 
     @classmethod
-    def new_app(cls, domain, name):
-        app = cls(domain=domain, name={lang: name}, langs=["default"])
-        app.save()
+    def new_app(cls, domain, name, lang="default"):
+        app = cls(domain=domain, name={lang: name}, langs=[lang])
         return app
-
-
-
-# The following classes are wrappers for the subparts of an application document
-class DictWrapper(object):
-    def __eq__(self, other):
-        try:
-            return (self.id == other.id) and (self.parent == other.parent)
-        except:
-            return False
-def _call_dict(fn):
-    def _fn(self, *args, **kwargs):
-        return getattr(self._dict, fn)(*args, **kwargs)
-    return _fn
-
-for fn in ('__getitem__', '__setitem__', '__contains__', 'update', 'get'):
-    setattr(DictWrapper, fn, _call_dict(fn))
-
-class Module(DictWrapper):
-    def __init__(self, app, id):
-        self.app = app
-        self.parent = self.app
-        self.id = int(id)
-        self._dict = app.modules[self.id]
-
-    def get_forms(self):
-        for i in range(len(self['forms'])):
-            yield Form(self, i)
-    def get_form(self, i):
-        return Form(self, i)
-    def get_detail(self, detail_type):
-        for detail in self['details']:
-            if detail['type'] == detail_type:
-                break
-
-
-class Form(DictWrapper):
-    def __init__(self, module, id):
-        self.module = module
-        self.parent = self.module
-        self.id = int(id)
-        self._dict = module['forms'][self.id]
 
 class DomainError(Exception):
     pass

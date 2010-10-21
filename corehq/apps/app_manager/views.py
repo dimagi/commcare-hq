@@ -9,7 +9,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app, _register_xform
+from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app, _register_xform, DetailColumn
 
 from corehq.util.webutils import URL_BASE
 
@@ -49,7 +49,7 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
     str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
     for app in VersionedDoc.view('app_manager/applications', startkey=[domain], endkey=[domain, '']).all():
         cls = str_to_cls[app.doc_type]
-        applications.append(cls(app.to_json()))
+        applications.append(cls.wrap(app.to_json()))
     app = module = form = None
     if app_id:
         app = get_app(domain, app_id)
@@ -157,6 +157,7 @@ def new_app(req, domain):
                 error="app_exists"
             else:
                 app = cls.new_app(domain, name, lang)
+                app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.app_manager.views.app_view', args=[domain, app['_id']])
                     + "?edit=true"
@@ -184,6 +185,7 @@ def new_module(req, domain, app_id):
                 error = "module_exists"
             else:
                 module = app.new_module(name, lang)
+                app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.app_manager.views.module_view', args=[domain, app_id, module.id])
                     + "?edit=true"
@@ -210,6 +212,7 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
             attachment = cd['file']
             app = get_app(domain, app_id)
             form = app.new_form(module_id, name, attachment, lang)
+            app.save()
             return HttpResponseRedirect(
                 reverse('corehq.apps.app_manager.views.form_view', args=[domain, app_id, module_id, form.id])
                 + "?edit=true"
@@ -236,6 +239,7 @@ def delete_app(req, domain, app_id):
 def delete_module(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     app.delete_module(module_id)
+    app.save()
     return HttpResponseRedirect(
         reverse('corehq.apps.app_manager.views.app_view', args=[domain, app_id])
         + "?edit=true"
@@ -245,6 +249,7 @@ def delete_module(req, domain, app_id, module_id):
 def delete_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     app.delete_form(module_id, form_id)
+    app.save()
     return HttpResponseRedirect(
         reverse('corehq.apps.app_manager.views.app_view', args=[domain, app_id])
         + "?edit=true"
@@ -258,7 +263,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         module = app.get_module(module_id)
         if   "case_type" == attr:
             case_type = req.POST.get("case_type", None)
-            module['case_type'] = case_type
+            module.case_type = case_type
         elif ("name", "case_name", "ref_name").__contains__(attr):
             name = req.POST.get(attr, None)
             module[attr][lang] = name
@@ -277,6 +282,7 @@ def edit_module_detail(req, domain, app_id, module_id):
 
         column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format', 'enum'))
         app = get_app(domain, app_id)
+        module = app.get_module(module_id)
 
         def _enum_to_dict(enum):
             if not enum:
@@ -290,23 +296,13 @@ def edit_module_detail(req, domain, app_id, module_id):
 
         column['enum'] = _enum_to_dict(column['enum'])
         column['header'] = {lang: column['header']}
-        detail = module.get_detail(detail_type)
-        if detail['type'] != detail_type:
-            detail = {'type': detail_type}
-            module['details'].append(detail)
-
+        column = DetailColumn.wrap(column)
+        detail = app.get_module(module_id).get_detail(detail_type)
 
         if(column_id == -1):
-            detail['columns'].append(column)
+            detail.append_column(column)
         else:
-            realcol = detail['columns'][column_id]
-            for key in ('model', 'field', 'format'):
-                realcol[key] = column[key]
-
-            realcol['header'][lang] = column['header'][lang]
-
-            for key in column['enum']:
-                realcol['enum'][key][lang] = column['enum'][key][lang]
+            detail.update_column(column_id, column)
         app.save()
 
     return HttpResponseRedirect(
@@ -321,9 +317,7 @@ def delete_module_detail(req, domain, app_id, module_id):
         detail_type = req.POST['detail_type']
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
-        for detail in module['details']:
-            if detail['type'] == detail_type:
-                del detail['columns'][column_id]
+        module.get_detail(detail_type).delete_column(column_id)
         app.save()
     return back_to_main(edit=True, **locals())
 
@@ -335,19 +329,18 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         form = app.get_module(module_id).get_form(form_id)
         if   "requires" == attr:
             requires = req.POST['requires']
-            form['requires'] = requires
+            form.requires = requires
         elif "name" == attr:
             name = req.POST['name']
-            form['name'][lang] = name
+            form.name[lang] = name
         elif "xform" == attr:
             xform = req.FILES['xform']
-            doc = _register_xform(domain, xform)
-            form['xform_id'] = doc['_id']
-            form['xmlns'] = doc['xmlns']
+            xform = _register_xform(domain, xform)
+            form.xform_id = xform._id
+            form.xmlns = xform.xmlns
         elif "show_count" == attr:
             show_count = req.POST['show_count']
-            form['show_count'] = True if show_count == "True" else False
-
+            form.show_count = True if show_count == "True" else False
         app.save()
     return back_to_main(edit=True, **locals())
 
@@ -399,9 +392,10 @@ def swap(req, domain, app_id, key):
             app.swap_modules(i, j)
         elif "detail" == key:
             module_id = int(req.POST['module_id'])
-            app.swap_details(module_id, req.POST['detail_type'], i, j)
+            app.swap_detail_columns(module_id, req.POST['detail_type'], i, j)
         elif "langs" == key:
             app.swap_langs(i, j)
+        app.save()
     return back_to_main(edit=True, **locals())
 
 def _url_base():
@@ -498,7 +492,7 @@ def save_copy(req, domain, app_id):
     if req.method == "POST":
         app = get_app(domain, app_id)
         app.save_copy()
-        return back_to_main(**locals())
+        return back_to_main(edit=True, **locals())
 
 
 @login_and_domain_required
@@ -507,7 +501,7 @@ def revert_to_copy(req, domain, app_id):
         app = get_app(domain, app_id)
         copy = get_app(domain, req.POST['saved_app'])
         app = app.revert_to_copy(copy)
-        return back_to_main(**locals())
+        return back_to_main(edit=True, **locals())
 
 @login_and_domain_required
 def delete_copy(req, domain, app_id):

@@ -18,7 +18,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        [<a href="#">edit</a>]
+                        <a class="edit_link" href="#">edit</a>
                     </div>
                 </td>
             </tr>
@@ -35,7 +35,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        [<a href="#">edit</a>]
+                        <a class="edit_link" href="#">edit</a>
                     </div>
                 </td>
             </tr>
@@ -52,7 +52,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        [<a href="#">edit</a>]
+                        <a class="edit_link" href="#">edit</a>
                     </div>
                 </td>
             </tr>
@@ -69,7 +69,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        [<a href="#">edit</a>]
+                        <a class="edit_link" href="#">edit</a>
                     </div>
                 </td>
             </tr>
@@ -147,7 +147,7 @@
                     <tr class="editable detail-row form">
                         <td class="index">{{ forloop.counter0 }}</td>
                         <td>
-                            [<a class="delete_link" href="#">x</a>]
+                            <a class="delete_link" href="#">x</a>
                             <div class="delete_dialog" title="Delete Header?">
                                 <form method="post"
                                     action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
@@ -195,7 +195,7 @@
                                 Save
                             </a>
                             <div class="immutable">
-                                [<a href="#" class="edit-row">edit</a>]
+                                <a href="#" class="edit_link edit-row">edit</a>
                             </div>
                         </td>
                     </tr>
@@ -246,7 +246,7 @@
                         <input type="hidden" name="detail_type" value="{{ detail.type }}">
                         <a class="submit button" href="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">Add</a>
                         <div class="immutable">
-                            [<a href="#" class="edit-row">add</a>]
+                            <a href="#" class="new_link edit-row">add</a>
                         </div>
                     </td>
                 </tr>

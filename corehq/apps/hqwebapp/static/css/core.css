@@ -211,6 +211,10 @@ form table {
 }
 #choose-application {
     float: left;
+    display: table;
+}
+#choose-application > * {
+    display: table-cell;
 }
 #edit {
     float: right;
