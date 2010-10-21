@@ -10,3 +10,6 @@
 [submodule "submodules/couchexport-src"]
 	path = submodules/couchexport-src
 	url = git://github.com/dimagi/couchexport.git
+[submodule "submodules/djangocouch-src"]
+	path = submodules/djangocouch-src
+	url = git@github.com:dimagi/djangocouch.git
