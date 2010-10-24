@@ -16,6 +16,21 @@ class XForm(Document):
     xmlns = StringProperty()
     submit_time = DateTimeProperty()
 
+    @classmethod
+    def new_xform(cls, domain, attachment):
+        if not isinstance(attachment, basestring):
+            attachment = attachment.read()
+        xform = cls()
+        soup = BeautifulStoneSoup(attachment)
+        xform.xmlns = soup.find('instance').findChild()['xmlns']
+
+        xform.submit_time = datetime.utcnow()
+        xform.domain = domain
+
+        xform.save()
+        xform.put_attachment(attachment, 'xform.xml', content_type='text/xml')
+        return xform
+
 class XFormGroup(DocumentSchema):
     "Aggregate of all XForms with the same xmlns"
     display_name = StringProperty()
@@ -191,9 +206,9 @@ class Application(VersionedDoc):
         del self.modules[int(module_id)]
 
     def new_form(self, module_id, name, attachment, lang):
-        xform = _register_xform(self.domain, attachment=attachment)
+        xform = XForm.new_xform(self.domain, attachment=attachment)
         module = self.get_module(module_id)
-        module['forms'].append(
+        module.forms.append(
             Form(
                 name={lang: name},
                 xform_id=xform._id,
@@ -253,16 +268,3 @@ def get_app(domain, app_id):
     app = cls.wrap(app.to_json())
     return app
 
-def _register_xform(domain, attachment):
-    if not isinstance(attachment, basestring):
-        attachment = attachment.read()
-    xform = XForm()
-    soup = BeautifulStoneSoup(attachment)
-    xform.xmlns = soup.find('instance').findChild()['xmlns']
-
-    xform.submit_time = datetime.utcnow()
-    xform.domain = domain
-
-    xform.save()
-    xform.put_attachment(attachment, 'xform.xml', content_type='text/xml')
-    return xform

@@ -6,14 +6,15 @@ Replace these with more appropriate tests for your application.
 """
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn
+from corehq.apps.app_manager.models import Application, DetailColumn, XForm
 from corehq.apps.domain.models import Domain
 
 class AppManagerTest(TestCase):
-    xform_str = '<instance><test_form xmlns="http://mrsexypants.com/test_form"></test_form></instance>'
+    xform_xmlns = "http://mrsexypants.com/test_form"
+    xform_str = '<instance><test_form xmlns="%s"></test_form></instance>' % xform_xmlns
     def setUp(self):
-        Domain.objects.get_or_create(name="demo")
-        self.app = Application.new_app("demo", "TestApp")
+        Domain.objects.get_or_create(name="test_domain")
+        self.app = Application.new_app("test_domain", "TestApp")
 
         for i in range(3):
             module = self.app.new_module("Module%d" % i, "en")
@@ -30,6 +31,8 @@ class AppManagerTest(TestCase):
         self.app.save()
     def tearDown(self):
         self.app.delete()
+        for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
+            xform.delete()
 
     def testSetUp(self):
         self.failUnlessEqual(len(self.app.modules), 3)

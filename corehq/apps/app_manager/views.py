@@ -9,7 +9,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app, _register_xform, DetailColumn
+from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app, DetailColumn
 
 from corehq.util.webutils import URL_BASE
 
@@ -337,7 +337,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
             form.name[lang] = name
         elif "xform" == attr:
             xform = req.FILES['xform']
-            xform = _register_xform(domain, xform)
+            xform = XForm.new_xform(domain, xform)
             form.xform_id = xform._id
             form.xmlns = xform.xmlns
         elif "show_count" == attr:
@@ -493,9 +493,10 @@ def download_jar(req, domain, app_id):
 @login_and_domain_required
 def save_copy(req, domain, app_id):
     if req.method == "POST":
+        edit = req.POST.get('edit', '') == "true"
         app = get_app(domain, app_id)
         app.save_copy()
-        return back_to_main(edit=True, **locals())
+        return back_to_main(**locals())
 
 
 @login_and_domain_required
