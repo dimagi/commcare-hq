@@ -42,7 +42,7 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
     #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
     edit = (req.GET.get('edit', '') == 'true')
     lang = req.GET.get('lang',
-       req.COOKIES.get('lang', 'default')
+       req.COOKIES.get('lang', '')
     )
 
     applications = []
@@ -139,7 +139,6 @@ def app_view(req, domain, app_id, template="app_manager/app_view.html"):
 
 @login_and_domain_required
 def new_app(req, domain):
-    lang = 'default'
     if req.method == "POST":
         form = NewAppForm(req.POST)
         if form.is_valid():
@@ -156,7 +155,7 @@ def new_app(req, domain):
             if name in [a.name.get(lang, "") for a in all_apps]:
                 error="app_exists"
             else:
-                app = cls.new_app(domain, name, lang)
+                app = cls.new_app(domain, name)
                 app.save()
                 return HttpResponseRedirect(
                     reverse('corehq.apps.app_manager.views.app_view', args=[domain, app['_id']])
@@ -174,13 +173,13 @@ def new_app(req, domain):
 
 @login_and_domain_required
 def new_module(req, domain, app_id):
-    lang = req.COOKIES.get('lang', 'default')
+    app = get_app(domain, app_id)
+    lang = req.COOKIES.get('lang', app.langs[0])
     if req.method == "POST":
         form = NewModuleForm(req.POST)
         if form.is_valid():
             cd = form.cleaned_data
             name = cd['name']
-            app = get_app(domain, app_id)
             if name in [m['name'].get(lang, "") for m in app.modules]:
                 error = "module_exists"
             else:
@@ -202,7 +201,8 @@ def new_module(req, domain, app_id):
 
 @login_and_domain_required
 def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html"):
-    lang = req.COOKIES.get('lang', 'default')
+    app = get_app(domain, app_id)
+    lang = req.COOKIES.get('lang', app.langs[0])
     if req.method == "POST":
         form = NewXFormForm(req.POST, req.FILES)
 
@@ -210,7 +210,6 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
             cd = form.cleaned_data
             name = cd['name']
             attachment = cd['file']
-            app = get_app(domain, app_id)
             form = app.new_form(module_id, name, attachment, lang)
             app.save()
             return HttpResponseRedirect(
@@ -257,10 +256,11 @@ def delete_form(req, domain, app_id, module_id, form_id):
 
 @login_and_domain_required
 def edit_module_attr(req, domain, app_id, module_id, attr):
-    lang = req.COOKIES.get('lang', 'default')
+
     if req.method == "POST":
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
+        lang = req.COOKIES.get('lang', app.langs[0])
         if   "case_type" == attr:
             case_type = req.POST.get("case_type", None)
             module.case_type = case_type
@@ -274,7 +274,6 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     )
 @login_and_domain_required
 def edit_module_detail(req, domain, app_id, module_id):
-    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         column_id = int(req.POST.get('column_id', -1))
         detail_type = req.POST.get('detail_type', '')
@@ -283,6 +282,8 @@ def edit_module_detail(req, domain, app_id, module_id):
         column = dict((key, req.POST[key]) for key in ('header', 'model', 'field', 'format', 'enum'))
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
+        lang = req.COOKIES.get('lang', app.langs[0])
+
 
         def _enum_to_dict(enum):
             if not enum:
@@ -323,10 +324,11 @@ def delete_module_detail(req, domain, app_id, module_id):
 
 @login_and_domain_required
 def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
-    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         app = get_app(domain, app_id)
         form = app.get_module(module_id).get_form(form_id)
+        lang = req.COOKIES.get('lang', app.langs[0])
+
         if   "requires" == attr:
             requires = req.POST['requires']
             form.requires = requires
@@ -368,9 +370,9 @@ def delete_app_lang(req, domain, app_id):
 
 @login_and_domain_required
 def edit_app_attr(req, domain, app_id, attr):
-    lang = req.COOKIES.get('lang', 'default')
     if req.method == "POST":
         app = get_app(domain, app_id)
+        lang = req.COOKIES.get('lang', app.langs[0])
         if   "suite_url" == attr:
             if app.doc_type not in ("RemoteApp",):
                 raise Exception("App type %s does not support suite urls" % app.doc_type)
@@ -422,7 +424,8 @@ def download_profile(req, domain, app_id, template='app_manager/profile.xml'):
 def download_suite(req, domain, app_id, template='app_manager/suite.xml'):
     app = get_app(domain, app_id)
     return render_to_response(req, template, {
-        'app': app
+        'app': app,
+        'langs': ["default"] + app.langs
     })
 
 

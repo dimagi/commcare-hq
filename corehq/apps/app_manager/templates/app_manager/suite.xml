@@ -13,7 +13,7 @@
   {% endfor %}
  {% endfor %}
 
- {% for lang in app.langs %}
+ {% for lang in langs %}
     <!-- Read and locally store the translation strings-->
     <locale language="{{ lang }}">
         <resource id="app_{{ lang }}_strings" version="{{ app.version }}">

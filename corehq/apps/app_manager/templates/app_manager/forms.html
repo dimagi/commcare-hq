@@ -15,7 +15,7 @@
     <div id="modules-form-view-wrapper">
         <div id="modules">
         <!--h2 id="modules-header">Modules</h2-->
-        <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.app_manager.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name|trans:langs}}</a></h2>
+        <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.app_manager.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name }}</a></h2>
         <ul {% if edit %}class="sortable"{% endif %}>
             {% if edit %}
                 <li class="sort-action">
@@ -36,7 +36,7 @@
                                 <table>
                                     <tr><td>
                                     Are you sure you want to delete module "{{ module.name|trans:langs }}"
-                                    and all its forms from application "{{ app.name|trans:app.langs }}"?
+                                    and all its forms from application "{{ app.name }}"?
                                     </td></tr>
                                 </table>
                                 <input type="submit" value="Delete" />

@@ -34,9 +34,10 @@ class IndexedSchema(DocumentSchema):
 
 class Form(IndexedSchema):
     name        = DictProperty()
-    requires    = StringProperty()
+    requires    = StringProperty(choices=["case", "referral", "none"], default="none")
     xform_id    = StringProperty()
     xmlns       = StringProperty()
+    show_count  = BooleanProperty(default=False)
 
 class DetailColumn(DocumentSchema):
     header  = DictProperty()
@@ -157,8 +158,7 @@ class VersionedDoc(Document):
 
 class Application(VersionedDoc):
     modules = SchemaListProperty(Module)
-    trans = DictProperty()
-    name = DictProperty()
+    name = StringProperty()
     langs = StringListProperty()
 
     def get_modules(self):
@@ -171,18 +171,18 @@ class Application(VersionedDoc):
         return self.modules[i].with_id(i%len(self.modules), self)
 
     @classmethod
-    def new_app(cls, domain, name, lang="default"):
-        app = cls(domain=domain, modules=[], name={lang: name}, langs=["default"])
+    def new_app(cls, domain, name):
+        app = cls(domain=domain, modules=[], name=name, langs=["en"])
         return app
 
-    def new_module(self, name, lang="default"):
+    def new_module(self, name, lang):
         self.modules.append(
             Module(
                 name={lang: name},
                 forms=[],
                 case_type='',
-                case_name={},
-                ref_name={},
+                case_name={'en': "Case"},
+                ref_name={'en': "Referral"},
                 details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
             )
         )
@@ -190,14 +190,15 @@ class Application(VersionedDoc):
     def delete_module(self, module_id):
         del self.modules[int(module_id)]
 
-    def new_form(self, module_id, name, attachment, lang="default"):
+    def new_form(self, module_id, name, attachment, lang):
         xform = _register_xform(self.domain, attachment=attachment)
         module = self.get_module(module_id)
         module['forms'].append(
             Form(
                 name={lang: name},
                 xform_id=xform._id,
-                xmlns=xform.xmlns
+                xmlns=xform.xmlns,
+                form_requires="none",
             )
         )
         form = module.get_form(-1)
@@ -227,12 +228,12 @@ class Application(VersionedDoc):
 
 class RemoteApp(VersionedDoc):
     profile_url = StringProperty()
-    suite_url = StringProperty()
-    name = DictProperty()
+    suite_url = StringProperty(default="http://")
+    name = StringProperty()
 
     @classmethod
-    def new_app(cls, domain, name, lang="default"):
-        app = cls(domain=domain, name={lang: name}, langs=[lang])
+    def new_app(cls, domain, name):
+        app = cls(domain=domain, name=name, langs=["en"])
         return app
 
 class DomainError(Exception):

@@ -28,7 +28,7 @@
                         <option value="case">case</option>
                         <option value="referral">referral</option>
                     </select>
-                    <div class="immutable"><code>{{ form.requires }}</code></div>
+                    <div class="immutable"><code>{% firstof form.requires "none" %}</code></div>
                 </td>
                 <td>
                     <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" class="submit button">

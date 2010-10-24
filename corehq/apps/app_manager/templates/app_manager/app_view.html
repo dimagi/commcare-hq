@@ -1,7 +1,7 @@
 {% extends "app_manager/forms.html" %}
 {% load xforms_extras %}
 {% block form-view %}
-    <h3>{{ app.name|trans:langs }}</h3>
+    <h3>{{ app.name }}</h3>
     {% if app.doc_type == "Application" %}
         <h4>Supported Languages</h4>
         <table class="config">

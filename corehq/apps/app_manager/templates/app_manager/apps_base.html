@@ -15,11 +15,11 @@
             <p>Application:</p>
             {% if edit and app %}
                 <a class="delete_link" href="#">x</a>
-                <div class="delete_dialog" title="Delete {{ app.name|trans:app.langs }}?">
+                <div class="delete_dialog" title="Delete {{ app.name }}?">
                     <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
                         <table>
                             <tr>
-                                <td>Are you sure you want to delete application "{{ app.name|trans:app.langs }}"
+                                <td>Are you sure you want to delete application "{{ app.name }}"
                                     and all its modules and forms?</td>
                             </tr>
                         </table>
@@ -29,7 +29,7 @@
             {% endif %}
             {% if applications %}
                 {% ifequal applications|length 1 %}
-                    <strong>{{ app.name|trans:app.langs }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
+                    <strong>{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
                 {% else %}
                     <select class="applications">
                         {% if not app %}
@@ -38,7 +38,7 @@
                         {% for a in applications %}
                         <option value="{% url corehq.apps.app_manager.views.app_view domain a.id %}"
                                 {% ifequal a.id app.id %}selected=""{% endifequal %}>
-                            {{ a.name|trans:a.langs }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
+                            {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
                         </option>
                         {% endfor %}
                     </select>
