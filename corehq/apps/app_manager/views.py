@@ -25,9 +25,9 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
     args = [domain]
     if app_id:
         args.append(app_id)
-
+    view_name = 'default' if len(args) == 1 else 'view_app'
     return HttpResponseRedirect("%s%s" % (
-        reverse('corehq.apps.app_manager.views.view_app', args=args),
+        reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""
     ))
 def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first=False):
