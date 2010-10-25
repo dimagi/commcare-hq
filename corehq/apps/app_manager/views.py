@@ -1,7 +1,5 @@
 from django.http import HttpResponse, Http404
 from corehq.util.webutils import render_to_response
-from BeautifulSoup import BeautifulStoneSoup
-from datetime import datetime
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
@@ -9,37 +7,30 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, Module, XForm, VersionedDoc, get_app, DetailColumn
+from corehq.apps.app_manager.models import RemoteApp, Application, XForm, VersionedDoc, get_app, DetailColumn
 
 from corehq.util.webutils import URL_BASE
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
-
+from django.utils.http import urlencode
 
 @login_and_domain_required
-def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=False, **kwargs):
-    params = {}
+def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
+    params = {'m': module_id, 'f': form_id}
     if edit:
         params['edit'] = 'true'
+    if error:
+        params['error'] = error
+
     args = [domain]
-    print "module_id: %s" % module_id
-    for x in app_id, module_id, form_id:
-        if x != '':
-            args.append(x)
-        else:
-            break
-    def urlize(params):
-        if params:
-            return '?' + ';'.join(["%s=%s" % (key,val) for key,val in params.items()])
-        else:
-            return ""
-    view_name = ('forms', 'app_view', 'module_view', 'form_view')[len(args)-1]
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.%s' % view_name, args=args)
-        + urlize(params)
-    )
-def _forms_context(req, domain, app_id='', module_id='', form_id='', select_first=False):
-    #print "%s > %s > %s > %s " % (domain, app_id, module_id, form_id)
+    if app_id:
+        args.append(app_id)
+
+    return HttpResponseRedirect("%s%s" % (
+        reverse('corehq.apps.app_manager.views.view_app', args=args),
+        "?%s" % urlencode(params) if params else ""
+    ))
+def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first=False):
     edit = (req.GET.get('edit', '') == 'true')
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
@@ -61,12 +52,12 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
         module = app.get_module(0)
     if form_id:
         form = module.get_form(form_id)
-    elif module and module['forms'] and select_first:
+    elif module and module.forms and select_first:
         form = module.get_form(0)
     xform = ""
     xform_contents = ""
     try:
-        xform = XForm.get(form['xform_id'])
+        xform = XForm.get(form.xform_id)
     except:
         pass
     if xform:
@@ -97,19 +88,30 @@ def _forms_context(req, domain, app_id='', module_id='', form_id='', select_firs
         'new_app_form': NewAppForm(),
         'new_module_form': NewModuleForm(),
         'edit': edit,
-        'langs': [lang] + (app.langs if app else [])    ,
+        'langs': [lang] + (app.langs if app else []),
         'lang': lang,
 
         'saved_apps': saved_apps,
     }
+def default(req, domain):
+    return view_app(req, domain, app_id='')
+
 @login_and_domain_required
-def forms(req, domain, app_id='', module_id='', form_id='', template='app_manager/forms.html'):
+def view_app(req, domain, app_id=''):
+    module_id = req.GET.get('m', '')
+    form_id = req.GET.get('f', '')
+    if form_id:
+        template="app_manager/form_view.html"
+    elif module_id:
+        template="app_manager/module_view.html"
+    else:
+        template="app_manager/app_view.html"
     error = req.GET.get('error', '')
-    context = _forms_context(req, domain, app_id, module_id, form_id)
+    context = _apps_context(req, domain, app_id, module_id, form_id)
     app = context['app']
     if not app and context['applications']:
         app_id = context['applications'][0]._id
-        return back_to_main(**locals())
+        return back_to_main(edit=False, **locals())
     if app and app.copy_of:
         raise Http404
     force_edit = False
@@ -124,18 +126,6 @@ def forms(req, domain, app_id='', module_id='', form_id='', template='app_manage
     response = render_to_response(req, template, context)
     response.set_cookie('lang', context['lang'])
     return response
-
-@login_and_domain_required
-def form_view(req, domain, app_id, module_id, form_id, template="app_manager/form_view.html"):
-    return forms(req, domain, app_id, module_id, form_id, template=template)
-
-@login_and_domain_required
-def module_view(req, domain, app_id, module_id, template='app_manager/module_view.html'):
-    return forms(req, domain, app_id, module_id, template=template)
-
-@login_and_domain_required
-def app_view(req, domain, app_id, template="app_manager/app_view.html"):
-    return forms(req, domain, app_id, template=template)
 
 @login_and_domain_required
 def new_app(req, domain):
@@ -157,19 +147,8 @@ def new_app(req, domain):
             else:
                 app = cls.new_app(domain, name)
                 app.save()
-                return HttpResponseRedirect(
-                    reverse('corehq.apps.app_manager.views.app_view', args=[domain, app['_id']])
-                    + "?edit=true"
-                )
+        return back_to_main(**locals())
 
-        else:
-            error="app_form_invalid"
-    else:
-        error="wtf"
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.forms', args=[domain])
-        + "?edit=true" + ";error=%s" % error
-    )
 
 @login_and_domain_required
 def new_module(req, domain, app_id):
@@ -185,19 +164,7 @@ def new_module(req, domain, app_id):
             else:
                 module = app.new_module(name, lang)
                 app.save()
-                return HttpResponseRedirect(
-                    reverse('corehq.apps.app_manager.views.module_view', args=[domain, app_id, module.id])
-                    + "?edit=true"
-                )
-        else:
-            error = "module_form_invalid"
-    else:
-        error = "wtf"
-
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.app_view', args=[domain, app_id])
-        + "?edit=true" + ";error=%s" % error
-    )
+        return back_to_main(**locals())
 
 @login_and_domain_required
 def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html"):
@@ -212,12 +179,9 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
             attachment = cd['file']
             form = app.new_form(module_id, name, attachment, lang)
             app.save()
-            return HttpResponseRedirect(
-                reverse('corehq.apps.app_manager.views.form_view', args=[domain, app_id, module_id, form.id])
-                + "?edit=true"
-            )
+            return back_to_main(**locals())
 
-    context = _forms_context(req, domain, app_id, module_id)
+    context = _apps_context(req, domain, app_id, module_id)
     form_name = req.GET.get('form_name', '')
     context.update({
         'new_xform_form': NewXFormForm(initial={'name':form_name}),
@@ -229,30 +193,23 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
 @login_and_domain_required
 def delete_app(req, domain, app_id):
     get_app(domain, app_id).delete()
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.forms', args=[domain])
-        + "?edit=true"
-    )
-
+    del app_id
+    return back_to_main(**locals())
 @login_and_domain_required
 def delete_module(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     app.delete_module(module_id)
     app.save()
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.app_view', args=[domain, app_id])
-        + "?edit=true"
-    )
+    del module_id
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def delete_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     app.delete_form(module_id, form_id)
     app.save()
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.app_view', args=[domain, app_id])
-        + "?edit=true"
-    )
+    del form_id
+    back_to_main(**locals())
 
 @login_and_domain_required
 def edit_module_attr(req, domain, app_id, module_id, attr):
@@ -268,10 +225,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             name = req.POST.get(attr, None)
             module[attr][lang] = name
         app.save()
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.module_view', args=[domain, app_id, module_id])
-        + "?edit=true"
-    )
+    return back_to_main(**locals())
+
 @login_and_domain_required
 def edit_module_detail(req, domain, app_id, module_id):
     if req.method == "POST":
@@ -306,11 +261,7 @@ def edit_module_detail(req, domain, app_id, module_id):
             detail.update_column(column_id, column)
         app.save()
 
-    return HttpResponseRedirect(
-        reverse('corehq.apps.app_manager.views.module_view', args=[domain, app_id, module_id])
-        + "?edit=true"
-    )
-
+    return back_to_main(**locals())
 @login_and_domain_required
 def delete_module_detail(req, domain, app_id, module_id):
     if req.method == "POST":
@@ -320,7 +271,7 @@ def delete_module_detail(req, domain, app_id, module_id):
         module = app.get_module(module_id)
         module.get_detail(detail_type).delete_column(column_id)
         app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
@@ -344,7 +295,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
             show_count = req.POST['show_count']
             form.show_count = True if show_count == "True" else False
         app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def edit_app_lang(req, domain, app_id):
@@ -357,7 +308,7 @@ def edit_app_lang(req, domain, app_id):
         else:
             app.langs[lang_id] = lang
         app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def delete_app_lang(req, domain, app_id):
@@ -366,7 +317,7 @@ def delete_app_lang(req, domain, app_id):
         app = get_app(domain, app_id)
         del app.langs[lang_id]
         app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def edit_app_attr(req, domain, app_id, attr):
@@ -378,7 +329,7 @@ def edit_app_attr(req, domain, app_id, attr):
                 raise Exception("App type %s does not support suite urls" % app.doc_type)
             app['suite_url'] = req.POST['suite_url']
             app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 
 @login_and_domain_required
@@ -398,7 +349,7 @@ def swap(req, domain, app_id, key):
         elif "langs" == key:
             app.swap_langs(i, j)
         app.save()
-    return back_to_main(edit=True, **locals())
+    return back_to_main(**locals())
 
 def _url_base():
     return URL_BASE
@@ -493,11 +444,10 @@ def download_jar(req, domain, app_id):
 @login_and_domain_required
 def save_copy(req, domain, app_id):
     if req.method == "POST":
-        edit = req.POST.get('edit', '') == "true"
+        next = req.POST.get('next')
         app = get_app(domain, app_id)
         app.save_copy()
-        return back_to_main(**locals())
-
+        return HttpResponseRedirect(next)
 
 @login_and_domain_required
 def revert_to_copy(req, domain, app_id):
@@ -505,12 +455,13 @@ def revert_to_copy(req, domain, app_id):
         app = get_app(domain, app_id)
         copy = get_app(domain, req.POST['saved_app'])
         app = app.revert_to_copy(copy)
-        return back_to_main(edit=True, **locals())
+        return back_to_main(**locals())
 
 @login_and_domain_required
 def delete_copy(req, domain, app_id):
     if req.method == "POST":
+        next = req.POST.get('next')
         app = get_app(domain, app_id)
         copy = get_app(domain, req.POST['saved_app'])
         app.delete_copy(copy)
-    return back_to_main(edit=True, **locals())
+        return HttpResponseRedirect(next)

@@ -1,11 +1,9 @@
 from django.conf.urls.defaults import patterns
+from django.template.defaulttags import url
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
-    (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',         'form_view'),
-    (r'view/(?P<app_id>\w+)/(?P<module_id>\w+)/$',                          'module_view'),
-    (r'view/(?P<app_id>\w+)/$',                                             'app_view'),
-    (r'view/$',                                                             'forms'),
-    #(r'$',                                                                  'forms'),
+    (r'view/(?P<app_id>\w+)/$',                                             'view_app'),
+    (r'view/$',                                                             'default'),
 
     (r'new_module/(?P<app_id>\w+)/$',                                       'new_module'),
     (r'new_app/$',                                                          'new_app'),

@@ -1,5 +1,6 @@
 {% extends base_template %}
 {% load xforms_extras %}
+{% load url_extras %}
 {% block head %}
 {% endblock %}
 {% block content %}
@@ -12,41 +13,43 @@
     {% endif %}
     <div id="title-bar" class="container">
         <div id="choose-application">
-            <p>Application:</p>
-            {% if edit and app %}
-                <a class="delete_link" href="#">x</a>
-                <div class="delete_dialog" title="Delete {{ app.name }}?">
-                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
-                        <table>
-                            <tr>
-                                <td>Are you sure you want to delete application "{{ app.name }}"
-                                    and all its modules and forms?</td>
-                            </tr>
-                        </table>
-                        <input type="submit" value="Delete" />
-                    </form>
-                </div>
-            {% endif %}
-            {% if applications %}
-                {% ifequal applications|length 1 %}
-                    <strong>{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
-                {% else %}
-                    <select class="applications">
-                        {% if not app %}
-                            <option value="#" disabled="" selected="">No Application Selected</option>
-                        {% endif %}
-                        {% for a in applications %}
-                        <option value="{% url corehq.apps.app_manager.views.app_view domain a.id %}"
-                                {% ifequal a.id app.id %}selected=""{% endifequal %}>
-                            {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                {% endifequal %}
-                {% if app %}
-                    v. {{ app.version }}
+            <div>
+                <p>Application:</p>
+                {% if edit and app %}
+                    <a class="delete_link" href="#">x</a>
+                    <div class="delete_dialog" title="Delete {{ app.name }}?">
+                        <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
+                            <table>
+                                <tr>
+                                    <td>Are you sure you want to delete application "{{ app.name }}"
+                                        and all its modules and forms?</td>
+                                </tr>
+                            </table>
+                            <input type="submit" value="Delete" />
+                        </form>
+                    </div>
                 {% endif %}
-            {% endif %}
+                {% if applications %}
+                    {% ifequal applications|length 1 %}
+                        <strong id="app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
+                    {% else %}
+                        <select class="applications">
+                            {% if not app %}
+                                <option value="#" disabled="" selected="">No Application Selected</option>
+                            {% endif %}
+                            {% for a in applications %}
+                            <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
+                                    {% ifequal a.id app.id %}selected=""{% endifequal %}>
+                                {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    {% endifequal %}
+                    {% if app %}
+                        v. {{ app.version }}
+                    {% endif %}
+                {% endif %}
+            </div>
             {% if edit %}
                 <a class="new_link" id="new_app" href="#"></a>
 
@@ -63,12 +66,13 @@
         </div>
         <div id="edit">
             {% if edit  %}
-                <a class="button"
-                   href="{% ifequal view_name "new_form" %}{% url corehq.apps.app_manager.views.module_view domain app.id module.id %}{% else %}./{% endifequal %}">
+                <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
                     Done Editing
                 </a>
             {% else %}
-                <a class="button" href="./?edit=true">Edit</a>
+                <a class="button" href="{% urlencode request.path request.GET with "edit" as "true" %}">
+                    Edit
+                </a>
             {% endif %}
         </div>
 
@@ -77,7 +81,6 @@
     <div id="form-tabs">
         <ul>
             <li><a href='#forms'>Structure and Configuration</a></li>
-            <!--li><a href='#settings'>Settings</a></li-->
             <li><a href='#release'>Release Manager</a></li>
         </ul>
         <div id="forms">
@@ -87,7 +90,7 @@
         <div id="release">
             {% if saved_apps.0.version != app.version %}
                 <form action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
-                    {% if edit %}<input type="hidden" name="edit" value="true" />{% endif %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
                     <input type="submit" value="Make New Build" />
                 </form>
             {% endif %}
@@ -112,6 +115,7 @@
                                     <p>Are you sure you want to delete this build?</p>
                                     <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}" method="post">
                                         <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
                                         <input type="submit" value="Delete" />
                                     </form>
                                 </div>

@@ -129,7 +129,9 @@ header {
 }
 #main > div {
 }
-
+#app_name {
+    padding: 0 1em;
+}
 .container {
     padding: 1em;
 }
@@ -213,8 +215,11 @@ form table {
     float: left;
     display: table;
 }
-#choose-application > * {
-    display: table-cell;
+#choose-application > div >* {
+    float:left;
+}
+#choose-application > div > p {
+    height: 40px;
 }
 #edit {
     float: right;

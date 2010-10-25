@@ -1,21 +1,27 @@
 {% extends "app_manager/apps_base.html" %}
 {% load xforms_extras %}
+{% load url_extras %}
 {% block head %}
 {% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
         Language:
-        <select class="code">
+        <select class="code" name="lang">
             {% for lang in app.langs %}
-            <option value="./?{% if edit %}edit=true;{% endif %}lang={{ lang }}"{% if lang == langs.0 %} selected=""{% endif %}>{{ lang }}</option>
+                <option value="{% urlencode request.path request.GET with "lang" as lang %}"
+                    {% if lang == langs.0 %}selected=""{% endif %}>
+                    {{ lang }}
+                </option>
             {% endfor %}
         </select>
-
     </div>
     <div id="modules-form-view-wrapper">
         <div id="modules">
         <!--h2 id="modules-header">Modules</h2-->
-        <h2 {% if not module and not form %}class="selected"{% endif %}><!--[A]--> <a href="{% url corehq.apps.app_manager.views.app_view domain app.id %}{% if edit %}?edit=true{% endif %}">{{ app.name }}</a></h2>
+        <h2 {% if not module and not form %}class="selected"{% endif %}>
+            <a href="{% urlencode request.path request.GET without "m" without "f" %}">{{ app.name }}
+            </a>
+        </h2>
         <ul {% if edit %}class="sortable"{% endif %}>
             {% if edit %}
                 <li class="sort-action">
@@ -43,7 +49,7 @@
                             </form>
                         </div>
                     {% endif %}
-                    <a href="{% url corehq.apps.app_manager.views.module_view domain app.id module.id %}{% if edit %}?edit=true{% endif %}">
+                    <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">
                         {{ module.name|trans:langs }}
                     </a>
                 </div>
@@ -74,7 +80,7 @@
                             </form>
                         </div>
                         {% endif %}
-                        <a href="{% url corehq.apps.app_manager.views.form_view domain app.id module.id form.id %}{% if edit %}?edit=true{% endif %}">
+                        <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}">
                             {{ form.name|trans:langs }}
                         </a>
                     </li>
@@ -126,7 +132,9 @@
                             </table>
                         {% else %}
                             <p>This xform doesn't seem to exist. Would you like to create one with this name?</p>
-                            <a class="button" href="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?form_name={{ form.name }}">Create Form</a>
+                            <a class="button" href="{% urlencode request.path request.GET with 'form_name' as form.name %}">
+                                Create Form
+                            </a>
 
                         {% endif %}
                     {% else %}{% if module %}
