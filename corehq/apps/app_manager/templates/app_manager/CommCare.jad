@@ -2,7 +2,7 @@ MIDlet-Name: CommCare
 MIDlet-Version: 1.0.1
 MIDlet-Vendor: Dimagi,Inc
 MIDlet-Jar-URL: {{ jar_url }}
-MIDlet-Jar-Size: 609515
+MIDlet-Jar-Size: {{ jar_size }}
 MIDlet-Info-URL: http://www.dimagi.com
 MIDlet-1: CommCare,,org.commcare.midlet.CommCareMidlet
 App-Version: 1.0.1

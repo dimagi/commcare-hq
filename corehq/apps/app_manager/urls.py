@@ -26,14 +26,15 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     (r'swap/(?P<app_id>\w+)/(?P<key>\w+)/$',                                'swap'),
 
+    (r'download/(?P<app_id>\w+)/$',                                         'download_index'),
     (r'download/(?P<app_id>\w+)/suite.xml$',                                'download_suite'),
     (r'download/(?P<app_id>\w+)/profile.xml$',                              'download_profile'),
     (r'download/(?P<app_id>\w+)/(?P<lang>\w+)/app_strings.txt$',            'download_app_strings'),
     (r'download/(?P<app_id>\w+)/m(?P<module_id>\d+)/f(?P<form_id>\d+).xml$',
                                                                             'download_xform'),
     (r'download/(?P<app_id>\w+)/CommCare.jad',                              'download_jad'),
-    (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_jar'),
-    #(r'download/(?P<app_id>\w+)/$',                                         'download'),
+    (r'download/(?P<app_id>\w+)/CommCare_raw.jar',                          'download_jar'),
+    (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_zipped_jar'),
 
     (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
     (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),

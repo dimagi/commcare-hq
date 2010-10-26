@@ -61,25 +61,40 @@ $(function(){
     $("#ic_file").button();
     $("input[type='submit']").button();
     $("#error").dialog();
-    $("#new_app_dialog").dialog({autoOpen:false, modal:true});
+
+
+    /*$("#new_app_dialog").dialog({autoOpen:false, modal:true});
     $("#new_app").click(function(e){
         e.preventDefault();
         $("#new_app_dialog").dialog('open');
     });
+
     $("#new_module_dialog").dialog({autoOpen:false, modal:true});
     $("#new_module").click(function(e){
         e.preventDefault();
         $("#new_module_dialog").dialog('open');
-    });
+    });*/
 
-    $(".delete_link").each(function (){
-        this._dialog = $(this).next('.delete_dialog');
+    $("#new_app").addClass("dialog_opener");
+    $("#new_app_dialog").addClass("dialog");
+    $("#new_module").addClass("dialog_opener");
+    $("#new_module_dialog").addClass("dialog");
+
+    $(".delete_link").addClass("dialog_opener");
+    $(".delete_dialog").addClass("dialog");
+
+
+
+    $(".dialog_opener").each(function (){
+        this._dialog = $(this).next('.dialog');
     });
-    $(".delete_dialog").dialog({autoOpen: false, modal: true});
-    $(".delete_link").click(function(e){
+    $(".dialog").dialog({autoOpen: false, modal: true});
+    $(".dialog_opener").click(function(e){
         e.preventDefault();
        this._dialog.dialog('open');
     });
+
+
     // Module Config Edit
     $('select[name="format"]').change(function(){
         var $enum = $(this).parent().next().find('input[name="enum"]');

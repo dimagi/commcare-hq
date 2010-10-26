@@ -5,7 +5,7 @@
     <property key="purge-freq" value="7" force="true"/>
     <property key="PostURL" value="{{ post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
-    <property key="cur_locale" value="default"/>
+    <property key="cur_locale" value="{{ app.langs.0 }}"/>
     <!--property key="cc-send-procedure" value="cc-send-none" /-->
 
     <features>
@@ -18,5 +18,6 @@
 
     <suite><resource id="suite" version="{{ app.version }}">
         <location authority="remote">{{ suite_url }}</location>
+        <location authority="local">jr://resource/suite.xml</location>
     </resource></suite>
 </profile>

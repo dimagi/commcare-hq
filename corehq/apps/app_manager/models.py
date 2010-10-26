@@ -7,8 +7,69 @@ from copy import deepcopy
 from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
 from datetime import datetime
+import hashlib
+from django.template.loader import render_to_string
+from zipfile import ZipFile, ZIP_DEFLATED
+from StringIO import StringIO
+import itertools
+
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
+
+class JadJar(Document):
+    @property
+    def hash(self):
+        return self._id
+    @classmethod
+    def new(cls, jad, jar):
+        try: jad = jad.read()
+        except: pass
+        try: jar = jar.read()
+        except: pass
+        hash = hashlib.sha1()
+        hash.update(jad)
+        hash.update(jar)
+        hash = hash.hexdigest()
+        try:
+            jadjar = cls.get(hash)
+        except:
+            jadjar = cls(_id=hash)
+            jadjar.save()
+            jadjar.put_attachment(jad, 'CommCare.jad', 'text/vnd.sun.j2me.app-descriptor')
+            jadjar.put_attachment(jar, 'CommCare.jar', 'application/java-archive')
+        return jadjar
+    def fetch_jad(self):
+        return self.fetch_attachment('CommCare.jad')
+    def fetch_jar(self):
+        return self.fetch_attachment('CommCare.jar')
+    def jad_dict(self):
+        return JadDict.from_jad(self.fetch_jad())
+
+class JadDict(dict):
+    @classmethod
+    def from_jad(cls, jad_contents):
+        sep = ": "
+        jd = cls()
+        lines = [line.strip() for line in jad_contents.split("\n") if line.strip()]
+        for line in lines:
+            i = line.find(sep)
+            if i == -1:
+                pass
+            key, value = line[:i], line[i+len(sep):]
+            jd[key] = value
+        return jd
+
+    def render(self):
+        '''Render self as jad file contents'''
+        ordered_start = ['MIDlet-Name', 'MIDlet-Version', 'MIDlet-Vendor', 'MIDlet-Jar-URL',
+                        'MIDlet-Jar-Size', 'MIDlet-Info-URL', 'MIDlet-1', 'MIDlet-Permissions']
+        ordered_end = ['MIDlet-Jar-RSA-SHA1', 'MIDlet-Certificate-1-1',
+                        'MIDlet-Certificate-1-2', 'MIDlet-Certificate-1-3',
+                        'MIDlet-Certificate-1-4']
+        unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
+        props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
+        lines = ['%s: %s\n' % (key, self[key]) for key in props if key in self]
+        return "".join(lines)
 
 
 class XForm(Document):
@@ -171,10 +232,116 @@ class VersionedDoc(Document):
             raise VersioningError("%s is not a copy of %s" % (copy, self))
         copy.delete()
 
-class Application(VersionedDoc):
+class ApplicationBase(VersionedDoc):
+
+    @property
+    def post_url(self):
+        return "%s%s" % (
+            URL_BASE,
+            reverse('corehq.apps.receiver.views.post', args=[self.domain])
+        )
+    @property
+    def profile_url(self):
+        return "%s%s" % (
+            URL_BASE,
+            reverse('corehq.apps.app_manager.views.download_profile', args=[self.domain, self._id])
+        )
+    @property
+    def jar_url(self):
+        return "%s%s" % (
+            URL_BASE,
+            reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
+        )
+    @property
+    def jadjar_id(self):
+        """
+        A sha1 hash of the jad + jar contents for identification
+
+        """
+        # won't be hard coded in the future
+        return 'a15cfcbb9c8ec0f5855ffa08be5ac02d2125926e'
+
+    def create_jad(self, template="app_manager/CommCare.jad"):
+        jad = JadJar.get(self.jadjar_id).jad_dict()
+        jad.update({
+            'MIDlet-Jar-Size': len(self.create_zipped_jar()),
+            'Profile': self.profile_url,
+            'MIDlet-Jar-URL': self.jar_url,
+        })
+        return jad.render()
+
+    def create_profile(self, template='app_manager/profile.xml'):
+        return render_to_string(template, {
+            'app': self,
+            'suite_url': self.suite_url,
+            'post_url': self.post_url,
+            'post_test_url': self.post_url,
+        })
+    def fetch_jar(self):
+        return JadJar.get(self.jadjar_id).fetch_jar()
+
+    def create_zipped_jar(self):
+        jar = self.fetch_jar()
+        files = self.create_all_files()
+        buffer = StringIO(jar)
+        zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
+        for path in files:
+            zipper.writestr(path, files[path].encode('utf-8'))
+        zipper.close()
+        buffer.flush()
+        answer = buffer.getvalue()
+        buffer.close()
+        return answer
+
+class Application(ApplicationBase):
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
+
+    @property
+    def suite_url(self):
+        return "%s%s" % (
+            URL_BASE,
+            reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
+        )
+    @property
+    def jar_url(self):
+        return "%s%s" % (
+            URL_BASE,
+            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
+        )
+    @property
+    def profile_url(self):
+        return "jr://resource/profile.xml"
+
+    def fetch_xform(self, module_id, form_id):
+        xform_id = self.get_module(module_id).get_form(form_id).xform_id
+        xform = XForm.get(xform_id)
+        return xform.fetch_attachment('xform.xml')
+
+    def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
+        return render_to_string(template, {
+            'app': self,
+            'langs': [lang] + self.langs,
+        })
+    def create_suite(self, template='app_manager/suite.xml'):
+        return render_to_string(template, {
+            'app': self,
+            'langs': ["default"] + self.langs
+        })
+
+    def create_all_files(self):
+        files = {
+            "profile.xml": self.create_profile(),
+            "suite.xml": self.create_suite(),
+        }
+
+        for lang in self.langs:
+            files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
+        for module in self.get_modules():
+            for form in module.get_forms():
+                files["m%s/f%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
+        return files
 
     def get_modules(self):
         l = len(self.modules)
@@ -241,7 +408,7 @@ class Application(VersionedDoc):
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
 
-class RemoteApp(VersionedDoc):
+class RemoteApp(ApplicationBase):
     profile_url = StringProperty()
     suite_url = StringProperty(default="http://")
     name = StringProperty()

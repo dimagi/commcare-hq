@@ -13,6 +13,9 @@ from corehq.util.webutils import URL_BASE
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
+from StringIO import StringIO
+from zipfile import ZipFile, ZIP_DEFLATED
+from urllib2 import urlopen
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
@@ -87,6 +90,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first
 
         'new_app_form': NewAppForm(),
         'new_module_form': NewModuleForm(),
+        'new_xform_form': NewXFormForm(),
         'edit': edit,
         'langs': [lang] + (app.langs if app else []),
         'lang': lang,
@@ -147,6 +151,7 @@ def new_app(req, domain):
             else:
                 app = cls.new_app(domain, name)
                 app.save()
+                app_id = app.id
         return back_to_main(**locals())
 
 
@@ -179,16 +184,16 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
             attachment = cd['file']
             form = app.new_form(module_id, name, attachment, lang)
             app.save()
-            return back_to_main(**locals())
+        return back_to_main(**locals())
 
-    context = _apps_context(req, domain, app_id, module_id)
-    form_name = req.GET.get('form_name', '')
-    context.update({
-        'new_xform_form': NewXFormForm(initial={'name':form_name}),
-        'edit': True,
-        'view_name': "new_form"
-    })
-    return render_to_response(req, template, context)
+#    context = _apps_context(req, domain, app_id, module_id)
+#    form_name = req.GET.get('form_name', '')
+#    context.update({
+#        'new_xform_form': NewXFormForm(initial={'name':form_name}),
+#        'edit': True,
+#        'view_name': "new_form"
+#    })
+#    return render_to_response(req, template, context)
 
 @login_and_domain_required
 def delete_app(req, domain, app_id):
@@ -209,7 +214,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     app.delete_form(module_id, form_id)
     app.save()
     del form_id
-    back_to_main(**locals())
+    return back_to_main(**locals())
 
 @login_and_domain_required
 def edit_module_attr(req, domain, app_id, module_id, attr):
@@ -357,89 +362,47 @@ def _url_base():
 def _check_domain_app(domain, app_id):
     get_app(domain, app_id)
 
-def download_profile(req, domain, app_id, template='app_manager/profile.xml'):
-    app = get_app(domain, app_id)
-    url_base = _url_base()
-    post_url = url_base + reverse('corehq.apps.receiver.views.post', args=[domain])
-    if 'suite_url' in app and app['suite_url']:
-        suite_url = app['suite_url']
-    else:
-        suite_url = url_base + reverse('corehq.apps.app_manager.views.download_suite', args=[domain, app_id])
+
+def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     return render_to_response(req, template, {
-        'app': app,
-        'suite_url': suite_url,
-        'post_url': post_url,
-        'post_test_url': post_url,
+        'app': get_app(domain, app_id)
     })
-
-def download_suite(req, domain, app_id, template='app_manager/suite.xml'):
-    app = get_app(domain, app_id)
-    return render_to_response(req, template, {
-        'app': app,
-        'langs': ["default"] + app.langs
-    })
-
-
-def download_app_strings(req, domain, app_id, lang, template='app_manager/app_strings.txt'):
-    app = get_app(domain, app_id)
-    return render_to_response(req, template, {
-        'app': app,
-        'langs': [lang] + app.langs,
-    })
-
+def download_profile(req, domain, app_id):
+    return HttpResponse(
+        get_app(domain, app_id).create_profile()
+    )
+def download_suite(req, domain, app_id):
+    return HttpResponse(
+        get_app(domain, app_id).create_suite()
+    )
+def download_app_strings(req, domain, app_id, lang):
+    return HttpResponse(
+        get_app(domain, app_id).create_app_strings(lang)
+    )
 def download_xform(req, domain, app_id, module_id, form_id):
-    xform_id = get_app(domain, app_id).get_module(module_id).get_form(form_id)['xform_id']
-    xform = XForm.get(xform_id)
-    xform_xml = xform.fetch_attachment('xform.xml')
-    return HttpResponse(xform_xml)
-
-def download_jad(req, domain, app_id, template="app_manager/CommCare.jad"):
-    app = get_app(domain, app_id)
-    url_base = _url_base()
-    if 'profile_url' in app and app['profile_url']:
-        profile_url = app['profile_url']
-    else:
-        profile_url = url_base + reverse('corehq.apps.app_manager.views.download_profile', args=[domain, app_id])
-    response = render_to_response(req, template, {
-        'domain': domain,
-        'app': app,
-        'profile_url': profile_url,
-        'jar_url': url_base + reverse('corehq.apps.app_manager.views.download_jar', args=[domain, app_id]),
-    })
+    return HttpResponse(
+        get_app(domain, app_id).fetch_xform(module_id, form_id)
+    )
+def download_jad(req, domain, app_id):
+    response = HttpResponse(
+        get_app(domain, app_id).create_jad()
+    )
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
 
 def download_jar(req, domain, app_id):
-    view,args,kwargs = resolve('/static/app_manager/CommCare.jar')
-    response = view(req, *args, **kwargs)
+    response = HttpResponse(
+        get_app(domain, app_id).fetch_jar()
+    )
     response['Content-Type'] = "application/java-archive"
     return response
 
-#@login_and_domain_required
-#def download(req, domain, app_id):
-#    url_base = _url_base()
-#    response = HttpResponse(mimetype="application/zip")
-#    response['Content-Disposition'] = "filename=commcare_app.zip"
-#    app = get_app(domain, app_id)
-#    root = url_base + reverse('corehq.apps.app_manager.views.download', args=[domain, app_id])
-#    paths = ["profile.xml", "suite.xml"]
-#    for lang in app.langs:
-#        paths.append("%s/app_strings.txt" % lang)
-#    for module in app.get_modules():
-#        for form in module.get_forms():
-#            paths.append("m%s/f%s.xml" % (module.id, form.id))
-#    print paths
-#    buffer = StringIO()
-#    zipper = ZipFile(buffer, 'w', ZIP_DEFLATED)
-#    for path in paths:
-#        print path
-#        zipper.writestr(path, urlopen(root + path).read())
-#    zipper.close()
-#    buffer.flush()
-#    response.write(buffer.getvalue())
-#    buffer.close()
-#    return response
-
+def download_zipped_jar(req, domain, app_id):
+    response = HttpResponse(mimetype="application/java-archive")
+    response['Content-Disposition'] = "filename=CommCare.jar"
+    app = get_app(domain, app_id)
+    response.write(app.create_zipped_jar())
+    return response
 
 @login_and_domain_required
 def save_copy(req, domain, app_id):

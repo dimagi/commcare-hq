@@ -1,4 +1,4 @@
-{% load xforms_extras %}
+  {% load xforms_extras %}
 <suite version="{{ app.version }}">
 
  {% for module in app.get_modules %}
