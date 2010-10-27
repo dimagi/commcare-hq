@@ -1,5 +1,6 @@
 from couchdbkit.client import Database
 from django.conf import settings
+import simplejson
 
 def export_excel(schema_index, file):
     """

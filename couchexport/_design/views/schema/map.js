@@ -4,7 +4,18 @@ function(doc) {
     
     // You have to put however you want to access/group your schema here.
     if (doc["#export_tag"]) {
-        emit(doc[doc["#export_tag"]], get_schema(doc));
+        var pattern = doc["#export_tag"];
+        var key;
+        if (uneval(pattern)[0] == '"') {
+            key = doc[pattern]
+        }
+        else {
+            key = [];
+            for(var i in pattern) {
+                key.push(doc[pattern[i]]);
+            }
+        }
+        emit(key, get_schema(doc));
     }
     else if (doc["doc_type"]) {
         // This is the way other couchdbkit models are stored
