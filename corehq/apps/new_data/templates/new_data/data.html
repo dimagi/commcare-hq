@@ -4,16 +4,26 @@
         <h2>Data</h2>
     </div>
     <div id="main-content" class="container">
+        {% regroup instances by xmlns as xmlns_list%}
         <table>
-            {% for instance in instances %}
+            {% for xmlns in xmlns_list%}
                 <tr>
                     <td>
-                        {{ instance.xmlns }}
-                    </td>
-                    <td>
-                        {{ instance.received_on }}
+                        <a href="{% url corehq.apps.new_data.views.export_data domain %}?export_tag={{ xmlns.grouper }}">
+                            {{ xmlns.grouper }}
+                        </a>
                     </td>
                 </tr>
+                {% for instance in xmlns.list %}
+                    <tr>
+                        <td>
+
+                        </td>
+                        <td>
+                            {{ instance.received_on }}
+                        </td>
+                    </tr>
+                {% endfor %}
             {% endfor %}
         </table>
     </div>
