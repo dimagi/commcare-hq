@@ -9,6 +9,29 @@
             <td>CommCare.jar</td>
             <td>{% url corehq.apps.app_manager.views.download_zipped_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
+        <tr>
+            <td>profile.xml</td>
+            <td>{% url corehq.apps.app_manager.views.download_profile app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+        </tr>
     </table>
+    <p>Resource Files:</p>
+    <ul>
+        {% for path,contents in files %}
+            <li>
+                <div class="toggle-next">{{ path }}</div>
+                <code>
+                    <pre>{{ contents|force_escape }}</pre>
+                </code>
+            </li>
+        {% endfor %}
+    </ul>
+    <script>
+        $(function(){
+            $('.toggle-next').next().hide().end()
+            .click(function(){
+                $(this).next().toggle();
+            });
 
+        });
+    </script>
 {% endblock %}

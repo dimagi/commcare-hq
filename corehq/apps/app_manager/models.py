@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from zipfile import ZipFile, ZIP_DEFLATED
 from StringIO import StringIO
 import itertools
+from urllib2 import urlopen
+from urlparse import urljoin
 
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
@@ -247,10 +249,13 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_profile', args=[self.domain, self._id])
         )
     @property
+    def profile_loc(self):
+        return "jr://resource/profile.xml"
+    @property
     def jar_url(self):
         return "%s%s" % (
             URL_BASE,
-            reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
+            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
         )
     @property
     def jadjar_id(self):
@@ -265,7 +270,7 @@ class ApplicationBase(VersionedDoc):
         jad = JadJar.get(self.jadjar_id).jad_dict()
         jad.update({
             'MIDlet-Jar-Size': len(self.create_zipped_jar()),
-            'Profile': self.profile_url,
+            'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
         })
         return jad.render()
@@ -274,6 +279,7 @@ class ApplicationBase(VersionedDoc):
         return render_to_string(template, {
             'app': self,
             'suite_url': self.suite_url,
+            'suite_loc': self.suite_loc,
             'post_url': self.post_url,
             'post_test_url': self.post_url,
         })
@@ -305,14 +311,14 @@ class Application(ApplicationBase):
             reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
         )
     @property
-    def jar_url(self):
-        return "%s%s" % (
-            URL_BASE,
-            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
-        )
-    @property
-    def profile_url(self):
-        return "jr://resource/profile.xml"
+    def suite_loc(self):
+        return "suite.xml"
+#    @property
+#    def jar_url(self):
+#        return "%s%s" % (
+#            URL_BASE,
+#            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
+#        )
 
     def fetch_xform(self, module_id, form_id):
         xform_id = self.get_module(module_id).get_form(form_id).xform_id
@@ -336,7 +342,7 @@ class Application(ApplicationBase):
             "suite.xml": self.create_suite(),
         }
 
-        for lang in self.langs:
+        for lang in ['default'] + self.langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
@@ -407,16 +413,41 @@ class Application(ApplicationBase):
         forms = self.modules[module_id]['forms']
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
-
+class NotImplementedYet(Exception):
+    pass
 class RemoteApp(ApplicationBase):
     profile_url = StringProperty()
     suite_url = StringProperty(default="http://")
     name = StringProperty()
 
+    @property
+    def suite_loc(self):
+        if self.suite_url:
+            return self.suite_url.split('/')[-1]
+        else:
+            raise NotImplementedYet()
+
     @classmethod
     def new_app(cls, domain, name):
         app = cls(domain=domain, name=name, langs=["en"])
         return app
+
+    def fetch_suite(self):
+        return urlopen(self.suite_url).read()
+    def create_all_files(self):
+        suite = self.fetch_suite()
+        files = {
+            self.suite_loc: suite,
+            'profile.xml': self.create_profile(),
+        }
+        soup = BeautifulStoneSoup(suite)
+        locations = []
+        for resource in soup.findAll('resource'):
+            loc = resource.findChild('location', authority='remote').string
+            locations.append(loc)
+        for location in locations:
+            files[location.split('/')[-1]] = urlopen(urljoin(self.suite_url, location)).read()
+        return files
 
 class DomainError(Exception):
     pass

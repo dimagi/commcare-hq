@@ -17,7 +17,6 @@
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
-        <location authority="remote">{{ suite_url }}</location>
-        <location authority="local">jr://resource/suite.xml</location>
+        <location authority="local">jr://resource/{{ suite_loc }}</location>
     </resource></suite>
 </profile>

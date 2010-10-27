@@ -364,8 +364,10 @@ def _check_domain_app(domain, app_id):
 
 
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
+    app = get_app(domain, app_id)
     return render_to_response(req, template, {
-        'app': get_app(domain, app_id)
+        'app': app,
+        'files': sorted(app.create_all_files().items()),
     })
 def download_profile(req, domain, app_id):
     return HttpResponse(
