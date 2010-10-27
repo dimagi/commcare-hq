@@ -14,6 +14,7 @@ from StringIO import StringIO
 import itertools
 from urllib2 import urlopen
 from urlparse import urljoin
+from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
@@ -46,33 +47,6 @@ class JadJar(Document):
         return self.fetch_attachment('CommCare.jar')
     def jad_dict(self):
         return JadDict.from_jad(self.fetch_jad())
-
-class JadDict(dict):
-    @classmethod
-    def from_jad(cls, jad_contents):
-        sep = ": "
-        jd = cls()
-        lines = [line.strip() for line in jad_contents.split("\n") if line.strip()]
-        for line in lines:
-            i = line.find(sep)
-            if i == -1:
-                pass
-            key, value = line[:i], line[i+len(sep):]
-            jd[key] = value
-        return jd
-
-    def render(self):
-        '''Render self as jad file contents'''
-        ordered_start = ['MIDlet-Name', 'MIDlet-Version', 'MIDlet-Vendor', 'MIDlet-Jar-URL',
-                        'MIDlet-Jar-Size', 'MIDlet-Info-URL', 'MIDlet-1', 'MIDlet-Permissions']
-        ordered_end = ['MIDlet-Jar-RSA-SHA1', 'MIDlet-Certificate-1-1',
-                        'MIDlet-Certificate-1-2', 'MIDlet-Certificate-1-3',
-                        'MIDlet-Certificate-1-4']
-        unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
-        props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
-        lines = ['%s: %s\n' % (key, self[key]) for key in props if key in self]
-        return "".join(lines)
-
 
 class XForm(Document):
     domain = StringProperty()
@@ -267,13 +241,20 @@ class ApplicationBase(VersionedDoc):
         return 'a15cfcbb9c8ec0f5855ffa08be5ac02d2125926e'
 
     def create_jad(self, template="app_manager/CommCare.jad"):
-        jad = JadJar.get(self.jadjar_id).jad_dict()
-        jad.update({
-            'MIDlet-Jar-Size': len(self.create_zipped_jar()),
-            'Profile': self.profile_loc,
-            'MIDlet-Jar-URL': self.jar_url,
-        })
-        return jad.render()
+        try:
+            return self.fetch_attachment('CommCare.jad')
+        except:
+            jad = JadJar.get(self.jadjar_id).jad_dict()
+            jar = self.create_zipped_jar()
+            jad.update({
+                'MIDlet-Jar-Size': len(jar),
+                'Profile': self.profile_loc,
+                'MIDlet-Jar-URL': self.jar_url,
+            })
+            jad = sign_jar(jad, jar)
+            jad = jad.render()
+            self.put_attachment(jad, 'CommCare.jad')
+            return jad
 
     def create_profile(self, template='app_manager/profile.xml'):
         return render_to_string(template, {
@@ -287,17 +268,21 @@ class ApplicationBase(VersionedDoc):
         return JadJar.get(self.jadjar_id).fetch_jar()
 
     def create_zipped_jar(self):
-        jar = self.fetch_jar()
-        files = self.create_all_files()
-        buffer = StringIO(jar)
-        zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
-        for path in files:
-            zipper.writestr(path, files[path].encode('utf-8'))
-        zipper.close()
-        buffer.flush()
-        answer = buffer.getvalue()
-        buffer.close()
-        return answer
+        try:
+            return self.fetch_attachment('CommCare.jar')
+        except:
+            jar = self.fetch_jar()
+            files = self.create_all_files()
+            buffer = StringIO(jar)
+            zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
+            for path in files:
+                zipper.writestr(path, files[path].encode('utf-8'))
+            zipper.close()
+            buffer.flush()
+            jar = buffer.getvalue()
+            buffer.close()
+            self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
+            return jar
 
 class Application(ApplicationBase):
     modules = SchemaListProperty(Module)
