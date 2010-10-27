@@ -1,6 +1,6 @@
 from couchdbkit.client import Database
 from django.conf import settings
-import simplejson
+import hashlib
 
 def export_excel(schema_index, file):
     """
@@ -157,7 +157,11 @@ def export_csv(tables):
 def _export_excel(tables):
     book = xlwt.Workbook()
     for table_name, table in tables:
-        sheet = book.add_sheet(table_name[-20:])
+        #test hack
+        #sheet = book.add_sheet(table_name[-20:])
+        hack_table_name_prefix = table_name[-20:]
+        hack_table_name = hack_table_name_prefix[0:10] + hashlib.sha1(table_name).hexdigest()[0:10]
+        sheet = book.add_sheet(hack_table_name)
         for i,row in enumerate(table):
             for j,val in enumerate(row):
                 sheet.write(i,j,unicode(val))
