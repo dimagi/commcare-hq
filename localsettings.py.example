@@ -1,0 +1,36 @@
+# Postgres config
+DATABASE_ENGINE = 'postgresql_psycopg2'
+DATABASE_NAME = 'commcarehq'
+DATABASE_USER = 'postgres'
+DATABASE_PASSWORD = '*****'
+DATABASE_HOST = ''
+DATABASE_PORT = '5432'
+
+DJANGO_LOG_FILE = "/var/log/datahq/datahq.django.log"
+LOG_SIZE = 1000000
+LOG_LEVEL   = "DEBUG"
+LOG_FILE    = "/var/log/datahq/datahq.log"
+LOG_FORMAT  = "[%(name)s]: %(message)s"
+LOG_BACKUPS = 256 # number of logs to keep
+
+
+
+XFORMS_FORM_TRANSLATE_JAR="/var/django_sites/datahq/lib/form_translate.jar"
+
+####### Couch Forms ######
+COUCH_SERVER_ROOT = 'localhost:5984'
+COUCH_USERNAME = ''
+COUCH_PASSWORD = ''
+COUCH_DATABASE_NAME = 'commcarehq'
+
+BITLY_LOGIN = 'dimagi'
+BITLY_APIKEY = '*****'
+
+
+JAR_SIGN = dict(
+    jad_tool = "/PATH/TO/releasemanager/JadTool.jar",
+    key_store = "/PATH/TO/KEY_STORE",
+    key_alias = "KEY",
+    store_pass = "*****",
+    key_pass = "*****",
+)
