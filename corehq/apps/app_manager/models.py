@@ -153,9 +153,11 @@ class Module(IndexedSchema):
         for form in self.forms:
             xform = form.get_xform().fetch_xform()
             soup = BeautifulStoneSoup(xform)
-            n = soup.find('case').find('case_type_id')
-            if n:
-                case_type = n.string.strip()
+            try:
+                case_type = soup.find('case').find('case_type_id').string.strip()
+            except AttributeError:
+                case_type = None
+            if case_type:
                 case_types.append(case_type)
         return case_types
 
@@ -377,6 +379,7 @@ class Application(ApplicationBase):
             )
         )
         return self.get_module(-1)
+
     def delete_module(self, module_id):
         del self.modules[int(module_id)]
 
@@ -392,6 +395,9 @@ class Application(ApplicationBase):
             )
         )
         form = module.get_form(-1)
+        case_types = module.infer_case_type()
+        if len(case_types) == 1 and not module.case_type:
+            module.case_type, = case_types
         return form
     def delete_form(self, module_id, form_id):
         module = self.get_module(module_id)

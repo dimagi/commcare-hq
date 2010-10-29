@@ -142,11 +142,16 @@ $(function(){
     });
 
     // dropdown
-    $('.dropdown').hide()
+//    $('.dropdown').hide();
 //    $('.has_dropdown').focus(function(){
-//        this.nextAll('.dropdown').show();
+//        $(this).children('.dropdown').show();
 //    }).blur(function(){
-//        this.nextAll('.dropdown').hide();
+//        $(this).children('.dropdown').hide();
+//    });
+//    $('.dropdown li').click(function(){
+//        alert($(this).text());
+//        var $input = $(this).prevAll('.has_dropdown');
+//        $input.attr('value', $(this).text());
 //    });
 
 

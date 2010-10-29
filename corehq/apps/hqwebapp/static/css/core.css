@@ -270,3 +270,14 @@ input.wide {
 #version {
     height: 22px;
 }
+
+.dropdown {
+    display: block;
+    background-color: white;
+    border: 1px solid #ccc;
+    position: absolute;
+    padding: 0 1em;
+}
+.dropdown:hover {
+    background-color: #8867B1;
+}
