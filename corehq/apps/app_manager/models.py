@@ -1,7 +1,7 @@
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.util import bitly
-from corehq.util.webutils import URL_BASE, parse_int
+from corehq.util.webutils import get_url_base, parse_int
 from django.http import Http404
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
@@ -67,6 +67,8 @@ class XForm(Document):
         xform.save()
         xform.put_attachment(attachment, 'xform.xml', content_type='text/xml')
         return xform
+    def fetch_xform(self):
+        return self.fetch_attachment('xform.xml')
 
 class XFormGroup(DocumentSchema):
     "Aggregate of all XForms with the same xmlns"
@@ -90,6 +92,9 @@ class Form(IndexedSchema):
     xform_id    = StringProperty()
     xmlns       = StringProperty()
     show_count  = BooleanProperty(default=False)
+
+    def get_xform(self):
+        return XForm.get(self.xform_id)
 
 class DetailColumn(DocumentSchema):
     header  = DictProperty()
@@ -143,6 +148,17 @@ class Module(IndexedSchema):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
+    def infer_case_type(self):
+        case_types = []
+        for form in self.forms:
+            xform = form.get_xform().fetch_xform()
+            soup = BeautifulStoneSoup(xform)
+            n = soup.find('case').find('case_type_id')
+            if n:
+                case_type = n.string.strip()
+                case_types.append(case_type)
+        return case_types
+
 
 
 
@@ -164,7 +180,7 @@ class VersionedDoc(Document):
         super(VersionedDoc, self).save()
         if not self.short_url:
             self.short_url = bitly.shorten(
-                URL_BASE + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
             )
             super(VersionedDoc, self).save()
     def save_copy(self):
@@ -198,6 +214,7 @@ class VersionedDoc(Document):
         app['_id'] = self._id
         app['version'] = self.version
         app['copy_of'] = None
+        del app['_attachments']
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
@@ -213,13 +230,13 @@ class ApplicationBase(VersionedDoc):
     @property
     def post_url(self):
         return "%s%s" % (
-            URL_BASE,
+            get_url_base(),
             reverse('corehq.apps.receiver.views.post', args=[self.domain])
         )
     @property
     def profile_url(self):
         return "%s%s" % (
-            URL_BASE,
+            get_url_base(),
             reverse('corehq.apps.app_manager.views.download_profile', args=[self.domain, self._id])
         )
     @property
@@ -228,7 +245,7 @@ class ApplicationBase(VersionedDoc):
     @property
     def jar_url(self):
         return "%s%s" % (
-            URL_BASE,
+            get_url_base(),
             reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
         )
     @property
@@ -292,7 +309,7 @@ class Application(ApplicationBase):
     @property
     def suite_url(self):
         return "%s%s" % (
-            URL_BASE,
+            get_url_base(),
             reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
         )
     @property
@@ -301,7 +318,7 @@ class Application(ApplicationBase):
 #    @property
 #    def jar_url(self):
 #        return "%s%s" % (
-#            URL_BASE,
+#            get_url_base(),
 #            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
 #        )
 

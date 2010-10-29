@@ -9,13 +9,8 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, XForm, VersionedDoc, get_app, DetailColumn
 
-from corehq.util.webutils import URL_BASE
-
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
-from StringIO import StringIO
-from zipfile import ZipFile, ZIP_DEFLATED
-from urllib2 import urlopen
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
@@ -355,9 +350,6 @@ def swap(req, domain, app_id, key):
             app.swap_langs(i, j)
         app.save()
     return back_to_main(**locals())
-
-def _url_base():
-    return URL_BASE
 
 def _check_domain_app(domain, app_id):
     get_app(domain, app_id)

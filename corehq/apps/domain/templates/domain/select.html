@@ -2,9 +2,9 @@
 
 {#################################################################################################################}
 
-{% block hq-stylesheets %}
-<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
-{% endblock hq-stylesheets %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
+{% endblock head %}
 
 {#################################################################################################################}
 
@@ -14,11 +14,9 @@
 
 {% block content %}
 
-<!-- domain_select form -->  
-<hr class="space"/>
-<hr class="space"/>
-<div class="span-8 clear" style="margin-left:auto; margin-right:auto; float:none">
-<form class="sfb" name="form" method="post" action="{% url domain_select %}">
+<!-- domain_select form -->
+<div>
+<form name="form" method="post" action="{% url domain_select %}">
 {% csrf_token %}
 <h3>Select a domain</h3>
 {% if form.non_field_errors %}
@@ -40,15 +38,15 @@
     {{field.errors}}
     </div>
   {% endif %}
-  <div class="span-2 clear"> <div style="float:right;">
+  <div class="form-label">
   {{ field.label_tag }}
-  </div></div>
-  <div class="span-1">
+  </div>
+  <div class="form-field">
   {{ field }}
   </div>
 {% endfor %}
   
-<div style="text-align: center"><button type="submit">Submit</button></div>
+<div><button type="submit">Submit</button></div>
 </form>
 
 </div> 

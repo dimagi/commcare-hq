@@ -141,6 +141,15 @@ $(function(){
         $form.submit();
     });
 
+    // dropdown
+    $('.dropdown').hide()
+//    $('.has_dropdown').focus(function(){
+//        this.nextAll('.dropdown').show();
+//    }).blur(function(){
+//        this.nextAll('.dropdown').hide();
+//    });
+
+
     // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){
         var val = $(this).next('div.immutable').text();
@@ -154,5 +163,9 @@ $(function(){
         if(val) {
             $(this).attr('value', val);
         }
+    });
+
+    $("#new_app_message").click(function(){
+        $("#new_app_dialog").dialog('open');
     });
 });

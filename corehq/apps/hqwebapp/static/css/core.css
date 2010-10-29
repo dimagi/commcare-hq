@@ -267,3 +267,6 @@ input.wide {
     border-right: none;
     padding: 1em;
 }
+#version {
+    height: 22px;
+}

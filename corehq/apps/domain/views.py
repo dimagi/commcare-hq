@@ -48,8 +48,9 @@ def select( request,
             form.save(request) # Needs request because it saves domain in session
     
             #  Weak attempt to give user a good UX - make sure redirect_to isn't garbage.
+            domain = form.cleaned_data['domain_list'].name
             if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                redirect_to = reverse('homepage')
+                redirect_to = reverse('domain_homepage', args=[domain])
             return HttpResponseRedirect(redirect_to) # Redirect after POST
     else:
         # An unbound form

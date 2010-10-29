@@ -14,7 +14,9 @@
     <div id="title-bar" class="container">
         <div id="choose-application">
             <div>
-                <p>Application:</p>
+                {% if applications %}
+                    <p>Application:</p>
+                {% endif %}
                 {% if edit and app %}
                     <a class="delete_link" href="#">x</a>
                     <div class="delete_dialog" title="Delete {{ app.name }}?">
@@ -46,13 +48,14 @@
                         </select>
                     {% endifequal %}
                     {% if app %}
-                        v. {{ app.version }}
+                        <div id="version">v. {{ app.version }}</div>
                     {% endif %}
                 {% endif %}
             </div>
-            {% if edit %}
+            {% if edit and applications %}
                 <a class="new_link" id="new_app" href="#"></a>
-
+            {% endif %}
+            {% if edit or not applications %}
                 <div id="new_app_dialog" title="Create a New Application">
                     <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                         <table>
@@ -64,17 +67,19 @@
                 </div>
             {% endif %}
         </div>
-        <div id="edit">
-            {% if edit  %}
-                <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
-                    Done Editing
-                </a>
-            {% else %}
-                <a class="button" href="{% urlencode request.path request.GET with "edit" as "true" %}">
-                    Edit
-                </a>
-            {% endif %}
-        </div>
+        {% if applications %}
+            <div id="edit">
+                {% if edit  %}
+                    <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
+                        Done Editing
+                    </a>
+                {% else %}
+                    <a class="button" href="{% urlencode request.path request.GET with "edit" as "true" %}">
+                        Edit
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
 
     </div>
     {% if app %}
@@ -147,7 +152,7 @@
             {% if applications %}
                 <h2 class="message">Select an application above.</h2>
             {% else %}
-                <h2 class="message">Begin by creating an application above.</h2>
+                <h2 class="message"><a href="#" id="new_app_message">Click here to start your first app.</a></h2>
             {% endif %}
         </div>
     {% endif %}

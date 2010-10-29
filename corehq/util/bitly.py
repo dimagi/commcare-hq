@@ -1,6 +1,6 @@
 from django.conf import settings
 from urllib2 import urlopen
-import simplejson
+from django.utils import simplejson
 
 class BitlyError(Exception):
     def __init__(self, status_code, status_txt):

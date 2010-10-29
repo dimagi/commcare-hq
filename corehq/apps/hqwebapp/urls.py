@@ -15,5 +15,5 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',
     (r'messages/$', 'messages'),
-    (r'^$', 'redirect_to_default'),
+ url(r'^$', 'redirect_to_default', name='domain_homepage'),
 )
