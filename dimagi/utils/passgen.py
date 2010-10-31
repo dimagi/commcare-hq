@@ -2,7 +2,8 @@ import math
 import random
 from optparse import OptionParser
 
-# no need to seed; automatically seeded on import from OS'es entropy source
+# no need to seed random; automatically seeded on import from OS entropy
+# source
 
 alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
 # why no CAPS??
@@ -34,20 +35,24 @@ def entropy_for_length(length):
     return entropy_per_char() * length
 
 def make_password(length=None, entropy=None):
-    ent_length = chars_for_entropy(entropy)
+    ent_length = chars_for_entropy(entropy) if entropy else 0
     length = max(ent_length, length) if length else ent_length
     return rand_pass(length)
 
 if __name__ == '__main__':
+    DEFAULT_ENTROPY = 32
+
     parser = OptionParser()
-    parser.add_option('-e', '--entropy', '-b', '--bits',
-                      dest='entropy', type='float', default=32,
+    parser.add_option('-e', '--entropy', '-b', '--bits', metavar='#bits',
+                      dest='entropy', type='float',
                       help='minimum password entropy (in bits)')
-    parser.add_option('-l', '--length', '-c', '--chars',
+    parser.add_option('-l', '--length', '-c', '--chars', metavar='#chars',
                       dest='length', type='int',
                       help='password length (in chars)')
 
     (op, _) = parser.parse_args()
+    if not op.length and not op.entropy:
+        op.entropy = DEFAULT_ENTROPY
 
     passwd = make_password(length=op.length, entropy=op.entropy)
 
