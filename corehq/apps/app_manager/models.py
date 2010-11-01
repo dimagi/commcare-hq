@@ -20,6 +20,11 @@ from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
 class JadJar(Document):
+    """
+    Has no properties except two attachments: CommCare.jad and CommCare.jar
+    Meant for saving the jad and jar exactly as they come from the build server.
+
+    """
     @property
     def hash(self):
         return self._id
@@ -49,6 +54,10 @@ class JadJar(Document):
         return JadDict.from_jad(self.fetch_jad())
 
 class XForm(Document):
+    """
+    A meta data doc that saves the xform as an attachment, xform.xml
+
+    """
     domain = StringProperty()
     xmlns = StringProperty()
     submit_time = DateTimeProperty()
@@ -70,12 +79,13 @@ class XForm(Document):
     def fetch_xform(self):
         return self.fetch_attachment('xform.xml')
 
-class XFormGroup(DocumentSchema):
-    "Aggregate of all XForms with the same xmlns"
-    display_name = StringProperty()
-    xmlns = StringProperty()
-
 class IndexedSchema(DocumentSchema):
+    """
+    Abstract class.
+    Meant for documents that appear in a list within another document
+    and need to know their own position within that list.
+
+    """
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -87,6 +97,11 @@ class IndexedSchema(DocumentSchema):
         return other and (self.id == other.id) and (self._parent == other._parent)
 
 class Form(IndexedSchema):
+    """
+    Part of a Managed Application; configuration for a form.
+    Translates to a second-level menu on the phone
+
+    """
     name        = DictProperty()
     requires    = StringProperty(choices=["case", "referral", "none"], default="none")
     xform_id    = StringProperty()
@@ -97,6 +112,17 @@ class Form(IndexedSchema):
         return XForm.get(self.xform_id)
 
 class DetailColumn(DocumentSchema):
+    """
+    Represents a column in case selection screen on the phone. Ex:
+        {
+            'header': {'en': 'Sex', 'pt': 'Sexo'},
+            'model': 'cc_pf_client',
+            'field': 'sex',
+            'format': 'enum',
+            'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
+        }
+
+    """
     header  = DictProperty()
     model   = StringProperty()
     field   = StringProperty()
@@ -104,7 +130,11 @@ class DetailColumn(DocumentSchema):
     enum    = DictProperty()
 
 class Detail(DocumentSchema):
-    type = StringProperty()
+    """
+    Full configuration for a case selection screen
+
+    """
+    type = StringProperty(choices=DETAIL_TYPES)
     columns = SchemaListProperty(DetailColumn)
 
     def append_column(self, column):
@@ -127,6 +157,11 @@ class Detail(DocumentSchema):
         del self.columns[column_id]
 
 class Module(IndexedSchema):
+    """
+    A group of related forms, and configuration that applies to them all.
+    Translates to a top-level menu on the phone.
+
+    """
     name = DictProperty()
     case_name = DictProperty()
     ref_name = DictProperty()
@@ -165,9 +200,15 @@ class Module(IndexedSchema):
 
 
 class VersioningError(Exception):
+    """For errors that violate the principals of versioning in VersionedDoc"""
     pass
 
 class VersionedDoc(Document):
+    """
+    A document that keeps an auto-incrementing version number, knows how to make copies of itself,
+    delete a copy of itself, and revert back to an earlier copy of itself.
+
+    """
     domain = StringProperty()
     copy_of = StringProperty()
     version = IntegerProperty()
@@ -228,7 +269,11 @@ class VersionedDoc(Document):
         copy.delete()
 
 class ApplicationBase(VersionedDoc):
+    """
+    Abstract base class for Application and RemoteApp.
+    Contains methods for generating the various files and zipping them into CommCare.jar
 
+    """
     @property
     def post_url(self):
         return "%s%s" % (
@@ -304,6 +349,11 @@ class ApplicationBase(VersionedDoc):
             return jar
 
 class Application(ApplicationBase):
+    """
+    A Managed Application that can be created entirely through the online interface, except for writing the
+    forms themselves.
+
+    """
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
@@ -421,9 +471,20 @@ class Application(ApplicationBase):
         forms = self.modules[module_id]['forms']
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
+
 class NotImplementedYet(Exception):
     pass
 class RemoteApp(ApplicationBase):
+    """
+    A wrapper for a url pointing to a suite or profile file. This allows you to
+    write all the files for an app by hand, and then give the url to app_manager
+    and let it package everything together for you.
+
+    Originally I thought it would be easiest to start from the suite.xml file, but this
+    means the profile is auto-generated, which isn't so good. I should probably get rid of
+    suite_url altogether and just switch to using the profile_url (which right now is not used).
+
+    """
     profile_url = StringProperty()
     suite_url = StringProperty(default="http://")
     name = StringProperty()
@@ -463,6 +524,12 @@ class DomainError(Exception):
 
 
 def get_app(domain, app_id):
+    """
+    Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
+    (Application or RemoteApp).
+
+    """
+
     app = VersionedDoc.get(app_id)
 
     try:    Domain.objects.get(name=domain)
