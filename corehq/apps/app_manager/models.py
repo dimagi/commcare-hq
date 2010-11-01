@@ -1,3 +1,4 @@
+# coding=utf-8
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.util import bitly
