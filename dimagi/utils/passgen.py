@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import math
 import random
 from optparse import OptionParser
