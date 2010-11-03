@@ -7,5 +7,5 @@ def post(request, domain):
         doc['submit_ip'] = request.META['REMOTE_ADDR']
         doc['domain'] = domain
         doc.save()
-        return HttpResponse("%s\n" % doc['_id'])
+        return HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'])
     return couchforms_post(request, callback)
