@@ -16,8 +16,6 @@ sys.path.append(os.path.join(filedir,'submodules','couchforms-src'))
 sys.path.append(os.path.join(filedir,'submodules','couchexport-src'))
 sys.path.append(os.path.join(filedir,'submodules','djangocouch-src'))
 
-#sys.path.append(os.path.join(filedir,'couchforms-src'))
-
 try:
     import settings # Assumed to be in the same directory.
 except ImportError:
