@@ -1,8 +1,9 @@
-from dimagi.utils.post import post_data, post_authenticated_data
-from django.conf import settings
-from couchforms.models import XFormInstance
-from dimagi.utils.logging import log_exception
 import logging
+from django.conf import settings
+from dimagi.utils.post import post_data, post_authenticated_data
+from dimagi.utils.logging import log_exception
+from couchforms.models import XFormInstance
+from couchforms.signals import xform_saved
 
 def post_xform_to_couch(instance):
     """
@@ -21,6 +22,7 @@ def post_xform_to_couch(instance):
         doc_id = response
         try:
             xform = XFormInstance.get(doc_id)
+            xform_saved.send(sender="post", form=xform)
             return xform
         except Exception, e:
             logging.error("Problem accessing %s" % doc_id)
