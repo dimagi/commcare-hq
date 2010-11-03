@@ -22,7 +22,7 @@ def post_xform_to_couch(instance):
         doc_id = response
         try:
             xform = XFormInstance.get(doc_id)
-            xform_saved.send(sender="post", form=xform)
+            xform_saved.send_robust(sender="post", form=xform)
             return xform
         except Exception, e:
             logging.error("Problem accessing %s" % doc_id)
