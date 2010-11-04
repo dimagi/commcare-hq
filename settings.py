@@ -118,6 +118,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.new_data',
     'corehq.apps.users',
+    'corehq.apps.reports',
 )
 
 RAPIDSMS_APPS = (
@@ -284,6 +285,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'new_data',
         'users',
         'domain',
+        'reports',
     ]
 ]
 

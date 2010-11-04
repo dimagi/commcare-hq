@@ -16,6 +16,7 @@ domain_specific = patterns('',
     (r'^receiver', include('corehq.apps.receiver.urls')),
     (r'^data/', include('corehq.apps.new_data.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
+    (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^', include(hqwebapp_domain_specific))
 
 )
