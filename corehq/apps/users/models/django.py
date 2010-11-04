@@ -1,3 +1,6 @@
+"""
+Django  models go here
+"""
 from django.db import models
 from django.conf import settings
 from djangocouchuser.models import CouchUserProfile

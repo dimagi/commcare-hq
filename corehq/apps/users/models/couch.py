@@ -1,0 +1,103 @@
+"""
+couch models go here
+"""
+from __future__ import absolute_import
+from datetime import datetime
+from django.contrib.auth.models import User
+from couchdbkit.ext.django.schema import *
+from couchdbkit.schema.properties_proxy import SchemaListProperty
+from corehq.apps.users.models import HqUserProfile
+
+class DjangoUser(Document):
+    id = IntegerProperty()
+    username = StringProperty()
+    first_name = StringProperty()
+    last_name = StringProperty()
+    django_type = StringProperty()
+    is_active = BooleanProperty()
+    email = StringProperty()
+    is_superuser = BooleanProperty()
+    is_staff = BooleanProperty()
+    last_login = DateTimeProperty()
+    groups = ListProperty()
+    user_permissions = ListProperty()
+    password = StringProperty()
+    date_joined = DateTimeProperty()
+        
+    class Meta:
+        app_label = 'django_user'
+
+class DomainAccount(Document):
+    """
+    Each user can have multiple accounts on the 
+    web domain. This is primarily for Dimagi staff.
+    """
+    username = StringProperty()
+    domain = StringProperty()
+    permissions = StringListProperty()
+    last_login = DateTimeProperty()
+    date_joined = DateTimeProperty()
+    
+    class Meta:
+        app_label = 'domain_account'
+
+class CommCareUser(Document):
+    """
+    This is the information associated with a 
+    particular commcare user. Right now, we 
+    associate one commcare user to one web user
+    (with multiple domain logins, phones, SIMS)
+    but we could always extend to multiple commcare
+    users if desired later.
+    """
+    uuid = StringProperty()
+    username = StringProperty()
+    password = StringProperty()
+    date = DateTimeProperty()
+    registering_phone_id = StringProperty()
+    user_data = DictProperty()
+    
+    class Meta:
+        app_label = 'commcare_user'
+
+class PhoneDevice(Document):
+    """
+    This is a physical device with a unique IMEI
+    Note, though, that the same physical device can 
+    be used with multiple SIM cards (and multiple phone numbers)
+    """
+    is_default = BooleanProperty()
+    device_id = StringProperty()
+    created = DateTimeProperty()
+    
+    class Meta:
+        app_label = 'phone_device'
+
+class PhoneNumber(Document):
+    """
+    This is the SIM card with a unique phone number
+    The same SIM card can be used in multiple phone
+    devices
+    """
+    is_default = BooleanProperty()
+    number = StringProperty()
+    created = DateTimeProperty()
+    
+    class Meta:
+        app_label = 'phone_number'
+
+class User(Document):
+    """
+    a user (for web+commcare+sms)
+    can be associated with multiple usename/password/login tuples
+    can be associated with multiple phone numbers/SIM cards
+    can be associated with multiple phones/device IDs
+    """
+    UUID = StringProperty(required=True)
+    django_user = SchemaProperty(DjangoUser)
+    domain_accoutns = SchemaListProperty(DomainAccount)
+    commcare_user = SchemaProperty(CommCareUser)
+    phone_devices = SchemaListProperty(PhoneDevice)
+    phone_numbers = SchemaListProperty(PhoneNumber)
+    created_on = DateTimeProperty()
+            
