@@ -19,3 +19,6 @@
 [submodule "submodules/xep_hq_server"]
 	path = submodules/xep_hq_server
 	url = git://github.com/dimagi/xep_hq_server.git
+[submodule "submodules/dimagi-utils"]
+	path = submodules/dimagi-utils
+	url = git://github.com/dimagi/dimagi-utils.git
