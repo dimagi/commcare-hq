@@ -18,6 +18,9 @@ from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 
 
+from django.db import models
+
+
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
 
 class JadJar(Document):
@@ -69,13 +72,22 @@ class XForm(Document):
             attachment = attachment.read()
         xform = cls()
         soup = BeautifulStoneSoup(attachment)
-        xform.xmlns = soup.find('instance').findChild()['xmlns']
+        try:
+            xform.xmlns = soup.find('instance').findChild()['xmlns']
+        except KeyError:
+            xform.xmlns = None
 
         xform.submit_time = datetime.utcnow()
         xform.domain = domain
 
         xform.save()
-        xform.put_attachment(attachment, 'xform.xml', content_type='text/xml')
+        if not xform.xmlns:
+            xform.xmlns = xform._id
+            xform.save()
+            soup.find('instance').findChild()['xmlns'] = xform.xmlns
+
+
+        xform.put_attachment(soup.prettify(), 'xform.xml', content_type='text/xml')
         return xform
     def fetch_xform(self):
         return self.fetch_attachment('xform.xml')

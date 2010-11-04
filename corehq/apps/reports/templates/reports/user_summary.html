@@ -1,0 +1,24 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+{% block reportcontent %}
+<table class="datatable">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Clinic</th>
+            <th>User type</th>
+            <th>Last submission date</th>
+            <th>Total forms received</th>
+        </tr>
+    </thead>
+<tbody>
+    {% for row in results %}
+    <tr>
+        {% render_user row.user %}
+        <td>{{ row.last_submission_date|date }}</td>
+        <td>{{ row.value }}</td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

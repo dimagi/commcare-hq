@@ -1,0 +1,9 @@
+{% extends "reports/clinic_user_report.html" %}
+{% block reportcontent %}
+{{ block.super }}
+{% if chart_url %}
+<img src="{{chart_url}}"></img>
+{% else %}
+<p class="notice">First select a clinic and user to display the chart</p>
+{% endif %}
+{% endblock %}

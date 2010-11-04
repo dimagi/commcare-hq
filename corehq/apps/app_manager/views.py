@@ -91,7 +91,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first
         ).all()
     else:
         saved_apps = []
-
+    if not lang:
+        lang = app.langs[0]
     return {
         'domain': domain,
         'applications': applications,

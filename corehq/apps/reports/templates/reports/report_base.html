@@ -1,0 +1,57 @@
+{% extends base_template %}
+{% block page_stylesheets %}
+    <style>
+        .ui-datepicker-calendar {
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block page_imports %}
+    {% include "imports/datatables.html" %}
+    {% include "imports/flot.html" %}
+{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+		$(function() {
+		    $('.date-picker').datepicker( {
+		        changeMonth: true,
+		        changeYear: true,
+		        showButtonPanel: true,
+		        dateFormat: 'M yy',
+		        onClose: function(dateText, inst) { 
+		            var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+		            var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+		            $(this).datepicker('setDate', new Date(year, month, 1));
+		        }
+		    });
+		});
+    </script>
+    <script type="text/javascript">
+        // datatable configuration.
+        $(document).ready(function() {
+            $('.datatable').dataTable({
+                "bJQueryUI": true
+            });
+        }); 
+    </script>
+{% block report_javascripts %}{% endblock %}
+{% endblock %}
+{% block content %}
+<p><a href="{% url report_list domain %}">&lt;-- back to report list</a></p>
+<h3>{{ report.name|default:"Unknown Report" }}</h3>
+{% if show_dates %}
+<form method="get">
+    <p>Start Month: <input type="text" id="startdate" name="startdate" class="date-picker">
+       End Month: <input type="text" id="enddate" name="enddate" class="date-picker">
+       <input type="submit" value="Go!" />
+    </p>
+</form>
+{% endif %}
+{% block reportcontent %}Your report goes here{% endblock %} 
+{% endblock %}
+
+<body>
+    <label for="startDate">Date :</label>
+    <input name="startDate" id="startDate" class="date-picker" />
+</body>
+</html> 
