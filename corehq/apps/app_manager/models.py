@@ -75,28 +75,31 @@ class XForm(Document):
         return self._id
 
     @classmethod
-    def new_xform(cls, domain, attachment):
-        if not isinstance(attachment, basestring):
-            attachment = attachment.read()
-        xform = cls()
-        soup = BeautifulStoneSoup(attachment)
-        try:
-            xform.xmlns = soup.find('instance').findChild()['xmlns']
-        except KeyError:
-            xform.xmlns = None
+    def new_xform(cls, domain, contents):
+        if not isinstance(contents, basestring):
+            contents = contents.read()
+        xform = cls(contents=contents)
+        xform.save()
 
         xform.submit_time = datetime.utcnow()
         xform.domain = domain
 
+        xform._reset_xmlns()
         xform.save()
-        if not xform.xmlns:
-            xform.xmlns = xform._id
-            xform.save()
-            soup.find('instance').findChild()['xmlns'] = xform.xmlns
-
-
-        xform.put_attachment(soup.prettify(), 'xform.xml', content_type='text/xml')
         return xform
+
+    def _reset_xmlns(self):
+        soup = BeautifulStoneSoup(self.contents)
+        try:
+            self.xmlns = soup.find('instance').findChild()['xmlns']
+        except KeyError:
+            self.xmlns = None
+        if not self.xmlns:
+            self.xmlns = self._id
+            self.save()
+            soup.find('instance').findChild()['xmlns'] = self.xmlns
+        self.contents = soup.prettify()
+
     def get_contents(self):
         if self.contents:
             contents = self.contents
@@ -121,10 +124,6 @@ def authorize_xform_edit(view):
             return view(request, xform_id)
     return authorized_view
 
-
-
-
-
 def get_xform(xform_id):
     "For use with xep_hq_server's GET_XFORM hook."
     return XForm.get(xform_id).get_contents()
@@ -132,6 +131,7 @@ def put_xform(xform_id, contents):
     "For use with xep_hq_server's PUT_XFORM hook."
     xform = XForm.get(xform_id)
     xform.contents = contents
+    xform._reset_xmlns()
     xform.save()
 
 class IndexedSchema(DocumentSchema):
@@ -160,7 +160,7 @@ class Form(IndexedSchema):
     name        = DictProperty()
     requires    = StringProperty(choices=["case", "referral", "none"], default="none")
     xform_id    = StringProperty()
-    xmlns       = StringProperty()
+    #xmlns       = StringProperty()
     show_count  = BooleanProperty(default=False)
 
     def get_xform(self):
@@ -489,13 +489,12 @@ class Application(ApplicationBase):
         del self.modules[int(module_id)]
 
     def new_form(self, module_id, name, attachment, lang):
-        xform = XForm.new_xform(self.domain, attachment=attachment)
+        xform = XForm.new_xform(self.domain, attachment)
         module = self.get_module(module_id)
         module.forms.append(
             Form(
                 name={lang: name},
                 xform_id=xform._id,
-                xmlns=xform.xmlns,
                 form_requires="none",
             )
         )
