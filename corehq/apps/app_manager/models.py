@@ -16,6 +16,8 @@ import itertools
 from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
+from corehq.apps.domain.decorators import login_and_domain_required
+from django.http import HttpResponseForbidden
 
 
 from django.db import models
@@ -60,11 +62,17 @@ class JadJar(Document):
 class XForm(Document):
     """
     A meta data doc that saves the xform as an attachment, xform.xml
+    Transitioning to storing content as a string an property "contents" instead
 
     """
     domain = StringProperty()
     xmlns = StringProperty()
     submit_time = DateTimeProperty()
+    contents = StringProperty()
+
+    @property
+    def id(self):
+        return self._id
 
     @classmethod
     def new_xform(cls, domain, attachment):
@@ -89,8 +97,42 @@ class XForm(Document):
 
         xform.put_attachment(soup.prettify(), 'xform.xml', content_type='text/xml')
         return xform
-    def fetch_xform(self):
-        return self.fetch_attachment('xform.xml')
+    def get_contents(self):
+        if self.contents:
+            contents = self.contents
+        else:
+            try:
+                contents = self.fetch_attachment('xform.xml')
+            except:
+                contents = ""
+        return contents
+
+
+def authorize_xform_edit(view):
+    def authorized_view(request, xform_id):
+        @login_and_domain_required
+        def wrapper(req, domain):
+            pass
+        if wrapper(request, XForm.get(xform_id).domain):
+            # If login_and_domain_required intercepted wrapper
+            # and returned an HttpResponse of its own
+            return HttpResponseForbidden()
+        else:
+            return view(request, xform_id)
+    return authorized_view
+
+
+
+
+
+def get_xform(xform_id):
+    "For use with xep_hq_server's GET_XFORM hook."
+    return XForm.get(xform_id).get_contents()
+def put_xform(xform_id, contents):
+    "For use with xep_hq_server's PUT_XFORM hook."
+    xform = XForm.get(xform_id)
+    xform.contents = contents
+    xform.save()
 
 class IndexedSchema(DocumentSchema):
     """
@@ -199,7 +241,7 @@ class Module(IndexedSchema):
     def infer_case_type(self):
         case_types = []
         for form in self.forms:
-            xform = form.get_xform().fetch_xform()
+            xform = form.get_xform().get_contents()
             soup = BeautifulStoneSoup(xform)
             try:
                 case_type = soup.find('case').find('case_type_id').string.strip()
@@ -390,7 +432,7 @@ class Application(ApplicationBase):
     def fetch_xform(self, module_id, form_id):
         xform_id = self.get_module(module_id).get_form(form_id).xform_id
         xform = XForm.get(xform_id)
-        return xform.fetch_attachment('xform.xml')
+        return xform.get_contents()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         return render_to_string(template, {

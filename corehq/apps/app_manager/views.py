@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
 
 from django.views.decorators.http import require_POST
+from django.conf import settings
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
@@ -112,6 +113,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first
         'lang': lang,
 
         'saved_apps': saved_apps,
+        'editor_url': settings.EDITOR_URL,
     }
 def default(req, domain):
     """

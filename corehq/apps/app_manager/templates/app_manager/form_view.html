@@ -99,4 +99,17 @@
             </tr>
         {% endif %}
     </table>
+    {% if edit %}
+         <form method="POST" action="http://{{ request.get_host }}{% url xep_hq_server.views.initiate xform.id %}">
+            {% csrf_token %}
+{#            <input type="hidden" name="callback" value="http://localhost:8010/HQ/?xform_id={{ xform.id }}" />#}
+            <input type="hidden" name="callback" value="http://{{ request.get_host }}{{ request.get_full_path|safe}}" />
+            <input type="hidden" name="editor" value="{{ editor_url }}" />
+
+            <input type="submit" value="Start Editing" />
+        </form>
+    {% endif %}
+    <code>
+        {{ xform.get_contents }}
+    </code>
 {% endblock %}
