@@ -68,17 +68,25 @@ function showdups(i) {
 {% endif %}
 
 <td><nobr><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></nobr></td>
-<td {% if l.time_discrepancy %}style="background: #faa;"{% endif %}><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
+<td><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
 <td>{{ l.type }}</td>
 <td>{{ l.msg }}</td>
 <td align="right"><nobr><span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span><span class="fullversion">{{ l.full_version }}</span></nobr></td>
 </tr>
 
+{% else %}{% ifequal l.rowtype "duphdr" %}
+
+<tr><td colspan="5" align="center" style="background: #ddd;">hiding <b>{{ l.total }}</b> duplicate log entries (<b>{{ l.uniq }}</b> unique) first received on <b>{{ l.recv }}</b> <a href="#" onclick="showdups({{ l.i }}); return false;">(show)</a></td></tr>
+
 {% else %}
 
-<tr><td colspan="5" align="center" style="background: #ddd;">hiding <b>{{ l.total }}</b> duplicates of <b>{{ l.uniq }}</b> unique log entries first received on <b>{{ l.recv }}</b> <a href="#" onclick="showdups({{ l.i }}); return false;">(show)</a></td></tr>
+{% if l.regress %}
+<tr><td colspan="5" align="center" style="font-style: italic; color: #888; background: #faa;">phone time discrepancy</td></tr>
+{% else %}
+<tr><td colspan="5" align="center" style="font-style: italic; color: #888;">{% if l.fdiff > 0 %}&hellip; time passes: {{ l.diff }} &hellip;{% else %}logs out of order?{% endif %}</td></tr>
+{% endif %}
 
-{% endifequal %}
+{% endifequal %}{% endifequal %}
 {% endfor %}
 </table>
 

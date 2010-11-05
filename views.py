@@ -6,6 +6,8 @@ import logging
 import itertools
 import re
 
+GAP_THRESHOLD = 3 #minutes
+
 def device_list(db):
     device_times = db.view('phonelog/device_log_first_last', group=True)
     device_users = db.view('phonelog/device_log_users', group=True)
@@ -99,16 +101,13 @@ def device_log(request, device):
     dup_index = db.view('phonelog/device_log_uniq', group=True,
                         keys=[[device, pure_log_entry(row)] for row in logdata])
     dup_index = dict((frozendict(row['key'][1]), row['value']) for row in dup_index)
-    print list(dup_index)
 
     def get_short_version(version):
         match = re.search(' (?P<build>#[0-9]+) ', version)
         return match.group('build') if match else None
 
     def parse_logs(logdata):
-        prev_row = None
-
-        for i, row in enumerate(logdata):
+        for row in logdata:
             recv_raw = row['key'][1]
             cur_row = {
                 'rowtype': 'log',
@@ -121,15 +120,11 @@ def device_log(request, device):
                 'raw_entry': frozendict(pure_log_entry(row)),
             }
 
-            if prev_row and prev_row['date'] > cur_row['date']:
-                cur_row['time_discrepancy'] = True
-
             first_recv = dup_index[cur_row['raw_entry']]
             cur_row['dup'] = (first_recv != recv_raw)
             cur_row['first_recv'] = first_recv if cur_row['dup'] else None
 
             yield cur_row
-            prev_row = cur_row
 
     def yield_dups(dups):
         total = len(dups['recs'])
@@ -147,7 +142,7 @@ def device_log(request, device):
             dup['dupgroup'] = dups['i']
             yield dup
 
-    def process_logs(logata):
+    def process_logs(logdata):
         dups = None
         dup_i = 0
 
@@ -170,8 +165,42 @@ def device_log(request, device):
             for dupr in yield_dups(dups):
                 yield dupr
 
+    def fdelta(delta):
+        return 86400.*delta.days + delta.seconds + 1.0e-6*delta.microseconds
+
+    def format_timediff(s):
+        s = int(abs(s)) + 30 #round to minute
+        days = s / 86400
+        hrs = (s / 3600) % 24
+        mins = (s / 60) % 60
+        secs = s % 60
+
+        if days > 0:
+            return '%dd %02dh %02dm' % (days, hrs, mins)
+        elif hrs > 0:
+            return '%dh %02dm' % (hrs, mins)
+        else:
+            return '%dm' % (mins)
+
+    def annotate_logs(logdata):
+        prev_row = None
+        for r in process_logs(logdata):
+            if r['rowtype'] == 'log' and not r['dup']:
+                if prev_row and (prev_row['date'] > r['date'] or
+                                 r['date'] - prev_row['date'] > timedelta(minutes=GAP_THRESHOLD)):
+                    yield {
+                        'rowtype': 'time',
+                        'regress': (prev_row['date'] > r['date'] + timedelta(seconds=45)),
+                        'fdiff': fdelta(r['date'] - prev_row['date']),
+                        'diff': format_timediff(fdelta(r['date'] - prev_row['date'])),
+                    }
+                
+                prev_row = r
+                    
+            yield r
+
     return render_to_response(request, 'phonelog/devicelogs.html', {
-        'logs': process_logs(logdata),
+        'logs': annotate_logs(logdata),
         'limit': limit,
         'more_next': more_next,
         'more_prev': more_prev,
