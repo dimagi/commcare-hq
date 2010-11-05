@@ -82,7 +82,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first
         pass
     if xform:
         xform_contents = form.contents
-        xform_contents, err, has_err = readable_form(xform_contents)
+        #xform_contents, err, has_err = readable_form(xform_contents)
 
     if app:
         saved_apps = (app.__class__).view('app_manager/applications',
