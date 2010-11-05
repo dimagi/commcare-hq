@@ -25,6 +25,10 @@ function toggle(mode) {
   }
 }
 
+function showdups(i) {
+  $('.dup-' + i).css('display', 'table-row');
+}
+
 </script>
 
 <br>
@@ -55,14 +59,41 @@ function toggle(mode) {
 </td>
 </tr>
 {% for l in logs %}
+{% ifequal l.rowtype "log" %}
+
+{% if l.dup %}
+<tr style="background: #ccc; display: none;" class="dup-{{ l.dupgroup }}">
+{% else %}
 <tr>
+{% endif %}
+
 <td><nobr><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></nobr></td>
-<td><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
+<td {% if l.time_discrepancy %}style="background: #faa;"{% endif %}><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
 <td>{{ l.type }}</td>
 <td>{{ l.msg }}</td>
 <td align="right"><nobr><span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span><span class="fullversion">{{ l.full_version }}</span></nobr></td>
 </tr>
+
+{% else %}
+
+<tr><td colspan="5" align="center" style="background: #ddd;">hiding <b>{{ l.total }}</b> duplicates of <b>{{ l.uniq }}</b> unique log entries first received on <b>{{ l.recv }}</b> <a href="#" onclick="showdups({{ l.i }}); return false;">(show)</a></td></tr>
+
+{% endifequal %}
 {% endfor %}
 </table>
+
+{% if more_prev %}
+<span style="float: left;"><a href="?limit={{ limit }}&skip={{ earlier_skip }}"><b>&laquo; earlier &laquo;</b></a></span>
+{% else %}
+<span style="float: left; color: #888;">| earlier &laquo;</span>
+{% endif %}
+
+{% if more_next %}
+<span style="float: right;"><a href="?limit={{ limit }}&skip={{ later_skip }}"><b>&raquo; later &raquo;</b></a></span>
+{% else %}
+<span style="float: right; color: #888;">&raquo; later |</span>
+{% endif %}
+
+<div style="clear: both;"><br>
 
 {% endblock %}
