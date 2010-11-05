@@ -5,6 +5,25 @@
 {% endblock %}
 {% block content %}
 
-<p>hello world</p>
+<table style="font-size: 120%;">
+<tr style="font-size: 80%;">
+<td>User</td>
+<td>First report</td>
+<td>Latest report</td>
+<td align="center">Device ID</td>
+<td align="center">Comments</td>
+</tr>
+{% for e in entries %}
+<tr>
+<td style="font-weight: bold;"><nobr>{{ e.user|default:"<span style=\"font-weight: normal; font-style: italic;\">&mdash;no user&mdash;</span>" }}</nobr></td>
+<td><nobr><b>{{ e.first|date:"M d"}}</b>, <span style="font-size: 80%">{{ e.first|date:"Y" }} <span style="color: #888;">{{ e.first|date:"H:i" }} UTC</span></span></nobr></td>
+<td><nobr><b>{{ e.last|date:"M d"}}</b>, <span style="font-size: 80%">{{ e.last|date:"Y" }} <span style="color: #888;">{{ e.last|date:"H:i" }} UTC</span></span></nobr></td>
+<td style="font-family: monospace; font-size: 120%;"><a href="{% url bhoma.apps.phonelog.views.device_log device=e.device %}">{{ e.device }}</a></td>
+<td style="font-size: 80%;">
+{% if e.other_users %}other users on this device: {{ e.other_users|join:", " }}<br>{% endif %}
+</td>
+</tr>
+{% endfor %}
+</table>
 
 {% endblock %}
