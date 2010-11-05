@@ -3,7 +3,6 @@ from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.util import bitly
 from corehq.util.webutils import get_url_base, parse_int
-from django.http import Http404
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
@@ -12,7 +11,6 @@ import hashlib
 from django.template.loader import render_to_string
 from zipfile import ZipFile, ZIP_DEFLATED
 from StringIO import StringIO
-import itertools
 from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
@@ -21,6 +19,8 @@ from django.http import HttpResponseForbidden
 
 
 from django.db import models
+import random
+from dimagi.utils.couch.database import get_db
 
 
 DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
@@ -59,64 +59,13 @@ class JadJar(Document):
     def jad_dict(self):
         return JadDict.from_jad(self.fetch_jad())
 
-class XForm(Document):
-    """
-    A meta data doc that saves the xform as an attachment, xform.xml
-    Transitioning to storing content as a string an property "contents" instead
-
-    """
-    domain = StringProperty()
-    xmlns = StringProperty()
-    submit_time = DateTimeProperty()
-    contents = StringProperty()
-
-    @property
-    def id(self):
-        return self._id
-
-    @classmethod
-    def new_xform(cls, domain, contents):
-        if not isinstance(contents, basestring):
-            contents = contents.read()
-        xform = cls(contents=contents)
-        xform.save()
-
-        xform.submit_time = datetime.utcnow()
-        xform.domain = domain
-
-        xform._reset_xmlns()
-        xform.save()
-        return xform
-
-    def _reset_xmlns(self):
-        soup = BeautifulStoneSoup(self.contents)
-        try:
-            self.xmlns = soup.find('instance').findChild()['xmlns']
-        except KeyError:
-            self.xmlns = None
-        if not self.xmlns:
-            self.xmlns = self._id
-            self.save()
-            soup.find('instance').findChild()['xmlns'] = self.xmlns
-        self.contents = soup.prettify()
-
-    def get_contents(self):
-        if self.contents:
-            contents = self.contents
-        else:
-            try:
-                contents = self.fetch_attachment('xform.xml')
-            except:
-                contents = ""
-        return contents
-
-
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
         @login_and_domain_required
         def wrapper(req, domain):
             pass
-        if wrapper(request, XForm.get(xform_id).domain):
+        _, app = Form.get_form(xform_id, and_app=True)
+        if wrapper(request, app.domain):
             # If login_and_domain_required intercepted wrapper
             # and returned an HttpResponse of its own
             return HttpResponseForbidden()
@@ -124,15 +73,16 @@ def authorize_xform_edit(view):
             return view(request, xform_id)
     return authorized_view
 
-def get_xform(xform_id):
+def get_xform(form_unique_id):
     "For use with xep_hq_server's GET_XFORM hook."
-    return XForm.get(xform_id).get_contents()
-def put_xform(xform_id, contents):
+    form = Form.get_form(form_unique_id)
+    return form.contents
+def put_xform(form_unique_id, contents):
     "For use with xep_hq_server's PUT_XFORM hook."
-    xform = XForm.get(xform_id)
-    xform.contents = contents
-    xform._reset_xmlns()
-    xform.save()
+    form, app = Form.get_form(form_unique_id, and_app=True)
+    form.contents = contents
+    form.refresh()
+    app.save()
 
 class IndexedSchema(DocumentSchema):
     """
@@ -157,14 +107,50 @@ class Form(IndexedSchema):
     Translates to a second-level menu on the phone
 
     """
+
     name        = DictProperty()
     requires    = StringProperty(choices=["case", "referral", "none"], default="none")
-    xform_id    = StringProperty()
-    #xmlns       = StringProperty()
     show_count  = BooleanProperty(default=False)
+    xmlns       = StringProperty()
+    contents    = StringProperty()
+    unique_id   = StringProperty()
 
-    def get_xform(self):
-        return XForm.get(self.xform_id)
+    @classmethod
+    def get_form(cls, form_unique_id, and_app=False):
+        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
+        # unpack the dict into variables app_id, module_id, form_id
+        app_id, module_id, form_id = [d[key] for key in ('app_id', 'module_id', 'form_id')]
+
+        app = Application.get(app_id)
+        form = app.modules[module_id].forms[form_id]
+        if and_app:
+            return form, app
+        else:
+            return form
+
+    def refresh(self):
+        if not self.unique_id:
+            self.unique_id = hex(random.getrandbits(160))[2:-1]
+        soup = BeautifulStoneSoup(self.contents)
+        try:
+            self.xmlns = soup.find('instance').findChild()['xmlns']
+        except KeyError:
+            self.xmlns = self.unique_id
+            self.save()
+            soup.find('instance').findChild()['xmlns'] = self.xmlns
+        self.contents = soup.prettify()
+
+    def get_contents(self):
+        if self.contents:
+            contents = self.contents
+        else:
+            try:
+                contents = self.fetch_attachment('xform.xml')
+            except:
+                contents = ""
+        return contents
+
+
 
 class DetailColumn(DocumentSchema):
     """
@@ -241,7 +227,7 @@ class Module(IndexedSchema):
     def infer_case_type(self):
         case_types = []
         for form in self.forms:
-            xform = form.get_xform().get_contents()
+            xform = form.contents
             soup = BeautifulStoneSoup(xform)
             try:
                 case_type = soup.find('case').find('case_type_id').string.strip()
@@ -430,9 +416,8 @@ class Application(ApplicationBase):
 #        )
 
     def fetch_xform(self, module_id, form_id):
-        xform_id = self.get_module(module_id).get_form(form_id).xform_id
-        xform = XForm.get(xform_id)
-        return xform.get_contents()
+        form = self.get_module(module_id).get_form(form_id)
+        return form.contents
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         return render_to_string(template, {
@@ -489,15 +474,13 @@ class Application(ApplicationBase):
         del self.modules[int(module_id)]
 
     def new_form(self, module_id, name, attachment, lang):
-        xform = XForm.new_xform(self.domain, attachment)
         module = self.get_module(module_id)
-        module.forms.append(
-            Form(
-                name={lang: name},
-                xform_id=xform._id,
-                form_requires="none",
-            )
+        form = Form(
+            name={lang: name},
+            contents=attachment
         )
+        form.refresh()
+        module.forms.append(form)
         form = module.get_form(-1)
         case_types = module.infer_case_type()
         if len(case_types) == 1 and not module.case_type:

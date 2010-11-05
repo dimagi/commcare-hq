@@ -7,13 +7,14 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, XForm, VersionedDoc, get_app, DetailColumn
+from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
 
 from django.views.decorators.http import require_POST
 from django.conf import settings
+from corehq.util.xforms import readable_form
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
@@ -76,13 +77,12 @@ def _apps_context(req, domain, app_id='', module_id='', form_id='', select_first
     xform = ""
     xform_contents = ""
     try:
-        xform = XForm.get(form.xform_id)
+        xform = form
     except:
         pass
     if xform:
-        #xform_contents = xform.fetch_attachment('xform.xml').encode('utf-8')
-        #xform_contents, err, has_err = readable_form(xform_contents)
-        xform_contents = ""
+        xform_contents = form.contents
+        xform_contents, err, has_err = readable_form(xform_contents)
 
     if app:
         saved_apps = (app.__class__).view('app_manager/applications',
@@ -341,9 +341,8 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         form.name[lang] = name
     elif "xform" == attr:
         xform = req.FILES['xform']
-        xform = XForm.new_xform(domain, xform)
-        form.xform_id = xform._id
-        form.xmlns = xform.xmlns
+        form.contents = xform.read()
+        form.refresh()
     elif "show_count" == attr:
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False

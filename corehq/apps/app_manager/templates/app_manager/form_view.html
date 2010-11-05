@@ -99,8 +99,8 @@
             </tr>
         {% endif %}
     </table>
-    {% if edit %}
-         <form method="POST" action="http://{{ request.get_host }}{% url xep_hq_server.views.initiate xform.id %}">
+    {% if edit and form.unique_id %}
+         <form method="POST" action="http://{{ request.get_host }}{% url xep_hq_server.views.initiate form.unique_id %}">
             {% csrf_token %}
 {#            <input type="hidden" name="callback" value="http://localhost:8010/HQ/?xform_id={{ xform.id }}" />#}
             <input type="hidden" name="callback" value="http://{{ request.get_host }}{{ request.get_full_path|safe}}" />
@@ -110,6 +110,6 @@
         </form>
     {% endif %}
     <code>
-        {{ xform.get_contents }}
+        {{ form.contents }}
     </code>
 {% endblock %}

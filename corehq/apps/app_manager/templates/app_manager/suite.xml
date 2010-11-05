@@ -5,7 +5,7 @@
   {% for  form in module.get_forms %}
     <!-- Parse and cache the XForm -->
     <xform>
-        <resource id="{{ form.xform_id }}" version="{{ app.version }}">
+        <resource id="{{ form.unique_id }}" version="{{ app.version }}">
            <location authority="local">./m{{ module.id }}/f{{ form.id }}.xml</location>
            <location authority="remote">./m{{ module.id }}/f{{ form.id }}.xml</location>
         </resource>

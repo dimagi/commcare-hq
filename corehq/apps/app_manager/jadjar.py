@@ -78,7 +78,7 @@ def sign_jar(jad, jar):
             for step in (step_one, step_two):
                 p = Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
                 err = p.stderr.read().strip()
-                if err != '': raise err
+                if err != '': raise Exception(err)
 
             with open(jad_file.name) as f:
                 txt = f.read()
