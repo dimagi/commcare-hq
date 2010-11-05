@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from bhoma.utils.couch.database import get_db
 import logging
 import itertools
+import re
 
 def device_list(db):
     device_times = db.view('phonelog/device_log_first_last', group=True)
@@ -61,4 +62,48 @@ def devices(request):
     return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries})
 
 def device_log(request, device):
-    pass
+    try:
+        limit = int(request.GET.get('limit'))
+    except:
+        limit = 1000
+
+    try:
+        skip = int(request.GET.get('skip'))
+    except:
+        skip = 0
+
+    logdata = get_db().view('phonelog/device_logs',
+                            limit=limit, skip=skip, 
+                            descending=True, endkey=[device], startkey=[device, {}])
+    num = len(logdata)
+    logdata = reversed(list(logdata))
+
+    more_prev = (num == limit)
+    more_next = (skip > 0)
+    overlap = 10
+    earlier_skip = skip + (limit - overlap)
+    later_skip = max(skip - (limit - overlap), 0)
+
+    def get_short_version(version):
+        match = re.search(' (?P<build>#[0-9]+) ', version)
+        return match.group('build') if match else None
+
+    def logs(logdata):
+        for row in logdata:
+            yield {
+                'recvd': datetime.utcfromtimestamp(row['key'][1]),
+                'date': datetime.strptime(row['value']['@date'][:19], '%Y-%m-%dT%H:%M:%S'),
+                'type': row['value']['type'],
+                'msg': row['value']['msg'],
+                'version': get_short_version(row['value']['version']),
+                'full_version': row['value']['version'],
+            }
+
+    return render_to_response(request, 'phonelog/devicelogs.html', {
+        'logs': logs(logdata),
+        'limit': limit,
+        'more_next': more_next,
+        'more_prev': more_prev,
+        'earlier_skip': earlier_skip,
+        'later_skip': later_skip,
+    })

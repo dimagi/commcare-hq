@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block page_imports %}
+    {% include "imports/jquery-ui.html" %}
+    {% include "imports/datatables.html" %}
+{% endblock %}
+{% block content %}
+
+<style>
+
+.shortversion { display: inline; }
+.fullversion { display: none; }
+
+body.full_on .shortversion { display: none; }
+body.full_on .fullversion { display: inline; }
+
+</style>
+
+<script>
+
+function toggle(mode) {
+  if (mode) {
+    $('body').addClass('full_on');
+  } else {
+    $('body').removeClass('full_on');
+  }
+}
+
+</script>
+
+<br>
+
+{% if more_prev %}
+<span style="float: left;"><a href="?limit={{ limit }}&skip={{ earlier_skip }}"><b>&laquo; earlier &laquo;</b></a></span>
+{% else %}
+<span style="float: left; color: #888;">| earlier &laquo;</span>
+{% endif %}
+
+{% if more_next %}
+<span style="float: right;"><a href="?limit={{ limit }}&skip={{ later_skip }}"><b>&raquo; later &raquo;</b></a></span>
+{% else %}
+<span style="float: right; color: #888;">&raquo; later |</span>
+{% endif %}
+
+<div style="clear: both;"><br>
+
+<table>
+<tr>
+<td>Received on&hellip;</td>
+<td>Phone Timestamp</td>
+<td>Type</td>
+<td>Message</td>
+<td align="right">App Version
+<span class="shortversion"><a href="#" onclick="toggle(true); return false;"><nobr>(show full)</nobr></a></span>
+<span class="fullversion"><a href="#" onclick="toggle(false); return false;"><nobr>(hide full)</nobr></a></span>
+</td>
+</tr>
+{% for l in logs %}
+<tr>
+<td><nobr><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></nobr></td>
+<td><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
+<td>{{ l.type }}</td>
+<td>{{ l.msg }}</td>
+<td align="right"><nobr><span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span><span class="fullversion">{{ l.full_version }}</span></nobr></td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
