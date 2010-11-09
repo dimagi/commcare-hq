@@ -222,7 +222,7 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
         cd = new_xform_form.cleaned_data
         name = cd['name']
         attachment = cd['file']
-        form = app.new_form(module_id, name, attachment, lang)
+        form = app.new_form(module_id, name, attachment.read(), lang)
         app.save()
         # add form_id to locals()
         form_id = form.id
