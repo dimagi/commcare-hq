@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='couchexport',
-    version='0.0.1.1',
+    version='0.0.1.2',
     description='Dimagi Couch Exporter for Django',
     author='Dimagi',
     author_email='information@dimagi.com',
