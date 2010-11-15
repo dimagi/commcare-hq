@@ -1,0 +1,47 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+{% block page_javascripts %}
+    {{ block.super }}
+    {% if clinic_id %}
+    <script type="text/javascript">
+        $("#clinic").live("change", 
+        function () {
+            button = $(this)[0];
+            console.log(button.value);
+            if (button.value != {{clinic_id}}) {
+                $("#user").hide();
+                $("#user").val(null);
+                $("#user_label").text("Press 'Go' to see this clinic's users");
+                $("#user_label").addClass("notice");
+                
+                
+            } else {
+                $("#user").show();
+                $("#user_label").text("User: ");
+                $("#user_label").removeClass("notice");
+                
+            }
+        });
+    </script>
+    {% endif %}
+{% endblock %}
+{% block reportcontent %}
+<form method="get" style="padding-bottom: 20px;">
+<label for="clinic">Clinic: </label> 
+<select name="clinic" id="clinic">
+{% for clinic, count in clinic_data.items %}
+    <option value="{{clinic}}" {% if clinic == clinic_id %}selected="selected"{% endif %}>{{ clinic }} ({{ count }} forms)</option>
+{% endfor %} 
+</select>
+{% if clinic_id %}
+    <label for="user" id="user_label">User: </label> 
+    <select name="user" id="user">
+        <option value="" {% if not user_id %}selected="selected"{% endif %}>All users</option>
+        {% for user,count in user_data %}
+        <option value="{{ user.get_id }}" {% if user.get_id == user_id %}selected="selected"{% endif %}>{% render_user_inline user %} ({{count}} forms)</option>
+        {% endfor %}
+    </select>
+{% endif %}
+<input type="submit" value="Go!" />
+</form>
+{% endblock %}

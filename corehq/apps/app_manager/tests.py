@@ -6,7 +6,7 @@ Replace these with more appropriate tests for your application.
 """
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn, XForm
+from corehq.apps.app_manager.models import Application, DetailColumn
 from corehq.apps.domain.models import Domain
 
 class AppManagerTest(TestCase):
@@ -31,8 +31,8 @@ class AppManagerTest(TestCase):
         self.app.save()
     def tearDown(self):
         self.app.delete()
-        for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
-            xform.delete()
+        #for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
+        #    xform.delete()
 
     def testSetUp(self):
         self.failUnlessEqual(len(self.app.modules), 3)

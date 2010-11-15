@@ -1,0 +1,17 @@
+{% extends "reports/clinic_user_report.html" %}
+{% load report_tags %}
+{% load plot_tags %}
+{% block page_javascripts %}
+    {{ block.super }}
+    {% if clinic_id %}
+    <script> 
+		{% formentry_plot_js clinic_id user_id %}
+    </script> 
+{% endif %}
+{% endblock %}
+{% block reportcontent %}
+{{ block.super }}
+{% if clinic_id %}
+    <div id="formentry-plot" style="width:950px;height:400px;"></div> 
+{% endif %}
+{% endblock %}

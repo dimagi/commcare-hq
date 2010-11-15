@@ -46,6 +46,10 @@ img::-moz-selection {background: transparent;}
 /*- LET'S GET STARTED!
 ----------------------------------------------------------------------*/
 
+table {
+    width: 100%;
+}
+
 li {
     list-style: none;
 }

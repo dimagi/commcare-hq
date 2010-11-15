@@ -1,0 +1,56 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+{% load sync_log_tags %}
+{% load plot_tags %}
+{% block page_javascripts %}
+    {{ block.super }}
+{% if main_chw %}
+    <script type="text/javascript">
+        {% case_plot_js main_chw.get_id %}
+        {% formentry_plot_js main_chw.current_clinic_id main_chw.get_id %}
+        $(function() {
+            $("#tabs").tabs();
+        });
+    </script> 
+{% endif %}
+{% endblock %}
+{% block reportcontent %}
+<form method="get" style="padding-bottom: 20px;">
+<label for="chw" id="chw_label">Choose CHW: </label> 
+<select name="chw" id="chw">
+        <option value="" {% if not user_id %}selected="selected"{% endif %}>All users</option>
+        {% for chw in chws %}
+        <option value="{{ chw.get_id }}" {% if chw.get_id == chw_id %}selected="selected"{% endif %}>{{ chw.formatted_name }} ({{ chw.current_clinic_display}})</option>
+        {% endfor %}
+</select>
+<input type="submit" value="Go!" />
+</form>
+{% if main_chw %}
+<div id="tabs">
+    <ul>
+        <li><a href="#sync-logs">Sync logs</a></li>
+        <li><a href="#case-data">Cases sent to phones</a></li>
+        <li><a href="#formentry">Form entry data over time</a></li>
+        <li><a href="#punchcard">Punchcard</a></li>
+    </ul>
+    <div id="sync-logs">
+        {% sync_logs_for_chw main_chw.get_id %}        
+    </div>
+    <div id="case-data">
+	    <h3>Cases sent to phones</h3>
+	    <div id="case-plot" style="width:910px;height:400px;"></div>
+    </div>
+    <div id="formentry">
+        <h3>Form entry data over time</h3>
+        <div id="formentry-plot" style="width:910px;height:400px;"></div>
+    </div>
+    <div id="punchcard">
+        {% if punchcard_url %}
+            <img src="{{punchcard_url}}"></img>
+        {% else %}
+            <p>Sorry, no data found</p>
+        {% endif %}
+    </div>
+</div> 
+{% endif %}
+{% endblock %}
