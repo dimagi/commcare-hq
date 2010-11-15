@@ -118,6 +118,8 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.new_data',
     'corehq.apps.users',
+    'corehq.apps.reports',
+    'xep_hq_server',
 )
 
 RAPIDSMS_APPS = (
@@ -211,6 +213,13 @@ EMAIL_USE_TLS = True
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
+
+# xep_hq_server settings
+XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
+XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
+XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
+GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
+
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -284,6 +293,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'new_data',
         'users',
         'domain',
+        'reports',
+        'xep_hq_server'
     ]
 ]
 

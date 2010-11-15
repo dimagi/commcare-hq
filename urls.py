@@ -16,6 +16,7 @@ domain_specific = patterns('',
     (r'^receiver', include('corehq.apps.receiver.urls')),
     (r'^data/', include('corehq.apps.new_data.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
+    (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^', include(hqwebapp_domain_specific))
 
 )
@@ -24,6 +25,7 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
     (r'^a/(?P<domain>\w+)/', include(domain_specific)),
+    (r'^xep/', include('xep_hq_server.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
 

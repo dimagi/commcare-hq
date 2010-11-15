@@ -12,4 +12,10 @@
 	url = git://github.com/dimagi/couchexport.git
 [submodule "submodules/djangocouch-src"]
 	path = submodules/djangocouch-src
-	url = git@github.com:dimagi/djangocouch.git
+	url = git://github.com/dimagi/djangocouch.git
+[submodule "submodules/dimagi-utils-src"]
+	path = submodules/dimagi-utils-src
+	url = git://github.com/dimagi/dimagi-utils.git
+[submodule "submodules/xep_hq_server"]
+	path = submodules/xep_hq_server
+	url = git://github.com/dimagi/xep_hq_server.git

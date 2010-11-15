@@ -34,3 +34,8 @@ JAR_SIGN = dict(
     store_pass = "*****",
     key_pass = "*****",
 )
+
+
+# Link to XForm Editor
+# in the future we will possible allow multiple
+EDITOR_URL = 'http://localhost:8011/xep/initiate/'
