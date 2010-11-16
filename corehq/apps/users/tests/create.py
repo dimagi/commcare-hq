@@ -50,7 +50,7 @@ class UsersTestCase(TestCase):
         couch_user.add_commcare_account('username4','password4','domain4')
         self.assertEqual(couch_user.commcare_accounts[1].username, 'username4')
         self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
-        couch_user.add_phone('IMEI')
+        couch_user.add_phone_device('IMEI')
         self.assertEqual(couch_user.phone_devices[0].IMEI, 'IMEI')
         couch_user.add_phone_number('1234567890')
         self.assertEqual(couch_user.phone_numbers[0].number, '1234567890')

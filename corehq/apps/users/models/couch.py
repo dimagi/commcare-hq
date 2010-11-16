@@ -115,7 +115,7 @@ class CouchUser(Document):
                                                       domain=domain,
                                                       **kwargs))
        
-    def add_phone(self, IMEI, default=False, **kwargs):
+    def add_phone_device(self, IMEI, default=False, **kwargs):
         self.phone_devices.append(PhoneDevice(IMEI=IMEI,
                                               default=default,
                                               **kwargs))

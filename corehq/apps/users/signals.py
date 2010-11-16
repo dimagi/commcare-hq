@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
-from corehq.apps.users.models import HqUserProfile
+from corehq.apps.users.models import HqUserProfile, CouchUser
 from couchforms.signals import xform_saved
 from couchforms.models import XFormInstance
 
@@ -38,3 +38,68 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
 post_save.connect(create_user_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
 
+"""
+Case 2: 
+This section automatically creates Couch users whenever a registration xform is received
+
+Question: is it possible to receive registration data from the phone after Case 3?
+If so, we need to check for a user created via Case 3 and link them to this account
+automatically
+"""
+
+def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
+    """
+    # this comes in as xml that looks like:
+    # <n0:registration xmlns:n0="openrosa.org/user-registration">
+    # <username>user</username>
+    # <password>pw</password>
+    # <uuid>MTBZJTDO3SCT2ONXAQ88WM0CH</uuid>
+    # <date>2008-01-07</date>
+    # <registering_phone_id>NRPHIOUSVEA215AJL8FFKGTVR</registering_phone_id>
+    # <user_data> ... some custom stuff </user_data>
+    """
+    try:
+        if namespace != REGISTRATION_XMLNS:
+            return
+        if not (xform.form['username'] and 
+                xform.form['password'] and 
+                xform.form['uuid'] and 
+                xform.form['date'] and 
+                xform.form['registering_phone_id']):
+                    raise Exception("Poorly configured registration XML")
+        username = xform.form['username']
+        password = xform.form['password']
+        uuid = xform.form['uuid']
+        date = xform.form['date']
+        imei = xform.form['registering_phone_id']
+        # TODO: implement this properly, more like xml_to_json(user_data)
+        user_data = xform.form['user_data']
+        domain = xform.domain
+        couch_user = CouchUser.view("users/by_username_password", 
+                                    key=[username, password, domain]).one()    
+        if couch_user is None:
+            # TODO: add a check for when uuid is not unique
+            user = User(username=uuid[:30], 
+                        password=password)
+            user.save()
+            couch_user = user.get_profile().get_couch_user()
+        # add metadata to couch user
+        couch_user.add_domain_account(username, domain)
+        couch_user.add_commcare_account(username = username, 
+                                        password = password, 
+                                        domain = domain, 
+                                        date_registered = date,
+                                        UUID = uuid)
+        couch_user.add_phone_device(IMEI=imei)
+        # TODO: fix after clarifying desired behaviour
+        # couch_user.user_data = user_data
+        couch_user.save()
+        return True
+    except Exception, e:
+        #import traceback, sys
+        #exc_type, exc_value, exc_traceback = sys.exc_info()
+        #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+        #print str(e)
+        raise
+
+xform_saved.connect(create_user_from_commcare_registration)
