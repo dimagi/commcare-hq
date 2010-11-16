@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 
-
 class DjangoUser(Document):
     id = IntegerProperty()
     username = StringProperty()
@@ -39,7 +38,7 @@ class DomainAccount(Document):
     class Meta:
         app_label = 'users'
 
-class CommCareUser(Document):
+class CommCareAccount(Document):
     """
     This is the information associated with a 
     particular commcare user. Right now, we 
@@ -54,6 +53,7 @@ class CommCareUser(Document):
     date = DateTimeProperty()
     registering_phone_id = StringProperty()
     user_data = DictProperty()
+    domain = StringProperty()
     
     class Meta:
         app_label = 'users'
@@ -93,12 +93,36 @@ class CouchUser(Document):
     """
     UUID = StringProperty(required=True)
     django_user = SchemaProperty(DjangoUser)
-    domain_accoutns = SchemaListProperty(DomainAccount)
-    commcare_user = SchemaProperty(CommCareUser)
+    domain_accounts = SchemaListProperty(DomainAccount)
+    commcare_accounts = SchemaListProperty(CommCareAccount)
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
     created_on = DateTimeProperty()
 
+    _user = None
+    _user_checked = False
+
     class Meta:
         app_label = 'users'
+        
+    def add_domain_account(self, username, domain, **kwargs):
+        self.domain_accounts.append(DomainAccount(username = username, 
+                                                  domain = domain,
+                                                  **kwargs))
+    
+    def add_commcare_account(self, username, password, domain, **kwargs):
+        self.commcare_accounts.append(CommCareAccount(username=username,
+                                                      password=password,
+                                                      domain=domain,
+                                                      **kwargs))
+       
+    def add_phone(self, IMEI, default=False, **kwargs):
+        self.phone_devices.append(PhoneDevice(IMEI=IMEI,
+                                              default=default,
+                                              **kwargs))
+        
+    def add_phone_number(self, number, default=False, **kwargs):
+        self.phone_numbers.append(PhoneNumber(number=number,
+                                              default=default,
+                                              **kwargs))
 
