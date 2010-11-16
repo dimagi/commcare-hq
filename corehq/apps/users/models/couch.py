@@ -2,11 +2,9 @@
 couch models go here
 """
 from __future__ import absolute_import
-from datetime import datetime
-from django.contrib.auth.models import User
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
-from corehq.apps.users.models import HqUserProfile
+
 
 class DjangoUser(Document):
     id = IntegerProperty()
@@ -25,7 +23,7 @@ class DjangoUser(Document):
     date_joined = DateTimeProperty()
         
     class Meta:
-        app_label = 'django_user'
+        app_label = 'users'
 
 class DomainAccount(Document):
     """
@@ -39,7 +37,7 @@ class DomainAccount(Document):
     date_joined = DateTimeProperty()
     
     class Meta:
-        app_label = 'domain_account'
+        app_label = 'users'
 
 class CommCareUser(Document):
     """
@@ -58,7 +56,7 @@ class CommCareUser(Document):
     user_data = DictProperty()
     
     class Meta:
-        app_label = 'commcare_user'
+        app_label = 'users'
 
 class PhoneDevice(Document):
     """
@@ -71,7 +69,7 @@ class PhoneDevice(Document):
     created = DateTimeProperty()
     
     class Meta:
-        app_label = 'phone_device'
+        app_label = 'users'
 
 class PhoneNumber(Document):
     """
@@ -84,9 +82,9 @@ class PhoneNumber(Document):
     created = DateTimeProperty()
     
     class Meta:
-        app_label = 'phone_number'
+        app_label = 'users'
 
-class User(Document):
+class CouchUser(Document):
     """
     a user (for web+commcare+sms)
     can be associated with multiple usename/password/login tuples
@@ -100,4 +98,7 @@ class User(Document):
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
     created_on = DateTimeProperty()
-            
+
+    class Meta:
+        app_label = 'users'
+

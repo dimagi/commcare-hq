@@ -1,9 +1,8 @@
 """
 Django  models go here
 """
-from django.db import models
-from django.conf import settings
 from djangocouchuser.models import CouchUserProfile
+from corehq.apps.users.models.couch import CouchUser
 
 class HqUserProfile(CouchUserProfile):
     """
@@ -11,9 +10,13 @@ class HqUserProfile(CouchUserProfile):
     with annotating whatever additional fields we need for Hq
     (Right now, none additional are required)
     """
+
+    class Meta:
+        app_label = 'users'
     
     def __unicode__(self):
         return "%s @ %s" % (self.user)
-    
-# load our signals.
-import corehq.apps.users.signals
+
+    def get_couch_user(self):
+        couch_user = CouchUser.view("users/all_users", key=self._id).one()
+        return couch_user
