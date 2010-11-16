@@ -91,7 +91,6 @@ class CouchUser(Document):
     can be associated with multiple phone numbers/SIM cards
     can be associated with multiple phones/device IDs
     """
-    UUID = StringProperty(required=True)
     django_user = SchemaProperty(DjangoUser)
     domain_accounts = SchemaListProperty(DomainAccount)
     commcare_accounts = SchemaListProperty(CommCareAccount)
