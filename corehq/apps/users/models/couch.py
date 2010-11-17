@@ -2,6 +2,7 @@
 couch models go here
 """
 from __future__ import absolute_import
+from django.contrib.auth.models import User
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 
@@ -103,7 +104,10 @@ class CouchUser(Document):
 
     class Meta:
         app_label = 'users'
-        
+    
+    def get_django_user(self):
+        return User.objects.get(id = self.django_user.id)
+       
     def add_domain_account(self, username, domain, **kwargs):
         self.domain_accounts.append(DomainAccount(username = username, 
                                                   domain = domain,

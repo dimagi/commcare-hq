@@ -1,15 +1,27 @@
+from datetime import datetime
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth.models import User
-from corehq.apps.domain.models import Domain
+from couchdbkit import Server
+from corehq.apps.users.signals import REGISTRATION_XMLNS
 
 class UsersTestCase(TestCase):
     def setUp(self):
-        pass
-
+        # wipe couch database for this unit test
+        # TODO: this feels useful enough to pull out for all of our unit tests
+        self.old_db_name = settings.COUCH_DATABASE_NAME
+        settings.COUCH_DATABASE_NAME = "test_commcarehq"
+        self.db = Server().get_or_create_db(settings.COUCH_DATABASE_NAME)
+        
     def tearDown(self):
-        pass
-
+        self.db.flush()
+        settings.COUCH_DATABASE_NAME = self.old_db_name
+    
     def testCreateBasicWebUser(self):
+        """ 
+        test that a basic couch user gets created properly after 
+        saving a django user programmatically
+        """
         username = "joe"
         email = "joe@domain.com"
         password = "password"
@@ -25,6 +37,9 @@ class UsersTestCase(TestCase):
         self.assertEqual(couch_user.django_user.email, email)
 
     def testCreateCompleteWebUser(self):
+        """ 
+        testing couch user internal functions
+        """
         username = "joe"
         email = "joe@domain.com"
         password = "password"
@@ -55,4 +70,41 @@ class UsersTestCase(TestCase):
         couch_user.add_phone_number('1234567890')
         self.assertEqual(couch_user.phone_numbers[0].number, '1234567890')
         couch_user.save()
+
+    def testCreateUserFromRegistration(self):
+        """ 
+        test creating of couch user from a registration xmlns
+        this is more of an integration test than a unit test,
+        since 
+        """
+        sender = "post"
+        from couchforms.models import XFormInstance
+        from corehq.apps.users.models import CouchUser
+        from corehq.apps.users.signals import create_user_from_commcare_registration
+        xform = XFormInstance()
+        xform.form = {}
+        xform.form['username'] = username = 'test_registration'
+        xform.form['password'] = password = '1982'
+        xform.form['uuid'] = uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
+        xform.form['date'] = date_string = '2010-03-23'
+        xform.form['registering_phone_id'] = registering_phone_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
+        xform.domain = domain = 'mockdomain'
+        namespace = REGISTRATION_XMLNS
+        doc_id = create_user_from_commcare_registration(sender, xform, namespace)
+        couch_user = CouchUser.get(doc_id)
+        # django_user = couch_user.get_django_user()
+        # self.assertEqual(django_user.username, random_uuid)
+        # self.assertEqual(couch_user.django_user.username, random_uuid)
+        # registered commcare user gets an automatic domain account on server
+        self.assertEqual(couch_user.domain_accounts[0].username, username)
+        self.assertEqual(couch_user.domain_accounts[0].domain, domain)
+        # they also get an automatic commcare account
+        self.assertEqual(couch_user.commcare_accounts[0].username, username)
+        self.assertEqual(couch_user.commcare_accounts[0].password, password)
+        self.assertEqual(couch_user.commcare_accounts[0].domain, domain)
+        self.assertEqual(couch_user.commcare_accounts[0].UUID, uuid)
+        date = datetime.date(datetime.strptime(date_string,'%Y-%m-%d'))
+        self.assertEqual(couch_user.commcare_accounts[0].date_registered, date)
+        self.assertEqual(couch_user.phone_devices[0].IMEI, registering_phone_id)
+
 

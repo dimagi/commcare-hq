@@ -60,7 +60,7 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
     """
     try:
         if namespace != REGISTRATION_XMLNS:
-            return
+            return False
         if not (xform.form['username'] and 
                 xform.form['password'] and 
                 xform.form['uuid'] and 
@@ -73,7 +73,6 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
         date = xform.form['date']
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
-        user_data = xform.form['user_data']
         domain = xform.domain
         couch_user = CouchUser.view("users/by_username_password", 
                                     key=[username, password, domain]).one()    
@@ -92,9 +91,9 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
                                         UUID = uuid)
         couch_user.add_phone_device(IMEI=imei)
         # TODO: fix after clarifying desired behaviour
-        # couch_user.user_data = user_data
+        # if 'user_data' in xform.form: couch_user.user_data = user_data
         couch_user.save()
-        return True
+        return couch_user._id
     except Exception, e:
         #import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
