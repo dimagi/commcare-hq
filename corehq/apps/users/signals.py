@@ -61,11 +61,11 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
     try:
         if namespace != REGISTRATION_XMLNS:
             return False
-        if not (xform.form['username'] and 
-                xform.form['password'] and 
-                xform.form['uuid'] and 
-                xform.form['date'] and 
-                xform.form['registering_phone_id']):
+        if not ('username' in xform.form and 
+                'password' in xform.form and 
+                'uuid' in xform.form and 
+                'date' in xform.form and 
+                'registering_phone_id' in xform.form):
                     raise Exception("Poorly configured registration XML")
         username = xform.form['username']
         password = xform.form['password']
@@ -98,7 +98,7 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
         #import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
         #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
-        #print str(e)
+        logging.error(str(e))
         raise
 
 xform_saved.connect(create_user_from_commcare_registration)
