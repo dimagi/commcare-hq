@@ -74,6 +74,8 @@ class Metadata(object):
 
 class XFormInstance(Document):
     """An XForms instance."""
+    xmlns = StringProperty()
+    
     @property
     def _form(self):
         return self[const.TAG_FORM]
@@ -90,10 +92,6 @@ class XFormInstance(Document):
         return self._form.get(const.TAG_UIVERSION, "")
     
     @property
-    def namespace(self):
-        return self._form.get(const.TAG_NAMESPACE, "")
-    
-    @property
     def metadata(self):
         if (const.TAG_META) in self._form:
             meta_block = self._form[const.TAG_META]
@@ -103,7 +101,7 @@ class XFormInstance(Document):
         return None
 
     def __unicode__(self):
-        return "%s (%s)" % (self.type, self.namespace)
+        return "%s (%s)" % (self.type, self.xmlns)
 
     def xpath(self, path):
         """
@@ -144,3 +142,13 @@ class XFormInstance(Document):
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             to_return[key] = self.xpath(key)
         return to_return
+
+class XFormDuplicate(XFormInstance):
+    """
+    Duplicates of instances go here.
+    """
+    
+    def save(self, *args, **kwargs):
+        self["#doc_type"] = "XFormDuplicate"
+        super(CXFormDuplicate, self).save(*args, **kwargs)
+        
