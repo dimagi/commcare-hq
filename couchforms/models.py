@@ -74,6 +74,12 @@ class Metadata(object):
 
 class XFormInstance(Document):
     """An XForms instance."""
+    
+    @property
+    def get_form(self):
+        """public getter for the xform's form instance, it's redundant with _form but wrapping that access gives future audit capabilities"""
+        return self._form
+    
     @property
     def _form(self):
         return self[const.TAG_FORM]
