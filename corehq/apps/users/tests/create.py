@@ -6,17 +6,7 @@ from couchdbkit import Server
 from corehq.apps.users.signals import REGISTRATION_XMLNS
 
 class UsersTestCase(TestCase):
-    def setUp(self):
-        # wipe couch database for this unit test
-        # TODO: this feels useful enough to pull out for all of our unit tests
-        self.old_db_name = settings.COUCH_DATABASE_NAME
-        settings.COUCH_DATABASE_NAME = "test_commcarehq"
-        self.db = Server().get_or_create_db(settings.COUCH_DATABASE_NAME)
         
-    def tearDown(self):
-        self.db.flush()
-        settings.COUCH_DATABASE_NAME = self.old_db_name
-    
     def testCreateBasicWebUser(self):
         """ 
         test that a basic couch user gets created properly after 
@@ -89,8 +79,8 @@ class UsersTestCase(TestCase):
         xform.form['date'] = date_string = '2010-03-23'
         xform.form['registering_phone_id'] = registering_phone_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
         xform.domain = domain = 'mockdomain'
-        namespace = REGISTRATION_XMLNS
-        doc_id = create_user_from_commcare_registration(sender, xform, namespace)
+        xform.xmlns = REGISTRATION_XMLNS
+        doc_id = create_user_from_commcare_registration(sender, xform)
         couch_user = CouchUser.get(doc_id)
         # django_user = couch_user.get_django_user()
         # self.assertEqual(django_user.username, random_uuid)

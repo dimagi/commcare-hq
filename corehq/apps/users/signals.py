@@ -47,7 +47,7 @@ If so, we need to check for a user created via Case 3 and link them to this acco
 automatically
 """
 
-def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
+def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     # this comes in as xml that looks like:
     # <n0:registration xmlns:n0="openrosa.org/user-registration">
@@ -59,7 +59,7 @@ def create_user_from_commcare_registration(sender, xform, namespace, **kwargs):
     # <user_data> ... some custom stuff </user_data>
     """
     try:
-        if namespace != REGISTRATION_XMLNS:
+        if xform.xmlns != REGISTRATION_XMLNS:
             return False
         if not ('username' in xform.form and 
                 'password' in xform.form and 

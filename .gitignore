@@ -1,5 +1,5 @@
 localsettings.*
 *.pyc
 *.py~
-data
+/data
 corehq/apps/releasemanager/DimagiKeyStore
