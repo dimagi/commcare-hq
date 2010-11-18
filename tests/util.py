@@ -1,9 +1,7 @@
 import os
 import uuid
-from corehq.apps.case.xform import get_or_update_cases
-from django.conf import settings
-from dimagi.utils.post import post_authenticated_data
-from couchforms.models import XFormInstance
+from couchforms.util import post_xform_to_couch
+from corehq.apps.case.models.couch import CommCareCase
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
@@ -12,9 +10,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
         xml_data = f.read()
     doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override, 
                                                          referral_id_override=referral_id_override)  
-    cases_touched = get_or_update_cases(XFormInstance.get(doc_id))
-    test_class.assertEqual(1, len(cases_touched))
-    case = cases_touched[case_id]
+    case = CommCareCase.get_by_case_id(case_id)
     test_class.assertEqual(case_id, case.case_id)
     return case
             
@@ -29,15 +25,8 @@ def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=N
     xml_data = xml_data.replace("REPLACE_UID", uid)
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
     xml_data = xml_data.replace("REPLACE_REFID", ref_id)
-    doc_id, errors = post_authenticated_data(xml_data, 
-                                             settings.XFORMS_POST_URL, 
-                                             settings.COUCH_USERNAME,
-                                             settings.COUCH_PASSWORD)
-    if errors: 
-        raise Exception("Couldn't post! %s" % errors)
-    elif "error" in doc_id:
-        raise Exception("Problem with couch! %s" % doc_id)
-    return (doc_id, uid, case_id, ref_id)
+    doc = post_xform_to_couch(xml_data)
+    return (doc.get_id, uid, case_id, ref_id)
     
 def check_xml_line_by_line(test_case, expected, actual, ignore_whitespace=True, delimiter="\n"):
     """Does what it's called, hopefully parameters are self-explanatory"""

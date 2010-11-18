@@ -159,8 +159,10 @@ class CommCareCase(CaseBase):
     the actions in sequence.
     """
     
+    case_id = StringProperty()
     external_id = StringProperty()
     encounter_id = StringProperty()
+    
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
@@ -177,14 +179,8 @@ class CommCareCase(CaseBase):
     class Meta:
         app_label = 'case'
         
-    
-    def _get_case_id(self):
-        return self._id
-    
-    def _set_case_id(self, value):
-        if getattr(self, "_id", None) is not None and self._id != value:
-            raise Exception("can't change case id once it has been set!")
-        self._id = value
+    def __unicode__(self):
+        return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
     
     def get_version_token(self):
         """
@@ -193,8 +189,6 @@ class CommCareCase(CaseBase):
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%(case_id)s::%(date_modified)s" % (self.case_id, self.date_modified)
-    
-    case_id = property(_get_case_id, _set_case_id)
     
     def is_started(self, since=None):
         """
@@ -233,6 +227,10 @@ class CommCareCase(CaseBase):
         # apply initial updates, referrals and such, if present
         case.update_from_block(case_block)
         return case
+    
+    @classmethod
+    def get_by_case_id(cls, id):
+        return cls.view(const.VIEW_BY_CASE_ID, key=id).one()
     
     def update_from_block(self, case_block, visit_date=None):
         
@@ -304,4 +302,6 @@ class CommCareCase(CaseBase):
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = datetime.combine(close_action.visit_date, time())
-        
+
+
+import corehq.apps.case.signals
