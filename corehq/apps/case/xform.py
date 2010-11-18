@@ -30,7 +30,7 @@ def get_or_update_model(case_block):
         return case_doc
     else:
         case_id = case_block[const.CASE_TAG_ID]
-        case_doc = CommCareCase.get(case_id)
+        case_doc = CommCareCase.get_by_case_id(case_id)
         case_doc.update_from_block(case_block)
         return case_doc
         
