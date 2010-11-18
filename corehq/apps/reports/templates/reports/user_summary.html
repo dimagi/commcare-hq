@@ -5,18 +5,22 @@
     <thead>
         <tr>
             <th>Username</th>
-            <th>Clinic</th>
-            <th>User type</th>
+            <th>Device ID(s)</th>
             <th>Last submission date</th>
             <th>Total forms received</th>
         </tr>
     </thead>
 <tbody>
-    {% for row in results %}
+    {% for row in report.rows %}
     <tr>
-        {% render_user row.user %}
+        <td>{{ row.username }}</td>
+        <td>
+            {% for device_id in row.device_ids %}
+                {{ device_id }}<br />
+            {% endfor %}
+        </td>
         <td>{{ row.last_submission_date|date }}</td>
-        <td>{{ row.value }}</td>
+        <td>{{ row.count }}</td>
     </tr>
 {% endfor %}
 </tbody>

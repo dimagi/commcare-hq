@@ -1,5 +1,34 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% block head %}
+    {{ block.super }}
+    <script>
+    $(function(){
+        fields = {
+            "referral": [
+                "id",
+                "type",
+                "date-due",
+                "date-created"
+            ],
+            "case": JSON.parse($("#case-fields").remove().text())
+        };
+        $('.detail-headers [name="model"]').change(function(){
+            model = $(this).attr('value');
+            $field = $(this).closest('tr').find('[name="field"]');
+            $field.autocomplete({
+                source: fields[model],
+                minLength: 0,
+                delay: 0
+            });
+        }).trigger('change');
+        $('.detail-headers [name="field"]').focus(function(){
+            $(this).autocomplete('search');
+        });
+    });
+    </script>
+{% endblock %}
+
 {% block form-view %}
     <h3>{{ module.name|trans:langs }}</h3>
     <table class="config">
@@ -27,15 +56,8 @@
                     Case Type
                 </th>
                 <td>
-                    <div class="has_dropdown">
+                    <div>
                         <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
-                        <ul class="dropdown">
-                            {% for case_type in module.infer_case_type %}
-                                <li>
-                                    {{ case_type }}
-                                </li>
-                            {% endfor %}
-                        </ul>
                     </div>
                     <div class="immutable"><code>{{ module.case_type }}</code></div>
 
@@ -117,10 +139,15 @@
         {% endif %}
         </tr>
     </table>
+    
+    {# just a json list used for the case field autocomplete #}
+    <div id="case-fields">{{ case_fields }}</div>
+
+
     {% for detail in module.details %}
     <h4>{{ detail.type|title}} Detail Headers</h4>
     {% if edit or detail.columns %}
-    <table class="config">
+    <table class="config detail-headers">
         <thead>
             <tr>
                 {% if edit %}

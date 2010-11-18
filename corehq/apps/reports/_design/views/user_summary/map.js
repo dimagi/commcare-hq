@@ -5,6 +5,13 @@ function(doc) {
     // for now incude all non-device-reports in this report
     if (doc.doc_type == "XFormInstance" )
     {
-        emit([doc.domain, doc.form.Meta.user_id, get_encounter_date(doc), doc.xmlns], 1);
+        var device_ids = {};
+        device_ids[doc.form.Meta.DeviceID] = null;
+        emit([doc.domain, doc.form.Meta.username], {
+            count: 1,
+            last_submission_date:(get_encounter_date(doc)),
+            username: doc.form.Meta.username,
+            device_ids: device_ids,
+        });
     }
 }

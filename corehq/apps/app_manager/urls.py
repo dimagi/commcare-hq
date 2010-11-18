@@ -2,6 +2,9 @@ from django.conf.urls.defaults import patterns
 from django.template.defaulttags import url
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
+    (r'xform/(?P<form_unique_id>\w+)/$',                                    'xform_display'),
+    (r'casexml/(?P<form_unique_id>\w+)/$',                                  'form_casexml'),
+
     (r'view/(?P<app_id>\w+)/$',                                             'view_app'),
     (r'view/$',                                                             'default'),
 
@@ -15,6 +18,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     (r'edit_form_attr/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/(?P<attr>\w+)/$',
                                                                             'edit_form_attr'),
+    (r'edit_form_actions/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',
+                                                                            'edit_form_actions'),
 
     (r'edit_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',            'edit_module_detail'),
     (r'edit_module_attr/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<attr>\w+)/$','edit_module_attr'),
