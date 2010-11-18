@@ -77,8 +77,14 @@ class XFormInstance(Document):
     xmlns = StringProperty()
     
     @property
+    def get_form(self):
+        """public getter for the xform's form instance, it's redundant with _form but wrapping that access gives future audit capabilities"""
+        return self._form
+    
+    @property
     def _form(self):
         return self[const.TAG_FORM]
+    
     @property
     def type(self):
         return self._form.get(const.TAG_TYPE, "")
