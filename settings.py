@@ -273,20 +273,17 @@ INSTALLED_BACKENDS = {
     }
 }
 
+from settingshelper import get_dynamic_db_settings
 ####### Couch Forms & Couch DB Kit Settings #######
-def get_server_url(server_root, username, password):
-    if username and password:
-        return "http://%(user)s:%(pass)s@%(server)s" % \
-            {"user": username,
-             "pass": password,
-             "server": server_root }
-    else:
-        return "http://%(server)s" % {"server": server_root }
-COUCH_SERVER = get_server_url(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD)
-COUCH_DATABASE = "%(server)s/%(database)s" % {"server": COUCH_SERVER, "database": COUCH_DATABASE_NAME }
+_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
 
+# create local server and database configs
+COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
+COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
-XFORMS_POST_URL = "http://%s/%s/_design/couchforms/_update/xform/" % (COUCH_SERVER_ROOT, COUCH_DATABASE_NAME)
+# other urls that depend on the server 
+XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
+
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchforms',
         'couchexport',
@@ -303,7 +300,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
 
 SKIP_SOUTH_TESTS = True
 
-#TEST_RUNNER = 'testrunner.CouchDbKitTestSuiteRunner'
+TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 try:
     INSTALLED_APPS += LOCAL_APPS
 except:
