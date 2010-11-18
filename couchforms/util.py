@@ -1,9 +1,24 @@
 import logging
 from django.conf import settings
-from dimagi.utils.post import post_data, post_authenticated_data
+from couchforms.models import XFormInstance, XFormDuplicate
 from dimagi.utils.logging import log_exception
-from couchforms.models import XFormInstance
+import logging
+from couchdbkit.resource import RequestFailed
+from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
+from dimagi.utils.couch import uid
+import re
+from dimagi.utils.post import post_authenticated_data, post_data
+
+def post_from_settings(instance, extras={}):
+    url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
+        (settings.XFORMS_POST_URL, "&".join(["%s=%s" % (k, v) for k, v in extras.items()]))
+    if settings.COUCH_USERNAME:
+        return post_authenticated_data(instance, url, 
+                                       settings.COUCH_USERNAME, 
+                                       settings.COUCH_PASSWORD)
+    else:
+        return post_data(instance, url)
 
 def post_xform_to_couch(instance):
     """
@@ -11,25 +26,60 @@ def post_xform_to_couch(instance):
     Returns the newly created document from couchdb, or raises an
     exception if anything goes wrong
     """
+    def _has_errors(response, errors):
+        return errors or "error" in response
+    
     # check settings for authentication credentials
-    if settings.COUCH_USERNAME:
-        response, errors = post_authenticated_data(instance, settings.XFORMS_POST_URL, 
-                                                   settings.COUCH_USERNAME, 
-                                                   settings.COUCH_PASSWORD)
-    else:
-        response, errors = post_data(instance, settings.XFORMS_POST_URL)
-    if not errors and not "error" in response:
-        doc_id = response
-        try:
-            xform = XFormInstance.get(doc_id)
-            xform_saved.send_robust(sender="post", form=xform)
-            return xform
-        except Exception, e:
-            logging.error("Problem accessing %s" % doc_id)
-            log_exception(e)
+    try:
+        response, errors = post_from_settings(instance)
+        if not _has_errors(response, errors):
+            doc_id = response
+            try:
+                xform = XFormInstance.get(doc_id)
+                # fire signals
+                feedback = xform_saved.send_robust(sender="post", xform=xform)
+                for func, errors in feedback:
+                    if errors:
+                        logging.error("Problem sending post-save signal %s for xform %s" % (func, doc_id))
+                        log_exception(errors)
+                    
+                return xform
+            except Exception, e:
+                logging.error("Problem accessing %s" % doc_id)
+                log_exception(e)
+                raise
+        else:
+            raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+    except RequestFailed, e:
+        if e.status_int == 409:
+            # this is an update conflict, i.e. the uid in the form was the same.
+            # log it and flag it.
+            def _extract_id_from_raw_xml(xml):
+                # TODO: this is brittle as hell. Fix.
+                _PATTERNS = (r"<uid>(\w+)</uid>", r"<uuid>(\w+)</uuid>")
+                for pattern in _PATTERNS:
+                    if re.search(pattern, xml): return re.search(pattern, xml).groups()[0]
+                logging.error("Unable to find conflicting matched uid in form: %s" % xml)
+                return ""
+            conflict_id = _extract_id_from_raw_xml(instance)
+            new_doc_id = uid.new()
+            log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
+                                             " %s, duplicate instance %s" % (conflict_id, new_doc_id)))
+            response, errors = post_from_settings(instance, {"uid": new_doc_id})
+            if not _has_errors(response, errors):
+                # create duplicate doc
+                # get and save the duplicate to ensure the doc types are set correctly
+                # so that it doesn't show up in our reports
+                dupe = XFormDuplicate.get(response)
+                dupe.release_lock()
+                dupe.save()
+                return dupe
+            else:
+                # how badly do we care about this?
+                raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+            
+        else:
             raise
-    else:
-        raise Exception("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
 
 def value_for_display(value, replacement_chars="_-"):
     """

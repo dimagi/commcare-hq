@@ -3,10 +3,6 @@ function(doc, req) {
     var base64Class = require("util/base64").Base64;
     var dateFormat = require("util/dateFormat").dateFormat;
     
-    
-    e4xmlJsonClass.hello();
-    base64Class.hello();
-    
     if (doc) {
         log("doc wasn't null!  this is unexpected! you will LOSE your information in favor of the xml");
     }
@@ -26,11 +22,10 @@ function(doc, req) {
         // search for a uuid in some known places
         // CZUE: stop using the uid from the form.  It creates all kinds of other problems
         // with document update conflicts
-        /*
-        var other_uuid = doc["uuid"];
+        
+        if (req.query && req.query.uid) return req.query.uid;
         if (doc["uuid"]) return doc["uuid"];
         if (doc["Meta"] && doc["Meta"]["uid"]) return doc["Meta"]["uid"];
-        */
         var guid = function() {
             // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
             // TODO: find a better guid generator / plug into couch uuid framework
@@ -47,7 +42,7 @@ function(doc, req) {
     doc["_id"] = uuid.toString();
     
     // attach the raw xml as a file called "form.xml"
-    // This apparently has to be base64 encoded to store properly in couch.
+    // This has to be base64 encoded to store properly in couch.
     var attachments = { "form.xml" : { "content_type":"text/xml", "data": base64Class.encode(req.body) } };      
     doc["_attachments"] = attachments;
     
