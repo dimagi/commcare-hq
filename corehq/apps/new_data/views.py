@@ -7,7 +7,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 def data(req, domain, template="new_data/data.html"):
     instances = XFormInstance.view('new_data/xforminstances', startkey=[domain], endkey=[domain, {}]).all()
-    print instances
     return render_to_response(req, template, {
         'tab': 'data',
         'domain': domain,

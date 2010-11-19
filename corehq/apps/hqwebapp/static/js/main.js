@@ -1,6 +1,5 @@
 $(function(){
 
-
     $.prototype.iconify = function(icon) {
         this.addClass('ui-icon ' + icon).css('float', 'left');
     }
@@ -107,14 +106,15 @@ $(function(){
     });
     $('.editable .immutable').prev().hide();
     //$('table .editable').last().find('.immutable').hide().prev().show();
-    $('tr.editable').click(function(e){
+    $('tr.editable').mouseup(function(e){
         //e.preventDefault();
         if($(this).hasClass('selected')) {return;}
         var $row = $(this).closest('tr');
+        $row.focus();
         var $table = $(this).closest('table');
         $('tr.editable').each(function(){
             $(this).removeClass('selected');
-            $(this).find('.immutable').show().prev().hide();
+            $(this).find('.immutable').show().prev().hide().autocomplete('close');
         });
         $row.addClass('selected');
         $row.find('.immutable').hide().prev().show().trigger('change');
@@ -140,20 +140,6 @@ $(function(){
         $('body').append($form);
         $form.submit();
     });
-
-    // dropdown
-//    $('.dropdown').hide();
-//    $('.has_dropdown').focus(function(){
-//        $(this).children('.dropdown').show();
-//    }).blur(function(){
-//        $(this).children('.dropdown').hide();
-//    });
-//    $('.dropdown li').click(function(){
-//        alert($(this).text());
-//        var $input = $(this).prevAll('.has_dropdown');
-//        $input.attr('value', $(this).text());
-//    });
-
 
     // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){

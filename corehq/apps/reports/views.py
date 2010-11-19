@@ -2,6 +2,7 @@
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
+import dateutil.parser
 
 def report_list(request, domain):
     template = "reports/report_list.html"
@@ -13,30 +14,24 @@ def report_list(request, domain):
 ##                              {"show_dates": False, "report": report})
 #
 def user_summary(request, domain):
-    results = get_db().view("reports/user_summary", group=True, group_level=2, startkey=[domain], endkey=[domain, {}]).all()
-    print results
+    results = get_db().view(
+        "reports/user_summary",
+        group=True,
+        startkey=[domain],
+        endkey=[domain, {}]
+    ).all()
+    rows = [result['value'] for result in results]
+    for row in rows:
+        row['last_submission_date'] = dateutil.parser.parse(row['last_submission_date'])
     report_name = "User Summary Report (number of forms filled in by person)"
-    for row in results:
-        # this is potentially 3N queries where N is the number of users.
-        # could be slimmed down if it starts to be slow
-        user_id = row["key"][1]
-        try:
-            user = get_db().get(user_id)
-        except Exception:
-            user = None
-        row["user"] = user
-        # have to swap the start and end keys when you specify descending=true
-        row["last_submission_date"] = string_to_datetime(get_db().view("reports/user_summary",
-                                                                       group=True, group_level=3,
-                                                                       endkey=[domain, user_id],
-                                                                       startkey=[domain, user_id, {}],
-                                                                       limit=1, descending=True).one()["key"][2])
 
     return render_to_response(request, "reports/user_summary.html", {
         "domain": domain,
         "show_dates": False,
-        "results": results,
-        "report": {"name": report_name},
+        "report": {
+            "name": report_name,
+            "rows": rows,
+        }
     })
 #
 ##@require_GET

@@ -1,5 +1,204 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% block head %}
+    {{ block.super }}
+    <style>
+        .casexml ul {
+            margin-left: 15px;
+        }
+    </style>
+    <script>
+        function initCondition() {
+            $condition = $("#condition-template");
+            $condition.removeAttr("id").remove();
+            $('.casexml .action .config .condition').html($condition.html());
+        }
+        function makeConditionInteractive(questions) {
+            $(".condition select[name='condition-question']").change(function(){
+                $answers = $(this).next("select[name='condition-answer']");
+                $answers.html("");
+                value = $(this).attr('value');
+                found = false;
+                for(i in questions) {
+                    q = questions[i];
+                    if(q.value == value) {
+                        found = true;
+                        break;
+                    }
+                }
+                if(found){
+                    $answers.show();
+                    for(i in q.options) {
+                        o = q.options[i];
+                        option = "<option value='" + o.value + "'>" + o.label + "</option>";
+                        $answers.append($(option));
+                    }
+                }
+            });
+        }
+        function populateQuestions(questions) {
+            $("select.questions").each(function(){
+                //$answers = $(this).next("select[name='trigger_answer']");
+                //$answers.hide();
+                for(i in questions) {
+                    q = questions[i];
+                    if(($(this).hasClass("questions-all")) ||
+                       ($(this).hasClass('questions-select1') && q.tag == "select1") ||
+                       ($(this).hasClass('questions-select') && q.tag == "select") ||
+                       ($(this).hasClass('questions-input') && q.tag == "input")) {
+                        option = "<option value='" + q.value + "'>" + q.label + "</option>";
+                        $(this).append($(option));
+                    }
+                }
+            });
+        }
+        function add_update_row(){
+            $new_row = initUpdateCase.template.clone();
+            $new_row.addClass('action-update');
+            $("#update-case").next().find('table').append($new_row);
+        }
+        function initUpdateCase() {
+            $update_template = $("#action-update-template");
+            $update_template.removeAttr("id").remove();
+            initUpdateCase.template = $update_template;
+
+            add_update_row();
+
+            $('.casexml [name="action-update-value"]').live('change', function (){
+                if($(this).closest('tr').is(':last-child')) {
+                    add_update_row();
+                }
+            });
+        }
+        function checkboxShowHide($checkbox, f_or_things){
+            // makes $checkbox toggle an element or elements given by f_or_things
+            // f_or_things is either a jquery set (things)
+            // or a function (f) that returns a jquery set based on $checkbox
+            // (which inside the function would be called `this`
+            $checkbox.change(function(){
+                if(typeof f_or_things == 'function') {
+                    $things = f_or_things.apply(this);
+                } else {
+                    $things = f_or_things;
+                }
+
+                that = this;
+                $things.each(function(){
+                    if($(that).is(":checked")) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }).trigger('change');
+        }
+        function generateCasexmlJson(){
+            actions = {};
+            function lookup(root, key){
+                return $(root).find('[name="' + key + '"]').attr('value');
+            }
+            $(".casexml .action").each(function(){
+
+                $checkbox = $(this).find('input[type="checkbox"]');
+                if(!$checkbox.is(":checked")) return;
+                action = {};
+                id = $checkbox.attr('id').replace('-','_');
+                if(id=="update_case") {
+                    action.update = {};
+                    $('.action-update', this).each(function(){
+                        key = lookup(this, "action-update-key");
+                        val = lookup(this, "action-update-value");
+                        if(key || val) {
+                            action.update[key] = val;
+                        }
+                    });
+                }
+                else if (id=="open_referral" || id=="open_case") {
+                    action.name_path = lookup(this, 'name_path');
+                }
+                else if (id=="update_referral") {
+                    action.followup_date = lookup(this, 'followup_date');
+                }
+                action.condition = {'type': 'always'}; // default value
+                $('.condition', this).each(function(){ // there is only one
+                    action.condition = {};
+                    action.condition.type = $('input[name="if"]', this).is(':checked') ? 'if' : 'always';
+                    if(action.condition.type == 'if') {
+                        action.condition.question = lookup(this, 'condition-question');
+                        action.condition.answer = lookup(this, 'condition-answer');
+                    }
+                });
+                actions[id] = action;
+
+            });
+            return JSON.stringify(actions);
+        }
+        function populateCasexmlForm(actions){
+            actions = JSON.parse(actions);
+            function is_active(action) {
+                return action.condition && action.condition.type in {'if': true, 'always': true};
+            }
+            for(a in actions) {
+                action = actions[a];                
+                if(!is_active(action)) continue;
+                id = a.replace('_', '-');
+                $checkbox = $("#"+id);
+                $action = $checkbox.parent();
+                $checkbox.attr('checked', true).trigger('change');
+
+                if(action.condition.type == 'if') {
+                    $if = $('.condition input[name="if"]', $action);
+                    $if.attr('checked', true).trigger('change');
+                    $('.condition [name="condition-question"]', $action).attr('value', action.condition.question).trigger('change');
+                    $('.condition [name="condition-answer"]', $action).attr('value', action.condition.answer);
+                }
+
+                if(a == 'update_case') {
+
+                    update = action.update;
+                    for(key in update) {
+                        val = update[key];
+                        $row = $('.action-update:last-child');
+                        $('[name="action-update-key"]', $row).attr('value', key);
+                        $('[name="action-update-value"]', $row).attr('value', val)
+                                .trigger('change'); // create new row
+                    }
+                }
+                else if(a == "open_referral" || a == "open_case") {
+                    name_path = action.name_path;
+                    $('[name="name_path"]', $action).attr('value', name_path);
+                }
+                else if(a == "update_referral") {
+                    followup_date = action.followup_date;
+                    $('[name="followup_date"]', $action).attr('value', followup_date);
+                }
+            }
+        }
+        $(function(){
+            initCondition();
+            url = $("#xform_questions_url").attr('value');
+            $.get(url, {}, function(text){
+                questions = JSON.parse(text);
+                populateQuestions(questions);
+
+                makeConditionInteractive(questions);
+                initUpdateCase();
+                populateCasexmlForm($("#casexml_json").text());
+                $(".casexml").delegate('*', 'change', function(){
+                    // recompute casexml_json
+                    $("#casexml_json").text(generateCasexmlJson());
+                }).trigger('change');
+                $(".no-edit *").each(function(){
+                    if($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) {
+                        $(this).parent().hide();
+                    }
+                }).attr("disabled", true);
+            });
+            checkboxShowHide($("#open-case"), $("#update-case, #open-referral").parent());
+            checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
+        });
+    </script>
+{% endblock %}
 {% block form-view %}
     <h3>{{ module.name|trans:langs }} &gt; {{ form.name|trans:langs }}</h3>
 
@@ -13,25 +212,6 @@
                 </td>
                 <td>
                     <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'name' %}" class="submit button">
-                        Save
-                    </a>
-                    <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
-                    </div>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>Requires</th>
-                <td>
-                    <select class="code" name="requires">
-                        <option value="none">none</option>
-                        <option value="case">case</option>
-                        <option value="referral">referral</option>
-                    </select>
-                    <div class="immutable"><code>{% firstof form.requires "none" %}</code></div>
-                </td>
-                <td>
-                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" class="submit button">
                         Save
                     </a>
                     <div class="immutable">
@@ -62,7 +242,7 @@
                 <td>
                     <input type="file" name="xform" />
                     <div class="immutable">
-                        <code>{{ xform.xmlns }}</code>
+                        <code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code>
                     </div>
                 </td>
                 <td>
@@ -74,17 +254,30 @@
                     </div>
                 </td>
             </tr>
+            <tr class="form editable">
+                <th>Requires</th>
+                <td>
+                    <select class="code" name="requires">
+                        <option value="none">none</option>
+                        <option value="case">case</option>
+                        <option value="referral">referral</option>
+                    </select>
+                    <div class="immutable"><code>{% firstof form.requires "none" %}</code></div>
+                </td>
+                <td>
+                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" class="submit button">
+                        Save
+                    </a>
+                    <div class="immutable">
+                        <a class="edit_link" href="#">edit</a>
+                    </div>
+                </td>
+            </tr>
         {% else %}
             <tr>
                 <th>Form Name</th>
                 <td>
                     {{ form.name|trans:langs }}
-                </td>
-            </tr>
-            <tr>
-                <th>Requires</th>
-                <td>
-                    <code>{{ form.requires }}</code>
                 </td>
             </tr>
             <tr>
@@ -95,10 +288,177 @@
             </tr>
             <tr>
                 <th>XForm</th>
-                <td><code>{{ xform.xmlns }}</code></td>
+                <td><code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code></td>
             </tr>
+            <tr>
+                <th>Requires</th>
+                <td>
+                    <code>{{ form.requires }}</code>
+                </td>
+            </tr>
+
         {% endif %}
     </table>
+
+    <!-- Case XML -->
+    <div id="condition-template" class="condition">
+        <input type="checkbox" name="if" /> If
+        <span>
+             the answer to
+            <select class="questions questions-select1" name="condition-question">
+                <option value="" disabled="" selected="">Select a question</option>
+            </select>
+            is
+            <select name="condition-answer">
+                <option value="" disabled="" selected="">Select an answer</option>
+            </select>
+        </span>
+    </div>
+    <div class="casexml {% if not edit %}no-edit{% endif %}">
+        Actions:
+        <ul>
+            {% if form.requires == "none" %}
+                <li class="action">
+                    <input type="checkbox" id="open-case"> Opens a case
+                    <div class="config">
+                        <div class="condition"></div>
+                        <span>
+                            Name according to question
+                            <select class="questions questions-all" name="name_path">
+                                <option disabled="">Select a question</option>
+                            </select>
+                        </span>
+                    </div>
+                </li>
+
+            {% endif %}
+            <li class="action">
+                <input type="checkbox" id="update-case"> Updates a case
+                <div class="config">
+{#                    <div class="condition"></div>#}
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr id="action-update-template" class="action-update">
+                            <td></td>
+                            <td><input type="text" name="action-update-key" /></td>
+                            <td>
+                                <select class="questions questions-all" name="action-update-value">
+                                    <option></option>
+                                </select>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </li>
+            {% if form.requires != "none" %}
+                <li class="action">
+                    <input type="checkbox" id="close-case"> Closes a case
+                    <div class="config">
+                        <div class="condition"></div>                        
+                    </div>
+                </li>
+            {% endif %}
+            {% if form.requires != "referral" %}
+                <li class="action">
+                    <input type="checkbox" id="open-referral"> Opens a referral
+                    <div class="config">
+{#                        <div class="condition"></div>#}
+                        <span>
+                            Name according to question
+                            <select class="questions questions-select questions-select1" name="name_path">
+                                <option disabled="">Select a question</option>
+                            </select>
+                        </span>
+                    </div>
+                </li>
+            {% endif %}
+            {% if form.requires == "referral" %}
+                <li class="action">
+                    <input type="checkbox" id="update-referral"> Updates a referral
+                    <div class="config">
+{#                        <div class="condition"></div>#}
+                        <span>
+                            Change followup date to
+                            <select class="questions questions-input" name="followup_date">
+                                <option disabled="">Select a question</option>
+                            </select>
+                        </span>
+                    </div>
+                </li>
+                <li class="action">
+                    <input type="checkbox" id="close-referral"> Closes a referral
+                    <div class="config">
+                        <div class="condition"></div>
+                    </div>
+                </li>
+            {% endif %}
+
+{#                <li class="action">#}
+{#                    <select name="action-type">#}
+{#                        <option value="open">Open</option>#}
+{#                        <option value="update">Update</option>#}
+{#                        <option value="close">Close</option>#}
+{#                    </select>#}
+{#                    <span class="immutable">{{ action.type }}</span>#}
+{#                    a#}
+{#                    <select name="model">#}
+{#                        <option value="case">Case</option>#}
+{#                        <option value="referral">Referral</option>#}
+{#                    </select>#}
+{#                    <span class="immutable">{{ action.model }}</span>#}
+{#                    <ul>#}
+{#                        {% for key,value in action.update.items %}#}
+{#                            <li class="action-update">#}
+{#                                Set#}
+{#                                <select class="code" name="action-update-key">#}
+{#                                    <option>case_name</option>#}
+{#                                    <option>date_opened</option>#}
+{#                                </select>#}
+{#                                <span class="immutable">{{ key }}</span>#}
+{#                                to the answer of#}
+{#                                <select class="questions questions-all" name="action-update-value">#}
+{#                                    <option disabled="">Select a question</option>#}
+{#                                </select>#}
+{#                                <span class="immutable">{{ value }}</span>#}
+{#                            </li>#}
+{#                        {% endfor %}#}
+{#                        <li class="action-condition">#}
+{#                            <select name="action-condition-type">#}
+{#                                <option value="if">If</option>#}
+{#                                <option value="always">Always</option>#}
+{#                            </select>#}
+{#                            <span value="if">#}
+{#                                 the answer to#}
+{#                                <select class="questions" name="action-condition-question">#}
+{#                                    <option value="" disabled="" selected="">Select a question</option>#}
+{#                                </select>#}
+{#                                <span class="immutable">{{ action.condition.question }}</span>#}
+{#                                is#}
+{#                                <select name="action-condition-answer">#}
+{#                                    <option value="" disabled="" selected="">Select an answer</option>#}
+{#                                </select>#}
+{#                                <span class="immutable">{{ action.condition.answer }}</span>#}
+{#                            </span>#}
+{#                        </li>#}
+{#                    </ul>#}
+{#                </li>#}
+        </ul>
+    </div>
+    <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
+        <textarea id="casexml_json" class="code" name="actions" >{{ form_actions }}</textarea><br/>
+        <input type="submit" value="Submit"/>
+    </form>
+    <!-- end -->
+
+    <div>
+        <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.unique_id %}">XForm Display</a>
+        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.unique_id %}" />
+    </div>
     {% if edit and form.unique_id %}
          <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.unique_id %}">
             {% csrf_token %}
@@ -109,7 +469,8 @@
             <input type="submit" value="Start Editing" />
         </form>
     {% endif %}
-    <code>
+    <div id="questions"></div>
+    <!--code>
         {{ form.contents }}
-    </code>
+    </code-->
 {% endblock %}
