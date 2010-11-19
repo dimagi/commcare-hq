@@ -456,11 +456,11 @@
     <!-- end -->
 
     <div>
-        <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.unique_id %}">XForm Display</a>
-        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.unique_id %}" />
+        <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}">XForm Display</a>
+        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}" />
     </div>
-    {% if edit and form.unique_id %}
-         <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.unique_id %}">
+    {% if edit and form.get_unique_id %}
+         <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.get_unique_id %}">
             {% csrf_token %}
 {#            <input type="hidden" name="callback" value="http://localhost:8010/HQ/?xform_id={{ xform.id }}" />#}
             <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />

@@ -171,10 +171,14 @@ class Form(IndexedSchema):
             return form, app
         else:
             return form
-
-    def refresh(self):
+    def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
+            self._parent._parent.save()
+        return self.unique_id
+        
+    def refresh(self):
+        pass
 #        soup = BeautifulStoneSoup(self.contents)
 #        try:
 #            self.xmlns = soup.find('instance').findChild()['xmlns']
@@ -516,14 +520,26 @@ class VersionedDoc(Document):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
         copy.delete()
+    
+    def scrub_source(self, source):
+        """
+        To be overridden.
+        
+        Use this to scrub out anything
+        that should be shown in the
+        application source, such as ids, etc.
+        
+        """
+        pass
 
     def export_json(self):
-        j = self.to_json()
+        source = self.to_json()
         
         for field in self._meta_fields:
-            if field in j:
-                del j[field]
-        return json.dumps(j)
+            if field in source:
+                del source[field]
+        self.scrub_source(source)
+        return json.dumps(source)
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -764,6 +780,10 @@ class Application(ApplicationBase):
         forms = self.modules[module_id]['forms']
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
+    def scrub_source(self, source):
+        for m,module in enumerate(source['modules']):
+            for f,form in enumerate(module['forms']):
+                del source['modules'][m]['forms'][f]['unique_id']
 
 class NotImplementedYet(Exception):
     pass
