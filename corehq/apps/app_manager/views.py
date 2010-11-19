@@ -21,6 +21,8 @@ from lxml import etree as ET
 import json
 from utilities.profile import profile
 
+_str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
     """
@@ -96,6 +98,26 @@ def form_casexml(req, domain, form_unique_id):
     if domain != app.domain: raise Http404
     return HttpResponse(form.create_casexml())
 
+@login_and_domain_required
+def app_source(req, domain, app_id):
+    app = get_app(domain, app_id)
+    return HttpResponse(app.export_json())
+    
+@login_and_domain_required
+@require_POST
+def import_app(req, domain):
+    source = req.POST.get('source')
+    name = req.POST.get('name')
+    source = json.loads(source)
+    if name:
+        source['name'] = name
+    cls = _str_to_cls[source['doc_type']]
+    app = cls.from_source(source, domain)
+    app.save()
+    app_id = app._id
+    return back_to_main(**locals())
+    
+
 #@profile("apps_context.prof")
 def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     """
@@ -110,7 +132,6 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     )
 
     applications = []
-    #str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
     for app in VersionedDoc._db.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
         app = app['value']
         applications.append(app)
@@ -151,7 +172,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     if module:
         for _form in module.forms:
             case_fields.update(_form.actions.update_case.update.keys())
-        case_fields = sorted(case_fields)
+    case_fields = sorted(case_fields)
 
     return {
         'domain': domain,
@@ -209,7 +230,7 @@ def view_app(req, domain, app_id=''):
     context = _apps_context(req, domain, app_id, module_id, form_id)
     app = context['app']
     if not app and context['applications']:
-        app_id = context['applications'][0]._id
+        app_id = context['applications'][0]['id']
         return back_to_main(edit=False, **locals())
     if app and app.copy_of:
         raise Http404

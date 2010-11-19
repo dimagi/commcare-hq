@@ -459,6 +459,8 @@ class VersionedDoc(Document):
     version = IntegerProperty()
     short_url = StringProperty()
 
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url']
+
     @property
     def id(self):
         return self._id
@@ -514,6 +516,23 @@ class VersionedDoc(Document):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
         copy.delete()
+
+    def export_json(self):
+        j = self.to_json()
+        
+        for field in self._meta_fields:
+            if field in j:
+                del j[field]
+        return json.dumps(j)
+    @classmethod
+    def from_source(cls, source, domain):
+        for field in cls._meta_fields:
+            if field in source:
+                del source[field]
+        source['domain'] = domain
+        return cls.wrap(source)
+        
+
 
 class ApplicationBase(VersionedDoc):
     """
@@ -574,7 +593,7 @@ class ApplicationBase(VersionedDoc):
             'suite_loc': self.suite_loc,
             'post_url': self.post_url,
             'post_test_url': self.post_url,
-        })
+        }).decode('utf-8')
     def fetch_jar(self):
         return JadJar.get(self.jadjar_id).fetch_jar()
 
@@ -786,10 +805,13 @@ class RemoteApp(ApplicationBase):
         soup = BeautifulStoneSoup(suite)
         locations = []
         for resource in soup.findAll('resource'):
-            loc = resource.findChild('location', authority='remote').string
+            try:
+                loc = resource.findChild('location', authority='remote').string
+            except:
+                loc = resource.findChild('location', authority='local').string
             locations.append(loc)
         for location in locations:
-            files[location.split('/')[-1]] = urlopen(urljoin(self.suite_url, location)).read()
+            files[location.split('/')[-1]] = urlopen(urljoin(self.suite_url, location)).read().decode('utf-8')
         return files
 
 class DomainError(Exception):

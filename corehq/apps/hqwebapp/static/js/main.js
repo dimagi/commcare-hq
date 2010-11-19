@@ -1,6 +1,5 @@
 $(function(){
 
-
     $.prototype.iconify = function(icon) {
         this.addClass('ui-icon ' + icon).css('float', 'left');
     }

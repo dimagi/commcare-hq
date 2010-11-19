@@ -1,5 +1,17 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% block head %}
+    {{ block.super }}
+    <script>
+        $(function(){
+            $("#view_source").click(function(){
+                $.get($(this).attr('href'), function(data){
+                    $("#app_source").text(data);
+                });
+            });
+        });
+    </script>
+{% endblock %}
 {% block form-view %}
     <h3>{{ app.name }}</h3>
     {% if app.doc_type == "Application" %}
@@ -106,4 +118,11 @@
             {% endif %}
         </table>
     {% endif %}
+    <h4>Advanced</h4>
+    <div class="config">
+        <a href="{% url corehq.apps.app_manager.views.app_source domain app.id %}" class="dialog_opener" id="view_source">View Source</a>
+        <div class="dialog" title="Application Source">
+            <textarea id="app_source"></textarea>
+        </div>
+    </div>
 {% endblock %}

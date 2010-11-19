@@ -4,6 +4,8 @@ from django.template.defaulttags import url
 urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'xform/(?P<form_unique_id>\w+)/$',                                    'xform_display'),
     (r'casexml/(?P<form_unique_id>\w+)/$',                                  'form_casexml'),
+    (r'source/(?P<app_id>\w+)/$',                                           'app_source'),
+    (r'import/$',                                                           'import_app'),
 
     (r'view/(?P<app_id>\w+)/$',                                             'view_app'),
     (r'view/$',                                                             'default'),
