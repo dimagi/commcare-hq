@@ -48,7 +48,7 @@ class CommCareAccount(Document):
     but we could always extend to multiple commcare
     users if desired later.
     """
-    uuid = StringProperty()
+    UUID = StringProperty()
     username = StringProperty()
     password = StringProperty()
     date = DateTimeProperty()
