@@ -74,14 +74,16 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
-        couch_user = CouchUser.view("users/by_username_password", 
-                                    key=[username, password, domain]).one()    
-        if couch_user is None:
-            # TODO: add a check for when uuid is not unique
-            user = User(username=uuid[:30], 
-                        password=password)
-            user.save()
-            couch_user = user.get_profile().get_couch_user()
+        num_couch_users = len(CouchUser.view("users/by_username_password", 
+                                             key=[username, password, domain]))
+        # TODO: add a check for when uuid is not unique
+        user = User(username=uuid[:30], 
+                    password=password)
+        user.save()
+        couch_user = user.get_profile().get_couch_user()
+        if num_couch_users > 0:
+            couch_user.is_duplicate = "True"
+            couch_user.save()
         # add metadata to couch user
         couch_user.add_domain_account(username, domain)
         couch_user.add_commcare_account(username = username, 
