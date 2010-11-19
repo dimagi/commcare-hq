@@ -14,9 +14,6 @@ LOG_FORMAT  = "[%(name)s]: %(message)s"
 LOG_BACKUPS = 256 # number of logs to keep
 
 
-
-XFORMS_FORM_TRANSLATE_JAR="/var/django_sites/datahq/lib/form_translate.jar"
-
 ####### Couch Forms ######
 COUCH_SERVER_ROOT = 'localhost:5984'
 COUCH_USERNAME = ''
