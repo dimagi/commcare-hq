@@ -3,9 +3,23 @@ from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth.models import User
 from couchdbkit import Server
+from couchforms.models import XFormInstance
 from corehq.apps.users.signals import REGISTRATION_XMLNS
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.signals import create_user_from_commcare_registration
 
 class UsersTestCase(TestCase):
+    
+    def setUp(self):
+        self.xform = XFormInstance()
+        self.xform.form = {}
+        self.xform.form['username'] = self.username = 'test_registration'
+        self.xform.form['password'] = self.password = '1982'
+        self.xform.form['uuid'] = self.uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
+        self.xform.form['date'] = self.date_string = '2010-03-23'
+        self.xform.form['registering_phone_id'] = self.registering_phone_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
+        self.xform.domain = self.domain = 'mockdomain'
+        self.xform.xmlns = REGISTRATION_XMLNS
         
     def testCreateBasicWebUser(self):
         """ 
@@ -68,33 +82,37 @@ class UsersTestCase(TestCase):
         since 
         """
         sender = "post"
-        from couchforms.models import XFormInstance
-        from corehq.apps.users.models import CouchUser
-        from corehq.apps.users.signals import create_user_from_commcare_registration
-        xform = XFormInstance()
-        xform.form = {}
-        xform.form['username'] = username = 'test_registration'
-        xform.form['password'] = password = '1982'
-        xform.form['uuid'] = uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
-        xform.form['date'] = date_string = '2010-03-23'
-        xform.form['registering_phone_id'] = registering_phone_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
-        xform.domain = domain = 'mockdomain'
-        xform.xmlns = REGISTRATION_XMLNS
-        doc_id = create_user_from_commcare_registration(sender, xform)
+        doc_id = create_user_from_commcare_registration(sender, self.xform)
         couch_user = CouchUser.get(doc_id)
         # django_user = couch_user.get_django_user()
         # self.assertEqual(django_user.username, random_uuid)
         # self.assertEqual(couch_user.django_user.username, random_uuid)
         # registered commcare user gets an automatic domain account on server
-        self.assertEqual(couch_user.domain_accounts[0].username, username)
-        self.assertEqual(couch_user.domain_accounts[0].domain, domain)
+        self.assertEqual(couch_user.domain_accounts[0].username, self.username)
+        self.assertEqual(couch_user.domain_accounts[0].domain, self.domain)
         # they also get an automatic commcare account
-        self.assertEqual(couch_user.commcare_accounts[0].username, username)
-        self.assertEqual(couch_user.commcare_accounts[0].password, password)
-        self.assertEqual(couch_user.commcare_accounts[0].domain, domain)
-        self.assertEqual(couch_user.commcare_accounts[0].UUID, uuid)
-        date = datetime.date(datetime.strptime(date_string,'%Y-%m-%d'))
+        self.assertEqual(couch_user.commcare_accounts[0].username, self.username)
+        self.assertEqual(couch_user.commcare_accounts[0].password, self.password)
+        self.assertEqual(couch_user.commcare_accounts[0].domain, self.domain)
+        self.assertEqual(couch_user.commcare_accounts[0].UUID, self.uuid)
+        date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
         self.assertEqual(couch_user.commcare_accounts[0].date_registered, date)
-        self.assertEqual(couch_user.phone_devices[0].IMEI, registering_phone_id)
-
-
+        self.assertEqual(couch_user.phone_devices[0].IMEI, self.registering_phone_id)
+        
+    def testCreateDuplicateUsersFromRegistration(self):
+        """ 
+        use case: chw on phone registers a username/password/domain triple somewhere 
+        another chw somewhere else somehow registers the same username/password/domain triple 
+        outcome: 2 distinct users on hq with the same info, with one marked 'is_duplicate'
+        (BUT ota restore should return a 'too many duplicate users' error)
+        """
+        sender = "post"
+        doc_id = create_user_from_commcare_registration(sender, self.xform)
+        first_user = CouchUser.get(doc_id)
+        # switch uuid so that we don't violate unique key constraints on django use creation
+        xform = self.xform
+        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
+        dupe_id = create_user_from_commcare_registration(sender, xform)
+        second_user = CouchUser.get(dupe_id)
+        self.assertFalse(hasattr(first_user, 'is_duplicate'))
+        self.assertTrue(second_user.is_duplicate)

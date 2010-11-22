@@ -18,5 +18,5 @@ class HqUserProfile(CouchUserProfile):
         return "%s @ %s" % (self.user)
 
     def get_couch_user(self):
-        couch_user = CouchUser.view("users/all_users", key=self._id).one()
+        couch_user = CouchUser.get(self._id)
         return couch_user
