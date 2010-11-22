@@ -105,6 +105,7 @@
                                 <table>
                                     <td>
                                         <select name="app_module_form_id">
+                                            <option value="" disabled="true">Select a form</option>
                                             {% for fapp in factory_apps %}
                                                 <optgroup label="{{ fapp.name }}">
                                                     {% for fmodule in fapp.modules %}
@@ -145,6 +146,7 @@
                                 {# <td><input type="text" name="name" /></td> #}
                                 <td>
                                     <select name="app_module_id">
+                                        <option value="" disabled="true">Select a module</option>
                                         {% for fapp in factory_apps %}
                                             <optgroup label="{{ fapp.name }}">
                                                 {% for fmodule in fapp.modules %}

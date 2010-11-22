@@ -76,8 +76,9 @@
                                 <th>Application:</th>
                                 <td>
                                     <select name="app_id">
-                                        {% for app in factory_apps %}
-                                            <option value="{{ app.id }}">{{ app.name }}</option>
+                                        <option value="" disabled="true">Select an application</option>
+                                        {% for fapp in factory_apps %}
+                                            <option value="{{ fapp.id }}">{{ fapp.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
