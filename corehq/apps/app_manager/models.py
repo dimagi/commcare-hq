@@ -760,11 +760,11 @@ class Application(ApplicationBase):
     def delete_module(self, module_id):
         del self.modules[int(module_id)]
 
-    def new_form(self, module_id, name, lang):
+    def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
         form = Form(
             name={lang: name},
-            contents="",
+            contents=attachment,
         )
         form.refresh()
         module.forms.append(form)
