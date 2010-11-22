@@ -1,0 +1,39 @@
+{% extends base_template %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    {% if error %}
+    <div id="error">
+    	{{ error }}
+    	{{ errors }}
+    </div>
+    {% endif %}
+    <div id="title-bar" class="container">
+        <div class="page-title">
+            <h1>USERS</h1>
+        </div>
+    </div>
+    <div id="forms" class="container">
+    <div id="modules-form-view-wrapper">
+        <div id="modules">
+        <h2 {% if not module and not form %}class="selected"{% endif %}>
+			Menu
+        </h2>
+	        <ul>
+	        	<li>My Profile</li>
+	        	<li>My Groups</li>
+	        	<li>Change Password</li>
+	        	<li>Users</li>
+	        	<li>Groups</li>
+	        </ul>
+        </div>
+        
+        <div id="form-view">
+            {% block user-view %}
+                <h2 class="message">Click on the menu to the left to edit your settings.</h2>
+            {% endblock %}
+        </div>
+
+     </div>
+    </div>
+{% endblock %}
