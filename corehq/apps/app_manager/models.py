@@ -158,6 +158,7 @@ class Form(IndexedSchema):
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
     contents    = StringProperty()
+    put_in_root = BooleanProperty(default=False)
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
@@ -179,12 +180,12 @@ class Form(IndexedSchema):
         
     def refresh(self):
         pass
-#        soup = BeautifulStoneSoup(self.contents)
-#        try:
-#            self.xmlns = soup.find('instance').findChild()['xmlns']
-#        except KeyError:
-#            self.xmlns = self.unique_id
-#            self.save()
+        soup = BeautifulStoneSoup(self.contents)
+        try:
+            self.xmlns = soup.find('instance').findChild()['xmlns']
+        except KeyError:
+            self.xmlns = self.unique_id
+            self.save()
 #            soup.find('instance').findChild()['xmlns'] = self.xmlns
 #        self.contents = soup.prettify()
     def get_case_type(self):
@@ -360,6 +361,11 @@ class Form(IndexedSchema):
 
             return casexml.render(), binds
 
+    def export_json(self):
+        source = self.to_json()
+        del source['unique_id']
+        return source
+
 class DetailColumn(DocumentSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -445,6 +451,11 @@ class Module(IndexedSchema):
                 case_types.append(case_type)
         return case_types
 
+    def export_json(self):
+        source = self.to_json()
+        for form in source['forms']:
+            del form['unique_id']
+        return source
 
 
 
@@ -539,7 +550,7 @@ class VersionedDoc(Document):
             if field in source:
                 del source[field]
         self.scrub_source(source)
-        return json.dumps(source)
+        return source
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -741,18 +752,30 @@ class Application(ApplicationBase):
             )
         )
         return self.get_module(-1)
-
+        
+    def new_module_from_source(self, source):
+        self.modules.append(Module.wrap(source))
+        return self.get_module(-1)
+    
     def delete_module(self, module_id):
         del self.modules[int(module_id)]
 
-    def new_form(self, module_id, name, attachment, lang):
+    def new_form(self, module_id, name, lang):
         module = self.get_module(module_id)
         form = Form(
             name={lang: name},
-            contents=attachment
+            contents="",
         )
         form.refresh()
         module.forms.append(form)
+        form = module.get_form(-1)
+        case_types = module.infer_case_type()
+        if len(case_types) == 1 and not module.case_type:
+            module.case_type, = case_types
+        return form
+    def new_form_from_source(self, module_id, source):
+        module = self.get_module(module_id)
+        module.forms.append(Form.wrap(source))
         form = module.get_form(-1)
         case_types = module.infer_case_type()
         if len(case_types) == 1 and not module.case_type:
@@ -798,30 +821,46 @@ class RemoteApp(ApplicationBase):
     suite_url altogether and just switch to using the profile_url (which right now is not used).
 
     """
-    profile_url = StringProperty()
-    suite_url = StringProperty(default="http://")
+    profile_url = StringProperty(default="http://")
+    #suite_url = StringProperty()
     name = StringProperty()
 
-    @property
-    def suite_loc(self):
-        if self.suite_url:
-            return self.suite_url.split('/')[-1]
-        else:
-            raise NotImplementedYet()
+    # @property
+    #     def suite_loc(self):
+    #         if self.suite_url:
+    #             return self.suite_url.split('/')[-1]
+    #         else:
+    #             raise NotImplementedYet()
 
     @classmethod
     def new_app(cls, domain, name):
         app = cls(domain=domain, name=name, langs=["en"])
         return app
 
-    def fetch_suite(self):
-        return urlopen(self.suite_url).read()
+    # def fetch_suite(self):
+    #     return urlopen(self.suite_url).read()
+    def create_profile(self):
+        return urlopen(self.profile_url).read()
+        
+    def fetch_file(self, location):
+        base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
+        if location.startswith('./'):
+            location = location.lstrip('./')
+        elif location.startswith(base):
+            location = location.lstrip(base)
+        elif location.startswith('jr://resource/'):
+            location = location.lstrip('jr://resource/')
+        return location, urlopen(urljoin(self.profile_url, location)).read().decode('utf-8')
+        
     def create_all_files(self):
-        suite = self.fetch_suite()
         files = {
-            self.suite_loc: suite,
             'profile.xml': self.create_profile(),
         }
+        tree = ET.fromstring(files['profile.xml'])
+        print tree
+        suite_loc = tree.find('suite/resource/location[@authority="local"]').text
+        suite_loc, suite = self.fetch_file(suite_loc)
+        files[suite_loc] = suite
         soup = BeautifulStoneSoup(suite)
         locations = []
         for resource in soup.findAll('resource'):
@@ -831,7 +870,7 @@ class RemoteApp(ApplicationBase):
                 loc = resource.findChild('location', authority='local').string
             locations.append(loc)
         for location in locations:
-            files[location.split('/')[-1]] = urlopen(urljoin(self.suite_url, location)).read().decode('utf-8')
+            files.update((self.fetch_file(location),))
         return files
 
 class DomainError(Exception):

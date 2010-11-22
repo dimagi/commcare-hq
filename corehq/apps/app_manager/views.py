@@ -101,7 +101,7 @@ def form_casexml(req, domain, form_unique_id):
 @login_and_domain_required
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(app.export_json())
+    return HttpResponse(json.dumps(app.export_json()))
     
 @login_and_domain_required
 @require_POST
@@ -115,6 +115,44 @@ def import_app(req, domain):
     app = cls.from_source(source, domain)
     app.save()
     app_id = app._id
+    return back_to_main(**locals())
+
+@login_and_domain_required
+@require_POST
+def import_factory_app(req, domain):
+    factory_app = get_app('factory', req.POST['app_id'])
+    source = factory_app.export_json()
+    name = req.POST.get('name')
+    if name:
+        source['name'] = name
+    cls = _str_to_cls[source['doc_type']]
+    app = cls.from_source(source, domain)
+    app.save()
+    app_id = app._id
+    return back_to_main(**locals())
+
+@login_and_domain_required
+@require_POST
+def import_factory_module(req, domain, app_id):
+    fapp_id, fmodule_id = req.POST['app_module_id'].split('/')
+    fapp = get_app('factory', fapp_id)
+    fmodule = fapp.get_module(fmodule_id)
+    app = get_app(domain, app_id)
+    source = fmodule.export_json()
+    app.new_module_from_source(source)
+    app.save()
+    return back_to_main(**locals())
+
+@login_and_domain_required
+@require_POST
+def import_factory_form(req, domain, app_id, module_id):
+    fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
+    fapp = get_app('factory', fapp_id)
+    fform = fapp.get_module(fmodule_id).get_form(fform_id)
+    source = fform.export_json()
+    app = get_app(domain, app_id)
+    app.new_form_from_source(module_id, source)
+    app.save()
     return back_to_main(**locals())
     
 
@@ -130,6 +168,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
     )
+
+    factory_apps = [app['value'] for app in VersionedDoc._db.view('app_manager/factory_apps')]
 
     applications = []
     for app in VersionedDoc._db.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
@@ -197,6 +237,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'lang': lang,
 
         'saved_apps': saved_apps,
+        'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
     }
@@ -299,8 +340,7 @@ def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html
     if new_xform_form.is_valid():
         cd = new_xform_form.cleaned_data
         name = cd['name']
-        attachment = cd['file']
-        form = app.new_form(module_id, name, attachment.read(), lang)
+        form = app.new_form(module_id, name, lang)
         app.save()
         # add form_id to locals()
         form_id = form.id
@@ -431,6 +471,9 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     elif "show_count" == attr:
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False
+    elif "put_in_root" == attr:
+        put_in_root = req.POST['put_in_root']
+        form.put_in_root = True if put_in_root == "True" else False
     app.save()
     return back_to_main(**locals())
 
@@ -483,10 +526,10 @@ def edit_app_attr(req, domain, app_id, attr):
     """
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    if   "suite_url" == attr:
+    if   "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support suite urls" % app.doc_type)
-        app['suite_url'] = req.POST['suite_url']
+        app['profile_url'] = req.POST['profile_url']
         app.save()
     return back_to_main(**locals())
 

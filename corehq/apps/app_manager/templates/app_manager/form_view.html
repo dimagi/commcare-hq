@@ -177,6 +177,7 @@
         $(function(){
             initCondition();
             url = $("#xform_questions_url").attr('value');
+            $("#casexml_json").hide();
             $.get(url, {}, function(text){
                 questions = JSON.parse(text);
                 populateQuestions(questions);
@@ -202,6 +203,7 @@
 {% block form-view %}
     <h3>{{ module.name|trans:langs }} &gt; {{ form.name|trans:langs }}</h3>
 
+    <h4>Form Settings</h4>
     <table class="config">
         {% if edit %}
             <tr class="form editable">
@@ -237,23 +239,41 @@
                     </div>
                 </td>
             </tr>
-            <tr class="form editable">
-                <th>XForm</th>
-                <td>
-                    <input type="file" name="xform" />
-                    <div class="immutable">
-                        <code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code>
-                    </div>
-                </td>
-                <td>
-                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" class="submit button">
-                        Upload
-                    </a>
-                    <div class="immutable">
-                        [<a href="#">replace</a>]
-                    </div>
-                </td>
-            </tr>
+            {# <tr class="form editable"> #}
+            {#     <th>Put in menu root</th> #}
+            {#     <td> #}
+            {#         <select class="code" name="put_in_root"> #}
+            {#             <option value="True">True</option> #}
+            {#             <option value="False">False</option> #}
+            {#         </select> #}
+            {#         <div class="immutable"><code>{% if form.put_in_root %}True{% else %}False{% endif %}</code></div> #}
+            {#     </td> #}
+            {#     <td> #}
+            {#         <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'put_in_root' %}" class="submit button"> #}
+            {#             Save #}
+            {#         </a> #}
+            {#         <div class="immutable"> #}
+            {#             <a class="edit_link" href="#">edit</a> #}
+            {#         </div> #}
+            {#     </td> #}
+            {# </tr> #}
+            {# <tr class="form editable"> #}
+            {#                 <th>XForm</th> #}
+            {#                 <td> #}
+            {#                     <input type="file" name="xform" /> #}
+            {#                     <div class="immutable"> #}
+            {#                         <code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code> #}
+            {#                     </div> #}
+            {#                 </td> #}
+            {#                 <td> #}
+            {#                     <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" class="submit button"> #}
+            {#                         Upload #}
+            {#                     </a> #}
+            {#                     <div class="immutable"> #}
+            {#                         [<a href="#">replace</a>] #}
+            {#                     </div> #}
+            {#                 </td> #}
+            {#             </tr> #}
             <tr class="form editable">
                 <th>Requires</th>
                 <td>
@@ -286,16 +306,22 @@
                     <code>{% if form.show_count %}True{% else %}False{% endif %}</code>
                 </td>
             </tr>
-            <tr>
-                <th>XForm</th>
-                <td><code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code></td>
-            </tr>
-            <tr>
-                <th>Requires</th>
-                <td>
-                    <code>{{ form.requires }}</code>
-                </td>
-            </tr>
+            {# <tr> #}
+            {#     <th>Put in menu root</th> #}
+            {#     <td> #}
+            {#         <code>{% if form.put_in_root %}True{% else %}False{% endif %}</code> #}
+            {#     </td> #}
+            {# </tr> #}
+            {# <tr> #}
+            {#     <th>XForm</th> #}
+            {#     <td><code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code></td> #}
+            {# </tr> #}
+            {# <tr> #}
+            {#     <th>Requires</th> #}
+            {#     <td> #}
+            {#         <code>{{ form.requires }}</code> #}
+            {#     </td> #}
+            {# </tr> #}
 
         {% endif %}
     </table>
@@ -314,8 +340,8 @@
             </select>
         </span>
     </div>
-    <div class="casexml {% if not edit %}no-edit{% endif %}">
-        Actions:
+    <h4>Actions</h4>
+    <div class="casexml {% if not edit %}no-edit{% endif %} config">
         <ul>
             {% if form.requires == "none" %}
                 <li class="action">
@@ -397,80 +423,45 @@
                     </div>
                 </li>
             {% endif %}
-
-{#                <li class="action">#}
-{#                    <select name="action-type">#}
-{#                        <option value="open">Open</option>#}
-{#                        <option value="update">Update</option>#}
-{#                        <option value="close">Close</option>#}
-{#                    </select>#}
-{#                    <span class="immutable">{{ action.type }}</span>#}
-{#                    a#}
-{#                    <select name="model">#}
-{#                        <option value="case">Case</option>#}
-{#                        <option value="referral">Referral</option>#}
-{#                    </select>#}
-{#                    <span class="immutable">{{ action.model }}</span>#}
-{#                    <ul>#}
-{#                        {% for key,value in action.update.items %}#}
-{#                            <li class="action-update">#}
-{#                                Set#}
-{#                                <select class="code" name="action-update-key">#}
-{#                                    <option>case_name</option>#}
-{#                                    <option>date_opened</option>#}
-{#                                </select>#}
-{#                                <span class="immutable">{{ key }}</span>#}
-{#                                to the answer of#}
-{#                                <select class="questions questions-all" name="action-update-value">#}
-{#                                    <option disabled="">Select a question</option>#}
-{#                                </select>#}
-{#                                <span class="immutable">{{ value }}</span>#}
-{#                            </li>#}
-{#                        {% endfor %}#}
-{#                        <li class="action-condition">#}
-{#                            <select name="action-condition-type">#}
-{#                                <option value="if">If</option>#}
-{#                                <option value="always">Always</option>#}
-{#                            </select>#}
-{#                            <span value="if">#}
-{#                                 the answer to#}
-{#                                <select class="questions" name="action-condition-question">#}
-{#                                    <option value="" disabled="" selected="">Select a question</option>#}
-{#                                </select>#}
-{#                                <span class="immutable">{{ action.condition.question }}</span>#}
-{#                                is#}
-{#                                <select name="action-condition-answer">#}
-{#                                    <option value="" disabled="" selected="">Select an answer</option>#}
-{#                                </select>#}
-{#                                <span class="immutable">{{ action.condition.answer }}</span>#}
-{#                            </span>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </li>#}
         </ul>
+        <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
+            <textarea id="casexml_json" class="code" name="actions" >{{ form_actions }}</textarea><br/>
+            <input type="submit" value="Save Actions"/>
+        </form>
     </div>
-    <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
-        <textarea id="casexml_json" class="code" name="actions" >{{ form_actions }}</textarea><br/>
-        <input type="submit" value="Submit"/>
-    </form>
-    <!-- end -->
+    <!-- end CaseXML -->
+    <h4>XForm</h4>
+    <table class="config">
+        <tr>
+            <th>XMLNS</th>
+            <td>{{ form.xmlns }}</td>
+        </tr>
+        {% if edit %}
+        <tr>
+            <th>Edit XForm</th>
+            <td>
+                 <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.get_unique_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                    <input type="hidden" name="editor" value="{{ editor_url }}" />
 
+                    <input type="submit" value="Edit XForm" />
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <th>Replace with new upload</th>
+            <td>
+                <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="xform" />
+                    <input type="submit" value="Upload" />
+                </form>
+            </td>
+        {% endif %}
+    </table>
     <div>
-        <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}">XForm Display</a>
+        {# <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}">XForm Display</a> #}
         <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}" />
     </div>
-    {% if edit and form.get_unique_id %}
-         <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.get_unique_id %}">
-            {% csrf_token %}
-{#            <input type="hidden" name="callback" value="http://localhost:8010/HQ/?xform_id={{ xform.id }}" />#}
-            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-            <input type="hidden" name="editor" value="{{ editor_url }}" />
-
-            <input type="submit" value="Start Editing" />
-        </form>
-    {% endif %}
     <div id="questions"></div>
-    <!--code>
-        {{ form.contents }}
-    </code-->
 {% endblock %}

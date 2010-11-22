@@ -65,6 +65,27 @@
                         <input type="submit" value="Create Application"/>
                     </form>
                     <hr/>
+                    <h4>From Factory Application</h4>
+                    <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">
+                        <table>
+                            <tr>
+                                <th>Name:</th>
+                                <td><input type="text" name="name"/></td>
+                            </tr>
+                            <tr>
+                                <th>Application:</th>
+                                <td>
+                                    <select name="app_id">
+                                        {% for app in factory_apps %}
+                                            <option value="{{ app.id }}">{{ app.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" value="Import Application">
+                    </form>
+                    <hr/>
                     <h4>Import from source (advanced)</h4>
                     <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
                         <table>
