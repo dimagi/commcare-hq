@@ -94,13 +94,13 @@
         <table class="config">
             {% if edit %}
                 <tr class="form editable">
-                    <th>Suite URL</th>
+                    <th>Profile URL</th>
                     <td>
-                        <input type="text" class="code wide" name="suite_url" />
-                        <div class="immutable"><code>{{ app.suite_url }}</code></div>
+                        <input type="text" class="code wide" name="profile_url" />
+                        <div class="immutable"><code>{{ app.profile_url }}</code></div>
                     </td>
                     <td>
-                        <a href="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'suite_url' %}" class="submit button">
+                        <a href="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}" class="submit button">
                             Save
                         </a>
                         <div class="immutable">
@@ -110,9 +110,9 @@
                 </tr>
             {% else %}
                 <tr>
-                    <th>Suite URL</th>
+                    <th>Profile URL</th>
                     <td>
-                        {{ app.suite_url }}
+                        {{ app.profile_url }}
                     </td>
                 </tr>
             {% endif %}

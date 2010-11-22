@@ -90,7 +90,7 @@
                         <li> <p class="warning">No Forms</p></li>
                     {% endif %}
                     {% if edit %}
-                    <li>
+                    <li class="sort-disabled">
                         <a class="new_link dialog_opener" id="new_form" href="#">+</a>
                         <div class="dialog" title="Create New Form">
                             <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}" method="post" enctype="multipart/form-data">
@@ -98,6 +98,27 @@
                                     {{ new_xform_form }}
                                 </table>
                                 <input type="submit" value="Upload Form" />
+                            </form>
+                            <hr/>
+                            <h4>From Factory Form</h4>
+                            <form action="{% url corehq.apps.app_manager.views.import_factory_form domain app.id module.id %}" method="post">
+                                <table>
+                                    <td>
+                                        <select name="app_module_form_id">
+                                            <option value="" disabled="true">Select a form</option>
+                                            {% for fapp in factory_apps %}
+                                                <optgroup label="{{ fapp.name }}">
+                                                    {% for fmodule in fapp.modules %}
+                                                        {% for fform in fmodule.forms %}
+                                                            <option value="{{ fapp.id }}/{{ fmodule.id }}/{{ fform.id }}">{{ fmodule.name|trans:langs }} &gt; {{ fform.name|trans:langs }}</option>
+                                                        {% endfor %}
+                                                    {% endfor %}
+                                                </optgroup>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                </table>
+                                <input type="submit" value="Import Form" />
                             </form>
                         </div>
                     </li>
@@ -108,7 +129,7 @@
             {% endfor %}
             {% endwith %}
             {% if edit and app.doc_type == "Application" %}
-                <li>
+                <li class="sort-disabled">
                     <a href="#" class="new_link" id="new_module">+</a>
                     <div id="new_module_dialog" title="Create New Module">
                         <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}" method="post">
@@ -117,11 +138,40 @@
                             </table>
                             <input type="submit" value="Create Module" />
                         </form>
-
+                        <hr/>
+                        <h4>From Factory Module</h4>
+                        <form action="{% url corehq.apps.app_manager.views.import_factory_module domain app.id %}" method="post">
+                            <table>
+                                {# <th>Name:</th> #}
+                                {# <td><input type="text" name="name" /></td> #}
+                                <td>
+                                    <select name="app_module_id">
+                                        <option value="" disabled="true">Select a module</option>
+                                        {% for fapp in factory_apps %}
+                                            <optgroup label="{{ fapp.name }}">
+                                                {% for fmodule in fapp.modules %}
+                                                    <option value="{{ fapp.id }}/{{ fmodule.id }}">{{ fmodule.name|trans:langs }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </table>
+                            <input type="submit" value="Import Module" />
+                        </form>
                     </div>
                 </li>
             {% endif %}
         </ul>
+        {# {% with app.menu_root as menu_root %} #}
+        {# {% if menu_root %} #}
+        {#     <hr/> #}
+        {#     <ul class="sortable"> #}
+        {#         menu-root #}
+        {#     </ul> #}
+        {# {% endif %} #}
+        {# {% endwith %} #}
+        
         </div>
         <div id="form-view">
             {% block form-view %}

@@ -27,6 +27,9 @@ $(function(){
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.container').addClass('ui-widget ui-widget-content');
+    $('.sortable-form-list').sortable({
+        connectWith: "#menu-root",
+    });
     $('.sortable').sortable({
         update: function(e, ui){
             var to = -1;
@@ -39,10 +42,12 @@ $(function(){
                     }
                 }
             });
-            $form = $(this).find('> .sort-action form');
-            $form.append('<input type="hidden" name="from" value="' + from + '" />');
-            $form.append('<input type="hidden" name="to"   value="' + to   + '" />');
-            $form.submit();
+            if(to != from) {
+                $form = $(this).find('> .sort-action form');
+                $form.append('<input type="hidden" name="from" value="' + from + '" />');
+                $form.append('<input type="hidden" name="to"   value="' + to   + '" />');
+                $form.submit();
+            }
         },
         items: ">*:not(.sort-disabled)"
     });
