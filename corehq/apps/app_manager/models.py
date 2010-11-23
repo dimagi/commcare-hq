@@ -183,7 +183,7 @@ class Form(IndexedSchema):
         soup = BeautifulStoneSoup(self.contents)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
-        except KeyError:
+        except:
             self.xmlns = self.unique_id
             self.save()
 #            soup.find('instance').findChild()['xmlns'] = self.xmlns
