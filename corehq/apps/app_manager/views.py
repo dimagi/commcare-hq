@@ -55,14 +55,22 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if domain != app.domain: raise Http404
-    tree = ET.fromstring(form.contents)
+    try:
+        return HttpResponse("[]")
+        tree = ET.fromstring(form.contents)
+    except:
+        return HttpResponse("[]")
     ns = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
     def lookup_translation(s,pre = 'jr:itext(', post = ')'):
-         if s.startswith(pre) and post[-len(post):] == post:
-             s = s[len(pre):-len(post)]
-         if s[0] == s[-1] and s[0] in ('"', "'"):
-             id = s[1:-1]
-         return tree.findtext('.//{f}translation[@lang="en"]/{f}text[@id="%s"]/{f}value'.format(**ns) % id).strip()
+        if s.startswith(pre) and post[-len(post):] == post:
+            s = s[len(pre):-len(post)]
+        if s[0] == s[-1] and s[0] in ('"', "'"):
+            id = s[1:-1]
+        x = tree.find('.//{f}translation[@lang="en"]'.format(**ns))
+        x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
+        print ET.tostring(x, pretty_print=True)
+        x = x.findtext('{f}value'.format(**ns)).strip()
+        return x
     def get_ref(elem):
         try:
             ref = elem.attrib['ref']
@@ -80,7 +88,7 @@ def xform_display(req, domain, form_unique_id):
                 "value": get_ref(elem),
             }
         except:
-            continue
+            pass
         if question['tag'] == "select1":
             options = []
             for item in elem.findall('{f}item'.format(**ns)):
@@ -466,7 +474,8 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         form.name[lang] = name
     elif "xform" == attr:
         xform = req.FILES['xform']
-        form.contents = xform.read()
+        xform = xform.read()
+        form.contents = unicode(xform, encoding="utf-8")
         form.refresh()
     elif "show_count" == attr:
         show_count = req.POST['show_count']
