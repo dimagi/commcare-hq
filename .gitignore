@@ -1,4 +1,5 @@
 *.pyc
+*~
 local.ini*
 localsettings.py
 .project
