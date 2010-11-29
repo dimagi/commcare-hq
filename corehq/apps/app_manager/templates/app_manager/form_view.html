@@ -190,7 +190,9 @@
                     $("#casexml_json").text(generateCasexmlJson());
                 }).trigger('change');
                 $(".no-edit *").each(function(){
-                    if($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) {
+                    if( ($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) ||
+                        (($(this).is('input[type="text"]') || $(this).is('select')) && !$(this).attr('value')) ||
+                        ($(this).is('input[type="submit"]'))){
                         $(this).parent().hide();
                     }
                 }).attr("disabled", true);
@@ -316,12 +318,12 @@
             {#     <th>XForm</th> #}
             {#     <td><code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code></td> #}
             {# </tr> #}
-            {# <tr> #}
-            {#     <th>Requires</th> #}
-            {#     <td> #}
-            {#         <code>{{ form.requires }}</code> #}
-            {#     </td> #}
-            {# </tr> #}
+            <tr>
+                 <th>Requires</th>
+                 <td>
+                     <code>{{ form.requires }}</code>
+                 </td>
+            </tr> 
 
         {% endif %}
     </table>
@@ -360,9 +362,8 @@
             {% endif %}
             <li class="action">
                 <input type="checkbox" id="update-case"> Updates a case
-                <div class="config">
-{#                    <div class="condition"></div>#}
-                    <table>
+                <div>
+                    <table class="config">
                         <tr>
                             <th></th>
                             <th>Property</th>

@@ -55,11 +55,10 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if domain != app.domain: raise Http404
-    try:
-        return HttpResponse("[]")
-        tree = ET.fromstring(form.contents)
-    except:
-        return HttpResponse("[]")
+    #try:
+    tree = ET.fromstring(form.contents.encode('utf-8'))
+    #except:
+    #    return HttpResponse("[]")
     ns = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
     def lookup_translation(s,pre = 'jr:itext(', post = ')'):
         if s.startswith(pre) and post[-len(post):] == post:
@@ -68,7 +67,7 @@ def xform_display(req, domain, form_unique_id):
             id = s[1:-1]
         x = tree.find('.//{f}translation[@lang="en"]'.format(**ns))
         x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
-        print ET.tostring(x, pretty_print=True)
+        #print ET.tostring(x, pretty_print=True)
         x = x.findtext('{f}value'.format(**ns)).strip()
         return x
     def get_ref(elem):
@@ -87,8 +86,9 @@ def xform_display(req, domain, form_unique_id):
                 "tag": elem.tag.split('}')[-1],
                 "value": get_ref(elem),
             }
-        except:
-            pass
+
+        except None:
+            continue
         if question['tag'] == "select1":
             options = []
             for item in elem.findall('{f}item'.format(**ns)):

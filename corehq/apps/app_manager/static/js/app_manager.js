@@ -28,26 +28,31 @@ $(function(){
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.container').addClass('ui-widget ui-widget-content');
 
-    $('.sortable').sortable({
-        update: function(e, ui){
-            var to = -1;
-            var from = -1;
-            $(this).find('> * > .index').each(function(i){
-                if(to == -1) {
-                    if(i != $(this).text()) {
-                        to = i;
-                        from = $(this).text();
+    $('.sortable .sort-action').addClass('sort-disabled');
+    $('.sortable').each(function(){
+        if($(this).children().not('.sort-disabled').size() > 1) {
+            $(this).sortable({
+                update: function(e, ui){
+                    var to = -1;
+                    var from = -1;
+                    $(this).find('> * > .index').each(function(i){
+                        if(to == -1) {
+                            if(i != $(this).text()) {
+                                to = i;
+                                from = $(this).text();
+                            }
+                        }
+                    });
+                    if(to != from) {
+                        $form = $(this).find('> .sort-action form');
+                        $form.append('<input type="hidden" name="from" value="' + from + '" />');
+                        $form.append('<input type="hidden" name="to"   value="' + to   + '" />');
+                        $form.submit();
                     }
-                }
+                },
+                items: ">*:not(.sort-disabled)"
             });
-            if(to != from) {
-                $form = $(this).find('> .sort-action form');
-                $form.append('<input type="hidden" name="from" value="' + from + '" />');
-                $form.append('<input type="hidden" name="to"   value="' + to   + '" />');
-                $form.submit();
-            }
-        },
-        items: ">*:not(.sort-disabled)"
+        }
     });
     $('.index, .sort-action').hide();
 

@@ -667,10 +667,8 @@ class Application(ApplicationBase):
 
     def fetch_xform(self, module_id, form_id, DEBUG=False):
         form = self.get_module(module_id).get_form(form_id)
-        try:
-            tree = ET.fromstring(form.contents)
-        except:
-            return ""
+        tree = ET.fromstring(form.contents.encode('utf-8'))
+
         def fmt(s):
             return s.format(
                 h='{http://www.w3.org/1999/xhtml}',
