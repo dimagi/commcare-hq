@@ -23,7 +23,7 @@ $(function(){
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
     $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
-    $('.config').wrap('<div />').parent().addClass('container ui-corner-all');
+    $('.edit_single_user').wrap('<div />').parent().addClass('container ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.container').addClass('ui-widget ui-widget-content');

@@ -129,3 +129,5 @@ class CouchUser(Document):
                                               default=default,
                                               **kwargs))
 
+    def get_phone_numbers(self):
+        return [phone.number for phone in self.phone_numbers]
