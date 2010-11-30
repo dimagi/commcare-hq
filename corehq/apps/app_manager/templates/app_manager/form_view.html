@@ -219,7 +219,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -237,7 +237,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -255,7 +255,7 @@
             {#             Save #}
             {#         </a> #}
             {#         <div class="immutable"> #}
-            {#             <a class="edit_link" href="#">edit</a> #}
+            {#             <a class="edit_link" href="#"></a> #}
             {#         </div> #}
             {#     </td> #}
             {# </tr> #}
@@ -291,7 +291,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -462,7 +462,7 @@
     </table>
     <div>
         {# <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}">XForm Display</a> #}
-        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}" />
+        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}?lang={{ lang }}" />
     </div>
     <div id="questions"></div>
 {% endblock %}

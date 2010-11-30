@@ -3,7 +3,12 @@
 {% load url_extras %}
 {% block head %}
     
-    <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>    
+    <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>
+    <style type="text/css">
+        a.new_link {
+            color: #aaa;
+        }
+    </style>
 {% endblock %}
 {% block content %}
     {% if error %}
@@ -20,7 +25,7 @@
                     <p>Application:</p>
                 {% endif %}
                 {% if edit and app %}
-                    <a class="delete_link" href="#">x</a>
+                    <a class="delete_link" href="#"></a>
                     <div class="delete_dialog" title="Delete {{ app.name }}?">
                         <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
                             <table>
@@ -55,7 +60,7 @@
                 {% endif %}
             </div>
             {% if edit and applications %}
-                <a class="new_link" id="new_app" href="#"></a>
+                <a class="new_link" id="new_app" href="#">Application</a>
             {% endif %}
             {% if edit or not applications %}
                 <div id="new_app_dialog" title="Create a New Application">
@@ -138,7 +143,17 @@
                     <input type="submit" value="Make New Build" />
                 </form>
             {% endif %}
-
+            {% if build_errors %}
+                <div class="message">
+                    <ul>
+                        {% for error in build_errors %}
+                            <li>
+                                {{ error }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             <table class="config">
                 <tr>
                     {% if edit %}
@@ -154,7 +169,7 @@
                     <tr>
                         {% if edit %}
                             <td>
-                                <a class="delete_link" href="">x</a>
+                                <a class="delete_link" href=""></a>
                                 <div class="delete_dialog" title="Delete Build {{ saved_app.version }}">
                                     <p>Are you sure you want to delete this build?</p>
                                     <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}" method="post">
