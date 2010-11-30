@@ -1,0 +1,46 @@
+{% extends base_template %}
+{% block head %}
+    <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>    
+    <script type="text/javascript" src="/static/users/js/users.js"></script>    
+{% endblock %}
+{% block content %}
+    {% if status %}
+    <div id="status">
+    	{{ status }}
+    </div>
+    {% endif %}
+    {% if error %}
+    <div id="error">
+    	{{ error }}
+    	{{ errors }}
+    </div>
+    {% endif %}
+    <div id="title-bar" class="container">
+        <div class="page-title">
+            <h1>USERS</h1>
+        </div>
+    </div>
+    <div id="forms" class="container">
+    <div id="modules-form-view-wrapper">
+        <div id="modules">
+        <h2 {% if not module and not form %}class="selected"{% endif %}>
+			Menu
+        </h2>
+	        <ul>
+	        	<li><a href="{% url my_account domain %}">My Account</a></li>
+	        	<li>My Groups</li>
+	        	<li><a href="{% url password_change %}">Change Password</a></li>
+	        	<li>Users</li>
+	        	<li>Groups</li>
+	        </ul>
+        </div>
+        
+        <div id="form-view">
+            {% block user-view %}
+                <h2 class="message">Click on the menu to the left to edit your settings.</h2>
+            {% endblock %}
+        </div>
+
+     </div>
+    </div>
+{% endblock %}

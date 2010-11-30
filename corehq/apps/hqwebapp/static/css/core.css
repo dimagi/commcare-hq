@@ -215,6 +215,15 @@ form table {
 #title-bar {
     min-height: 30px;
 }
+
+.page-title {
+	text-align: center;
+	font: bold 18px Helvetica, Arial, Verdana, sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+
 #choose-application {
     float: left;
     display: table;
