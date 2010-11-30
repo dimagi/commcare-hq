@@ -94,7 +94,7 @@ def xform_display(req, domain, form_unique_id):
                 "value": get_ref(elem),
             }
 
-        except None:
+        except:
             continue
         if question['tag'] == "select1":
             options = []
