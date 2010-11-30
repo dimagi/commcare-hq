@@ -1,7 +1,14 @@
 {% extends base_template %}
 {% block head %}
+    <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>    
+    <script type="text/javascript" src="/static/users/js/users.js"></script>    
 {% endblock %}
 {% block content %}
+    {% if status %}
+    <div id="status">
+    	{{ status }}
+    </div>
+    {% endif %}
     {% if error %}
     <div id="error">
     	{{ error }}
@@ -20,9 +27,9 @@
 			Menu
         </h2>
 	        <ul>
-	        	<li>My Profile</li>
+	        	<li><a href="{% url my_account domain %}">My Account</a></li>
 	        	<li>My Groups</li>
-	        	<li>Change Password</li>
+	        	<li><a href="{% url password_change %}">Change Password</a></li>
 	        	<li>Users</li>
 	        	<li>Groups</li>
 	        </ul>
