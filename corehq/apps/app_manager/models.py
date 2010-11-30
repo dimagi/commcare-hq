@@ -74,7 +74,8 @@ def authorize_xform_edit(view):
         if wrapper(request, app.domain):
             # If login_and_domain_required intercepted wrapper
             # and returned an HttpResponse of its own
-            return HttpResponseForbidden()
+            #return HttpResponseForbidden()
+            return wrapper(request, app.domain)
         else:
             return view(request, xform_id)
     return authorized_view
@@ -183,11 +184,8 @@ class Form(IndexedSchema):
         soup = BeautifulStoneSoup(self.contents)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
-        except KeyError:
-            self.xmlns = self.unique_id
-            self.save()
-#            soup.find('instance').findChild()['xmlns'] = self.xmlns
-#        self.contents = soup.prettify()
+        except:
+            self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
     def get_case_type(self):
         return self._parent.case_type
     
@@ -669,7 +667,8 @@ class Application(ApplicationBase):
 
     def fetch_xform(self, module_id, form_id, DEBUG=False):
         form = self.get_module(module_id).get_form(form_id)
-        tree = ET.fromstring(form.contents)
+        tree = ET.fromstring(form.contents.encode('utf-8'))
+
         def fmt(s):
             return s.format(
                 h='{http://www.w3.org/1999/xhtml}',
@@ -684,6 +683,7 @@ class Application(ApplicationBase):
 
         casexml, binds = form.create_casexml()
         if casexml:
+            # casexml has to be valid, 'cuz *I* made it
             casexml = ET.fromstring(casexml)
             case_parent.append(casexml)
             if DEBUG: tree = ET.fromstring(ET.tostring(tree))
@@ -766,9 +766,9 @@ class Application(ApplicationBase):
             name={lang: name},
             contents=attachment,
         )
-        form.refresh()
         module.forms.append(form)
         form = module.get_form(-1)
+        form.refresh()
         case_types = module.infer_case_type()
         if len(case_types) == 1 and not module.case_type:
             module.case_type, = case_types
@@ -857,7 +857,6 @@ class RemoteApp(ApplicationBase):
             'profile.xml': self.create_profile(),
         }
         tree = ET.fromstring(files['profile.xml'])
-        print tree
         suite_loc = tree.find('suite/resource/location[@authority="local"]').text
         suite_loc, suite = self.fetch_file(suite_loc)
         files[suite_loc] = suite
