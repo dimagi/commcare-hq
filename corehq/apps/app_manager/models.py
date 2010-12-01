@@ -638,7 +638,9 @@ class ApplicationBase(VersionedDoc):
             buffer.close()
             self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
             return jar
-
+    def validate(self):
+        pass
+    
 class Application(ApplicationBase):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
@@ -807,7 +809,34 @@ class Application(ApplicationBase):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 del source['modules'][m]['forms'][f]['unique_id']
-
+    def validate(self):
+        errors = []
+        if not self.modules:
+            errors.append({"type": "no modules"})
+        for module in self.get_modules():
+            if not module.forms:
+                errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+            needs_case = False
+            needs_referral = False
+            for form in module.get_forms():
+                try:
+                    ET.fromstring(form.content)
+                except:
+                    errors.append({
+                        'type': "invalid xml",
+                        "module": {"id": module.id, "name": module.name},
+                        "form": {"id": form.id, "name": form.name}
+                    })
+                if form.requires in ('case', 'referral'):
+                    needs_case = True
+                if form.requires == "referral":
+                    needs_referral = True
+            if needs_case and not (module.get_detail('case_short') and module.get_detail('case_long')):
+                errors.append({'type': "no case detail", module: {"id": module.id, "name": module.name}})
+            if needs_referral and not (module.get_detail('ref_short') and module.get_detail('ref_long')):
+                errors.append({'type': "no case detail", module: {"id": module.id, "name": module.name}})
+        return errors
+    
 class NotImplementedYet(Exception):
     pass
 class RemoteApp(ApplicationBase):

@@ -13,14 +13,22 @@
             ],
             "case": JSON.parse($("#case-fields").remove().text())
         };
+        if(fields['case'] != "") {
+            $('#case-properties-warning').hide();
+        }
         $('.detail-headers [name="model"]').change(function(){
             model = $(this).attr('value');
             $field = $(this).closest('tr').find('[name="field"]');
-            $field.autocomplete({
-                source: fields[model],
-                minLength: 0,
-                delay: 0
-            });
+            if(fields[model] != "") {
+                $field.autocomplete({
+                    source: fields[model],
+                    minLength: 0,
+                    delay: 0
+                });
+            }
+            else {
+                $field.autocomplete('destroy');
+            }
         }).trigger('change');
         $('.detail-headers [name="field"]').focus(function(){
             $(this).autocomplete('search');
@@ -62,7 +70,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -82,7 +90,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -99,7 +107,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -116,7 +124,7 @@
                         Save
                     </a>
                     <div class="immutable">
-                        <a class="edit_link" href="#">edit</a>
+                        <a class="edit_link" href="#"></a>
                     </div>
                 </td>
             </tr>
@@ -158,9 +166,23 @@
     {# just a json list used for the case field autocomplete #}
     <div id="case-fields">{{ case_fields }}</div>
 
-
+    <div class="message" id="case-properties-warning">I can't find any properties for this module's case. To generate
+    cases with properties, select "Updates a case" under a form's "Actions" and make a list of properties.</div>
     {% for detail in module.details %}
-    <h4>{{ detail.type|title}} Detail Headers</h4>
+    <h4>
+        {% if detail.type == "case_short" %}
+            Case Inline View
+        {% endif %}
+        {% if detail.type == "case_long" %}
+            Case Full View
+        {% endif %}
+        {% if detail.type == "ref_short" %}
+            Referral Inline View
+        {% endif %}
+        {% if detail.type == "ref_long" %}
+            Referral Full View
+        {% endif %}
+    </h4>
     {% if edit or detail.columns %}
     <table class="config detail-headers">
         <thead>
@@ -199,7 +221,7 @@
                     <tr class="editable detail-row form">
                         <td class="index">{{ forloop.counter0 }}</td>
                         <td>
-                            <a class="delete_link" href="#">x</a>
+                            <a class="delete_link" href="#"></a>
                             <div class="delete_dialog" title="Delete Header?">
                                 <form method="post"
                                     action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
@@ -247,7 +269,7 @@
                                 Save
                             </a>
                             <div class="immutable">
-                                <a href="#" class="edit_link edit-row">edit</a>
+                                <a href="#" class="edit_link edit-row"></a>
                             </div>
                         </td>
                     </tr>
@@ -298,7 +320,7 @@
                         <input type="hidden" name="detail_type" value="{{ detail.type }}">
                         <a class="submit button" href="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">Add</a>
                         <div class="immutable">
-                            <a href="#" class="new_link edit-row">add</a>
+                            <a href="#" class="new_link edit-row">Property</a>
                         </div>
                     </td>
                 </tr>

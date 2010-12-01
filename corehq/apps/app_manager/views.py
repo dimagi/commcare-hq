@@ -20,6 +20,9 @@ from BeautifulSoup import BeautifulStoneSoup
 from lxml import etree as ET
 import json
 from utilities.profile import profile
+import urllib
+import urlparse
+from collections import defaultdict
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
@@ -55,6 +58,7 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if domain != app.domain: raise Http404
+    langs = [req.GET.get('lang')] + app.langs
     #try:
     tree = ET.fromstring(form.contents.encode('utf-8'))
     #except:
@@ -65,7 +69,10 @@ def xform_display(req, domain, form_unique_id):
             s = s[len(pre):-len(post)]
         if s[0] == s[-1] and s[0] in ('"', "'"):
             id = s[1:-1]
-        x = tree.find('.//{f}translation[@lang="en"]'.format(**ns))
+        for lang in langs:
+            x = tree.find('.//{f}translation[@lang="%s"]'.format(**ns) % lang)
+            if x:
+                break
         x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
         #print ET.tostring(x, pretty_print=True)
         x = x.findtext('{f}value'.format(**ns)).strip()
@@ -87,7 +94,7 @@ def xform_display(req, domain, form_unique_id):
                 "value": get_ref(elem),
             }
 
-        except None:
+        except:
             continue
         if question['tag'] == "select1":
             options = []
@@ -176,7 +183,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
     )
-
+    
     factory_apps = [app['value'] for app in VersionedDoc._db.view('app_manager/factory_apps')]
 
     applications = []
@@ -248,6 +255,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
+
+        'build_errors': req.GET.getlist('build_errors'),
     }
 def default(req, domain):
     """
@@ -585,7 +594,24 @@ def save_copy(req, domain, app_id):
     """
     next = req.POST.get('next')
     app = get_app(domain, app_id)
-    app.save_copy()
+    errors = app.validate()
+    if errors:
+        def replace_params(next, **kwargs):
+            """this is a more general function that should be moved"""
+            url = urlparse.urlparse(next)
+            q = urlparse.parse_qs(url.query)
+            for param in kwargs:
+                if isinstance(kwargs[param], basestring):
+                    q[param] = [kwargs[param]]
+                else:
+                    q[param] = kwargs[param]
+            url = url._replace(query=urllib.urlencode(q, doseq=True))
+            next = urlparse.urlunparse(url)
+            return next
+        errors = map(json.dumps, errors)
+        next = replace_params(next, build_errors=errors)
+    else:
+        app.save_copy()
     return HttpResponseRedirect(next)
 
 @require_POST
