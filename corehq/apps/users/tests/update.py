@@ -29,6 +29,6 @@ class CouchUserTestCase(TestCase):
         self.user.first_name = "update_first"
         self.user.last_name = "update_last"
         self.user.save()
-        self.assertEqual(self.couch_user.django_user.first_name, 'update_first')
-        self.assertEqual(self.couch_user.django_user.last_name, 'update_last')
+        self.assertEqual(self.user.get_profile().get_couch_user().django_user.first_name, 'update_first')
+        self.assertEqual(self.user.get_profile().get_couch_user().django_user.last_name, 'update_last')
 

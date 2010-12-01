@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from django.contrib.auth.models import User
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
+from djangocouch.utils import model_to_doc
 
 class DjangoUser(Document):
     id = IntegerProperty()
@@ -48,10 +49,8 @@ class CommCareAccount(Document):
     but we could always extend to multiple commcare
     users if desired later.
     """
+    django_user = SchemaProperty(DjangoUser)
     UUID = StringProperty()
-    username = StringProperty()
-    password = StringProperty()
-    date = DateTimeProperty()
     registering_phone_id = StringProperty()
     user_data = DictProperty()
     domain = StringProperty()
@@ -107,17 +106,20 @@ class CouchUser(Document):
     
     def get_django_user(self):
         return User.objects.get(id = self.django_user.id)
-       
+
     def add_domain_account(self, username, domain, **kwargs):
         self.domain_accounts.append(DomainAccount(username = username, 
                                                   domain = domain,
                                                   **kwargs))
-    
-    def add_commcare_account(self, username, password, domain, **kwargs):
-        self.commcare_accounts.append(CommCareAccount(username=username,
-                                                      password=password,
-                                                      domain=domain,
-                                                      **kwargs))
+
+    def add_commcare_account(self, django_user, domain, UUID, registering_phone_id, **kwargs):
+        django_user_doc = model_to_doc(django_user)
+        commcare_account = CommCareAccount(django_user=django_user_doc,
+                                           domain=domain,
+                                           UUID=UUID,
+                                           registering_phone_id=registering_phone_id,
+                                           **kwargs)
+        self.commcare_accounts.append(commcare_account)
        
     def add_phone_device(self, IMEI, default=False, **kwargs):
         self.phone_devices.append(PhoneDevice(IMEI=IMEI,

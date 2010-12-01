@@ -1,0 +1,14 @@
+table.edit_single_user {
+    margin: 1em;
+    text-align: left;
+}
+
+div #error_msg {
+    text-align: right;
+    color: red;
+}
+
+div #status_msg {
+    text-align: right;
+    color: orange;
+}
