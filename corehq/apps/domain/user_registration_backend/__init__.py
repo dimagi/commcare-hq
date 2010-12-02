@@ -362,7 +362,7 @@ To login, navigate to the following link:
 @login_and_domain_required
 @domain_admin_required
 @transaction.commit_manually
-def register_admin_does_all(request):
+def register_admin_does_all(request, domain, *args, **kwargs):
     if request.method == 'POST': # If the form has been submitted...
         form = AdminRegistersUserForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
