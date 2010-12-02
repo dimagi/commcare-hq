@@ -17,7 +17,7 @@ class UsersMiddleware(object):
     
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user:
+        if request.user and hasattr(request.user, 'get_profile'):
             request.couch_user = request.user.get_profile().get_couch_user()
         return None
     
