@@ -6,7 +6,7 @@ from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from corehq.apps.users.models import HqUserProfile, CouchUser
 from corehq.apps.users.models.django import create_django_user_from_registration_data
-from couchforms.signals import xform_saved
+from corehq.apps.receiver.signals import post_received
 from couchforms.models import XFormInstance
 
 # xmlns that registrations and backups come in as, respectively. 
@@ -80,9 +80,9 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         domain = xform.domain
         num_couch_users = len(CouchUser.view("users/by_username_password", 
                                              key=[username, password, domain]))
-        # TODO: add a check for when uuid is not unique
-        user = User(username=uuid[:30], 
+        user = User(username=username, 
                     password=password)
+        # TODO: add a check for when uuid is not unique
         user.save()
         couch_user = user.get_profile().get_couch_user()
         if num_couch_users > 0:
@@ -105,4 +105,4 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         logging.error(str(e))
         raise
 
-xform_saved.connect(create_user_from_commcare_registration)
+post_received.connect(create_user_from_commcare_registration)
