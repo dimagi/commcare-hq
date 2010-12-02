@@ -133,3 +133,7 @@ class CouchUser(Document):
 
     def get_phone_numbers(self):
         return [phone.number for phone in self.phone_numbers]
+    
+    @property
+    def couch_id(self):
+        return self._id

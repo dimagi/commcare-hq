@@ -48,8 +48,8 @@ def my_phone_numbers(request, domain, template="users/phone_numbers.html"):
 
 def phone_numbers(request, couch_user, domain, template="users/phone_numbers.html"):
     context = {}
-    if request.method == "POST" and 'id_add_phone_number' in request.POST:
-        phone_number = request.POST['id_add_phone_number']
+    if request.method == "POST" and 'phone_number' in request.POST:
+        phone_number = request.POST['phone_number']
         couch_user.add_phone_number(phone_number)
         couch_user.save()
         context['status'] = 'phone number added'
@@ -62,7 +62,7 @@ def delete_phone_number(request, domain, user_id, phone_number):
     user = CouchUser.get(user_id)
     del user.phone_numbers[0]
     user.save()
-    return HttpResponseRedirect(reverse("my_account"))
+    return HttpResponseRedirect(reverse("my_phone_numbers", args=(domain, )))
 
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
     return edit(request, domain, template, request.user)
