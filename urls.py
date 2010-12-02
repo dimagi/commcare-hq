@@ -45,7 +45,10 @@ for module_name in settings.INSTALLED_APPS:
     # attempt to import this app's urls
     module = try_import("%s.urls" % (module_name))
     if not hasattr(module, "urlpatterns"): continue
-
+    
+    # TODO: the following is currently broken
+    # add the explicitly defined urlpatterns
+    # urlpatterns += module.urlpatterns    
     
     # if the MEDIA_URL does not contain a hostname (ie, it's just an
     # http path), and we are running in DEBUG mode, we will also serve
