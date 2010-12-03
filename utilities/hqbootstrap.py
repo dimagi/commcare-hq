@@ -71,6 +71,10 @@ def run():
     auth_user_2.save()
 
     auth_user_2.domain_membership.add(domain_membership_1)
+    
+    couch_user = auth_user_2.get_profile().get_couch_user()
+    couch_user.add_domain_membership(domain_domain_1.name)
+    couch_user.save()
 
     from corehq.apps.domain.models import RegistrationRequest
 
