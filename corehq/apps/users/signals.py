@@ -89,7 +89,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
             couch_user.is_duplicate = "True"
             couch_user.save()
         # add metadata to couch user
-        couch_user.add_domain_account(username, domain)
+        couch_user.add_domain_membership(domain)
         django_user = create_django_user_from_registration_data(username, password)
         django_user.save()
         couch_user.add_commcare_account(django_user, domain, uuid, imei, date_registered = date, **kwargs)

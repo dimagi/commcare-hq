@@ -187,6 +187,11 @@ def _create_new_domain_request( request, kind, form, now ):
     mem.is_active = True # Unlike domain and account, the membership is valid from the start
     mem.save()
                                                  
+    ############# Couch Domain Membership
+    couch_user = new_user.get_profile().get_couch_user()
+    couch_user.add_domain_membership(d.name)
+    couch_user.save()
+    
     # Django docs say "use is_authenticated() to see if you have a valid user"
     # request.user is an AnonymousUser if not, and that always returns False                
     if request.user.is_authenticated():

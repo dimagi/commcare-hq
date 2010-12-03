@@ -26,7 +26,7 @@ class DjangoUser(Document):
     class Meta:
         app_label = 'users'
 
-class DomainAccount(Document):
+class DomainMembership(Document):
     """
     Each user can have multiple accounts on the 
     web domain. This is primarily for Dimagi staff.
@@ -92,7 +92,7 @@ class CouchUser(Document):
     can be associated with multiple phones/device IDs
     """
     django_user = SchemaProperty(DjangoUser)
-    domain_accounts = SchemaListProperty(DomainAccount)
+    domain_memberships = SchemaListProperty(DomainMembership)
     commcare_accounts = SchemaListProperty(CommCareAccount)
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
@@ -107,10 +107,9 @@ class CouchUser(Document):
     def get_django_user(self):
         return User.objects.get(id = self.django_user.id)
 
-    def add_domain_account(self, username, domain, **kwargs):
-        self.domain_accounts.append(DomainAccount(username = username, 
-                                                  domain = domain,
-                                                  **kwargs))
+    def add_domain_membership(self, domain, **kwargs):
+        self.domain_memberships.append(DomainMembership(domain = domain,
+                                                        **kwargs))
 
     def add_commcare_account(self, django_user, domain, UUID, registering_phone_id, **kwargs):
         django_user_doc = model_to_doc(django_user)
