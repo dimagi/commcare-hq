@@ -36,3 +36,4 @@ JAR_SIGN = dict(
 # Link to XForm Editor
 # in the future we will possible allow multiple
 EDITOR_URL = 'http://localhost:8011/xep/initiate/'
+XFORMPLAYER_URL = 'http://localhost:8888/play_remote/'

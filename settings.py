@@ -154,8 +154,8 @@ TABS = [
 #    ('corehq.apps.releasemanager.views.projects', 'Release Manager'),
 #    #('corehq.apps.receiver.views.show_submits', 'Submissions'),
 #    ('corehq.apps.xforms.views.dashboard', 'XForms'),
+    ("corehq.apps.reports.views.report_list", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.new_data.views.data", "Data"),
 #    ("corehq.apps.hqwebapp.views.messages", "Messages"),
     ("corehq.apps.users.views.users", "Users and Settings"),
 ]
