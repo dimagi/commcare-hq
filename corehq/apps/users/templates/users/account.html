@@ -1,9 +1,10 @@
 {% extends "users/users_base.html" %}
 {% block user-view %}
-	<form method="post">
-	    <table>{{ form.as_table }}
+	<form name="user_details" method="post">
+	    <table class="edit_single_user detail-headers">
+	    {{ form.as_table }}
 	    <tr><th></th><td><br/><input type="submit" class="small" value="Submit"/></td></tr>
 	    </table>
-    </form>
+	</form>
 {% endblock %}
 

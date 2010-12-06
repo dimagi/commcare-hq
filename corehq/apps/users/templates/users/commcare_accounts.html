@@ -1,0 +1,32 @@
+{% extends "users/users_base.html" %}
+{% block user-view %}
+	    <table class="edit_single_user detail-headers">
+	    {% if commcare_users %}
+	    	{% for commcare_user in commcare_users %}
+		    <tr>
+		    	<th>{% if forloop.first %}CommCare Users: {% endif %}</th>
+		    	<td>{{ commcare_user.domain }}</td>
+		    	<td>{{ commcare_user.username }}</td>
+		    	<td><a class="delete_link" href="#">x</a></td> 
+                    <div class="delete_dialog" title="Delete {{ phone_number }}?">
+                        <form name="add_commcare_user" action="{% url delete_phone_number domain couch_user.id phone_number %}" method="POST">
+                            <table>
+                                <tr><td>
+                                Are you sure you want to delete the phone number: "{{ phone_number }}"?
+                                </td></tr>
+                            </table>
+                            <input type="submit" value="Delete" />
+                        </form>
+                    </div>
+		    	</td>
+		    </tr>
+		    {% endfor %}
+		{% endif %}
+		<tr>
+			<th><label for="id_add_phone_number">Add CommCare User:</label></th>
+			<td><input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" /><input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" /></td>
+		    <td></td><td><br/><input type="submit" class="small" value="Submit"/></td>
+		</tr>
+	    </table>
+{% endblock %}
+

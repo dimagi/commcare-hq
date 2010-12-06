@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from django.contrib.auth.models import User
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
+from djangocouch.utils import model_to_doc
 
 class DjangoUser(Document):
     id = IntegerProperty()
@@ -25,7 +26,7 @@ class DjangoUser(Document):
     class Meta:
         app_label = 'users'
 
-class DomainAccount(Document):
+class DomainMembership(Document):
     """
     Each user can have multiple accounts on the 
     web domain. This is primarily for Dimagi staff.
@@ -48,10 +49,8 @@ class CommCareAccount(Document):
     but we could always extend to multiple commcare
     users if desired later.
     """
+    django_user = SchemaProperty(DjangoUser)
     UUID = StringProperty()
-    username = StringProperty()
-    password = StringProperty()
-    date = DateTimeProperty()
     registering_phone_id = StringProperty()
     user_data = DictProperty()
     domain = StringProperty()
@@ -93,7 +92,7 @@ class CouchUser(Document):
     can be associated with multiple phones/device IDs
     """
     django_user = SchemaProperty(DjangoUser)
-    domain_accounts = SchemaListProperty(DomainAccount)
+    domain_memberships = SchemaListProperty(DomainMembership)
     commcare_accounts = SchemaListProperty(CommCareAccount)
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
@@ -107,17 +106,19 @@ class CouchUser(Document):
     
     def get_django_user(self):
         return User.objects.get(id = self.django_user.id)
-       
-    def add_domain_account(self, username, domain, **kwargs):
-        self.domain_accounts.append(DomainAccount(username = username, 
-                                                  domain = domain,
-                                                  **kwargs))
-    
-    def add_commcare_account(self, username, password, domain, **kwargs):
-        self.commcare_accounts.append(CommCareAccount(username=username,
-                                                      password=password,
-                                                      domain=domain,
-                                                      **kwargs))
+
+    def add_domain_membership(self, domain, **kwargs):
+        self.domain_memberships.append(DomainMembership(domain = domain,
+                                                        **kwargs))
+
+    def add_commcare_account(self, django_user, domain, UUID, registering_phone_id, **kwargs):
+        django_user_doc = model_to_doc(django_user)
+        commcare_account = CommCareAccount(django_user=django_user_doc,
+                                           domain=domain,
+                                           UUID=UUID,
+                                           registering_phone_id=registering_phone_id,
+                                           **kwargs)
+        self.commcare_accounts.append(commcare_account)
        
     def add_phone_device(self, IMEI, default=False, **kwargs):
         self.phone_devices.append(PhoneDevice(IMEI=IMEI,
@@ -129,3 +130,9 @@ class CouchUser(Document):
                                               default=default,
                                               **kwargs))
 
+    def get_phone_numbers(self):
+        return [phone.number for phone in self.phone_numbers]
+    
+    @property
+    def couch_id(self):
+        return self._id

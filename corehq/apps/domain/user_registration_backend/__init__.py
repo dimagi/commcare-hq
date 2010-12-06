@@ -362,7 +362,7 @@ To login, navigate to the following link:
 @login_and_domain_required
 @domain_admin_required
 @transaction.commit_manually
-def register_admin_does_all(request):
+def register_admin_does_all(request, domain, *args, **kwargs):
     if request.method == 'POST': # If the form has been submitted...
         form = AdminRegistersUserForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
@@ -391,7 +391,12 @@ def register_admin_does_all(request):
                 mem.member_type = ct
                 mem.member_id = new_user.id
                 mem.is_active = form.cleaned_data['is_active_member'] 
-                mem.save()      
+                mem.save()
+                
+                # Add membership info to Couch
+                couch_user = new_user.get_profile().get_couch_user()
+                couch_user.add_domain_membership(request.user.selected_domain.name)
+                couch_user.save()
                 
                 # domain admin?
                 if form.cleaned_data['is_domain_admin']:

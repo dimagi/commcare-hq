@@ -1,0 +1,26 @@
+table.edit_single_user {
+    margin: 1em;
+    text-align: left;
+}
+
+div #error_msg {
+    text-align: right;
+    color: red;
+}
+
+div #status_msg {
+    text-align: right;
+    color: orange;
+}
+
+.all_users {
+}
+
+.all_users a{
+    color: blue;
+    font-weight: bold;
+}
+
+.all_users .big_border{
+    margin: 15px;
+}

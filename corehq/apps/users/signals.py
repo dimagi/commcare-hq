@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from corehq.apps.users.models import HqUserProfile, CouchUser
-from couchforms.signals import xform_saved
+from corehq.apps.users.models.django import create_django_user_from_registration_data
+from corehq.apps.receiver.signals import post_received
 from couchforms.models import XFormInstance
 
 # xmlns that registrations and backups come in as, respectively. 
@@ -29,7 +30,10 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
         except SiteProfileNotAvailable:
             raise
     
-    profile, created = HqUserProfile.objects.get_or_create(user=instance)
+    if hasattr(instance, 'is_commcare_user'):
+        profile, created = HqUserProfile.objects.get_or_create(user=instance, is_commcare_user=instance.is_commcare_user)
+    else:
+        profile, created = HqUserProfile.objects.get_or_create(user=instance)
 
     if not created:
         # magically calls our other save signal
@@ -76,21 +80,19 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         domain = xform.domain
         num_couch_users = len(CouchUser.view("users/by_username_password", 
                                              key=[username, password, domain]))
-        # TODO: add a check for when uuid is not unique
-        user = User(username=uuid[:30], 
+        user = User(username=username, 
                     password=password)
+        # TODO: add a check for when uuid is not unique
         user.save()
         couch_user = user.get_profile().get_couch_user()
         if num_couch_users > 0:
             couch_user.is_duplicate = "True"
             couch_user.save()
         # add metadata to couch user
-        couch_user.add_domain_account(username, domain)
-        couch_user.add_commcare_account(username = username, 
-                                        password = password, 
-                                        domain = domain, 
-                                        date_registered = date,
-                                        UUID = uuid)
+        couch_user.add_domain_membership(domain)
+        django_user = create_django_user_from_registration_data(username, password)
+        django_user.save()
+        couch_user.add_commcare_account(django_user, domain, uuid, imei, date_registered = date, **kwargs)
         couch_user.add_phone_device(IMEI=imei)
         # TODO: fix after clarifying desired behaviour
         # if 'user_data' in xform.form: couch_user.user_data = user_data
@@ -103,4 +105,4 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         logging.error(str(e))
         raise
 
-xform_saved.connect(create_user_from_commcare_registration)
+post_received.connect(create_user_from_commcare_registration)
