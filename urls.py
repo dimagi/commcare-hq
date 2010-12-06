@@ -10,15 +10,14 @@ from django.contrib import admin
 admin.autodiscover()
 
 
-from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^receiver', include('corehq.apps.receiver.urls')),
     (r'^data/', include('corehq.apps.new_data.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
-    (r'^', include(hqwebapp_domain_specific))
-
+    (r'^', include('corehq.apps.hqwebapp.urls')),
+    (r'^', include('django_user_registration.urls')),
 )
 
 urlpatterns = patterns('',
@@ -28,7 +27,6 @@ urlpatterns = patterns('',
     (r'^xep/', include('xep_hq_server.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
-
 )
 
 
@@ -45,7 +43,10 @@ for module_name in settings.INSTALLED_APPS:
     # attempt to import this app's urls
     module = try_import("%s.urls" % (module_name))
     if not hasattr(module, "urlpatterns"): continue
-
+    
+    # TODO: the following is currently broken
+    # add the explicitly defined urlpatterns
+    # urlpatterns += module.urlpatterns    
     
     # if the MEDIA_URL does not contain a hostname (ie, it's just an
     # http path), and we are running in DEBUG mode, we will also serve

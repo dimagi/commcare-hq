@@ -59,6 +59,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
+    'corehq.apps.users.middleware.UsersMiddleware',
 ]
 
 ROOT_URLCONF = "urls"
