@@ -37,7 +37,7 @@ def post_xform_to_couch(instance):
             try:
                 xform = XFormInstance.get(doc_id)
                 # fire signals
-                feedback = xform_saved.send_robust(sender="post", xform=xform)
+                feedback = xform_saved.send_robust(sender="couchforms", xform=xform)
                 for func, errors in feedback:
                     if errors:
                         logging.error("Problem sending post-save signal %s for xform %s" % (func, doc_id))
