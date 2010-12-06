@@ -1,7 +1,6 @@
 {% extends base_template %}
 {% block content %}
-{% if user.is_superuser %}
-<div class="span-12">
+<div>
     <h2>Workforce management</h2>
     <ul>
         <li><a href="{% url user_summary_report domain %}">User/CHW summary</a></li>
@@ -9,6 +8,4 @@
         <li><a href="{% url daily_completions_report domain %}">Daily Form Completions</a></li>
     </ul>
 </div>
-
-{% endif %}
-{% endblock %} 
+{% endblock %}
