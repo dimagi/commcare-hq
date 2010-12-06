@@ -11,7 +11,7 @@ function(doc) {
             count: 1,
             last_submission_date:(get_encounter_date(doc)),
             username: doc.form.Meta.username,
-            device_ids: device_ids,
+            device_ids: device_ids
         });
     }
 }

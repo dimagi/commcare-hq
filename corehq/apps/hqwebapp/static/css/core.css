@@ -71,7 +71,7 @@ a:hover {
 }
 
 body {
-	background-color: #fff;
+	background-color: #f5f5ff;
 	color: #000;
 	font: normal 12px Helvetica, Arial, Verdana, sans-serif;
 	margin: 0;
@@ -82,7 +82,7 @@ abbr {
 	cursor: help;
 }
 
-#wrapper {
+.fixed-width {
     width: 1000px;
     margin: auto;
 }
@@ -102,12 +102,31 @@ ul#top-nav li {
     display: inline;
 }
 header {
-    padding-top: 10px;
+    padding: 10px 0;
     height: 70px;
+    background-color: #fff;
+}
+.bottom-shadow {
+    height: 8px;
+    border-top: 1px solid #eee;
+    /*background: url('../img/shadow-bottom.png') repeat-x scroll 0 0 transparent;    */
+    /*background: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, #f5f5ff),
+        color-stop(.75, #888888),
+        color-stop(1, rgb(0,0,0))
+    );
+    background: -moz-linear-gradient(
+        center bottom,
+        #f5f5ff 0%,
+        rgb(0,0,0) 100%
+    );*/
 }
     header nav ul {
         float: right;
-        padding-top: 20px;
+        padding-top: 0px;
         padding-bottom: 0;
         margin: 0;
     }

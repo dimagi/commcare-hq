@@ -1,0 +1,38 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+    <script>
+        $(function(){
+        });
+    </script>
+    <style type="text/css">
+        .null-entry {
+            color: #ccc;
+        }
+    </style>
+{% endblock %}
+{% block reportcontent %}
+
+<table class="datatable">
+    <thead>
+        <tr>
+            {% for header in report.headers %}
+                <th>{{ header }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+<tbody>
+    {% for row in report.rows %}
+        <tr>
+            {% for thing in row %}
+                <td class="{% if not thing %}null-entry{% endif %}">
+                    {{ thing }}
+                </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% endblock %}

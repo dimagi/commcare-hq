@@ -23,48 +23,44 @@
     <body>
         <div id="wrapper">
             <header>
-                <div id="logo">
-                    CommCare HQ
-                </div>
-                <nav>
-                    <ul id="top-nav">
-                    	{% block tabs %}
+                <div class="fixed-width">
+                    <div id="logo">
+                        CommCare HQ
+                    </div>
+                    <nav>
+                        <ul id="top-nav">
+                            {% block tabs %}
+                                {% if domain %}
+                                    {% get_tabs as tabs %}
+                                    <ul id="tabs">
+                                        {% for tab in tabs %}
+                                            {% if tab.is_active %}
+                                                <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
+                                            {% else %}
+                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                {% endif %}
+                                {% if user.is_authenticated %}
+                                    <li><a href='/accounts/logout'>Sign Out</a></li>
+                                {% endif %}
+                                </ul>
+                            {% endblock %}
+                        </ul>
+                    </nav>
+                    {% if request.user.is_authenticated %}
+                        <p id="logged-in">
+                            Signed in
                             {% if domain %}
-                                {% get_tabs as tabs %}
-                                <ul id="tabs">
-                                    {% for tab in tabs %}
-                                        {% if tab.is_active %}
-                                            <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
-                                        {% else %}
-                                            <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                        {% endif %}
-                                    {% endfor %}
+                                to <strong>{{ domain|title }}</strong>
                             {% endif %}
-                            {% if user.is_authenticated %}
-                                <li><a href='/accounts/logout'>Sign Out</a></li>
-                            {% endif %}
-                            </ul>
-                        {% endblock %}
-{#                        {% for tab_id, tab_name in settings.TABS %}#}
-{#                            {% if tab_id == selected_tab %}#}
-{#                                <li class="selected">{{ tab_name }}</li>#}
-{#                            {% else %}#}
-{#                                <li><a href='/{{ domain }}/{{ tab_id }}/'>{{ tab_name }}</a></li>#}
-{#                            {% endif %}#}
-{#                        {% endfor %}#}
-                    </ul>
-                </nav>
-                {% if request.user.is_authenticated %}
-                    <p id="logged-in">
-                        Signed in
-                        {% if domain %}
-                            to <strong>{{ domain|title }}</strong>
-                        {% endif %}
-                        as <strong>{{ user.username }}</strong>
-                    </p>
-                {% endif %}
+                            as <strong>{{ user.username }}</strong>
+                        </p>
+                    {% endif %}
+                </div>
             </header>
-            <div id="main">
+            <div class="bottom-shadow"></div>
+            <div id="main" class="fixed-width">
             {% block content %}
 
             {% endblock %}

@@ -1,23 +1,12 @@
 {% extends base_template %}
 {% block content %}
-{#<div class="span-12 last">#}
-{#    <h2>Performance Indicator Reports</h2>#}
-{#    <ul>#}
-{#        <li><a href="{% url adult_pi %}">Adult PI Report</a></li>#}
-{#        <li><a href="{% url pregnancy_pi %}">Pregnancy PI Report</a></li>#}
-{#        <li><a href="{% url under_five_pi %}">Under-Five PI Report</a></li>#}
-{#        <li><a href="{% url chw_pi %}">CHW PI Report</a></li>#}
-{#    </ul>#}
-{#</div>#}
 {% if user.is_superuser %}
 <div class="span-12">
     <h2>Workforce management</h2>
     <ul>
         <li><a href="{% url user_summary_report domain %}">User/CHW summary</a></li>
-{#        <li><a href="{% url chw_summary_report %}">Single CHW report</a></li>#}
-{#        <li><a href="{% url punchcard_report %}">Punchcard report</a></li>#}
-{#        <li><a href="{% url entrytime_report %}">Form entry time report</a></li>#}
-{#        <li><a href="{% url phone_sync_logs %}">Look at sync logs from phones</a></li>#}
+        <li><a href="{% url daily_submissions_report domain %}">Daily Form Submissions</a></li>
+        <li><a href="{% url daily_completions_report domain %}">Daily Form Completions</a></li>
     </ul>
 </div>
 

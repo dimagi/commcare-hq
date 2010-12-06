@@ -4,6 +4,7 @@ $.prototype.iconify = function(icon) {
 };
 
 $(function(){
+    $('.hidden').hide();
     $('.delete_link').iconify('ui-icon-closethick');
     $('.new_link').iconify('ui-icon-plusthick');
     $('.edit_link').iconify('ui-icon-pencil');

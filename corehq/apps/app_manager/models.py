@@ -827,14 +827,16 @@ class Application(ApplicationBase):
                         "module": {"id": module.id, "name": module.name},
                         "form": {"id": form.id, "name": form.name}
                     })
-                if form.requires in ('case', 'referral'):
+                if form.requires in ('case', 'referral') or form.active_actions():
                     needs_case = True
-                if form.requires == "referral":
+                if form.requires == "referral" or not set(['open_referral', 'update_referral', 'close_referral']).isdisjoint(form.active_actions()):
                     needs_referral = True
-            if needs_case and not (module.get_detail('case_short') and module.get_detail('case_long')):
-                errors.append({'type': "no case detail", module: {"id": module.id, "name": module.name}})
-            if needs_referral and not (module.get_detail('ref_short') and module.get_detail('ref_long')):
-                errors.append({'type': "no case detail", module: {"id": module.id, "name": module.name}})
+            if needs_case and not module.case_type:
+                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
+            if needs_case and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
+            if needs_referral and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
         return errors
     
 class NotImplementedYet(Exception):

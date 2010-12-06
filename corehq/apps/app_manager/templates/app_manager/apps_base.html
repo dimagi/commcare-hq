@@ -145,10 +145,39 @@
             {% endif %}
             {% if build_errors %}
                 <div class="message">
+                    Build Failed!
                     <ul>
                         {% for error in build_errors %}
                             <li>
-                                {{ error }}
+                                {% if error.type == "invalid xml" %}
+                                    Invalid xml in form "{{ error.form.name|trans:langs }}"
+                                    in module "{{ error.module.name|trans:langs }}".
+                                {% else %}
+                                {% if error.type == "no ref detail" %}
+                                    Module "{{ error.module.name|trans:langs }}" uses referrals but doesn't have
+                                    detail screens configured for referrals.
+                                {% else %}
+                                {% if error.type == "no case detail" %}
+                                    Module "{{ error.module.name|trans:langs }}" uses cases but doesn't have
+                                    detail screens configured for cases.
+                                {% else %}
+                                {% if error.type == "no modules" %}
+                                    This application has no modules.
+                                {% else %}
+                                {% if error.type == "no forms" %}
+                                    Module "{{ error.module.name|trans:langs }}" has no forms.
+                                {% else %}
+                                {% if error.type == "no case type" %}
+                                    Module "{{ error.module.name|trans:langs }}" uses cases but doesn't have a
+                                    case type defined.
+                                {% else %}
+                                    {{ error }}
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ul>

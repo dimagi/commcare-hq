@@ -82,7 +82,13 @@
                     <div>
                         <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
                     </div>
-                    <div class="immutable"><code>{{ module.case_type }}</code></div>
+                    <div class="immutable">
+                        {% if module.case_type %}
+                            <code>{{ module.case_type }}</code>
+                        {% else %}
+                             (e.g. client, hiv_patient, etc.)
+                        {% endif %}
+                    </div>
 
                 </td>
                 <td>
@@ -140,7 +146,11 @@
                     Case Type
                 </th>
                 <td>
-                    <code>{{ module.case_type }}</code>
+                        {% if module.case_type %}
+                            <code>{{ module.case_type }}</code>
+                        {% else %}
+                             (e.g. client, hiv_patient, etc.)
+                        {% endif %}
                 </td>
             </tr>
             <tr>

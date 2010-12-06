@@ -134,7 +134,7 @@
             return JSON.stringify(actions);
         }
         function populateCasexmlForm(actions){
-            actions = JSON.parse(actions);
+            //actions = JSON.parse(actions);
             function is_active(action) {
                 return action.condition && action.condition.type in {'if': true, 'always': true};
             }
@@ -174,6 +174,9 @@
                 }
             }
         }
+        function get_actions() {
+            return JSON.parse($("#casexml_json").text());
+        }
         $(function(){
             initCondition();
             url = $("#xform_questions_url").attr('value');
@@ -184,11 +187,11 @@
 
                 makeConditionInteractive(questions);
                 initUpdateCase();
-                populateCasexmlForm($("#casexml_json").text());
+                populateCasexmlForm(get_actions());
                 $(".casexml").delegate('*', 'change', function(){
                     // recompute casexml_json
                     $("#casexml_json").text(generateCasexmlJson());
-                }).trigger('change');
+                }).find('*').first().trigger('change');
                 $(".no-edit *").each(function(){
                     if( ($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) ||
                         (($(this).is('input[type="text"]') || $(this).is('select')) && !$(this).attr('value')) ||
@@ -196,6 +199,17 @@
                         $(this).parent().hide();
                     }
                 }).attr("disabled", true);
+                if($('.no-edit').size()) {
+                    no_actions = true;
+                    actions = get_actions();
+                    for(i in actions) {
+                        no_actions = false;
+                        break;
+                    }
+                    if(no_actions) {
+                        $("#no_casexml_actions").show();                        
+                    }
+                }
             });
             checkboxShowHide($("#open-case"), $("#update-case, #open-referral").parent());
             checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
@@ -344,6 +358,7 @@
     </div>
     <h4>Actions</h4>
     <div class="casexml {% if not edit %}no-edit{% endif %} config">
+        <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
         <ul>
             {% if form.requires == "none" %}
                 <li class="action">
@@ -426,7 +441,7 @@
             {% endif %}
         </ul>
         <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
-            <textarea id="casexml_json" class="code" name="actions" >{{ form_actions }}</textarea><br/>
+            <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>
             <input type="submit" value="Save Actions"/>
         </form>
     </div>
@@ -436,6 +451,20 @@
         <tr>
             <th>XMLNS</th>
             <td>{{ form.xmlns }}</td>
+        </tr>
+        <tr>
+            <th>Play Form</th>
+            <td>
+                <form method="POST" action="{{ XFORMPLAYER_URL }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                    <input type="hidden" name="data" value="{}" />
+                    <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
+
+
+                    <input type="submit" value="Play Form" />
+                </form>
+            </td>
         </tr>
         {% if edit %}
         <tr>
