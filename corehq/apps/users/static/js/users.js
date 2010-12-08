@@ -8,8 +8,6 @@ $(function(){
     $('.edit_link').iconify('ui-icon-pencil');
 
 
-    $("#title-bar").addClass("ui-corner-all");
-
     $("#form-tabs").tabs({
         cookie: {}
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');

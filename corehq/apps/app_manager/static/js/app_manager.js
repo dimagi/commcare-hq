@@ -14,7 +14,6 @@ $(function(){
         cookie: {}
     }).removeClass('ui-corner-all').removeClass('ui-widget-content');
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
-    //$("#title-bar").addClass('container ui-corner-top');
     //$("#main-content").addClass('container ui-corner-bottom');
     $("#modules").addClass('ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');
@@ -27,8 +26,7 @@ $(function(){
     $('.config').wrap('<div />').parent().addClass('container block ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
-    $('.container').addClass('ui-widget ui-widget-content');
-
+    
     $('.sortable .sort-action').addClass('sort-disabled');
     $('.sortable').each(function(){
         if($(this).children().not('.sort-disabled').size() > 1) {

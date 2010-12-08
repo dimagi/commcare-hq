@@ -1,7 +1,11 @@
 from django.conf.urls.defaults import *
 
+actual_reports = patterns('corehq.apps.reports.views',
+    url('submit_history', 'submit_history', name="submit_history_report"),
+)
+
 urlpatterns = patterns('corehq.apps.reports.views',
-    url(r'^$', "report_list", name="report_list"),
+    url(r'^$', "default", name="default_report"),
 
     url(r'^user_summary/$', 'user_summary', name='user_summary_report'),
     url(r'^individual_summary/', 'individual_summary', name="individual_summary_report"),
@@ -17,4 +21,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
         kwargs=dict(view_name="reports/daily_completions"),
         name='daily_completions_report'
     ),
+
+    url(r'^r/', include(actual_reports)),
 )

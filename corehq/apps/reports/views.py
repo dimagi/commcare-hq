@@ -5,10 +5,54 @@ from dimagi.utils.couch.database import get_db
 import dateutil.parser
 import datetime as DT
 from collections import defaultdict
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
-def report_list(request, domain):
-    template = "reports/report_list.html"
-    return render_to_response(request, template, {'domain': domain})
+iso_format = '%Y-%m-%dT%H:%M:%SZ'
+
+#def report_list(request, domain):
+#    template = "reports/report_list.html"
+#    return render_to_response(request, template, {'domain': domain})
+
+def default(request, domain):
+    return HttpResponseRedirect(reverse("individual_summary_report", args=[domain]))
+
+def submit_history(request, domain, template="reports/partials/couch_report_partial.html"):
+    individual = request.GET.get('individual', '')
+    rows = []
+
+    if individual:
+        headings = ["Submit Time", "XMLNS"]
+        results = get_db().view('reports/submit_history',
+            endkey=[domain, individual],
+            startkey=[domain, individual, {}],
+            descending=True,
+        ).all()
+
+        for result in results:
+            time = result['value'].get('time')
+            xmlns = result['value'].get('xmlns')
+
+            time = DT.datetime.strptime(time, iso_format)
+            rows.append([time, xmlns])
+    else:
+        headings = ["Username", "Submit Time", "XMLNS"]
+        results = get_db().view('reports/all_submissions',
+            endkey=[domain],
+            startkey=[domain, {}],
+            descending=True,
+        ).all()
+        for result in results:
+            time = result['value'].get('time')
+            xmlns = result['value'].get('xmlns')
+            username = result['value'].get('username')
+
+            time = DT.datetime.strptime(time, iso_format)
+            rows.append([username, time, xmlns])
+    return render_to_response(request, template, {
+        'headings': headings,
+        'rows': rows,
+    })
 
 def user_summary(request, domain):
     results = get_db().view(
@@ -40,7 +84,7 @@ def individual_summary(request, domain):
     usernames = [result['key'][1] for result in usernames]
     return render_to_response(request, "reports/individual_summary.html", {
         "domain": domain,
-        "show_dates": False,
+        "show_users": True,
         "report": {
             "name": "Individual Summary",
             "header": [],

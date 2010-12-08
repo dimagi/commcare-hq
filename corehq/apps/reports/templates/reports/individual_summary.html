@@ -3,43 +3,15 @@
 
 {% block head %}
     {{ block.super }}
-    <script>
-        $(function(){
-            $("#individual_select").change(function(){
-                $(this).parent().submit();
-            });
-        });
-    </script>
+
     <style type="text/css">
     </style>
 {% endblock %}
 {% block reportcontent %}
-    <form action="" method="GET">
-        <select id="individual_select" name="individual">
-            <option  value=''>Select an individual</option>
-            {% for username in usernames %}
-                <option {% if username == individual %}selected="true"{% endif %}>{{ username }}</option>
-            {% endfor %}
-        </select>
-    </form>
-    <!--table class="datatable">
-        <thead>
-            <tr>
-                {% for header in report.headers %}
-                    <th>{{ header }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in report.rows %}
-                <tr>
-                    {% for thing in row %}
-                        <td class="{% if not thing %}null-entry{% endif %}">
-                            {{ thing }}
-                        </td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table-->
+    <div id="report-tabs">
+        <ul>
+            <li><a href="{% url submit_history_report domain %}?individual={{ individual }}">Submit History</a></li>
+            <li><a href="../r/submit_punchard">Submit Times</a></li>
+        </ul>
+    </div>
 {% endblock %}
