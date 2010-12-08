@@ -4,6 +4,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "report_list", name="report_list"),
 
     url(r'^user_summary/$', 'user_summary', name='user_summary_report'),
+    url(r'^individual_summary/', 'individual_summary', name="individual_summary_report"),
     url(
         r'^daily_submissions/$',
         'daily_submissions',

@@ -1,16 +1,10 @@
 {% extends base_template %}
-{% block page_stylesheets %}
-    <!--style>
-        .ui-datepicker-calendar {
-            display: none;
-        }
-    </style-->
-{% endblock %}
 {% block page_imports %}
     {% include "imports/datatables.html" %}
     {% include "imports/flot.html" %}
 {% endblock %}
 {% block head %}
+    {{ block.super }}
     <script type="text/javascript">
         function shiftDates(days) {
             start = new Date($("#startdate").val());
@@ -56,27 +50,28 @@
             });
         }); 
     </script>
-{% block report_javascripts %}{% endblock %}
+    <style>
+        .datatable {
+            width: 100%;
+        }
+    </style>
+    {% block report_javascripts %}{% endblock %}
 {% endblock %}
 {% block content %}
-<p><a href="{% url report_list domain %}">&lt;-- back to report list</a></p>
-<h3>{{ report.name|default:"Unknown Report" }}</h3>
-{% if show_dates %}
-<form method="get" id="dateForm">
-    <p>Start Date: <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ start_date }}">
-       End Date: <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ end_date }}">
-       <input type="submit" value="Go!" />
-    </p>
-    <p>
-        <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>
-    </p>
-</form>
-{% endif %}
-{% block reportcontent %}Your report goes here{% endblock %} 
+    <div id="main_container">
+        <p><a href="{% url report_list domain %}">&lt;-- back to report list</a></p>
+        <h1>{{ report.name|default:"Unknown Report" }}</h1>
+        {% if show_dates %}
+            <form method="get" id="dateForm">
+                <p>Start Date: <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ start_date }}">
+                   End Date: <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ end_date }}">
+                   <input type="submit" value="Go!" />
+                </p>
+                <p>
+                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>
+                </p>
+            </form>
+        {% endif %}
+        {% block reportcontent %}Your report goes here{% endblock %}
+    </div>
 {% endblock %}
-
-<!--body>
-    <label for="startDate">Date :</label>
-    <input name="startDate" id="startDate" class="date-picker" />
-</body-->
-</html> 

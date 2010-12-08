@@ -8,18 +8,18 @@ $(function(){
     $('.edit_link').iconify('ui-icon-pencil');
 
 
+    $("#title-bar").addClass("ui-corner-all");
+
     $("#form-tabs").tabs({
         cookie: {}
     }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
 
-    $("#title-bar").addClass('container ui-corner-top');
-    $("#main-content").addClass('container ui-corner-bottom');
     $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');
     $("#modules ul li").addClass('ui-corner-all');
     $("#modules ul li div").addClass('ui-corner-top');
     $("#modules ul").addClass('ui-corner-bottom');
-    //$("#form-view").addClass('ui-widget ui-widget-content ui-corner-br');
+
     $("#form-tabs > ul").removeClass('ui-corner-all');
     $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
     $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');

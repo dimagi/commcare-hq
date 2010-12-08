@@ -1,4 +1,4 @@
-t/*-  BASE STYLES
+/*-  BASE STYLES
 ----------------------------------------------------------------------*/
 
 /*- self-clearing floats ----------*/
@@ -46,20 +46,18 @@ img::-moz-selection {background: transparent;}
 /*- LET'S GET STARTED!
 ----------------------------------------------------------------------*/
 
-table {
-    width: 100%;
-}
-
 li {
     list-style: none;
 }
 
 .shadow {
-	-moz-box-shadow: 1px 1px 8px #000;
-	-webkit-box-shadow: 1px 1px 8px #000;
-	box-shadow: 1px 1px 8px #000;
+	-moz-box-shadow: 1px 1px 8px #aab;
+	-webkit-box-shadow: 1px 1px 8px #aab;
+	box-shadow: 1px 1px 8px #aab;
 }
-
+h1,h2,h3,h4,h5,h6 {
+    text-shadow: #96989B 0px 0px 4px;
+}
 
 a {
     color: #0067B1;
@@ -132,9 +130,10 @@ header {
     }
         header nav li {
             padding: 0 11px 0 6px;
-            font-weight: bold;
+            font-weight: normal;
             font-size: 1.2em;
-            border-right: 2px solid #96989B;
+            text-shadow: #96989B 0px 0px 3px;
+            border-right: 1px solid #96989B;
             margin: 0;
         }
         header nav li:last-child {
@@ -155,6 +154,11 @@ header {
 #app_name {
     padding: 0 1em;
 }
+
+#main_container {
+    border: 0;
+    background-color: #fff;
+}
 .container {
     padding: 1em;
 }
@@ -168,7 +172,6 @@ header {
 }
 #title-bar {
     padding: 1em;
-    border-bottom: none;
 }
 #modules {
     width: 200px;
@@ -269,8 +272,13 @@ form table {
     margin-left: 1em;
 }
 
+.block {
+    margin: 1em;
+}
 table.config {
     margin: 1em;
+    width: 100%;
+    
 }
 table.config td, table.config, th {
     padding: 0em 1em;
@@ -282,11 +290,14 @@ table.config th {
     text-align: center;
 }
 
-input[type="text"], input[type="password"]{
+input[type='text'], input[type='password'] {
     border: 1px solid #ccc;
+    background-color: #f5f5ff;
     width: 100px;
     margin: 1px;
+    padding: 2px;
 }
+
 input.wide {
     width: 400px;
 }

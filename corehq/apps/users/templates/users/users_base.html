@@ -3,47 +3,50 @@
     <link type="text/css" rel="stylesheet" href="/static/users/css/users.css" />
 {% endblock %}
 {% block head %}
-    <script type="text/javascript" src="/static/users/js/users.js"></script>    
+    {{ block.super }}
+    <script type="text/javascript" src="/static/users/js/users.js"></script>
 {% endblock %}
 {% block content %}
-    <div id="title-bar" class="container">
-        <div class="page-title">
-            <h1>USERS</h1>
+    <div id="main_container">
+        <div id="title-bar" class="container">
+            <div class="page-title">
+                <h1>Users</h1>
+            </div>
         </div>
-    </div>
-    <div id="forms" class="container">
-    <div id="modules-form-view-wrapper">
-        <div id="modules">
-        <h2 class="selected">
-			Menu
-        </h2>
-	        <ul>
-	        	<li><a href="{% url my_account domain %}">My Account</a></li>
-	        	<li><a href="{% url my_phone_numbers domain %}">My Phone Numbers</a></li>
-	        	<li><a href="{% url my_commcare_accounts domain %}">My CommCare Accounts</a></li>
-	        	<li>My Groups</li>
-	        	<li><a href="{% url password_change %}">Change Password</a></li>
-	        	<li><a href="{% url all_users domain %}">Users</a></li>
-	        	<li>Groups</li>
-	        </ul>
-        </div>
-        
-        <div id="form-view">
-            {% block user-view %}
-                <h2 class="message">Click on the menu to the left to edit your settings.</h2>
-            {% endblock %}
-		    {% if status %}
-		    <div id="status_msg">
-		    	{{ status }}
-		    </div>
-		    {% endif %}
-		    {% if error %}
-		    <div id="error_msg">
-		    	{{ error }}
-		    </div>
-		    {% endif %}
-        </div>
+        <div id="forms">
+        <div id="modules-form-view-wrapper">
+            <div id="modules">
+            <h2 class="selected">
+                Menu
+            </h2>
+                <ul>
+                    <li><a href="{% url my_account domain %}">My Account</a></li>
+                    <li><a href="{% url my_phone_numbers domain %}">My Phone Numbers</a></li>
+                    <li><a href="{% url my_commcare_accounts domain %}">My CommCare Accounts</a></li>
+                    <li>My Groups</li>
+                    <li><a href="{% url password_change %}">Change Password</a></li>
+                    <li><a href="{% url all_users domain %}">Users</a></li>
+                    <li>Groups</li>
+                </ul>
+            </div>
 
-     </div>
+            <div id="form-view">
+                {% block user-view %}
+                    <h2 class="message">Click on the menu to the left to edit your settings.</h2>
+                {% endblock %}
+                {% if status %}
+                <div id="status_msg">
+                    {{ status }}
+                </div>
+                {% endif %}
+                {% if error %}
+                <div id="error_msg">
+                    {{ error }}
+                </div>
+                {% endif %}
+            </div>
+
+         </div>
+        </div>
     </div>
 {% endblock %}

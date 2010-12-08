@@ -1,3 +1,13 @@
+#main_container {
+    padding: 0;
+}
+
+#title-bar {
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}
+
 table.edit_single_user {
     margin: 1em;
     text-align: left;

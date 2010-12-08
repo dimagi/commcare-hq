@@ -31,6 +31,25 @@ def user_summary(request, domain):
         }
     })
 
+def individual_summary(request, domain):
+    individual = request.GET.get('individual', '')
+    if individual:
+        pass
+
+    usernames = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
+    usernames = [result['key'][1] for result in usernames]
+    return render_to_response(request, "reports/individual_summary.html", {
+        "domain": domain,
+        "show_dates": False,
+        "report": {
+            "name": "Individual Summary",
+            "header": [],
+            "rows": [],
+        },
+        "usernames": usernames,
+        "individual": individual,
+    })
+
 def daily_submissions(request, domain, view_name):
     start_date = request.GET.get('startdate')
     end_date = request.GET.get('enddate')

@@ -29,7 +29,7 @@ import settings
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
         return password_reset(request, *args, **kwargs)                
-    except: 
+    except None: 
         vals = {'error_msg':'There was a problem with your request',
                 'error_details':sys.exc_info(),
                 'show_homepage_link': 1 }

@@ -1,17 +1,32 @@
 div.login-block {
     border: 1px solid #ccc;
+    background-color: #fff;
     margin: auto;
     width: 500px;
     padding: 1.5em;
 }
-body {
-    font-size: .9em;
+p {
+    font-size: .8em;
 }
 
-div.form-label {
-    float: left;
+h1 {
+    font-size: 1.2em;
+    text-align: center;
 }
 
-div.form-field {
-    margin-left: 200px;
+form {
+    padding: 10px;
+}
+
+.field_error {
+    font-size: .8em;
+    background-color: #faa;
+}
+
+/*div.form-label {*/
+    /*float: left;*/
+/*}*/
+
+/*div.form-field {*/
+    /*margin-left: 200px;*/
 }

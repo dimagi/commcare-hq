@@ -1,11 +1,12 @@
 {% extends base_template %}
 {% block content %}
-<div>
-    <h2>Workforce management</h2>
+<div id="main_container">
+    <h1>Reports</h1>
     <ul>
-        <li><a href="{% url user_summary_report domain %}">User/CHW summary</a></li>
+        <!--li><a href="{% url user_summary_report domain %}">User/CHW summary</a></li-->
         <li><a href="{% url daily_submissions_report domain %}">Daily Form Submissions</a></li>
         <li><a href="{% url daily_completions_report domain %}">Daily Form Completions</a></li>
+        <li><a href="{% url individual_summary_report domain %}">Individual Summary</a></li>
     </ul>
 </div>
 {% endblock %}
