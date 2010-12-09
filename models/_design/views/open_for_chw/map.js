@@ -1,6 +1,6 @@
 
 function(doc) { 
-    if (doc.doc_type == "CPatient") {
+    if (doc.doc_type == "CommCareCase") {
         for (i in doc.cases) {
             pat_case = doc.cases[i];
             if (!pat_case.closed) {
