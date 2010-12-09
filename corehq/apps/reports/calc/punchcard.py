@@ -29,11 +29,10 @@ def get_users(clinic):
     return res
         
     
-def get_data(clinic, user=None):
-    
+def get_data(domain, user=None):
     data = defaultdict(lambda: 0)
-    startkey = [clinic, user] if user else [clinic]
-    endkey = [clinic, user, {}] if user else [clinic, {}]
+    startkey = [domain, user] if user else [domain]
+    endkey = [domain, user, {}] if user else [domain, {}]
     view = get_db().view("reports/form_time_by_user", 
                          startkey=startkey,
                          endkey=endkey,

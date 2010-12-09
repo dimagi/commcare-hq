@@ -1,66 +1,51 @@
-{% extends base_template %}
-
-{#################################################################################################################}
-
-{% block title %}
-     domain registration request{% endblock title %}
-
-{#################################################################################################################}
-
-{% block head %}
-
-<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
-<script type="text/javascript" src="{{ MEDIA_URL }}/domain/js/login.js"></script>
-<link rel="stylesheet" href="{{MEDIA_URL}}/domain/javascripts/nyroModal/styles/nyroModal.css" type="text/css" media="screen" /> 
-<script type="text/javascript" src="{{MEDIA_URL}}/domain/javascripts/nyroModal/js/jquery.nyroModal-1.5.5.pack.js"></script> 
-
-{% endblock %}
-
-{#################################################################################################################}           
-{% block content %}
-
-<script type="text/javascript">
-$(function() {
-  $.nyroModalSettings({
-    height:500,
-    width:700
-  });
-});
-</script>
+{% extends login_template %}
 
 
-<div class="login-block">
-<form name="form" method="post" action="{% url domain_registration_request kind=kind %}">
-{% csrf_token %}
-<h3>Request a new domain</h3>
-{% if form.non_field_errors %}
-  <div class="non_field_errors">
-  {{ form.non_field_errors }}
-  </div>
-{% endif %}
+{% block title %}domain registration request{% endblock title %}
 
-{% for field in form.visible_fields %}
-  {% if field.errors %}
-    <div class="field_errors">
-    {{field.errors}}
-    </div>
-  {% endif %}
-  {% ifnotequal field.name 'tos_confirmed' %}
-  <div class="form-label">
-  {{ field.label_tag }}
-  </div>
-  <div class="form-field">
-  {{ field }}
-  </div>
-  {%else%}
-  <label for="id_tos_confirmed">I have read and agree to the <a href="{%url tos%}" class="nyroModal" target="_blank">Terms of Service</a></label>
-  <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" />
-  {% endifnotequal %}
-{% endfor %}
+{% block login-content %}
 
-<button type="submit">Submit</button>
-</form>
-</div>
-<!-- Registration request form -->  
+    <script type="text/javascript">
+    $(function() {
+      $.nyroModalSettings({
+        height:500,
+        width:700
+      });
+    });
+    </script>
 
-{% endblock content %}     
+    <form name="form" method="post" action="{% url domain_registration_request kind=kind %}">
+        {% csrf_token %}
+        <h1>Request a new domain</h1>
+        {% if form.non_field_errors %}
+          <div class="non_field_errors">
+          {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+        <table>
+            {% for field in form.visible_fields %}
+                <tr>                
+                    {% ifnotequal field.name 'tos_confirmed' %}
+                        <td>{{ field.label_tag }}</td>
+                        <td>{{ field }}</td>
+                    {%else%}
+                        <td colspan="2">
+                            <label for="id_tos_confirmed">I have read and agree to the <a href="{%url tos%}" class="nyroModal" target="_blank">Terms of Service</a></label>
+                            <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" />
+                        </td>
+                    {% endifnotequal %}
+                </tr>  
+                {% if field.errors %}
+                    <tr>
+                        <td></td>
+                        <td>{{field.errors}}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Submit" /></td>
+            </tr>
+        </table>
+    </form>
+{% endblock %}     

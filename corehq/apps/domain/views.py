@@ -72,21 +72,21 @@ def _send_domain_registration_email(recipient, domain_name, guid, username):
     link = 'http://' + DNS_name + reverse('domain_registration_confirm') + guid + '/'    
     
     text_content = """
-You requested a new HQ domain - \"%(domain)s\". To activate this domain, navigate to the following link
-%(link)s
-Thereafter, you'll be able to log on to your new domain with username "%(user)s".
+You requested the new HQ domain "{domain}". To activate this domain, navigate to the following link
+{link}
+Thereafter, you'll be able to log on to your new domain with username "{user}".
 """
 
     html_content = """
-<p>You requested a new HQ domain - \"%(domain)s\".</p> 
-<p>To activate this domain, click on <a href="%(link)s">this link</a>.</p>
+<p>You requested the new CommCare HQ domain "{domain}".</p>
+<p>To activate this domain, click on <a href="{link}">this link</a>.</p>
 <p>If your email viewer won't permit you to click on that link, cut and paste the following link into your web browser:</p>
-<p>%(link)s</p>
-<p>Thereafter, you'll be able to log on to your new domain with username "%(user)s".</p>
+<p>{link}</p>
+<p>Thereafter, you'll be able to log on to your new domain with username "{user}".</p>
 """
     params = {"domain": domain_name, "link": link, "user": username}
-    text_content = text_content % params
-    html_content = html_content % params
+    text_content = text_content.format(**params)
+    html_content = html_content.format(**params)
      
     # http://blog.elsdoerfer.name/2009/11/09/properly-sending-contact-form-emails-and-how-to-do-it-in-django/
     #
@@ -96,7 +96,7 @@ Thereafter, you'll be able to log on to your new domain with username "%(user)s"
     # Need to get this right so that SMTP servers that do "SPF" testing won't stop our email.
     # See http://en.wikipedia.org/wiki/Sender_Policy_Framework
             
-    subject = 'New CommCareHQ domain "' + domain_name + '" requested - ACTIVATION REQUIRED'
+    subject = 'CommCare HQ Domain Request ({domain_name})'.format(**locals())
     
     send_HTML_email(subject, recipient, text_content, html_content)
 

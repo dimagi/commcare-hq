@@ -14,6 +14,7 @@ $(function(){
         cookie: {}
     }).removeClass('ui-corner-all').removeClass('ui-widget-content');
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
+    
     //$("#main-content").addClass('container ui-corner-bottom');
     $("#modules").addClass('ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');

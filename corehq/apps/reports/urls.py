@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 actual_reports = patterns('corehq.apps.reports.views',
     url('submit_history', 'submit_history', name="submit_history_report"),
+    url('submit_time_punchcard', 'submit_time_punchcard', name="submit_time_punchcard"),
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',

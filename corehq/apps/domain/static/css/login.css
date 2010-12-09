@@ -2,11 +2,12 @@ div.login-block {
     border: 1px solid #ccc;
     background-color: #fff;
     margin: auto;
-    width: 500px;
+    width: 300px;
     padding: 1.5em;
 }
 p {
     font-size: .8em;
+    text-align: center;
 }
 
 h1 {
@@ -16,6 +17,9 @@ h1 {
 
 form {
     padding: 10px;
+}
+form table {
+    margin: auto;
 }
 
 .field_error {

@@ -7,6 +7,9 @@ import datetime as DT
 from collections import defaultdict
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from .googlecharts import get_punchcard_url
+from .calc.punchcard import get_data, get_users
+from corehq.apps.reports.templatetags.report_tags import render_user_inline
 
 iso_format = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -53,6 +56,25 @@ def submit_history(request, domain, template="reports/partials/couch_report_part
         'headings': headings,
         'rows': rows,
     })
+
+def submit_time_punchcard(request, domain):
+#    user_id = request.GET.get("user", None)
+#    url = None
+#    user_data = {}
+#    url = get_punchcard_url(get_data(user_id))
+#    user_data = get_users(domain)
+#    if user_id:
+#        selected_user = [user for user, _ in user_data if user["_id"] == user_id][0]
+#        name = "Punchcard Report for %s at %s" % (render_user_inline(selected_user))
+#    return render_to_response(request, "reports/punchcard.html", {
+#        "chart_url": url,
+#        "clinic_data": clinic_data,
+#        "user_data": user_data,
+#        "clinic_id": clinic_id,
+#        "user_id": user_id
+#    })
+    pass
+
 
 def user_summary(request, domain):
     results = get_db().view(

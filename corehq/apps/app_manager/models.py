@@ -820,7 +820,7 @@ class Application(ApplicationBase):
             needs_referral = False
             for form in module.get_forms():
                 try:
-                    ET.fromstring(form.content)
+                    ET.fromstring(form.contents)
                 except:
                     errors.append({
                         'type': "invalid xml",
