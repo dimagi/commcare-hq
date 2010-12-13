@@ -1,3 +1,7 @@
+#main_container {
+    padding: 0;
+}
+
 table.edit_single_user {
     margin: 1em;
     text-align: left;

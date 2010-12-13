@@ -12,24 +12,22 @@ $(function(){
 
     $("#form-tabs").tabs({
         cookie: {}
-    }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
-
-    $("#title-bar").addClass('container ui-corner-top');
-    $("#main-content").addClass('container ui-corner-bottom');
-    $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
+    }).removeClass('ui-corner-all').removeClass('ui-widget-content');
+    $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
+    
+    //$("#main-content").addClass('container ui-corner-bottom');
+    $("#modules").addClass('ui-widget-content ui-corner-bl');
     $("#modules h2").addClass('ui-corner-all');
     $("#modules ul li").addClass('ui-corner-all');
     $("#modules ul li div").addClass('ui-corner-top');
     $("#modules ul").addClass('ui-corner-bottom');
     //$("#form-view").addClass('ui-widget ui-widget-content ui-corner-br');
-    $("#form-tabs > ul").removeClass('ui-corner-all');
-    $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
-    $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
-    $('.config').wrap('<div />').parent().addClass('container ui-corner-all');
+    //$("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
+    //$("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
+    $('.config').wrap('<div />').parent().addClass('container block ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
-    $('.container').addClass('ui-widget ui-widget-content');
-
+    
     $('.sortable .sort-action').addClass('sort-disabled');
     $('.sortable').each(function(){
         if($(this).children().not('.sort-disabled').size() > 1) {
@@ -66,9 +64,8 @@ $(function(){
         var url = $(this).find('option:selected').attr('value');
         $(document).attr('location', url);
     });
-    $(".button").button().wrap('<span />');
+
     $("#ic_file").button();
-    $("input[type='submit']").button();
     $("#error").dialog();
 
     $("#new_app").addClass("dialog_opener");

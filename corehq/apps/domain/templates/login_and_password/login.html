@@ -2,52 +2,62 @@
 
 {% block title %}login{% endblock title %}
 {% block head %}
+    {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
     <script src="{{ MEDIA_URL }}/domain/js/login.js"></script>
 {% endblock %}
 
 {% block content %}
     <div class="login-block">
-        {% if next %}
-            <h4>You will be transferred to your original destination after you log in</h4>
-        {% endif %}
-        <form class="sfb" name="form" method="post" action="{% url login %}">
-            {% csrf_token %}
-            <h3>Login</h3>
-            {% if form.non_field_errors %}
-                <div class="non_field_errors">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
+        {% block login-content %}
             {% if next %}
-                <input name="next" type="hidden" value="{{next}}" />
+                <h4>You will be transferred to your original destination after you log in</h4>
             {% endif %}
-
-            <!-- See: http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html for
-    example of multiline text associated with each input field -->
-
-            {% for field in form.visible_fields %}
-                {% if field.errors %}
-                    <div class="field_errors">
-                        {{field.errors}}
+            <form class="sfb" name="form" method="post" action="{% url login %}">
+                {% csrf_token %}
+                <h1>Login</h1>
+                {% if form.non_field_errors %}
+                    <div class="non_field_errors">
+                        {{ form.non_field_errors }}
                     </div>
                 {% endif %}
-                <div class="form-label">
-                    {{ field.label_tag }}
-                </div>
-                <div class="form-field">
-                    {{ field }}
-                </div>
-            {% endfor %}
 
+                {% if next %}
+                    <input name="next" type="hidden" value="{{next}}" />
+                {% endif %}
+
+                <table>
+                    {% for field in form.visible_fields %}
+                        <tr>
+                            <td>{{ field.label_tag }}</td>
+                            <td>{{ field }}</td>
+                        </tr>
+                        {% if field.name == "password" %}
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <p>
+                                        <a href="{% url password_reset_email %}">Forgot password?</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if field.errors %}
+                            <tr class="field_errors">
+                                <td></td><td>{{field.errors}}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    <tr>
+                        <td></td><td><input type="submit" value="Submit"/></td>
+                    </tr>
+                </table>
+            </form>
             <div>
-                <a href="{% url password_reset_email %}">Forgot password?</a>
+                <p>New here?
+                <a href="{% url domain_registration_request %}">Sign up</a> for free.</p>
             </div>
-            <button type="submit">Submit</button>
-        </form>
-
-        <div><a href="{% url domain_registration_request %}">Request a new domain</a></div>
-        <div></div><a href="{% url domain_registration_resend_confirm_email %}">Resend confirm email?</a></div>
+            <!--div><a href="{% url domain_registration_resend_confirm_email %}">Resend confirm email?</a></div-->
+        {% endblock %}
     </div>
 {% endblock content %}     

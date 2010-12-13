@@ -1,54 +1,43 @@
-{% extends base_template %}
-
-{#################################################################################################################}
-
-{% block head %}
-<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/css/login.css"/>
-{% endblock head %}
-
-{#################################################################################################################}
+{% extends login_template %}
 
 {% block title %}Domain Selection{% endblock title %}
 
-{#################################################################################################################}
+{% block login-content %}
+    <form name="form" method="post" action="{% url domain_select %}">
+        {% csrf_token %}
+        <h1>Select a domain</h1>
+        {% if form.non_field_errors %}
+            <div class="non_field_errors">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
 
-{% block content %}
+        {% if next %}
+            <input name="next" type="hidden" value="{{next}}" />
+        {% endif %}
 
-<!-- domain_select form -->
-<div>
-<form name="form" method="post" action="{% url domain_select %}">
-{% csrf_token %}
-<h3>Select a domain</h3>
-{% if form.non_field_errors %}
-  <div class="non_field_errors">
-  {{ form.non_field_errors }}
-  </div>
-{% endif %}
+        <table>
+            {% for field in form.visible_fields %}
+                <tr>
+                    <td>{{ field.label_tag }}</td>
+                    <td>{{ field }}</td>
+                </tr>
+                {% if field.errors %}
+                    <tr>
+                        <td></td>
+                        <td class="field_errors">
+                            {{field.errors}}
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            <tr>
+                <td></td>
+                <td>
+                    <input type="submit" value="Submit"/>
+                </td>
+            </tr>
+        </table>
 
-{% if next %}
-<input name="next" type="hidden" value="{{next}}" />
-{% endif %}
-
-<!-- See: http://woork.blogspot.com/2008/06/clean-and-pure-css-form-design.html for
-  example of multiline text associated with each input field -->
-
-{% for field in form.visible_fields %}
-  {% if field.errors %}
-    <div class="field_errors">
-    {{field.errors}}
-    </div>
-  {% endif %}
-  <div class="form-label">
-  {{ field.label_tag }}
-  </div>
-  <div class="form-field">
-  {{ field }}
-  </div>
-{% endfor %}
-  
-<div><button type="submit">Submit</button></div>
-</form>
-
-</div> 
-<!-- domain_select form -->  
-{% endblock content %}
+    </form>
+{% endblock %}
