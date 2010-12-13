@@ -47,10 +47,20 @@ def delete_phone_number(request, domain, user_id, phone_number):
     return HttpResponseRedirect(reverse("my_phone_numbers", args=(domain, )))
 
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
-    return edit(request, domain, request.couch_user.couch_id, template)
+    return commcare_accounts(request, domain, request.couch_user.couch_id, template)
 
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
-    return edit(request, domain, couch_id, template)
+    context = {}
+    couch_user = CouchUser.get(couch_id)
+    if request.method == "POST" and 'commcare_user' in request.POST:
+        phone_number = request.POST['commcare_user']
+        couch_user.add_phone_number(phone_number)
+        couch_user.save()
+        context['status'] = 'commcare user added'
+    # TODO: add a reduce function to that view
+    context['other_commcare_users'] = CouchUser.view("users/commcare_users_not_in_hq_user").all()
+    context.update({"domain": domain, "couch_user":couch_user })
+    return render_to_response(request, template, context)
 
 def edit(request, domain, couch_id=None, template="users/account.html"):
     """
