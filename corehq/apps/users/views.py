@@ -12,7 +12,7 @@ def users(req, domain, template="users/users_base.html"):
     })
 
 def all_users(request, domain, template="users/all_users.html"):
-    all_users = CouchUser.view("users/by_domain", key='test')
+    all_users = CouchUser.view("users/by_domain", key=domain)
     return render_to_response(request, template, {
         'domain': domain,
         'all_users': all_users
