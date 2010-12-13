@@ -11,6 +11,9 @@ from corehq.apps.users.signals import create_user_from_commcare_registration
 class UsersTestCase(TestCase):
     
     def setUp(self):
+        all_users = CouchUser.view("users/all_users")
+        for user in all_users:
+            user.delete()
         self.xform = XFormInstance()
         self.xform.form = {}
         self.xform.form['username'] = self.username = 'test_registration'
@@ -58,24 +61,16 @@ class UsersTestCase(TestCase):
         self.assertEqual(couch_user.django_user.username, username)
         self.assertEqual(couch_user.django_user.email, email)
         couch_user.add_domain_membership('domain1')
-        self.assertEqual(couch_user.domain_accounts[0].username, 'username1')
-        self.assertEqual(couch_user.domain_accounts[0].domain, 'domain1')
+        self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
         couch_user.add_domain_membership('domain2')
-        self.assertEqual(couch_user.domain_accounts[1].username, 'username2')
-        self.assertEqual(couch_user.domain_accounts[1].domain, 'domain2')
-        user3 = User.objects.create_user('username3', 'username3@domain3.com', 'password3')
-        user3.save()
-        couch_user.add_commcare_account(user3, 'domain3', 'sdf', 'ewr')
+        self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
+        couch_user.create_commcare_user('domain3','username3','password3', 'sdf', 'ewr')
         self.assertEqual(couch_user.commcare_accounts[0].django_user.username, 'username3')
-        self.assertEqual(couch_user.commcare_accounts[0].django_user.email, 'username3@domain3.com')
         self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')        
         self.assertEqual(couch_user.commcare_accounts[0].UUID, 'sdf')
         self.assertEqual(couch_user.commcare_accounts[0].registering_phone_id, 'ewr')
-        user4 = User.objects.create_user('username4', 'username4@domain4.com', 'password4')
-        user4.save()
-        couch_user.add_commcare_account(user4, 'domain4', 'oiu', 'wer',extra_data='extra')
+        couch_user.create_commcare_user('domain4','username4','password4', 'oiu', 'wer', extra_data='extra')
         self.assertEqual(couch_user.commcare_accounts[1].django_user.username, 'username4')
-        self.assertEqual(couch_user.commcare_accounts[1].django_user.email, 'username4@domain4.com')
         self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
         self.assertEqual(couch_user.commcare_accounts[1].UUID, 'oiu')
         self.assertEqual(couch_user.commcare_accounts[1].registering_phone_id, 'wer')
@@ -100,8 +95,7 @@ class UsersTestCase(TestCase):
         # self.assertEqual(django_user.username, random_uuid)
         # self.assertEqual(couch_user.django_user.username, random_uuid)
         # registered commcare user gets an automatic domain account on server
-        self.assertEqual(couch_user.domain_accounts[0].username, self.username)
-        self.assertEqual(couch_user.domain_accounts[0].domain, self.domain)
+        self.assertEqual(couch_user.domain_memberships[0].domain, self.domain)
         # they also get an automatic commcare account
         self.assertEqual(couch_user.commcare_accounts[0].django_user.username, self.username)
         #unpredictable, given arbitrary salt to hash

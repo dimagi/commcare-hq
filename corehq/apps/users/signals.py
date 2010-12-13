@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 import logging
+from datetime import datetime
 from django.db.models.signals import post_save
 from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
-from corehq.apps.users.models import HqUserProfile, CouchUser
-from corehq.apps.users.models.django import create_django_user_from_registration_data
-from corehq.apps.receiver.signals import post_received
 from couchforms.models import XFormInstance
+from corehq.apps.receiver.signals import post_received
+from corehq.apps.users.models import HqUserProfile, CouchUser
+from corehq.apps.users.models import create_hq_user_from_commcare_registration
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -78,25 +79,8 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
-        num_couch_users = len(CouchUser.view("users/by_username_password", 
-                                             key=[username, password, domain]))
-        user = User(username=username, 
-                    password=password)
-        # TODO: add a check for when uuid is not unique
-        user.save()
-        couch_user = user.get_profile().get_couch_user()
-        if num_couch_users > 0:
-            couch_user.is_duplicate = "True"
-            couch_user.save()
-        # add metadata to couch user
-        couch_user.add_domain_membership(domain)
-        django_user = create_django_user_from_registration_data(username, password)
-        django_user.save()
-        couch_user.add_commcare_account(django_user, domain, uuid, imei, date_registered = date, **kwargs)
-        couch_user.add_phone_device(IMEI=imei)
-        # TODO: fix after clarifying desired behaviour
-        # if 'user_data' in xform.form: couch_user.user_data = user_data
-        couch_user.save()
+        couch_user = create_hq_user_from_commcare_registration(domain, username, password, uuid, imei, date)
+        
         return couch_user._id
     except Exception, e:
         #import traceback, sys
@@ -106,3 +90,48 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         raise
 
 post_received.connect(create_user_from_commcare_registration)
+
+
+"""
+Case 3: 
+This section automatically creates Couch users whenever a non-registration xform instance 
+is received containing user data for a user that doesn't already exist
+"""
+
+def populate_user_from_commcare_submission(sender, xform, **kwargs):
+    """
+    Create a phone from a metadata submission if its a device we've
+    not seen.
+    """
+    
+    domain = xform.domain
+    try:
+        username = xform.form.Meta.username
+        imei = xform.form.Meta.DeviceID
+        
+    except AttributeError:
+        # if these fields don't exist, it's not a regular xform
+        # so we just ignore it
+        return
+    
+    matching_users = CouchUser.view("users/by_commcare_username_domain", key=[username, domain])
+    num_matching_users = len(matching_users)
+    user_already_exists = num_matching_users > 0
+    if not user_already_exists:
+        c = CouchUser()
+        c.created_on = datetime.now()
+        c.add_commcare_username(domain, username)
+        c.add_phone_device(imei)
+        c.status = 'auto_created'
+        c.save()
+    elif num_matching_users == 1:
+        # user already exists. we should add SIM + IMEI info if applicable
+        couch_user = matching_users.one()
+        couch_user.add_phone_device(imei)
+        couch_user.save()
+    else:
+        # >1 matching user. this is problematic.
+        logging.error("Username %s in domain %s has multiple matches" % (username, domain)) 
+    # we should also add phone and devices
+    
+post_received.connect(populate_user_from_commcare_submission)
