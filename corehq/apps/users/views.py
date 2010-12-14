@@ -3,8 +3,9 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainMembership
 
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
@@ -53,13 +54,31 @@ def commcare_accounts(request, domain, couch_id, template="users/commcare_accoun
     context = {}
     couch_user = CouchUser.get(couch_id)
     if request.method == "POST" and 'commcare_user' in request.POST:
-        phone_number = request.POST['commcare_user']
-        couch_user.add_phone_number(phone_number)
+        commcare_user = request.POST['commcare_user']
+        couch_user.add_phone_number(commcare_user)
         couch_user.save()
         context['status'] = 'commcare user added'
     # TODO: add a reduce function to that view
     context['other_commcare_users'] = CouchUser.view("users/commcare_users_not_in_hq_user").all()
     context.update({"domain": domain, "couch_user":couch_user })
+    return render_to_response(request, template, context)
+
+def my_domains(request, domain, template="users/domain_accounts.html"):
+    return domain_accounts(request, domain, request.couch_user.couch_id, template)
+
+def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
+    context = {}
+    couch_user = CouchUser.get(couch_id)
+    if request.method == "POST" and 'domain' in request.POST:
+        domain = request.POST['domain']
+        couch_user.add_domain_membership(domain)
+        couch_user.save()
+        context['status'] = 'domain added'
+    my_domains = [dm.name for dm in couch_user.domain_memberships]
+    context['other_domains'] = Domain.objects.exclude(name__in=my_domains)
+    context.update({"domain": domain,
+                    "domains": couch_user.domain_memberships, 
+                    "couch_user":couch_user })
     return render_to_response(request, template, context)
 
 def edit(request, domain, couch_id=None, template="users/account.html"):

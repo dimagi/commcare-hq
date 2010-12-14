@@ -1,0 +1,34 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% block user-view %}
+<div class='all_users'>
+	<h1>COMMCARE USERS ASSOCIATED WITH {{ couch_user.get_id }}</h1>
+	<table class='big_border'>
+	<tr><td></td>
+		<td>{% trans "Domain Name" %}</td>
+		<td></td>
+	</tr>
+	{% for dom in domains %}
+	<tr><td></td>
+		<td>{{ dom.name }}</td>
+		<td><a href="">{% trans "Leave" %}</a></td>
+	</tr>
+	{% endfor %}
+	</table>
+
+	<h1>ALL COMMCARE USERS IN DOMAIN {{ domain|upper }}</h1>
+	<table class='big_border'>
+	<tr><td></td>
+		<td>{% trans "Domain Name" %}</td>
+		<td></td>
+	</tr>
+	{% for dom in other_domains %}
+	<tr><td></td>
+		<td>{{ dom.name }}</a></td>
+		<td><a href="">{% trans "Join" %}</a></td>
+	</tr>
+	{% endfor %}
+	</table>
+</div>
+{% endblock %}
+
