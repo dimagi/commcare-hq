@@ -39,6 +39,11 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
     if not created:
         # magically calls our other save signal
         profile.save()
+        # save updated django model data to couch model
+        couch_user = profile.get_couch_user()
+        for i in couch_user.django_user:
+            couch_user.django_user[i] = getattr(instance, i)
+        couch_user.save()
         
 post_save.connect(create_user_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
