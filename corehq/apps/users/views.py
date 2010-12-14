@@ -43,9 +43,12 @@ def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"
 @require_POST
 def delete_phone_number(request, domain, user_id, phone_number):
     user = CouchUser.get(user_id)
-    del user.phone_numbers[0]
+    for i in range(0,len(user.phone_numbers)):
+        if user.phone_numbers[i].number == phone_number:
+            del user.phone_numbers[i]
+            break
     user.save()
-    return HttpResponseRedirect(reverse("my_phone_numbers", args=(domain, )))
+    return HttpResponseRedirect(reverse("phone_numbers", args=(domain, user_id )))
 
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
     return commcare_accounts(request, domain, request.couch_user.couch_id, template)
@@ -74,12 +77,31 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
         couch_user.add_domain_membership(domain)
         couch_user.save()
         context['status'] = 'domain added'
-    my_domains = [dm.name for dm in couch_user.domain_memberships]
-    context['other_domains'] = Domain.objects.exclude(name__in=my_domains)
+    my_domains = [dm.domain for dm in couch_user.domain_memberships]
+    context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
     context.update({"domain": domain,
-                    "domains": couch_user.domain_memberships, 
+                    "domains": [dm.domain for dm in couch_user.domain_memberships], 
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
+
+@require_POST
+def add_domain_membership(request, domain, user_id, domain_name):
+    user = CouchUser.get(user_id)
+    if domain_name:
+        user.add_domain_membership(domain_name)
+        user.save()
+    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id)))
+
+@require_POST
+def delete_domain_membership(request, domain, user_id, domain_name):
+    user = CouchUser.get(user_id)
+    for i in range(0,len(user.domain_memberships)):
+        if user.domain_memberships[i].domain == domain_name:
+            del user.domain_memberships[i]
+            break
+    user.save()
+    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
+
 
 def edit(request, domain, couch_id=None, template="users/account.html"):
     """

@@ -10,8 +10,19 @@
 	</tr>
 	{% for dom in domains %}
 	<tr><td></td>
-		<td>{{ dom.name }}</td>
-		<td><a href="">{% trans "Leave" %}</a></td>
+		<td>{{ dom }}</td>
+    	<td><a class="delete_link" href="#">>{% trans "Leave" %}</a>
+	        <div class="delete_dialog" title="Leave {{ dom }}?">
+	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
+	                <table>
+	                    <tr><td>
+	                    Are you sure you want to leave the domain "{{ dom }}"?
+	                    </td></tr>
+	                </table>
+	                <input type="submit" value="Delete" />
+	            </form>
+	        </div>
+    	</td>
 	</tr>
 	{% endfor %}
 	</table>
@@ -24,8 +35,19 @@
 	</tr>
 	{% for dom in other_domains %}
 	<tr><td></td>
-		<td>{{ dom.name }}</a></td>
-		<td><a href="">{% trans "Join" %}</a></td>
+		<td>{{ dom }}</a></td>
+    	<td><a class="add_link" href="#">Join</a>
+	        <div class="add_dialog" title="Add {{ dom }}?">
+	            <form  name="add_domain_membership" action="{% url add_domain_membership domain couch_user.couch_id dom %}" method="POST">
+	                <table>
+	                    <tr><td>
+	                    Are you sure you want to join the domain "{{ dom }}"?
+	                    </td></tr>
+	                </table>
+	                <input type="submit" value="Add" />
+	            </form>
+	        </div>
+    	</td>
 	</tr>
 	{% endfor %}
 	</table>

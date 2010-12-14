@@ -4,6 +4,7 @@ $.prototype.iconify = function(icon) {
 
 $(function(){
     $('.delete_link').iconify('ui-icon-closethick');
+    $('.add_link').iconify('ui-icon-plusthick');
     $('.new_link').iconify('ui-icon-plusthick');
     $('.edit_link').iconify('ui-icon-pencil');
 
@@ -73,7 +74,9 @@ $(function(){
     $("#new_module_dialog").addClass("dialog");
 
     $(".delete_link").addClass("dialog_opener");
+    $(".add_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
+    $(".add_dialog").addClass("dialog");
 
 
 
