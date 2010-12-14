@@ -227,7 +227,6 @@ class CouchUser(Document):
 
 
 
-
 """
 Django  models go here
 """
@@ -246,10 +245,22 @@ class HqUserProfile(CouchUserProfile):
     def __unicode__(self):
         return "%s @ %s" % (self.user)
 
+    def __getattr__(self, attr, *args):
+        """ 
+        This neat little method allows us to call CouchUser methods
+        from the HQProfile django object. 
+        """
+        try:
+            return getattr(self.__class__, attr, *args)
+        except AttributeError:
+            couch_user = self.get_couch_user()
+            return getattr(couch_user, attr, *args)
+        
     def get_couch_user(self):
-        couch_user = CouchUser.get(self._id)
-        return couch_user
-
+        if not hasattr(self,'couch_user'):
+            self.couch_user = CouchUser.get(self._id)
+        return self.couch_user
+    
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
 #def create_commcare_user(domain, username, password, uuid='', imei='', date='', **kwargs):
