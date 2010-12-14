@@ -1,14 +1,14 @@
-
+import datetime as DT
+import dateutil.parser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
-import dateutil.parser
-import datetime as DT
 from collections import defaultdict
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
 from .calc.punchcard import get_data, get_users
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.templatetags.report_tags import render_user_inline
 
 iso_format = '%Y-%m-%dT%H:%M:%SZ'
@@ -97,6 +97,7 @@ def user_summary(request, domain):
         }
     })
 
+@login_and_domain_required
 def individual_summary(request, domain):
     individual = request.GET.get('individual', '')
     if individual:

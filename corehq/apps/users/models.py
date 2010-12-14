@@ -9,6 +9,7 @@ from djangocouchuser.models import CouchUserProfile
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
+from corehq.apps.domain.models import Domain
 
 class DjangoUser(Document):
     id = IntegerProperty()
@@ -139,6 +140,19 @@ class CouchUser(Document):
                 return
         self.domain_memberships.append(DomainMembership(domain = domain,
                                                         **kwargs))
+    
+    @property
+    def domain_names(self):
+        return [dm.domain for dm in self.domain_memberships]
+
+    def get_active_domains(self):
+        return Domain.objects.filter(name__in=self.domain_names)
+
+    def is_member_of(self, domain_qs):
+        membership_count = domain_qs.filter(name__in=self.domain_names).count()
+        if membership_count > 0:
+            return True
+        return False
 
     def create_commcare_user(self, domain, username, password, uuid='', imei='', date='', **kwargs):
         def _create_django_user_from_registration_data(domain, username, password):
@@ -225,8 +239,6 @@ class CouchUser(Document):
     def couch_id(self):
         return self._id
 
-
-
 """
 Django  models go here
 """
@@ -244,17 +256,6 @@ class HqUserProfile(CouchUserProfile):
     
     def __unicode__(self):
         return "%s @ %s" % (self.user)
-
-    def __getattr__(self, attr, *args):
-        """ 
-        This neat little method allows us to call CouchUser methods
-        from the HQProfile django object. 
-        """
-        try:
-            return getattr(self.__class__, attr, *args)
-        except AttributeError:
-            couch_user = self.get_couch_user()
-            return getattr(couch_user, attr, *args)
         
     def get_couch_user(self):
         if not hasattr(self,'couch_user'):
