@@ -27,6 +27,16 @@ def delete_group(request, domain, group_id):
     group.delete()
     return HttpResponseRedirect(reverse("all_groups", args=(domain, )))
     
+def group_members(request, domain, group_name, template="groups/group_members.html"):
+    context = {}
+    group = Group.view("groups/by_name", key=group_name).one()
+    members = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+    context.update({"domain": domain,
+                    "group": group,
+                    "members": members, 
+                    })
+    return render_to_response(request, template, context)
+
 def my_groups(request, domain, template="groups/groups.html"):
     return group_membership(request, domain, request.couch_user._id, template)
 
@@ -56,11 +66,17 @@ def join_group(request, domain, couch_user_id, group_id):
     group = Group.get(group_id)
     if group:
         group.add_user(couch_user_id)
-    return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
+    if 'redirect_url' in request.POST:
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.name)))
+    else:
+        return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
 
 @require_POST
-def leave_group(request, domain, couch_user_id, group_id):
+def leave_group(request, domain, group_id, couch_user_id):
     group = Group.get(group_id)
     if group:
         group.remove_user(couch_user_id)
-    return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id )))
+    if 'redirect_url' in request.POST:
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.name)))
+    else:
+        return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))

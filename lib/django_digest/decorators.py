@@ -21,6 +21,7 @@ def _httpdigest(authenticator, f, *args, **kwargs):
         raise Exception("Neither args[0] nor args[1] is an HttpRequest.")
 
     if not authenticator.authenticate(request):
+        # first pass
         return authenticator.build_challenge_response()
 
     response = f(*args, **kwargs)

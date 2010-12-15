@@ -2,7 +2,7 @@
 couch models go here
 """
 from __future__ import absolute_import
-import datetime
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from djangocouchuser.models import CouchUserProfile
@@ -10,6 +10,8 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
 from corehq.apps.domain.models import Domain
+
+COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 class DjangoUser(Document):
     id = IntegerProperty()
@@ -171,8 +173,8 @@ class CouchUser(Document):
             user.is_staff = False # Can't log in to admin site
             user.is_active = True # Activated upon receipt of confirmation
             user.is_superuser = False # Certainly not, although this makes login sad
-            user.last_login =  datetime.datetime(1970,1,1)
-            user.date_joined = datetime.datetime.utcnow()
+            user.last_login =  datetime(1970,1,1)
+            user.date_joined = datetime.utcnow()
             user.is_commcare_user = True
             return user
         def _add_commcare_account(django_user, domain, UUID, registering_phone_id, **kwargs):
@@ -214,6 +216,32 @@ class CouchUser(Document):
                                            **kwargs)
         self.commcare_accounts.append(commcare_account)
        
+    def link_commcare_account(self, domain, commcare_username, **kwargs):
+        commcare_hq_users = CouchUser.view("users/by_commcare_username_domain", key=[commcare_username, domain]).all()
+        for j in range(0,len(commcare_hq_users)):
+            user = commcare_hq_users[j]
+            for i in range(0,len(commcare_hq_users[j].commcare_accounts)):
+                if commcare_hq_users[j].commcare_accounts[i].django_user.username == commcare_username and \
+                   commcare_hq_users[j].commcare_accounts[i].domain == domain:
+                        original = commcare_hq_users[j].commcare_accounts[i]
+                        self.commcare_accounts.append(original)
+                        self.save()
+                        # Hm, by not deleting commcare_hq_users[j] if commcare_hq_users[j].status == COUCH_USER_AUTOCREATED_STATUS:
+                        # we risk leaving around a bunch of unnattached empty couch_user models...
+                        del commcare_hq_users[j].commcare_accounts[i]
+                        i = i + 1
+
+    def unlink_commcare_account(self, domain, commcare_user_index, **kwargs):
+        commcare_user_index = int(commcare_user_index)
+        c = CouchUser()
+        c.created_on = datetime.now()
+        original = self.commcare_accounts[commcare_user_index]
+        c.commcare_accounts.append(original)
+        c.status = 'unlinked from %s' % self._id
+        c.save()
+        # is there a more atomic way to do this?
+        del self.commcare_accounts[commcare_user_index]
+        
     def add_phone_device(self, IMEI, default=False, **kwargs):
         """ Don't add phone devices if they already exist """
         for device in self.phone_devices:
@@ -264,7 +292,6 @@ class HqUserProfile(CouchUserProfile):
     
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
-#def create_commcare_user(domain, username, password, uuid='', imei='', date='', **kwargs):
     """ a 'commcare user' is a couch user which:
     * has a django web login  
     * has an associated commcare account,
@@ -285,6 +312,15 @@ def create_hq_user_from_commcare_registration(domain, username, password, uuid='
     # if 'user_data' in xform.form: couch_user.user_data = user_data
     couch_user.save()
     return couch_user
+
+def create_couch_user_without_web_user(domain, username, imei='', status='', **kwargs):
+    c = CouchUser(**kwargs)
+    c.created_on = datetime.now()
+    c.add_commcare_username(domain, username)
+    c.add_phone_device(imei)
+    c.status = status
+    c.save()
+    return c
 
 # make sure our signals are loaded
 import corehq.apps.users.signals

@@ -12,7 +12,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template import RequestContext
 
-import django_tables as tables
+from django_tables import tables
 
 from corehq.apps.domain import Permissions
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required

@@ -7,7 +7,9 @@ from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from couchforms.models import XFormInstance
 from corehq.apps.receiver.signals import post_received
-from corehq.apps.users.models import HqUserProfile, CouchUser
+from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS
+from corehq.apps.users.models import create_hq_user_from_commcare_registration
+from corehq.apps.users.models import create_couch_user_without_web_user
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -123,12 +125,7 @@ def populate_user_from_commcare_submission(sender, xform, **kwargs):
     num_matching_users = len(matching_users)
     user_already_exists = num_matching_users > 0
     if not user_already_exists:
-        c = CouchUser()
-        c.created_on = datetime.now()
-        c.add_commcare_username(domain, username)
-        c.add_phone_device(imei)
-        c.status = 'auto_created'
-        c.save()
+        create_couch_user_without_web_user(domain, username, imei, COUCH_USER_AUTOCREATED_STATUS)
     elif num_matching_users == 1:
         # user already exists. we should add SIM + IMEI info if applicable
         couch_user = matching_users.one()
