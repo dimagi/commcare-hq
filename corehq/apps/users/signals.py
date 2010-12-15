@@ -8,7 +8,6 @@ from djangocouchuser.signals import couch_user_post_save
 from couchforms.models import XFormInstance
 from corehq.apps.receiver.signals import post_received
 from corehq.apps.users.models import HqUserProfile, CouchUser
-from corehq.apps.users.models import create_hq_user_from_commcare_registration
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -84,6 +83,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
+        from corehq.apps.users.models import create_hq_user_from_commcare_registration
         couch_user = create_hq_user_from_commcare_registration(domain, username, password, uuid, imei, date)
         
         return couch_user._id

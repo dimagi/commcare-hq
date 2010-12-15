@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm
-from corehq.apps.users.models import CouchUser, DomainMembership
+from corehq.apps.users.models import CouchUser
 
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
