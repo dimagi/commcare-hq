@@ -95,7 +95,7 @@ DEFAULT_APPS = (
 
 HQ_APPS = (
     #'django_extensions',
-    #'django_digest',
+    'django_digest',
     'django_rest_interface',
     'django_granular_permissions',
     'django_tables',
@@ -314,3 +314,4 @@ except:
 
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 
+XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
