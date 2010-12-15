@@ -23,3 +23,13 @@ class Group(Document):
     # hm, couchdbkit doesn't seem to support 'self'. 
     # but maybe that's ok. this is, after all, couch.
 
+    def add_user(self, couch_user_id):
+        if couch_user_id not in self.users:
+            self.users.append(couch_user_id)
+        
+    def remove_user(self, couch_user_id):
+        if couch_user_id in self.users:
+            for user in self.users:
+                if user == couch_user_id:
+                    del user
+                    return
