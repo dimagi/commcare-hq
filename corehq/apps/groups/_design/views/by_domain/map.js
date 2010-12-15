@@ -1,5 +1,5 @@
 function(doc){ 
-    if (doc.doc_type == "Groupb")
+    if (doc.doc_type == "Group")
         emit(doc.domain,  doc);
 }
 

@@ -38,9 +38,13 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
         group.add_user(couch_user)
         group.save()
         context['status'] = '%s joined group %s' % (couch_user._id, group.name)
-    #groups = Group.view("groups/by_user", key=couch_id)
-    my_groups = Group.view("groups/by_domain", key=domain)
-    other_groups = Group.view("groups/by_domain", key=domain)
+    my_groups = Group.view("groups/by_user", key=couch_user_id).all()
+    all_groups = Group.view("groups/by_domain", key=domain).all()
+    other_groups = []
+    for group in all_groups:
+        if group.name not in [g.name for g in my_groups]:
+            other_groups.append(group)
+    #other_groups = [group for group in all_groups if group not in my_groups]
     context.update({"domain": domain,
                     "groups": my_groups, 
                     "other_groups": other_groups,
@@ -52,7 +56,6 @@ def join_group(request, domain, couch_user_id, group_id):
     group = Group.get(group_id)
     if group:
         group.add_user(couch_user_id)
-        group.save()
     return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
 
 @require_POST
@@ -60,5 +63,4 @@ def leave_group(request, domain, couch_user_id, group_id):
     group = Group.get(group_id)
     if group:
         group.remove_user(couch_user_id)
-        group.save()
     return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id )))
