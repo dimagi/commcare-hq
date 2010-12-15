@@ -22,7 +22,6 @@ class AccountStorage(object):
 
     def get_partial_digest(self, username):
         cursor = self.db.connection.cursor()
-        print self.GET_PARTIAL_DIGEST_QUERY % [username]
         cursor.execute(self.GET_PARTIAL_DIGEST_QUERY, [username])
         # In MySQL, string comparison is case-insensitive by default.
         # Therefore a second round of filtering is required.

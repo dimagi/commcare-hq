@@ -21,4 +21,5 @@ urlpatterns = patterns('corehq.apps.users.views',
         'delete_domain_membership',
         name='delete_domain_membership'),
     url(r'all/?$', 'all_users', name='all_users'),
+    url(r'^httpdigest/?$', 'httpdigest'),
 )

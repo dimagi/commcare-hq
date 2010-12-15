@@ -117,7 +117,7 @@ class HttpDigestAuthenticator(object):
                              'or nonce count.')
                 return False
 
-        #request.user = user
+        request.user = user
         return True
             
     def build_challenge_response(self, stale=False):

@@ -1,13 +1,14 @@
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm
-from corehq.apps.users.models import CouchUser, DomainMembership
+from corehq.apps.users.models import CouchUser
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django_digest.decorators import httpdigest
+ 
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
         'domain': domain,
@@ -136,3 +137,6 @@ def edit(request, domain, couch_id=None, template="users/account.html"):
     context.update({"form": form, "domain": domain, "couch_user": couch_user })
     return render_to_response(request, template, context)
 
+@httpdigest
+def httpdigest(request, domain):
+    return HttpResponse("ok")
