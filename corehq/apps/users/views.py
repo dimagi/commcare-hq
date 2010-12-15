@@ -8,7 +8,7 @@ from corehq.apps.users.forms import UserForm
 from corehq.apps.users.models import CouchUser
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
- 
+
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
         'domain': domain,

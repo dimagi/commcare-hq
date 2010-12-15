@@ -65,6 +65,10 @@ h1,h2,h3,h4,h5,h6 {
     /*text-shadow: #96989B 0px 0px 4px;*/
 }
 
+.sortable {
+    sortable: auto;
+}
+
 a {
     color: #0067B1;
     text-decoration: none;
@@ -198,7 +202,7 @@ header {
 }
 #modules ul li{
     padding: .25em;
-    padding-left: 2em;
+    padding-left: 1.5em;
     list-style: none;
 }
 #modules > ul > li > div {
@@ -290,11 +294,11 @@ form table {
 }
 table.config {
     margin: 1em;
-    width: 100%;
+    /*width: 100%;*/
     
 }
 table.config td, table.config, th {
-    padding: 0em 1em;
+    padding: 5px;
 }
 table.config th {
     text-align: left;
@@ -304,11 +308,13 @@ table.config th {
 }
 
 input[type='text'], input[type='password'] {
-    border: 1px solid #ccc;
-    background-color: #f5f5ff;
     width: 100px;
     margin: 1px;
     padding: 2px;
+}
+input[type='text'], input[type='password'], textarea {
+    border: 1px solid #ccc;
+    background-color: #f5f5ff;
 }
 
 input.wide {
@@ -327,13 +333,22 @@ input.wide {
     height: 22px;
 }
 
-.dropdown {
-    display: block;
-    background-color: white;
-    border: 1px solid #ccc;
-    position: absolute;
-    padding: 0 1em;
+.drag_handle {
+    width: 16px;
+    cursor: move;
 }
-.dropdown:hover {
-    background-color: #8867B1;
+
+.ui-tabs {
+    position: static !important;
+}
+
+/*.dropdown {*/
+    /*display: block;*/
+    /*background-color: white;*/
+    /*border: 1px solid #ccc;*/
+    /*position: absolute;*/
+    /*padding: 0 1em;*/
+/*}*/
+/*.dropdown:hover {*/
+    /*background-color: #8867B1;*/
 }

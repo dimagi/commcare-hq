@@ -20,31 +20,33 @@
             <tbody {% if edit %}class="sortable"{% endif %}>
                 <tr class="sort-action">
                     <td>
-                        <form method="post" action="{% url corehq.apps.app_manager.views.swap domain app.id 'langs' %}">
+                        <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
+                            <input name="ajax" value="true" />
                         </form>
                     </td>
                 </tr>
                 {% if edit %}
                     {% for lang in app.langs %}
-                        <tr class="form editable">
-                            <td class="index">
-                                {{ forloop.counter0 }}
+                        <tr>
+                            <td class="index">{{ forloop.counter0 }}</td>
+                            <td>
+                                <span class="drag_handle"></span>
+                                {% with util.make_uuid as uuid %}
+                                    <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
+                                    <div class="delete_dialog" title="Remove Language" data-uuid="{{ uuid }}">
+                                        <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
+                                            <p>Removing this language will not permanently delete any translations you have made for it.</p>
+                                            <input type="hidden" name="lang_id" value="{# filled in by js #}" />
+                                            <input type="submit" value="Remove" />
+                                        </form>
+                                    </div>
+                                {% endwith %}
                             </td>
                             <td>
-                                <a class="delete_link" href="#"></a>
-                                <div class="delete_dialog" title="Remove Language">
-                                    <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
-                                        <p>Removing this language will not permanently delete any translations you have made for it.</p>
-                                        <input type="hidden" name="lang_id" value="{{ forloop.counter|add:-1 }}" />
-                                        <input type="submit" value="Remove" />
-                                    </form>
-                                </div>
-                            </td>
-                            <td>
-                                <input class="code" type="text" name="lang" value={{ lang }} />
+                                <!--input class="code" type="text" name="lang" value={{ lang }} /-->
                                 <div class="immutable"><code>{{ lang }}</code></div>
                             </td>
-                            <td>
+                            <!--td>
                                 <input type="hidden" name="lang_id" value="{{ forloop.counter|add:-1 }}" />
                                 <a href="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}" class="submit button">
                                     Save
@@ -52,23 +54,19 @@
                                 <div class="immutable">
                                     <a class="edit_link" href="#"></a>
                                 </div>
-                            </td>
+                            </td-->
                         </tr>
                     {% endfor %}
-                    <tr class="form editable sort-disabled">
+                    <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
                         <td>
                         </td>
                         <td>
                             <input class="code" type="text" name="lang" />
-                            <div class="immutable"></div>
                         </td>
                         <td>
-                            <a href="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}" class="submit button">
+                            <a href="#" class="submit button">
                                 Add
                             </a>
-                            <div class="immutable">
-                                <a class="new_link" href="#">Add Language</a>
-                            </div>
                         </td>
                     </tr>
                 {% else %}

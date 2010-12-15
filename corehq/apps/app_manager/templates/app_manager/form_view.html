@@ -55,7 +55,7 @@
         function add_update_row(){
             $new_row = initUpdateCase.template.clone();
             $new_row.addClass('action-update');
-            $("#update-case").next().find('table').append($new_row);
+            $("#update-case-config").find('table').append($new_row);
         }
         function initUpdateCase() {
             $update_template = $("#action-update-template");
@@ -179,10 +179,9 @@
         }
         $(function(){
             initCondition();
-            url = $("#xform_questions_url").attr('value');
-            $("#casexml_json").hide();
-            $.get(url, {}, function(text){
-                questions = JSON.parse(text);
+            $("#casexml_json, #xform_questions").hide();
+            var questions = JSON.parse($("#xform_questions").text());
+            if(questions.length) {
                 populateQuestions(questions);
 
                 makeConditionInteractive(questions);
@@ -207,12 +206,12 @@
                         break;
                     }
                     if(no_actions) {
-                        $("#no_casexml_actions").show();                        
+                        $("#no_casexml_actions").show();
                     }
                 }
-            });
-            checkboxShowHide($("#open-case"), $("#update-case, #open-referral").parent());
-            checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
+                //checkboxShowHide($("#open-case"), $("#update-case, #open-referral").parent());
+                //checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
+            }
         });
     </script>
 {% endblock %}
@@ -222,91 +221,37 @@
     <h4>Form Settings</h4>
     <table class="config">
         {% if edit %}
-            <tr class="form editable">
+            <tr>
                 <th>Form Name</th>
                 <td>
-                    <input type="text" name="name" />
-                    <div class="immutable">{{ form.name|trans:langs }}</div>
-                </td>
-                <td>
-                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'name' %}" class="submit button">
-                        Save
-                    </a>
-                    <div class="immutable">
-                        <a class="edit_link" href="#"></a>
-                    </div>
+                    <!-- autosave hijacks the form so that it sends automatically in the background-->
+                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'name' %}">
+                        <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                    </form>
                 </td>
             </tr>
-            <tr class="form editable">
+            <tr>
                 <th>Show Count</th>
                 <td>
-                    <select class="code" name="show_count">
-                        <option value="True">True</option>
-                        <option value="False">False</option>
-                    </select>
-                    <div class="immutable"><code>{% if form.show_count %}True{% else %}False{% endif %}</code></div>
+                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'show_count' %}">
+                        <select class="autosave code" name="show_count">
+                            <option value="True">True</option>
+                            <option value="False" {% if not form.show_count %}selected="true"{% endif %}>False</option>
+                        </select>
+                    </form>
                 </td>
-                <td>
-                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'show_count' %}" class="submit button">
-                        Save
-                    </a>
-                    <div class="immutable">
-                        <a class="edit_link" href="#"></a>
-                    </div>
-                </td>
+
             </tr>
-            {# <tr class="form editable"> #}
-            {#     <th>Put in menu root</th> #}
-            {#     <td> #}
-            {#         <select class="code" name="put_in_root"> #}
-            {#             <option value="True">True</option> #}
-            {#             <option value="False">False</option> #}
-            {#         </select> #}
-            {#         <div class="immutable"><code>{% if form.put_in_root %}True{% else %}False{% endif %}</code></div> #}
-            {#     </td> #}
-            {#     <td> #}
-            {#         <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'put_in_root' %}" class="submit button"> #}
-            {#             Save #}
-            {#         </a> #}
-            {#         <div class="immutable"> #}
-            {#             <a class="edit_link" href="#"></a> #}
-            {#         </div> #}
-            {#     </td> #}
-            {# </tr> #}
-            {# <tr class="form editable"> #}
-            {#                 <th>XForm</th> #}
-            {#                 <td> #}
-            {#                     <input type="file" name="xform" /> #}
-            {#                     <div class="immutable"> #}
-            {#                         <code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code> #}
-            {#                     </div> #}
-            {#                 </td> #}
-            {#                 <td> #}
-            {#                     <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" class="submit button"> #}
-            {#                         Upload #}
-            {#                     </a> #}
-            {#                     <div class="immutable"> #}
-            {#                         [<a href="#">replace</a>] #}
-            {#                     </div> #}
-            {#                 </td> #}
-            {#             </tr> #}
-            <tr class="form editable">
+            <tr>
                 <th>Requires</th>
                 <td>
-                    <select class="code" name="requires">
-                        <option value="none">none</option>
-                        <option value="case">case</option>
-                        <option value="referral">referral</option>
-                    </select>
-                    <div class="immutable"><code>{% firstof form.requires "none" %}</code></div>
-                </td>
-                <td>
-                    <a href="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" class="submit button">
-                        Save
-                    </a>
-                    <div class="immutable">
-                        <a class="edit_link" href="#"></a>
-                    </div>
+                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}">
+                        <select class="autosave code" name="requires" data-value="{{ form.requires }}">
+                            <option value="none">none</option>
+                            <option value="case">case</option>
+                            <option value="referral">referral</option>
+                        </select>
+                    </form>
                 </td>
             </tr>
         {% else %}
@@ -322,131 +267,17 @@
                     <code>{% if form.show_count %}True{% else %}False{% endif %}</code>
                 </td>
             </tr>
-            {# <tr> #}
-            {#     <th>Put in menu root</th> #}
-            {#     <td> #}
-            {#         <code>{% if form.put_in_root %}True{% else %}False{% endif %}</code> #}
-            {#     </td> #}
-            {# </tr> #}
-            {# <tr> #}
-            {#     <th>XForm</th> #}
-            {#     <td><code>{% if form_err %}{{ form_err }}{% else %}Valid{% endif %}</code></td> #}
-            {# </tr> #}
             <tr>
                  <th>Requires</th>
                  <td>
                      <code>{{ form.requires }}</code>
                  </td>
             </tr> 
-
         {% endif %}
     </table>
 
-    <!-- Case XML -->
-    <div id="condition-template" class="condition">
-        <input type="checkbox" name="if" /> If
-        <span>
-             the answer to
-            <select class="questions questions-select1" name="condition-question">
-                <option value="" disabled="" selected="">Select a question</option>
-            </select>
-            is
-            <select name="condition-answer">
-                <option value="" disabled="" selected="">Select an answer</option>
-            </select>
-        </span>
-    </div>
-    <h4>Actions</h4>
-    <div class="casexml {% if not edit %}no-edit{% endif %} config">
-        <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
-        <ul>
-            {% if form.requires == "none" %}
-                <li class="action">
-                    <input type="checkbox" id="open-case"> Opens a case
-                    <div class="config">
-                        <div class="condition"></div>
-                        <span>
-                            Name according to question
-                            <select class="questions questions-all" name="name_path">
-                                <option disabled="">Select a question</option>
-                            </select>
-                        </span>
-                    </div>
-                </li>
 
-            {% endif %}
-            <li class="action">
-                <input type="checkbox" id="update-case"> Updates a case
-                <div>
-                    <table class="config">
-                        <tr>
-                            <th></th>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                        <tr id="action-update-template" class="action-update">
-                            <td></td>
-                            <td><input type="text" name="action-update-key" /></td>
-                            <td>
-                                <select class="questions questions-all" name="action-update-value">
-                                    <option></option>
-                                </select>
-                            </td>
-                        </tr>
-
-                    </table>
-                </div>
-            </li>
-            {% if form.requires != "none" %}
-                <li class="action">
-                    <input type="checkbox" id="close-case"> Closes a case
-                    <div class="config">
-                        <div class="condition"></div>                        
-                    </div>
-                </li>
-            {% endif %}
-            {% if form.requires != "referral" %}
-                <li class="action">
-                    <input type="checkbox" id="open-referral"> Opens a referral
-                    <div class="config">
-{#                        <div class="condition"></div>#}
-                        <span>
-                            Name according to question
-                            <select class="questions questions-select questions-select1" name="name_path">
-                                <option disabled="">Select a question</option>
-                            </select>
-                        </span>
-                    </div>
-                </li>
-            {% endif %}
-            {% if form.requires == "referral" %}
-                <li class="action">
-                    <input type="checkbox" id="update-referral"> Updates a referral
-                    <div class="config">
-{#                        <div class="condition"></div>#}
-                        <span>
-                            Change followup date to
-                            <select class="questions questions-input" name="followup_date">
-                                <option disabled="">Select a question</option>
-                            </select>
-                        </span>
-                    </div>
-                </li>
-                <li class="action">
-                    <input type="checkbox" id="close-referral"> Closes a referral
-                    <div class="config">
-                        <div class="condition"></div>
-                    </div>
-                </li>
-            {% endif %}
-        </ul>
-        <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
-            <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>
-            <input type="submit" value="Save Actions"/>
-        </form>
-    </div>
-    <!-- end CaseXML -->
-    <h4>XForm</h4>
+        <h4>XForm</h4>
     <table class="config">
         <tr>
             <th>XMLNS</th>
@@ -466,6 +297,17 @@
                 </form>
             </td>
         </tr>
+        <tr>
+            <th>
+                Source XML
+            </th>
+            <th>
+                <a class="dialog_opener" href="#">View Source</a>
+                <div class="dialog" title="XML Source">
+                    <textarea style="width: 500px; height: 500px;">{{ form.contents }}</textarea>
+                </div>
+            </th>
+        </tr>
         {% if edit %}
         <tr>
             <th>Edit XForm</th>
@@ -475,7 +317,7 @@
                     <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                     <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                    <input type="submit" value="Edit XForm" />
+                    <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %} XForm" />
                 </form>
             </td>
         </tr>
@@ -489,9 +331,128 @@
             </td>
         {% endif %}
     </table>
+    
+    <!-- Case XML -->
+    <div id="condition-template" class="condition">
+        <input type="checkbox" name="if" /> If
+        <span>
+             the answer to
+            <select class="questions questions-select1" name="condition-question">
+                <option value="" disabled="" selected="">Select a question</option>
+            </select>
+            is
+            <select name="condition-answer">
+                <option value="" disabled="" selected="">Select an answer</option>
+            </select>
+        </span>
+    </div>
+    <h4>Actions</h4>
+    {% if xform_questions != "[]"%}
+        <div class="casexml {% if not edit %}no-edit{% endif %} config">
+            <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
+            <ul>
+                {% if form.requires == "none" %}
+                    <li class="action">
+                        <input type="checkbox" id="open-case"><label for="open-case">Opens a case</label>
+                        <div class="config">
+                            <div class="condition"></div>
+                            <span>
+                                Name according to question
+                                <select class="questions questions-all" name="name_path">
+                                    <option disabled="">Select a question</option>
+                                </select>
+                            </span>
+                        </div>
+                    </li>
+
+                {% endif %}
+                <li class="action">
+                    <input type="checkbox" id="update-case"><label for="update-case">Updates a case</label>
+                    <div id="update-case-config">
+                        <table class="config">
+                            <tr>
+                                <th></th>
+                                <th>Question</th>
+                                <th>Case Property</th>
+                            </tr>
+                            <tr id="action-update-template" class="action-update">
+                                <td></td>
+                                <td>
+                                    <select class="questions questions-all" name="action-update-value">
+                                        <option></option>
+                                    </select>
+                                </td>
+                                <td><input class="code" type="text" name="action-update-key" /></td>
+                            </tr>
+
+                        </table>
+                    </div>
+                </li>
+                {% if form.requires != "none" %}
+                    <li class="action">
+                        <input type="checkbox" id="close-case"><label for="close-case">Closes a case</label>
+                        <div class="config">
+                            <div class="condition"></div>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if form.requires != "referral" %}
+                    <li class="action">
+                        <input type="checkbox" id="open-referral"> <label for="open-referral">Opens a referral</label>
+                        <div class="config">
+    {#                        <div class="condition"></div>#}
+                            <span>
+                                Name according to question
+                                <select class="questions questions-select questions-select1" name="name_path">
+                                    <option disabled="">Select a question</option>
+                                </select>
+                            </span>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if form.requires == "referral" %}
+                    <li class="action">
+                        <input type="checkbox" id="update-referral"> <label for="update-referral">Updates a referral</label>
+                        <div class="config">
+    {#                        <div class="condition"></div>#}
+                            <span>
+                                Change followup date to
+                                <select class="questions questions-input" name="followup_date">
+                                    <option disabled="">Select a question</option>
+                                </select>
+                            </span>
+                        </div>
+                    </li>
+                    <li class="action">
+                        <input type="checkbox" id="close-referral"> <label for="close-referral">Closes a referral</label>
+                        <div class="config">
+                            <div class="condition"></div>
+                        </div>
+                    </li>
+                {% endif %}
+            </ul>
+            <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
+                <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>
+                <input type="submit" value="Save Actions"/>
+            </form>
+        </div>
+    {% else %} {# if not questions #}
+        {% if form.contents %}
+            <p class="warning">
+                I'm unable to get a list of questions from your form. This may mean that your form is corrupted or
+                malformed.
+            </p>
+        {% else %}
+            <p>
+                You have not yet created or uploaded a form.
+            </p>
+        {% endif %}
+    {% endif %}
+    <!-- end CaseXML -->
     <div>
         {# <a href="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}">XForm Display</a> #}
-        <input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}?lang={{ lang }}" />
+        <!--input type="hidden" id="xform_questions_url" value="{% url corehq.apps.app_manager.views.xform_display app.domain form.get_unique_id %}?lang={{ lang }}" /-->
+        <div id="xform_questions">{{ xform_questions }}</div>
     </div>
     <div id="questions"></div>
 {% endblock %}

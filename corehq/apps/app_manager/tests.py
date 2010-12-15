@@ -55,14 +55,14 @@ class AppManagerTest(TestCase):
         self.failUnlessEqual(len(detail.columns), 2)
         self.failUnlessEqual(detail.columns[0].name['en'], 'test')
         self.failUnlessEqual(detail.columns[1].name['en'], 'age')
-        self.app.swap_detail_columns(module.id, "ref_short", 0, 1)
+        self.app.rearrange_detail_columns(module.id, "ref_short", 0, 1)
         self.failUnlessEqual(detail.columns[0].name['en'], 'age')
         self.failUnlessEqual(detail.columns[1].name['en'], 'test')
 
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']
         m1 = self.app.modules[1].name['en']
-        self.app.swap_modules(0,1)
+        self.app.rearrange_modules(0,1)
         self.failUnlessEqual(self.app.modules[0].name['en'], m1)
         self.failUnlessEqual(self.app.modules[1].name['en'], m0)
 

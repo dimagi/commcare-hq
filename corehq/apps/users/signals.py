@@ -85,6 +85,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
+        from corehq.apps.users.models import create_hq_user_from_commcare_registration
         couch_user = create_hq_user_from_commcare_registration(domain, username, password, uuid, imei, date)
         
         return couch_user._id

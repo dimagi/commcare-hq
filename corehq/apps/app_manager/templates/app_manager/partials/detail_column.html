@@ -1,0 +1,65 @@
+{% load xforms_extras %}
+
+<tr class="form" data-action="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
+    {% if edit %}
+        <td class="index">{{ column.id }}</td>
+        <td>
+            <span class="drag_handle"></span>
+
+            {% with util.make_uuid as uuid %}
+            <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
+            <div class="delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
+                <form class="delete-detail-column" method="post"
+                    action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
+                    <input type="hidden" name="column_id" value="{# filled in by js #}" /> {# must be recomputed!! #}
+                    <input type="hidden" name="detail_type" value="{{ detail.type }}" />
+                    <input type="hidden" name="ajax" value="true" />
+                    <input type="submit" value="Delete" />
+                </form>
+            </div>
+            {% endwith %}
+
+            <input type="hidden" name="column_id" value="{# filled in by js #}">
+            <input type="hidden" name="detail_type" value="{{ detail.type }}">
+        </td>
+    {% endif %}
+    <td class="model-column">
+        <input type="hidden" name="model" value="{{ column.model }}">
+        {% if detail.type.0 == 'r' %}
+            {{ column.model }}
+        {% endif %}
+    </td>
+    <td class="field-column">
+        <input type="hidden" name="field" value="{{ column.field }}">
+        <code>{{ column.field }}</code>
+    </td>
+    <td class="header-column">
+        {% if edit %}
+            <input class="autosave" type="text" name="header" value="{{ column.header|trans:langs }}" />
+        {% else %}
+            {{ column.header|trans:langs }}
+        {% endif %}
+    </td>
+    <td class="format-column">
+        {% if edit %}
+            <select class="autosave format code" name="format" data-value="{{ column.format }}">
+                <option value="plain">plain</option>
+                <option value="date">date</option>
+                <option value="years-ago">years-ago</option>
+                <option value="enum">enum</option>
+                <option value="advanced">advanced</option>
+            </select>
+        {% else %}
+            {{ column.format }}
+        {% endif %}
+    </td>
+    <td class="autosave enum-column">
+        {% if edit %}
+            <!--input type="text" name="enum" value="{{ column.enum|format_enum:langs }}" /-->
+            <textarea name="enum">{{ column.enum|format_enum:langs }}</textarea>
+        {% else %}
+            {{ column.enum|format_enum:langs }}
+        {% endif %}
+    </td>
+    <td></td>
+</tr>
