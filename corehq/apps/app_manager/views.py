@@ -24,6 +24,7 @@ import urllib
 import urlparse
 from collections import defaultdict
 import random
+from dimagi.utils.couch.database import get_db
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
@@ -147,10 +148,10 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
        req.COOKIES.get('lang', '')
     )
     
-    factory_apps = [app['value'] for app in VersionedDoc._db.view('app_manager/factory_apps')]
+    factory_apps = [app['value'] for app in get_db().view('app_manager/factory_apps')]
 
     applications = []
-    for app in VersionedDoc._db.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
+    for app in get_db().view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
         app = app['value']
         applications.append(app)
     app = module = form = None
@@ -171,7 +172,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         #xform_contents, err, has_err = readable_form(xform_contents)
 
     if app:
-        saved_apps = [x['value'] for x in VersionedDoc._db.view('app_manager/saved_app',
+        saved_apps = [x['value'] for x in get_db().view('app_manager/saved_app',
             startkey=[domain, app_id, {}],
             endkey=[domain, app_id],
             descending=True

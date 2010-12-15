@@ -25,7 +25,7 @@ import json
 from lxml import etree as ET
 
 
-DETAIL_TYPES = ('case_short', 'case_long', 'ref_short', 'ref_long')
+DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
@@ -1003,7 +1003,7 @@ def get_app(domain, app_id):
 
     """
 
-    app = VersionedDoc._db.get(app_id)
+    app = get_db().get(app_id)
 
     try:    Domain.objects.get(name=domain)
     except: raise DomainError("domain %s does not exist" % domain)
