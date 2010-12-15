@@ -1,3 +1,5 @@
+# modified from http://code.djangoproject.com/wiki/ProfilingDjango
+
 import hotshot
 import os
 import time

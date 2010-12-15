@@ -142,8 +142,6 @@ RAPIDSMS_APPS = (
     # 'default',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS
-
 TABS = [
 #    ("message_log", "Message Log"),
 #    #("rapidsms.contrib.messagelog.views.message_log", "Message Log"),
@@ -230,6 +228,12 @@ try:
     from localsettings import *
 except ImportError:
     pass
+
+try:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS + LOCAL_APPS
+except:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS
+
 
 # create data directories required by commcarehq
 import os
