@@ -28,11 +28,11 @@ class Domain(models.Model):
     # domains in which the user can theoretically participate, not whether the user 
     # is cleared to login. 
     @staticmethod
-    def active_for_user(user):            
-        return Domain.objects.filter( membership__member_type = ContentType.objects.get_for_model(User), 
-                                      membership__member_id = user.id, 
-                                      membership__is_active=True, # Looks in membership table
-                                      is_active=True) # Looks in domain table
+    def active_for_user(user):
+        if not hasattr(user,'get_profile'):
+            # this had better be an anonymous user
+            return Domain.objects.none()
+        return user.get_profile().get_couch_user().get_active_domains()
     
     def add(self, model_instance, is_active=True):
         """

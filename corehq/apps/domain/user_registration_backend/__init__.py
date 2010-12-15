@@ -415,7 +415,10 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                 return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) ) # Redirect after POST                
     else:
         form = AdminRegistersUserForm() # An unbound form
-   
-    return render_to_response('domain/user_registration/registration_admin_does_all_form.html', {'form': form}, context_instance = RequestContext(request)) 
+        
+    context = {'form': form, 'domain': domain}
+    return render_to_response('domain/user_registration/registration_admin_does_all_form.html', 
+                              context, 
+                              context_instance = RequestContext(request)) 
 
 ########################################################################################################

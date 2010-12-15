@@ -1,0 +1,56 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% block user-view %}
+<div class='all_users'>
+	<h1>GROUPS ASSOCIATED WITH {{ couch_user.get_id }}</h1>
+	<table class='big_border'>
+	<tr><td></td>
+		<td>{% trans "Group Name" %}</td>
+		<td></td>
+	</tr>
+	{% for group in groups %}
+	<tr><td></td>
+		<td>{{ group.name }}</td>
+    	<td><a class="delete_link" href="#">>{% trans "Leave" %}</a>
+	        <div class="delete_dialog" title="Leave {{ group }}?">
+	            <form  name="leave_group" action="{% url leave_group domain group.get_id couch_user.couch_id %}" method="POST">
+	                <table>
+	                    <tr><td>
+	                    Are you sure you want to leave the group "{{ group.name }}"?
+	                    </td></tr>
+	                </table>
+	                <input type="submit" value="Delete" />
+	            </form>
+	        </div>
+    	</td>
+	</tr>
+	{% endfor %}
+	</table>
+
+	<h1>{% blocktrans with domain|upper as domain %}ALL GROUPS IN DOMAIN {{ domain }}{% endblocktrans %}</h1>
+	<table class='big_border'>
+	<tr><td></td>
+		<td>{% trans "Domain Name" %}</td>
+		<td></td>
+	</tr>
+	{% for group in other_groups %}
+	<tr><td></td>
+		<td>{{ group.name }}</a></td>
+    	<td><a class="add_link" href="#">Join</a>
+	        <div class="add_dialog" title="Add {{ group }}?">
+	            <form  name="join_group" action="{% url join_group domain group.get_id couch_user.couch_id %}" method="POST">
+	                <table>
+	                    <tr><td>
+	                    Are you sure you want to join the group "{{ group.name }}"?
+	                    </td></tr>
+	                </table>
+	                <input type="submit" value="Add" />
+	            </form>
+	        </div>
+    	</td>
+	</tr>
+	{% endfor %}
+	</table>
+</div>
+{% endblock %}
+

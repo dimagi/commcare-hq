@@ -3,8 +3,9 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainMembership
 
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
@@ -12,7 +13,7 @@ def users(req, domain, template="users/users_base.html"):
     })
 
 def all_users(request, domain, template="users/all_users.html"):
-    all_users = CouchUser.view("users/by_domain", key='test')
+    all_users = CouchUser.view("users/by_domain", key=domain)
     return render_to_response(request, template, {
         'domain': domain,
         'all_users': all_users
@@ -42,15 +43,65 @@ def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"
 @require_POST
 def delete_phone_number(request, domain, user_id, phone_number):
     user = CouchUser.get(user_id)
-    del user.phone_numbers[0]
+    for i in range(0,len(user.phone_numbers)):
+        if user.phone_numbers[i].number == phone_number:
+            del user.phone_numbers[i]
+            break
     user.save()
-    return HttpResponseRedirect(reverse("my_phone_numbers", args=(domain, )))
+    return HttpResponseRedirect(reverse("phone_numbers", args=(domain, user_id )))
 
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
-    return edit(request, domain, request.couch_user.couch_id, template)
+    return commcare_accounts(request, domain, request.couch_user.couch_id, template)
 
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
-    return edit(request, domain, couch_id, template)
+    context = {}
+    couch_user = CouchUser.get(couch_id)
+    if request.method == "POST" and 'commcare_user' in request.POST:
+        commcare_user = request.POST['commcare_user']
+        couch_user.add_phone_number(commcare_user)
+        couch_user.save()
+        context['status'] = 'commcare user added'
+    # TODO: add a reduce function to that view
+    context['other_commcare_users'] = CouchUser.view("users/commcare_users_not_in_hq_user").all()
+    context.update({"domain": domain, "couch_user":couch_user })
+    return render_to_response(request, template, context)
+
+def my_domains(request, domain, template="users/domain_accounts.html"):
+    return domain_accounts(request, domain, request.couch_user.couch_id, template)
+
+def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
+    context = {}
+    couch_user = CouchUser.get(couch_id)
+    if request.method == "POST" and 'domain' in request.POST:
+        domain = request.POST['domain']
+        couch_user.add_domain_membership(domain)
+        couch_user.save()
+        context['status'] = 'domain added'
+    my_domains = [dm.domain for dm in couch_user.domain_memberships]
+    context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
+    context.update({"domain": domain,
+                    "domains": [dm.domain for dm in couch_user.domain_memberships], 
+                    "couch_user":couch_user })
+    return render_to_response(request, template, context)
+
+@require_POST
+def add_domain_membership(request, domain, user_id, domain_name):
+    user = CouchUser.get(user_id)
+    if domain_name:
+        user.add_domain_membership(domain_name)
+        user.save()
+    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id)))
+
+@require_POST
+def delete_domain_membership(request, domain, user_id, domain_name):
+    user = CouchUser.get(user_id)
+    for i in range(0,len(user.domain_memberships)):
+        if user.domain_memberships[i].domain == domain_name:
+            del user.domain_memberships[i]
+            break
+    user.save()
+    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
+
 
 def edit(request, domain, couch_id=None, template="users/account.html"):
     """
