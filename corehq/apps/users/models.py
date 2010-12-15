@@ -264,7 +264,6 @@ class HqUserProfile(CouchUserProfile):
     
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
-#def create_commcare_user(domain, username, password, uuid='', imei='', date='', **kwargs):
     """ a 'commcare user' is a couch user which:
     * has a django web login  
     * has an associated commcare account,
