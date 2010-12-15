@@ -23,8 +23,14 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
+import random
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+
+class TemplateFunctions(object):
+    @classmethod
+    def make_uuid(cls):
+        return hex(random.getrandbits(160))[2:-1]
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
@@ -59,52 +65,9 @@ def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if domain != app.domain: raise Http404
     langs = [req.GET.get('lang')] + app.langs
-    #try:
-    tree = ET.fromstring(form.contents.encode('utf-8'))
-    #except:
-    #    return HttpResponse("[]")
-    ns = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
-    def lookup_translation(s,pre = 'jr:itext(', post = ')'):
-        if s.startswith(pre) and post[-len(post):] == post:
-            s = s[len(pre):-len(post)]
-        if s[0] == s[-1] and s[0] in ('"', "'"):
-            id = s[1:-1]
-        for lang in langs:
-            x = tree.find('.//{f}translation[@lang="%s"]'.format(**ns) % lang)
-            if x:
-                break
-        x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
-        #print ET.tostring(x, pretty_print=True)
-        x = x.findtext('{f}value'.format(**ns)).strip()
-        return x
-    def get_ref(elem):
-        try:
-            ref = elem.attrib['ref']
-        except:
-            bind_id = elem.attrib['bind']
-            bind = tree.find('.//{f}bind[@id="%s"]'.format(**ns) % bind_id)
-            ref = bind.attrib['nodeset']
-        return ref
-    questions = []
-    for elem in tree.findall('{h}body/*'.format(**ns)):
-        try:
-            question = {
-                "label": lookup_translation(elem.find('{f}label'.format(**ns)).attrib['ref']),
-                "tag": elem.tag.split('}')[-1],
-                "value": get_ref(elem),
-            }
 
-        except:
-            continue
-        if question['tag'] == "select1":
-            options = []
-            for item in elem.findall('{f}item'.format(**ns)):
-                options.append({
-                    'label': lookup_translation(item.find('{f}label'.format(**ns)).attrib['ref']),
-                    'value': item.findtext('{f}value'.format(**ns)).strip()
-                })
-            question.update({'options': options})
-        questions.append(question)
+    questions = form.get_questions(langs)
+
     return HttpResponse(json.dumps(questions))
 
 @login_and_domain_required
@@ -222,6 +185,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         app.save()
     if app and not lang:
         lang = app.langs[0]
+    langs = [lang] + (app.langs if app else [])
 
     case_fields = set()
     if module:
@@ -240,6 +204,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'xform': xform,
         #'xform_contents': xform_contents,
         #'form_err': err if form and has_err else None,
+        "xform_questions": json.dumps(form.get_questions(langs) if form else {}),
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
         'case_fields': json.dumps(case_fields),
 
@@ -248,7 +213,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
         'edit': edit,
-        'langs': [lang] + (app.langs if app else []),
+        'langs': langs,
         'lang': lang,
 
         'saved_apps': saved_apps,
@@ -258,6 +223,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
 
         'build_errors': map(json.loads, req.GET.getlist('build_errors')),
+
+        'util': TemplateFunctions,
     }
 def default(req, domain):
     """
@@ -404,11 +371,13 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if   "case_type" == attr:
         case_type = req.POST.get("case_type", None)
         module.case_type = case_type
+        resp = case_type
     elif ("name", "case_name", "ref_name").__contains__(attr):
         name = req.POST.get(attr, None)
         module[attr][lang] = name
+        resp = module[attr]
     app.save()
-    return back_to_main(**locals())
+    return HttpResponse(json.dumps(resp))
 
 @require_POST
 @login_and_domain_required
@@ -425,6 +394,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
+    ajax = (column_id != -1) # edits are ajax, adds are not
 
 
     def _enum_to_dict(enum):
@@ -447,8 +417,21 @@ def edit_module_detail(req, domain, app_id, module_id):
     else:
         detail.update_column(column_id, column)
     app.save()
-
-    return back_to_main(**locals())
+    column = detail.get_column(column_id)
+    if(ajax):
+        return HttpResponse(json.dumps({"status": "OK"}))
+#        return render_to_response(req, "app_manager/partials/detail_column.html", {
+#            'domain': domain,
+#            'app': app,
+#            'module': module,
+#            'detail': detail,
+#            'column': column,
+#            'util': TemplateFunctions,
+#            'langs': [lang] + app.langs,
+#            'edit': True,
+#        })
+    else:
+        return back_to_main(**locals())
 
 @require_POST
 @login_and_domain_required
@@ -463,7 +446,8 @@ def delete_module_detail(req, domain, app_id, module_id):
     module = app.get_module(module_id)
     module.get_detail(detail_type).delete_column(column_id)
     app.save()
-    return back_to_main(**locals())
+    return HttpResponse(json.dumps({'status': "OK"}))
+    #return back_to_main(**locals())
 
 @require_POST
 @login_and_domain_required
@@ -555,31 +539,33 @@ def edit_app_attr(req, domain, app_id, attr):
 
 @require_POST
 @login_and_domain_required
-def swap(req, domain, app_id, key):
+def rearrange(req, domain, app_id, key):
     """
     This function handels any request to switch two items in a list.
     Key tells us the list in question and must be one of
     'forms', 'modules', 'detail', or 'langs'. The two POST params
-    'to' and 'from' give us the indicies of the items to be swapped.
-    (They must respect to < from because of an implementation detail of
-    the app.swap_* functions)
+    'to' and 'from' give us the indicies of the items to be rearranged.
 
     """
     app = get_app(domain, app_id)
+    ajax = json.loads(req.POST.get('ajax', 'false'))
     i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
-    assert(i < j)
+
     if   "forms" == key:
         module_id = int(req.POST['module_id'])
-        app.swap_forms(module_id, i, j)
+        app.rearrange_forms(module_id, i, j)
     elif "modules" == key:
-        app.swap_modules(i, j)
+        app.rearrange_modules(i, j)
     elif "detail" == key:
         module_id = int(req.POST['module_id'])
-        app.swap_detail_columns(module_id, req.POST['detail_type'], i, j)
+        app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
     elif "langs" == key:
-        app.swap_langs(i, j)
+        app.rearrange_langs(i, j)
     app.save()
-    return back_to_main(**locals())
+    if ajax:
+        return HttpResponse(json.dumps({'status': "OK"}))
+    else:
+        return back_to_main(**locals())
 
 
 # The following three functions deal with

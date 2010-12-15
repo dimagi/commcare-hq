@@ -359,12 +359,90 @@ class Form(IndexedSchema):
 
             return casexml.render(), binds
 
+
+    def get_questions(self, langs):
+        """
+        parses out the questions from the xform, into the format:
+        [
+            {
+                "label": label,
+                "tag": tag,
+                "value": value,
+            },
+            ...
+        ]
+        """        
+        #<hack>
+        xform = self.contents.replace('xmlns=""', '')
+        if xform != self.contents:
+            self.contents = xform
+            self._parent._parent.save()
+        #</hack>
+
+        if not xform:
+            return []
+
+        # "Unicode strings with encoding declaration are not supported."
+        tree = ET.fromstring(xform.encode('utf-8'))
+
+
+        ns = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
+        def lookup_translation(s,pre = 'jr:itext(', post = ')'):
+            if s.startswith(pre) and post[-len(post):] == post:
+                s = s[len(pre):-len(post)]
+            if s[0] == s[-1] and s[0] in ('"', "'"):
+                id = s[1:-1]
+            for lang in langs:
+                x = tree.find('.//{f}translation[@lang="%s"]'.format(**ns) % lang)
+                if x is not None:
+                    break
+            if x is None:
+                x = tree.find('.//{f}translation'.format(**ns))
+            x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
+            #print ET.tostring(x, pretty_print=True)
+            x = x.findtext('{f}value'.format(**ns)).strip()
+            return x
+        def get_ref(elem):
+            try:
+                ref = elem.attrib['ref']
+            except:
+                bind_id = elem.attrib['bind']
+                bind = tree.find('.//{f}bind[@id="%s"]'.format(**ns) % bind_id)
+                ref = bind.attrib['nodeset']
+            return ref
+        questions = []
+        for elem in tree.findall('{h}body/*'.format(**ns)):
+            try:
+                label_ref = elem.find('{f}label'.format(**ns)).attrib['ref']
+            except:
+                label_ref = None
+            if label_ref:
+                question = {
+                    "label": lookup_translation(label_ref),
+                    "tag": elem.tag.split('}')[-1],
+                    "value": get_ref(elem),
+                }
+            else:
+                pass
+            if question['tag'] == "select1":
+                options = []
+                for item in elem.findall('{f}item'.format(**ns)):
+                    options.append({
+                        'label': lookup_translation(item.find('{f}label'.format(**ns)).attrib['ref']),
+                        'value': item.findtext('{f}value'.format(**ns)).strip()
+                    })
+                question.update({'options': options})
+            questions.append(question)
+#        if not questions:
+#            questions = [{"label": "Unable to get questions from xform", "tag": "", "value": ""}]
+        return questions
+    
     def export_json(self):
         source = self.to_json()
         del source['unique_id']
         return source
 
-class DetailColumn(DocumentSchema):
+class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
         {
@@ -390,6 +468,15 @@ class Detail(DocumentSchema):
     type = StringProperty(choices=DETAIL_TYPES)
     columns = SchemaListProperty(DetailColumn)
 
+
+    def get_columns(self):
+        l = len(self.columns)
+        for i, column in enumerate(self.columns):
+            yield column.with_id(i%l, self)
+    @parse_int([1])
+    def get_column(self, i):
+        return self.columns[i].with_id(i%len(self.columns), self)
+    
     def append_column(self, column):
         self.columns.append(column)
     def update_column(self, column_id, column):
@@ -787,21 +874,21 @@ class Application(ApplicationBase):
         module = self.get_module(module_id)
         del module['forms'][int(form_id)]
 
-    def swap_langs(self, i, j):
+    def rearrange_langs(self, i, j):
         langs = self.langs
         langs.insert(i, langs.pop(j))
         self.langs = langs
-    def swap_modules(self, i, j):
+    def rearrange_modules(self, i, j):
         modules = self.modules
         modules.insert(i, modules.pop(j))
         self.modules = modules
-    def swap_detail_columns(self, module_id, detail_type, i, j):
+    def rearrange_detail_columns(self, module_id, detail_type, i, j):
         module = self.get_module(module_id)
         detail = module['details'][DETAIL_TYPES.index(detail_type)]
         columns = detail['columns']
         columns.insert(i, columns.pop(j))
         detail['columns'] = columns
-    def swap_forms(self, module_id, i, j):
+    def rearrange_forms(self, module_id, i, j):
         forms = self.modules[module_id]['forms']
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
@@ -820,12 +907,13 @@ class Application(ApplicationBase):
             needs_referral = False
             for form in module.get_forms():
                 try:
-                    ET.fromstring(form.contents)
-                except:
+                    ET.fromstring(form.contents.encode('utf-8'))
+                except Exception as e:
                     errors.append({
                         'type': "invalid xml",
                         "module": {"id": module.id, "name": module.name},
-                        "form": {"id": form.id, "name": form.name}
+                        "form": {"id": form.id, "name": form.name},
+                        'message': unicode(e),
                     })
                 if form.requires in ('case', 'referral') or form.active_actions():
                     needs_case = True

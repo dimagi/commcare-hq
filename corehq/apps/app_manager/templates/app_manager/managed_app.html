@@ -32,7 +32,7 @@
         <ul {% if edit %}class="sortable"{% endif %}>
             {% if edit %}
                 <li class="sort-action">
-                    <form method="post" action="{% url corehq.apps.app_manager.views.swap domain app.id 'modules' %}">
+                    <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'modules' %}">
                     </form>
                 </li>
             {% endif %}
@@ -42,6 +42,7 @@
                 {% if edit %}<div class="index">{{ module.id }}</div>{% endif %}
                 <div {% ifequal module.id selected_module.id %}{% if not form %} class="selected"{% endif %}{% endifequal %}><!--[M]-->
                     {% if edit %}
+                        <span class="drag_handle"></span>                                                    
                         <a class="delete_link" href="#"></a>
                         <div class="delete_dialog" title="Delete {{ module.name|trans:langs }}?">
                             <form action="{% url corehq.apps.app_manager.views.delete_module domain app.id module.id %}" method="POST">
@@ -62,7 +63,7 @@
                 <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
                     {% if edit %}
                         <li class="sort-action">
-                            <form method="post" action="{% url corehq.apps.app_manager.views.swap domain app.id 'forms' %}">
+                            <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'forms' %}">
                                 <input type="hidden" name="module_id" value="{{ module.id }}" />
                             </form>
                         </li>
@@ -72,6 +73,7 @@
                     <li {% ifequal form selected_form %} class="selected"{% endifequal %}><!--[F]-->
                         {% if edit %}<div class="index">{{ form.id }}</div>{% endif %}
                         {% if edit %}
+                        <span class="drag_handle"></span>                                                        
                         <a class="delete_link" href="#"></a>
                         <div class="delete_dialog" title="Delete {{ form.name|trans:langs }}?">
                             <form action="{% url corehq.apps.app_manager.views.delete_form domain app.id module.id form.id %}" method="POST">
