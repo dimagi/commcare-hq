@@ -1,0 +1,32 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% block user-view %}
+<div class='all_users'>
+	<h1>Members of {{ group.name }}</h1>
+	<table class='big_border'>
+	<tr><td></td>
+		<td>{% trans "Member ID" %}</td>
+		<td></td>
+	</tr>
+	{% for member in members %}
+	<tr><td></td>
+		<td>{{ member }}</td>
+    	<td><a class="delete_link" href="#">{% trans "Leave" %}</a>
+	        <div class="delete_dialog" title="Leave {{ group.name }}?">
+	            <form name="leave_group" action="{% url leave_group domain group.get_id member %}" method="POST">
+	                <table>
+	                    <tr><td>
+	                    Are you sure you want to drop user {{ member }} from the group "{{ group.name }}"?
+	                    </td></tr>
+	                </table>
+	                <input type="hidden" name="redirect_url" value="group_members" />
+	                <input type="submit" value="Delete" />
+	            </form>
+	        </div>
+    	</td>
+	</tr>
+	{% endfor %}
+	</table>
+</div>
+{% endblock %}
+
