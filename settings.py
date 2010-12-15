@@ -118,6 +118,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.new_data',
     'corehq.apps.users',
+    'corehq.apps.groups',
     'corehq.apps.reports',
     'xep_hq_server',
 )
@@ -294,6 +295,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'new_data',
         'case',
         'users',
+        'groups',
         'domain',
         'reports',
         'xep_hq_server'
