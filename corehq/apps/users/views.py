@@ -6,6 +6,7 @@ from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm
 from corehq.apps.users.models import CouchUser, DomainMembership
+from django.contrib.admin.views.decorators import staff_member_required
 
 def users(req, domain, template="users/users_base.html"):
     return render_to_response(req, template, {
@@ -66,9 +67,11 @@ def commcare_accounts(request, domain, couch_id, template="users/commcare_accoun
     context.update({"domain": domain, "couch_user":couch_user })
     return render_to_response(request, template, context)
 
+@staff_member_required
 def my_domains(request, domain, template="users/domain_accounts.html"):
     return domain_accounts(request, domain, request.couch_user.couch_id, template)
 
+@staff_member_required
 def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
@@ -79,7 +82,8 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
         context['status'] = 'domain added'
     my_domains = [dm.domain for dm in couch_user.domain_memberships]
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
-    context.update({"domain": domain,
+    context.update({"user": request.user, 
+                    "domain": domain,
                     "domains": [dm.domain for dm in couch_user.domain_memberships], 
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
