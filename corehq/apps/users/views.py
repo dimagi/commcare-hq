@@ -64,9 +64,36 @@ def commcare_accounts(request, domain, couch_id, template="users/commcare_accoun
         couch_user.save()
         context['status'] = 'commcare user added'
     # TODO: add a reduce function to that view
-    context['other_commcare_users'] = CouchUser.view("users/commcare_users_not_in_hq_user").all()
+    context['commcare_users'] = couch_user.commcare_accounts
+    
+    # this is ugly. there has to be a pretter way to do this in couch
+    # (trying to find all commcare users that do NOT belong to 'this' user)
+    my_commcare_usernames = [c.django_user.username for c in couch_user.commcare_accounts]
+    all_commcare_users = CouchUser.view("users/commcare_users_by_domain", key=domain).all()
+    other_commcare_users = []
+    for u in all_commcare_users:
+        if u.django_user.username not in my_commcare_usernames:
+            other_commcare_users.append(u)
+            
+    context['other_commcare_users'] = other_commcare_users
     context.update({"domain": domain, "couch_user":couch_user })
     return render_to_response(request, template, context)
+
+@require_POST
+def link_commcare_account(request, domain, couch_user_id, commcare_username):
+    user = CouchUser.get(couch_user_id)
+    if commcare_username:
+        user.link_commcare_account(domain, commcare_username)
+        user.save()
+    return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id)))
+
+@require_POST
+def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
+    user = CouchUser.get(couch_user_id)
+    if commcare_user_index:
+        user.unlink_commcare_account(domain, commcare_user_index)
+        user.save()
+    return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id )))
 
 @staff_member_required
 def my_domains(request, domain, template="users/domain_accounts.html"):
@@ -106,7 +133,6 @@ def delete_domain_membership(request, domain, user_id, domain_name):
             break
     user.save()
     return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
-
 
 def edit(request, domain, couch_id=None, template="users/account.html"):
     """
