@@ -8,9 +8,13 @@
             {% for form in forms %}
                 <li>
                     <a href="{% url corehq.apps.new_data.views.export_data domain %}?export_tag={{ form.xmlns }}">
-                        {{ form.module.name|trans:form.app.langs }} &gt;
-                        {{ form.name|trans:form.app.langs }}
-                        ({{ form.app.name }})
+                        {% if form.app %}
+                            {{ form.module.name|trans:form.app.langs }} &gt;
+                            {{ form.name|trans:form.app.langs }}
+                            ({{ form.app.name }})
+                        {% else %}
+                            {{ form.xmlns }}
+                        {% endif %}
                     </a>
                 </li>
             {% endfor %}
