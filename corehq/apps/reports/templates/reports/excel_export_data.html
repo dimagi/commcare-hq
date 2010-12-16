@@ -9,11 +9,12 @@
                 <li>
                     <a href="{% url corehq.apps.new_data.views.export_data domain %}?export_tag={{ form.xmlns }}">
                         {% if form.app %}
+                            {{ form.app.name }} &gt;
                             {{ form.module.name|trans:form.app.langs }} &gt;
                             {{ form.name|trans:form.app.langs }}
-                            ({{ form.app.name }})
+
                         {% else %}
-                            {{ form.xmlns }}
+                            {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}
                         {% endif %}
                     </a>
                 </li>

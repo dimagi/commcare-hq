@@ -279,56 +279,58 @@
 
         <h4>XForm</h4>
     <table class="config">
-        <tr>
+        <!--tr>
             <th>XMLNS</th>
             <td>{{ form.xmlns }}</td>
-        </tr>
-        <tr>
-            <th>Play Form</th>
-            <td>
-                <form method="POST" action="{{ XFORMPLAYER_URL }}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                    <input type="hidden" name="data" value="{}" />
-                    <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
-
-
-                    <input type="submit" value="Play Form" />
-                </form>
-            </td>
-        </tr>
-        <tr>
-            <th>
-                Source XML
-            </th>
-            <th>
-                <a class="dialog_opener" href="#">View Source</a>
-                <div class="dialog" title="XML Source">
-                    <textarea style="width: 500px; height: 500px;">{{ form.contents }}</textarea>
-                </div>
-            </th>
-        </tr>
+        </tr-->
         {% if edit %}
-        <tr>
-            <th>Edit XForm</th>
-            <td>
-                 <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.get_unique_id %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                    <input type="hidden" name="editor" value="{{ editor_url }}" />
+            <tr>
+                <th>Edit XForm</th>
+                <td>
+                     <form method="POST" action="{{ URL_BASE }}{% url xep_hq_server.views.initiate form.get_unique_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                        <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                    <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %} XForm" />
-                </form>
-            </td>
-        </tr>
-        <tr>
-            <th>Replace with new upload</th>
-            <td>
-                <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="xform" />
-                    <input type="submit" value="Upload" />
-                </form>
-            </td>
+                        <input type="submit" value="Edit…" />
+                    </form>
+                </td>
+                <td>
+                    or 
+                    <a class="dialog_opener" href="#">Upload XForm</a>
+                    <div class="dialog" title="Upload XForm">
+                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="xform" />
+                            <input type="submit" value="Upload" />
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% endif %}
+        {% if form.contents %}
+            <tr>
+                <th>
+                    View XForm
+                </th>
+                <td>
+                    <form method="POST" action="{{ XFORMPLAYER_URL }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                        <input type="hidden" name="data" value="{}" />
+                        <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
+
+
+                        <input type="submit" value="Play…" />
+                    </form>
+                </td>
+                <td>
+                    or
+                    <a class="dialog_opener" href="#">View Source XML</a>
+                    <div class="dialog" title="XML Source">
+                        <textarea style="width: 500px; height: 500px;" disabled="true">{{ form.contents }}</textarea>
+                    </div>
+                </td>
+            </tr>
         {% endif %}
     </table>
     
