@@ -5,10 +5,7 @@ localsettings.py
 .project
 .pydevproject
 .idea
-data/attachments/*
-data/submissions/*
-data/schemas/*
-data/builds/*
+data/*
 submissions/*
 export/*
 bad/*
