@@ -219,7 +219,6 @@ class CouchUser(Document):
     def link_commcare_account(self, domain, commcare_username, **kwargs):
         commcare_hq_users = CouchUser.view("users/by_commcare_username_domain", key=[commcare_username, domain]).all()
         for j in range(0,len(commcare_hq_users)):
-            user = commcare_hq_users[j]
             for i in range(0,len(commcare_hq_users[j].commcare_accounts)):
                 if commcare_hq_users[j].commcare_accounts[i].django_user.username == commcare_username and \
                    commcare_hq_users[j].commcare_accounts[i].domain == domain:
@@ -229,6 +228,7 @@ class CouchUser(Document):
                         # Hm, by not deleting commcare_hq_users[j] if commcare_hq_users[j].status == COUCH_USER_AUTOCREATED_STATUS:
                         # we risk leaving around a bunch of unnattached empty couch_user models...
                         del commcare_hq_users[j].commcare_accounts[i]
+                        commcare_hq_users[j].save()
                         i = i + 1
 
     def unlink_commcare_account(self, domain, commcare_user_index, **kwargs):
@@ -241,6 +241,7 @@ class CouchUser(Document):
         c.save()
         # is there a more atomic way to do this?
         del self.commcare_accounts[commcare_user_index]
+        self.save()
         
     def add_phone_device(self, IMEI, default=False, **kwargs):
         """ Don't add phone devices if they already exist """

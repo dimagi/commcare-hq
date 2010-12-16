@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import populate_user_from_commcare_submission
 
-class CouchUserTestCase(TestCase):
+class SignalsTestCase(TestCase):
     
     def setUp(self):
         all_users = CouchUser.view("users/all_users")

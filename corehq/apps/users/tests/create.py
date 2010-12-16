@@ -8,7 +8,7 @@ from corehq.apps.users.signals import REGISTRATION_XMLNS
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import create_user_from_commcare_registration
 
-class UsersTestCase(TestCase):
+class CreateTestCase(TestCase):
     
     def setUp(self):
         all_users = CouchUser.view("users/all_users")
