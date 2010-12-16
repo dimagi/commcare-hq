@@ -3,7 +3,7 @@ function(doc) {
         emit([doc.domain, doc.received_on], {
             time: doc.received_on,
             xmlns: doc.xmlns,
-            username: doc.form.Meta.username
+            username: doc.form.meta.username
         });
     }
 }

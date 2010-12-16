@@ -113,8 +113,8 @@ def populate_user_from_commcare_submission(sender, xform, **kwargs):
     
     domain = xform.domain
     try:
-        username = xform.form.Meta.username
-        imei = xform.form.Meta.DeviceID
+        username = xform.form.meta.username
+        imei = xform.form.meta.deviceID
         
     except AttributeError:
         # if these fields don't exist, it's not a regular xform
