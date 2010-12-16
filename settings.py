@@ -314,3 +314,4 @@ except:
 
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 
+XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
