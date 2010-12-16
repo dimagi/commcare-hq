@@ -217,7 +217,12 @@
 {% endblock %}
 {% block form-view %}
     <h3>{{ form.name|trans:langs }}</h3>
-
+    {% if xform_errors %}
+        <div class="warning padded">
+            <p>Your XForm is not valid XML:</p>
+            <p>{{ xform_errors }}</p>
+        </div>
+    {% endif %}
     <h4>Form Settings</h4>
     <table class="config">
         {% if edit %}

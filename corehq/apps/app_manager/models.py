@@ -376,6 +376,9 @@ class Form(IndexedSchema):
             },
             ...
         ]
+
+        if the xform is bad, it will raise an XMLSyntaxError
+
         """        
         #<hack>
         xform = self.contents.replace('xmlns=""', '')
