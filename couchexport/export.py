@@ -1,6 +1,7 @@
 from couchdbkit.client import Database
 from django.conf import settings
 import hashlib
+import csv
 
 def export_excel(schema_index, file):
     """
@@ -144,8 +145,6 @@ def format_tables(tables, id_label='id', separator='.'):
             new_table.append(new_row)
         answ.append((separator.join(table_name), new_table))
     return answ
-import csv
-import xlwt
 
 def export_csv(tables):
     "this function isn't ready to use because of how it deals with files"
@@ -155,9 +154,16 @@ def export_csv(tables):
             writer.writerow([x if '"' not in x else "" for x in row])
 
 def _export_excel(tables):
+    try:
+        import xlwt
+    except ImportError:
+        raise Exception("It doesn't look like this machine is configured for "
+                        "excel export. To export to excel you have to run the "
+                        "command:  easy_install xlutils")
     book = xlwt.Workbook()
     for table_name, table in tables:
-        #test hack
+        # this is in case the first 20 characters are the same, but we	
+        # should do something smarter.	
         #sheet = book.add_sheet(table_name[-20:])
         hack_table_name_prefix = table_name[-20:]
         hack_table_name = hack_table_name_prefix[0:10] + hashlib.sha1(table_name).hexdigest()[0:10]

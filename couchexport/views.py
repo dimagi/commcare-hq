@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from StringIO import StringIO
 
 
-def export_data(request):
+def export_data(request, **kwargs):
     """
     Download all data for a couchdbkit model
     """
