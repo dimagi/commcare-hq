@@ -1,0 +1,19 @@
+{% extends "reports/report_base.html" %}
+{% load xforms_extras %}
+
+{% block reportcontent %}
+    <div class="padded">
+        Download data submitted for:
+        <ul class="padded">
+            {% for form in forms %}
+                <li>
+                    <a href="{% url corehq.apps.new_data.views.export_data domain %}?export_tag={{ form.xmlns }}">
+                        {{ form.module.name|trans:form.app.langs }} &gt;
+                        {{ form.name|trans:form.app.langs }}
+                        ({{ form.app.name }})
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
