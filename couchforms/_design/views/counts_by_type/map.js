@@ -11,7 +11,7 @@ function(doc) {
     function get_encounter_date(xform_doc) {
         function get_date_string(xform_doc) {
             // check some expected places for a date
-            var meta = xform_doc.form.Meta;
+            var meta = xform_doc.form.meta;
             if (xform_doc.form.encounter_date) return xform_doc.form.encounter_date;
             if (meta && meta.TimeEnd) return meta.TimeEnd;
             if (meta && meta.TimeStart) return meta.TimeStart;
@@ -25,6 +25,6 @@ function(doc) {
         if (!date) {
             date = Date();
         }
-        emit([doc.xmlns, doc.form.Meta.clinic_id, date.getFullYear(), date.getMonth(), date.getDate()], 1);
+        emit([doc.xmlns, doc.form.meta.clinic_id, date.getFullYear(), date.getMonth(), date.getDate()], 1);
     } 
 }

@@ -11,7 +11,7 @@ function(doc) {
     function get_encounter_date(xform_doc) {
         function get_date_string(xform_doc) {
             // check some expected places for a date
-            var meta = xform_doc.form.Meta;
+            var meta = xform_doc.form.meta;
             if (xform_doc.form.encounter_date) return xform_doc.form.encounter_date;
             if (meta && meta.TimeEnd) return meta.TimeEnd;
             if (meta && meta.TimeStart) return meta.TimeStart;
@@ -21,7 +21,7 @@ function(doc) {
     }
     
     function get_user_id(xform_doc) {
-        var meta = xform_doc.form.Meta;
+        var meta = xform_doc.form.meta;
         if (meta) return meta.user_id;
     }
     if (doc.doc_type == "XFormInstance" && get_user_id(doc) != null) {
@@ -29,6 +29,6 @@ function(doc) {
         if (!date) {
             date = Date();
         }
-        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns, doc.form.Meta.clinic_id], 1);
+        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns, doc.form.meta.clinic_id], 1);
     } 
 }
