@@ -95,7 +95,7 @@ DEFAULT_APPS = (
 
 HQ_APPS = (
     #'django_extensions',
-    #'django_digest',
+    'django_digest',
     'django_rest_interface',
     'django_granular_permissions',
     'django_tables',
