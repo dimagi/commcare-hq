@@ -95,11 +95,9 @@ def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index)
         user.save()
     return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id )))
 
-@staff_member_required
 def my_domains(request, domain, template="users/domain_accounts.html"):
     return domain_accounts(request, domain, request.couch_user.couch_id, template)
 
-@staff_member_required
 def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
