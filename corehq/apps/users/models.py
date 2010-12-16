@@ -157,7 +157,7 @@ class CouchUser(Document):
         return False
 
     def create_commcare_user(self, domain, username, password, uuid='', imei='', date='', **kwargs):
-        def _create_django_user_from_registration_data(domain, username, password):
+        def _create_commcare_django_user_from_registration_data(domain, username, password):
             """ 
             From registration xml data, automatically build a django user
             Note that we set the 'is_commcare_user' flag here, so that we don't
@@ -167,7 +167,6 @@ class CouchUser(Document):
             user.username = username
             user.set_password(password)
             user.first_name = ''
-            user.domain = domain
             user.last_name  = ''
             user.email = ""
             user.is_staff = False # Can't log in to admin site
@@ -196,9 +195,9 @@ class CouchUser(Document):
                                                registering_phone_id=registering_phone_id,
                                                **kwargs)
             self.commcare_accounts.append(commcare_account)
-        django_user = _create_django_user_from_registration_data(domain, username, password)        
-        django_user.save()
-        _add_commcare_account(django_user, domain, uuid, imei, date_registered = date, **kwargs)
+        commcare_django_user =_create_commcare_django_user_from_registration_data(domain, username, password)
+        commcare_django_user.save()
+        _add_commcare_account(commcare_django_user, domain, uuid, imei, date_registered = date, **kwargs)
 
     def add_commcare_username(self, domain, username, **kwargs):
         """
