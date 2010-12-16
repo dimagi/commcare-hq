@@ -14,7 +14,7 @@ def post(request, domain):
         for func, errors in feedback:
             if errors:
                 logging.error("Receiver app: problem sending post-save signal %s for xform %s" \
-                              % (func, doc.id))
+                              % (func, doc._id))
                 log_exception(errors)
         return HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'])
     return couchforms_post(request, callback)
