@@ -94,7 +94,7 @@ function reconcile_model(models) {
             return {"#export_tag_value": null, "fail_reason": "empty_tag"};
         }
         for (i in models) {
-            if (models[i]["#export_tag_value"] != tag) {
+            if (!are_equal(models[i]["#export_tag_value"], tag)) {
                 // this means we're reconciling things of a different type.
                 // fail in this case.
                 // log ("incompatiple types " + models[i]["#export_tag_value"] + " and " + tag);

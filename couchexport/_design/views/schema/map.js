@@ -1,5 +1,6 @@
 function(doc) {
     // these lines magically import our other javascript files.  DON'T REMOVE THEM!
+    // !code util/types.js
     // !code util/reconcile.js
     // !code util/schema.js
     

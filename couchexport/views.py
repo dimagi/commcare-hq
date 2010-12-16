@@ -1,13 +1,13 @@
 from couchexport.export import export_excel
 from django.http import HttpResponse
 from StringIO import StringIO
-
+import json
 
 def export_data(request, **kwargs):
     """
     Download all data for a couchdbkit model
     """
-    export_tag = request.GET.get("export_tag", "")
+    export_tag = json.loads(request.GET.get("export_tag", ""))
     if not export_tag:
         raise Exception("You must specify a model to download!")
     tmp = StringIO()
