@@ -27,11 +27,11 @@ var exists = function(basestring, searchstring) {
 function get_date_string(xform_doc) {
 	// check some expected places for a date
     var form = xform_doc.form;
-    var meta = form.Meta;
+    var meta = form.meta;
 	if (form.encounter_date) return form.encounter_date;
 	if (form.date) return form.date;
-    if (meta && meta.TimeEnd) return meta.TimeEnd;
-	if (meta && meta.TimeStart) return meta.TimeStart;
+    if (meta && meta.timeEnd) return meta.timeEnd;
+	if (meta && meta.timeStart) return meta.timeStart;
 	return null;
 }
 
@@ -57,15 +57,15 @@ function get_encounter_date(xform_doc) {
 
 function get_form_filled_duration(xform_doc) {
     // in milliseconds
-    var meta = xform.form.Meta;
-    if (meta && meta.TimeEnd && meta.TimeStart)
-        return new Date(meta.TimeEnd).getTime() - new Date(meta.TimeStart).getTime();
+    var meta = xform.form.meta;
+    if (meta && meta.timeEnd && meta.timeStart)
+        return new Date(meta.timeEnd).getTime() - new Date(meta.timeStart).getTime();
     return null;
 }
 
 function get_form_filled_date(xform_doc) {
-    var meta = xform.form.Meta;
-    if (meta && meta.TimeEnd) return new Date(meta.TimeEnd);
-    if (meta && meta.TimeStart) return new Date(meta.TimeStart);
+    var meta = xform.form.meta;
+    if (meta && meta.timeEnd) return new Date(meta.timeEnd);
+    if (meta && meta.timeStart) return new Date(meta.timeStart);
     return null;
 }

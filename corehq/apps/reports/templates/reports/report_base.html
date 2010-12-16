@@ -109,7 +109,6 @@
     <div id="main_container">
         <div id="title-bar">
             <h1>Reports</h1>
-            Report: 
             <select id="report_select">
                 {% include "reports/partials/report_list.html" %}
             </select>
@@ -130,7 +129,7 @@
             {% if show_users %}
                 <form action="" method="GET">
                     <select id="individual_select" name="individual">
-                        <option  value=''>Select an individual</option>
+                        <option  value=''>All Individuals</option>
                         {% for username in usernames %}
                             <option {% if username == individual %}selected="true"{% endif %}>{{ username }}</option>
                         {% endfor %}

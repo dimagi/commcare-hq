@@ -30,6 +30,8 @@ m{{ module.id }}.ref_short.title={{ module.ref_name|trans:langs }}
 m{{ module.id }}.ref_long.title={{ module.ref_name|trans:langs }}
     {% endfor %}
 
+{% comment %}
     {% for key, trans in app.translations.items %}
 {{ key }}={{ trans|trans:langs }}
     {% endfor %}
+{% endcomment %}

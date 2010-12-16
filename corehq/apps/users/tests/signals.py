@@ -16,11 +16,11 @@ class SignalsTestCase(TestCase):
         self.xform = Mock()
         self.xform.domain = 'mockdomain'
         self.xform.form = Mock()
-        self.xform.form.Meta = Mock()
+        self.xform.form.meta = Mock()
         self.username = 'username'
         self.device_ID = 'DeviceID'
-        self.xform.form.Meta.username = self.username
-        self.xform.form.Meta.DeviceID = self.device_ID
+        self.xform.form.meta.username = self.username
+        self.xform.form.meta.deviceID = self.device_ID
         
     def testNewUserFromFormSubmission(self):
         """ 

@@ -31,6 +31,16 @@ def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
 #DocumentSchema.__repr__ = _dsstr
 
+NS = dict(
+    jr = "{http://openrosa.org/javarosa}",
+    xsd = "{http://www.w3.org/2001/XMLSchema}",
+    h='{http://www.w3.org/1999/xhtml}',
+    f='{http://www.w3.org/2002/xforms}',
+    orx="{http://openrosa.org/jr/xforms}",
+)
+def _make_elem(tag, attr):
+    return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
+
 class JadJar(Document):
     """
     Has no properties except two attachments: CommCare.jad and CommCare.jar
@@ -211,11 +221,6 @@ class Form(IndexedSchema):
 
     
     def create_casexml(self):
-        ns = dict(
-            jr = "{http://openrosa.org/javarosa}",
-            xsd = "{http://www.w3.org/2001/XMLSchema}",
-        )
-
         from xml_utils import XMLTag as __
         actions = self.active_actions()
 
@@ -224,7 +229,7 @@ class Form(IndexedSchema):
         else:
             binds = []
             def add_bind(d):
-                binds.append(ET.Element('bind', dict([(key.format(**ns), val) for key,val in d.items()])))
+                binds.append(_make_elem('bind', d))
             casexml = __('case')[
                 __("case_id"),
                 __("date_modified")
@@ -386,34 +391,34 @@ class Form(IndexedSchema):
         tree = ET.fromstring(xform.encode('utf-8'))
 
 
-        ns = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
+        NS = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
         def lookup_translation(s,pre = 'jr:itext(', post = ')'):
             if s.startswith(pre) and post[-len(post):] == post:
                 s = s[len(pre):-len(post)]
             if s[0] == s[-1] and s[0] in ('"', "'"):
                 id = s[1:-1]
             for lang in langs:
-                x = tree.find('.//{f}translation[@lang="%s"]'.format(**ns) % lang)
+                x = tree.find('.//{f}translation[@lang="%s"]'.format(**NS) % lang)
                 if x is not None:
                     break
             if x is None:
-                x = tree.find('.//{f}translation'.format(**ns))
-            x = x.find('{f}text[@id="%s"]'.format(**ns) % id)
+                x = tree.find('.//{f}translation'.format(**NS))
+            x = x.find('{f}text[@id="%s"]'.format(**NS) % id)
             #print ET.tostring(x, pretty_print=True)
-            x = x.findtext('{f}value'.format(**ns)).strip()
+            x = x.findtext('{f}value'.format(**NS)).strip()
             return x
         def get_ref(elem):
             try:
                 ref = elem.attrib['ref']
             except:
                 bind_id = elem.attrib['bind']
-                bind = tree.find('.//{f}bind[@id="%s"]'.format(**ns) % bind_id)
+                bind = tree.find('.//{f}bind[@id="%s"]'.format(**NS) % bind_id)
                 ref = bind.attrib['nodeset']
             return ref
         questions = []
-        for elem in tree.findall('{h}body/*'.format(**ns)):
+        for elem in tree.findall('{h}body/*'.format(**NS)):
             try:
-                label_ref = elem.find('{f}label'.format(**ns)).attrib['ref']
+                label_ref = elem.find('{f}label'.format(**NS)).attrib['ref']
             except:
                 label_ref = None
             if label_ref:
@@ -426,10 +431,10 @@ class Form(IndexedSchema):
                 pass
             if question['tag'] == "select1":
                 options = []
-                for item in elem.findall('{f}item'.format(**ns)):
+                for item in elem.findall('{f}item'.format(**NS)):
                     options.append({
-                        'label': lookup_translation(item.find('{f}label'.format(**ns)).attrib['ref']),
-                        'value': item.findtext('{f}value'.format(**ns)).strip()
+                        'label': lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref']),
+                        'value': item.findtext('{f}value'.format(**NS)).strip()
                     })
                 question.update({'options': options})
             questions.append(question)
@@ -673,20 +678,14 @@ class ApplicationBase(VersionedDoc):
             get_url_base(),
             reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
         )
-    @property
-    def jadjar_id(self):
-        """
-        A sha1 hash of the jad + jar contents for identification
-
-        """
-        # won't be hard coded in the future
-        return 'a15cfcbb9c8ec0f5855ffa08be5ac02d2125926e'
+    def get_jadjar(self):
+        return JadJar.view('app_manager/jadjar').all()[0]
 
     def create_jad(self, template="app_manager/CommCare.jad"):
         try:
             return self.fetch_attachment('CommCare.jad')
         except:
-            jad = JadJar.get(self.jadjar_id).jad_dict()
+            jad = self.get_jadjar().jad_dict()
             jar = self.create_zipped_jar()
             jad.update({
                 'MIDlet-Jar-Size': len(jar),
@@ -707,7 +706,7 @@ class ApplicationBase(VersionedDoc):
             'post_test_url': self.post_url,
         }).decode('utf-8')
     def fetch_jar(self):
-        return JadJar.get(self.jadjar_id).fetch_jar()
+        return self.get_jadjar().fetch_jar()
 
     def create_zipped_jar(self):
         try:
@@ -760,13 +759,13 @@ class Application(ApplicationBase):
 
         def fmt(s):
             return s.format(
-                h='{http://www.w3.org/1999/xhtml}',
-                f='{http://www.w3.org/2002/xforms}',
                 x='{%s}' % form.xmlns,
-                jr="{http://openrosa.org/javarosa}",
+                **NS
             )
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
+        bind_parent = tree.find(fmt('.//{f}model/'))
+        
         if case is not None:
             case_parent.remove(case)
 
@@ -776,7 +775,6 @@ class Application(ApplicationBase):
             casexml = ET.fromstring(casexml)
             case_parent.append(casexml)
             if DEBUG: tree = ET.fromstring(ET.tostring(tree))
-            bind_parent = tree.find(fmt('.//{f}model/'))
             for bind in bind_parent.findall(fmt('{f}bind')):
                 if bind.attrib['nodeset'].startswith('case/'):
                     bind_parent.remove(bind)
@@ -788,6 +786,24 @@ class Application(ApplicationBase):
                         raise Exception("Invalid XPath Expression %s" % xpath)
                 bind_parent.append(bind)
 
+        if case_parent.find(fmt('{orx}meta')) is None:
+            orx = fmt("{orx}")[1:-1]
+            nsmap = {"orx": orx}
+            meta = ET.Element(fmt("{orx}meta"), nsmap=nsmap)
+            for tag in ('deviceID','timeStart', 'timeEnd','username','userID','uid'):
+                meta.append(ET.Element(fmt("{orx}%s")%tag, nsmap=nsmap))
+            case_parent.append(meta)
+        binds = [
+            {"id": "hidden1", "nodeset": "meta/deviceID", "type": "xsd:string", "{jr}preload": "property", "{jr}preloadParams": "DeviceID"},
+            {"id": "hidden2", "nodeset": "meta/timeStart", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "start"},
+            {"id": "hidden3", "nodeset": "meta/timeEnd", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "end"},
+            {"id": "hidden4", "nodeset": "meta/username", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserName"},
+            {"id": "hidden5", "nodeset": "meta/userID", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserID"},
+            {"id": "hidden6", "nodeset": "meta/uid", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
+        ]
+        for bind in binds:
+            bind = _make_elem('bind', bind)
+            bind_parent.append(bind)
         
         return ET.tostring(tree)
 
