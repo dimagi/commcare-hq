@@ -14,4 +14,9 @@ function(doc){
             }
         }
     }
+    else if(doc.doc_type == "XFormInstance") {
+        emit([doc.domain, doc.xmlns], {
+            xmlns: doc.xmlns
+        });
+    }
 }

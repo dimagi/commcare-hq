@@ -25,6 +25,7 @@ import urlparse
 from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
+from lxml.etree import XMLSyntaxError
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
@@ -194,6 +195,13 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
             case_fields.update(_form.actions.update_case.update.keys())
     case_fields = sorted(case_fields)
 
+    try:
+        xform_questions = json.dumps(form.get_questions(langs) if form else [])
+        xform_errors = None
+    except XMLSyntaxError as e:
+        xform_questions = []
+        xform_errors = e.msg
+
     return {
         'domain': domain,
         'applications': applications,
@@ -205,7 +213,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'xform': xform,
         #'xform_contents': xform_contents,
         #'form_err': err if form and has_err else None,
-        "xform_questions": json.dumps(form.get_questions(langs) if form else {}),
+        "xform_questions": xform_questions,
+        "xform_errors": xform_errors,
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
         'case_fields': json.dumps(case_fields),
 

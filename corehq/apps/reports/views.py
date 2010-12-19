@@ -167,10 +167,11 @@ def daily_submissions(request, domain, view_name):
 
 
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
-
+    results = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    forms = [r['value'] for r in results]
     return render_to_response(request, template, {
         "domain": domain,
-        "forms": [r['value'] for r in get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}])],
+        "forms": forms,
         "report": {
             "name": "Excel Export Data"
         }

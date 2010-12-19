@@ -111,7 +111,10 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     # error message accordingly).
     
     def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip()
+        data = self.cleaned_data['domain_name'].strip().lower()
+        data = re.sub(r"[-_ ]", '.', data)
+        if not re.match(r"[\w\.]+]", data):
+            raise forms.ValidationError('Only lowercase letters and periods (".") allowed in domain name')
         if Domain.objects.filter(name__iexact=data).count() > 0:
             raise forms.ValidationError('Domain name already taken; please try another')        
         return data
