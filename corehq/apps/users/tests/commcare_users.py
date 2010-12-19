@@ -75,6 +75,9 @@ class CommCareUsersTestCase(TestCase):
         # only one instance of an hq user should contain that commcare user
         users_count = CouchUser.view("users/by_commcare_username_domain", key=[self.domain, self.commcare_username]).total_rows
         self.assertEquals(users_count, 1)
+        user = CouchUser.view("users/by_commcare_username_domain", key=[self.commcare_username, self.domain]).one()
+        self.assertEquals(user.commcare_accounts[0].domain,self.domain)
+        self.assertEquals(user.commcare_accounts[0].django_user.username,self.commcare_username)
         # only one instance of that commcare user should exist
         commcare_users_count = CouchUser.view("users/commcare_users_by_domain_username", key=[self.domain, self.commcare_username]).total_rows
         self.assertEquals(commcare_users_count, 1)
