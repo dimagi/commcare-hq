@@ -286,9 +286,13 @@ class HqUserProfile(CouchUserProfile):
         return "%s @ %s" % (self.user)
         
     def get_couch_user(self):
-        if not hasattr(self,'couch_user'):
-            self.couch_user = CouchUser.get(self._id)
-        return self.couch_user
+        # This caching could be useful, but for now we leave it out since
+        # we don't yet have a good intelligent refresh mechanism
+        # def get_couch_user(self, force_update=False):
+        #if not hasattr(self,'couch_user') or force_update:
+        #    self.couch_user = CouchUser.get(self._id)
+        #return self.couch_user
+        return CouchUser.get(self._id)
     
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
