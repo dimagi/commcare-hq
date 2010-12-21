@@ -261,7 +261,7 @@ class CouchUser(Document):
                                               **kwargs))
 
     def get_phone_numbers(self):
-        return [phone.number for phone in self.phone_numbers]
+        return [phone.number for phone in self.phone_numbers if phone.number]
     
     @property
     def couch_id(self):
