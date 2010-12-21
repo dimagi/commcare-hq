@@ -10,13 +10,13 @@
 	</tr>
 	{% for member in members %}
 	<tr><td></td>
-		<td>{{ member }}</td>
+		<td>{{ member.django_user.username }}</td>
     	<td><a class="delete_link" href="#">{% trans "Leave" %}</a>
 	        <div class="delete_dialog" title="Leave {{ group.name }}?">
-	            <form name="leave_group" action="{% url leave_group domain group.get_id member %}" method="POST">
+	            <form name="leave_group" action="{% url leave_group domain group.get_id member.get_id %}" method="POST">
 	                <table>
 	                    <tr><td>
-	                    Are you sure you want to drop user {{ member }} from the group "{{ group.name }}"?
+	                    Are you sure you want to drop user {{ member.django_user.username }} from the group "{{ group.name }}"?
 	                    </td></tr>
 	                </table>
 	                <input type="hidden" name="redirect_url" value="group_members" />

@@ -11,6 +11,7 @@
 		<td>{% trans "E-mail" %}</td>
 		<td>{% trans "Phone Numbers" %}</td>
 		<td>{% trans "CommCare" %}</td>
+		<td>{% trans "Groups" %}</td>
 	</tr>
 	{% for user in all_users %}
 	<tr><td></td>
@@ -20,6 +21,7 @@
 		<td>{{ user.django_user.email }}</td>
 		<td><a href="{% url phone_numbers domain user.couch_id %}">x</a></td>
 		<td><a href="{% url commcare_accounts domain user.couch_id %}">x</a></td>
+		<td><a href="{% url group_membership domain user.couch_id %}">x</a></td>
 	</tr>
 	{% endfor %}
 	</table>

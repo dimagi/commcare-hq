@@ -30,10 +30,14 @@ def delete_group(request, domain, group_id):
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = {}
     group = Group.view("groups/by_name", key=group_name).one()
-    members = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+    member_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+    members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
+    commcare_users = []
+    for member in members:
+        commcare_users.extend([commcare_account for commcare_account in member.commcare_accounts])
     context.update({"domain": domain,
                     "group": group,
-                    "members": members, 
+                    "members": commcare_users, 
                     })
     return render_to_response(request, template, context)
 
