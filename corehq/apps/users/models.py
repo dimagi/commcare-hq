@@ -54,7 +54,10 @@ class CommCareAccount(Document):
     but we could always extend to multiple commcare
     users if desired later.
     """
-    django_user = SchemaProperty(DjangoUser)
+    # django_user should always be created when registering a commcare account properly
+    # however, sometimes we autocreate users (e.g. when getting a form from an unknown user)
+    # in which case, we don't know the password and can't create django_user
+    django_user = SchemaProperty(DjangoUser) # null = True
     UUID = StringProperty()
     registering_phone_id = StringProperty()
     user_data = DictProperty()
@@ -96,7 +99,8 @@ class CouchUser(Document):
     can be associated with multiple phone numbers/SIM cards
     can be associated with multiple phones/device IDs
     """
-    django_user = SchemaProperty(DjangoUser)
+    # not used e.g. when user is only a commcare user
+    django_user = SchemaProperty(DjangoUser) # null = True
     domain_memberships = SchemaListProperty(DomainMembership)
     commcare_accounts = SchemaListProperty(CommCareAccount)
     phone_devices = SchemaListProperty(PhoneDevice)
@@ -215,21 +219,17 @@ class CouchUser(Document):
                                            **kwargs)
         self.commcare_accounts.append(commcare_account)
        
-    def link_commcare_account(self, domain, commcare_username, **kwargs):
-        commcare_hq_users = CouchUser.view("users/by_commcare_username_domain", key=[commcare_username, domain]).all()
-        for j in range(0,len(commcare_hq_users)):
-            for i in range(0,len(commcare_hq_users[j].commcare_accounts)):
-                if commcare_hq_users[j].commcare_accounts[i].django_user.username == commcare_username and \
-                   commcare_hq_users[j].commcare_accounts[i].domain == domain:
-                        original = commcare_hq_users[j].commcare_accounts[i]
-                        self.commcare_accounts.append(original)
-                        self.save()
-                        # Hm, by not deleting commcare_hq_users[j] if commcare_hq_users[j].status == COUCH_USER_AUTOCREATED_STATUS:
-                        # we risk leaving around a bunch of unnattached empty couch_user models...
-                        del commcare_hq_users[j].commcare_accounts[i]
-                        commcare_hq_users[j].save()
-                        i = i + 1
-
+    def link_commcare_account(self, domain, from_couch_user_id, commcare_username, **kwargs):
+        from_couch_user = CouchUser.get(from_couch_user_id)
+        for i in range(0, len(from_couch_user.commcare_accounts)):
+            if from_couch_user.commcare_accounts[i].django_user.username == commcare_username:
+                # this generates a 'document update conflict'. why?
+                self.commcare_accounts.append(from_couch_user.commcare_accounts[i])
+                self.save()
+                del from_couch_user.commcare_accounts[i]
+                from_couch_user.save()
+                return
+    
     def unlink_commcare_account(self, domain, commcare_user_index, **kwargs):
         commcare_user_index = int(commcare_user_index)
         c = CouchUser()
@@ -317,10 +317,17 @@ def create_hq_user_from_commcare_registration(domain, username, password, uuid='
     couch_user.save()
     return couch_user
 
-def create_couch_user_without_web_user(domain, username, imei='', status='', **kwargs):
-    c = CouchUser(**kwargs)
+def create_commcare_user_without_web_user(domain, username, imei='', status='', **kwargs):
+    """
+    This function is used when autocreating a user on form submission from an unknown user
+    Note that we don't know the user's password, so we cannot create a django user for
+    later authentication. This needs to be linked to a django user later.
+    
+    """
+    c = CouchUser()
     c.created_on = datetime.now()
-    c.add_commcare_username(domain, username)
+    c.add_commcare_username(domain, username, registering_phone_id=imei)
+    c.commcare_accounts[0].user_data = kwargs
     c.add_phone_device(imei)
     c.status = status
     c.save()

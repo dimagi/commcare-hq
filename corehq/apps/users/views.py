@@ -58,33 +58,29 @@ def my_commcare_accounts(request, domain, template="users/commcare_accounts.html
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
-    if request.method == "POST" and 'commcare_user' in request.POST:
-        commcare_user = request.POST['commcare_user']
-        couch_user.add_phone_number(commcare_user)
-        couch_user.save()
-        context['status'] = 'commcare user added'
-    # TODO: add a reduce function to that view
     context['commcare_users'] = couch_user.commcare_accounts
-    
-    # this is ugly. there has to be a pretter way to do this in couch
-    # (trying to find all commcare users that do NOT belong to 'this' user)
     my_commcare_usernames = [c.django_user.username for c in couch_user.commcare_accounts]
     all_commcare_users = CouchUser.view("users/commcare_users_by_domain", key=domain).all()
     other_commcare_users = []
     for u in all_commcare_users:
         if u.django_user.username not in my_commcare_usernames:
+            couch_user = CouchUser.get(u.get_id)
+            if hasattr(couch_user, 'django_user'):
+                u.couch_user_id = couch_user.get_id
+                u.couch_user_username = couch_user.django_user.username
             other_commcare_users.append(u)
-            
     context['other_commcare_users'] = other_commcare_users
     context.update({"domain": domain, "couch_user":couch_user })
     return render_to_response(request, template, context)
 
 @require_POST
-def link_commcare_account(request, domain, couch_user_id, commcare_username):
+def link_commcare_account_to_user(request, domain, couch_user_id, commcare_username):
     user = CouchUser.get(couch_user_id)
-    if commcare_username:
-        user.link_commcare_account(domain, commcare_username)
-        user.save()
+    if 'commcare_couch_user_id' not in request.POST: 
+        return Http404("Poorly formed link request")
+    user.link_commcare_account(domain, 
+                               request.POST['commcare_couch_user_id'], 
+                               commcare_username)
     return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id)))
 
 @require_POST

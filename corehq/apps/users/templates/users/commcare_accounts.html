@@ -34,6 +34,7 @@
 	<h1>ALL COMMCARE USERS IN DOMAIN {{ domain|upper }}</h1>
 	<table class='big_border'>
 	<tr><td></td>
+		<td>{% trans "Web User" %}</td>
 		<td>{% trans "Username" %}</td>
 		<td>{% trans "Domain" %}</td>
 		<td>{% trans "Registering Phone ID" %}</td>
@@ -41,18 +42,26 @@
 	</tr>
 	{% for commcare_user in other_commcare_users %}
 	<tr><td></td>
+		<td>
+			{% if commcare_user.couch_user_username %}
+			{{ commcare_user.couch_user_username }}
+			{% else %}
+			n/a
+			{% endif %}
+		</td>
 		<td>{{ commcare_user.django_user.username }}</a></td>
 		<td>{{ commcare_user.domain }}</td>
 		<td>{{ commcare_user.registering_phone_id }}</td>
     	<td><a class="add_link" href="#"></a>
 	        <div class="add_dialog" title="Add {{ commcare_user.django_user.username }}?">
-	            <form name="link_commcare_account" action="{% url link_commcare_account commcare_user.domain couch_user.couch_id commcare_user.django_user.username %}" method="POST">
+	            <form name="link_commcare_account" action="{% url link_commcare_account_to_user commcare_user.domain couch_user.couch_id commcare_user.django_user.username %}" method="POST">
 	                <table>
 	                    <tr><td>
 	                    Are you sure you want to associate user {{ couch_user.get_id }} with the commcare account "{{ commcare_user.django_user.username }}"?
 	                    </td></tr>
 	                </table>
 	                <input type="submit" value="Link" />
+	                <input type="hidden" name="commcare_couch_user_id" value="{{ commcare_user.couch_user_id }}" />
 	            </form>
 	        </div>
     	</td>
