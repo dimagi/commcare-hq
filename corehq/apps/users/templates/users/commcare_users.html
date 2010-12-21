@@ -6,27 +6,16 @@
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Username" %}</td>
-		<td>{% trans "First Name" %}</td>
-		<td>{% trans "Last Name" %}</td>
-		<td>{% trans "E-mail" %}</td>
-		<td>{% trans "Phone Numbers" %}</td>
+		<td>{% trans "UUID" %}</td>
+		<td>{% trans "Registering Phone ID" %}</td>
+		<td>{% trans "Date Registered" %}</td>
 	</tr>
 	{% for user in all_users %}
 	<tr><td></td>
-		<td><a href="{% url user_account domain user.couch_id %}">{{ user.django_user.username }}</a></td>
-		<td>{{ user.django_user.first_name }}</td>
-		<td>{{ user.django_user.last_name }}</td>
-		<td>{{ user.django_user.email }}</td>
-		<td>
-			<a href="{% url phone_numbers domain user.couch_id %}">
-				{% if user.phone_numbers.0.number %}
-					{{ user.phone_numbers.0.number }}
-					{% if user.phone_numbers.1.number %}
-						(and more)
-					{% endif %}
-				{% else %}+{% endif %}
-			</a>
-		</td>
+		<td>{{ user.django_user.username }}</td>
+		<td>{{ user.UUID }}</td>
+		<td>{{ user.registering_phone_id }}</td>
+		<td>{{ user.user_data.date_registered }}</td>
 	</tr>
 	{% endfor %}
 	</table>
