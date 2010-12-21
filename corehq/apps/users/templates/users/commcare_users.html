@@ -10,8 +10,6 @@
 		<td>{% trans "Last Name" %}</td>
 		<td>{% trans "E-mail" %}</td>
 		<td>{% trans "Phone Numbers" %}</td>
-		<td>{% trans "CommCare" %}</td>
-		<td>{% trans "Groups" %}</td>
 	</tr>
 	{% for user in all_users %}
 	<tr><td></td>
@@ -19,13 +17,20 @@
 		<td>{{ user.django_user.first_name }}</td>
 		<td>{{ user.django_user.last_name }}</td>
 		<td>{{ user.django_user.email }}</td>
-		<td><a href="{% url phone_numbers domain user.couch_id %}">x</a></td>
-		<td><a href="{% url commcare_accounts domain user.couch_id %}">x</a></td>
-		<td><a href="{% url group_membership domain user.couch_id %}">x</a></td>
+		<td>
+			<a href="{% url phone_numbers domain user.couch_id %}">
+				{% if user.phone_numbers.0.number %}
+					{{ user.phone_numbers.0.number }}
+					{% if user.phone_numbers.1.number %}
+						(and more)
+					{% endif %}
+				{% else %}+{% endif %}
+			</a>
+		</td>
 	</tr>
 	{% endfor %}
 	</table>
-	<a href="{% url registration_admin_does_all domain %}">Create New User</a>
+	<a href="{% url registration_admin_does_all domain %}">Link duplicate CommCare Users</a>
 </div>
 {% endblock %}
 

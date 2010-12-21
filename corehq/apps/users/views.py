@@ -14,8 +14,15 @@ def users(req, domain, template="users/users_base.html"):
         'domain': domain,
     })
 
-def all_users(request, domain, template="users/all_users.html"):
+def web_users(request, domain, template="users/web_users.html"):
     all_users = CouchUser.view("users/web_users_by_domain", key=domain)
+    return render_to_response(request, template, {
+        'domain': domain,
+        'all_users': all_users
+    })
+
+def commcare_users(request, domain, template="users/commcare_users.html"):
+    all_users = CouchUser.view("users/commcare_users_by_domain", key=domain)
     return render_to_response(request, template, {
         'domain': domain,
         'all_users': all_users
@@ -38,7 +45,7 @@ def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"
         couch_user.add_phone_number(phone_number)
         couch_user.save()
         context['status'] = 'phone number added'
-    context['phone_numbers'] = phone_numbers = couch_user.get_phone_numbers()
+    context['phone_numbers'] = couch_user.get_phone_numbers()
     context.update({"domain": domain, "couch_user":couch_user })
     return render_to_response(request, template, context)
 
