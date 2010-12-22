@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h1>COMMCARE USERS ASSOCIATED WITH {{ couch_user.get_id }}</h1>
+	<h1>COMMCARE USERS ASSOCIATED WITH {{ couch_user.django_user.username }}</h1>
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Username" %}</td>
@@ -46,6 +46,7 @@
 			{% if commcare_user.couch_user_username %}
 			{{ commcare_user.couch_user_username }}
 			{% else %}
+			<!--  {{ commcare_user.get_id }}  -->
 			n/a
 			{% endif %}
 		</td>
