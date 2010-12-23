@@ -3,13 +3,13 @@
 <head>
 
 {#################################################################################################################}      
+{% include "imports/jquery.html" %}
 
 {% block base_stylesheets %}
 <link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
 <link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/stylesheets/blueprint/print.css" type="text/css" media="print">
 <!--[if lt IE 8]><link rel="stylesheet" href="{{MEDIA_URL}}/hqwebapp/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
 <link type="text/css" rel="stylesheet" href="/static/backends/stylesheets/global.css" />
-<script type="text/javascript" src="/static/webapp/javascripts/jquery-1.3.2.min.js"></script>
 <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/base.css?version=4" media="screen, projection">
 
 {% endblock base_stylesheets %}
