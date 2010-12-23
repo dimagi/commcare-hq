@@ -115,6 +115,7 @@ HQ_APPS = (
     'corehq.apps.new_data',
     'corehq.apps.users',
     'corehq.apps.groups',
+    'corehq.apps.sms',
     'corehq.apps.reports',
     'xep_hq_server',
 )
@@ -127,7 +128,7 @@ TABS = [
 #    ('corehq.apps.xforms.views.dashboard', 'XForms'),
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
-#    ("corehq.apps.hqwebapp.views.messages", "Messages"),
+    ("corehq.apps.sms.views.user_messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users and Settings"),
 ]
 
