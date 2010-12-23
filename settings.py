@@ -10,9 +10,7 @@ ADMINS = ()
 MANAGERS = ADMINS
 
 
-# default to the system's timezone settings. this can still be
-# overridden in rapidsms.ini [django], by providing one of:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
+# default to the system's timezone settings
 TIME_ZONE = "EST"
 
 
@@ -81,9 +79,6 @@ TEMPLATE_DIRS = [
 
 
 
-# ====================
-# INJECT RAPIDSMS APPS
-# ====================
 DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -124,31 +119,8 @@ HQ_APPS = (
     'xep_hq_server',
 )
 
-RAPIDSMS_APPS = (
-    # RapidSMS Core
-    'djtables',
-    'rapidsms',
-
-    # Common Dependencies
-    #"rapidsms.contrib.handlers",
-    #"rapidsms.contrib.ajax",
-
-    # RapidSMS Apps
-    #'rapidsms.contrib.messagelog',
-    #'rapidsms.contrib.messaging',
-    
-    # For Testing
-    'rapidsms.contrib.httptester',
-
-    # TODO: customize these and then add them
-    # 'default',
-)
-
 TABS = [
 #    ("message_log", "Message Log"),
-#    #("rapidsms.contrib.messagelog.views.message_log", "Message Log"),
-#    ("rapidsms.contrib.messaging.views.messaging", "Messaging"),
-#    ("rapidsms.contrib.httptester.views.generate_identity", "Message Tester"),
 #    ('corehq.apps.hqwebapp.views.dashboard', 'Dashboard'),
 #    ('corehq.apps.releasemanager.views.projects', 'Release Manager'),
 #    #('corehq.apps.receiver.views.show_submits', 'Submissions'),
@@ -232,9 +204,9 @@ except ImportError:
     pass
 
 try:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS + LOCAL_APPS
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
 except:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 
 # create data directories required by commcarehq
@@ -263,23 +235,8 @@ XFORMS_FORM_TRANSLATE_JAR="submodules/core-hq-src/lib/form_translate.jar"
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
 
-####### RapidSMS Settings #######
-INSTALLED_BACKENDS = {
-    #"att": {
-    #    "ENGINE": "rapidsms.backends.gsm",
-    #    "PORT": "/dev/ttyUSB0"
-    #},
-    #"verizon": {
-    #    "ENGINE": "rapidsms.backends.gsm,
-    #    "PORT": "/dev/ttyUSB1"
-    #},
-    "message_tester": {
-        "ENGINE": "rapidsms.backends.bucket"
-    }
-}
-
-from settingshelper import get_dynamic_db_settings
 ####### Couch Forms & Couch DB Kit Settings #######
+from settingshelper import get_dynamic_db_settings
 _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
 
 # create local server and database configs

@@ -8,7 +8,6 @@
 	<property name="pydoc.dir" value="../../docs"/>
 	<property name="libs.dir" value="../../lib" />
 	<property name="deployment.dir" value="../deployment" />
-	<property name="rapidsms.dir" value="../../rapidsms" />
 	
 	<property name="antdepends.dir" value="../../utilities/build" />
 	<property name="postdeploy.dir" value="../../tests/deployment" />
@@ -29,10 +28,6 @@
 	-->
 	<target name="clean" depends="init">
 		<delete>
-			<fileset dir="${rapidsms.dir}">
-		    	<include name="**/*.pyc"/>
-		        <include name="**/*.pyo"/>
-			</fileset>			
 			<fileset dir="${project.dir}">
 		    	<include name="**/*.pyc"/>
 		        <include name="**/*.pyo"/>
