@@ -168,6 +168,7 @@ header {
 #main_container {
     border: 0;
     background-color: #fff;
+    padding: 0px;
 }
 
 #title-bar {
