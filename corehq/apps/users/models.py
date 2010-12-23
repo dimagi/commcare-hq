@@ -106,6 +106,7 @@ class CouchUser(Document):
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
     created_on = DateTimeProperty()
+    is_duplicate = BooleanProperty(default=False)
     """
     For now, 'status' is things like:
         ('auto_created',     'Automatically created from form submission.'),   
