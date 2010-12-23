@@ -264,6 +264,13 @@ class CouchUser(Document):
     def get_phone_numbers(self):
         return [phone.number for phone in self.phone_numbers if phone.number]
     
+    def default_phone_number(self):
+        for phone_number in self.phone_numbers:
+            if phone_number.is_default:
+                return phone_number.number
+        # if no default set, default to the last number added
+        return self.phone_numbers[-1].number
+    
     @property
     def couch_id(self):
         return self._id
