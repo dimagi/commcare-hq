@@ -9,7 +9,7 @@ setup(
     author='Dimagi',
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
-    packages=['dimagi', 'dimagi.utils'],
+    packages = find_packages(exclude=['*.pyc']),
     install_requires = [
         "python-dateutil"
     ],
