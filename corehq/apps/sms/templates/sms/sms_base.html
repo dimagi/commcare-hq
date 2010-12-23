@@ -1,0 +1,32 @@
+{% extends base_template %}
+{% block head %}
+    {{ block.super }}
+    <script>
+    $(function(){
+	    $("#sms-tabs").tabs({
+	        ajaxOptions: {
+	            error: function( xhr, status, index, anchor ) {
+	                $( anchor.hash ).html(
+	                    "Couldn't load this tab. We'll try to fix this as soon as possible. "
+	                );
+	            }
+	        },
+	    }).removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
+	    $("#sms-tabs ul").removeClass('ui-corner-all');
+    });
+    </script>
+{% endblock %}
+{% block content %}
+    <div id="main_container">
+    <div id="sms-tabs">
+        <ul>
+            <li><a href="{% url user_messaging domain %}">Individuals</a></li>
+            <li><a href="{% url group_messaging domain %}">Groups</a></li>
+        </ul>
+    </div>
+    <div class="padded">
+		{% block sms_content %}
+		{% endblock %}
+	</div>
+    </div>
+{% endblock %}
