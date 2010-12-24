@@ -12,9 +12,9 @@ from django.contrib.contenttypes.models import ContentType
 def run():
     from django.contrib.sites.models import Site
 
-    django_site_1 = Site()
-    django_site_1.domain = u'localhost'
-    django_site_1.name = u'localhost'
+    django_site_1 = Site.objects.all()[0]
+    django_site_1.domain = u'localhost:8000'
+    django_site_1.name = u'localhost:8000'
     django_site_1.save()
 
     from corehq.apps.domain.models import Domain
@@ -27,7 +27,7 @@ def run():
     from django.contrib.auth.models import User
 
     auth_user_1 = User()
-    auth_user_1.username = u'testadmin'
+    auth_user_1.username = u'admin'
     auth_user_1.first_name = u''
     auth_user_1.last_name = u''
     auth_user_1.email = u'test@test.com'

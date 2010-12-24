@@ -89,7 +89,6 @@ DEFAULT_APPS = (
 )
 
 HQ_APPS = (
-    #'django_extensions',
     'django_digest',
     'django_rest_interface',
     'django_granular_permissions',
@@ -120,6 +119,16 @@ HQ_APPS = (
     'corehq.apps.reports',
     'xep_hq_server',
 )
+
+# you can locally add apps if you want here
+LOCAL_APPS = (
+    'django_extensions',
+)
+
+try:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
+except:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
 #    ("message_log", "Message Log"),
@@ -194,8 +203,6 @@ XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
 
-LOCAL_APPS = () # you can locally add apps if you want here
-
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -206,11 +213,6 @@ try:
     from localsettings import *
 except ImportError:
     pass
-
-try:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
-except:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # create data directories required by commcarehq
 import os
