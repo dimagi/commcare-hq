@@ -128,7 +128,7 @@ TABS = [
 #    ('corehq.apps.xforms.views.dashboard', 'XForms'),
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.sms.views.user_messaging", "Messages"),
+    ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users and Settings"),
 ]
 
