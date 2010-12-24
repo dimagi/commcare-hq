@@ -110,6 +110,7 @@ HQ_APPS = (
     'ota_restore',
     'couchforms',
     'couchexport',
+    'couchlog',
     'corehq.apps.receiver',
     'corehq.apps.app_manager',
     'corehq.apps.new_data',
@@ -193,6 +194,8 @@ XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
 
+LOCAL_APPS = () # you can locally add apps if you want here
+
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -208,7 +211,6 @@ try:
     INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
 except:
     INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
-
 
 # create data directories required by commcarehq
 import os
@@ -250,6 +252,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchforms',
         'couchexport',
+        'couchlog',
         'app_manager',
         'new_data',
         'case',
@@ -265,10 +268,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
 SKIP_SOUTH_TESTS = True
 
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
-try:
-    INSTALLED_APPS += LOCAL_APPS
-except:
-    pass
+
+INSTALLED_APPS += LOCAL_APPS
 
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 

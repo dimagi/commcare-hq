@@ -13,6 +13,7 @@ sys.path.append(os.path.join(filedir,'submodules','core-hq-src','corehq'))
 sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
 sys.path.append(os.path.join(filedir,'submodules','couchforms-src'))
 sys.path.append(os.path.join(filedir,'submodules','couchexport-src'))
+sys.path.append(os.path.join(filedir,'submodules','couchlog-src'))
 sys.path.append(os.path.join(filedir,'submodules','djangocouch-src'))
 sys.path.append(os.path.join(filedir,'submodules','dimagi-utils-src'))
 

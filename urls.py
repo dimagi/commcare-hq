@@ -28,6 +28,7 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
     (r'^a/(?P<domain>[\w\.]+)/', include(domain_specific)),
+    (r'^couchlog/', include('couchlog.urls')),
     (r'^xep/', include('xep_hq_server.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
