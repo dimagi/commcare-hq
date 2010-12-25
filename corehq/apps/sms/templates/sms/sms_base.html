@@ -1,7 +1,12 @@
 {% extends base_template %}
+{% block page_imports %}
+    {% include "imports/datatables.html" %}
+{% endblock %}
 {% block head %}
     {{ block.super }}
-    <script>
+	<link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/sms/css/sms.css" />
+	<link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/hqwebapp/css/splits.css" />
+    <script type="text/javascript" charset="utf-8">
     $(function(){
 	    $("#sms-tabs").tabs({
 	        ajaxOptions: {
@@ -16,6 +21,8 @@
     });
     </script>
 {% endblock %}
+
+
 {% block content %}
     <div id="main_container">
     <div id="sms-tabs">

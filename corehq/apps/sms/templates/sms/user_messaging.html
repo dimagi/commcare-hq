@@ -1,1 +1,76 @@
-user messaging
+{% block head %}
+    {{ block.super }}
+    <script type="text/javascript" charset="utf-8">
+		    // datatable configuration.
+		    function start_datatables(elem){
+		        if(!elem){
+		            elem = document;
+		        }
+		        $('.datatable', elem).dataTable({
+		            "bJQueryUI": true
+		        });
+		    }
+		    $(document).ready(function() {
+		        start_datatables();
+		    }); 
+		    $(".send_message").addClass('ui-widget');
+		    $(".send_message_header").addClass('ui-widget-header').addClass('ui-corner-bottom');
+		    $(".send_message_content").addClass('ui-widget-content').addClass('ui-corner-bottom');
+		    $(".message_log").addClass('ui-widget');
+		    $(".message_log_header").addClass('ui-widget-header').addClass('ui-corner-bottom');
+		    $(".message_log_content").addClass('ui-widget-content').addClass('ui-corner-bottom');
+	</script>
+{% endblock %}
+{% load pagination_tags %}
+<div class="two-columns">
+<div class="col-1">
+		<table class="datatable">
+			<thead>
+				<tr>
+					<th><a href="">Username</a></th>
+					<th><a href="">Phone Number</a></th>
+				</tr>
+			</thead>
+
+			<tbody>{% if people.object_list %}{% for person in people.object_list %}
+				<tr>
+					<td>{{ person }}</td>
+					<td>{{ person.default_phone_number }}</td>
+				</tr>{% endfor %}{% else %}
+				<tr class="no-data">
+					<td></td>
+					<td >
+						No recipients yet.
+					</td>
+				</tr>
+				{% endif %}
+			</tbody>
+
+			<tfoot>
+				<tr>
+					<td></td>
+					<td>
+						<div class="paginator">
+						</div>
+					</td>
+				</tr>
+			</tfoot>
+		</table>
+  	</div>
+	<div class="col-2">
+		<div id="send_message">
+			<h2 id="send_message_header">Message</h2>
+			<div id="send_message_content">
+				<textarea cols="50" rows="3"></textarea>
+				<input type="button" class="send" value="Send Messages" />
+				<input type="button" class="cancel" value="Cancel" disabled="disabled" />
+			</div>
+		</div>
+		<div id="message_log">
+			<h2 id="message_log_header">Message Log</h2>
+			<div id="message_log_content">
+			{{ messages_table.as_html }}
+			</div>
+		</div>
+	</div>
+</div>
