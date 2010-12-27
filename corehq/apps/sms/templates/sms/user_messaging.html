@@ -23,12 +23,14 @@
 <div class="two-columns" class="ui-widget">
 <div class="col-1">
 	<select id="recipients" class="checklist" multiple="multiple" size=20>
-		<option>Rowena Luk (+16176023315)</option>
-		<option>Jane Smith (+12345748283)</option>
-		<option>Simon Mutundu (+254342123132)</option>
+		{% for phone_user in phone_users %}
+		<option>{{ phone_user.0 }} ({{phone_user.1}})</option>
+		{% endfor %}
 	</select>
 	<ul id="recipients_selectedItems">
-	</ul>
+	</ul><br/>
+	Person not showing up?<br/>
+	<a href="">Register a new person</a> or <a href="">add a phone number.</a>
   	</div>
 	<div class="col-2">
 		<div id="send_message" class="ui-widget ui-corner-all">
