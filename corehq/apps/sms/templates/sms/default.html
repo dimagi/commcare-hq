@@ -10,17 +10,28 @@
 	<link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/hqwebapp/css/splits.css" />
     <script type="text/javascript" charset="utf-8">
     $(function(){
-	    $("#sms-tabs").tabs({
-	        ajaxOptions: {
-	            error: function( xhr, status, index, anchor ) {
-	                $( anchor.hash ).html(
-	                    "Couldn't load this tab. We'll try to fix this as soon as possible. "
-	                );
-	            }
-	        },
-	    }).removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
+	    $("#sms-tabs").tabs().removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
 	    $("#sms-tabs ul").removeClass('ui-corner-all');
     });
+    
+    // datatable configuration.
+    function start_datatables(elem){
+        if(!elem){
+            elem = document;
+        }
+        $('.datatable', elem).dataTable({
+            "bJQueryUI": true
+        });
+    }
+    $(document).ready(function() {
+        start_datatables();
+        $('.checklist').toChecklist({
+    		addSearchBox : true,
+    		showSelectedItems : true,
+    	});
+    }); 
+    
+    
     </script>
 {% endblock %}
 
@@ -29,9 +40,15 @@
     <div id="main_container">
 	    <div id="sms-tabs">
 	        <ul>
-	            <li><a href="{% url user_messaging domain %}">People</a></li>
-	            <li><a href="{% url group_messaging domain %}">Groups</a></li>
+	            <li><a href="#tabs-1">People</a></li>
+	            <li><a href="#tabs-2">Groups</a></li>
 	        </ul>
+	        <div id="tabs-1">
+			    {% include "sms/partials/user_messaging.html" %}
+	        </div>
+	        <div id="tabs-2">
+			    {% include "sms/partials/group_messaging.html" %}
+	        </div>
 	    </div>
 	    <div class="padded">
 			{% block sms_content %}

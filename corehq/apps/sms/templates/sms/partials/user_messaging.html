@@ -1,27 +1,11 @@
 {% block head %}
     {{ block.super }}
     <script type="text/javascript" charset="utf-8">
-    // datatable configuration.
-    function start_datatables(elem){
-        if(!elem){
-            elem = document;
-        }
-        $('.datatable', elem).dataTable({
-            "bJQueryUI": true
-        });
-    }
-    $(document).ready(function() {
-        start_datatables();
-    }); 
-    $('.checklist').toChecklist({
-		addSearchBox : true,
-		showSelectedItems : true,
-	});
     </script>
 	{% endblock %}
 {% load pagination_tags %}
 <div class="two-columns" class="ui-widget">
-<form>
+<form method="POST" action="">
 	<div class="col-1" >
 		{% if errors %}
 		<div class="errors">{{errors}}</div>
