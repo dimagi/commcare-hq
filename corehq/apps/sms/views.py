@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+
 from corehq.util.webutils import render_to_response
 
-def messaging(request, domain, template="sms/messaging.html"):
+def messaging(request, domain, template="sms/default.html"):
     return render_to_response(request, template, {
         'domain': domain,
     })

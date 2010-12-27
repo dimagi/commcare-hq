@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% block page_imports %}
     {% include "imports/datatables.html" %}
 {% endblock %}
@@ -25,15 +26,15 @@
 
 {% block content %}
     <div id="main_container">
-    <div id="sms-tabs">
-        <ul>
-            <li><a href="{% url user_messaging domain %}">Individuals</a></li>
-            <li><a href="{% url group_messaging domain %}">Groups</a></li>
-        </ul>
-    </div>
-    <div class="padded">
-		{% block sms_content %}
-		{% endblock %}
-	</div>
+	    <div id="sms-tabs">
+	        <ul>
+	            <li><a href="{% url user_messaging domain %}">Individuals</a></li>
+	            <li><a href="{% url group_messaging domain %}">Groups</a></li>
+	        </ul>
+	    </div>
+	    <div class="padded">
+			{% block sms_content %}
+			{% endblock %}
+		</div>
     </div>
 {% endblock %}

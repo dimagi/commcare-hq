@@ -11,9 +11,10 @@
 .two-columns        { padding-left: 1em; }
 .two-columns .col-1 { margin-left: -1em; }
 
-    .two-columns .col-1,
+    .two-columns .col-1{
+        width: 25%; }
     .two-columns .col-2 {
-        width: 50%; }
+        width: 75%; }
 
 
 .three-columns        { padding-left: 2em; }

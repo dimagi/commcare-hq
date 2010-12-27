@@ -16,5 +16,17 @@
     .col-1 col:last-child { width: auto; }
 
 #send_message {
+	padding-bottom: 10px;
+}
+
+#header {
+	padding: 5px;
+}
+
+#datatable {
+	width: 100%;
+}
+#content {
 	padding: 10px;
 }
+

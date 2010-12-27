@@ -1,28 +1,22 @@
 {% block head %}
     {{ block.super }}
     <script type="text/javascript" charset="utf-8">
-		    // datatable configuration.
-		    function start_datatables(elem){
-		        if(!elem){
-		            elem = document;
-		        }
-		        $('.datatable', elem).dataTable({
-		            "bJQueryUI": true
-		        });
-		    }
-		    $(document).ready(function() {
-		        start_datatables();
-		    }); 
-		    $(".send_message").addClass('ui-widget');
-		    $(".send_message_header").addClass('ui-widget-header').addClass('ui-corner-bottom');
-		    $(".send_message_content").addClass('ui-widget-content').addClass('ui-corner-bottom');
-		    $(".message_log").addClass('ui-widget');
-		    $(".message_log_header").addClass('ui-widget-header').addClass('ui-corner-bottom');
-		    $(".message_log_content").addClass('ui-widget-content').addClass('ui-corner-bottom');
-	</script>
-{% endblock %}
+    // datatable configuration.
+    function start_datatables(elem){
+        if(!elem){
+            elem = document;
+        }
+        $('.datatable', elem).dataTable({
+            "bJQueryUI": true
+        });
+    }
+    $(document).ready(function() {
+        start_datatables();
+    }); 
+    </script>
+	{% endblock %}
 {% load pagination_tags %}
-<div class="two-columns">
+<div class="two-columns" class="ui-widget">
 <div class="col-1">
 		<table class="datatable">
 			<thead>
@@ -58,19 +52,35 @@
 		</table>
   	</div>
 	<div class="col-2">
-		<div id="send_message">
-			<h2 id="send_message_header">Message</h2>
-			<div id="send_message_content">
-				<textarea cols="50" rows="3"></textarea>
-				<input type="button" class="send" value="Send Messages" />
-				<input type="button" class="cancel" value="Cancel" disabled="disabled" />
+		<div id="send_message" class="ui-widget ui-corner-all">
+			<h2 id="header" class="ui-widget-header ui-corner-top">Message</h2>
+			<div id="content" class="ui-widget-content">
+				<textarea cols="53" rows="3"></textarea><br/>
+				<input class="ui-button ui-button-text-only" type="button" class="send" value="Send Messages" />
+				<input class="ui-button ui-button-text-only" type="button" class="cancel" value="Cancel" disabled="disabled" />
 			</div>
 		</div>
-		<div id="message_log">
-			<h2 id="message_log_header">Message Log</h2>
-			<div id="message_log_content">
-			{{ messages_table.as_html }}
-			</div>
-		</div>
+		<table class="datatable"  width="100%">
+			<thead>
+				<tr>
+					<th><a href="">Direction</a></th>
+					<th><a href="">Message</a></th>
+				</tr>
+			</thead>
+
+			<tbody>{% if people.object_list %}{% for person in people.object_list %}
+				<tr>
+					<td>{{ person }}</td>
+					<td>{{ person.default_phone_number }}</td>
+				</tr>{% endfor %}{% else %}
+				<tr class="no-data">
+					<td></td>
+					<td>
+						No messages yet.
+					</td>
+				</tr>
+				{% endif %}
+			</tbody>
+		</table>
 	</div>
 </div>
