@@ -13,43 +13,22 @@
     $(document).ready(function() {
         start_datatables();
     }); 
+    $('.checklist').toChecklist({
+		addSearchBox : true,
+		showSelectedItems : true,
+	});
     </script>
 	{% endblock %}
 {% load pagination_tags %}
 <div class="two-columns" class="ui-widget">
 <div class="col-1">
-		<table class="datatable">
-			<thead>
-				<tr>
-					<th><a href="">Username</a></th>
-					<th><a href="">Phone Number</a></th>
-				</tr>
-			</thead>
-
-			<tbody>{% if people.object_list %}{% for person in people.object_list %}
-				<tr>
-					<td>{{ person }}</td>
-					<td>{{ person.default_phone_number }}</td>
-				</tr>{% endfor %}{% else %}
-				<tr class="no-data">
-					<td></td>
-					<td >
-						No recipients yet.
-					</td>
-				</tr>
-				{% endif %}
-			</tbody>
-
-			<tfoot>
-				<tr>
-					<td></td>
-					<td>
-						<div class="paginator">
-						</div>
-					</td>
-				</tr>
-			</tfoot>
-		</table>
+	<select id="recipients" class="checklist" multiple="multiple" size=20>
+		<option>Rowena Luk (+16176023315)</option>
+		<option>Jane Smith (+12345748283)</option>
+		<option>Simon Mutundu (+254342123132)</option>
+	</select>
+	<ul id="recipients_selectedItems">
+	</ul>
   	</div>
 	<div class="col-2">
 		<div id="send_message" class="ui-widget ui-corner-all">
