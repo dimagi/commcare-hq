@@ -276,3 +276,6 @@ INSTALLED_APPS += LOCAL_APPS
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
+
+SMS_GATEWAY_URL = "http://localhost:8001"
+SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
