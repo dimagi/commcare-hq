@@ -8,22 +8,40 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import MessageLog, INCOMING
+from corehq.apps.groups.models import Group
 from corehq.util.webutils import render_to_response
 from . import util
 
 def messaging(request, domain, template="sms/default.html"):
     context = {}
     if request.method == "POST":
-        if 'recipients[]' not in request.POST or 'text' not in request.POST:
-            context['errors'] = "Error: must select at least 1 number and write a message."
+        if ('recipients[]' not in request.POST and 'grouprecipients[]' not in request.POST) \
+          or 'text' not in request.POST:
+            context['errors'] = "Error: must select at least 1 recipient and write a message."
         else:
-            phone_numbers = request.POST.getlist('recipients[]')
-            for phone_number in phone_numbers:
-                num_errors = 0
-                id, phone_number = phone_number.split('_')
-                success = util.send_sms(domain, id, phone_number, request.POST["text"])
-                if not success:
-                    num_errors = num_errors + 1
+            num_errors = 0
+            text = request.POST["text"]
+            if 'recipients[]' in request.POST:
+                phone_numbers = request.POST.getlist('recipients[]')
+                for phone_number in phone_numbers:
+                    id, phone_number = phone_number.split('_')
+                    success = util.send_sms(domain, id, phone_number, text)
+                    if not success:
+                        num_errors = num_errors + 1
+            else:            
+                groups = request.POST.getlist('grouprecipients[]')
+                for group_id in groups:
+                    group = Group.get(group_id)
+                    users = CouchUser.view("users/by_group", key=group.name).all()
+                    user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+                    users = [m for m in CouchUser.view("users/all_users", keys=user_ids).all()]
+                    for user in users: 
+                        success = util.send_sms(domain, 
+                                                user.get_id, 
+                                                user.default_phone_number(), 
+                                                text)
+                        if not success:
+                            num_errors = num_errors + 1
             if num_errors > 0:
                 context['errors'] = "Could not send %s messages" % num_errors
             else:
@@ -35,7 +53,9 @@ def messaging(request, domain, template="sms/default.html"):
         phone_users.append( PhoneUser(id = phone_user['id'],
                                       name = phone_user['value'][0],
                                       phone_number = phone_user['value'][1]))
+    groups = Group.view("groups/by_domain", key=domain)
     context['phone_users'] = phone_users
+    context['groups'] = groups
     context['messagelog'] = MessageLog.objects.filter(domain=domain)
     return render_to_response(request, template, context)
 

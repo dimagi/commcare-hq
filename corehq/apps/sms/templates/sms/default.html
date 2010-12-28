@@ -6,12 +6,12 @@
 {% endblock %}
 {% block head %}
     {{ block.super }}
-	<link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/sms/css/sms.css" />
-	<link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/hqwebapp/css/splits.css" />
+    <link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/sms/css/sms.css" />
+    <link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/hqwebapp/css/splits.css" />
     <script type="text/javascript" charset="utf-8">
     $(function(){
-	    $("#sms-tabs").tabs().removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
-	    $("#sms-tabs ul").removeClass('ui-corner-all');
+        $("#sms-tabs").tabs().removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
+        $("#sms-tabs ul").removeClass('ui-corner-all');
     });
     
     // datatable configuration.
@@ -26,33 +26,36 @@
     $(document).ready(function() {
         start_datatables();
         $('.checklist').toChecklist({
-    		addSearchBox : true,
-    		showSelectedItems : true,
-    	});
+            addSearchBox : true,
+            showSelectedItems : true,
+        });
     }); 
-    
-    
     </script>
 {% endblock %}
 
 
 {% block content %}
     <div id="main_container">
-	    <div id="sms-tabs">
-	        <ul>
-	            <li><a href="#tabs-1">People</a></li>
-	            <li><a href="#tabs-2">Groups</a></li>
-	        </ul>
-	        <div id="tabs-1">
-			    {% include "sms/partials/user_messaging.html" %}
-	        </div>
-	        <div id="tabs-2">
-			    {% include "sms/partials/group_messaging.html" %}
-	        </div>
-	    </div>
-	    <div class="padded">
-			{% block sms_content %}
-			{% endblock %}
-		</div>
+        <div id="sms-tabs">
+            <ul>
+                <li><a href="#tabs-1">People</a></li>
+                <li><a href="#tabs-2">Groups</a></li>
+            </ul>
+
+            {% if errors %}
+            <div class="errors">{{errors}}</div>
+            {% endif %}
+            
+            <div id="tabs-1">
+                {% include "sms/partials/user_messaging.html" %}
+            </div>
+            <div id="tabs-2">
+                {% include "sms/partials/group_messaging.html" %}
+            </div>
+        </div>
+        <div class="padded">
+            {% block sms_content %}
+            {% endblock %}
+        </div>
     </div>
 {% endblock %}

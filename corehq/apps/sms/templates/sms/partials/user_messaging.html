@@ -1,25 +1,14 @@
-{% block head %}
-    {{ block.super }}
-    <script type="text/javascript" charset="utf-8">
-    </script>
-	{% endblock %}
-{% load pagination_tags %}
 <div class="two-columns" class="ui-widget">
 <form method="POST" action="">
-</form>
-<form method="POST" action="">
 	<div class="col-1" >
-		{% if errors %}
-		<div class="errors">{{errors}}</div>
-		{% endif %}
 		<div class="ui-widget-content ui-corner-all">
 		<h2 id="header" class="ui-widget-header ui-corner-top">Recipients</h2>
-		<select name="recipients" id="recipients" class="checklist" multiple="multiple" size=20>
+		<SELECT MULTIPLE id="userrecipients" class="checklist" size=20>
 			{% for phone_user in phone_users %}
 			<option value={{phone_user.id}}_{{phone_user.phone_number}}>{{ phone_user.name }} ({{phone_user.phone_number}})</option>
 			{% endfor %}
-		</select>
-		<ul id="recipients_selectedItems">
+		</SELECT>
+		<ul id="userrecipients_selectedItems">
 		</ul>
 		<div class="footnote">
 		Person not showing up?<br/>
@@ -29,49 +18,10 @@
 		</div>
 	</div>
 	<div class="col-2">
-			<div id="send_message" class="ui-widget ui-corner-all">
-				<h2 id="header" class="ui-widget-header ui-corner-top">Message</h2>
-				<div id="content" class="ui-widget-content">
-					<textarea name="text" cols="53" rows="3"></textarea><br/>
-					<input name="send_sms_button" class="send ui-button ui-button-text-only" type="submit" value="Send Messages"/>
-				</div>
-			</div>
+	    {% include "sms/partials/submit_sms_message.html" %}
 	</div>
 </form>
 <div class="col-2">
-		
-		<table class="datatable"  width="100%">
-			<thead>
-				<tr>
-					<th><a href="">ID</a></th>
-					<th><a href="">Direction</a></th>
-					<th><a href="">Time</a></th>
-					<th><a href="">Message</a></th>
-				</tr>
-			</thead>
-
-			<tbody>{% if messagelog %}
-				{% for message in messagelog %}
-				<tr>
-					<td>{% if message.username %}{{message.username}}
-						{% else %}{{ message.phone_number }}{% endif %}
-					</td>
-					<td>{% if message.direction == "I" %}Received
-						{% else %}Sent
-						{% endif %}
-					</td>
-					<td>{{ message.date|date:"D, M d, G:i:s" }}</td>
-					<td>{{ message.text }}</td>
-				</tr>
-				{% endfor %}
-				{% else %}
-				<tr class="no-data">
-					<td></td>
-					<td></td>
-					<td>No messages yet.</td>
-				</tr>
-				{% endif %}
-			</tbody>
-		</table>
+    {% include "sms/partials/messagelog.html" %}
 </div>
 </div>

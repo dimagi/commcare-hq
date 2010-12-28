@@ -30,7 +30,11 @@
 	padding: 10px;
 }
 
-#recipients {
+#grouprecipients {
+	width: 237px;
+}
+
+#userrecipients {
 	width: 237px;
 }
 
