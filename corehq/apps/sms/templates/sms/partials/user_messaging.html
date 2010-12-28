@@ -12,16 +12,21 @@
 		{% if errors %}
 		<div class="errors">{{errors}}</div>
 		{% endif %}
+		<div class="ui-widget-content ui-corner-all">
 		<h2 id="header" class="ui-widget-header ui-corner-top">Recipients</h2>
-		<select name="recipients" class="checklist" multiple="multiple" size=20>
+		<select name="recipients" id="recipients" class="checklist" multiple="multiple" size=20>
 			{% for phone_user in phone_users %}
 			<option value={{phone_user.id}}_{{phone_user.phone_number}}>{{ phone_user.name }} ({{phone_user.phone_number}})</option>
 			{% endfor %}
 		</select>
 		<ul id="recipients_selectedItems">
-		</ul><br/>
+		</ul>
+		<div class="footnote">
 		Person not showing up?<br/>
-		<a href="">Register a new person</a> or <a href="">add a phone number.</a>
+		<a href="">Register a new person.</a><br/>
+		<a href="">Add a new phone number.</a>
+		</div>
+		</div>
 	</div>
 	<div class="col-2">
 			<div id="send_message" class="ui-widget ui-corner-all">

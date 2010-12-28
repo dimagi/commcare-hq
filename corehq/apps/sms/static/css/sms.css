@@ -31,5 +31,10 @@
 }
 
 #recipients {
-	width: 225px;
+	width: 237px;
+}
+
+.footnote {
+	padding: 7px;
+	font-size: 80%;
 }
