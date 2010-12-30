@@ -22,8 +22,8 @@
             {% endfor %}
         </select>
     </div>
-    <div id="modules-form-view-wrapper">
-        <div id="modules">
+    <div id="modules-form-view-wrapper" class="sidebar-wrapper">
+        <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
         <h2 {% if not module and not form %}class="selected"{% endif %}>
             <a href="{% urlencode request.path request.GET without "m" without "f" %}">{{ app.name }}
@@ -182,7 +182,7 @@
         {# {% endwith %} #}
         
         </div>
-        <div id="form-view">
+        <div class="next-to-sidebar">
             {% block form-view %}
                 {% if app.modules %}
                     {% if form %}

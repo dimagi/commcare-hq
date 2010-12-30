@@ -32,15 +32,6 @@ $(function(){
     }).removeClass('ui-corner-all').removeClass('ui-widget-content');
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
 
-    //$("#main-content").addClass('container ui-corner-bottom');
-    $("#modules").addClass('ui-widget-content ui-corner-bl');
-    $("#modules h2").addClass('ui-corner-all');
-    $("#modules ul li").addClass('ui-corner-all');
-    $("#modules ul li div").addClass('ui-corner-top');
-    $("#modules ul").addClass('ui-corner-bottom');
-    //$("#form-view").addClass('ui-widget ui-widget-content ui-corner-br');
-    //$("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
-    //$("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
     $('.config').wrap('<div />').parent().addClass('container block ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));

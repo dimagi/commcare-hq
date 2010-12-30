@@ -3,26 +3,20 @@ $.prototype.iconify = function(icon) {
 };
 
 $(function(){
+
+    $('#user-options li').each(function(){
+        var url = $(this).find('a').attr('href');
+        if(location.pathname == url) {
+            $(this).addClass('selected'); 
+        }
+    });
+
+
     $('.delete_link').iconify('ui-icon-closethick');
     $('.add_link').iconify('ui-icon-plusthick');
     $('.new_link').iconify('ui-icon-plusthick');
     $('.edit_link').iconify('ui-icon-pencil');
 
-
-    $("#form-tabs").tabs({
-        cookie: {}
-    }).removeClass('ui-corner-all').addClass('ui-corner-bottom');
-
-    $("#modules").addClass('ui-widget ui-widget-content ui-corner-bl');
-    $("#modules h2").addClass('ui-corner-all');
-    $("#modules ul li").addClass('ui-corner-all');
-    $("#modules ul li div").addClass('ui-corner-top');
-    $("#modules ul").addClass('ui-corner-bottom');
-
-    $("#form-tabs > ul").removeClass('ui-corner-all');
-    $("#forms").removeClass('ui-corners-all').addClass('ui-corner-bottom');
-    $("#empty").addClass('ui-widget ui-widget-content ui-corner-bottom');
-    $('.edit_single_user').wrap('<div />').parent().addClass('container ui-corner-all');
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.container').addClass('ui-widget ui-widget-content');

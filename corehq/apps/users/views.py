@@ -10,9 +10,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 
 def users(req, domain, template="users/users_base.html"):
-    return render_to_response(req, template, {
-        'domain': domain,
-    })
+    return HttpResponseRedirect(reverse(
+        "corehq.apps.users.views.my_account",
+        args=[domain],
+    ))
 
 def web_users(request, domain, template="users/web_users.html"):
     all_users = CouchUser.view("users/web_users_by_domain", key=domain)

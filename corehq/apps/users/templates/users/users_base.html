@@ -13,22 +13,20 @@
                 <h1>Users</h1>
             </div>
         </div>
-        <div id="forms">
-        <div id="modules-form-view-wrapper">
-            <div id="modules">
+        <div class="sidebar-wrapper">
+            <div class="sidebar" id="user-options">
                 <ul>
                     <li><a href="{% url my_account domain %}">My Account</a></li>
                     <li><a href="{% url my_phone_numbers domain %}">My Phone Numbers</a></li>
                     <li><a href="{% url my_commcare_accounts domain %}">My CommCare Accounts</a></li>
                     <li><a href="{% url my_domains domain %}">My Domains</a></li>
-                    <li><a href="{% url password_change %}">Change Password</a></li>
                     <li><a href="{% url web_users domain %}">Web Users</a></li>
                     <li><a href="{% url commcare_users domain %}">CommCare Users</a></li>
                     <li><a href="{% url all_groups domain %}">CommCare Groups</a></li>
                 </ul>
             </div>
 
-            <div id="form-view">
+            <div class="next-to-sidebar">
                 {% block user-view %}
                     <h2 class="message">Click on the menu to the left to edit your settings.</h2>
                 {% endblock %}
@@ -44,7 +42,6 @@
                 {% endif %}
             </div>
 
-         </div>
         </div>
     </div>
 {% endblock %}

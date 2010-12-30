@@ -193,57 +193,57 @@ header {
 #title-bar {
     padding: 1em;
 }
-#modules {
+.sidebar {
     width: 200px;
     padding: 1em;
 }
 #modules-header {
     text-align: center;
 }
-#modules h2 {
+.sidebar h2 {
     padding: .25em;
 }
-#modules ul li{
+.sidebar ul li{
     padding: .25em;
     padding-left: 1.5em;
     list-style: none;
 }
-#modules > ul > li > div {
+.sidebar > ul > li > div {
     padding: .25em;
 }
-#modules ul {
+.sidebar ul {
     margin-bottom: 1em;
 }
-#modules h2.selected {
+.sidebar h2.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
-#modules div.selected {
+.sidebar div.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
-#modules ul.selected {
+.sidebar ul.selected {
     background-color: #eee;
 }
-#modules li.selected {
+.sidebar li.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
 
-/* make join #modules and #form-view horizontally */
-#modules-form-view-wrapper {
+/* make join .sidebar and .next-to-sidebar horizontally */
+.sidebar-wrapper {
     display: table;
     width: 100%;
 }
-#modules, #form-view {
+.sidebar, .next-to-sidebar {
     display: table-cell;
     border-top: none;
 }
-#form-view {
+.next-to-sidebar {
     border: none;
     padding: 1em;
 }
-#modules {
+.sidebar {
     border-left: none;
     border-bottom: none;
 }
@@ -308,7 +308,7 @@ table.config td, table.config, th {
 table.config th {
     text-align: left;
 }
-#form-view h3{
+.next-to-sidebar h3{
     text-align: center;
 }
 
