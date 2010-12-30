@@ -1,0 +1,83 @@
+{% load i18n %}
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+   toggle_content = function(elem) {
+			if (elem.is(':visible')) {
+				elem.hide();
+			} else {
+				elem.show();
+			}
+		}
+
+    $('#djDebugCouchDBPanel a.djSQLShowStacktrace').click(function() {
+				toggle_content($('.djSQLHideStacktraceDiv', $(this).parents('tr')));
+				return false;
+			});
+});
+</script>
+<table>
+	<thead>
+		<tr>
+			<th>{% trans "Time" %}&nbsp;(ms)</th>
+			<th>{% trans "Action" %}</th>
+            <th>{% trans 'Stacktrace' %}</th>
+            <th>{% trans 'View Name' %}</th>
+            <th>{% trans 'Request Params' %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for query in queries %}
+			<tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
+				<td>{{ query.duration|floatformat:"2" }}</td>
+				<td>
+				{% if query.view_params %}
+                    <a class="remoteCall" href="/__debug__/couch_select/?viewpath={{ query.view_path_safe|urlencode }}&amp;params={{ query.view_params|urlencode }}&amp;duration={{ query.duration|floatformat:"2"|urlencode }}&amp;hash={{ query.hash }}">View</a><br />
+				{% endif %}
+				</td>
+				<td>
+					{% if query.stacktrace %}
+					<div class="djSQLShowStacktraceDiv"><a class="djSQLShowStacktrace" href="#">Toggle Stacktrace</a></div>
+					{% endif %}
+				</td>
+                <td>
+                    {{ query.view_path_display }}
+                </td>
+				<td class="syntax">
+					<div class="djDebugSqlWrap">
+						<div class="djDebugSql">{{ query.params|safe }}</div>
+						{% if query.stacktrace %}
+						<div class="djSQLHideStacktraceDiv" style="display:none;">
+							<table>
+								<tr>
+									<th>{% trans "Line" %}</th>
+									<th>{% trans "Method" %}</th>
+									<th>{% trans "File" %}</th>
+								</tr>
+								{% for file, line, method in query.stacktrace %}
+									<tr>
+										<td>{{ line }}</td>
+										<td><code>{{ method|escape }}</code></td>
+										<td><code>{{ file|escape }}</code></td>
+									</tr>
+								{% endfor %}
+							</table>
+							{% if query.template_info %}
+							<table>
+								{% for line in query.template_info.context %}
+								<tr>
+									<td>{{ line.num }}</td>
+									<td><code style="font-family: monospace;{% if line.highlight %}background-color: lightgrey{% endif %}">{{ line.content }}</code></td>
+								</tr>
+								{% endfor %}
+							</table>
+							<p><strong>{{ query.template_info.name|default:"(unknown)" }}</strong></p>
+							{% endif %}
+						</div>
+						{% endif %}
+            <span class="djDebugLineChart{% if query.is_slow %} djDebugLineChartWarning{% endif %}" style="width:{{ query.width_ratio }}%; left:{{ query.start_offset }}%;"></span>
+					</div>
+				</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>

@@ -1,0 +1,1 @@
+This is a debug toolbar panel for adding couch trace/performance logging

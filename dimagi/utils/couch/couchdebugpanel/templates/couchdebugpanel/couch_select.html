@@ -1,0 +1,41 @@
+{% load i18n %}
+<link href="{{MEDIA_URL}}couchdebugpanel/prettify.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="{{MEDIA_URL}}couchdebugpanel/prettify.js"></script>
+<div class="djDebugPanelTitle">
+	<a class="djDebugClose djDebugBack" href="">{% trans "Back" %}</a>
+	<h3>{% trans "CouchDB View" %}</h3>
+</div>
+<div class="djDebugPanelContent">
+	<div class="scroll">
+		<dl>
+			<dt>{% trans "Executed View" %}</dt>
+            <dd>{{ view_name }}</dd>
+            <dt>{% trans "Parameters" %}</dt>
+			<dd>{{ params }}</dd>
+			<dt>{% trans "Time" %}</dt>
+			<dd>{{ duration }} ms</dd>
+		</dl>
+		{% if result %}
+		<table class="djSqlSelect">
+			<thead>
+				<tr>
+					<th>Result</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in result %}
+					<tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
+							<td>
+                                <pre class="prettyprint">
+                                {{ row }}
+                                </pre>
+                            </td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+			<p>{% trans "Empty set" %}</p>
+		{% endif %}
+	</div>
+</div>
