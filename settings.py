@@ -2,6 +2,7 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import os, time
+import logging
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -78,7 +79,6 @@ TEMPLATE_DIRS = [
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 ]
-
 
 
 # ====================
@@ -220,6 +220,15 @@ XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
 
+
+DJANGO_LOG_FILE = "/var/log/commcarehq.django.log"
+LOG_SIZE = 1000000
+LOG_LEVEL   = "DEBUG"
+LOG_FILE    = "/var/log/commcarehq.router.log"
+LOG_FORMAT  = "[%(name)s]: %(message)s"
+LOG_BACKUPS = 256 # number of logs to keep
+
+
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -249,13 +258,6 @@ if not os.path.isdir(os.path.join(root,'data','attachments')):
 if not os.path.isdir(os.path.join(root,'data','schemas')):
     os.mkdir(os.path.join(root,'data','schemas'))
 
-
-DJANGO_LOG_FILE = "/var/log/commcarehq.django.log"
-LOG_SIZE = 1000000
-LOG_LEVEL   = "DEBUG"
-LOG_FILE    = "/var/log/commcarehq.router.log"
-LOG_FORMAT  = "[%(name)s]: %(message)s"
-LOG_BACKUPS = 256 # number of logs to keep
 
 XFORMS_FORM_TRANSLATE_JAR="submodules/core-hq-src/lib/form_translate.jar"
 
@@ -315,3 +317,5 @@ except:
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
+
+logging.basicConfig(filename=DJANGO_LOG_FILE)
