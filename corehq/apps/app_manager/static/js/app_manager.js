@@ -10,6 +10,11 @@ function resetIndexes($sortable) {
     }
 }
 
+function updateDOM(update) {
+    for(var key in update) {
+        $(key).text(update[key]);
+    }
+}
 
 $(function(){
     $('.hidden').hide();
@@ -43,7 +48,12 @@ $(function(){
     $('.sortable .sort-action').addClass('sort-disabled');
     $('.sortable').each(function(){
         if($(this).children().not('.sort-disabled').size() < 2) {
-            $('.drag_handle', this).removeClass('drag_handle').css({cursor: "auto"}).find('.ui-icon').css({backgroundImage: "none"});
+            var $sortable = $(this);
+            $('.drag_handle', this).each(function(){
+                if($(this).closest('.sortable')[0] == $sortable[0]) {
+                    $(this).removeClass('drag_handle').css({cursor: "auto"}).find('.ui-icon').css({backgroundImage: "none"});
+                }
+            });
         }
     });
     $('.sortable').each(function(){
@@ -84,7 +94,8 @@ $(function(){
                         $sortable.sortable('option', 'disabled', true);
                         if($form.find('input[name="ajax"]').first().val() == "true") {
                             resetIndexes($sortable);
-                            $.post($form.attr('action'), $form.serialize(), function(){
+                            $.post($form.attr('action'), $form.serialize(), function(data){
+                                updateDOM(JSON.parse(data)['update']);
                                 // re-enable sortable
                                 $sortable.sortable('option', 'disabled', false);
                                 $sortable.find('.drag_handle .ui-icon').show(1000);
@@ -217,13 +228,23 @@ $(function(){
     }
     $(".autosave").closest('form').append($("<span />"));
     $(".autosave").closest('.form').append("<td />");
-    $(".autosave").closest_form().submit(function(){
+    $(".autosave").closest_form().each(function(){
+      //alert($(this).attr('action'));
+      $(this).submit(function(){
         var $form = $(this);
         $form.children().last().text('saving...');
-        $.post($form.attr('action') || $form.attr('data-action'), $form.my_serialize(), function(){
-            $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
-        });
-        return false;
+        if($form.find('[name="ajax"]').val() == "false") {
+            return true;
+        }
+        else {
+            $.post($form.attr('action') || $form.attr('data-action'), $form.my_serialize(), function(data){
+                updateDOM(JSON.parse(data)['update']);
+
+                $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
+            });
+            return false;
+        }
+      });
     });
     $(".autosave").change(function(){
         $(this).closest_form().submit();

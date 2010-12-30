@@ -549,8 +549,19 @@ class Module(IndexedSchema):
         for form in source['forms']:
             del form['unique_id']
         return source
-
-
+    def requires(self):
+        r = set(["none"])
+        for form in self.get_forms():
+            r.add(form.requires)
+        for val in ("referral", "case", "none"):
+            if val in r:
+                return val
+    def detail_types(self):
+        return {
+            "referral": ["case_short", "case_long", "ref_short", "ref_long"],
+            "case": ["case_short", "case_long"],
+            "none": []
+        }[self.requires()]
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
@@ -573,7 +584,7 @@ class VersionedDoc(Document):
     def id(self):
         return self._id
 
-    def save(self, **params):
+    def save(self, response_json=None, **params):
         self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
         if not self.short_url:
@@ -581,6 +592,11 @@ class VersionedDoc(Document):
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
             )
             super(VersionedDoc, self).save()
+        if response_json is not None:
+            if 'update' not in response_json:
+                response_json['update'] = {}
+            response_json['update']['.variable-version'] = self.version
+            print response_json
     def save_copy(self):
         copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version]).all()
         if copies:

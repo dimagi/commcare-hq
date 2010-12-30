@@ -293,6 +293,8 @@ form table {
 
 .block {
     margin: 1em;
+    border: 1px solid #eaeaff;
+    background-color: #fafaff;
 }
 table.config {
     margin: 1em;

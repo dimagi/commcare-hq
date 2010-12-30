@@ -216,7 +216,7 @@
     </script>
 {% endblock %}
 {% block form-view %}
-    <h3>{{ form.name|trans:langs }}</h3>
+    <h3 class="variable-form_name">{{ form.name|trans:langs }}</h3>
     {% if xform_errors %}
         <div class="warning padded">
             <p>Your XForm is not valid XML:</p>
@@ -250,12 +250,13 @@
             <tr>
                 <th>Requires</th>
                 <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}">
+                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" method="post">
                         <select class="autosave code" name="requires" data-value="{{ form.requires }}">
                             <option value="none">none</option>
                             <option value="case">case</option>
                             <option value="referral">referral</option>
                         </select>
+                        <input type="hidden" name="ajax" value="false" />
                     </form>
                 </td>
             </tr>
@@ -297,7 +298,7 @@
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                        <input type="submit" value="Edit…" />
+                        <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
                     </form>
                 </td>
                 <td>
@@ -336,9 +337,13 @@
                     </div>
                 </td>
             </tr>
+        {% else %}
+            <p class="warning">
+                You have not yet created or uploaded a form.
+            </p>
         {% endif %}
     </table>
-    
+
     <!-- Case XML -->
     <div id="condition-template" class="condition">
         <input type="checkbox" name="if" /> If
@@ -353,105 +358,101 @@
             </select>
         </span>
     </div>
-    <h4>Actions</h4>
-    {% if xform_questions != "[]"%}
-        <div class="casexml {% if not edit %}no-edit{% endif %} config">
-            <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
-            <ul>
-                {% if form.requires == "none" %}
-                    <li class="action">
-                        <input type="checkbox" id="open-case"><label for="open-case">Opens a case</label>
-                        <div class="config">
-                            <div class="condition"></div>
-                            <span>
-                                Name according to question
-                                <select class="questions questions-all" name="name_path">
-                                    <option disabled="">Select a question</option>
-                                </select>
-                            </span>
-                        </div>
-                    </li>
-
-                {% endif %}
-                <li class="action">
-                    <input type="checkbox" id="update-case"><label for="update-case">Updates a case</label>
-                    <div id="update-case-config">
-                        <table class="config">
-                            <tr>
-                                <th></th>
-                                <th>Question</th>
-                                <th>Case Property</th>
-                            </tr>
-                            <tr id="action-update-template" class="action-update">
-                                <td></td>
-                                <td>
-                                    <select class="questions questions-all" name="action-update-value">
-                                        <option></option>
+    {% if form.contents %}
+        <h4>Actions</h4>
+        {% if xform_questions != "[]"%}
+            <div class="casexml {% if not edit %}no-edit{% endif %} config">
+                <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
+                <ul>
+                    {% if form.requires == "none" %}
+                        <li class="action">
+                            <input type="checkbox" id="open-case"><label for="open-case">Opens a case</label>
+                            <div class="config">
+                                <div class="condition"></div>
+                                <span>
+                                    Name according to question
+                                    <select class="questions questions-all" name="name_path">
+                                        <option disabled="">Select a question</option>
                                     </select>
-                                </td>
-                                <td><input class="code" type="text" name="action-update-key" /></td>
-                            </tr>
+                                </span>
+                            </div>
+                        </li>
 
-                        </table>
-                    </div>
-                </li>
-                {% if form.requires != "none" %}
+                    {% endif %}
                     <li class="action">
-                        <input type="checkbox" id="close-case"><label for="close-case">Closes a case</label>
-                        <div class="config">
-                            <div class="condition"></div>
+                        <input type="checkbox" id="update-case"><label for="update-case">Updates a case</label>
+                        <div id="update-case-config">
+                            <table class="config">
+                                <tr>
+                                    <th></th>
+                                    <th>Question</th>
+                                    <th>Case Property</th>
+                                </tr>
+                                <tr id="action-update-template" class="action-update">
+                                    <td></td>
+                                    <td>
+                                        <select class="questions questions-all" name="action-update-value">
+                                            <option></option>
+                                        </select>
+                                    </td>
+                                    <td><input class="code" type="text" name="action-update-key" /></td>
+                                </tr>
+
+                            </table>
                         </div>
                     </li>
-                {% endif %}
-                {% if form.requires != "referral" %}
-                    <li class="action">
-                        <input type="checkbox" id="open-referral"> <label for="open-referral">Opens a referral</label>
-                        <div class="config">
-    {#                        <div class="condition"></div>#}
-                            <span>
-                                Name according to question
-                                <select class="questions questions-select questions-select1" name="name_path">
-                                    <option disabled="">Select a question</option>
-                                </select>
-                            </span>
-                        </div>
-                    </li>
-                {% endif %}
-                {% if form.requires == "referral" %}
-                    <li class="action">
-                        <input type="checkbox" id="update-referral"> <label for="update-referral">Updates a referral</label>
-                        <div class="config">
-    {#                        <div class="condition"></div>#}
-                            <span>
-                                Change followup date to
-                                <select class="questions questions-input" name="followup_date">
-                                    <option disabled="">Select a question</option>
-                                </select>
-                            </span>
-                        </div>
-                    </li>
-                    <li class="action">
-                        <input type="checkbox" id="close-referral"> <label for="close-referral">Closes a referral</label>
-                        <div class="config">
-                            <div class="condition"></div>
-                        </div>
-                    </li>
-                {% endif %}
-            </ul>
-            <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
-                <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>
-                <input type="submit" value="Save Actions"/>
-            </form>
-        </div>
-    {% else %} {# if not questions #}
-        {% if form.contents %}
+                    {% if form.requires != "none" %}
+                        <li class="action">
+                            <input type="checkbox" id="close-case"><label for="close-case">Closes a case</label>
+                            <div class="config">
+                                <div class="condition"></div>
+                            </div>
+                        </li>
+                    {% endif %}
+                    {% if form.requires != "referral" %}
+                        <li class="action">
+                            <input type="checkbox" id="open-referral"> <label for="open-referral">Opens a referral</label>
+                            <div class="config">
+        {#                        <div class="condition"></div>#}
+                                <span>
+                                    Name according to question
+                                    <select class="questions questions-select questions-select1" name="name_path">
+                                        <option disabled="">Select a question</option>
+                                    </select>
+                                </span>
+                            </div>
+                        </li>
+                    {% endif %}
+                    {% if form.requires == "referral" %}
+                        <li class="action">
+                            <input type="checkbox" id="update-referral"> <label for="update-referral">Updates a referral</label>
+                            <div class="config">
+        {#                        <div class="condition"></div>#}
+                                <span>
+                                    Change followup date to
+                                    <select class="questions questions-input" name="followup_date">
+                                        <option disabled="">Select a question</option>
+                                    </select>
+                                </span>
+                            </div>
+                        </li>
+                        <li class="action">
+                            <input type="checkbox" id="close-referral"> <label for="close-referral">Closes a referral</label>
+                            <div class="config">
+                                <div class="condition"></div>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+                <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
+                    <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>
+                    <input type="submit" value="Save Actions"/>
+                </form>
+            </div>
+        {% else %} {# if not questions #}
             <p class="warning">
                 I'm unable to get a list of questions from your form. This may mean that your form is corrupted or
                 malformed.
-            </p>
-        {% else %}
-            <p>
-                You have not yet created or uploaded a form.
             </p>
         {% endif %}
     {% endif %}
