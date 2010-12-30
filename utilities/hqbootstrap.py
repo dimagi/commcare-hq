@@ -12,9 +12,9 @@ from django.contrib.contenttypes.models import ContentType
 def run():
     from django.contrib.sites.models import Site
 
-    django_site_1 = Site()
-    django_site_1.domain = u'localhost'
-    django_site_1.name = u'localhost'
+    django_site_1 = Site.objects.all()[0]
+    django_site_1.domain = u'localhost:8000'
+    django_site_1.name = u'localhost:8000'
     django_site_1.save()
 
     from corehq.apps.domain.models import Domain
@@ -24,28 +24,10 @@ def run():
     domain_domain_1.is_active = True
     domain_domain_1.save()
 
-    from corehq.apps.domain.models import Membership
-
-    domain_membership_1 = Membership()
-    domain_membership_1.domain = domain_domain_1
-    domain_membership_1.member_type = ContentType.objects.get(app_label="auth", model="user")
-    domain_membership_1.member_id = 2
-    domain_membership_1.is_active = True
-    domain_membership_1.save()
-
-    from django_granular_permissions.models import Permission
-
-    django_granular_permissions_permission_1 = Permission()
-    django_granular_permissions_permission_1.name = u'admin'
-    django_granular_permissions_permission_1.content_type = ContentType.objects.get(app_label="domain", model="domain")
-    django_granular_permissions_permission_1.object_id = 1
-    django_granular_permissions_permission_1.group = None
-    django_granular_permissions_permission_1.save()
-
     from django.contrib.auth.models import User
 
     auth_user_1 = User()
-    auth_user_1.username = u'testadmin'
+    auth_user_1.username = u'admin'
     auth_user_1.first_name = u''
     auth_user_1.last_name = u''
     auth_user_1.email = u'test@test.com'
@@ -70,8 +52,6 @@ def run():
     auth_user_2.date_joined = datetime.datetime(2010, 9, 10, 19, 40, 6, 159442)
     auth_user_2.save()
 
-    auth_user_2.domain_membership.add(domain_membership_1)
-    
     couch_user = auth_user_2.get_profile().get_couch_user()
     couch_user.add_domain_membership(domain_domain_1.name)
     couch_user.save()
@@ -89,7 +69,4 @@ def run():
     domain_registration_request_1.new_user = auth_user_2
     domain_registration_request_1.requesting_user = None
     domain_registration_request_1.save()
-
-    django_granular_permissions_permission_1.user = auth_user_2
-    django_granular_permissions_permission_1.save()
 

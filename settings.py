@@ -11,9 +11,7 @@ ADMINS = ()
 MANAGERS = ADMINS
 
 
-# default to the system's timezone settings. this can still be
-# overridden in rapidsms.ini [django], by providing one of:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
+# default to the system's timezone settings
 TIME_ZONE = "EST"
 
 
@@ -84,6 +82,7 @@ TEMPLATE_DIRS = [
 # ====================
 # INJECT RAPIDSMS APPS
 # ====================
+
 DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -94,7 +93,6 @@ DEFAULT_APPS = (
 )
 
 HQ_APPS = (
-    #'django_extensions',
     'django_digest',
     'django_rest_interface',
     'django_granular_permissions',
@@ -115,47 +113,36 @@ HQ_APPS = (
     'ota_restore',
     'couchforms',
     'couchexport',
+    'couchlog',
     'corehq.apps.receiver',
     'corehq.apps.app_manager',
     'corehq.apps.new_data',
     'corehq.apps.users',
     'corehq.apps.groups',
+    'corehq.apps.sms',
     'corehq.apps.reports',
     'xep_hq_server',
 )
 
-RAPIDSMS_APPS = (
-    # RapidSMS Core
-    'djtables',
-    'rapidsms',
-
-    # Common Dependencies
-    #"rapidsms.contrib.handlers",
-    #"rapidsms.contrib.ajax",
-
-    # RapidSMS Apps
-    #'rapidsms.contrib.messagelog',
-    #'rapidsms.contrib.messaging',
-    
-    # For Testing
-    'rapidsms.contrib.httptester',
-
-    # TODO: customize these and then add them
-    # 'default',
+# you can locally add apps if you want here
+LOCAL_APPS = (
+    'django_extensions',
 )
+
+try:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
+except:
+    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
 #    ("message_log", "Message Log"),
-#    #("rapidsms.contrib.messagelog.views.message_log", "Message Log"),
-#    ("rapidsms.contrib.messaging.views.messaging", "Messaging"),
-#    ("rapidsms.contrib.httptester.views.generate_identity", "Message Tester"),
 #    ('corehq.apps.hqwebapp.views.dashboard', 'Dashboard'),
 #    ('corehq.apps.releasemanager.views.projects', 'Release Manager'),
 #    #('corehq.apps.receiver.views.show_submits', 'Submissions'),
 #    ('corehq.apps.xforms.views.dashboard', 'XForms'),
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
-#    ("corehq.apps.hqwebapp.views.messages", "Messages"),
+    ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users and Settings"),
 ]
 
@@ -240,12 +227,6 @@ try:
 except ImportError:
     pass
 
-try:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS + LOCAL_APPS
-except:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + RAPIDSMS_APPS
-
-
 # create data directories required by commcarehq
 import os
 root = os.path.dirname(__file__)
@@ -265,23 +246,8 @@ XFORMS_FORM_TRANSLATE_JAR="submodules/core-hq-src/lib/form_translate.jar"
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
 
-####### RapidSMS Settings #######
-INSTALLED_BACKENDS = {
-    #"att": {
-    #    "ENGINE": "rapidsms.backends.gsm",
-    #    "PORT": "/dev/ttyUSB0"
-    #},
-    #"verizon": {
-    #    "ENGINE": "rapidsms.backends.gsm,
-    #    "PORT": "/dev/ttyUSB1"
-    #},
-    "message_tester": {
-        "ENGINE": "rapidsms.backends.bucket"
-    }
-}
-
-from settingshelper import get_dynamic_db_settings
 ####### Couch Forms & Couch DB Kit Settings #######
+from settingshelper import get_dynamic_db_settings
 _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
 
 # create local server and database configs
@@ -294,6 +260,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchforms',
         'couchexport',
+        'couchlog',
         'app_manager',
         'new_data',
         'case',
@@ -309,13 +276,13 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
 SKIP_SOUTH_TESTS = True
 
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
-try:
-    INSTALLED_APPS += LOCAL_APPS
-except:
-    pass
+
+INSTALLED_APPS += LOCAL_APPS
 
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 
 logging.basicConfig(filename=DJANGO_LOG_FILE)
+SMS_GATEWAY_URL = "http://localhost:8001"
+SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
