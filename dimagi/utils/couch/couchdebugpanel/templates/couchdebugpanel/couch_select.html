@@ -1,6 +1,6 @@
 {% load i18n %}
-<link href="{{MEDIA_URL}}couchdebugpanel/prettify.css" type="text/css" rel="stylesheet" />
-<script type="text/javascript" src="{{MEDIA_URL}}couchdebugpanel/prettify.js"></script>
+<link href="{{MEDIA_URL}}couchdebugpanel/prettify/prettify.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="{{MEDIA_URL}}couchdebugpanel/prettify/prettify.js"></script>
 <div class="djDebugPanelTitle">
 	<a class="djDebugClose djDebugBack" href="">{% trans "Back" %}</a>
 	<h3>{% trans "CouchDB View" %}</h3>
@@ -12,6 +12,8 @@
             <dd>{{ view_name }}</dd>
             <dt>{% trans "Parameters" %}</dt>
 			<dd>{{ params }}</dd>
+            <dt>{% trans "Total Rows" %}</dt>
+            <dd>{{ result|length }}</dd>
 			<dt>{% trans "Time" %}</dt>
 			<dd>{{ duration }} ms</dd>
 		</dl>
