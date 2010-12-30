@@ -5,6 +5,3 @@ function(doc){
             emit(doc.name,  doc.users[i]);
     	}
 }
-
-
-

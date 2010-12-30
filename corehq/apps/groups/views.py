@@ -30,10 +30,30 @@ def delete_group(request, domain, group_id):
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = {}
     group = Group.view("groups/by_name", key=group_name).one()
-    members = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+    if group is None:
+        raise Http404("Group %s does not exist" % group_name)
+    member_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
+    members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
+    member_commcare_users = []
+    for member in members:
+        for commcare_account in member.commcare_accounts:
+            commcare_account.couch_user_id = member.get_id
+            member_commcare_users.append(commcare_account)
+    # note: we believe couch/hq users and commcare users unilaterally share group membership
+    # i.e. there's no such thing as commcare_account group membership, only couch_user group membership
+    nonmember_commcare_users = []
+    all_users = CouchUser.view("users/by_domain", key=domain).all()
+    for user in all_users:
+        if user.get_id not in member_ids:
+            commcare_accounts = []
+            for commcare_account in user.commcare_accounts:
+                commcare_account.couch_user_id = user.get_id
+                commcare_accounts.append(commcare_account)
+            nonmember_commcare_users.extend(commcare_accounts)
     context.update({"domain": domain,
                     "group": group,
-                    "members": members, 
+                    "members": member_commcare_users, 
+                    "nonmembers": nonmember_commcare_users, 
                     })
     return render_to_response(request, template, context)
 

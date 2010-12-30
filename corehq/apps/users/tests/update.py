@@ -1,9 +1,14 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from corehq.apps.users.models import CouchUser
 
 class UpdateTestCase(TestCase):
     
     def setUp(self):
+        all_users = CouchUser.view("users/all_users")
+        for user in all_users:
+            user.delete()
+        User.objects.all().delete()
         username = "joe"
         email = "joe@domain.com"
         password = "password"
