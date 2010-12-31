@@ -13,7 +13,6 @@ import threading
 from django.template.loader import render_to_string
 from django.views.debug import linebreak_iter
 import couchdbkit
-from dimagi.utils.couch.couchdebugpanel.debugdatabase import DebugCouchDatabase
 
 # Figure out some paths
 django_path = os.path.realpath(os.path.dirname(django.__file__))
