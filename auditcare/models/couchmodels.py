@@ -13,7 +13,7 @@ from django.contrib.contenttypes import generic
 from django.db.models.query import QuerySet
 from django.utils.http import urlquote
 import logging
-from auditor import utils
+from auditcare import utils
 
 def make_uuid():
     return uuid.uuid1().hex
@@ -40,7 +40,7 @@ class AuditEvent(Document):
             return ""
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
 
     def __unicode__(self):
@@ -81,7 +81,7 @@ class ModelActionAudit(AuditEvent):
         return "%s ID: %s" % (self.object_type, self.object_uuid)
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
     @classmethod
     def audit_save(cls, model_class, instance, user):
@@ -109,7 +109,7 @@ class NavigationEventAudit(AuditEvent):
         return "%s from %s" % (self.request_path, self.ip_address)
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
 
     @classmethod
@@ -145,7 +145,7 @@ class AccessAudit(AuditEvent):
     session_key = StringProperty()
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
     @property
     def summary(self):
@@ -193,7 +193,7 @@ class FieldAccess(models.Model):
     field = StringProperty()
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
     class Meta:
         unique_together = ('object_type', 'field')
@@ -209,7 +209,7 @@ class ModelAuditEvent(models.Model):
     accessed = DateTimeProperty(default = getdate)
 
     class Meta:
-        app_label = 'auditor'
+        app_label = 'auditcare'
 
 
-import auditor.signals
+import auditcare.signals

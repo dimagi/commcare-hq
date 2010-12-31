@@ -4,7 +4,11 @@ from django.db.models import Q
 import logging
 from datetime import datetime
 import settings
-from corehq.util.threadlocals import get_current_user
+try:
+    from corehq.util.threadlocals import get_current_user
+except:
+    from auditcare.utils.threadlocals import get_current_user
+
 from django.db import transaction
 from models import *
 

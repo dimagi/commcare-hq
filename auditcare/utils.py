@@ -4,6 +4,26 @@
 from django.conf import settings
 import re
 
+# threadlocals middleware for global usage
+# if this is used elsewhere in your system, consider using that instead of this.
+
+try:
+    from threading import local
+except ImportError:
+    from django.utils._threading_local import local
+
+_thread_locals = local()
+def get_current_user():
+    return getattr(_thread_locals, 'user', None)
+
+class ThreadLocals(object):
+    """Middleware that gets various objects from the
+    request object and saves them in thread local storage."""
+    def process_request(self, request):
+        _thread_locals.user = getattr(request, 'user', None)
+
+
+
 # this is not intended to be an all-knowing IP address regex
 IP_RE = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
