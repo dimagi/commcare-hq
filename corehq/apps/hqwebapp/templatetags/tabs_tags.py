@@ -78,9 +78,9 @@ class Tab(object):
         TEMPLATE_STRING_IF_INVALID setting.
         """
         try:
-            return reverse(self.callback)
-        except:
             return reverse(self.callback, args=[self.domain])
+        except:
+            return reverse(self.callback)
 
     @property
     def caption(self):

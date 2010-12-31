@@ -1,0 +1,38 @@
+{% extends "help/help_base.html" %}
+
+{% block head %}
+    {{ block.super }}
+    <style type="text/css">
+        #phone {
+            float: left;
+            height: 200px;
+        }
+    </style>
+{% endblock %}
+
+{% block help_content %}
+    <h1>Getting Started With CommCareHQ</h1>
+
+    <h2>What is CommCareHQ?</h2>
+    <img id="phone" src="http://www.mobilewhack.com/wp-content/images/2009/01/nokia_2700-classic_1_lowres.jpg" />
+    <p>CommCareHQ works together with the open-source mobile client CommCare to help rural health organizations
+    replace paperwork with electronic forms filled on J2ME-compatible phones. Organizations build on the
+    Community Health Worker (CHW) model will find that mobile data entry will provide the following benefits:
+    </p>
+    <ul>
+        <li>See forms online immediately as they are submitted</li>
+        <li>Easily view your data in a number of layouts</li>
+        <li>Download and manipulate in Excel</li>
+    </ul>
+    <p>This document will show you how to get started using CommCareHQ.</p>
+
+    <h2>What you need</h2>
+    <p>In order to begin using CommCareHQ, all you need is a computer with an internet connection
+    and at least one J2ME-compatible cellphone connected to the network. Here is full list of supported phones:
+    </p>
+    <ul>
+        <li>Nokia 2700C</li>
+    </ul>
+    <p>That's it. When you have built your forms and packaged them as an application using CommCareHQ's
+    application builder, CommCareHQ will send the application to your phone(s) via SMS (text message).</p>
+{% endblock %}
