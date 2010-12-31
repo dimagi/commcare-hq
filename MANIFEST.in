@@ -1,0 +1,2 @@
+recursive-include auditcare/models *
+recursive-include auditcare/models/_design *
