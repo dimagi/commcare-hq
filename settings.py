@@ -110,6 +110,7 @@ HQ_APPS = (
     'corehq.apps.releasemanager',
     'corehq.apps.requestlogger',
     'corehq.apps.docs',
+    'corehq.apps.help',
     'ota_restore',
     'couchforms',
     'couchexport',
@@ -126,7 +127,7 @@ HQ_APPS = (
 
 # you can locally add apps if you want here
 LOCAL_APPS = (
-    'django_extensions',
+    #'django_extensions',
 )
 
 try:
@@ -143,7 +144,8 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.users.views.users", "Users and Settings"),
+    ("corehq.apps.users.views.users", "People"),
+    ("corehq.apps.help.views.default", "Help"),
 ]
 
 # after login, django redirects to this URL

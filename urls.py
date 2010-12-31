@@ -22,6 +22,7 @@ domain_specific = patterns('',
     # include only those urls in hqwebapp which are domain-specific
     (r'^', include(hqwebapp_domain_specific)),
     (r'^', include('django_user_registration.urls')),
+    (r'^help/', include('corehq.apps.help.urls')),
 )
 
 urlpatterns = patterns('',
