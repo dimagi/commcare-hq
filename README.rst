@@ -1,8 +1,8 @@
 ==========
-HQ Auditor
+Dimagi Auditcare
 ==========
 
-A set of simple auditing tools for HQ and its related technologies.
+A set of simple auditing tools for Dimagi's CommCareHQ and its related technologies.
 
 All audits events inherit from the AuditEvent model which contains some basic audit information.
 
