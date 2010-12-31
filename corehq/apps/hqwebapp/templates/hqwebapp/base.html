@@ -60,12 +60,16 @@
                     {% endif %}
                 </div>
             </header>
-            <div class="bottom-shadow"></div>
             <div id="main" class="fixed-width">
-            {% block content %}
+                {% block content %}
 
-            {% endblock %}
+                {% endblock %}
             </div>
         </div>
+        <footer>
+            <div class="fixed-width">
+                <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
+            </div>
+        </footer>
     </body>
 </html>
