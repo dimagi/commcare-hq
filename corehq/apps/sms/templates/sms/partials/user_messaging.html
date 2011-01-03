@@ -3,6 +3,7 @@
 	<div class="col-1" >
 		<div class="ui-widget-content ui-corner-all">
 		<h2 id="header" class="ui-widget-header ui-corner-top">Recipients</h2>
+		{% if phone_users %}
 		<SELECT MULTIPLE id="userrecipients" class="checklist" size=20>
 			{% for phone_user in phone_users %}
 			<option value={{phone_user.id}}_{{phone_user.phone_number}}>{{ phone_user.name }} ({{phone_user.phone_number}})</option>
@@ -10,6 +11,11 @@
 		</SELECT>
 		<ul id="userrecipients_selectedItems">
 		</ul>
+		{% else %}
+		<div class="footnote">
+		NO PHONE NUMBERS REGISTERED YET.
+		</div>
+		{% endif %}
 		<div class="footnote">
 		Person not showing up?<br/>
 		<a href="{% url registration_admin_does_all domain %}">Register a new person</a><br/>
