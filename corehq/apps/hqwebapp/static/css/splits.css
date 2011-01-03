@@ -14,7 +14,8 @@
     .two-columns .col-1{
         width: 25%; }
     .two-columns .col-2 {
-        width: 75%; }
+        width: 75%; 
+        float: right; }
 
 
 .three-columns        { padding-left: 2em; }

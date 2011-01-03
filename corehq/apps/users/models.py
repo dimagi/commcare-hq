@@ -121,6 +121,20 @@ class CouchUser(Document):
     class Meta:
         app_label = 'users'
         
+    @property
+    def username(self):
+        # first choice: web user login
+        if self.django_user.username:
+            return self.django_user.username
+        # second choice: latest registered commcare account
+        if len(self.commcare_accounts)>0:
+            return self.commcare_accounts[-1].django_user.username
+        # third choice: phone number
+        if len(self.phone_numbers)>0:
+            return self.phone_numbers[-1].number
+        # failing all else, default to global uuid
+        return self.get_id
+        
     def save(self, *args, **kwargs):
         self.django_type = "users.hquserprofile"
         super(CouchUser, self).save(*args, **kwargs) # Call the "real" save() method.

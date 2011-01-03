@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-from django.db import models, connection
-from django.core.exceptions import ValidationError
-from corehq.apps.domain.models import Domain
+from django.db import models
+from corehq.apps.users.models import CouchUser
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -30,3 +29,10 @@ class MessageLog(models.Model):
 
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "%s (%s %s)" % (str, to_from, self.phone_number)
+    
+    @property
+    def username(self):
+        if self.couch_recipient:
+            user = CouchUser.get(self.couch_recipient)
+            return user.username
+        return self.phone_number
