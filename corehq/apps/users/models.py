@@ -268,6 +268,8 @@ class CouchUser(Document):
     
     def add_phone_number(self, number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
+        if not isinstance(number,basestring):
+            number = str(number)
         for phone in self.phone_numbers:
             if phone.number == number:
                 return

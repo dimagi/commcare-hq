@@ -2,6 +2,7 @@ function(doc){
     if (doc.django_type == "users.hquserprofile" && doc.phone_numbers != null && doc.phone_numbers.length > 0)
         var name = '';
         var phone_number = '';
+        // get default phone number, if set
         for (var i=0;i<doc.phone_numbers.length;i++)
         {
             if (doc.phone_numbers[i].is_default == true){
@@ -10,16 +11,18 @@ function(doc){
             }
         }
         if (phone_number==''){
-            // default to the last number added;
+            // if default not set, use last number added;
             phone_number = doc.phone_numbers[doc.phone_numbers.length-1].number;
         }
+        // get username from web user account
         if (doc.django_user.username != null && doc.django_user.username.length > 0)
         {
             name = doc.django_user.username
         }
         else 
         {
-            for (var i=0;i<doc.commcare_accounts.length;i++)
+        	// if no web user, use the latest commcare account username
+           for (var i=doc.commcare_accounts.length-1;i>=0;i--)
             {
                 if (doc.commcare_accounts[i].django_user.username.length > 0){
                     name = doc.commcare_accounts[i].django_user.username
@@ -27,6 +30,7 @@ function(doc){
                 }
             } 
         }
+        // if no usernames found, return name as '' 
     	for (var i=0;i<doc.domain_memberships.length;i++)
     	{
             emit(doc.domain_memberships[i].domain,  [name, phone_number]);
