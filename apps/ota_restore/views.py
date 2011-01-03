@@ -12,6 +12,9 @@ from django_digest.decorators import *
 from xml.dom.minidom import parse, parseString
 #from corehq.apps.receiver.models import Submission, Attachment
 #from corehq.apps.xforms.models import Metadata
+
+"""
+#this ota_restore code is from cchq 0.9. todo: upgrade to 1.0 casexml processing              
 from phone.models import PhoneUserInfo
 
     
@@ -89,7 +92,7 @@ def ota_restore(request):
     xml += "</restoredata>"
     
     return HttpResponse(xml, mimetype="text/xml")
-    
+"""  
     
 @httpdigest
 def digest_test(request):
