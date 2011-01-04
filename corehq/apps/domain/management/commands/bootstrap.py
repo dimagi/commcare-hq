@@ -9,7 +9,7 @@ class Command(LabelCommand):
      
     def handle(self, *args, **options):
         if len(args) != 3:
-            raise CommandError('Usage: manage.py submit_forms <domain> <user> <password>')
+            raise CommandError('Usage: manage.py bootstrap <domain> <user> <password>')
         domain_name, username, passwd = args
         domain = create_domain(domain_name)
         user = create_user(username, passwd)
