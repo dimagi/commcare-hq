@@ -14,8 +14,4 @@ urlpatterns = patterns('corehq.apps.groups.views',
     url(r'leave_group/(?P<group_id>[\w-]+)/(?P<couch_user_id>[\w-]+)/?$', 
         'leave_group',
         name='leave_group'),
-    url(r'mine/?$', 'my_groups', name='my_groups'),
-    url(r'membership/(?P<couch_user_id>[\w-]+)/?$', 'group_membership', name='group_membership'),
-    url(r'members/(?P<group_name>[\w-]+)/?$', 'group_members', name='group_members'),
-    url(r'/?$', 'all_groups', name='all_groups'),
 )

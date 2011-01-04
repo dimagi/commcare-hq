@@ -31,7 +31,7 @@
 		        showButtonPanel: true,
 		        dateFormat: 'yy-mm-dd',
                 maxDate: '0',
-                numberOfMonths: 3,
+                numberOfMonths: 2,
 		        /*onClose: function(dateText, inst) {
 		            var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
 		            var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
@@ -57,8 +57,11 @@
             if(!elem){
                 elem = document;
             }
-            $('.datatable', elem).dataTable({
-                "bJQueryUI": true
+            $('.datatable', elem).each(function(){
+                $(this).dataTable({
+                    "bJQueryUI": true,
+                    "sAjaxSource": $(this).attr('data-source')
+                });
             });
         }
         $(document).ready(function() {

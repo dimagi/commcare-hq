@@ -58,7 +58,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'corehq.util.threadlocals.ThreadLocals',
-    'corehq.apps.auditor.middleware.AuditMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'django_digest.middleware.HttpDigestMiddleware',
 )
@@ -102,7 +101,6 @@ HQ_APPS = (
     'corehq.apps.program',
     'corehq.apps.phone',
     'corehq.apps.logtracker',
-    'corehq.apps.auditor',
     'corehq.apps.xforms',
     'releasemanager',
     'requestlogger',
@@ -192,40 +190,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = "notifications@dimagi.com"
 EMAIL_HOST_PASSWORD = "alpha321"
 EMAIL_USE_TLS = True
-
-AUDIT_VIEWS = [
-               'corehq.apps.xforms.views.dashboard',
-               'corehq.apps.xforms.views.remove_xform',
-               'corehq.apps.xforms.views.new_form_data_group',
-               'corehq.apps.xforms.views.submit_data',
-               'corehq.apps.xforms.views.single_xform',
-               'corehq.apps.xforms.views.get_xform',
-               'corehq.apps.xforms.views.export_xml',
-               'corehq.apps.xforms.views.plain_data',
-               'corehq.apps.xforms.views.data',
-               'corehq.apps.xforms.views.export_csv',
-               'corehq.apps.xforms.views.readable_xform',
-               'corehq.apps.xforms.views.get_csv_from_form',
-               'corehq.apps.xforms.views.data',
-               'corehq.apps.receiver.views.single_attachment',
-               'corehq.apps.receiver.views.single_submission',
-               'corehq.apps.receiver.views.domain_submit',
-               'corehq.apps.receiver.views.domain_resubmit',
-               'corehq.apps.receiver.views.orphaned_data',
-               'corehq.apps.receiver.views.delete_submission',
-               'corehq.apps.receiver.views.show_submits',
-               'corehq.apps.receiver.views.show_dupes',
-]
-
-AUDIT_MODEL_SAVE = [
-                    'django.contrib.auth.models.User',
-                    'corehq.apps.xforms.models.Metadata',
-                    'corehq.apps.xforms.models.FormDefModel',
-                    'corehq.apps.receiver.models.Submission',
-                    'corehq.apps.domain.models.Domain',
-                    'corehq.apps.domain.models.Membership',
-]
-AUDIT_ADMIN_VIEWS = []
 
 TABS = [
     ('corehq.apps.hqwebapp.views.dashboard', 'Dashboard'),

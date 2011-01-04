@@ -79,13 +79,16 @@ a:hover {
 }
 
 body {
-	background-color: #f5f5ff;
 	color: #000;
 	font: normal 12px Helvetica, Arial, Verdana, sans-serif;
 	margin: 0;
 	padding: 0;
 }
-
+#wrapper {
+    background-color: #f5f5ff;
+    padding-bottom: 60px;
+    min-height: 600px;
+}
 abbr {
 	cursor: help;
 }
@@ -96,8 +99,8 @@ abbr {
 }
 #logo {
     float: left;
-    background: url('../img/commcare-logo.png') no-repeat scroll 0 0 transparent;
-    width: 350px;
+    background: url('../img/commcarehq-logo.png') no-repeat scroll 0 0 transparent;
+    width: 450px;
     height: 70px;
     text-indent: -10000%;
 }
@@ -110,31 +113,16 @@ ul#top-nav li {
     display: inline;
 }
 header {
-    padding: 10px 0;
+    padding: 5px 0;
     height: 70px;
     background-color: #fff;
+    border-bottom: 1px solid #eee;
+
 }
-.bottom-shadow {
-    height: 8px;
-    border-top: 1px solid #eee;
-    /*background: url('../img/shadow-bottom.png') repeat-x scroll 0 0 transparent;    */
-    /*background: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, #f5f5ff),
-        color-stop(.75, #888888),
-        color-stop(1, rgb(0,0,0))
-    );
-    background: -moz-linear-gradient(
-        center bottom,
-        #f5f5ff 0%,
-        rgb(0,0,0) 100%
-    );*/
-}
+
     header nav ul {
         float: right;
-        padding-top: 0px;
+        padding-top: 3px;
         padding-bottom: 0;
         margin: 0;
     }
@@ -156,6 +144,17 @@ header {
         margin-top: 10px;
         padding: 0;
     }
+
+
+footer {
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+}
+    #copyright {
+        color: #555;
+        text-align: right;
+    }
+
 #main {
     margin-top: 40px;
 }
@@ -168,6 +167,7 @@ header {
 #main_container {
     border: 0;
     background-color: #fff;
+    padding: 0px;
 }
 
 #title-bar {
@@ -192,57 +192,57 @@ header {
 #title-bar {
     padding: 1em;
 }
-#modules {
+.sidebar {
     width: 200px;
     padding: 1em;
 }
 #modules-header {
     text-align: center;
 }
-#modules h2 {
+.sidebar h2 {
     padding: .25em;
 }
-#modules ul li{
+.sidebar ul li{
     padding: .25em;
     padding-left: 1.5em;
     list-style: none;
 }
-#modules > ul > li > div {
+.sidebar > ul > li > div {
     padding: .25em;
 }
-#modules ul {
+.sidebar ul {
     margin-bottom: 1em;
 }
-#modules h2.selected {
+.sidebar h2.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
-#modules div.selected {
+.sidebar div.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
-#modules ul.selected {
+.sidebar ul.selected {
     background-color: #eee;
 }
-#modules li.selected {
+.sidebar li.selected {
     background-color: #ccc;
     border: 1px solid #bbb;
 }
 
-/* make join #modules and #form-view horizontally */
-#modules-form-view-wrapper {
+/* make join .sidebar and .next-to-sidebar horizontally */
+.sidebar-wrapper {
     display: table;
     width: 100%;
 }
-#modules, #form-view {
+.sidebar, .next-to-sidebar {
     display: table-cell;
     border-top: none;
 }
-#form-view {
+.next-to-sidebar {
     border: none;
     padding: 1em;
 }
-#modules {
+.sidebar {
     border-left: none;
     border-bottom: none;
 }
@@ -293,6 +293,8 @@ form table {
 
 .block {
     margin: 1em;
+    border: 1px solid #eaeaff;
+    background-color: #fafaff;
 }
 table.config {
     margin: 1em;
@@ -305,7 +307,7 @@ table.config td, table.config, th {
 table.config th {
     text-align: left;
 }
-#form-view h3{
+.next-to-sidebar h3{
     text-align: center;
 }
 
@@ -353,4 +355,4 @@ input.wide {
 /*}*/
 /*.dropdown:hover {*/
     /*background-color: #8867B1;*/
-}
+/*}*/

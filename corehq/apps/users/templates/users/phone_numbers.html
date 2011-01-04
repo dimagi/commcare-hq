@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% block user-view %}
+    <h3>My Phone Numbers</h3>
 	<div class="edit_single_user">
     {% if phone_numbers %}
 	    <table>
@@ -27,7 +28,7 @@
 		<tr>
 			<th><label for="id_add_phone_number">Add Phone Number:</label></th>
 			<td><input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" /></td>
-		    <tr><td></td><td><br/><input type="submit" class="small" value="Submit"/></td></tr>
+		    <tr><td></td><td><br/><input type="submit" class="small" value="Add"/></td></tr>
 		</tr>
 	    </table>
     </form>

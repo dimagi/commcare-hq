@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends login_template %}
 
 {#################################################################################################################}
 
@@ -15,11 +15,10 @@ domain registration request received{% endblock title %}
 {% block content %}
 
 <div class="login-block">
-    <h3><strong>Domain registration request received</strong></h3>
+    <h1>Domain registration request received</h1>
     <p>Confirmation mail sent to {{email}}</p>
     <p>To complete your domain registration, follow the instructions in the email.</p>
-    <hr class="space"/>
-    <h4><a href="{% url homepage %}">Homepage</h4>
+    <a href="{% url homepage %}">Login</a>
 </div>
 {% endblock content %}
 

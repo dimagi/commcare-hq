@@ -7,6 +7,13 @@ $(function() {
     $('#main_container').addClass('ui-corner-all container shadow');
     $('.container').addClass('ui-widget ui-widget-content');
 
+
+    $(".sidebar").addClass('ui-widget ui-widget-content ui-corner-bl');
+    $(".sidebar h2").addClass('ui-corner-all');
+    $(".sidebar ul li").addClass('ui-corner-all');
+    $(".sidebar ul li div").addClass('ui-corner-top');
+    $(".sidebar ul").addClass('ui-corner-bottom');
+
     // trick to give a select menu an initial value
     $('select[data-value]').each(function(){
         var val = $(this).attr('data-value');

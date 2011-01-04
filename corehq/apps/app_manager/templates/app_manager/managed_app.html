@@ -22,8 +22,8 @@
             {% endfor %}
         </select>
     </div>
-    <div id="modules-form-view-wrapper">
-        <div id="modules">
+    <div id="modules-form-view-wrapper" class="sidebar-wrapper">
+        <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
         <h2 {% if not module and not form %}class="selected"{% endif %}>
             <a href="{% urlencode request.path request.GET without "m" without "f" %}">{{ app.name }}
@@ -44,11 +44,11 @@
                     {% if edit %}
                         <span class="drag_handle"></span>                                                    
                         <a class="delete_link" href="#"></a>
-                        <div class="delete_dialog" title="Delete {{ module.name|trans:langs }}?">
+                        <div class="delete_dialog" title="Delete Module?">
                             <form action="{% url corehq.apps.app_manager.views.delete_module domain app.id module.id %}" method="POST">
                                 <table>
                                     <tr><td>
-                                    Are you sure you want to delete module "{{ module.name|trans:langs }}"
+                                    Are you sure you want to delete module "<span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>{{ module.name|trans:langs }}</span>"
                                     and all its forms from application "{{ app.name }}"?
                                     </td></tr>
                                 </table>
@@ -56,7 +56,8 @@
                             </form>
                         </div>
                     {% endif %}
-                    <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">
+                    <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}"
+                            {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                         {{ module.name|trans:langs }}
                     </a>
                 </div>
@@ -75,19 +76,20 @@
                         {% if edit %}
                         <span class="drag_handle"></span>                                                        
                         <a class="delete_link" href="#"></a>
-                        <div class="delete_dialog" title="Delete {{ form.name|trans:langs }}?">
+                        <div class="delete_dialog" title="Delete Form?">
                             <form action="{% url corehq.apps.app_manager.views.delete_form domain app.id module.id form.id %}" method="POST">
                                 <table>
                                     <tr><td>
-                                    Are you sure you want to delete form "{{ form.name|trans:langs }}"
-                                    from module "{{ module.name|trans:langs }}"?
+                                    Are you sure you want to delete form "<span {% if form == selected_form %}class="variable-form_name"{% endif %}>{{ form.name|trans:langs }}</span>"
+                                    from module "<span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>{{ module.name|trans:langs }}</span>"?
                                     </td></tr>
                                 </table>
                                 <input type="submit" value="Delete" />
                             </form>
                         </div>
                         {% endif %}
-                        <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}">
+                        <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}"
+                            {% if form == selected_form %}class="variable-form_name"{% endif %}>
                             {{ form.name|trans:langs }}
                         </a>
                     </li>
@@ -104,7 +106,7 @@
                                 <table>
                                     {{ new_xform_form }}
                                 </table>
-                                <input type="submit" value="Upload Form" />
+                                <input type="submit" value="Create Form" />
                             </form>
                             <hr/>
                             <h4>From Factory Form</h4>
@@ -180,7 +182,7 @@
         {# {% endwith %} #}
         
         </div>
-        <div id="form-view">
+        <div class="next-to-sidebar">
             {% block form-view %}
                 {% if app.modules %}
                     {% if form %}

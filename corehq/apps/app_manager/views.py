@@ -322,11 +322,13 @@ def new_module(req, domain, app_id):
         else:
             module = app.new_module(name, lang)
             app.save()
+            # for locals()
+            module_id = module.id
     return back_to_main(**locals())
 
 @require_POST
 @login_and_domain_required
-def new_form(req, domain, app_id, module_id, template="app_manager/new_form.html"):
+def new_form(req, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -378,15 +380,16 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
+    resp = {'update': {}}
     if   "case_type" == attr:
         case_type = req.POST.get("case_type", None)
         module.case_type = case_type
-        resp = case_type
     elif ("name", "case_name", "ref_name").__contains__(attr):
         name = req.POST.get(attr, None)
         module[attr][lang] = name
-        resp = module[attr]
-    app.save()
+        if attr == "name":
+            resp['update'].update({'.variable-module_name': module.name[lang]})
+    app.save(resp)
     return HttpResponse(json.dumps(resp))
 
 @require_POST
@@ -406,6 +409,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     lang = req.COOKIES.get('lang', app.langs[0])
     ajax = (column_id != -1) # edits are ajax, adds are not
 
+    resp = {}
 
     def _enum_to_dict(enum):
         if not enum:
@@ -426,10 +430,10 @@ def edit_module_detail(req, domain, app_id, module_id):
         detail.append_column(column)
     else:
         detail.update_column(column_id, column)
-    app.save()
+    app.save(resp)
     column = detail.get_column(column_id)
     if(ajax):
-        return HttpResponse(json.dumps({"status": "OK"}))
+        return HttpResponse(json.dumps(resp))
 #        return render_to_response(req, "app_manager/partials/detail_column.html", {
 #            'domain': domain,
 #            'app': app,
@@ -455,8 +459,9 @@ def delete_module_detail(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     module.get_detail(detail_type).delete_column(column_id)
-    app.save()
-    return HttpResponse(json.dumps({'status': "OK"}))
+    resp = {}
+    app.save(resp)
+    return HttpResponse(json.dumps(resp))
     #return back_to_main(**locals())
 
 @require_POST
@@ -469,6 +474,9 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
+    ajax = json.loads(req.POST.get('ajax', 'true'))
+
+    resp = {}
 
     if   "requires" == attr:
         requires = req.POST['requires']
@@ -476,6 +484,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     elif "name" == attr:
         name = req.POST['name']
         form.name[lang] = name
+        resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
         xform = req.FILES['xform']
         xform = xform.read()
@@ -487,8 +496,11 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     elif "put_in_root" == attr:
         put_in_root = req.POST['put_in_root']
         form.put_in_root = True if put_in_root == "True" else False
-    app.save()
-    return back_to_main(**locals())
+    app.save(resp)
+    if ajax:
+        return HttpResponse(json.dumps(resp))
+    else:
+        return back_to_main(**locals())
 
 @require_POST
 @login_and_domain_required
@@ -560,6 +572,8 @@ def rearrange(req, domain, app_id, key):
     app = get_app(domain, app_id)
     ajax = json.loads(req.POST.get('ajax', 'false'))
     i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
+    resp = {}
+
 
     if   "forms" == key:
         module_id = int(req.POST['module_id'])
@@ -571,9 +585,9 @@ def rearrange(req, domain, app_id, key):
         app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
     elif "langs" == key:
         app.rearrange_langs(i, j)
-    app.save()
+    app.save(resp)
     if ajax:
-        return HttpResponse(json.dumps({'status': "OK"}))
+        return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(**locals())
 

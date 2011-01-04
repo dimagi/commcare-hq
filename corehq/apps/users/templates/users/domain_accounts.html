@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h1>COMMCARE USERS ASSOCIATED WITH {{ couch_user.get_id }}</h1>
+	<h4>Your Domains</h4>
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Domain Name" %}</td>
@@ -27,7 +27,7 @@
 	{% endfor %}
 	</table>
 
-	<h1>ALL COMMCARE USERS IN DOMAIN {{ domain|upper }}</h1>
+	<h4>Other Domains</h4>
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Domain Name" %}</td>

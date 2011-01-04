@@ -9,7 +9,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from corehq.util.webutils import render_to_response
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from rapidsms.contrib.messaging.views import messaging
 
 
 def redirect_to_default(req, domain=None):
@@ -64,5 +63,3 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     response = django_logout(req, **{"template_name" : template_name})
     return HttpResponseRedirect(reverse('login'))
 
-def messages(req, domain):
-    return messaging(req)

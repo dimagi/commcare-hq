@@ -29,4 +29,8 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'web/?$', 'web_users', name='web_users'),
     url(r'commcare/?$', 'commcare_users', name='commcare_users'),
     url(r'^httpdigest/?$', 'httpdigest'),
+    url(r'my_groups/?$', 'my_groups', name='my_groups'),
+    url(r'group_memberships/(?P<couch_user_id>[\w-]+)/?$', 'group_membership', name='group_membership'),
+    url(r'group_members/(?P<group_name>[\w-]+)/?$', 'group_members', name='group_members'),
+    url(r'all_groups/?$', 'all_groups', name='all_groups'),
 )

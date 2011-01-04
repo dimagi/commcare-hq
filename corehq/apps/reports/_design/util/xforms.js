@@ -57,14 +57,14 @@ function get_encounter_date(xform_doc) {
 
 function get_form_filled_duration(xform_doc) {
     // in milliseconds
-    var meta = xform.form.meta;
+    var meta = xform_doc.form.meta;
     if (meta && meta.timeEnd && meta.timeStart)
         return new Date(meta.timeEnd).getTime() - new Date(meta.timeStart).getTime();
     return null;
 }
 
 function get_form_filled_date(xform_doc) {
-    var meta = xform.form.meta;
+    var meta = xform_doc.form.meta;
     if (meta && meta.timeEnd) return new Date(meta.timeEnd);
     if (meta && meta.timeStart) return new Date(meta.timeStart);
     return null;
