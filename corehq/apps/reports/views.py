@@ -42,11 +42,11 @@ def paging_submit_history(request, domain, individual):
     def xmlns_to_name(xmlns):
         try:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
+            lang = form['app']['langs'][0]            
         except:
             form = None
 
         if form:
-            lang = form['app']['langs'][0]
             name = "%s > %s > %s" % (
                 form['app']['name'],
                 form['module']['name'][lang],
