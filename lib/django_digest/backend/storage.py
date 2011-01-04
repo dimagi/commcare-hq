@@ -75,6 +75,9 @@ class NonceStorage(object):
     INSERT INTO django_digest_usernonce (user_id, nonce, count, last_used_at)
       VALUES (%s, %s, %s, %s)
     """
+    GET_NONCE_QUERY = """
+    SELECT nonce FROM django_digest_usernonce WHERE nonce=%s
+    """
 
     def __init__(self, db=None):
         self.db = db or get_default_db()
@@ -114,6 +117,12 @@ class NonceStorage(object):
         self._expire_nonces_for_user(user)
         cursor = self.db.connection.cursor()
         try:
+            # make sure we don't insert duplicate values
+            cursor.execute( self.GET_NONCE_QUERY, [nonce] )
+            rows = cursor.fetchone()
+            if rows:
+                # user exists already
+                return False
             cursor.execute(
                 self.INSERT_NONCE_QUERY,
                 [user.id, nonce, nonce_count,
