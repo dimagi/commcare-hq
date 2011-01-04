@@ -15,11 +15,16 @@
         </div>
         <div class="sidebar-wrapper">
             <div class="sidebar" id="user-options">
+                <strong>My Account</strong>
                 <ul>
-                    <li><a href="{% url my_account domain %}">My Account</a></li>
-                    <li><a href="{% url my_phone_numbers domain %}">My Phone Numbers</a></li>
-                    <li><a href="{% url my_commcare_accounts domain %}">My CommCare Accounts</a></li>
-                    <li><a href="{% url my_domains domain %}">My Domains</a></li>
+                    <li><a href="{% url my_account domain %}">Basic Info</a></li>
+                    <li><a href="{% url password_change %}">Change Password</a></li>
+                    <li><a href="{% url my_phone_numbers domain %}">Phone Numbers</a></li>
+                    <li><a href="{% url my_commcare_accounts domain %}">CommCare Accounts</a></li>
+                    <li><a href="{% url my_domains domain %}">Domains</a></li>
+                </ul>
+                <strong>Domain "{{ domain }}"</strong>
+                <ul>
                     <li><a href="{% url web_users domain %}">Web Users</a></li>
                     <li><a href="{% url commcare_users domain %}">CommCare Users</a></li>
                     <li><a href="{% url all_groups domain %}">CommCare Groups</a></li>

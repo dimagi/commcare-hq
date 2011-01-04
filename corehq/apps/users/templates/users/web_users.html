@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h1>ALL USERS IN DOMAIN {{ domain|upper }}</h1>
+	<h1>All users in domain "{{ domain }}"</h1>
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Username" %}</td>
@@ -11,7 +11,7 @@
 		<td>{% trans "E-mail" %}</td>
 		<td>{% trans "Phone Numbers" %}</td>
 	</tr>
-	{% for user in all_users %}
+	{% for user in web_users %}
 	<tr><td></td>
 		<td><a href="{% url user_account domain user.couch_id %}">{{ user.django_user.username }}</a></td>
 		<td>{{ user.django_user.first_name }}</td>

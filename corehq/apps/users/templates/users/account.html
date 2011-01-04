@@ -1,7 +1,6 @@
 {% extends "users/users_base.html" %}
 {% block user-view %}
     <h3>My Account</h3>
-    <a href="{% url password_change %}">Change Password</a>
 	<form name="user_details" method="post">
 	    <table class="edit_single_user">
 	    {{ form.as_table }}

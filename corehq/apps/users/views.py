@@ -9,36 +9,47 @@ from corehq.apps.users.models import CouchUser
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.decorators import login_and_domain_required
 
+
+
+def _users_context(request, domain):
+    return {
+         'web_users': CouchUser.view("users/web_users_by_domain", key=domain),
+         'domain': domain
+    }
+@login_and_domain_required
 def users(req, domain, template="users/users_base.html"):
     return HttpResponseRedirect(reverse(
         "corehq.apps.users.views.my_account",
         args=[domain],
     ))
-
+@login_and_domain_required
 def web_users(request, domain, template="users/web_users.html"):
-    all_users = CouchUser.view("users/web_users_by_domain", key=domain)
-    return render_to_response(request, template, {
-        'domain': domain,
-        'all_users': all_users
-    })
+    context = _users_context(request, domain)
+    return render_to_response(request, template, context)
 
+@login_and_domain_required
 def commcare_users(request, domain, template="users/commcare_users.html"):
-    all_users = CouchUser.view("users/commcare_users_by_domain", key=domain)
-    return render_to_response(request, template, {
-        'domain': domain,
-        'all_users': all_users
+    context = _users_context(request, domain)
+    context.update({
+        'all_users': CouchUser.view("users/commcare_users_by_domain", key=domain),
     })
+    return render_to_response(request, template, context)
 
+@login_and_domain_required
 def my_account(request, domain, template="users/account.html"):
     return edit(request, domain, request.couch_user.couch_id, template)
 
+@login_and_domain_required
 def account(request, domain, couch_id, template="users/account.html"):
     return edit(request, domain, couch_id, template)
 
+@login_and_domain_required
 def my_phone_numbers(request, domain, template="users/phone_numbers.html"):
     return phone_numbers(request, domain, request.couch_user.couch_id, template)
 
+@login_and_domain_required
 def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
@@ -52,6 +63,7 @@ def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"
     return render_to_response(request, template, context)
 
 @require_POST
+@login_and_domain_required
 def delete_phone_number(request, domain, user_id, phone_number):
     user = CouchUser.get(user_id)
     for i in range(0,len(user.phone_numbers)):
@@ -61,9 +73,11 @@ def delete_phone_number(request, domain, user_id, phone_number):
     user.save()
     return HttpResponseRedirect(reverse("phone_numbers", args=(domain, user_id )))
 
+@login_and_domain_required
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
     return commcare_accounts(request, domain, request.couch_user.couch_id, template)
 
+@login_and_domain_required
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
@@ -89,6 +103,7 @@ def commcare_accounts(request, domain, couch_id, template="users/commcare_accoun
     return render_to_response(request, template, context)
 
 @require_POST
+@login_and_domain_required
 def link_commcare_account_to_user(request, domain, couch_user_id, commcare_username):
     user = CouchUser.get(couch_user_id)
     if 'commcare_couch_user_id' not in request.POST: 
@@ -99,6 +114,7 @@ def link_commcare_account_to_user(request, domain, couch_user_id, commcare_usern
     return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id)))
 
 @require_POST
+@login_and_domain_required
 def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
     user = CouchUser.get(couch_user_id)
     if commcare_user_index:
@@ -106,9 +122,11 @@ def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index)
         user.save()
     return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id )))
 
+@login_and_domain_required
 def my_domains(request, domain, template="users/domain_accounts.html"):
     return domain_accounts(request, domain, request.couch_user.couch_id, template)
 
+@login_and_domain_required
 def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
@@ -126,6 +144,7 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
     return render_to_response(request, template, context)
 
 @require_POST
+@login_and_domain_required
 def add_domain_membership(request, domain, user_id, domain_name):
     user = CouchUser.get(user_id)
     if domain_name:
@@ -134,6 +153,7 @@ def add_domain_membership(request, domain, user_id, domain_name):
     return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id)))
 
 @require_POST
+@login_and_domain_required
 def delete_domain_membership(request, domain, user_id, domain_name):
     user = CouchUser.get(user_id)
     for i in range(0,len(user.domain_memberships)):
@@ -143,11 +163,12 @@ def delete_domain_membership(request, domain, user_id, domain_name):
     user.save()
     return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
 
+@login_and_domain_required
 def edit(request, domain, couch_id=None, template="users/account.html"):
     """
     Edit a user
     """
-    context = {}
+    context = _users_context(request, domain)
     if couch_id is None:
         django_user = User()
     else:
@@ -173,6 +194,7 @@ def edit(request, domain, couch_id=None, template="users/account.html"):
     return render_to_response(request, template, context)
 
 @httpdigest
+@login_and_domain_required
 def httpdigest(request, domain):
     return HttpResponse("ok")
 
@@ -180,6 +202,7 @@ def httpdigest(request, domain):
 GROUP VIEWS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+@login_and_domain_required
 def all_groups(request, domain, template="groups/all_groups.html"):
     all_groups = Group.view("groups/by_domain", key=domain)
     return render_to_response(request, template, {
@@ -187,6 +210,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
         'all_groups': all_groups
     })
 
+@login_and_domain_required
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = {}
     group = Group.view("groups/by_name", key=group_name).one()
@@ -217,9 +241,11 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
                     })
     return render_to_response(request, template, context)
 
+@login_and_domain_required
 def my_groups(request, domain, template="groups/groups.html"):
     return group_membership(request, domain, request.couch_user._id, template)
 
+@login_and_domain_required
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = {}
     couch_user = CouchUser.get(couch_user_id)
