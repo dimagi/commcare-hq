@@ -1,13 +1,13 @@
 <?xml version='1.0' ?>
 <registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://openrosa.org/case/test/create">
-<Meta>
+<meta>
     <DeviceID>Chalimbana</DeviceID>
     <TimeStart>2010-06-29T13:42:50.137</TimeStart>
     <TimeEnd />
     <username>admin</username>
     <chw_id>c2c253a1-7d82-11df-a037-005056c00008</chw_id>
     <uid>REPLACE_UID</uid>
-</Meta>
+</meta>
 <case>
     <case_id>REPLACE_CASEID</case_id>
     <date_modified>2010-06-29T13:42:50</date_modified>
