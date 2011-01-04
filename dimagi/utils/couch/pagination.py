@@ -40,7 +40,7 @@ class CouchPaginator(object):
     """
     
     
-    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x): 
+    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x, view_args={}): 
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
@@ -51,6 +51,7 @@ class CouchPaginator(object):
         self._generator_func = generator_func
         self._search = search
         self._search_preprocessor = search_preprocessor
+        self._view_args = view_args
         
     def get_ajax_response(self, request, default_display_length=DEFAULT_DISPLAY_LENGTH, 
                           default_start=DEFAULT_START, extras={}):
@@ -67,7 +68,7 @@ class CouchPaginator(object):
         # search
         search_key = query.get("sSearch", "")
         if self._search and search_key:
-            items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, key=self._search_preprocessor(search_key), reduce=False)
+            items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, key=self._search_preprocessor(search_key), reduce=False, **self._view_args)
             if params.start + len(items) < params.count:
                 total_display_rows = len(items)
             else:
@@ -77,9 +78,9 @@ class CouchPaginator(object):
             # only reduce if the _search param is set.  
             # TODO: get this more smartly from the couch view
             if self._search:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, reduce=False)
+                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, reduce=False, **self._view_args)
             else:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc)
+                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, **self._view_args)
             total_display_rows = items.total_rows
         
         # this startkey, endkey business is not currently used, 
