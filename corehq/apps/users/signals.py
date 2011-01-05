@@ -6,10 +6,12 @@ from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from couchforms.models import XFormInstance
-from corehq.apps.receiver.signals import post_received
-from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS
-from corehq.apps.users.models import create_hq_user_from_commcare_registration
-from corehq.apps.users.models import create_commcare_user_without_django_login
+from corehq.apps.receiver.signals import post_received, ReceiverResult
+from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS,\
+    create_hq_user_from_commcare_registration_info
+from corehq.util.xforms import get_unique_value
+from corehq.apps.users.util import format_username
+from dimagi.utils.logging import log_exception
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -40,14 +42,20 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
     if not created:
         # magically calls our other save signal
         profile.save()
+        
+        """ 
+        TODO: remove this, we must explicitly create the 
+        couch user when we want to
         # save updated django model data to couch model
         couch_user = profile.get_couch_user()
         for i in couch_user.django_user:
             couch_user.django_user[i] = getattr(instance, i)
         couch_user.save()
+        """
         
 post_save.connect(create_user_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
+
 
 """
 Case 2: 
@@ -57,7 +65,6 @@ Question: is it possible to receive registration data from the phone after Case 
 If so, we need to check for a user created via Case 3 and link them to this account
 automatically
 """
-
 def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     # this comes in as xml that looks like:
@@ -85,56 +92,30 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
-        from corehq.apps.users.models import create_hq_user_from_commcare_registration
-        couch_user = create_hq_user_from_commcare_registration(domain, username, password, uuid, imei, date)
+        # we need to check for username conflicts, other issues
+        # and make sure we send the appropriate conflict response to the
+        # phone.
+        username = format_username(username, domain)
+        print username
+        try: 
+            User.objects.get(username=username)
+            prefix, suffix = username.split("@") 
+            username = get_unique_value(User.objects, "username", prefix, sep="", suffix="@%s" % suffix)
+            print username
+        except User.DoesNotExist:
+            # they didn't exist, so we can use this username
+            pass
         
-        return couch_user._id
+        couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, uuid, imei, date)
+        print couch_user
+        print couch_user.get_id
+        return ReceiverResult("I'm rick james bitch!")
     except Exception, e:
-        #import traceback, sys
+        import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
         #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
-        logging.error(str(e))
+        logging.exception(e)
         raise
 
 post_received.connect(create_user_from_commcare_registration)
 
-
-"""
-Case 3: 
-This section automatically creates Couch users whenever a non-registration xform instance 
-is received containing user data for a user that doesn't already exist
-"""
-
-def populate_user_from_commcare_submission(sender, xform, **kwargs):
-    """
-    Create a phone from a metadata submission if its a device we've
-    not seen.
-    """
-    
-    domain = xform.domain
-    try:
-        username = xform.form.meta.username
-        imei = xform.form.meta.deviceID
-        uuid = xform.form.meta.uid
-        
-    except AttributeError:
-        # if these fields don't exist, it's not a regular xform
-        # so we just ignore it
-        return
-    
-    matching_users = CouchUser.view("users/by_commcare_username_domain", key=[username, domain])
-    num_matching_users = len(matching_users)
-    user_already_exists = num_matching_users > 0
-    if not user_already_exists:
-        create_commcare_user_without_django_login(domain, username, uuid, imei, COUCH_USER_AUTOCREATED_STATUS)
-    elif num_matching_users == 1:
-        # user already exists. we should add SIM + IMEI info if applicable
-        couch_user = matching_users.one()
-        couch_user.add_phone_device(imei)
-        couch_user.save()
-    else:
-        # >1 matching user. this is problematic.
-        logging.error("Username %s in domain %s has multiple matches" % (username, domain)) 
-    # we should also add phone and devices
-    
-post_received.connect(populate_user_from_commcare_submission)

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
-from corehq.apps.users.models import CouchUser, create_commcare_user_without_web_user
+from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
@@ -277,8 +277,8 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
-            couch_user = create_commcare_user_without_web_user(domain, username, password, 
-                                                               imei='Generated from HQ')
+            couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
+                                                                        imei='Generated from HQ')
             # set commcare account UUID to match the couch id
             couch_user.commcare_accounts[0].UUID = couch_user.get_id
             couch_user.save()

@@ -10,27 +10,9 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_user
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
-
-class DjangoUser(Document):
-    id = IntegerProperty()
-    username = StringProperty()
-    first_name = StringProperty()
-    last_name = StringProperty()
-    django_type = StringProperty()
-    is_active = BooleanProperty()
-    email = StringProperty()
-    is_superuser = BooleanProperty()
-    is_staff = BooleanProperty()
-    last_login = DateTimeProperty()
-    groups = ListProperty()
-    user_permissions = ListProperty()
-    password = StringProperty()
-    date_joined = DateTimeProperty()
-        
-    class Meta:
-        app_label = 'users'
 
 class DomainMembership(Document):
     """
@@ -54,10 +36,7 @@ class CommCareAccount(Document):
     but we could always extend to multiple commcare
     users if desired later.
     """
-    # django_user should always be created when registering a commcare account properly
-    # however, sometimes we autocreate users (e.g. when getting a form from an unknown user)
-    # in which case, we don't know the password and can't create django_user
-    django_user = SchemaProperty(DjangoUser) # null = True
+    django_user_id = StringProperty()
     UUID = StringProperty()
     registering_phone_id = StringProperty()
     user_data = DictProperty()
@@ -100,9 +79,10 @@ class CouchUser(Document):
     can be associated with multiple phones/device IDs
     """
     # not used e.g. when user is only a commcare user
-    django_user = SchemaProperty(DjangoUser) # null = True
+    django_user_id = StringProperty() # null = True
     domain_memberships = SchemaListProperty(DomainMembership)
-    commcare_accounts = SchemaListProperty(CommCareAccount)
+    # the various commcare accounts associated with this user
+    commcare_accounts = SchemaListProperty(CommCareAccount) 
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
     created_on = DateTimeProperty()
@@ -174,67 +154,18 @@ class CouchUser(Document):
         if membership_count > 0:
             return True
         return False
-
-    def create_commcare_user(self, domain, username, password, uuid='', imei='', date='', **kwargs):
-        def _create_commcare_django_user_from_registration_data(domain, username, password):
-            """ 
-            From registration xml data, automatically build a django user
-            Note that we set the 'is_commcare_user' flag here, so that we don't
-            auto-generate the couch user
-            """
-            user = User()
-            user.username = username
-            user.set_password(password)
-            user.first_name = ''
-            user.last_name  = ''
-            user.email = ""
-            user.is_staff = False # Can't log in to admin site
-            user.is_active = True # Activated upon receipt of confirmation
-            user.is_superuser = False # Certainly not, although this makes login sad
-            user.last_login =  datetime(1970,1,1)
-            user.date_joined = datetime.utcnow()
-            user.is_commcare_user = True
-            return user
-        def _add_commcare_account(django_user, domain, UUID, registering_phone_id, **kwargs):
-            """ 
-            This function expects a real django user.
-            Note that it doesn't create a django user.
-            """
-            for commcare_account in self.commcare_accounts:
-                if commcare_account.django_user.id == django_user.id  and \
-                   commcare_account.domain == domain and \
-                   commcare_account.UUID == UUID and \
-                   commcare_account.registering_phone_id == registering_phone_id:
-                        # already exists
-                        return
-            django_user_doc = model_to_doc(django_user)
-            commcare_account = CommCareAccount(django_user=django_user_doc,
-                                               domain=domain,
-                                               UUID=UUID,
-                                               registering_phone_id=registering_phone_id,
-                                               **kwargs)
-            self.commcare_accounts.append(commcare_account)
-        commcare_django_user =_create_commcare_django_user_from_registration_data(domain, username, password)
-        commcare_django_user.save()
-        _add_commcare_account(commcare_django_user, domain, uuid, imei, date_registered = date, **kwargs)
-
-    def add_commcare_username(self, domain, username, uuid, **kwargs):
+    
+    def add_commcare_account(self, django_user, domain, uuid, imei, **kwargs):
         """
-        This function doesn't set up a full commcare account, it only  has the username
-        This is placeholder, used when we receive xforms from a user who hasn't registered
-        and so for whom we don't have a password. This needs to be manually linked to
-        a commcare/django account asap.
+        Adds a commcare account to this. 
         """
-        django_user = DjangoUser(username=username)
-        for commcare_account in self.commcare_accounts:
-            if commcare_account.domain == domain and commcare_account.django_user.username == username:
-                return
-        commcare_account = CommCareAccount(django_user=django_user,
+        commcare_account = CommCareAccount(django_user_id=django_user.get_profile()._id,
                                            domain=domain,
-                                           UUID=uuid, 
+                                           UUID=uuid, # todo: can we use a different uuid aka the actual id?
+                                           registering_phone_id=imei,
                                            **kwargs)
         self.commcare_accounts.append(commcare_account)
-       
+
     def link_commcare_account(self, domain, from_couch_user_id, commcare_username, **kwargs):
         from_couch_user = CouchUser.get(from_couch_user_id)
         for i in range(0, len(from_couch_user.commcare_accounts)):
@@ -303,12 +234,12 @@ class HqUserProfile(CouchUserProfile):
     (Right now, none additional are required)
     """
     is_commcare_user = models.BooleanField(default=False)
-
+    
     class Meta:
         app_label = 'users'
     
     def __unicode__(self):
-        return "%s @ %s" % (self.user)
+        return "%s" % (self.user)
         
     def get_couch_user(self):
         # This caching could be useful, but for now we leave it out since
@@ -320,52 +251,39 @@ class HqUserProfile(CouchUserProfile):
         return CouchUser.get(self._id)
     
 
-def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
-    """
-    This alias is just to improve readability
-    """
-    couch_user = create_commcare_user_without_web_user(domain, username, password, uuid, imei, date)
-    return couch_user
-
-def create_commcare_user_without_web_user(domain, username, password, uuid='', imei='', date='', **kwargs):
-    """ a 'commcare user' is a couch user which:
+def create_hq_user_from_commcare_registration_info(domain, username, password, uuid='', imei='', date='', **kwargs):
+    """ na 'commcare user' is a couch user which:
     * does not have a web user
     * does have an associated commcare account,
         * has a django account linked to the commcare account for httpdigest auth
     """
-    num_couch_users = len(CouchUser.view("users/by_commcare_username_domain", 
-                                         key=[username, domain]))
-    # TODO: add a check for when uuid is not unique
-    couch_user = CouchUser()
-    if num_couch_users > 0:
-        couch_user.is_duplicate = True
-        couch_user.save()
-    # add metadata to couch user
-    couch_user.add_domain_membership(domain)
+    # create django user for the commcare account
+    django_user = create_user(username, password)
+    
+    # create new couch user
+    couch_user = new_couch_user(domain)
+    
+    # populate the couch user
     if not date:
         date = datetime.now()
-    couch_user.create_commcare_user(domain, username, password, uuid, imei, date)
+    
+    couch_user.add_commcare_account(django_user, domain, uuid, imei)
     couch_user.add_phone_device(IMEI=imei)
     # TODO: fix after clarifying desired behaviour
     # if 'user_data' in xform.form: couch_user.user_data = user_data
     couch_user.save()
     return couch_user
-
-def create_commcare_user_without_django_login(domain, username, uuid, imei='', status='', **kwargs):
-    """
-    This function is used when autocreating a user on form submission from an unknown user
-    Note that we don't know the user's password, so we cannot create a django user for
-    later authentication. This needs to be linked to a django user later.
     
-    """
-    c = CouchUser()
-    c.created_on = datetime.now()
-    c.add_commcare_username(domain, username, uuid, registering_phone_id=imei)
-    c.commcare_accounts[0].user_data = kwargs
-    c.add_phone_device(imei)
-    c.status = status
-    c.save()
-    return c
 
+def new_couch_user(domain):
+    """
+    Gets a new couch user in a domain. 
+    """
+    couch_user = CouchUser()
+    # add metadata to couch user
+    couch_user.add_domain_membership(domain)
+    return couch_user
+    
+    
 # make sure our signals are loaded
 import corehq.apps.users.signals
