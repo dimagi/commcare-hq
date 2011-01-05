@@ -72,7 +72,7 @@ def paging_submit_history(request, domain, individual):
             name = "%s > %s > %s" % (
                 form['app']['name'],
                 form['module']['name'][lang],
-                form['name'][lang]
+                form['form']['name'][lang]
             )
         else:
             name = xmlns
@@ -230,13 +230,62 @@ def daily_submissions(request, domain, view_name, title):
 
 @login_and_domain_required
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
-    results = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
-    forms = [r['value'] for r in results]
+    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    forms = [x['value'] for x in forms]
+
+    forms = sorted(forms, key=lambda form: \
+        (0, form['app']['name'], form['module']['id'], form['form']['id']) \
+        if 'app' in form else \
+        (1, form['xmlns'])
+    )
+
+    apps = []
+    unknown_forms = []
+
+    # organize forms into apps, modules, forms:
+    #        apps = [
+    #            {
+    #                "name": "App",
+    #                "modules": [
+    #                    {
+    #                        "name": "Module 1",
+    #                        "id": 1,
+    #                        "forms": [
+    #                            {...}
+    #                        ]
+    #                    }
+    #                ]
+    #
+    #            }
+    #        ]
+
+    for f in forms:
+        if 'app' in f:
+            if apps and f['app']['name'] == apps[-1]['name']:
+                if f['module']['id'] == apps[-1]['modules'][-1]['id']:
+                    apps[-1]['modules'][-1]['forms'].append(f)
+                else:
+                    module = f['module'].copy()
+                    module.update(forms=[f])
+                    apps[-1]['modules'].append(module)
+            else:
+                app = f['app'].copy()
+                module = f['module'].copy()
+                module.update(forms=[f])
+                app.update(modules=[module])
+                apps.append(app)
+
+        else:
+            unknown_forms.append(f)
+
+
     return render_to_response(request, template, {
         "domain": domain,
         "forms": forms,
+        "forms_by_app": apps,
+        "unknown_forms": unknown_forms,
         "report": {
-            "name": "Excel Export Data"
+            "name": "Export Data to Excel"
         }
     })
 

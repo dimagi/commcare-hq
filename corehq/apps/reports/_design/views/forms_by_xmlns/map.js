@@ -8,8 +8,8 @@ function(doc){
                 emit([app.domain, form.xmlns], {
                     xmlns: form.xmlns,
                     app: {name: app.name, langs: app.langs},
-                    module: {name: module.name},
-                    name: form.name
+                    module: {name: module.name, id: m},
+                    form: {name: form.name, id: f}
                 });
             }
         }

@@ -606,22 +606,20 @@ def save_copy(req, domain, app_id):
     next = req.POST.get('next')
     app = get_app(domain, app_id)
     errors = app.validate()
-    if errors:
-        def replace_params(next, **kwargs):
-            """this is a more general function that should be moved"""
-            url = urlparse.urlparse(next)
-            q = urlparse.parse_qs(url.query)
-            for param in kwargs:
-                if isinstance(kwargs[param], basestring):
-                    q[param] = [kwargs[param]]
-                else:
-                    q[param] = kwargs[param]
-            url = url._replace(query=urllib.urlencode(q, doseq=True))
-            next = urlparse.urlunparse(url)
-            return next
-        errors = map(json.dumps, errors)
-        next = replace_params(next, build_errors=errors)
-    else:
+    def replace_params(next, **kwargs):
+        """this is a more general function that should be moved"""
+        url = urlparse.urlparse(next)
+        q = urlparse.parse_qs(url.query)
+        for param in kwargs:
+            if isinstance(kwargs[param], basestring):
+                q[param] = [kwargs[param]]
+            else:
+                q[param] = kwargs[param]
+        url = url._replace(query=urllib.urlencode(q, doseq=True))
+        next = urlparse.urlunparse(url)
+        return next
+    next = replace_params(next, build_errors=map(json.dumps, errors))
+    if not errors:
         app.save_copy()
     return HttpResponseRedirect(next)
 

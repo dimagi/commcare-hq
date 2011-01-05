@@ -338,9 +338,11 @@
                 </td>
             </tr>
         {% else %}
-            <tr><td class="warning">
-                You have not yet created or uploaded a form.
-            </td></tr>
+            {% if not edit %}
+                <tr><td class="warning">
+                    You have not yet created or uploaded a form.
+                </td></tr>
+            {% endif %}
         {% endif %}
     </table>
 
