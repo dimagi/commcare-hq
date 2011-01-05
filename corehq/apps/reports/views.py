@@ -4,13 +4,16 @@ from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
-from .calc import punchcard #import get_data, get_users
+from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.templatetags.report_tags import render_user_inline
 from dimagi.utils.couch.pagination import CouchPaginator
+
+from couchexport.export import export_excel
+from StringIO import StringIO
 
 iso_format = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -21,6 +24,25 @@ iso_format = '%Y-%m-%dT%H:%M:%SZ'
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse("individual_summary_report", args=[domain]))
+
+@login_and_domain_required
+def export_data(req, domain):
+    """
+    Download all data for a couchdbkit model
+    """
+    export_tag = req.GET.get("export_tag", "")
+    if not export_tag:
+        raise Exception("You must specify a model to download!")
+    tmp = StringIO()
+    if export_excel([domain, export_tag], tmp):
+        response = HttpResponse(mimetype='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s.xls' % export_tag
+        response.write(tmp.getvalue())
+        tmp.close()
+        return response
+    else:
+        return HttpResponse("Sorry, there was no data found for the tag '%s'." % export_tag)
+
 
 @login_and_domain_required
 def submit_history(request, domain, template="reports/partials/couch_report_partial.html"):
@@ -42,7 +64,7 @@ def paging_submit_history(request, domain, individual):
     def xmlns_to_name(xmlns):
         try:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
-            lang = form['app']['langs'][0]            
+            lang = form['app']['langs'][0]
         except:
             form = None
 
