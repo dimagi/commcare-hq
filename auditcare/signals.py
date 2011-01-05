@@ -7,7 +7,7 @@ import settings
 try:
     from corehq.util.threadlocals import get_current_user
 except:
-    from auditcare.utils.threadlocals import get_current_user
+    from auditcare.utils import get_current_user
 
 from django.db import transaction
 from models import *

@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import Document
-from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty
+from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import uuid
@@ -195,8 +195,8 @@ class FieldAccess(models.Model):
     class Meta:
         app_label = 'auditcare'
 
-    class Meta:
-        unique_together = ('object_type', 'field')
+#    class Meta:
+#        unique_together = ('object_type', 'field')
 
 class ModelAuditEvent(models.Model):
     object_type = StringProperty() # String of ContentType/Model, verbose_name='Case linking content type', blank=True, null=True)

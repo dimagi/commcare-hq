@@ -1,9 +1,9 @@
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
-from corehq.apps.auditor.models import AuditEvent, ModelActionAudit, AccessAudit
+from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 import unittest
 import settings
-from corehq.util.threadlocals import _thread_locals
+from auditcare.util import _thread_locals
 
 
 def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):
