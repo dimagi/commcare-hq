@@ -27,6 +27,10 @@ form table {
     background-color: #faa;
 }
 
+.helptext {
+    font-size: .8em;
+}
+
 /*div.form-label {*/
     /*float: left;*/
 /*}*/

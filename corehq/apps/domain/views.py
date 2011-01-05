@@ -161,7 +161,7 @@ def _create_new_domain_request( request, kind, form, now ):
         new_user = User()
         new_user.first_name = form.cleaned_data['first_name']
         new_user.last_name  = form.cleaned_data['last_name']
-        new_user.username = form.cleaned_data['username']
+        new_user.username = form.cleaned_data['email']
         new_user.email = form.cleaned_data['email']
         assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
         new_user.set_password(form.cleaned_data['password_1'])                                                        
@@ -253,7 +253,7 @@ def registration_request(request, kind=None):
     
             # Only gets here if the database-insert try block's else clause executed
             if kind == 'existing_user':
-                vals = {'domain_name':dom_req.domain.name, 'username':request.user.username}
+                vals = {'domain_name':dom_req.domain.name, 'username':request.user.email}
                 return render_to_response(request, 'domain/registration_confirmed.html', vals)
             else: # new_user
                 vals = dict(email=form.cleaned_data['email'])
@@ -471,7 +471,7 @@ class AdminEditsUserForm( AdminRegistersUserForm ):
         # Only throw an error if we try to CHANGE our username, and if that change will conflict with
         # another existing name
         if data != self.existing_username and User.objects.filter(username__iexact=data).count() > 0:
-            raise forms.ValidationError('Username already taken; please try another')        
+            raise forms.ValidationError('Email already in use; please try another')        
         return data
 
     def clean_password_1(self):

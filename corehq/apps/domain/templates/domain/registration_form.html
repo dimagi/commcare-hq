@@ -26,7 +26,9 @@
             {% for field in form.visible_fields %}
                 <tr>                
                     {% ifnotequal field.name 'tos_confirmed' %}
-                        <td>{{ field.label_tag }}</td>
+                        <td>{{ field.label_tag }}
+                        	<br/><span class="helptext">{{field.help_text}}</span>
+                        </td>
                         <td>{{ field }}</td>
                     {%else%}
                         <td colspan="2">

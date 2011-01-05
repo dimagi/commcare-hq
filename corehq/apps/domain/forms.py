@@ -88,8 +88,9 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     domain_name =  forms.CharField(label='Domain name', max_length=Domain._meta.get_field('name').max_length)
     first_name  =  forms.CharField(label='Your first name', max_length=User._meta.get_field('first_name').max_length)
     last_name   =  forms.CharField(label='Your last (family) name', max_length=User._meta.get_field('last_name').max_length)    
-    email       =  forms.EmailField(label='Your email address', max_length=User._meta.get_field('email').max_length)    
-    username    =  forms.CharField(label='Username', max_length=User._meta.get_field('username').max_length)
+    email       =  forms.EmailField(label='Your email address', 
+                                    max_length=User._meta.get_field('email').max_length, 
+                                    help_text='(This will be your unique login.)')
     password_1   =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     password_2   =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     
@@ -101,7 +102,6 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
             del self.fields['first_name']
             del self.fields['last_name']
             del self.fields['email']
-            del self.fields['username']
             del self.fields['password_1']
             del self.fields['password_2']        
         
@@ -119,8 +119,8 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
             raise forms.ValidationError('Domain name already taken; please try another')        
         return data
  
-    def clean_username(self):
-        data = self.cleaned_data['username'].strip()
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip()
         if User.objects.filter(username__iexact=data).count() > 0:
             raise forms.ValidationError('Username already taken; please try another')        
         return data
