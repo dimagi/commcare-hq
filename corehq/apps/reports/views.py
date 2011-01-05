@@ -72,7 +72,7 @@ def paging_submit_history(request, domain, individual):
             name = "%s > %s > %s" % (
                 form['app']['name'],
                 form['module']['name'][lang],
-                form['name'][lang]
+                form['form']['name'][lang]
             )
         else:
             name = xmlns
