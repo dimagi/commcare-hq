@@ -1,24 +1,113 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
 
+{% block head %}
+    {{ block.super }}
+    <style>
+        th {
+            text-align: left;
+        }
+        table.export_data a {
+            color: #0067B1;
+        }
+        table.export_data {
+            border: 1px solid #ccc;
+            margin: auto;
+        }
+    </style>
+{% endblock %}
+
 {% block reportcontent %}
     <div class="padded">
-        Download data submitted for:
-        <ul class="padded">
+{#        <ul class="padded">#}
+{#            {% for form in forms %}#}
+{#                <li>#}
+{#                    <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">#}
+{#                        {% if form.app %}#}
+{#                            {{ form.app.name }} &gt;#}
+{#                            {{ form.module.name|trans:form.app.langs }} &gt;#}
+{#                            {{ form.form.name|trans:form.app.langs }}#}
+{##}
+{#                        {% else %}#}
+{#                            {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}#}
+{#                        {% endif %}#}
+{#                    </a>#}
+{#                </li>#}
+{#            {% endfor %}#}
+{#        </ul>#}
+        
+{#        <ul class="indented">#}
+{#            {% for app in forms_by_app %}#}
+{#                <li>#}
+{#                    <strong>{{ app.name }}</strong>#}
+{#                    <ul>#}
+{#                        {% for module in app.modules %}#}
+{#                            <li>#}
+{#                                <strong>{{ module.name|trans:app.langs }}</strong>#}
+{#                                <ul>#}
+{#                                    {% for form in module.forms %}#}
+{#                                        <li>#}
+{#                                            <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">#}
+{#                                                {{ form.form.name|trans:app.langs }}#}
+{#                                            </a>#}
+{#                                        </li>#}
+{#                                    {% endfor %}#}
+{#                                </ul>#}
+{#                            </li>#}
+{#                        {% endfor %}#}
+{#                    </ul>#}
+{##}
+{#                </li>#}
+{#            {% endfor %}#}
+{#            {% if unknown_forms %}#}
+{#                <li>#}
+{#                    <strong>Unknown Forms</strong>#}
+{#                    <ul>#}
+{#                        {% for form in unknown_forms %}#}
+{#                            <li>#}
+{#                                <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">#}
+{#                                    {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}#}
+{#                                </a>#}
+{#                            </li>#}
+{#                        {% endfor %}#}
+{#                    </ul>#}
+{#                </li>#}
+{#            {% endif %}#}
+{#        </ul>#}
+    {% if forms %}
+        <table class="export_data">
+            <tr>
+                <th>Application</th>
+                <th>Module</th>
+                <th>Form</th>
+                <th></th>
+            </tr>
             {% for form in forms %}
-                <li>
-                    <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">
-                        {% if form.app %}
-                            {{ form.app.name }} &gt;
-                            {{ form.module.name|trans:form.app.langs }} &gt;
-                            {{ form.name|trans:form.app.langs }}
+                <tr class="{% cycle "odd" "even" %}">
+                    <td>{% ifchanged %}{{ form.app.name }} {% endifchanged %}</td>
+                    <td>
+                        {% ifchanged %}
+                            <!--Make sure to check if {{ form.app.name }} changed-->
+                            {{ form.module.name|trans:form.app.langs }}
+                        {% endifchanged %}
+                    </td>
+                    <td>
+                            {% if form.app %}
+                                {{ form.form.name|trans:form.app.langs }}
 
-                        {% else %}
-                            {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}
-                        {% endif %}
-                    </a>
-                </li>
+                            {% else %}
+                                {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}
+                            {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">
+                            Download
+                        </a>
+                    </td>
+                </tr>
             {% endfor %}
-        </ul>
+        </table>
+    {% endif %}
+
     </div>
 {% endblock %}
