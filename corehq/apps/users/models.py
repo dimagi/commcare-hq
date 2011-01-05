@@ -320,15 +320,18 @@ class HqUserProfile(CouchUserProfile):
     
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
-    """ a 'commcare user' is a couch user which:
-    * does not have a web user
-    * does have an associated commcare account,
-        * has a django account linked to the commcare account for httpdigest auth
+    """
+    This alias is just to improve readability
     """
     couch_user = create_commcare_user_without_web_user(domain, username, password, uuid, imei, date)
     return couch_user
 
 def create_commcare_user_without_web_user(domain, username, password, uuid='', imei='', date='', **kwargs):
+    """ a 'commcare user' is a couch user which:
+    * does not have a web user
+    * does have an associated commcare account,
+        * has a django account linked to the commcare account for httpdigest auth
+    """
     num_couch_users = len(CouchUser.view("users/by_commcare_username_domain", 
                                          key=[username, domain]))
     # TODO: add a check for when uuid is not unique

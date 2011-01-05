@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.models import create_commcare_user_without_web_user
+from corehq.apps.users.models import create_commcare_user_without_django_login
 
 class PhoneUsersTestCase(TestCase):
     
@@ -47,7 +47,7 @@ class PhoneUsersTestCase(TestCase):
                                           key=self.domain).count()
         self.assertEquals(phone_user_count, 0)
         # create a user without an associated django account
-        couch_user = create_commcare_user_without_web_user(domain = self.domain, 
+        couch_user = create_commcare_user_without_django_login(domain = self.domain, 
                                                            username = 'commcare_username')
         couch_user.add_domain_membership(self.domain)
         couch_user.add_phone_number(123)
