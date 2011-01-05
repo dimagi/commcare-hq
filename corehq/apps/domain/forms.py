@@ -90,7 +90,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     last_name   =  forms.CharField(label='Your last (family) name', max_length=User._meta.get_field('last_name').max_length)    
     email       =  forms.EmailField(label='Your email address', 
                                     max_length=User._meta.get_field('email').max_length, 
-                                    help_text='(This will be your unique login.)')
+                                    help_text='(This will be the unique login.)')
     password_1   =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     password_2   =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     
