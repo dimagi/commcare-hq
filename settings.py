@@ -103,21 +103,15 @@ HQ_APPS = (
     'corehq.apps.case',
     'corehq.apps.domain',
     'corehq.apps.hqwebapp',
-    'corehq.apps.program',
-    'corehq.apps.phone',
     'corehq.apps.logtracker',
 
-    'corehq.apps.releasemanager',
-    'corehq.apps.requestlogger',
     'corehq.apps.docs',
     'corehq.apps.help',
-    'ota_restore',
     'couchforms',
     'couchexport',
     'couchlog',
     'corehq.apps.receiver',
     'corehq.apps.app_manager',
-    'corehq.apps.new_data',
     'corehq.apps.users',
     'corehq.apps.groups',
     'corehq.apps.sms',
@@ -136,11 +130,6 @@ except:
     INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-#    ("message_log", "Message Log"),
-#    ('corehq.apps.hqwebapp.views.dashboard', 'Dashboard'),
-#    ('corehq.apps.releasemanager.views.projects', 'Release Manager'),
-#    #('corehq.apps.receiver.views.show_submits', 'Submissions'),
-#    ('corehq.apps.xforms.views.dashboard', 'XForms'),
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
@@ -167,9 +156,6 @@ DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH=os.path.join("data","builds")
-
-####### Photo App settings  #######
-PHOTO_IMAGE_PATH=os.path.join("data","photos")
 
 
 ####### Shared/Global/UI Settings ######
@@ -264,7 +250,6 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchexport',
         'couchlog',
         'app_manager',
-        'new_data',
         'case',
         'users',
         'groups',
