@@ -4,8 +4,8 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.forms import UserForm
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import UserForm, CommCareAccountForm
+from corehq.apps.users.models import CouchUser, create_commcare_user_without_web_user
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
@@ -267,3 +267,27 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
 
+@login_and_domain_required
+def add_commcare_account(request, domain, template="users/add_commcare_account.html"):
+    """
+    Create a new commcare account
+    """
+    if request.method == "POST":
+        form = CommCareAccountForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            couch_user = create_commcare_user_without_web_user(domain, username, password, 
+                                                               imei='Generated from HQ')
+            # set commcare account UUID to match the couch id
+            couch_user.commcare_accounts[0].UUID = couch_user.get_id
+            couch_user.save()
+            return HttpResponseRedirect(reverse("commcare_accounts", args=[domain, request.couch_user.get_id]))  
+    else:
+        form = CommCareAccountForm()
+    return render_to_response(request, template, 
+                              {"form": form,
+                               "couch_user": request.couch_user,
+                               "domain": domain })
+                               
+                                

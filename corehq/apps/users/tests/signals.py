@@ -19,8 +19,10 @@ class SignalsTestCase(TestCase):
         self.xform.form.meta = Mock()
         self.username = 'username'
         self.device_ID = 'DeviceID'
+        self.uid = 'commcare_user_uuid'
         self.xform.form.meta.username = self.username
         self.xform.form.meta.deviceID = self.device_ID
+        self.xform.form.meta.uid = self.uid
         
     def testNewUserFromFormSubmission(self):
         """ 
@@ -30,9 +32,10 @@ class SignalsTestCase(TestCase):
         all_users = CouchUser.view("users/all_users")
         self.assertEqual(len(all_users),1)
         user = CouchUser.view("users/all_users").one()
-        self.assertEqual(user.commcare_accounts[0].django_user.username,'username')
+        self.assertEqual(user.commcare_accounts[0].django_user.username,self.username)
         self.assertEqual(user.commcare_accounts[0].domain,self.xform.domain)
-        self.assertEqual(user.phone_devices[0].IMEI,'DeviceID')
+        self.assertEqual(user.commcare_accounts[0].UUID, self.uid)
+        self.assertEqual(user.phone_devices[0].IMEI,self.device_ID)
         # user should not be associated with any django accounts, since we don't have passwords
         self.assertEqual(user.django_user.username,None)
         self.assertEqual(len(user.commcare_accounts),1)
