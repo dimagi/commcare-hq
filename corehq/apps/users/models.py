@@ -321,19 +321,25 @@ class HqUserProfile(CouchUserProfile):
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
     """ a 'commcare user' is a couch user which:
-    * has a django web login  
-    * has an associated commcare account,
-        * has a second django account linked to the commcare account for httpdigest auth
+    * does not have a web user
+    * does have an associated commcare account,
+        * has a django account linked to the commcare account for httpdigest auth
     """
-    num_couch_users = len(CouchUser.view("users/by_username_domain", 
+    couch_user = create_commcare_user_without_web_user(domain, username, password, uuid, imei, date)
+    return couch_user
+
+def create_commcare_user_without_web_user(domain, username, password, uuid='', imei='', date='', **kwargs):
+    num_couch_users = len(CouchUser.view("users/by_commcare_username_domain", 
                                          key=[username, domain]))
     # TODO: add a check for when uuid is not unique
     couch_user = CouchUser()
     if num_couch_users > 0:
-        couch_user.is_duplicate = "True"
+        couch_user.is_duplicate = True
         couch_user.save()
     # add metadata to couch user
     couch_user.add_domain_membership(domain)
+    if not date:
+        date = datetime.now()
     couch_user.create_commcare_user(domain, username, password, uuid, imei, date)
     couch_user.add_phone_device(IMEI=imei)
     # TODO: fix after clarifying desired behaviour
@@ -341,7 +347,7 @@ def create_hq_user_from_commcare_registration(domain, username, password, uuid='
     couch_user.save()
     return couch_user
 
-def create_commcare_user_without_web_user(domain, username, imei='', status='', **kwargs):
+def create_commcare_user_without_django_login(domain, username, imei='', status='', **kwargs):
     """
     This function is used when autocreating a user on form submission from an unknown user
     Note that we don't know the user's password, so we cannot create a django user for

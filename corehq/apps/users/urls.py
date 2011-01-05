@@ -33,4 +33,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'group_memberships/(?P<couch_user_id>[\w-]+)/?$', 'group_membership', name='group_membership'),
     url(r'group_members/(?P<group_name>[\w-]+)/?$', 'group_members', name='group_members'),
     url(r'all_groups/?$', 'all_groups', name='all_groups'),
+    url(r'add_commcare_account/?$', 
+        'add_commcare_account',
+        name='add_commcare_account'),
 )

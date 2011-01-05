@@ -9,7 +9,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.receiver.signals import post_received
 from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS
 from corehq.apps.users.models import create_hq_user_from_commcare_registration
-from corehq.apps.users.models import create_commcare_user_without_web_user
+from corehq.apps.users.models import create_commcare_user_without_django_login
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -125,7 +125,7 @@ def populate_user_from_commcare_submission(sender, xform, **kwargs):
     num_matching_users = len(matching_users)
     user_already_exists = num_matching_users > 0
     if not user_already_exists:
-        create_commcare_user_without_web_user(domain, username, imei, COUCH_USER_AUTOCREATED_STATUS)
+        create_commcare_user_without_django_login(domain, username, imei, COUCH_USER_AUTOCREATED_STATUS)
     elif num_matching_users == 1:
         # user already exists. we should add SIM + IMEI info if applicable
         couch_user = matching_users.one()
