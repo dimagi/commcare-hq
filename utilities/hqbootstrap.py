@@ -27,10 +27,10 @@ def run():
     from django.contrib.auth.models import User
 
     auth_user_1 = User()
-    auth_user_1.username = u'admin'
+    auth_user_1.username = u'admin@test.com'
     auth_user_1.first_name = u''
     auth_user_1.last_name = u''
-    auth_user_1.email = u'test@test.com'
+    auth_user_1.email = u'admin@test.com'
     auth_user_1.password = u'sha1$f8d4b$b6d2f6431c423687c227ad261caa46faaf16917d'
     auth_user_1.is_staff = True
     auth_user_1.is_active = True
@@ -40,7 +40,7 @@ def run():
     auth_user_1.save()
 
     auth_user_2 = User()
-    auth_user_2.username = u'test'
+    auth_user_2.username = u'test@test.com'
     auth_user_2.first_name = u'test'
     auth_user_2.last_name = u'test'
     auth_user_2.email = u'test@test.com'
