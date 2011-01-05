@@ -84,11 +84,23 @@
             </tr>
             {% for form in forms %}
                 <tr class="{% cycle "odd" "even" %}">
-                    <td>{% ifchanged %}{{ form.app.name }} {% endifchanged %}</td>
                     <td>
                         {% ifchanged %}
-                            <!--Make sure to check if {{ form.app.name }} changed-->
-                            {{ form.module.name|trans:form.app.langs }}
+                            {% if form.app %}
+                                {{ form.app.name }}
+                            {% else %}
+                                Unknown Forms <!---->
+                            {% endif %}
+                        {% endifchanged %}
+                    </td>
+                    <td>
+                        {% ifchanged %}
+                            {% if form.app %}
+                                <!--Make sure to check if {{ form.app.name }} changed-->
+                                {{ form.module.name|trans:form.app.langs }}
+                            {% else %}
+                                <!---->
+                            {% endif %}
                         {% endifchanged %}
                     </td>
                     <td>
