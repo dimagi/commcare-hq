@@ -28,6 +28,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ),
 
 
+    url(r"^export/", 'export_data'),
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
     url(r'^r/', include(actual_reports)),
     url(r'^paging/', include(paging_reports)),

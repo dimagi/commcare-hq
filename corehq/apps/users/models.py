@@ -218,7 +218,7 @@ class CouchUser(Document):
         commcare_django_user.save()
         _add_commcare_account(commcare_django_user, domain, uuid, imei, date_registered = date, **kwargs)
 
-    def add_commcare_username(self, domain, username, **kwargs):
+    def add_commcare_username(self, domain, username, uuid, **kwargs):
         """
         This function doesn't set up a full commcare account, it only  has the username
         This is placeholder, used when we receive xforms from a user who hasn't registered
@@ -231,6 +231,7 @@ class CouchUser(Document):
                 return
         commcare_account = CommCareAccount(django_user=django_user,
                                            domain=domain,
+                                           UUID=uuid, 
                                            **kwargs)
         self.commcare_accounts.append(commcare_account)
        
@@ -320,20 +321,29 @@ class HqUserProfile(CouchUserProfile):
     
 
 def create_hq_user_from_commcare_registration(domain, username, password, uuid='', imei='', date='', **kwargs):
-    """ a 'commcare user' is a couch user which:
-    * has a django web login  
-    * has an associated commcare account,
-        * has a second django account linked to the commcare account for httpdigest auth
     """
-    num_couch_users = len(CouchUser.view("users/by_username_domain", 
+    This alias is just to improve readability
+    """
+    couch_user = create_commcare_user_without_web_user(domain, username, password, uuid, imei, date)
+    return couch_user
+
+def create_commcare_user_without_web_user(domain, username, password, uuid='', imei='', date='', **kwargs):
+    """ a 'commcare user' is a couch user which:
+    * does not have a web user
+    * does have an associated commcare account,
+        * has a django account linked to the commcare account for httpdigest auth
+    """
+    num_couch_users = len(CouchUser.view("users/by_commcare_username_domain", 
                                          key=[username, domain]))
     # TODO: add a check for when uuid is not unique
     couch_user = CouchUser()
     if num_couch_users > 0:
-        couch_user.is_duplicate = "True"
+        couch_user.is_duplicate = True
         couch_user.save()
     # add metadata to couch user
     couch_user.add_domain_membership(domain)
+    if not date:
+        date = datetime.now()
     couch_user.create_commcare_user(domain, username, password, uuid, imei, date)
     couch_user.add_phone_device(IMEI=imei)
     # TODO: fix after clarifying desired behaviour
@@ -341,7 +351,7 @@ def create_hq_user_from_commcare_registration(domain, username, password, uuid='
     couch_user.save()
     return couch_user
 
-def create_commcare_user_without_web_user(domain, username, imei='', status='', **kwargs):
+def create_commcare_user_without_django_login(domain, username, uuid, imei='', status='', **kwargs):
     """
     This function is used when autocreating a user on form submission from an unknown user
     Note that we don't know the user's password, so we cannot create a django user for
@@ -350,7 +360,7 @@ def create_commcare_user_without_web_user(domain, username, imei='', status='', 
     """
     c = CouchUser()
     c.created_on = datetime.now()
-    c.add_commcare_username(domain, username, registering_phone_id=imei)
+    c.add_commcare_username(domain, username, uuid, registering_phone_id=imei)
     c.commcare_accounts[0].user_data = kwargs
     c.add_phone_device(imei)
     c.status = status
