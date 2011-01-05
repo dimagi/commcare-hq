@@ -115,6 +115,7 @@ def populate_user_from_commcare_submission(sender, xform, **kwargs):
     try:
         username = xform.form.meta.username
         imei = xform.form.meta.deviceID
+        uuid = xform.form.meta.uid
         
     except AttributeError:
         # if these fields don't exist, it's not a regular xform
@@ -125,7 +126,7 @@ def populate_user_from_commcare_submission(sender, xform, **kwargs):
     num_matching_users = len(matching_users)
     user_already_exists = num_matching_users > 0
     if not user_already_exists:
-        create_commcare_user_without_django_login(domain, username, imei, COUCH_USER_AUTOCREATED_STATUS)
+        create_commcare_user_without_django_login(domain, username, uuid, imei, COUCH_USER_AUTOCREATED_STATUS)
     elif num_matching_users == 1:
         # user already exists. we should add SIM + IMEI info if applicable
         couch_user = matching_users.one()

@@ -25,8 +25,10 @@ class CommCareUsersTestCase(TestCase):
         commcare_username = self.commcare_username
         commcare_imei = 'imei'
         commcare_user_data = 'random'
+        commcare_user_uuid = 'commcare_user_uuid'
         couch_user_2 = create_commcare_user_without_django_login(domain = commcare_domain, 
                                                           username = commcare_username, 
+                                                          uuid = commcare_user_uuid,
                                                           imei = commcare_imei, 
                                                           random_user_info = commcare_user_data,
                                                           status = COUCH_USER_AUTOCREATED_STATUS)

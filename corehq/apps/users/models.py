@@ -218,7 +218,7 @@ class CouchUser(Document):
         commcare_django_user.save()
         _add_commcare_account(commcare_django_user, domain, uuid, imei, date_registered = date, **kwargs)
 
-    def add_commcare_username(self, domain, username, **kwargs):
+    def add_commcare_username(self, domain, username, uuid, **kwargs):
         """
         This function doesn't set up a full commcare account, it only  has the username
         This is placeholder, used when we receive xforms from a user who hasn't registered
@@ -231,6 +231,7 @@ class CouchUser(Document):
                 return
         commcare_account = CommCareAccount(django_user=django_user,
                                            domain=domain,
+                                           UUID=uuid, 
                                            **kwargs)
         self.commcare_accounts.append(commcare_account)
        
@@ -350,7 +351,7 @@ def create_commcare_user_without_web_user(domain, username, password, uuid='', i
     couch_user.save()
     return couch_user
 
-def create_commcare_user_without_django_login(domain, username, imei='', status='', **kwargs):
+def create_commcare_user_without_django_login(domain, username, uuid, imei='', status='', **kwargs):
     """
     This function is used when autocreating a user on form submission from an unknown user
     Note that we don't know the user's password, so we cannot create a django user for
@@ -359,7 +360,7 @@ def create_commcare_user_without_django_login(domain, username, imei='', status=
     """
     c = CouchUser()
     c.created_on = datetime.now()
-    c.add_commcare_username(domain, username, registering_phone_id=imei)
+    c.add_commcare_username(domain, username, uuid, registering_phone_id=imei)
     c.commcare_accounts[0].user_data = kwargs
     c.add_phone_device(imei)
     c.status = status

@@ -48,7 +48,8 @@ class PhoneUsersTestCase(TestCase):
         self.assertEquals(phone_user_count, 0)
         # create a user without an associated django account
         couch_user = create_commcare_user_without_django_login(domain = self.domain, 
-                                                           username = 'commcare_username')
+                                                           username = 'commcare_username',
+                                                           uuid = 'commcare_username_uuid')
         couch_user.add_domain_membership(self.domain)
         couch_user.add_phone_number(123)
         couch_user.save()
@@ -60,7 +61,7 @@ class PhoneUsersTestCase(TestCase):
                                     key=self.domain).one()
         self.assertEquals(phone_user['value'][0], 'commcare_username')
         # add a commcare account and verify commcare username is returned
-        couch_user.add_commcare_username(self.domain,'commcare_username_2')
+        couch_user.add_commcare_username(self.domain,'commcare_username_2', 'commcare_account_uuid')
         couch_user.save()
         phone_user = CouchUser.view("users/phone_users_by_domain", 
                                     key=self.domain).one()
