@@ -2,8 +2,7 @@ from datetime import datetime
 from django.test import TestCase
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser, COUCH_USER_AUTOCREATED_STATUS
-from corehq.apps.users.signals import create_hq_user_from_commcare_registration
-from corehq.apps.users.models import create_commcare_user_without_django_login
+from corehq.apps.users.signals import create_hq_user_from_commcare_registration_info
 
 class CommCareUsersTestCase(TestCase):
     

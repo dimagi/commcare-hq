@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import logging
+import corehq.apps.users.xml as xml
 from datetime import datetime
 from django.db.models.signals import post_save
 from django.conf import settings
@@ -90,26 +91,22 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         uuid = xform.form['uuid']
         date = xform.form['date']
         imei = xform.form['registering_phone_id']
-        # TODO: implement this properly, more like xml_to_json(user_data)
         domain = xform.domain
+        
         # we need to check for username conflicts, other issues
         # and make sure we send the appropriate conflict response to the
         # phone.
         username = format_username(username, domain)
-        print username
         try: 
             User.objects.get(username=username)
             prefix, suffix = username.split("@") 
             username = get_unique_value(User.objects, "username", prefix, sep="", suffix="@%s" % suffix)
-            print username
         except User.DoesNotExist:
             # they didn't exist, so we can use this username
             pass
         
         couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, uuid, imei, date)
-        print couch_user
-        print couch_user.get_id
-        return ReceiverResult("I'm rick james bitch!")
+        return ReceiverResult(xml.get_response(couch_user))
     except Exception, e:
         import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -118,4 +115,3 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         raise
 
 post_received.connect(create_user_from_commcare_registration)
-

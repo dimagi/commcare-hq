@@ -11,6 +11,7 @@ from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.users.util import django_user_from_couch_id
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -100,20 +101,21 @@ class CouchUser(Document):
 
     class Meta:
         app_label = 'users'
-        
+    
+    @property
+    def default_django_user(self):
+        id = ""
+        # first choice: web user login
+        if self.django_user_id:       id = self.django_user_id 
+        # second choice: latest registered commcare account
+        elif self.commcare_accounts:  id = self.commcare_accounts[-1].django_user_id
+        if not id:
+            raise User.DoesNotExist("This couch user doesn't have a linked django account!")
+        return django_user_from_couch_id(id)
+            
     @property
     def username(self):
-        # first choice: web user login
-        if self.django_user.username:
-            return self.django_user.username
-        # second choice: latest registered commcare account
-        if len(self.commcare_accounts)>0:
-            return self.commcare_accounts[-1].django_user.username
-        # third choice: phone number
-        if len(self.phone_numbers)>0:
-            return self.phone_numbers[-1].number
-        # failing all else, default to global uuid
-        return self.get_id
+        return self.default_django_user.username
         
     def save(self, *args, **kwargs):
         self.django_type = "users.hquserprofile"
@@ -262,7 +264,6 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     
     # create new couch user
     couch_user = new_couch_user(domain)
-    
     # populate the couch user
     if not date:
         date = datetime.now()
