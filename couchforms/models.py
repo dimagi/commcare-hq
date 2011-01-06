@@ -50,8 +50,6 @@ class Metadata(object):
     uid = None
 
     def __init__(self, meta_block):
-        if const.TAG_META_CLINIC_ID in meta_block:
-            self.clinic_id = str(meta_block[const.TAG_META_CLINIC_ID])
         if const.TAG_META_TIMESTART in meta_block:
             self.time_start = string_to_datetime(meta_block[const.TAG_META_TIMESTART])
         elif "time_start" in meta_block:

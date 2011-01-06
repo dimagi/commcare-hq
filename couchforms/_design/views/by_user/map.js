@@ -8,7 +8,7 @@ function(doc) {
         return new Date(parts[0], parts[1]-1, parts[2]); // months are 0-based
     }
      
-    function get_encounter_date(xform_doc) {
+    function get_date(xform_doc) {
         function get_date_string(xform_doc) {
             // check some expected places for a date
             var meta = xform_doc.form.meta;
@@ -25,10 +25,10 @@ function(doc) {
         if (meta) return meta.user_id;
     }
     if (doc.doc_type == "XFormInstance" && get_user_id(doc) != null) {
-        date = get_encounter_date(doc);
+        date = get_date(doc);
         if (!date) {
             date = Date();
         }
-        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns, doc.form.meta.clinic_id], 1);
+        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns], 1);
     } 
 }
