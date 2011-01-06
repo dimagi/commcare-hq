@@ -7,7 +7,8 @@ from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from couchforms.models import XFormInstance
-from corehq.apps.receiver.signals import post_received, ReceiverResult
+from corehq.apps.receiver.signals import post_received, ReceiverResult,\
+    Certainty
 from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS,\
     create_hq_user_from_commcare_registration_info
 from corehq.util.xforms import get_unique_value
@@ -106,7 +107,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
             pass
         
         couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, uuid, imei, date)
-        return ReceiverResult(xml.get_response(couch_user))
+        return ReceiverResult(xml.get_response(couch_user), Certainty.CERTAIN)
     except Exception, e:
         import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()

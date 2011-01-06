@@ -7,6 +7,12 @@ def format_username(username, domain):
     sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
     return "%s@%s.%s" % (username, domain, sitewide_domain)
 
+def raw_username(username):
+    """
+    Strips the @domain.commcarehq.org from the username if it's there
+    """
+    return username.split("@")[0]
+
 def django_user_from_couch_id(id):
     """
     From a couch id of a profile object, get the django user
