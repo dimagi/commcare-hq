@@ -156,5 +156,5 @@ class XFormDuplicate(XFormInstance):
     
     def save(self, *args, **kwargs):
         self["#doc_type"] = "XFormDuplicate"
-        super(CXFormDuplicate, self).save(*args, **kwargs)
+        super(XFormDuplicate, self).save(*args, **kwargs)
         
