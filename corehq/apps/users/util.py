@@ -22,3 +22,15 @@ def django_user_from_couch_id(id):
     django_id = couch_rep["django_user"]["id"]
     return User.objects.get(id=django_id)
 
+def commcare_account_from_django_user(django_user):
+    couch_id = django_user.get_profile()._id
+    from corehq.apps.users.models import CommCareAccount
+    return CommCareAccount.view("users/commcare_users_by_django_profile_id", 
+                                key=couch_id).one()
+    
+                          
+def couch_user_from_django_user(django_user):
+    couch_id = django_user.get_profile()._id
+    from corehq.apps.users.models import CouchUser
+    return CouchUser.view("users/couch_users_by_django_profile_id", 
+                          include_docs=True, key=couch_id).one()
