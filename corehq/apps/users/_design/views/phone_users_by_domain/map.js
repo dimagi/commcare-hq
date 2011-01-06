@@ -15,17 +15,17 @@ function(doc){
             phone_number = doc.phone_numbers[doc.phone_numbers.length-1].number;
         }
         // get username from web user account
-        if (doc.django_user.username != null && doc.django_user.username.length > 0)
+        if (doc.django_user_id != null)
         {
-            name = doc.django_user.username
+            name = doc.django_user_id
         }
         else 
         {
         	// if no web user, use the latest commcare account username
            for (var i=doc.commcare_accounts.length-1;i>=0;i--)
             {
-                if (doc.commcare_accounts[i].django_user.username.length > 0){
-                    name = doc.commcare_accounts[i].django_user.username
+                if (doc.commcare_accounts[i].django_user_id != null){
+                    name = doc.commcare_accounts[i].django_user_id
                     break
                 }
             } 

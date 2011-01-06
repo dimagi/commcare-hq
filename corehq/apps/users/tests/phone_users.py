@@ -47,7 +47,8 @@ class PhoneUsersTestCase(TestCase):
                                           key=self.domain).count()
         self.assertEquals(phone_user_count, 0)
         # create a user without an associated django account
-        couch_user = CouchUser(domain = self.domain)
+        couch_user = CouchUser()
+        couch_user.add_domain_membership(self.domain)
         couch_user.add_phone_number(123)
         couch_user.save()
         # verify no name is returned in phone_users view

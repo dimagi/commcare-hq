@@ -132,7 +132,7 @@ class CouchUser(Document):
         raise NotImplementedError
 
     def get_django_user(self): 
-        return User.objects.get(id = self.django_user.id)
+        return User.objects.get(username = self.django_user_id)
 
     def add_domain_membership(self, domain, **kwargs):
         for d in self.domain_memberships:
