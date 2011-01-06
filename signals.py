@@ -1,5 +1,15 @@
 from django.dispatch import Signal
 
+class Certainty(object):
+    """
+    How certain you are.  See the certainty property of the receiver 
+    response.
+    """
+    NONE = 0
+    MILD = 25
+    AVERAGE = 50
+    STRONG = 75
+    CERTAIN = 100
 
 class ReceiverResult(object):
     """
@@ -9,8 +19,9 @@ class ReceiverResult(object):
     is overriding the response to the user based on an 
     application's specific logic.
     """ 
-    def __init__(self, response):
+    def __init__(self, response, certainty):
         self._response = response
+        self._certainty = certainty
     
     @property
     def response(self):
@@ -19,6 +30,18 @@ class ReceiverResult(object):
         """ 
         return self._response
     
+    @property
+    def certainty(self):
+        """
+        The certainty of this response.  Higher is more certain.  When
+        multiple responses are received the one with the highest certainty
+        will win out.
+        """ 
+        return self._response
+    
+    def __cmp__(self, other):
+        return self.certainty.__cmp__(other.certainty)
+        
     def __str__(self):
         return self.response
     

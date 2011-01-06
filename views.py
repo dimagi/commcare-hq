@@ -10,17 +10,18 @@ def post(request, domain):
         doc['domain'] = domain
         doc.save()
         feedback = post_received.send_robust(sender="receiver", xform=doc)
-        to_respond = None
+        responses = []
         for func, resp in feedback:
             if resp and isinstance(resp, Exception):
                 logging.error("Receiver app: problem sending post-save signal %s for xform %s" \
                               % (func, doc._id))
                 logging.exception(resp)
-            elif resp and not to_respond and isinstance(resp, ReceiverResult):
+            elif resp and isinstance(resp, ReceiverResult):
                 # use the first valid response if we get one 
-                to_respond = resp
-        if to_respond:
-            return HttpResponse(to_respond.response)
+                responses.append(resp)
+        if responses:
+            responses.sort()
+            return HttpResponse(responses[-1].response)
         # default to something generic
         return HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'])
     return couchforms_post(request, callback)
