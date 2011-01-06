@@ -25,7 +25,9 @@
         <table>
             {% for field in form.visible_fields %}
                 <tr>
-                    <td>{{ field.label_tag }}</td>
+                    <td>{{ field.label_tag }}
+                    	<br/><span class="helptext">{{field.help_text}}</span>
+                    </td>
                     <td>{{ field }}</td>
                 </tr>
                 {% if field.errors %}

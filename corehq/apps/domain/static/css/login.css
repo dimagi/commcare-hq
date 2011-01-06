@@ -25,4 +25,7 @@ div.login-block {
 .login-block .field_error {
     font-size: .8em;
     background-color: #faa;
+
+.helptext {
+    font-size: .8em;
 }
