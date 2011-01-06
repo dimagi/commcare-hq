@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+import json
 
 import logging
 from datetime import datetime
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, PhoneUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
 from corehq.util.webutils import render_to_response
@@ -46,25 +47,13 @@ def messaging(request, domain, template="sms/default.html"):
                 context['errors'] = "Could not send %s messages" % num_errors
             else:
                 return HttpResponseRedirect( reverse("messaging", kwargs={ "domain": domain} ) )
-    phone_users_raw = CouchUser.view("users/phone_users_by_domain", key=domain)
-    context['domain'] = domain
-    phone_users = []
-    for phone_user in phone_users_raw:
-        phone_users.append( PhoneUser(id = phone_user['id'],
-                                      name = phone_user['value'][0],
-                                      phone_number = phone_user['value'][1]))
+    phone_users = PhoneUser.view("users/phone_users_by_domain", key=domain)
     groups = Group.view("groups/by_domain", key=domain)
+    context['domain'] = domain
     context['phone_users'] = phone_users
     context['groups'] = groups
     context['messagelog'] = MessageLog.objects.filter(domain=domain)
     return render_to_response(request, template, context)
-
-class PhoneUser(object):
-    """ this class is purely for better readability/debuggability """
-    def __init__(self, id="", name="", phone_number=""):
-        self.id = id
-        self.name = name
-        self.phone_number = phone_number
 
 def post(request, domain):
     """
@@ -94,3 +83,14 @@ def post(request, domain):
                      text = text)
     msg.save()
     return HttpResponse('OK')     
+
+
+def get_sms_autocomplete_context(request, domain):
+    """A helper view for sms autocomplete"""
+    phone_users = PhoneUser.view("users/phone_users_by_domain", key=domain)
+    groups = Group.view("groups/by_domain", key=domain)
+
+    contacts = []
+    contacts.extend(['%s (group)' % group.name for group in groups])
+    contacts.extend(['"%s" <%s>' % (user.name, user.phone_number) for user in phone_users])
+    return {"sms_contacts": json.dumps(contacts)}

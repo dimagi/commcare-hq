@@ -36,4 +36,6 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'add_commcare_account/?$', 
         'add_commcare_account',
         name='add_commcare_account'),
+
+    url(r'test_autocomplete', 'test_autocomplete'),
 )

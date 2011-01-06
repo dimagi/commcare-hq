@@ -11,7 +11,12 @@
         #main_container {
             padding: 0;
         }
+        input.sms-autocomplete {
+            width: 838px;
+        }
     </style>
+
+    {% include "sms/partials/sms_autocomplete.html" %}
 {% endblock %}
 {% block content %}
     <div id="main_container">
@@ -142,6 +147,10 @@
                 {% endblock %}
             </div>
             <div id="release">
+                <div>
+                    <label>Send to Phones: </label>
+                    <input type="text" class="sms-autocomplete" />
+                </div>
                 {% if saved_apps.0.version != app.version %}
                     <form action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
                         <input type="hidden" name="next" value="{{ request.get_full_path }}" />

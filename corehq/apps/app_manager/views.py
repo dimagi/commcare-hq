@@ -1,4 +1,5 @@
 from django.http import HttpResponse, Http404
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.util.webutils import render_to_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
@@ -202,7 +203,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_questions = []
         xform_errors = e.msg
 
-    return {
+    context = {
         'domain': domain,
         'applications': applications,
 
@@ -236,6 +237,9 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
         'util': TemplateFunctions,
     }
+    context.update(get_sms_autocomplete_context(req, domain))
+    return context
+    
 def default(req, domain):
     """
     Handles a url that does not include an app_id.

@@ -17,7 +17,7 @@ function(doc){
         // get username from web user account
         if (doc.django_user.username != null && doc.django_user.username.length > 0)
         {
-            name = doc.django_user.username
+            name = doc.django_user.username;
         }
         else 
         {
@@ -25,14 +25,18 @@ function(doc){
            for (var i=doc.commcare_accounts.length-1;i>=0;i--)
             {
                 if (doc.commcare_accounts[i].django_user.username.length > 0){
-                    name = doc.commcare_accounts[i].django_user.username
-                    break
+                    name = doc.commcare_accounts[i].django_user.username;
+                    break;
                 }
             } 
         }
         // if no usernames found, return name as '' 
     	for (var i=0;i<doc.domain_memberships.length;i++)
     	{
-            emit(doc.domain_memberships[i].domain,  [name, phone_number]);
+            emit(doc.domain_memberships[i].domain,  {
+                name: name,
+                phone_number: phone_number,
+                id: doc['_id']
+            });
     	}
 }
