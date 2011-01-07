@@ -24,9 +24,14 @@ def _add_to_list(list, obj, default):
     if obj in list:
         list.remove(obj)
     if default:
-        list.insert(0, obj)
+        ret = [obj]
+        ret.extend(list)
+        return ret
     else:
         list.append(obj)
+    return list
+    
+    
 def _get_default(list):
     return list[0]
 
@@ -177,7 +182,9 @@ class CouchUser(Document, UnicodeMixIn):
                                            domain=domain,
                                            registering_device_id=device_id,
                                            **kwargs)
-        _add_to_list(self.commcare_accounts, commcare_account, default=True)
+        
+        self.commcare_accounts = _add_to_list(self.commcare_accounts, commcare_account, default=True)
+        
 
     def link_commcare_account(self, domain, from_couch_user_id, commcare_username, **kwargs):
         from_couch_user = CouchUser.get(from_couch_user_id)
@@ -204,13 +211,13 @@ class CouchUser(Document, UnicodeMixIn):
         
     def add_phone_device(self, device_id, default=False, **kwargs):
         """ Don't add phone devices if they already exist """
-        _add_to_list(self.device_ids, device_id, default)
+        self.device_ids = _add_to_list(self.device_ids, device_id, default)
     
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
         if not isinstance(number,basestring):
             phone_number = str(phone_number)
-        _add_to_list(self.phone_numbers, phone_number, default)
+        self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
     
     def default_phone_number(self):
         return _get_default(self.phone_numbers)
@@ -266,12 +273,10 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     
     # create new couch user
     couch_user = CouchUser()
-    couch_user.add_domain_membership(domain)
     
     # populate the couch user
     if not date:
         date = datetime.now()
-    
     couch_user.add_commcare_account(login, domain, device_id)
     couch_user.add_phone_device(device_id=device_id)
     # TODO: fix after clarifying desired behaviour
