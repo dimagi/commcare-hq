@@ -58,7 +58,7 @@ def get_registration_xml(user):
     # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
     return REGISTRATION_TEMPLATE % {"username":  raw_username(user.username),
                                     "password":  user.password,
-                                    "uuid":      commcare_account.UUID,
+                                    "uuid":      commcare_account.login_id,
                                     "date":      user.date_joined.strftime("%Y-%m-%d"),
                                     "user_data": get_user_data_xml(commcare_account.user_data)
                                     }

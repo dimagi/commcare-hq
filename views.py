@@ -86,13 +86,13 @@ def generate_restore_payload(user, restore_id):
     # create a sync log for this
     if last_sync == None:
         reg_xml = xml.get_registration_xml(user)
-        synclog = SyncLog(user_id=commcare_account.UUID, last_seq=last_seq,
+        synclog = SyncLog(user_id=commcare_account.login_id, last_seq=last_seq,
                           date=datetime.utcnow(), previous_log_id=None,
                           cases=saved_case_ids)
         synclog.save()
     else:
         reg_xml = "" # don't sync registration after initial sync
-        synclog = SyncLog(user_id=commcare_account.UUID, last_seq=last_seq,
+        synclog = SyncLog(user_id=commcare_account.login_id, last_seq=last_seq,
                           date=datetime.utcnow(),
                           previous_log_id=last_sync.get_id,
                           cases=saved_case_ids)
