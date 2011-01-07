@@ -3,7 +3,6 @@
 couch models go here
 """
 from __future__ import absolute_import
-print "Entering users.models"
 
 from datetime import datetime
 from django.contrib.auth.models import User
@@ -273,7 +272,7 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     if not date:
         date = datetime.now()
     
-    couch_user.add_commcare_account(login, domain, uuid, device_id)
+    couch_user.add_commcare_account(login, domain, device_id)
     couch_user.add_phone_device(device_id=device_id)
     # TODO: fix after clarifying desired behaviour
     # if 'user_data' in xform.form: couch_user.user_data = user_data
@@ -284,5 +283,3 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     
 # make sure our signals are loaded
 import corehq.apps.users.signals
-
-print "Exiting users.models"
