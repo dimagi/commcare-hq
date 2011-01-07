@@ -11,6 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.util import couch_user_from_django_user
 
 
 
@@ -174,7 +175,7 @@ def edit(request, domain, couch_id=None, template="users/account.html"):
         django_user = User()
     else:
         user = CouchUser.get(couch_id)
-        django_user = User.objects.get(id=user.django_user.id)
+        django_user = user.default_django_user
     if request.method == "POST":
         form = UserForm(request.POST)
         if form.is_valid():
@@ -190,7 +191,7 @@ def edit(request, domain, couch_id=None, template="users/account.html"):
         form.initial['first_name'] = django_user.first_name
         form.initial['last_name'] = django_user.last_name
         form.initial['email'] = django_user.email
-    couch_user = django_user.get_profile().get_couch_user()
+    couch_user = couch_user_from_django_user(django_user)
     context.update({"form": form, "domain": domain, "couch_user": couch_user })
     return render_to_response(request, template, context)
 

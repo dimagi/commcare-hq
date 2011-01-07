@@ -20,7 +20,7 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user.set_password(password)
     user.save()
     return user
-    
+
 def add_user_to_domain(user, domain):
     couch_user = user.get_profile().get_couch_user()
     couch_user.add_domain_membership(domain.name)

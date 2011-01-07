@@ -20,9 +20,10 @@ REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
 
 """
 Case 1: 
-This section automatically creates Couch users whenever a web user is created
+This section automatically creates profile documents in couch 
+whenever a web user is created
 """
-def create_user_from_django_user(sender, instance, created, **kwargs): 
+def create_profile_from_django_user(sender, instance, created, **kwargs): 
     """
     The user post save signal, to auto-create our Profile
     """
@@ -36,14 +37,12 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
         except SiteProfileNotAvailable:
             raise
     if hasattr(instance, 'uuid'):
-        raise Exception("this needs to get fixed!")
         try:
             profile = HqUserProfile.objects.get(_id=instance.uuid)
+            if profile.user != instance:
+                raise Exception("You can't have profiles for different users with the same guid!")
         except HqUserProfile.DoesNotExist:
             profile = HqUserProfile.objects.create(_id=instance.uuid, user=instance)
-            
-        except Exception, e:
-            logging.exception(e)
     else:
         profile, created = HqUserProfile.objects.get_or_create(user=instance)
 
@@ -52,7 +51,7 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
         profile.save()
         
         
-post_save.connect(create_user_from_django_user, User)        
+post_save.connect(create_profile_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
 
 
@@ -106,7 +105,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, uuid, imei, date)
         return ReceiverResult(xml.get_response(couch_user), Certainty.CERTAIN)
     except Exception, e:
-        import traceback, sys
+        #import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
         #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
         logging.exception(e)

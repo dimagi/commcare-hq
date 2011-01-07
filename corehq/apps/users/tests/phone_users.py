@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.models import new_couch_user
 
 class PhoneUsersTestCase(TestCase):
     

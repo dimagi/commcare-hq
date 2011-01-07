@@ -11,7 +11,10 @@ from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.users.util import django_user_from_couch_id
+from corehq.apps.users.util import django_user_from_couch_id,\
+    couch_user_from_django_user
+from dimagi.utils.mixins import UnicodeMixIn
+import logging
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -72,7 +75,7 @@ class PhoneNumber(Document):
     class Meta:
         app_label = 'users'
 
-class CouchUser(Document):
+class CouchUser(Document, UnicodeMixIn):
     """
     a user (for web+commcare+sms)
     can be associated with multiple usename/password/login tuples
@@ -108,6 +111,9 @@ class CouchUser(Document):
 
     class Meta:
         app_label = 'users'
+    
+    def __unicode__(self):
+        return "couch user %s" % self.get_id
     
     @property
     def default_django_user(self):
@@ -231,6 +237,16 @@ class CouchUser(Document):
     @property
     def couch_id(self):
         return self._id
+    
+    @classmethod
+    def from_web_user(cls, user):
+        couch_user = CouchUser()
+        # TODO: fill in web properties
+        couch_user.django_user_id = user.get_profile()._id
+        couch_user.account_id = user.username
+        couch_user.first_name = user.first_name
+        couch_user.last_name = user.last_name
+        return couch_user
 
 class PhoneUser(Document):
     """A wrapper for response returned by phone_users_by_domain, etc."""
@@ -255,16 +271,7 @@ class HqUserProfile(CouchUserProfile):
     def __unicode__(self):
         return "%s" % (self.user)
         
-    def get_couch_user(self):
-        # This caching could be useful, but for now we leave it out since
-        # we don't yet have a good intelligent refresh mechanism
-        # def get_couch_user(self, force_update=False):
-        #if not hasattr(self,'couch_user') or force_update:
-        #    self.couch_user = CouchUser.get(self._id)
-        #return self.couch_user
-        return CouchUser.get(self._id)
     
-
 def create_hq_user_from_commcare_registration_info(domain, username, password, uuid='', imei='', date='', **kwargs):
     """ na 'commcare user' is a couch user which:
     * does not have a web user
@@ -275,7 +282,9 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     django_user = create_user(username, password, uuid=uuid)
     
     # create new couch user
-    couch_user = new_couch_user(domain)
+    couch_user = CouchUser()
+    couch_user.add_domain_membership(domain)
+    
     # populate the couch user
     if not date:
         date = datetime.now()
@@ -288,15 +297,6 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     return couch_user
     
 
-def new_couch_user(domain):
-    """
-    Gets a new couch user in a domain. 
-    """
-    couch_user = CouchUser()
-    # add metadata to couch user
-    couch_user.add_domain_membership(domain)
-    return couch_user
-    
     
 # make sure our signals are loaded
 import corehq.apps.users.signals

@@ -1,5 +1,6 @@
 from django.conf import settings
 import django.core.exceptions
+from corehq.apps.users.util import couch_user_from_django_user
 
 ############################################################################################################
 
@@ -18,7 +19,7 @@ class UsersMiddleware(object):
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if request.user and hasattr(request.user, 'get_profile'):
-            request.couch_user = request.user.get_profile().get_couch_user()
+            request.couch_user = couch_user_from_django_user(request.user)
         return None
     
 ############################################################################################################
