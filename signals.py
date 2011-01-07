@@ -37,7 +37,7 @@ class ReceiverResult(object):
         multiple responses are received the one with the highest certainty
         will win out.
         """ 
-        return self._response
+        return self._certainty
     
     def __cmp__(self, other):
         return self.certainty.__cmp__(other.certainty)
