@@ -13,6 +13,18 @@ from corehq.apps.domain.models import Domain
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
+class TestSuper(Document):
+    username = StringProperty()
+
+class TestSubA(TestSuper):
+    a = StringProperty()
+
+class TestSubB(TestSuper):
+    b = StringProperty()
+
+class TestParent(Document):
+    children = SchemaListProperty(TestSuper)
+
 class DjangoUser(Document):
     id = IntegerProperty()
     username = StringProperty()

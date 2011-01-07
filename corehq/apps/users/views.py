@@ -219,8 +219,10 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
     group = Group.view("groups/by_name", key=group_name).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
-    member_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
-    members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
+    members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
+    member_ids = [member._id for member in members]
+    #members = [m['doc'] for m in result]
+    #members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
     member_commcare_users = []
     for member in members:
         for commcare_account in member.commcare_accounts:

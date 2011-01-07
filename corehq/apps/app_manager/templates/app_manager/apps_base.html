@@ -12,9 +12,15 @@
             padding: 0;
         }
         input.sms-autocomplete {
-            width: 838px;
+            width: 90%;
+        }
+        .dialog textarea {
+            width: 90%;
+            height: 100px;
+            padding: 10px;
         }
     </style>
+
 
     {% include "sms/partials/sms_autocomplete.html" %}
 {% endblock %}
@@ -147,10 +153,6 @@
                 {% endblock %}
             </div>
             <div id="release">
-                <div>
-                    <label>Send to Phones: </label>
-                    <input type="text" class="sms-autocomplete" />
-                </div>
                 {% if saved_apps.0.version != app.version %}
                     <form action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
                         <input type="hidden" name="next" value="{{ request.get_full_path }}" />
@@ -228,6 +230,17 @@
                                 {% if saved_app.short_url %}
                                     <a href="{{ saved_app.short_url }}">{{ saved_app.short_url }}</a>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <a class="dialog_opener" href="">Send To Phones</a>
+                                <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
+                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                        <label>Send to: </label>
+                                        <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                        <textarea name="message">Update to CommCare {{ saved_app.name }} version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                        <input type="submit" value="Send"/>
+                                    </form>
+                                </div>
                             </td>
                             {% if edit %}
                                 <td>

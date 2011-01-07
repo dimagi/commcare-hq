@@ -44,8 +44,15 @@ That's it.
             minLength: 0,
             source: function( request, response ) {
                 // delegate back to autocomplete, but extract the last term
-                response( $.ui.autocomplete.filter(
-                    availableTags, extractLast( request.term ) ) );
+                var term = extractLast( request.term );
+
+                if(term) {
+                    response( $.ui.autocomplete.filter(
+                        availableTags,  term) );
+                }
+                else {
+                    response([]);
+                }
             },
             focus: function() {
                 // prevent value inserted on focus

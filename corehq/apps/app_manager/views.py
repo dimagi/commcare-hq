@@ -555,12 +555,20 @@ def edit_app_attr(req, domain, app_id, attr):
     """
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    if   "profile_url" == attr:
+
+    # For either type of app
+    if   "recipients" == attr:
+        recipients = req.POST['recipients']
+        app.recipients = recipients
+        app.save()
+    # For RemoteApp
+    elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
-            raise Exception("App type %s does not support suite urls" % app.doc_type)
+            raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
         app.save()
-    return back_to_main(**locals())
+    #return back_to_main(**locals())
+    return HttpResponse(json.dumps({"update": {}}))
 
 
 @require_POST

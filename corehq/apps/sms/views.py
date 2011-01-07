@@ -4,6 +4,7 @@ import json
 
 import logging
 from datetime import datetime
+import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
@@ -12,6 +13,9 @@ from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
 from corehq.util.webutils import render_to_response
 from . import util
+from corehq.apps.domain.decorators import login_and_domain_required
+from dimagi.utils.couch.database import get_db
+
 
 def messaging(request, domain, template="sms/default.html"):
     context = {}
@@ -33,9 +37,10 @@ def messaging(request, domain, template="sms/default.html"):
                 groups = request.POST.getlist('grouprecipients[]')
                 for group_id in groups:
                     group = Group.get(group_id)
-                    users = CouchUser.view("users/by_group", key=group.name).all()
-                    user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
-                    users = [m for m in CouchUser.view("users/all_users", keys=user_ids).all()]
+                    users = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
+                    #user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=[domain, group.name]).all()]
+                    #users = [m for m in CouchUser.view("users/all_users", keys=user_ids).all()]
+                    users = [m['doc'] for m in users]
                     for user in users: 
                         success = util.send_sms(domain, 
                                                 user.get_id, 
@@ -94,3 +99,25 @@ def get_sms_autocomplete_context(request, domain):
     contacts.extend(['%s (group)' % group.name for group in groups])
     contacts.extend(['"%s" <%s>' % (user.name, user.phone_number) for user in phone_users])
     return {"sms_contacts": json.dumps(contacts)}
+
+@login_and_domain_required
+def send_to_recipients(request, domain):
+    recipients = request.POST.get('recipients')
+    recipients = [x.strip() for x in recipients.split(',') if x.strip()]
+    phone_numbers = []
+    # formats: GroupName (group), "Username" <5555555555>
+    group_names = []
+    usernames = []
+    for recipient in recipients:
+        if recipient.endswith("(group)"):
+            name = recipient.strip("(group)").strip()
+            group_names.append(name)
+        elif re.match(r'"[\w\.]+" <\d+>', recipient):
+            name = recipient.split('"')[1]
+            usernames.append(name)
+
+    users = get_db().view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
+    users.extend(get_db().view('users/by_username', keys=[[domain, un] for un in usernames], include_docs=True).all())
+    phone_numbers = [r['doc']['phone_numbers'][-1]['number'] for r in users]
+
+    return HttpResponse(json.dumps({"phone_numbers": phone_numbers}))
