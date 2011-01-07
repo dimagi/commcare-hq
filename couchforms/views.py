@@ -1,10 +1,7 @@
 from django.views.decorators.http import require_POST
-from couchexport.export import export_excel
-from StringIO import StringIO
 from couchforms.util import post_xform_to_couch
 from django.http import HttpResponse
-from dimagi.utils.logging import log_exception
-from couchexport.views import export_data as download_excel
+import logging
 
 @require_POST
 def post(request, callback=None):
@@ -26,5 +23,5 @@ def post(request, callback=None):
             return callback(doc)
         return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"])
     except Exception, e:
-        log_exception(e)
+        logging.exception(e)
         return HttpResponse("fail")
