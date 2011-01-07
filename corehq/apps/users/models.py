@@ -33,7 +33,7 @@ def _add_to_list(list, obj, default):
     
     
 def _get_default(list):
-    return list[0]
+    return list[0] if list else None
 
 class DomainMembership(Document):
     """
@@ -185,7 +185,10 @@ class CouchUser(Document, UnicodeMixIn):
         
         self.commcare_accounts = _add_to_list(self.commcare_accounts, commcare_account, default=True)
         
-
+    @property
+    def default_commcare_account(self):
+        return _get_default(self.commcare_accounts)
+    
     def link_commcare_account(self, domain, from_couch_user_id, commcare_username, **kwargs):
         from_couch_user = CouchUser.get(from_couch_user_id)
         for i in range(0, len(from_couch_user.commcare_accounts)):
