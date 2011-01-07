@@ -84,6 +84,7 @@ TEMPLATE_DIRS = [
 # ====================
 
 DEFAULT_APPS = (
+    'corehq.apps.userhack', # this hast to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
