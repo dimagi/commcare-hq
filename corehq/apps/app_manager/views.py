@@ -1,4 +1,5 @@
 from django.http import HttpResponse, Http404
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.util.webutils import render_to_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
@@ -202,7 +203,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_questions = []
         xform_errors = e.msg
 
-    return {
+    context = {
         'domain': domain,
         'applications': applications,
 
@@ -236,6 +237,9 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
         'util': TemplateFunctions,
     }
+    context.update(get_sms_autocomplete_context(req, domain))
+    return context
+    
 def default(req, domain):
     """
     Handles a url that does not include an app_id.
@@ -551,12 +555,20 @@ def edit_app_attr(req, domain, app_id, attr):
     """
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    if   "profile_url" == attr:
+
+    # For either type of app
+    if   "recipients" == attr:
+        recipients = req.POST['recipients']
+        app.recipients = recipients
+        app.save()
+    # For RemoteApp
+    elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
-            raise Exception("App type %s does not support suite urls" % app.doc_type)
+            raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
         app.save()
-    return back_to_main(**locals())
+    #return back_to_main(**locals())
+    return HttpResponse(json.dumps({"update": {}}))
 
 
 @require_POST

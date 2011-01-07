@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
@@ -216,8 +217,10 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
     group = Group.view("groups/by_name", key=group_name).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
-    member_ids = [m['value'] for m in CouchUser.view("users/by_group", key=group.name).all()]
-    members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
+    members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
+    member_ids = [member._id for member in members]
+    #members = [m['doc'] for m in result]
+    #members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
     member_commcare_users = []
     for member in members:
         for commcare_account in member.commcare_accounts:
@@ -289,5 +292,9 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
                               {"form": form,
                                "couch_user": request.couch_user,
                                "domain": domain })
-                               
-                                
+
+@login_and_domain_required
+def test_autocomplete(request, domain, template="users/test_autocomplete.html"):
+    context = _users_context(request, domain)
+    context.update(get_sms_autocomplete_context(request, domain))
+    return render_to_response(request, template, context)

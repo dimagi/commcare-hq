@@ -28,8 +28,8 @@ class PhoneUsersTestCase(TestCase):
         self.couch_user.save()
         phone_user = CouchUser.view("users/phone_users_by_domain", 
                                     key=self.domain).one()
-        self.assertEquals(phone_user['value'][0], self.name)
-        self.assertEquals(phone_user['value'][1], '456')
+        self.assertEquals(phone_user['name'], self.name)
+        self.assertEquals(phone_user['phone_number'], '456')
 
     def testPhoneUsersViewDefaultNumber(self):
         self.couch_user.add_phone_number(789)
@@ -38,8 +38,8 @@ class PhoneUsersTestCase(TestCase):
         self.couch_user.save()
         phone_user = CouchUser.view("users/phone_users_by_domain", 
                                     key=self.domain).one()
-        self.assertEquals(phone_user['value'][0], self.name)
-        self.assertEquals(phone_user['value'][1], '101')
+        self.assertEquals(phone_user['name'], self.name)
+        self.assertEquals(phone_user['phone_number'], '101')
 
     def testPhoneUsersViewLastCommCareUsername(self):
         self.couch_user.delete()
@@ -57,10 +57,14 @@ class PhoneUsersTestCase(TestCase):
         self.assertEquals(phone_user_count, 1)
         phone_user = CouchUser.view("users/phone_users_by_domain", 
                                     key=self.domain).one()
+        
+        # TODO: one of these two lines is wrong, but the whole test is currently broken 
         self.assertEquals(phone_user['value'][0], '')
+        self.assertEquals(phone_user['name'], 'commcare_username')
+        
         # add a commcare account and verify commcare username is returned
         couch_user.add_commcare_username(self.domain,'commcare_username_2', 'commcare_account_uuid')
         couch_user.save()
         phone_user = CouchUser.view("users/phone_users_by_domain", 
                                     key=self.domain).one()
-        self.assertEquals(phone_user['value'][0], 'commcare_username_2')
+        self.assertEquals(phone_user['name'], 'commcare_username_2')

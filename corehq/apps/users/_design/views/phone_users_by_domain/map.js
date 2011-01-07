@@ -33,6 +33,10 @@ function(doc){
         // if no usernames found, return name as '' 
     	for (var i=0;i<doc.domain_memberships.length;i++)
     	{
-            emit(doc.domain_memberships[i].domain,  [name, phone_number]);
+            emit(doc.domain_memberships[i].domain,  {
+                name: name,
+                phone_number: phone_number,
+                id: doc['_id']
+            });
     	}
 }

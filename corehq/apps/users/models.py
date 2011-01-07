@@ -232,6 +232,12 @@ class CouchUser(Document):
     def couch_id(self):
         return self._id
 
+class PhoneUser(Document):
+    """A wrapper for response returned by phone_users_by_domain, etc."""
+    id = StringProperty()
+    name = StringProperty()
+    phone_number = StringProperty()
+
 """
 Django  models go here
 """
