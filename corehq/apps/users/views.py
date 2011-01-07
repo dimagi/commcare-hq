@@ -83,7 +83,7 @@ def my_commcare_accounts(request, domain, template="users/commcare_accounts.html
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
-    my_commcare_usernames = [c.django_user.username for c in couch_user.commcare_accounts]
+    my_commcare_usernames = [c.login.username for c in couch_user.commcare_accounts]
     other_commcare_users = []
     all_commcare_users = CouchUser.view("users/commcare_users_by_domain", key=domain).all()
     for u in all_commcare_users:
@@ -91,11 +91,11 @@ def commcare_accounts(request, domain, couch_id, template="users/commcare_accoun
         # these need to be resolved elsewhere.
         if hasattr(u,'is_duplicate') and u.is_duplicate == True:
             continue
-        if u.django_user.username not in my_commcare_usernames:
+        if u.login.username not in my_commcare_usernames:
             other_couch_user = CouchUser.get(u.get_id)
-            if hasattr(other_couch_user, 'django_user'):
+            if hasattr(other_couch_user, 'login'):
                 u.couch_user_id = other_couch_user.get_id
-                u.couch_user_username = other_couch_user.django_user.username
+                u.couch_user_username = other_couch_user.login.username
             other_commcare_users.append(u)
     context.update({"domain": domain, 
                     "couch_user":couch_user, 
@@ -282,7 +282,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
             couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
-                                                                        imei='Generated from HQ')
+                                                                        device_id='Generated from HQ')
             # set commcare account UUID to match the couch id
             couch_user.commcare_accounts[0].UUID = couch_user.get_id
             couch_user.save()

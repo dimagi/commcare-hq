@@ -109,7 +109,7 @@ class CouchUser(Document, UnicodeMixIn):
         return "couch user %s" % self.get_id
     
     @property
-    def default_login(self):
+    def default_django_user(self):
         login_id = ""
         # first choice: web user login
         if self.login_id:
@@ -123,7 +123,7 @@ class CouchUser(Document, UnicodeMixIn):
             
     @property
     def username(self):
-        return self.default_login.username
+        return self.default_django_user.username
         
     def save(self, *args, **kwargs):
         # Call the "real" save() method.
