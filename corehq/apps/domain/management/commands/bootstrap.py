@@ -14,4 +14,4 @@ class Command(LabelCommand):
         domain = create_domain(domain_name)
         user = create_user(username, passwd)
         add_user_to_domain(user, domain)
-        
+        print "user %s created and added to domain %s" % (user, domain)
