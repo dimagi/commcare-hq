@@ -103,11 +103,13 @@ def get_sms_autocomplete_context(request, domain):
 @login_and_domain_required
 def send_to_recipients(request, domain):
     recipients = request.POST.get('recipients')
+    message = request.POST.get('message')
     recipients = [x.strip() for x in recipients.split(',') if x.strip()]
     phone_numbers = []
     # formats: GroupName (group), "Username" <5555555555>
     group_names = []
     usernames = []
+    phone_numbers = []
     for recipient in recipients:
         if recipient.endswith("(group)"):
             name = recipient.strip("(group)").strip()
@@ -115,9 +117,12 @@ def send_to_recipients(request, domain):
         elif re.match(r'"[\w\.]+" <\d+>', recipient):
             name = recipient.split('"')[1]
             usernames.append(name)
+        elif re.match(r'\+\d+', recipient):
+            phone_numbers.append(recipient)
+            
 
     users = get_db().view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
     users.extend(get_db().view('users/by_username', keys=[[domain, un] for un in usernames], include_docs=True).all())
-    phone_numbers = [r['doc']['phone_numbers'][-1]['number'] for r in users]
+    phone_numbers.extend([r['doc']['phone_numbers'][-1]['number'] for r in users])
 
-    return HttpResponse(json.dumps({"phone_numbers": phone_numbers}))
+    return HttpResponse(json.dumps({"phone_numbers": phone_numbers, "message": message}))

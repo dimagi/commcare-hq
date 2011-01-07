@@ -232,12 +232,12 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a class="dialog_opener" href="">Send To Phones</a>
+                                <a class="dialog_opener" href="">Send to Phones</a>
                                 <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
                                     <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                         <label>Send to: </label>
                                         <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                        <textarea name="message">Update to CommCare {{ saved_app.name }} version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                        <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
                                         <input type="submit" value="Send"/>
                                     </form>
                                 </div>
