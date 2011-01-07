@@ -87,7 +87,14 @@ class CouchUser(Document):
     phone_devices = SchemaListProperty(PhoneDevice)
     phone_numbers = SchemaListProperty(PhoneNumber)
     created_on = DateTimeProperty()
-    is_duplicate = BooleanProperty(default=False)
+    
+    # these properties are associated with the main account.  
+    # the account_id will defalult to the username of the first
+    # linked django account 
+    account_id = StringProperty()
+    first_name = StringProperty()
+    last_name = StringProperty()
+    
     """
     For now, 'status' is things like:
         ('auto_created',     'Automatically created from form submission.'),   
@@ -118,8 +125,8 @@ class CouchUser(Document):
         return self.default_django_user.username
         
     def save(self, *args, **kwargs):
-        self.django_type = "users.hquserprofile"
-        super(CouchUser, self).save(*args, **kwargs) # Call the "real" save() method.
+        # Call the "real" save() method.
+        super(CouchUser, self).save(*args, **kwargs) 
     
     def delete(self, *args, **kwargs):
         try:
@@ -235,7 +242,6 @@ class HqUserProfile(CouchUserProfile):
     with annotating whatever additional fields we need for Hq
     (Right now, none additional are required)
     """
-    is_commcare_user = models.BooleanField(default=False)
     
     class Meta:
         app_label = 'users'
@@ -260,7 +266,7 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
         * has a django account linked to the commcare account for httpdigest auth
     """
     # create django user for the commcare account
-    django_user = create_user(username, password)
+    django_user = create_user(username, password, uuid=uuid)
     
     # create new couch user
     couch_user = new_couch_user(domain)

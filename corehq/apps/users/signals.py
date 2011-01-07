@@ -35,9 +35,15 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
                          "%s but wasn't.  Creating one now." % instance)
         except SiteProfileNotAvailable:
             raise
-    
-    if hasattr(instance, 'is_commcare_user'):
-        profile, created = HqUserProfile.objects.get_or_create(user=instance, is_commcare_user=instance.is_commcare_user)
+    if hasattr(instance, 'uuid'):
+        raise Exception("this needs to get fixed!")
+        try:
+            profile = HqUserProfile.objects.get(_id=instance.uuid)
+        except HqUserProfile.DoesNotExist:
+            profile = HqUserProfile.objects.create(_id=instance.uuid, user=instance)
+            
+        except Exception, e:
+            logging.exception(e)
     else:
         profile, created = HqUserProfile.objects.get_or_create(user=instance)
 
@@ -45,15 +51,6 @@ def create_user_from_django_user(sender, instance, created, **kwargs):
         # magically calls our other save signal
         profile.save()
         
-        """ 
-        TODO: remove this, we must explicitly create the 
-        couch user when we want to
-        # save updated django model data to couch model
-        couch_user = profile.get_couch_user()
-        for i in couch_user.django_user:
-            couch_user.django_user[i] = getattr(instance, i)
-        couch_user.save()
-        """
         
 post_save.connect(create_user_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
