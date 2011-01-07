@@ -59,7 +59,7 @@ def phone_numbers(request, domain, couch_id, template="users/phone_numbers.html"
         couch_user.add_phone_number(phone_number)
         couch_user.save()
         context['status'] = 'phone number added'
-    context['phone_numbers'] = couch_user.get_phone_numbers()
+    context['phone_numbers'] = couch_user.phone_numbers
     context.update({"domain": domain, "couch_user":couch_user })
     return render_to_response(request, template, context)
 
