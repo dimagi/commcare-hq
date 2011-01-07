@@ -25,7 +25,7 @@ def django_user_from_couch_id(id):
 def commcare_account_from_django_user(django_user):
     couch_id = django_user.get_profile()._id
     from corehq.apps.users.models import CommCareAccount
-    return CommCareAccount.view("users/commcare_users_by_django_profile_id", 
+    return CommCareAccount.view("users/commcare_users_by_login_id", 
                                 key=couch_id).one()
     
                           

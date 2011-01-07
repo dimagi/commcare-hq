@@ -70,7 +70,7 @@ def get_open_cases_to_send(commcare_accounts, last_sync):
     to_return = []
     case_ids = []
     for account in commcare_accounts:
-        cases = CommCareCase.view("case/by_user", key=[account.UUID, False],
+        cases = CommCareCase.view("case/by_user", key=[account.login_id, False],
                                   include_docs=True).all()
         for case in cases:
             print case
