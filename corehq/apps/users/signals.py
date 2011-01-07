@@ -12,8 +12,10 @@ from corehq.apps.receiver.signals import post_received, ReceiverResult,\
 from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS,\
     create_hq_user_from_commcare_registration_info
 from corehq.util.xforms import get_unique_value
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, django_user_from_couch_id,\
+    couch_user_from_django_user
 from dimagi.utils.logging import log_exception
+from couchdbkit.resource import ResourceNotFound
 
 # xmlns that registrations and backups come in as, respectively. 
 REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
@@ -90,6 +92,18 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         imei = xform.form['registering_phone_id']
         domain = xform.domain
         
+        # check for uuid conflicts
+        django = None
+        try:
+            django = django_user_from_couch_id(uuid)
+            logging.error("Trying to create a new user %s from form %s!  This is not yet supported." % \
+                          (uuid, xform))
+            # this will just respond back with whatever was in the first
+            # registration xml packet.
+            return ReceiverResult(xml.get_response(couch_user_from_django_user(django)), Certainty.CERTAIN)
+            
+        except ResourceNotFound, e: pass
+        except User.DoesNotExist:   pass
         # we need to check for username conflicts, other issues
         # and make sure we send the appropriate conflict response to the
         # phone.

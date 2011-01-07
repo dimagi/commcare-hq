@@ -254,6 +254,7 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     * does have an associated commcare account,
         * has a django account linked to the commcare account for httpdigest auth
     """
+    
     # create django user for the commcare account
     login = create_user(username, password, uuid=uuid)
     
