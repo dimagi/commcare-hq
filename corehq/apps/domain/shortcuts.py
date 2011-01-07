@@ -25,5 +25,3 @@ def add_user_to_domain(user, domain):
     couch_user = user.get_profile().get_couch_user()
     couch_user.add_domain_membership(domain.name)
     couch_user.save()
-
-        
