@@ -283,10 +283,8 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
             password = form.cleaned_data["password"]
             couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
                                                                         device_id='Generated from HQ')
-            # set commcare account UUID to match the couch id
-            couch_user.commcare_accounts[0].UUID = couch_user.get_id
             couch_user.save()
-            return HttpResponseRedirect(reverse("commcare_accounts", args=[domain, request.couch_user.get_id]))  
+            return HttpResponseRedirect(reverse("commcare_accounts", args=[domain, request.couch_user.get_id]))
     else:
         form = CommCareAccountForm()
     return render_to_response(request, template, 

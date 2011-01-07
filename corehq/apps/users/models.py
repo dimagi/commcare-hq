@@ -1,7 +1,10 @@
+
 """
 couch models go here
 """
 from __future__ import absolute_import
+print "Entering users.models"
+
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
@@ -112,7 +115,7 @@ class CouchUser(Document, UnicodeMixIn):
     def default_django_user(self):
         login_id = ""
         # first choice: web user login
-        if self.login_id:
+        if self.web_account.login_id:
             login_id = self.web_account.login_id
         # second choice: latest registered commcare account
         elif self.commcare_accounts:
@@ -145,19 +148,21 @@ class CouchUser(Document, UnicodeMixIn):
         return User.objects.get(username = self.web_account.login_id)
 
     def add_domain_membership(self, domain, **kwargs):
-        for d in self.domain_memberships:
+        for d in self.web_account.domain_memberships:
             if d.domain == domain:
                 # membership already exists
                 return
-        self.domain_memberships.append(DomainMembership(domain = domain,
+        self.web_account.domain_memberships.append(DomainMembership(domain = domain,
                                                         **kwargs))
     
     @property
     def domain_names(self):
-        return [dm.domain for dm in self.domain_memberships]
+        return [dm.domain for dm in self.web_account.domain_memberships]
 
     def get_active_domains(self):
-        return Domain.objects.filter(name__in=self.domain_names)
+        domain_names = self.domain_names
+        print domain_names
+        return Domain.objects.filter(name__in=domain_names)
 
     def is_member_of(self, domain_qs):
         membership_count = domain_qs.filter(name__in=self.domain_names).count()
@@ -218,11 +223,10 @@ class CouchUser(Document, UnicodeMixIn):
     @classmethod
     def from_web_user(cls, user):
         couch_user = CouchUser()
-        # TODO: fill in web properties
-        couch_user.django_user_id = user.get_profile()._id
-        couch_user.account_id = user.username
+        couch_user.web_account.login_id = user.get_profile()._id
         couch_user.first_name = user.first_name
         couch_user.last_name = user.last_name
+        couch_user.email = user.email
         return couch_user
 
 class PhoneUser(Document):
@@ -247,6 +251,9 @@ class HqUserProfile(CouchUserProfile):
     
     def __unicode__(self):
         return "%s" % (self.user)
+
+    def get_couch_user(self):
+        return couch_user_from_django_user(self.user)
         
 def create_hq_user_from_commcare_registration_info(domain, username, password, uuid='', device_id='', date='', **kwargs):
     """ na 'commcare user' is a couch user which:
@@ -277,3 +284,5 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     
 # make sure our signals are loaded
 import corehq.apps.users.signals
+
+print "Exiting users.models"
