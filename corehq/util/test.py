@@ -1,5 +1,5 @@
 import hashlib
-from corehq.apps.domain.models import Domain, Membership
+from corehq.apps.domain.models import Domain
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 import tempfile
@@ -35,14 +35,6 @@ def create_user_and_domain(username='brian',
         
         user.save()
         
-        # update the domain mapping using the Membership object
-        mem = Membership()
-        mem.domain = domain         
-        mem.member_type = ContentType.objects.get_for_model(User)
-        mem.member_id = user.id
-        mem.is_active = True
-        mem.save()
-                
     return (user, domain)
 
 def replace_in_file(filename, to_replace, replace_with):

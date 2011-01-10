@@ -15,14 +15,14 @@ from . import util
 def messaging(request, domain, template="sms/default.html"):
     context = {}
     if request.method == "POST":
-        if ('recipients[]' not in request.POST and 'grouprecipients[]' not in request.POST) \
+        if ('userrecipients[]' not in request.POST and 'grouprecipients[]' not in request.POST) \
           or 'text' not in request.POST:
             context['errors'] = "Error: must select at least 1 recipient and write a message."
         else:
             num_errors = 0
             text = request.POST["text"]
-            if 'recipients[]' in request.POST:
-                phone_numbers = request.POST.getlist('recipients[]')
+            if 'userrecipients[]' in request.POST:
+                phone_numbers = request.POST.getlist('userrecipients[]')
                 for phone_number in phone_numbers:
                     id, phone_number = phone_number.split('_')
                     success = util.send_sms(domain, id, phone_number, text)

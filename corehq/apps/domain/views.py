@@ -10,14 +10,13 @@ from django.core.mail import EmailMultiAlternatives, SMTPConnection
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.template import RequestContext
 
 from django_tables import tables
 
 from corehq.apps.domain import Permissions
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
-from corehq.apps.domain.models import Domain, Membership, RegistrationRequest
+from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from django_user_registration.models import RegistrationProfile
 
@@ -175,18 +174,6 @@ def _create_new_domain_request( request, kind, form, now ):
    
     dom_req.new_user = new_user
 
-    # new_user must become superuser in the new domain 
-    new_user.add_row_perm(d, Permissions.ADMINISTRATOR)
-     
-    ############# Membership
-    ct = ContentType.objects.get_for_model(User)
-    mem = Membership()
-    mem.domain = d          
-    mem.member_type = ct
-    mem.member_id = new_user.id
-    mem.is_active = True # Unlike domain and account, the membership is valid from the start
-    mem.save()
-                                                 
     ############# Couch Domain Membership
     couch_user = new_user.get_profile().get_couch_user()
     couch_user.add_domain_membership(d.name)

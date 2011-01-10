@@ -39,46 +39,13 @@ class Domain(models.Model):
         Add something to this domain, through the generic relation.
         Returns the created membership object
         """
-        mem = Membership()
-        mem.domain = self
-        mem.member_type = ContentType.objects.get_for_model(model_instance)
-        mem.member_id = model_instance.id
-        mem.is_active = is_active
-        mem.save()        
-        return mem
+        # Add membership info to Couch
+        couch_user = model_instance.get_profile().get_couch_user()
+        couch_user.add_domain_membership(self.name)
+        couch_user.save()
         
     def __unicode__(self):
         return self.name
-
-##############################################################################################################
-#
-# Use cases:
-#
-# Get all members in a domain:
-# Member.objects.filter(member_type = 3, domain = 1) then iterate - slow, because of one query (for User) per row
-# User.objects.filter(membership__domain = 2) - fast, but requires the addition of a GenericRelation to User. 
-# See UserInDomain, below.
-#
-# Get all domains to which a member belongs:
-# User.objects.get(id = 1).membership.all() and then iterate to pick out domains - slow, because of one query 
-#       (for Domain) per row. Requires GenericRelation on User.
-# Member.objects.filter(member_type = 3, member_id = 1).query.as_sql()   Generate same SQL, and require same 
-#       slow iteration
-# Domain.objects.filter(membership__member_type = 3, membership__member_id = 1) - fast, and requires no new fields
-#       (as Domain is a FK of Member)
-#
-
-member_limits = {'model__in':('user', 'formdatagroup')}
-                                         
-class Membership(models.Model):
-    domain = models.ForeignKey(Domain)
-    member_type = models.ForeignKey(ContentType, limit_choices_to=member_limits)
-    member_id = models.PositiveIntegerField()
-    member_object = generic.GenericForeignKey('member_type', 'member_id')
-    is_active = models.BooleanField(default=False)
-
-    def __unicode__(self):
-        return str(self.member_type) + str(self.member_id) + str(self.member_object)
 
 ##############################################################################################################
 
@@ -112,32 +79,12 @@ class Settings(models.Model):
     domain = models.OneToOneField(Domain)
     max_users = models.PositiveIntegerField()
     
-# To be added - all of the date, time, etc. fields that will go into RegistrationRequest
-
-##############################################################################################################
-#
-# http://bolhoed.net/blog/how-to-dynamically-add-fields-to-a-django-model shows:
-#
-# User.add_to_class('membership', generic.GenericRelation(Membership, content_type_field='member_type', object_id_field='member_id'))
-#
-# Rather than that hackery, I tried to implemenet a trivial proxy model for User, containing just the 
-# GenericRelation field. Doesn't work, though! Django complains about a field being defined on a proxy model.
-#
-# Looks like we have to enable the above hackery if we want an easy means of filtering users in a domain. Makes
-# life easier, too, in that views will have access to this information.
-#
-if not hasattr(User, "domain_membership"):
-    # the above check is sketchy, but in some instances the models were getting
-    # loaded twice.
-    # TODO: figure out why this is the case.
-    User.add_to_class('domain_membership', 
-                  generic.GenericRelation( Membership, content_type_field='member_type', object_id_field='member_id' ) )
-
 ##############################################################################################################
     
 
 # Monkeypatch a function onto User to tell if user is administrator of selected domain
 def _admin_p (self):
+    # TODO fix this to use the couch membership code
     dom = getattr(self, 'selected_domain', None)    
     if dom is not None:
         return self.has_row_perm(dom, Permissions.ADMINISTRATOR)

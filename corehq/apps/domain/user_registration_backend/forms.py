@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from corehq.apps.domain import Permissions
 from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
 
 

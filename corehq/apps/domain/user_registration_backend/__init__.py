@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.domain import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
-from corehq.apps.domain.models import Domain, Membership, RegistrationRequest
+from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
 from corehq.apps.domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm, UserRegistersSelfForm, AdminRegistersUserForm
 from django_user_registration import signals
@@ -129,15 +129,9 @@ class UserRegistersSelfBackend( DefaultBackend ):
             new_user.date_joined = datetime.datetime.utcnow()
             new_user.save()
                 
-            # Membership     
-            ct = ContentType.objects.get_for_model(User)
-            mem = Membership()
-            # Domain that the current logged-on admin is in
-            mem.domain = request.user.selected_domain         
-            mem.member_type = ct
-            mem.member_id = new_user.id
-            mem.is_active = True # Unlike domain and account, the membership is valid from the start
-            mem.save()        
+            couch_user = new_user.get_profile().get_couch_user()
+            couch_user.add_domain_membership(request.user.selected_domain.name)
+            couch_user.save()
     
             # Registration profile   
             registration_profile = RegistrationProfile.objects.create_profile(new_user)
@@ -222,7 +216,7 @@ class UserRegistersSelfBackend( DefaultBackend ):
                     if activated:                                              
                         activated.first_name = form.cleaned_data['first_name']
                         activated.last_name  = form.cleaned_data['last_name']
-                        activated.username = form.cleaned_data['username']        
+                        activated.username = form.cleaned_data['email']        
                         assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
                         activated.set_password(form.cleaned_data['password_1'])                                                                
                         activated.date_joined = datetime.datetime.utcnow() 
@@ -369,7 +363,7 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                 new_user = User()
                 new_user.first_name = form.cleaned_data['first_name']
                 new_user.last_name  = form.cleaned_data['last_name']
-                new_user.username = form.cleaned_data['username']
+                new_user.username = form.cleaned_data['email']
                 new_user.email = form.cleaned_data['email']
                 new_user.set_password(form.cleaned_data['password_1'])
                 new_user.is_staff = False # Can't log in to admin site
@@ -381,17 +375,6 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                 new_user.date_joined = datetime.datetime.utcnow()
                 new_user.save()
                     
-                # Membership     
-                ct = ContentType.objects.get_for_model(User)
-                mem = Membership()
-                
-                # Domain that the current logged-on admin is in 
-                mem.domain = request.user.selected_domain         
-                mem.member_type = ct
-                mem.member_id = new_user.id
-                mem.is_active = form.cleaned_data['is_active_member'] 
-                mem.save()
-                
                 # Add membership info to Couch
                 couch_user = new_user.get_profile().get_couch_user()
                 couch_user.add_domain_membership(request.user.selected_domain.name)
@@ -411,7 +394,7 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                 return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
             else:
                 transaction.commit()  
-                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) ) # Redirect after POST                
+                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) ) # Redirect after POST
     else:
         form = AdminRegistersUserForm() # An unbound form
         
