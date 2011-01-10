@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
-from corehq.apps.domain import Permissions
 
 ##############################################################################################################
 #
@@ -80,15 +79,3 @@ class Settings(models.Model):
     max_users = models.PositiveIntegerField()
     
 ##############################################################################################################
-    
-
-# Monkeypatch a function onto User to tell if user is administrator of selected domain
-def _admin_p (self):
-    # TODO fix this to use the couch membership code
-    dom = getattr(self, 'selected_domain', None)    
-    if dom is not None:
-        return self.has_row_perm(dom, Permissions.ADMINISTRATOR)
-    else:
-        return False
-    
-User.is_selected_dom_admin = _admin_p 

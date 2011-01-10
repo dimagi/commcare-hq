@@ -13,7 +13,6 @@ from django.http import HttpResponseRedirect
 
 from django_tables import tables
 
-from corehq.apps.domain import Permissions
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from corehq.apps.domain.models import Domain, RegistrationRequest
@@ -405,13 +404,13 @@ def _dict_for_one_user( user, domain ):
     is_active_member = user.domain_membership.filter(domain = domain)[0].is_active
     retval['is_active_member'] = _bool_to_yes_no(is_active_member)
 
-    # Could use has_row_perm, which we've monkeypatched onto User, but that will take one DB call per user.
-    # Going through the ORM should be faster, as we did a select_related() on the User queryset.
-    ct = ContentType.objects.get_for_model(Domain)        
-    is_domain_admin = user.permission_set.filter(content_type = ct, 
-                                                 object_id = domain.id, 
-                                                 name=Permissions.ADMINISTRATOR)
-    retval['is_domain_admin'] = _bool_to_yes_no(is_domain_admin)
+    # TODO: update this to use new couch user permissions scheme 
+    # ct = ContentType.objects.get_for_model(Domain) 
+    # is_domain_admin = user.permission_set.filter(content_type = ct, 
+    #                                             object_id = domain.id, 
+    #                                             name=Permissions.ADMINISTRATOR)
+    # retval['is_domain_admin'] = _bool_to_yes_no(is_domain_admin)
+    retval['is_domain_admin'] = False
     
     # user is a unique get in the registrationprofile table; there can be at most
     # one invite per user, so if there is any invite at all, it's safe to just grab
@@ -531,9 +530,10 @@ def edit_user(request, user_id):
                 
                 # domain admin?
                 if form.cleaned_data['is_domain_admin']:
-                    user.add_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR)
+                    pass
                 else:
-                    user.del_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR)                                
+                    # TODO: user.remove_permission(domain_admin) 
+                    pass
             except:
                 transaction.rollback()                
                 vals = {'error_msg':'There was a problem with your request',
@@ -551,8 +551,8 @@ def edit_user(request, user_id):
                        # PASSWORD!
                        is_active=user.is_active,
                        is_active_member=membership.is_active,
-                       # See my bugfix msg in the granular permissions app - it explains the last False param
-                       is_domain_admin=user.has_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR, do_active_test=False) )
+                       # TODO: migrate this to latest couch user permissions
+                       is_domain_admin=False) #user.has_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR, do_active_test=False) )
         form = AdminEditsUserForm(user.username, editing_self, initial=initial) # An unbound form
    
     vals = dict(form=form, title=' edit user in domain',form_title='Edit user - leave passwords blank if no change required')

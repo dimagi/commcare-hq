@@ -12,7 +12,6 @@ from django.shortcuts import redirect, render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.domain import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
@@ -382,7 +381,8 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                 
                 # domain admin?
                 if form.cleaned_data['is_domain_admin']:
-                    new_user.add_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR)
+                    # TODO: make user a domain admin
+                    pass
                 
                 _send_user_registration_email(new_user.email, request.user.selected_domain.name, 
                                               new_user.username, form.cleaned_data['password_1'])                                 
