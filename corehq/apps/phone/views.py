@@ -13,48 +13,6 @@ from corehq.apps.users.util import couch_user_from_django_user,\
     commcare_account_from_django_user, raw_username
 from corehq.apps.users.models import CouchUser
 
-@httpdigest
-def restore_caseless(request):
-    
-    restore_id_from_request = lambda req: req.GET.get("since")
-    restore_id = restore_id_from_request(request)
-    last_sync = None
-    if restore_id:
-        try:
-            last_sync = SyncLog.get(restore_id)
-        except Exception:
-            logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, request.user))
-    
-    username = request.user.username
-    chw_id = request.user.get_profile().chw_id
-    if not chw_id:
-        raise Exception("No linked chw found for %s" % username)
-    chw = CommunityHealthWorker.view("chw/all", key=chw_id).one()
-    
-    last_sync_id = 0 if not last_sync else last_sync.last_seq
-    patient_ids, last_seq = get_pats_with_updated_cases(chw.current_clinic_id, 
-                                                        chw.current_clinic_zone, 
-                                                        last_sync_id) 
-    last_seq = 0 # hackity hack
-    # create a sync log for this
-    if last_sync == None:
-        reg_xml = xml.get_registration_xml(chw)
-        synclog = SyncLog(chw_id=chw_id, last_seq=last_seq,
-                          date=datetime.utcnow(), previous_log_id=None,
-                          cases=[])
-        synclog.save()
-    else:
-        reg_xml = "" # don't sync registration after initial sync
-        synclog = SyncLog(chw_id=chw_id, last_seq=last_seq,
-                          date=datetime.utcnow(),
-                          previous_log_id=last_sync.get_id,
-                          cases=[])
-        synclog.save()
-                                         
-    to_return = xml.RESTOREDATA_TEMPLATE % {"registration": reg_xml, 
-                                            "restore_id": synclog.get_id, 
-                                            "case_list": ""}
-    return HttpResponse(to_return, mimetype="text/xml")
 
 def generate_restore_payload(user, restore_id):
     last_sync = None
