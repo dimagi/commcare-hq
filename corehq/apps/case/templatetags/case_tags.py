@@ -1,7 +1,6 @@
 import types
 from datetime import date, datetime
 from django import template
-from corehq.apps.xforms.util import value_for_display
 
 register = template.Library()
 
