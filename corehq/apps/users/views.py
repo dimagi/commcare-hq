@@ -1,7 +1,10 @@
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST
+from corehq.apps.domain.user_registration_backend import register_user
+from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
@@ -17,7 +20,7 @@ from corehq.apps.users.util import couch_user_from_django_user
 
 def _users_context(request, domain):
     return {
-         'web_users': CouchUser.view("users/web_users_by_domain", key=domain),
+         'web_users': CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True),
          'domain': domain
     }
 @login_and_domain_required
@@ -29,6 +32,26 @@ def users(req, domain, template="users/users_base.html"):
 @login_and_domain_required
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+@transaction.commit_on_success
+def create_web_user(request, domain, template="users/create_web_user.html"):
+    if request.method == "POST":
+        form = AdminRegistersUserForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            data['password'] = data['password_1']
+            del data['password_1']
+            del data['password_2']
+            new_user = register_user(domain, **data)
+            return HttpResponseRedirect(reverse("web_users", args=[domain]))
+    else:
+        form = AdminRegistersUserForm()
+    context = _users_context(request, domain)
+    context.update(
+        registration_form=form
+    )
     return render_to_response(request, template, context)
 
 @login_and_domain_required
@@ -137,11 +160,11 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
         couch_user.add_domain_membership(domain)
         couch_user.save()
         context['status'] = 'domain added'
-    my_domains = [dm.domain for dm in couch_user.domain_memberships]
+    my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
     context.update({"user": request.user, 
                     "domain": domain,
-                    "domains": [dm.domain for dm in couch_user.domain_memberships], 
+                    "domains": [dm.domain for dm in couch_user.web_account.domain_memberships],
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
 
@@ -158,9 +181,9 @@ def add_domain_membership(request, domain, user_id, domain_name):
 @login_and_domain_required
 def delete_domain_membership(request, domain, user_id, domain_name):
     user = CouchUser.get(user_id)
-    for i in range(0,len(user.domain_memberships)):
-        if user.domain_memberships[i].domain == domain_name:
-            del user.domain_memberships[i]
+    for i in range(0,len(user.web_account.domain_memberships)):
+        if user.web_account.domain_memberships[i].domain == domain_name:
+            del user.web_account.domain_memberships[i]
             break
     user.save()
     return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
@@ -230,7 +253,7 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
     # note: we believe couch/hq users and commcare users unilaterally share group membership
     # i.e. there's no such thing as commcare_account group membership, only couch_user group membership
     nonmember_commcare_users = []
-    all_users = CouchUser.view("users/by_domain", key=domain).all()
+    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True).all()
     for user in all_users:
         if user.get_id not in member_ids:
             commcare_accounts = []

@@ -40,8 +40,8 @@ class CreateTestCase(TestCase):
         profile = new_user.get_profile()
         # verify that the default couch stuff was created
         couch_user = profile.get_couch_user()
-        self.assertEqual(couch_user.django_user.username, username)
-        self.assertEqual(couch_user.django_user.email, email)
+        self.assertEqual(couch_user.web_account.login.username, username)
+        self.assertEqual(couch_user.web_account.login.email, email)
 
     def testCreateCompleteWebUser(self):
         """ 
@@ -58,12 +58,12 @@ class CreateTestCase(TestCase):
         profile = new_user.get_profile()
         # verify that the default couch stuff was created
         couch_user = profile.get_couch_user()
-        self.assertEqual(couch_user.django_user.username, username)
-        self.assertEqual(couch_user.django_user.email, email)
+        self.assertEqual(couch_user.web_account.login.username, username)
+        self.assertEqual(couch_user.web_account.login.email, email)
         couch_user.add_domain_membership('domain1')
-        self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
+        self.assertEqual(couch_user.web_account.domain_memberships[0].domain, 'domain1')
         couch_user.add_domain_membership('domain2')
-        self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
+        self.assertEqual(couch_user.web_account.domain_memberships[1].domain, 'domain2')
         couch_user.create_commcare_user('domain3','username3','password3', 'sdf', 'ewr')
         self.assertEqual(couch_user.commcare_accounts[0].django_user.username, 'username3')
         self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')        
@@ -93,9 +93,9 @@ class CreateTestCase(TestCase):
         couch_user = CouchUser.get(doc_id)
         # django_user = couch_user.get_django_user()
         # self.assertEqual(django_user.username, random_uuid)
-        # self.assertEqual(couch_user.django_user.username, random_uuid)
+        # self.assertEqual(couch_user.web_account.login.username, random_uuid)
         # registered commcare user gets an automatic domain account on server
-        self.assertEqual(couch_user.domain_memberships[0].domain, self.domain)
+        self.assertEqual(couch_user.web_account.domain_memberships[0].domain, self.domain)
         # they also get an automatic commcare account
         self.assertEqual(couch_user.commcare_accounts[0].django_user.username, self.username)
         #unpredictable, given arbitrary salt to hash

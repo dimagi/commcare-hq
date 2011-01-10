@@ -1,7 +1,9 @@
 function(doc){ 
-    if (doc.django_type == "users.hquserprofile" && doc.django_user.username != null)
-		for (var i=0;i<doc.domain_memberships.length;i++)
+    if (doc.doc_type == "CouchUser" && doc.web_account.login_id != null) {
+        var domain_memberships = doc.web_account.domain_memberships;
+		for (var i in domain_memberships)
 		{
-	        emit(doc.domain_memberships[i].domain,  doc);
+	        emit(domain_memberships[i].domain,  null);
 		}
+    }
 }

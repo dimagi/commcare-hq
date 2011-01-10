@@ -1,5 +1,12 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+
+{% block groups_indicator %}
+<ul>
+    <li class="selected">{{ group.name }}</li>
+</ul>
+{% endblock %}
+
 {% block user-view %}
 <div class='all_users'>
 	<h1>Members of {{ group.name }}</h1>

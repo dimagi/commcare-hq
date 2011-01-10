@@ -25,9 +25,13 @@
                 </ul>
                 <strong>Domain "{{ domain }}"</strong>
                 <ul>
-                    <li><a href="{% url web_users domain %}">Web Users</a></li>
+                    <li><a href="{% url web_users domain %}">Web Users</a>
+                        {% block web_users_indicator %}{% endblock %}
+                    </li>
                     <li><a href="{% url commcare_users domain %}">CommCare Users</a></li>
-                    <li><a href="{% url all_groups domain %}">CommCare Groups</a></li>
+                    <li><a href="{% url all_groups domain %}">CommCare Groups</a>
+                        {% block groups_indicator %}{% endblock %}
+                    </li>
                 </ul>
             </div>
 

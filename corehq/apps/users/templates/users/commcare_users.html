@@ -13,7 +13,7 @@
 	</tr>
 	{% for user in all_users %}
 	<tr><td></td>
-		<td>{{ user.django_user.username }}</td>
+		<td>{{ user.login.username }}</td>
 		<td>{{ user.UUID }}</td>
 		<td>{{ user.registering_phone_id }}</td>
 		<td>{{ user.user_data.date_registered }}</td>

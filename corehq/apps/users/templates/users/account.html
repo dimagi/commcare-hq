@@ -1,6 +1,13 @@
 {% extends "users/users_base.html" %}
+
+{% block web_users_indicator %}
+    <ul>
+        <li class="selected">{{ couch_user.web_account.login.username }}</li>
+    </ul>
+{% endblock %}
+
 {% block user-view %}
-    <h3>My Account</h3>
+    <h3>Basic Info for {{ couch_user.web_account.login.username }}</h3>
 	<form name="user_details" method="post">
 	    <table class="edit_single_user">
 	    {{ form.as_table }}

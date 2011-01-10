@@ -7,6 +7,7 @@ from __future__ import absolute_import
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
+from dimagi.utils.couch.database import get_db
 from djangocouchuser.models import CouchUserProfile
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
@@ -48,7 +49,18 @@ class DomainMembership(Document):
     class Meta:
         app_label = 'users'
 
-class CommCareAccount(Document):
+class Account(Document):
+    # the UUID which is also the login doc's _id
+    login_id = StringProperty()
+
+    @property
+    def login(self):
+        return get_db().get(self.login_id)['django_user']
+    
+    class Meta:
+        app_label = 'users'
+        
+class CommCareAccount(Account):
     """
     This is the information associated with a 
     particular commcare user. Right now, we 
@@ -58,18 +70,15 @@ class CommCareAccount(Document):
     users if desired later.
     """
 
-    # the UUID which is also the login doc's _id
-    login_id = StringProperty()
     registering_device_id = StringProperty()
     user_data = DictProperty()
     domain = StringProperty()
-    
+
     class Meta:
         app_label = 'users'
 
 
-class WebAccount(Document):
-    login_id = StringProperty() # null = True
+class WebAccount(Account):
     domain_memberships = SchemaListProperty(DomainMembership)
     
     class Meta:

@@ -26,7 +26,10 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'link_commcare_account/(?P<couch_user_id>[\w-]+)/(?P<commcare_username>[\w-]+)/?$', 
         'link_commcare_account_to_user',
         name='link_commcare_account_to_user'),
-    url(r'web/?$', 'web_users', name='web_users'),
+    url(r'web/create/$', 'create_web_user', name='create_web_user'),
+    url(r'web/$', 'web_users', name='web_users'),
+
+
     url(r'commcare/?$', 'commcare_users', name='commcare_users'),
     url(r'^httpdigest/?$', 'httpdigest'),
     url(r'my_groups/?$', 'my_groups', name='my_groups'),

@@ -13,10 +13,10 @@
 	</tr>
 	{% for user in web_users %}
 	<tr><td></td>
-		<td><a href="{% url user_account domain user.couch_id %}">{{ user.django_user.username }}</a></td>
-		<td>{{ user.django_user.first_name }}</td>
-		<td>{{ user.django_user.last_name }}</td>
-		<td>{{ user.django_user.email }}</td>
+		<td><a href="{% url user_account domain user.couch_id %}">{{ user.web_account.login.username }}</a></td>
+		<td>{{ user.first_name }}</td>
+		<td>{{ user.last_name }}</td>
+		<td>{{ user.email }}</td>
 		<td>
 		<a href="{% url phone_numbers domain user.couch_id %}">
 			{% if user.phone_numbers.0.number %}
@@ -30,7 +30,7 @@
 	</tr>
 	{% endfor %}
 	</table>
-	<a href="{% url registration_admin_does_all domain %}">Create New User</a>
+	<a href="{% url create_web_user domain %}">Create New User</a>
 </div>
 {% endblock %}
 
