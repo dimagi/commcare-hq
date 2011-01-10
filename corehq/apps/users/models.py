@@ -13,6 +13,18 @@ from corehq.apps.domain.models import Domain
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
+class TestSuper(Document):
+    username = StringProperty()
+
+class TestSubA(TestSuper):
+    a = StringProperty()
+
+class TestSubB(TestSuper):
+    b = StringProperty()
+
+class TestParent(Document):
+    children = SchemaListProperty(TestSuper)
+
 class DjangoUser(Document):
     id = IntegerProperty()
     username = StringProperty()
@@ -291,6 +303,12 @@ class CouchUser(Document):
     @property
     def couch_id(self):
         return self._id
+
+class PhoneUser(Document):
+    """A wrapper for response returned by phone_users_by_domain, etc."""
+    id = StringProperty()
+    name = StringProperty()
+    phone_number = StringProperty()
 
 """
 Django  models go here

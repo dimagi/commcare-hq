@@ -676,6 +676,9 @@ class ApplicationBase(VersionedDoc):
     Contains methods for generating the various files and zipping them into CommCare.jar
 
     """
+
+    recipients = StringProperty()
+
     @property
     def post_url(self):
         return "%s%s" % (
