@@ -393,8 +393,10 @@ def register_admin_does_all(request, domain, *args, **kwargs):
                         'show_homepage_link': 1 }
                 return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
             else:
-                transaction.commit()  
-                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) ) # Redirect after POST
+                transaction.commit()
+                # django's URL parser doesn't like '@'
+                username = new_user.username.split('@')[0]
+                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'domain':domain, 'caller':'admin', 'account':username}) ) # Redirect after POST
     else:
         form = AdminRegistersUserForm() # An unbound form
         
