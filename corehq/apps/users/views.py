@@ -9,13 +9,14 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
-from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info
+from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.util import couch_user_from_django_user
-
+from dimagi.utils.couch.database import get_db
+from .util import doc_value_wrapper
 
 
 def _users_context(request, domain):
@@ -57,8 +58,12 @@ def create_web_user(request, domain, template="users/create_web_user.html"):
 @login_and_domain_required
 def commcare_users(request, domain, template="users/commcare_users.html"):
     context = _users_context(request, domain)
+    users = CouchUser.view("users/commcare_users_by_domain", key=domain, include_docs=True)
+    for user in users:
+        user.current_domain = domain
+        print user.default_commcare_account.username_html()
     context.update({
-        'all_users': CouchUser.view("users/commcare_users_by_domain", key=domain),
+        'commcare_users': users,
     })
     return render_to_response(request, template, context)
 
@@ -100,42 +105,44 @@ def delete_phone_number(request, domain, user_id, phone_number):
 
 @login_and_domain_required
 def my_commcare_accounts(request, domain, template="users/commcare_accounts.html"):
-    return commcare_accounts(request, domain, request.couch_user.couch_id, template)
+    return commcare_accounts(request, domain, request.couch_user._id, template)
 
 @login_and_domain_required
 def commcare_accounts(request, domain, couch_id, template="users/commcare_accounts.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
-    my_commcare_usernames = [c.login.username for c in couch_user.commcare_accounts]
-    other_commcare_users = []
-    all_commcare_users = CouchUser.view("users/commcare_users_by_domain", key=domain).all()
-    for u in all_commcare_users:
+    my_commcare_login_ids = [c.login_id for c in couch_user.commcare_accounts]
+        
+    all_commcare_accounts = get_db().view(
+        "users/commcare_accounts_by_domain",
+        key=domain,
+        include_docs=True,
+        # This wrapper returns tuples of (CouchUser, CommCareAccount)
+        wrapper=doc_value_wrapper(CouchUser, CommCareAccount)
+    )
+    other_commcare_accounts = []
+    for user, account in all_commcare_accounts:
         # we don't bother showing the duplicate commcare users. 
         # these need to be resolved elsewhere.
-        if hasattr(u,'is_duplicate') and u.is_duplicate == True:
+        if hasattr(account,'is_duplicate') and account.is_duplicate == True:
             continue
-        if u.login.username not in my_commcare_usernames:
-            other_couch_user = CouchUser.get(u.get_id)
-            if hasattr(other_couch_user, 'login'):
-                u.couch_user_id = other_couch_user.get_id
-                u.couch_user_username = other_couch_user.login.username
-            other_commcare_users.append(u)
+        if account.login_id not in my_commcare_login_ids:
+            other_commcare_accounts.append((user, account))
     context.update({"domain": domain, 
-                    "couch_user":couch_user, 
-                    "commcare_users":couch_user.commcare_accounts, 
-                    "other_commcare_users":other_commcare_users, 
+                    "couch_user":couch_user,
+                    "other_commcare_accounts":other_commcare_accounts,
                     })
     return render_to_response(request, template, context)
 
 @require_POST
 @login_and_domain_required
-def link_commcare_account_to_user(request, domain, couch_user_id, commcare_username):
+def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
     user = CouchUser.get(couch_user_id)
     if 'commcare_couch_user_id' not in request.POST: 
         return Http404("Poorly formed link request")
     user.link_commcare_account(domain, 
                                request.POST['commcare_couch_user_id'], 
-                               commcare_username)
+                               commcare_login_id)
     return HttpResponseRedirect(reverse("commcare_accounts", args=(domain, couch_user_id)))
 
 @require_POST
@@ -194,27 +201,31 @@ def edit(request, domain, couch_id=None, template="users/account.html"):
     Edit a user
     """
     context = _users_context(request, domain)
-    if couch_id is None:
-        django_user = User()
+    if couch_id:
+        couch_user = CouchUser.get(couch_id)
+        create_user = False
     else:
-        user = CouchUser.get(couch_id)
-        django_user = user.default_django_user
+        create_user = True
     if request.method == "POST":
         form = UserForm(request.POST)
         if form.is_valid():
-            django_user.username = form.cleaned_data['username']
-            django_user.first_name = form.cleaned_data['first_name']
-            django_user.last_name = form.cleaned_data['last_name']
-            django_user.email = form.cleaned_data['email']
-            django_user.save()
+            if create_user:
+                django_user = User()
+                django_user.username = form.cleaned_data['email']
+                django_user.save()
+                couch_user = couch_user_from_django_user(django_user)
+            couch_user.first_name = form.cleaned_data['first_name']
+            couch_user.last_name = form.cleaned_data['last_name']
+            couch_user.email = form.cleaned_data['email']
+            couch_user.save()
             context['status'] = 'changes saved'
     else:
         form = UserForm()
-        form.initial['username'] = django_user.username
-        form.initial['first_name'] = django_user.first_name
-        form.initial['last_name'] = django_user.last_name
-        form.initial['email'] = django_user.email
-    couch_user = couch_user_from_django_user(django_user)
+        if not create_user:
+            form.initial['first_name'] = couch_user.first_name
+            form.initial['last_name'] = couch_user.last_name
+            form.initial['email'] = couch_user.email
+
     context.update({"form": form, "domain": domain, "couch_user": couch_user })
     return render_to_response(request, template, context)
 
@@ -242,29 +253,14 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
-    member_ids = [member._id for member in members]
-    #members = [m['doc'] for m in result]
-    #members = [m for m in CouchUser.view("users/all_users", keys=member_ids).all()]
-    member_commcare_users = []
-    for member in members:
-        for commcare_account in member.commcare_accounts:
-            commcare_account.couch_user_id = member.get_id
-            member_commcare_users.append(commcare_account)
-    # note: we believe couch/hq users and commcare users unilaterally share group membership
-    # i.e. there's no such thing as commcare_account group membership, only couch_user group membership
-    nonmember_commcare_users = []
+    member_ids = set([member._id for member in members])
     all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True).all()
-    for user in all_users:
-        if user.get_id not in member_ids:
-            commcare_accounts = []
-            for commcare_account in user.commcare_accounts:
-                commcare_account.couch_user_id = user.get_id
-                commcare_accounts.append(commcare_account)
-            nonmember_commcare_users.extend(commcare_accounts)
+    nonmembers = [user for user in all_users if user._id not in member_ids]
+
     context.update({"domain": domain,
                     "group": group,
-                    "members": member_commcare_users, 
-                    "nonmembers": nonmember_commcare_users, 
+                    "members": members,
+                    "nonmembers": nonmembers,
                     })
     return render_to_response(request, template, context)
 
@@ -304,6 +300,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
+            #username = format_username(username, domain)
             couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
                                                                         device_id='Generated from HQ')
             couch_user.save()

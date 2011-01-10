@@ -31,7 +31,7 @@ class CommCareUsersTestCase(TestCase):
                                                           imei = commcare_imei, 
                                                           random_user_info = commcare_user_data,
                                                           status = COUCH_USER_AUTOCREATED_STATUS)
-        self.assertEquals(couch_user_2.commcare_accounts[0].registering_phone_id, commcare_imei)
+        self.assertEquals(couch_user_2.commcare_accounts[0].registering_device_id, commcare_imei)
         # associate orphan child with parent
         couch_user_1.link_commcare_account(self.domain, couch_user_2.get_id, self.commcare_username)
         
@@ -43,7 +43,7 @@ class CommCareUsersTestCase(TestCase):
         self.assertEquals(len(couch_user_1.commcare_accounts),1)
         self.assertEquals(couch_user_1.commcare_accounts[0].domain,commcare_domain)
         self.assertEquals(couch_user_1.commcare_accounts[0].django_user.username,commcare_username)
-        self.assertEquals(couch_user_1.commcare_accounts[0].registering_phone_id,commcare_imei)
+        self.assertEquals(couch_user_1.commcare_accounts[0].registering_device_id,commcare_imei)
         self.assertEquals(couch_user_1.commcare_accounts[0].user_data['random_user_info'],commcare_user_data)
         
         # verify that the data got cleared from the couch_user_2 properly
@@ -72,7 +72,7 @@ class CommCareUsersTestCase(TestCase):
         self.assertEquals(couch_user_1.commcare_accounts[0].django_user.username,self.commcare_username)
         self.assertTrue(len(couch_user_1.commcare_accounts[0].django_user.password)>0)
         self.assertEquals(couch_user_1.commcare_accounts[0].UUID,'uuid')
-        self.assertEquals(couch_user_1.commcare_accounts[0].registering_phone_id,'imei')
+        self.assertEquals(couch_user_1.commcare_accounts[0].registering_device_id,'imei')
         # verify that the data got cleared from the couch_user_2 properly
         couch_user_2 = CouchUser.get(couch_user_2.get_id) # refresh the couch user
         self.assertEquals(len(couch_user_2.commcare_accounts),0)
@@ -101,7 +101,7 @@ class CommCareUsersTestCase(TestCase):
         self.assertEquals(couch_user_2.commcare_accounts[0].django_user.username,self.commcare_username)
         self.assertTrue(len(couch_user_2.commcare_accounts[0].django_user.password)>0)
         self.assertEquals(couch_user_2.commcare_accounts[0].UUID,'uuid')
-        self.assertEquals(couch_user_2.commcare_accounts[0].registering_phone_id,'imei')
+        self.assertEquals(couch_user_2.commcare_accounts[0].registering_device_id,'imei')
         # only one instance of that commcare user should exist
         commcare_users_count = CouchUser.view("users/commcare_users_by_domain_username", key=[self.domain, self.commcare_username]).total_rows
         self.assertEquals(commcare_users_count, 1)
@@ -129,7 +129,7 @@ class CommCareUsersTestCase(TestCase):
         self.assertEquals(couch_user_2.commcare_accounts[0].django_user.username,commcare_username)
         self.assertTrue(len(couch_user_2.commcare_accounts[0].django_user.password)>0)
         self.assertEquals(couch_user_2.commcare_accounts[0].UUID,'sdf')
-        self.assertEquals(couch_user_2.commcare_accounts[0].registering_phone_id,'ewr')
+        self.assertEquals(couch_user_2.commcare_accounts[0].registering_device_id,'ewr')
         # only one instance of that commcare user should exist
         commcare_users_count = CouchUser.view("users/commcare_users_by_domain_username", key=[domain, commcare_username]).total_rows
         self.assertEquals(commcare_users_count, 1)

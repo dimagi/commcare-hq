@@ -5,23 +5,21 @@
 	<h1>All users in domain "{{ domain }}"</h1>
 	<table class='big_border'>
 	<tr><td></td>
-		<td>{% trans "Username" %}</td>
-		<td>{% trans "First Name" %}</td>
-		<td>{% trans "Last Name" %}</td>
 		<td>{% trans "E-mail" %}</td>
+        <td>{% trans "First Name" %}</td>
+		<td>{% trans "Last Name" %}</td>
 		<td>{% trans "Phone Numbers" %}</td>
 	</tr>
 	{% for user in web_users %}
 	<tr><td></td>
-		<td><a href="{% url user_account domain user.couch_id %}">{{ user.web_account.login.username }}</a></td>
+		<td><a href="{% url user_account domain user.couch_id %}">{{ user.web_account.username_html|safe }}</a></td>
 		<td>{{ user.first_name }}</td>
 		<td>{{ user.last_name }}</td>
-		<td>{{ user.email }}</td>
 		<td>
 		<a href="{% url phone_numbers domain user.couch_id %}">
-			{% if user.phone_numbers.0.number %}
-				{{ user.phone_numbers.0.number }}
-				{% if user.phone_numbers.1.number %}
+			{% if user.phone_numbers %}
+				{{ user.default_phone_number }}
+				{% if user.phone_numbers.1 %}
 					(and more)
 				{% endif %}
 			{% else %}+{% endif %}

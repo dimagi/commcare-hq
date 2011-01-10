@@ -2,32 +2,34 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h1>ALL USERS IN DOMAIN {{ domain|upper }}</h1>
+	<h1>CommCare accounts in domain "{{ domain }}"</h1>
 	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "Username" %}</td>
-		<td>{% trans "UUID" %}</td>
-		<td>{% trans "Registering Phone ID" %}</td>
-		<td>{% trans "Date Registered" %}</td>
-		<td>{% trans "Phone Numbers" %}</td>
+	<tr><th></th>
+		<th>{% trans "Username" %}</th>
+		<!--th>{% trans "UUID" %}</th-->
+		<th>{% trans "Registering Phone ID" %}</th>
+		<th>{% trans "Date Registered" %}</th>
+		<th>{% trans "Phone Numbers" %}</th>
 	</tr>
-	{% for user in all_users %}
-	<tr><td></td>
-		<td>{{ user.login.username }}</td>
-		<td>{{ user.UUID }}</td>
-		<td>{{ user.registering_phone_id }}</td>
-		<td>{{ user.user_data.date_registered }}</td>
-		<td>
-		<a href="{% url phone_numbers domain user.couch_id %}">
-			{% if user.phone_numbers.0.number %}
-				{{ user.phone_numbers.0.number }}
-				{% if user.phone_numbers.1.number %}
-					(and more)
-				{% endif %}
-			{% else %}+{% endif %}
-		</a>
-		</td>
-	</tr>
+	{% for user in commcare_users %}
+        {% with user.default_commcare_account as account %}
+            <tr><td></td>
+                <td>{{ account.username_html|safe }}</td>
+                <!--td>{{ account.login_id }}</td-->
+                <td>{{ account.registering_device_id }}</td>
+                <td>{{ account.user_data.date_registered }}</td>
+                <td>
+                <a href="{% url phone_numbers domain user.get_id %}">
+                    {% if user.phone_numbers %}
+                        {{ user.phone_numbers.0 }}
+                        {% if user.phone_numbers.1 %}
+                            (and more)
+                        {% endif %}
+                    {% else %}+{% endif %}
+                </a>
+                </td>
+            </tr>
+        {% endwith %}
 	{% endfor %}
 	</table>
 	<a href="{% url registration_admin_does_all domain %}">Link duplicate CommCare Users</a><br/>

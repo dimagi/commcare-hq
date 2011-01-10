@@ -1,8 +1,8 @@
 function(doc){ 
-    if (doc.django_type == "users.hquserprofile")
-    	for (var i=0;i<doc.commcare_accounts.length;i++)
-    	{
-    		emit(doc.commcare_accounts[i].domain, doc.commcare_accounts[i]);
-    	}
+    if (doc.doc_type == "CouchUser") {
+    	for (var i in doc.commcare_accounts) {
+    		emit(doc.commcare_accounts[i].domain, null);
+        }
+    }
 }
 

@@ -20,7 +20,7 @@ class CreateTestCase(TestCase):
         self.xform.form['password'] = self.password = '1982'
         self.xform.form['uuid'] = self.uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
         self.xform.form['date'] = self.date_string = '2010-03-23'
-        self.xform.form['registering_phone_id'] = self.registering_phone_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
+        self.xform.form['registering_phone_id'] = self.registering_device_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
         self.xform.domain = self.domain = 'mockdomain'
         self.xform.xmlns = REGISTRATION_XMLNS
         
@@ -68,12 +68,12 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.commcare_accounts[0].django_user.username, 'username3')
         self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')        
         self.assertEqual(couch_user.commcare_accounts[0].UUID, 'sdf')
-        self.assertEqual(couch_user.commcare_accounts[0].registering_phone_id, 'ewr')
+        self.assertEqual(couch_user.commcare_accounts[0].registering_device_id, 'ewr')
         couch_user.create_commcare_user('domain4','username4','password4', 'oiu', 'wer', extra_data='extra')
         self.assertEqual(couch_user.commcare_accounts[1].django_user.username, 'username4')
         self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
         self.assertEqual(couch_user.commcare_accounts[1].UUID, 'oiu')
-        self.assertEqual(couch_user.commcare_accounts[1].registering_phone_id, 'wer')
+        self.assertEqual(couch_user.commcare_accounts[1].registering_device_id, 'wer')
         #TODO: fix
         #self.assertEqual(couch_user.commcare_accounts[1].user_data['extra_data'], 'extra')
         couch_user.add_phone_device('IMEI')
@@ -104,7 +104,7 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.commcare_accounts[0].UUID, self.uuid)
         date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
         self.assertEqual(couch_user.commcare_accounts[0].date_registered, date)
-        self.assertEqual(couch_user.phone_devices[0].IMEI, self.registering_phone_id)
+        self.assertEqual(couch_user.phone_devices[0].IMEI, self.registering_device_id)
         
     def testCreateDuplicateUsersFromRegistration(self):
         """ 

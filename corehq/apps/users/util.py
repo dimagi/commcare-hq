@@ -34,3 +34,27 @@ def couch_user_from_django_user(django_user):
     from corehq.apps.users.models import CouchUser
     return CouchUser.view("users/couch_users_by_django_profile_id", 
                           include_docs=True, key=couch_id).one()
+
+
+def doc_value_wrapper(doc_cls, value_cls):
+    """
+    Wrap both the doc and the value
+    Code copied from couchdbkit.schema.base.QueryMixin.__view
+
+    """
+    #from corehq.apps.users.models import CouchUser
+    def wrapper(row):
+
+        data = row.get('value')
+        docid = row.get('id')
+        doc = row.get('doc')
+
+        data['_id'] = docid
+        if 'rev' in data:
+            data['_rev'] = data.pop('rev')
+        value_cls._allow_dynamic_properties = True
+        doc_cls._allow_dynamic_properties = True
+        value_inst = value_cls.wrap(data)
+        doc_inst = doc_cls.wrap(doc)
+        return doc_inst, value_inst
+    return wrapper

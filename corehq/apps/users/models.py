@@ -55,8 +55,17 @@ class Account(Document):
 
     @property
     def login(self):
-        return get_db().get(self.login_id)['django_user']
-    
+        try:
+            return get_db().get(self.login_id)['django_user']
+        except:
+            return None
+
+
+    def username_html(self):
+        username = self.login['username']
+        html = "<span class='user_username'>%s</span>" % username
+        return html
+
     class Meta:
         app_label = 'users'
         
@@ -74,6 +83,15 @@ class CommCareAccount(Account):
     user_data = DictProperty()
     domain = StringProperty()
 
+    def username_html(self):
+        username = self.login['username']
+        if '@' in username:
+            html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
+                   tuple(username.split('@'))
+        else:
+            html = "<span class='user_username'>%s</span>" % username
+        return html
+    
     class Meta:
         app_label = 'users'
 
@@ -136,6 +154,13 @@ class CouchUser(Document, UnicodeMixIn):
         else:
             raise User.DoesNotExist("This couch user doesn't have a linked django login!")
         return django_user_from_couch_id(login_id)
+
+    @property
+    def default_account(self):
+        if self.web_account.login_id:
+            return self.web_account
+        else:
+            return self.default_commcare_account
             
     @property
     def username(self):
@@ -174,7 +199,6 @@ class CouchUser(Document, UnicodeMixIn):
 
     def get_active_domains(self):
         domain_names = self.domain_names
-        print domain_names
         return Domain.objects.filter(name__in=domain_names)
 
     def is_member_of(self, domain_qs):
@@ -195,13 +219,21 @@ class CouchUser(Document, UnicodeMixIn):
         self.commcare_accounts = _add_to_list(self.commcare_accounts, commcare_account, default=True)
         
     @property
-    def default_commcare_account(self):
-        return _get_default(self.commcare_accounts)
+    def default_commcare_account(self, domain=None):
+        if hasattr(self, 'current_domain'):
+            # this is a hack needed because we can't pass parameters from views
+            domain = self.current_domain
+        if domain:
+            for account in self.commcare_accounts:
+                if account.domain == domain:
+                    return account
+        else:
+            return _get_default(self.commcare_accounts)
     
-    def link_commcare_account(self, domain, from_couch_user_id, commcare_username, **kwargs):
+    def link_commcare_account(self, domain, from_couch_user_id, commcare_login_id, **kwargs):
         from_couch_user = CouchUser.get(from_couch_user_id)
         for i in range(0, len(from_couch_user.commcare_accounts)):
-            if from_couch_user.commcare_accounts[i].login.username == commcare_username:
+            if from_couch_user.commcare_accounts[i].login_id == commcare_login_id:
                 # this generates a 'document update conflict'. why?
                 self.commcare_accounts.append(from_couch_user.commcare_accounts[i])
                 self.save()
@@ -227,7 +259,7 @@ class CouchUser(Document, UnicodeMixIn):
     
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(number,basestring):
+        if not isinstance(phone_number,basestring):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
     

@@ -356,3 +356,18 @@ input.wide {
 /*.dropdown:hover {*/
     /*background-color: #8867B1;*/
 /*}*/
+
+.user_username {
+    color: #000;
+    font-weight: normal;
+}
+
+.user_domainname {
+    color: #555;
+    font-size: .8em;
+}
+
+th {
+    color: #888;
+    font-weight: normal;
+}

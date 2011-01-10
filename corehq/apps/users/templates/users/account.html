@@ -2,16 +2,21 @@
 
 {% block web_users_indicator %}
     <ul>
-        <li class="selected">{{ couch_user.web_account.login.username }}</li>
+        <li class="selected">{{ couch_user.web_account.username_html|safe }}</li>
     </ul>
 {% endblock %}
 
 {% block user-view %}
-    <h3>Basic Info for {{ couch_user.web_account.login.username }}</h3>
+    <h3>Basic Info</h3>
+    
 	<form name="user_details" method="post">
 	    <table class="edit_single_user">
-	    {{ form.as_table }}
-	    <tr><th></th><td><br/><input type="submit" class="small" value="Submit"/></td></tr>
+            <tr>
+                <th>Username:</th>
+                <td>{{ couch_user.web_account.username_html|safe }}</td>
+            </tr>
+	        {{ form.as_table }}
+	        <tr><th></th><td><br/><input type="submit" class="small" value="Submit"/></td></tr>
 	    </table>
 	</form>
 {% endblock %}
