@@ -84,6 +84,7 @@ TEMPLATE_DIRS = [
 # ====================
 
 DEFAULT_APPS = (
+    'corehq.apps.userhack', # this has to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -111,6 +112,7 @@ HQ_APPS = (
     'couchlog',
     'corehq.apps.receiver',
     'corehq.apps.app_manager',
+    'corehq.apps.phone',
     'corehq.apps.users',
     'corehq.apps.groups',
     'corehq.apps.sms',
@@ -251,6 +253,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'app_manager',
         'case',
         'users',
+        'phone',
         'groups',
         'domain',
         'reports',
