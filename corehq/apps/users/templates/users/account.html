@@ -1,23 +1,56 @@
 {% extends "users/users_base.html" %}
 
+{% block head %}
+    {{ block.super }}
+    <script>
+	    $(function() {
+            $( "#user_settings_tabs" ).tabs({
+                cookie: {
+                    // store cookie for a day
+                    expires: 1
+                }
+            });
+        });
+	</script>
+{% endblock %}
+
 {% block web_users_indicator %}
-    <ul>
-        <li class="selected">{{ couch_user.web_account.username_html|safe }}</li>
-    </ul>
+    {% if couch_user.get_id != request.couch_user.get_id %}
+        <ul>
+            <li class="selected">{{ couch_user.web_account.username_html|safe }}</li>
+        </ul>
+    {% endif %}
 {% endblock %}
 
 {% block user-view %}
-    <h3>Basic Info</h3>
-    
-	<form name="user_details" method="post">
-	    <table class="edit_single_user">
-            <tr>
-                <th>Username:</th>
-                <td>{{ couch_user.web_account.username_html|safe }}</td>
-            </tr>
-	        {{ form.as_table }}
-	        <tr><th></th><td><br/><input type="submit" class="small" value="Submit"/></td></tr>
-	    </table>
-	</form>
+    <div id="user_settings_tabs">
+        <ul>
+            <li><a href="#basic-info">Basic</a></li>
+            <li><a href="#phone-numbers">Phone Numbers</a></li>
+            <li><a href="#commcare-accounts">CommCare Accounts</a></li>
+        </ul>
+        <div id="basic-info">
+            <form name="user_details" method="post">
+                <input type="hidden" name="form_type" value="basic-info" />
+                <table class="edit_single_user">
+                    <tr>
+                        <th>Username:</th>
+                        <td>{{ couch_user.web_account.username_html|safe }}</td>
+                    </tr>
+                    {{ form.as_table }}
+                    <tr>
+                        <th></th>
+                        <td><br/><input type="submit" class="small" value="Submit"/></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div id="phone-numbers">
+            {% include "users/partial/phone_numbers.html" %}
+        </div>
+        <div id="commcare-accounts">
+            {% include "users/partial/commcare_accounts.html" %}
+        </div>
+    </div>
 {% endblock %}
 

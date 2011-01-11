@@ -11,6 +11,13 @@ $(function(){
         }
     });
 
+    // for striped tables
+    $('tr.same_as_last').each(function(){
+        $(this).addClass(
+            $(this).prev().hasClass('odd') ? "odd" : "even"
+        );
+
+    });
 
     $('.delete_link').iconify('ui-icon-closethick');
     $('.add_link').iconify('ui-icon-plusthick');
