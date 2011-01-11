@@ -17,17 +17,20 @@
             <div class="sidebar" id="user-options">
                 <strong>My Account</strong>
                 <ul>
-                    <li><a href="{% url my_account domain %}">Basic Info</a></li>
-                    <li><a href="{% url password_change %}">Change Password</a></li>
-                    <li><a href="{% url my_phone_numbers domain %}">Phone Numbers</a></li>
-                    <li><a href="{% url my_commcare_accounts domain %}">CommCare Accounts</a></li>
-                    <li><a href="{% url my_domains domain %}">Domains</a></li>
+                    <li><a href="{% url user_account domain request.couch_user.get_id %}">Account Settings</a></li>
+                    <li><a href="{% url change_my_password domain %}">Change Password</a></li>
                 </ul>
                 <strong>Domain "{{ domain }}"</strong>
                 <ul>
-                    <li><a href="{% url web_users domain %}">Web Users</a></li>
-                    <li><a href="{% url commcare_users domain %}">CommCare Users</a></li>
-                    <li><a href="{% url all_groups domain %}">CommCare Groups</a></li>
+                    <li><a href="{% url web_users domain %}">Web Users</a>
+                        {% block web_users_indicator %}{% endblock %}
+                    </li>
+                    <li><a href="{% url commcare_users domain %}">CommCare Users</a>
+                        {% block commcare_users_indicator %}{% endblock %}
+                    </li>
+                    <li><a href="{% url all_groups domain %}">CommCare Groups</a>
+                        {% block groups_indicator %}{% endblock %}
+                    </li>
                 </ul>
             </div>
 

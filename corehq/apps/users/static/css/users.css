@@ -28,3 +28,14 @@ div #status_msg {
 .all_users .big_border{
     margin: 15px;
 }
+
+tr.odd {
+    background-color: #eef;
+}
+tr.even {
+    background-color: #fff;
+}
+tr.same_as_last td {
+    text-indent: 2em;
+    font-size: .8em;
+}

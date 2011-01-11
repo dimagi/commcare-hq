@@ -29,7 +29,7 @@ def select( request,
             domain_select_template = 'domain/select.html' ):
     
     domains_for_user = Domain.active_for_user(request.user)
-    if len(domains_for_user) == 0:       
+    if len(domains_for_user) == 0:
         vals = dict( error_msg = "You are not a member of any existing domains - please contact your system administrator",
                      show_homepage_link = False   )
         return render_to_response(request, 'error.html', vals)

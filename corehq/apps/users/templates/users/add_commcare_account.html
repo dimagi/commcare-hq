@@ -1,5 +1,11 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% block commcare_users_indicator %}
+    <ul>
+        <li class="selected">New CommCare User</li>
+    </ul>
+{% endblock %}
+
 {% block user-view %}
 <div class='all_users'>
 <h3>Create a new CommCare Account</h3>

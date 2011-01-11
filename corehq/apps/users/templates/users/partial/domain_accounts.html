@@ -1,17 +1,14 @@
-{% extends "users/users_base.html" %}
 {% load i18n %}
-{% block user-view %}
 <div class='all_users'>
-	<h4>Your Domains</h4>
 	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "Domain Name" %}</td>
-		<td></td>
+	<tr><th></th>
+		<th>{% trans "Domain Name" %}</th>
+		<th></th>
 	</tr>
 	{% for dom in domains %}
 	<tr><td></td>
 		<td>{{ dom }}</td>
-    	<td><a class="delete_link" href="#">>{% trans "Leave" %}</a>
+    	<td><a class="delete_link" href="domain_accounts.html#">>{% trans "Leave" %}</a>
 	        <div class="delete_dialog" title="Leave {{ dom }}?">
 	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
@@ -29,14 +26,14 @@
 
 	<h4>Other Domains</h4>
 	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "Domain Name" %}</td>
-		<td></td>
+	<tr><th></th>
+		<th>{% trans "Domain Name" %}</th>
+		<th></th>
 	</tr>
 	{% for dom in other_domains %}
 	<tr><td></td>
 		<td>{{ dom }}</a></td>
-    	<td><a class="add_link" href="#">Join</a>
+    	<td><a class="add_link" href="domain_accounts.html#">Join</a>
 	        <div class="add_dialog" title="Add {{ dom }}?">
 	            <form  name="add_domain_membership" action="{% url add_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
@@ -52,5 +49,3 @@
 	{% endfor %}
 	</table>
 </div>
-{% endblock %}
-

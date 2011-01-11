@@ -1,20 +1,47 @@
 import logging
 from django.http import HttpResponse
-from dimagi.utils.logging import log_exception
 from couchforms.views import post as couchforms_post
-from corehq.apps.receiver.signals import post_received
+from corehq.apps.receiver.signals import post_received, ReceiverResult
 
 def post(request, domain):
     def callback(doc):
         doc['#export_tag'] = ["domain", "xmlns"]
         doc['submit_ip'] = request.META['REMOTE_ADDR']
         doc['domain'] = domain
+        def _scrub_meta(doc):
+            property_map = {"TimeStart": "timeStart",
+                            "TimeEnd": "timeEnd",
+                            "chw_id": "userID",
+                            "DeviceID": "deviceID",
+                            "uid": "instanceID"}
+            
+            # hack to make sure uppercase meta still ends up in the right place
+            if "Meta" in doc.form:
+                doc.form["meta"] = doc.form["Meta"]
+                del doc.form["Meta"]
+                logging.error("form %s contains old-format metadata.  You should update it!!" % doc.get_id)
+            if "meta" in doc.form:
+                # scrub values from 0.9 to 1.0
+                for key in doc.form["meta"]:
+                    if key in property_map and property_map[key] not in doc.form["meta"]:
+                        logging.error("Moving deprecated meta property %s to %s.  You should update your forms to be standards compliant!" % (key, property_map[key]))
+                        doc.form["meta"][property_map[key]] = doc.form["meta"][key]
+                        del doc.form["meta"][key]
+        _scrub_meta(doc)
         doc.save()
         feedback = post_received.send_robust(sender="receiver", xform=doc)
-        for func, errors in feedback:
-            if errors:
+        responses = []
+        for func, resp in feedback:
+            if resp and isinstance(resp, Exception):
                 logging.error("Receiver app: problem sending post-save signal %s for xform %s" \
                               % (func, doc._id))
-                log_exception(errors)
+                logging.exception(resp)
+            elif resp and isinstance(resp, ReceiverResult):
+                # use the first valid response if we get one 
+                responses.append(resp)
+        if responses:
+            responses.sort()
+            return HttpResponse(responses[-1].response)
+        # default to something generic
         return HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'])
     return couchforms_post(request, callback)

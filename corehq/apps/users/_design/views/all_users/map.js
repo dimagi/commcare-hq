@@ -1,5 +1,5 @@
 function(doc){ 
-    if (doc.django_type == "users.hquserprofile")
+    if (doc.doc_type == "CouchUser")
         emit(doc._id, doc);
 }
 

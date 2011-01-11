@@ -96,7 +96,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     
     tos_confirmed = forms.BooleanField(required=False) # Must be set to False to have the clean_*() routine called        
         
-    def __init__(self, kind, *args, **kwargs):
+    def __init__(self, kind="new_user", *args, **kwargs):
         super(RegistrationRequestForm, self).__init__(*args, **kwargs)
         if kind=="existing_user":
             del self.fields['first_name']

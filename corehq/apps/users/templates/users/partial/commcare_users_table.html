@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<tr><th></th>
+    <th>{% trans "Web Account" %}</th>
+    <th>{% trans "CommCare Account" %}</th>
+    <!--th>{% trans "Registering Phone ID" %}</th-->
+    <th>{% trans "Date Registered" %}</th>
+    <th>{% trans "Phone Numbers" %}</th>
+</tr>
+{% for user, account in commcare_users %}
+    {% ifchanged user.get_id %}
+        <tr class="{% cycle "odd" "even" %}">
+    {% else %}
+        <tr class="same_as_last">
+    {% endifchanged %}
+        <td></td>
+        <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
+        <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
+        <!--td>{{ account.registering_device_id }}</td-->
+        <td>{{ account.user_data.date_registered }}</td>
+        <td>
+        {% ifchanged %}
+                {% if user.phone_numbers %}
+                    {{ user.phone_numbers.0 }}
+                    {% if user.phone_numbers.1 %}
+                        (and more)
+                    {% endif %}
+                {% endif %}
+        {% endifchanged %}
+        </td>
+    </tr>
+{% endfor %}

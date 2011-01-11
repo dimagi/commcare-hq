@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
+from corehq.apps.domain import Permissions
+from corehq.apps.users.util import couch_user_from_django_user
 
 ##############################################################################################################
 #
@@ -31,7 +33,11 @@ class Domain(models.Model):
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
             return Domain.objects.none()
-        return user.get_profile().get_couch_user().get_active_domains()
+        couch_user = couch_user_from_django_user(user)
+        if couch_user:
+            return couch_user.get_active_domains()
+        else:
+            return Domain.objects.none()
     
     def add(self, model_instance, is_active=True):
         """

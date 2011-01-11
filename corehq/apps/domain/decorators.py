@@ -4,7 +4,10 @@ from django.http import HttpResponseRedirect, Http404
 from django.utils.http import urlquote
 
 ########################################################################################################
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, Membership
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
+from corehq.apps.users.models import CouchUser
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -52,10 +55,14 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
         def _inner(req, domain, *args, **kwargs):
 
             user = req.user
+            couch_user = req.couch_user
+            if not couch_user:
+                couch_user = CouchUser.from_web_user(user)
+                couch_user.save()
             domain_name = domain
             domains = Domain.objects.filter(name=domain)
             if user.is_authenticated() and user.is_active:
-                if req.couch_user.is_member_of(domains) or (user.is_superuser and domains.count()):
+                if couch_user.is_member_of(domains) or (user.is_superuser and domains.count()):
                     return view_func(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404
@@ -158,3 +165,10 @@ domain_admin_required = domain_admin_required_ex()
 
 ########################################################################################################
     
+def require_superuser(view_func):
+    def _inner(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise Http404()
+        else:
+            return view_func(request, *args, **kwargs)
+    return _inner

@@ -11,6 +11,7 @@
 <case>
     <case_id>REPLACE_CASEID</case_id>
     <date_modified>2010-06-29T13:42:50</date_modified>
+    <user_id>BXPKZLP49P3DDTJH3W0BRM2HVABA</user_id>
     <create>
     <case_type_id>test_case_type</case_type_id>
         <user_id>someuser</user_id>

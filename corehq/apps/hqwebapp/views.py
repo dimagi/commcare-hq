@@ -19,7 +19,7 @@ def redirect_to_default(req, domain=None):
             domains = Domain.objects.filter(name=domain)
         else:
             domains = Domain.active_for_user(req.user)
-        if   0 == domains.count():
+        if   0 == domains.count() and not req.user.is_superuser:
             return render_to_response(req, "hqwebapp/no_permission.html", {})
         elif 1 == domains.count():
             #url = reverse('corehq.apps.app_manager.views.default', args=[domains[0].name])

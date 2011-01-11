@@ -21,8 +21,9 @@ from django_user_registration.backends import get_backend
 from django_user_registration.backends.default import DefaultBackend
 from django_user_registration.models import RegistrationProfile
 
-########################################################################################################    
-    
+########################################################################################################
+from corehq.apps.users.models import CouchUser
+
 class UserRegistersSelfBackend( DefaultBackend ):
     """
     Workflow is slightly different than that  given by the default; a domain 
@@ -352,51 +353,69 @@ To login, navigate to the following link:
 
 ########################################################################################################
 
-@login_and_domain_required
+def register_user(domain, first_name, last_name, email, password, is_active, is_active_member, is_domain_admin):
+    new_user = User()
+    new_user.first_name = first_name
+    new_user.last_name  = last_name
+    new_user.username = email
+    new_user.email = email
+    new_user.set_password(password)
+    new_user.is_staff = False # Can't log in to admin site
+    new_user.is_active = is_active
+    new_user.is_superuser = False
+    new_user.last_login =  datetime.datetime(1970,1,1)
+    # date_joined is used to determine expiration of the invitation key - I'd like to
+    # munge it back to 1970, but can't because it makes all keys look expired.
+    new_user.date_joined = datetime.datetime.utcnow()
+    new_user.save()
+
+    # Membership
+    ct = ContentType.objects.get_for_model(User)
+    mem = Membership()
+
+    # Domain that the current logged-on admin is in
+    mem.domain = Domain.objects.get(name=domain)
+    mem.member_type = ct
+    mem.member_id = new_user.id
+    mem.is_active = is_active_member
+    mem.save()
+
+    # domain admin?
+#    if is_domain_admin:
+#        new_user.add_row_perm(domain, Permissions.ADMINISTRATOR)
+        
+
+    # turn off for debugging
+    if False:
+        _send_user_registration_email(new_user.email, domain, new_user.username, password)
+    # Add membership info to Couch
+    #couch_user = new_user.get_profile().get_couch_user()
+    couch_user = CouchUser.from_web_user(new_user)
+    couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
+    couch_user.save()
+    return new_user
+
 @transaction.commit_manually
+@login_and_domain_required
 def register_admin_does_all(request, domain, *args, **kwargs):
     if request.method == 'POST': # If the form has been submitted...
         form = AdminRegistersUserForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
+            data = form.cleaned_data
+            data['password'] = data['password_1']
+            del data['password_1']
+            del data['password_2']
             try:
-                new_user = User()
-                new_user.first_name = form.cleaned_data['first_name']
-                new_user.last_name  = form.cleaned_data['last_name']
-                new_user.username = form.cleaned_data['email']
-                new_user.email = form.cleaned_data['email']
-                new_user.set_password(form.cleaned_data['password_1'])
-                new_user.is_staff = False # Can't log in to admin site
-                new_user.is_active = form.cleaned_data['is_active']
-                new_user.is_superuser = False           
-                new_user.last_login =  datetime.datetime(1970,1,1)
-                # date_joined is used to determine expiration of the invitation key - I'd like to
-                # munge it back to 1970, but can't because it makes all keys look expired.
-                new_user.date_joined = datetime.datetime.utcnow()
-                new_user.save()
-                    
-                # Add membership info to Couch
-                couch_user = new_user.get_profile().get_couch_user()
-                couch_user.add_domain_membership(request.user.selected_domain.name)
-                couch_user.save()
-                
-                # domain admin?
-                if form.cleaned_data['is_domain_admin']:
-                    # TODO: make user a domain admin
-                    pass
-                
-                _send_user_registration_email(new_user.email, request.user.selected_domain.name, 
-                                              new_user.username, form.cleaned_data['password_1'])                                 
-            except:
-                transaction.rollback()                
-                vals = {'error_msg':'There was a problem with your request',
-                        'error_details':sys.exc_info(),
-                        'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
-            else:
+                new_user = register_user(domain, **data)
                 transaction.commit()
-                # django's URL parser doesn't like '@'
-                username = new_user.username.split('@')[0]
-                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'domain':domain, 'caller':'admin', 'account':username}) ) # Redirect after POST
+                # Redirect after POST
+                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) )
+            except:
+                transaction.rollback()
+                vals = {'error_msg':'There was a problem with your request',
+                'error_details':sys.exc_info(),
+                'show_homepage_link': 1 }
+                return render_to_response('error.html', vals, context_instance = RequestContext(request))
     else:
         form = AdminRegistersUserForm() # An unbound form
         
