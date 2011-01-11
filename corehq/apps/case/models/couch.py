@@ -54,14 +54,9 @@ class CommCareCaseAction(Document):
         if isinstance(action_block, basestring):
             return action
             
-        action.type = action_block.get(const.CASE_TAG_TYPE_ID)
-        action.name = action_block.get(const.CASE_TAG_NAME)
-        if const.CASE_TAG_DATE_OPENED in action_block:
-            action.opened_on = parsing.string_to_datetime(action_block[const.CASE_TAG_DATE_OPENED])
-        
         for item in action_block:
-            if item not in const.CASE_TAGS:
-                action[item] = action_block[item]
+            #if item not in const.CASE_TAGS:
+            action[item] = action_block[item]
         return action
     
     @classmethod
@@ -166,8 +161,8 @@ class CommCareCase(CaseBase):
     """
     
     case_id = StringProperty()
+    
     external_id = StringProperty()
-    encounter_id = StringProperty()
     user_id = StringProperty()
     
     referrals = SchemaListProperty(Referral)
@@ -249,15 +244,15 @@ class CommCareCase(CaseBase):
         if not visit_date:
             visit_date = mod_date.date()
         
-        
         if const.CASE_ACTION_UPDATE in case_block:
+            
             update_block = case_block[const.CASE_ACTION_UPDATE]
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
                                                                  mod_date, visit_date, 
                                                                  update_block)
             self.apply_updates(update_action)
             self.actions.append(update_action)
-        
+            
         if const.CASE_ACTION_CLOSE in case_block:
             close_block = case_block[const.CASE_ACTION_CLOSE]
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
@@ -295,16 +290,16 @@ class CommCareCase(CaseBase):
         """
         Applies updates to a case
         """
-        if hasattr(update_action, "type") and update_action.type:
-            self.type = update_action.type
-        if hasattr(update_action, "name") and update_action.name:
-            self.name = update_action.name
-        if hasattr(update_action, "opened_on") and update_action.opened_on: 
-            self.opened_on = update_action.opened_on
-        
+        if const.CASE_TAG_TYPE_ID in update_action:
+            self.type = update_action[const.CASE_TAG_TYPE_ID]
+        if const.CASE_TAG_NAME in update_action:
+            self.name = update_action[const.CASE_TAG_NAME]
+        if const.CASE_TAG_DATE_OPENED in update_action:
+            self.opened_on = update_action[const.CASE_TAG_DATE_OPENED]
         for item in update_action.dynamic_properties():
             if item not in const.CASE_TAGS:
                 self[item] = update_action[item]
+            
         
     def apply_close(self, close_action):
         self.closed = True

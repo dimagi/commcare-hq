@@ -213,13 +213,14 @@ class CouchUser(Document, UnicodeMixIn):
             return True
         return False
     
-    def add_commcare_account(self, django_user, domain, device_id, **kwargs):
+    def add_commcare_account(self, django_user, domain, device_id, user_data={}, **kwargs):
         """
         Adds a commcare account to this. 
         """
         commcare_account = CommCareAccount(login_id=django_user.get_profile()._id,
                                            domain=domain,
                                            registering_device_id=device_id,
+                                           user_data=user_data,
                                            **kwargs)
         
         self.commcare_accounts = _add_to_list(self.commcare_accounts, commcare_account, default=True)
@@ -311,7 +312,10 @@ class HqUserProfile(CouchUserProfile):
     def get_couch_user(self):
         return couch_user_from_django_user(self.user)
         
-def create_hq_user_from_commcare_registration_info(domain, username, password, uuid='', device_id='', date='', **kwargs):
+def create_hq_user_from_commcare_registration_info(domain, username, password, 
+                                                   uuid='', device_id='', 
+                                                   date='', user_data={}, 
+                                                   **kwargs):
     """ na 'commcare user' is a couch user which:
     * does not have a web user
     * does have an associated commcare account,
@@ -327,10 +331,8 @@ def create_hq_user_from_commcare_registration_info(domain, username, password, u
     # populate the couch user
     if not date:
         date = datetime.now()
-    couch_user.add_commcare_account(login, domain, device_id)
+    couch_user.add_commcare_account(login, domain, device_id, user_data)
     couch_user.add_phone_device(device_id=device_id)
-    # TODO: fix after clarifying desired behaviour
-    # if 'user_data' in xform.form: couch_user.user_data = user_data
     couch_user.save()
     return couch_user
     
