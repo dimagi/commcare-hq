@@ -297,7 +297,6 @@ class CommCareCase(CaseBase):
         if const.CASE_TAG_DATE_OPENED in update_action:
             self.opened_on = update_action[const.CASE_TAG_DATE_OPENED]
         for item in update_action.dynamic_properties():
-            print "%s: %s"  %(item, update_action[item])
             if item not in const.CASE_TAGS:
                 self[item] = update_action[item]
             
