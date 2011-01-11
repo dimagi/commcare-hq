@@ -23,7 +23,8 @@ class CaseFromXFormTest(TestCase):
         # recycle our previous test's form
         original_case = bootstrap_case_from_xml(self, "create_update.xml")
         original_case.save()
-        
+        self.assertEqual(original_case.type, "test_case_type")
+        self.assertEqual(original_case.name, "test case name")
         # we don't need to bother checking all the properties because this is
         # the exact same workflow as above.
         case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
@@ -46,11 +47,11 @@ class CaseFromXFormTest(TestCase):
         
         # we also changed everything originally in the case
         self.assertEqual("a_new_type", case.type)
-        self.assertEqual("a_new_type", new_update_action.type)
+        self.assertEqual("a_new_type", new_update_action.case_type_id)
         self.assertEqual("a new name", case.name)
-        self.assertEqual("a new name", new_update_action.name)        
+        self.assertEqual("a new name", new_update_action.case_name)        
         self.assertEqual(UPDATE_DATE, case.opened_on)
-        self.assertEqual(UPDATE_DATE, new_update_action.opened_on)
+        self.assertEqual(UPDATE_DATE, new_update_action.date_opened)
         
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)
