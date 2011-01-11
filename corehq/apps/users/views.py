@@ -141,7 +141,7 @@ def account(request, domain, couch_id, template="users/account.html"):
 def delete_phone_number(request, domain, user_id, phone_number):
     user = CouchUser.get(user_id)
     for i in range(0,len(user.phone_numbers)):
-        if user.phone_numbers[i].number == phone_number:
+        if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
             break
     user.save()

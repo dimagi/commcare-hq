@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
-from corehq.apps.domain import Permissions
 from corehq.apps.users.util import couch_user_from_django_user
 
 ##############################################################################################################

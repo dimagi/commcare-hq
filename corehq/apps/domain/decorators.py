@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.utils.http import urlquote
 
 ########################################################################################################
-from corehq.apps.domain.models import Domain, Membership
+from corehq.apps.domain.models import Domain
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser
