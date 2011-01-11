@@ -1,6 +1,6 @@
 from django.views.decorators.http import require_POST
 from couchforms.util import post_xform_to_couch
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 import logging
 
 @require_POST
@@ -24,4 +24,4 @@ def post(request, callback=None):
         return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"])
     except Exception, e:
         logging.exception(e)
-        return HttpResponse("fail")
+        return HttpResponseServerError("FAIL")
