@@ -91,6 +91,15 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         date = xform.form['date']
         imei = xform.form['registering_phone_id']
         domain = xform.domain
+        def user_data_from_reg_form(xform):
+            ret = {}
+            if "user_data" in xform.form and "data" in xform.form["user_data"]:
+                vals = xform.form["user_data"]["data"]
+                for item in vals:
+                    # this is ugly, but how the data comes in
+                    ret[item["@key"]] = item["#text"]
+            return ret
+        user_data = user_data_from_reg_form(xform)
         
         # check for uuid conflicts
         django = None
@@ -116,7 +125,9 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
             # they didn't exist, so we can use this username
             pass
         
-        couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, uuid, imei, date)
+        
+        couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
+                                                                    uuid, imei, date, user_data)
         return ReceiverResult(xml.get_response(couch_user), Certainty.CERTAIN)
     except Exception, e:
         #import traceback, sys

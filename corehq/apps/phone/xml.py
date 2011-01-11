@@ -38,9 +38,9 @@ REGISTRATION_TEMPLATE = \
 
 USER_DATA_TEMPLATE = \
 """
-    <user_data>%(data)s
-    </user_data>
-"""
+        <user_data>
+            %(data)s
+        </user_data>"""
 
 def get_sync_xml(restore_id):
     return SYNC_TEMPLATE % {"restore_id": restore_id} 
@@ -48,8 +48,8 @@ def get_sync_xml(restore_id):
 def get_user_data_xml(dict):
     if not dict:  return ""
     return USER_DATA_TEMPLATE % \
-        {"data": "\n".join('<data key="%(key)s">%(value)s</data>' % \
-                           {"key": key, "value": val } for key, val in dict.items())}    
+        {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
+                                       {"key": key, "value": val } for key, val in dict.items())}    
 
 def get_registration_xml(user):
     commcare_account = commcare_account_from_django_user(user)
