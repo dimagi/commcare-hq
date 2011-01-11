@@ -4,11 +4,11 @@
 <div class='all_users'>
 	<h1>All users in domain "{{ domain }}"</h1>
 	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "E-mail" %}</td>
-        <td>{% trans "First Name" %}</td>
-		<td>{% trans "Last Name" %}</td>
-		<td>{% trans "Phone Numbers" %}</td>
+	<tr><th></th>
+		<th>{% trans "E-mail" %}</th>
+        <th>{% trans "First Name" %}</th>
+		<th>{% trans "Last Name" %}</th>
+		<th>{% trans "Phone Numbers" %}</th>
 	</tr>
 	{% for user in web_users %}
 	<tr><td></td>
@@ -16,14 +16,12 @@
 		<td>{{ user.first_name }}</td>
 		<td>{{ user.last_name }}</td>
 		<td>
-		<a href="{% url phone_numbers domain user.couch_id %}">
 			{% if user.phone_numbers %}
 				{{ user.default_phone_number }}
 				{% if user.phone_numbers.1 %}
 					(and more)
 				{% endif %}
 			{% else %}+{% endif %}
-		</a>
 		</td>
 	</tr>
 	{% endfor %}

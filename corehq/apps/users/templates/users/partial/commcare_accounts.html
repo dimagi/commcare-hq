@@ -1,7 +1,5 @@
-{% extends "users/users_base.html" %}
 {% load i18n %}
-{% block user-view %}
-    <h3>CommCare Accounts</h3>
+
 <div class='all_users'>
 	<h4>CommCare users associated with {{ couch_user.web_account.username_html|safe }}</h4>
     {% if couch_user.commcare_accounts %}
@@ -17,7 +15,7 @@
                     <td>{{ account.username_html|safe }}</td>
                     <td>{{ account.domain }}</td>
                     <td>{{ account.registering_device_id }}</td>
-                    <td><a class="delete_link" href="#">{% trans "Unlink" %}</a>
+                    <td><a class="delete_link" href="commcare_accounts.html#">{% trans "Unlink" %}</a>
                         <div class="delete_dialog" title="Unlink {{ account.username_html|safe }}?">
                             <form name="unlink_commcare_account" action="{% url unlink_commcare_account account.domain couch_user.couch_id forloop.counter0 %}" method="POST">
                                 <table>
@@ -36,7 +34,7 @@
         <p class="big_border">You have no CommCare accounts.</p>
     {% endif %}
 
-	<h4>All CommCare users in domain "{{ domain }}"</h4>
+	<h4>Other CommCare users in domain "{{ domain }}"</h4>
     {% if other_commcare_accounts %}
         <table class='big_border'>
             <tr><th></th>
@@ -58,7 +56,7 @@
                 <td>{{ account.username_html|safe }}</a></td>
                 <!--td>{{ account.domain }}</td-->
                 <td>{{ account.registering_device_id }}</td>
-                <td><a class="add_link" href="#"></a>
+                <td><a class="add_link" href="commcare_accounts.html#"></a>
                     <div class="add_dialog" title="Add {{ account.username_html|safe }}?">
                         <form name="link_commcare_account" action="{% url link_commcare_account_to_user account.domain couch_user.couch_id account.login_id %}" method="POST">
                             <table>
@@ -79,5 +77,3 @@
 	</table>
 	<a href="{% url add_commcare_account domain %}">Add New CommCare Account</a>
 </div>
-{% endblock %}
-

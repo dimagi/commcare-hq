@@ -37,7 +37,7 @@ class Domain(models.Model):
         if couch_user:
             return couch_user.get_active_domains()
         else:
-            return []
+            return Domain.objects.none()
     
     def add(self, model_instance, is_active=True):
         """
