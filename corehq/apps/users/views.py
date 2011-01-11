@@ -21,6 +21,15 @@ from dimagi.utils.couch.database import get_db
 from .util import doc_value_wrapper
 
 
+def require_permission_to_edit_user(view_func):
+    def _inner(request, domain, couch_id, *args, **kwargs):
+        if request.user.is_superuser or request.couch_user.is_domain_admin(domain) or request.couch_user._id == couch_id:
+            return view_func(request, domain, couch_id, *args, **kwargs)
+        else:
+            raise Http404()
+    return _inner
+
+
 def _users_context(request, domain):
     return {
          'web_users': CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True),
@@ -79,7 +88,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     })
     return render_to_response(request, template, context)
 
-@login_and_domain_required
+@require_permission_to_edit_user
 def account(request, domain, couch_id, template="users/account.html"):
     context = {}
     couch_user = CouchUser.get(couch_id)
@@ -104,6 +113,16 @@ def account(request, domain, couch_id, template="users/account.html"):
         if account.login_id not in my_commcare_login_ids:
             other_commcare_accounts.append((user, account))
 
+    # domain-accounts tab
+    if request.user.is_superuser:
+        my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
+        other_domains = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
+        context.update({"user": request.user,
+                        "domain": domain,
+                        "domains": my_domains,
+                        "other_domains": other_domains,
+                        "couch_user":couch_user })
+
     context.update({
         "domain": domain,
         "couch_user":couch_user,
@@ -115,7 +134,6 @@ def account(request, domain, couch_id, template="users/account.html"):
         "other_commcare_accounts": other_commcare_accounts,
     })
     context.update(handle_user_form(request, domain, couch_user))
-    print context
     return render_to_response(request, template, context)
 
 @require_POST
@@ -172,16 +190,16 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
     return render_to_response(request, template, context)
 
 @require_POST
-@login_and_domain_required
+@require_superuser
 def add_domain_membership(request, domain, user_id, domain_name):
     user = CouchUser.get(user_id)
     if domain_name:
         user.add_domain_membership(domain_name)
         user.save()
-    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id)))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, user_id)))
 
 @require_POST
-@login_and_domain_required
+@require_superuser
 def delete_domain_membership(request, domain, user_id, domain_name):
     user = CouchUser.get(user_id)
     for i in range(0,len(user.web_account.domain_memberships)):
@@ -189,7 +207,7 @@ def delete_domain_membership(request, domain, user_id, domain_name):
             del user.web_account.domain_memberships[i]
             break
     user.save()
-    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, user_id )))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, user_id )))
 
 @login_and_domain_required
 def change_my_password(request, domain, template="users/change_my_password.html"):

@@ -42,6 +42,7 @@ class DomainMembership(Document):
     web domain. This is primarily for Dimagi staff.
     """
     domain = StringProperty()
+    is_admin = BooleanProperty()
     permissions = StringListProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
@@ -192,7 +193,12 @@ class CouchUser(Document, UnicodeMixIn):
                 return
         self.web_account.domain_memberships.append(DomainMembership(domain = domain,
                                                         **kwargs))
-    
+    def is_domain_admin(self, domain):
+        for d in self.web_account.domain_memberships:
+            if d.domain == domain and d.is_admin:
+                return True
+        return False
+
     @property
     def domain_names(self):
         return [dm.domain for dm in self.web_account.domain_memberships]

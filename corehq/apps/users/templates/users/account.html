@@ -28,6 +28,9 @@
             <li><a href="#basic-info">Basic</a></li>
             <li><a href="#phone-numbers">Phone Numbers</a></li>
             <li><a href="#commcare-accounts">CommCare Accounts</a></li>
+            {% if request.user.is_superuser %}
+                <li><a href="#domains">Domains</a></li>
+            {% endif %}
         </ul>
         <div id="basic-info">
             <form name="user_details" method="post">
@@ -51,6 +54,11 @@
         <div id="commcare-accounts">
             {% include "users/partial/commcare_accounts.html" %}
         </div>
+        {% if request.user.is_superuser %}
+            <div id="domains">
+                {% include "users/partial/domain_accounts.html" %}
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
 
