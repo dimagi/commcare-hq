@@ -12,7 +12,7 @@ REGISTRATION_TEMPLATE = \
     <Registration xmlns="http://openrosa.org/user/registration">
         <username>%(username)s</username>
         <uuid>%(uuid)s</uuid>
-    <Registration >'''
+    </Registration >'''
 
 def get_response(user):
     from corehq.apps.phone.xml import get_response as phone_get_response
