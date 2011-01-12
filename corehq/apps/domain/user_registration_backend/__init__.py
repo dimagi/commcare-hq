@@ -385,9 +385,7 @@ def register_user(domain, first_name, last_name, email, password, is_active, is_
 #        new_user.add_row_perm(domain, Permissions.ADMINISTRATOR)
         
 
-    # turn off for debugging
-    if False:
-        _send_user_registration_email(new_user.email, domain, new_user.username, password)
+    _send_user_registration_email(new_user.email, domain, new_user.username, password)
     # Add membership info to Couch
     #couch_user = new_user.get_profile().get_couch_user()
     couch_user = CouchUser.from_web_user(new_user)

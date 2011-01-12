@@ -431,7 +431,7 @@ class Form(IndexedSchema):
                     "value": get_ref(elem),
                 }
             else:
-                pass
+                continue
             if question['tag'] == "select1":
                 options = []
                 for item in elem.findall('{f}item'.format(**NS)):
