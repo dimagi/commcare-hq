@@ -127,5 +127,5 @@ def send_to_recipients(request, domain):
     phone_numbers.extend([r['doc']['phone_numbers'][-1]['number'] for r in users])
 
     for number in phone_numbers:
-        send_sms(domain, None, number, message)
+        send_sms(domain, "", number, message)
     return HttpResponse(json.dumps({"phone_numbers": phone_numbers, "message": message}))
