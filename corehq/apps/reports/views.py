@@ -59,8 +59,6 @@ def submit_history(request, domain, template="reports/partials/couch_report_part
         'ajax_source': reverse('paging_submit_history', args=[domain, individual]),
     })
 def paging_submit_history(request, domain, individual):
-    print "individual %s" % individual
-
     def xmlns_to_name(xmlns):
         try:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
@@ -196,8 +194,9 @@ def daily_submissions(request, domain, view_name, title):
         view_name,
         group=True,
         startkey=[domain, start_date.isoformat()],
-        endkey=[domain, end_date.isoformat()]
+        endkey=[domain, end_date.isoformat(), {}]
     ).all()
+    print results
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     usernames = [result['key'][1] for result in all_users_results]
 
@@ -215,7 +214,6 @@ def daily_submissions(request, domain, view_name, title):
         rows[i][0] = username
 
     headers = ["Username"] + dates
-    print "end date: %s" % end_date
     return render_to_response(request, "reports/daily_submissions.html", {
         "domain": domain,
         "show_dates": True,

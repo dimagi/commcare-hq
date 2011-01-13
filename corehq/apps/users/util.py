@@ -11,7 +11,13 @@ def raw_username(username):
     """
     Strips the @domain.commcarehq.org from the username if it's there
     """
-    return username.split("@")[0]
+    sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
+    username = username.lower()
+    u, d = username.split("@")
+    if d == sitewide_domain:
+        return u
+    else:
+        return username
 
 def django_user_from_couch_id(id):
     """

@@ -8,6 +8,7 @@ from corehq.apps.domain.models import Domain
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import couch_user_from_django_user
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -55,13 +56,14 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
         def _inner(req, domain, *args, **kwargs):
 
             user = req.user
-            couch_user = req.couch_user
-            if not couch_user:
-                couch_user = CouchUser.from_web_user(user)
-                couch_user.save()
+#            couch_user = req.couch_user
+#            if not couch_user:
+#                couch_user = CouchUser.from_web_user(user)
+#                couch_user.save()
             domain_name = domain
             domains = Domain.objects.filter(name=domain)
             if user.is_authenticated() and user.is_active:
+                couch_user = couch_user_from_django_user(user)
                 if couch_user.is_member_of(domains) or (user.is_superuser and domains.count()):
                     return view_func(req, domain_name, *args, **kwargs)
                 else:
