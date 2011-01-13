@@ -60,7 +60,8 @@ class CommCareUsersTestCase(TestCase):
         parent = User(username='parent')
         parent.set_password('password')
         parent.save()
-        couch_user_1 = couch_user_from_django_user(parent)
+        couch_user_1 = CouchUser.from_web_user(parent)
+        couch_user_1.save()
         # child
         couch_user_2 = create_hq_user_from_commcare_registration_info(self.domain,
                                                                  self.commcare_username, 
@@ -96,9 +97,9 @@ class CommCareUsersTestCase(TestCase):
         # verify that it's gone from couch_user_1
         self.assertEquals(len(couch_user_1.commcare_accounts),0)
         # only one instance of an hq user should contain that commcare user
-        users_count = CouchUser.view("users/by_commcare_username_domain", key=[self.domain, self.commcare_username]).total_rows
+        users_count = CouchUser.view("users/commcare_accounts_by_domain", key=self.domain, include_docs=True).total_rows
         self.assertEquals(users_count, 1)
-        couch_user_2 = CouchUser.view("users/by_commcare_username_domain", key=[self.commcare_username, self.domain]).one()
+        couch_user_2 = CouchUser.view("users/commcare_accounts_by_domain", key=self.domain, include_docs=True).one()
         self.assertEquals(couch_user_2.commcare_accounts[0].domain,self.domain)
         self.assertEquals(couch_user_2.commcare_accounts[0].django_user.username,self.commcare_username)
         self.assertTrue(len(couch_user_2.commcare_accounts[0].django_user.password)>0)
@@ -108,8 +109,8 @@ class CommCareUsersTestCase(TestCase):
         commcare_users_count = CouchUser.view("users/commcare_users_by_domain_username", key=[self.domain, self.commcare_username]).total_rows
         self.assertEquals(commcare_users_count, 1)
         # TODO: add this back in once we've merged back the refactored users code
-        #users_count = CouchUser.view("users/all_users").total_rows
-        #self.assertEquals(users_count, 2)
+        users_count = CouchUser.view("users/all_users").total_rows
+        self.assertEquals(users_count, 2)
 
 #    def testUnlinkCommCareUser(self):
 #        # create parent and child

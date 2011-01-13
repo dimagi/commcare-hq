@@ -26,8 +26,7 @@ class CreateTestCase(TestCase):
         
     def testCreateBasicWebUser(self):
         """ 
-        test that a basic couch user gets created properly after 
-        saving a django user programmatically
+        test that a basic couch user gets created when calling CouchUser.from_web_user
         """
         username = "joe"
         email = "joe@domain.com"
@@ -35,11 +34,9 @@ class CreateTestCase(TestCase):
         # create django user
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
-        # the following will throw a HQUserProfile.DoesNotExist error
-        # if the profile was not properly created
-        profile = new_user.get_profile()
         # verify that the default couch stuff was created
-        couch_user = profile.get_couch_user()
+        couch_user = CouchUser.from_web_user(new_user)
+        couch_user.save()
         self.assertEqual(couch_user.web_account.login.username, username)
         self.assertEqual(couch_user.web_account.login.email, email)
 
@@ -53,11 +50,8 @@ class CreateTestCase(TestCase):
         # create django user
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
-        # the following will throw a HQUserProfile.DoesNotExist error
-        # if the profile was not properly created
-        profile = new_user.get_profile()
         # verify that the default couch stuff was created
-        couch_user = profile.get_couch_user()
+        couch_user = CouchUser.from_web_user(new_user)
         self.assertEqual(couch_user.web_account.login.username, username)
         self.assertEqual(couch_user.web_account.login.email, email)
         couch_user.add_domain_membership('domain1')

@@ -8,6 +8,7 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from corehq.apps.sms.util import send_sms
 from corehq.apps.users.models import CouchUser, PhoneUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
@@ -106,7 +107,7 @@ def send_to_recipients(request, domain):
     message = request.POST.get('message')
     recipients = [x.strip() for x in recipients.split(',') if x.strip()]
     phone_numbers = []
-    # formats: GroupName (group), "Username" <5555555555>
+    # formats: GroupName (group), "Username" <+15555555555>, +15555555555
     group_names = []
     usernames = []
     phone_numbers = []
@@ -125,4 +126,6 @@ def send_to_recipients(request, domain):
     users.extend(get_db().view('users/by_username', keys=[[domain, un] for un in usernames], include_docs=True).all())
     phone_numbers.extend([r['doc']['phone_numbers'][-1]['number'] for r in users])
 
+    for number in phone_numbers:
+        send_sms(domain, "", number, message)
     return HttpResponse(json.dumps({"phone_numbers": phone_numbers, "message": message}))
