@@ -68,7 +68,7 @@ class UserRegistersSelfBackend( DefaultBackend ):
     fields and supported operations.
     
     """    
-    @transaction.commit_manually
+    @transaction.commit_on_success
     def register(self, request, **kwargs):
         """
         Given an email address, create a dummy user account, with a 
@@ -113,39 +113,30 @@ class UserRegistersSelfBackend( DefaultBackend ):
         # requisite steps: create user, create registration profile, create domain
         # membership
         
-        try:
-            new_user = User()
-            new_user.first_name = 'unregistered'
-            new_user.last_name  = 'unregistered'
-            new_user.username = username
-            new_user.email = email        
-            new_user.set_password(password)
-            new_user.is_staff = False # Can't log in to admin site
-            new_user.is_active = False # Activated upon receipt of confirmation
-            new_user.is_superuser = True # For now make people superusers because permissions are a pain
-            new_user.last_login =  datetime.datetime(1970,1,1)
-            # date_joined is used to determine expiration of the invitation key - I'd like to
-            # munge it back to 1970, but can't because it makes all keys look expired.
-            new_user.date_joined = datetime.datetime.utcnow()
-            new_user.save()
-                
-            couch_user = new_user.get_profile().get_couch_user()
-            couch_user.add_domain_membership(request.user.selected_domain.name)
-            couch_user.save()
-    
-            # Registration profile   
-            registration_profile = RegistrationProfile.objects.create_profile(new_user)
-            
-            registration_profile.send_activation_email(site)
-            
-        except:
-            transaction.rollback()                
-            vals = {'error_msg':'There was a problem with your request',
-                    'error_details':sys.exc_info(),
-                    'show_homepage_link': 1 }
-            return render_to_response('error.html', vals, context_instance = RequestContext(request))                   
-        else:
-            transaction.commit()  
+        new_user = User()
+        new_user.first_name = 'unregistered'
+        new_user.last_name  = 'unregistered'
+        new_user.username = username
+        new_user.email = email
+        new_user.set_password(password)
+        new_user.is_staff = False # Can't log in to admin site
+        new_user.is_active = False # Activated upon receipt of confirmation
+        new_user.is_superuser = True # For now make people superusers because permissions are a pain
+        new_user.last_login =  datetime.datetime(1970,1,1)
+        # date_joined is used to determine expiration of the invitation key - I'd like to
+        # munge it back to 1970, but can't because it makes all keys look expired.
+        new_user.date_joined = datetime.datetime.utcnow()
+        new_user.save()
+
+        couch_user = CouchUser.from_web_user(new_user)
+        couch_user.add_domain_membership(request.user.selected_domain.name)
+        couch_user.save()
+
+        # Registration profile
+        registration_profile = RegistrationProfile.objects.create_profile(new_user)
+
+        registration_profile.send_activation_email(site)
+
                          
         signals.user_registered.send(sender=self.__class__,
                                      user=new_user,

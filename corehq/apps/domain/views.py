@@ -18,6 +18,7 @@ from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestFor
 from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from django_user_registration.models import RegistrationProfile
+from corehq.apps.users.models import CouchUser
 
 from corehq.util.webutils import render_to_response
 
@@ -174,7 +175,7 @@ def _create_new_domain_request( request, kind, form, now ):
     dom_req.new_user = new_user
 
     ############# Couch Domain Membership
-    couch_user = new_user.get_profile().get_couch_user()
+    couch_user = CouchUser.from_web_user(new_user)
     couch_user.add_domain_membership(d.name)
     couch_user.save()
     
@@ -191,7 +192,7 @@ def _create_new_domain_request( request, kind, form, now ):
 # Neither login nor domain required here - outside users, not registered on our site, can request a domain
 # Manual transaction because we want to update multiple objects atomically
 
-@transaction.commit_manually
+@transaction.commit_on_success
 def registration_request(request, kind=None):
     
     # Logic to decide whehter or not we're creating a new user to go with the new domain, or reusing the 
@@ -223,19 +224,11 @@ def registration_request(request, kind=None):
                         'show_homepage_link': 1 }
                 return render_to_response(request, 'error.html', vals)   
             
-            try:        
-                dom_req = _create_new_domain_request( request, kind, form, now )
-                if kind == 'new_user': # existing_users are automatically activated; no confirmation email
-                    _send_domain_registration_email( dom_req.new_user.email, dom_req.domain.name, 
-                                              dom_req.activation_guid, dom_req.new_user.username )
-            except:
-                transaction.rollback()                
-                vals = {'error_msg':'There was a problem with your request',
-                        'error_details':sys.exc_info(),
-                        'show_homepage_link': 1 }
-                return render_to_response(request, 'error.html', vals)                   
-            else:
-                transaction.commit()    
+            dom_req = _create_new_domain_request( request, kind, form, now )
+            if kind == 'new_user': # existing_users are automatically activated; no confirmation email
+                _send_domain_registration_email( dom_req.new_user.email, dom_req.domain.name,
+                                          dom_req.activation_guid, dom_req.new_user.username )
+  
     
             # Only gets here if the database-insert try block's else clause executed
             if kind == 'existing_user':

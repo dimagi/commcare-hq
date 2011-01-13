@@ -279,8 +279,10 @@ class CouchUser(Document, UnicodeMixIn):
     
     @classmethod
     def from_web_user(cls, user):
-        couch_user = CouchUser()
-        couch_user.web_account.login_id = user.get_profile()._id
+        login_id = user.get_profile()._id
+        assert(len(cls.view("users/couch_users_by_django_profile_id", include_docs=True, key=login_id)) == 0)
+        couch_user = cls()
+        couch_user.web_account.login_id = login_id
         couch_user.first_name = user.first_name
         couch_user.last_name = user.last_name
         couch_user.email = user.email

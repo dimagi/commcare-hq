@@ -1,5 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
+from corehq.apps.domain.urls import domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
     (r'^$', 'users'),
@@ -10,10 +11,10 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'delete_phone_number/(?P<user_id>[\w-]+)/(?P<phone_number>[\+\w-]+)/?$',
         'delete_phone_number',
         name='delete_phone_number'),
-    url(r'add_domain_membership/(?P<user_id>[\w-]+)/(?P<domain_name>[\w-]+)/?$', 
+    url(r'add_domain_membership/(?P<user_id>[\w-]+)/(?P<domain_name>%s)/?$' % domain_re,
         'add_domain_membership',
         name='add_domain_membership'),
-    url(r'delete_domain_membership/(?P<user_id>[\w-]+)/(?P<domain_name>[\w-]+)/?$', 
+    url(r'delete_domain_membership/(?P<user_id>[\w-]+)/(?P<domain_name>%s)/?$' % domain_re,
         'delete_domain_membership',
         name='delete_domain_membership'),
     url(r'unlink_commcare_account/(?P<couch_user_id>[\w-]+)/(?P<commcare_user_index>[\d-]+)/?$',

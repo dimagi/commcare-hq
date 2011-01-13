@@ -43,6 +43,8 @@ def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
 
+domain_re = "[\w\.]+"
+
 urlpatterns =\
     patterns('corehq.apps.domain.views',
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
