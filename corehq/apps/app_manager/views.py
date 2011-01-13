@@ -291,6 +291,7 @@ def view_app(req, domain, app_id=''):
 @login_and_domain_required
 def new_app(req, domain):
     "Adds an app to the database"
+    lang = req.COOKIES.get('lang', "en")
     form = NewAppForm(req.POST)
     if form.is_valid():
         cd = form.cleaned_data
@@ -302,13 +303,17 @@ def new_app(req, domain):
             cls = Application
 
 
-        all_apps = Application.view('app_manager/applications', key=[domain]).all()
-        if name in [a.name.get(lang, "") for a in all_apps]:
+        all_apps = Application.view('app_manager/applications', key=[domain, None]).all()
+        if name in [a.name for a in all_apps]:
             error="app_exists"
         else:
             app = cls.new_app(domain, name)
+            app.new_module("Untitled Module", lang)
+            app.new_form(0, "Untitled Form", lang)
             app.save()
             app_id = app.id
+            module_id = 0
+            form_id = 0
     return back_to_main(**locals())
 
 @require_POST
@@ -556,11 +561,17 @@ def edit_app_attr(req, domain, app_id, attr):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
 
+    resp = {"update": {}}
     # For either type of app
     if   "recipients" == attr:
         recipients = req.POST['recipients']
         app.recipients = recipients
         app.save()
+    elif "name" == attr:
+        name = req.POST["name"]
+        app.name = name
+        app.save()
+        resp['update'].update({'.variable-app_name': name})
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
@@ -568,7 +579,7 @@ def edit_app_attr(req, domain, app_id, attr):
         app['profile_url'] = req.POST['profile_url']
         app.save()
     #return back_to_main(**locals())
-    return HttpResponse(json.dumps({"update": {}}))
+    return HttpResponse(json.dumps(resp))
 
 
 @require_POST
@@ -676,8 +687,8 @@ def download_zipped_jar(req, domain, app_id):
 
     """
     response = HttpResponse(mimetype="application/java-archive")
-    response['Content-Disposition'] = "filename=CommCare.jar"
     app = get_app(domain, app_id)
+    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
     response.write(app.create_zipped_jar())
     return response
 
@@ -733,9 +744,11 @@ def download_jad(req, domain, app_id):
     See ApplicationBase.create_jad
 
     """
+    app = get_app(domain, app_id)
     response = HttpResponse(
-        get_app(domain, app_id).create_jad()
+        app.create_jad()
     )
+    response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
 

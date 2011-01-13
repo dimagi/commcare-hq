@@ -13,7 +13,10 @@ def raw_username(username):
     """
     sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
     username = username.lower()
-    u, d = username.split("@")
+    try:
+        u, d = username.split("@")
+    except:
+        return username
     if d == sitewide_domain:
         return u
     else:

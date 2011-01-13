@@ -42,11 +42,12 @@
                     {% endif %}
                     {% if edit and app %}
                         <a class="delete_link" href="#"></a>
-                        <div class="delete_dialog" title="Delete {{ app.name }}?">
+                        <div class="delete_dialog" title="Delete Application?">
                             <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
                                 <table>
                                     <tr>
-                                        <td>Are you sure you want to delete application "{{ app.name }}"
+                                        <td>Are you sure you want to delete application
+                                            "<span class="variable-app_name">{{ app.name }}</span>"
                                             and all its modules and forms?</td>
                                     </tr>
                                 </table>
@@ -56,7 +57,7 @@
                     {% endif %}
                     {% if applications %}
                         {% ifequal applications|length 1 %}
-                            <strong id="app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
+                            <strong id="app_name" class="variable-app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
                         {% else %}
                             <select class="applications">
                                 {% if not app %}
@@ -64,7 +65,7 @@
                                 {% endif %}
                                 {% for a in applications %}
                                 <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
-                                        {% ifequal a.id app.id %}selected=""{% endifequal %}>
+                                        {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
                                     {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
                                 </option>
                                 {% endfor %}
@@ -87,43 +88,43 @@
                             </table>
                             <input type="submit" value="Create Application"/>
                         </form>
-                        <hr/>
-                        <h4>From Factory Application</h4>
-                        <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">
-                            <table>
-                                <tr>
-                                    <th>Name:</th>
-                                    <td><input type="text" name="name"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Application:</th>
-                                    <td>
-                                        <select name="app_id">
-                                            <option value="" disabled="true">Select an application</option>
-                                            {% for fapp in factory_apps %}
-                                                <option value="{{ fapp.id }}">{{ fapp.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </td>
-                                </tr>
-                            </table>
-                            <input type="submit" value="Import Application">
-                        </form>
-                        <hr/>
-                        <h4>Import from source (advanced)</h4>
-                        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
-                            <table>
-                                <tr>
-                                    <th>Name:</th>
-                                    <td><input type="text" name="name"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Source:</th>
-                                    <td><textarea name="source" id="jkasf"></textarea></td>
-                                </tr>
-                            </table>
-                            <input type="submit" value="Import Application">
-                        </form>
+{#                        <hr/>#}
+{#                        <h4>From Factory Application</h4>#}
+{#                        <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">#}
+{#                            <table>#}
+{#                                <tr>#}
+{#                                    <th>Name:</th>#}
+{#                                    <td><input type="text" name="name"/></td>#}
+{#                                </tr>#}
+{#                                <tr>#}
+{#                                    <th>Application:</th>#}
+{#                                    <td>#}
+{#                                        <select name="app_id">#}
+{#                                            <option value="" disabled="true">Select an application</option>#}
+{#                                            {% for fapp in factory_apps %}#}
+{#                                                <option value="{{ fapp.id }}">{{ fapp.name }}</option>#}
+{#                                            {% endfor %}#}
+{#                                        </select>#}
+{#                                    </td>#}
+{#                                </tr>#}
+{#                            </table>#}
+{#                            <input type="submit" value="Import Application">#}
+{#                        </form>#}
+{#                        <hr/>#}
+{#                        <h4>Import from source (advanced)</h4>#}
+{#                        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">#}
+{#                            <table>#}
+{#                                <tr>#}
+{#                                    <th>Name:</th>#}
+{#                                    <td><input type="text" name="name"/></td>#}
+{#                                </tr>#}
+{#                                <tr>#}
+{#                                    <th>Source:</th>#}
+{#                                    <td><textarea name="source" id="jkasf"></textarea></td>#}
+{#                                </tr>#}
+{#                            </table>#}
+{#                            <input type="submit" value="Import Application">#}
+{#                        </form>#}
                     </div>
                 {% endif %}
             </div>
@@ -166,25 +167,38 @@
                             {% for error in build_errors %}
                                 <li>
                                     {% if error.type == "invalid xml" %}
-                                        Invalid xml in form "{{ error.form.name|trans:langs }}"
+                                        Invalid xml in form
+                                        <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}">
+                                            {{ error.form.name|trans:langs }}
+                                        </a>
                                         in module "{{ error.module.name|trans:langs }}": {{ error.message }}
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
-                                        Module "{{ error.module.name|trans:langs }}" uses referrals but doesn't have
+                                        Module
+                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">
+                                            {{ error.module.name|trans:langs }}
+                                        </a>
+                                        uses referrals but doesn't have
                                         detail screens configured for referrals.
                                     {% else %}
                                     {% if error.type == "no case detail" %}
-                                        Module "{{ error.module.name|trans:langs }}" uses cases but doesn't have
+                                        Module
+                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        uses cases but doesn't have
                                         detail screens configured for cases.
                                     {% else %}
                                     {% if error.type == "no modules" %}
                                         This application has no modules.
                                     {% else %}
                                     {% if error.type == "no forms" %}
-                                        Module "{{ error.module.name|trans:langs }}" has no forms.
+                                        Module
+                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        has no forms.
                                     {% else %}
                                     {% if error.type == "no case type" %}
-                                        Module "{{ error.module.name|trans:langs }}" uses cases but doesn't have a
+                                        Module
+                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        uses cases but doesn't have a
                                         case type defined.
                                     {% else %}
                                         {{ error }}

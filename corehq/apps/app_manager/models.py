@@ -713,6 +713,7 @@ class ApplicationBase(VersionedDoc):
                 'MIDlet-Jar-Size': len(jar),
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
+                #'MIDlet-Name': self.name,
             })
             jad = sign_jar(jad, jar)
             jad = jad.render()
@@ -941,8 +942,9 @@ class Application(ApplicationBase):
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
-            needs_case = False
-            needs_referral = False
+            needs_case_detail = False
+            needs_referral_detail = False
+
             for form in module.get_forms():
                 try:
                     ET.fromstring(form.contents.encode('utf-8'))
@@ -953,15 +955,18 @@ class Application(ApplicationBase):
                         "form": {"id": form.id, "name": form.name},
                         'message': unicode(e),
                     })
-                if form.requires in ('case', 'referral') or form.active_actions():
-                    needs_case = True
-                if form.requires == "referral" or not set(['open_referral', 'update_referral', 'close_referral']).isdisjoint(form.active_actions()):
-                    needs_referral = True
-            if needs_case and not module.case_type:
+                if form.requires in ('case', 'referral'):
+                    needs_case_detail = True
+                    needs_case_type = True
+                if form.active_actions():
+                    needs_case_type = True
+                if form.requires == "referral":
+                    needs_referral_detail = True
+            if needs_case_type and not module.case_type:
                 errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-            if needs_case and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+            if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
                 errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-            if needs_referral and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+            if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
                 errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
         return errors
     

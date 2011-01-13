@@ -12,6 +12,7 @@ from corehq.apps.sms.util import send_sms
 from corehq.apps.users.models import CouchUser, PhoneUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
+from corehq.apps.users.util import raw_username
 from corehq.util.webutils import render_to_response
 from . import util
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -93,12 +94,19 @@ def post(request, domain):
 
 def get_sms_autocomplete_context(request, domain):
     """A helper view for sms autocomplete"""
-    phone_users = PhoneUser.view("users/phone_users_by_domain", key=domain)
+    phone_users = CouchUser.view("users/phone_users_by_domain",
+        startkey=[domain], endkey=[domain, {}], include_docs=True
+    )
     groups = Group.view("groups/by_domain", key=domain)
 
     contacts = []
     contacts.extend(['%s (group)' % group.name for group in groups])
-    contacts.extend(['"%s" <%s>' % (user.name, user.phone_number) for user in phone_users])
+    user_id = None
+    for user in phone_users:
+        if user._id == user_id:
+            continue
+        contacts.append(user.username)
+        user_id = user._id
     return {"sms_contacts": json.dumps(contacts)}
 
 @login_and_domain_required
@@ -107,7 +115,7 @@ def send_to_recipients(request, domain):
     message = request.POST.get('message')
     recipients = [x.strip() for x in recipients.split(',') if x.strip()]
     phone_numbers = []
-    # formats: GroupName (group), "Username" <+15555555555>, +15555555555
+    # formats: GroupName (group), "Username", +15555555555
     group_names = []
     usernames = []
     phone_numbers = []
@@ -115,16 +123,17 @@ def send_to_recipients(request, domain):
         if recipient.endswith("(group)"):
             name = recipient.strip("(group)").strip()
             group_names.append(name)
-        elif re.match(r'"[\w\.]+" <\d+>', recipient):
-            name = recipient.split('"')[1]
-            usernames.append(name)
+        elif re.match(r'[\w\.]+', recipient):
+            usernames.append(recipient)
         elif re.match(r'\+\d+', recipient):
             phone_numbers.append(recipient)
             
 
-    users = get_db().view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
-    users.extend(get_db().view('users/by_username', keys=[[domain, un] for un in usernames], include_docs=True).all())
-    phone_numbers.extend([r['doc']['phone_numbers'][-1]['number'] for r in users])
+    login_ids = [r['value'] for r in get_db().view("users/logins_by_username", keys=usernames).all()]
+
+    users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
+    users.extend(CouchUser.view('users/by_login', keys=login_ids, include_docs=True).all())
+    phone_numbers.extend([user.default_phone_number() for user in users])
 
     for number in phone_numbers:
         send_sms(domain, "", number, message)
