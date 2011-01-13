@@ -747,7 +747,7 @@ class ApplicationBase(VersionedDoc):
             buffer.close()
             self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
             return jar
-    def validate(self):
+    def validate_app(self):
         pass
     
 class Application(ApplicationBase):
@@ -935,13 +935,14 @@ class Application(ApplicationBase):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 del source['modules'][m]['forms'][f]['unique_id']
-    def validate(self):
+    def validate_app(self):
         errors = []
         if not self.modules:
             errors.append({"type": "no modules"})
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+            needs_case_type = False
             needs_case_detail = False
             needs_referral_detail = False
 

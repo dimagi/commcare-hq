@@ -628,7 +628,7 @@ def save_copy(req, domain, app_id):
     """
     next = req.POST.get('next')
     app = get_app(domain, app_id)
-    errors = app.validate()
+    errors = app.validate_app()
     def replace_params(next, **kwargs):
         """this is a more general function that should be moved"""
         url = urlparse.urlparse(next)
