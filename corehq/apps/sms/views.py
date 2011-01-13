@@ -57,7 +57,7 @@ def messaging(request, domain, template="sms/default.html"):
     context['domain'] = domain
     context['phone_users'] = phone_users
     context['groups'] = groups
-    context['messagelog'] = MessageLog.objects.filter(domain=domain)
+    context['messagelog'] = MessageLog.objects.filter(domain=domain).order_by('-pk')
     return render_to_response(request, template, context)
 
 def post(request, domain):

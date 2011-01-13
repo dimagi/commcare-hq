@@ -1,3 +1,4 @@
+import urllib
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -136,9 +137,15 @@ def account(request, domain, couch_id, template="users/account.html"):
     context.update(handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
 
-@require_POST
 @login_and_domain_required
-def delete_phone_number(request, domain, user_id, phone_number):
+def delete_phone_number(request, domain, user_id):
+    """
+    phone_number cannot be passed in the url due to special characters
+    but it can be passed as %-encoded GET parameters
+    """
+    if 'phone_number' not in request.GET:
+        return Http404('Must include phone number in request.')
+    phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get(user_id)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
