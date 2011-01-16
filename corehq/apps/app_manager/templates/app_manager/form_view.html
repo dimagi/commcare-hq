@@ -307,6 +307,7 @@
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
                             <input type="file" name="xform" />
+                            <input type="hidden" name="ajax" value="false" />
                             <input type="submit" value="Upload" />
                         </form>
                     </div>
