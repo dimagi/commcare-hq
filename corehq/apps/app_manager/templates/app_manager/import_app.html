@@ -1,0 +1,13 @@
+<form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+    <table>
+        <tr>
+            <th>Name:</th>
+            <td><input type="text" name="name"/></td>
+        </tr>
+        <tr>
+            <th>Source:</th>
+            <td><textarea name="source"></textarea></td>
+        </tr>
+    </table>
+    <input type="submit" value="Import Application">
+</form>

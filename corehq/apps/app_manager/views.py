@@ -85,18 +85,22 @@ def app_source(req, domain, app_id):
     return HttpResponse(json.dumps(app.export_json()))
     
 @login_and_domain_required
-@require_POST
-def import_app(req, domain):
-    source = req.POST.get('source')
-    name = req.POST.get('name')
-    source = json.loads(source)
-    if name:
-        source['name'] = name
-    cls = _str_to_cls[source['doc_type']]
-    app = cls.from_source(source, domain)
-    app.save()
-    app_id = app._id
-    return back_to_main(**locals())
+def import_app(req, domain, template="app_manager/import_app.html"):
+    if req.method == "POST":
+        source = req.POST.get('source')
+        name = req.POST.get('name')
+        source = json.loads(source)
+        try: del source['_attachments']
+        except: pass
+        if name:
+            source['name'] = name
+        cls = _str_to_cls[source['doc_type']]
+        app = cls.from_source(source, domain)
+        app.save()
+        app_id = app._id
+        return back_to_main(**locals())
+    else:
+        return render_to_response(req, template, {'domain': domain})
 
 @login_and_domain_required
 @require_POST

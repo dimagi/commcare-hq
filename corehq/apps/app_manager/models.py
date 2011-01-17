@@ -296,8 +296,9 @@ class Form(IndexedSchema):
             if 'open_referral' in actions or 'update_referral' in actions or 'close_referral' in actions:
                 referral = __('referral')[
                     __('referral_id'),
-                    __('followup_date')
                 ]
+                if 'open_referral' in actions or 'update_referral' in actions:
+                    referral[__('followup_date')]
                 casexml[referral]
 
                 if 'open_referral' in actions:
