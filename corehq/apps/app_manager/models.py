@@ -703,7 +703,7 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
-        return JadJar.view('app_manager/jadjar').all()[0]
+        return JadJar.view('app_manager/jadjar', descending=True).all()[0]
 
     def create_jad(self, template="app_manager/CommCare.jad"):
         try:
