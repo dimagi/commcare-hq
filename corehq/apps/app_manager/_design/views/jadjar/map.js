@@ -1,5 +1,5 @@
 function(doc) {
     if(doc.doc_type == "JadJar") {
-        emit(doc.version, doc);
+        emit(doc.build_number, doc);
     }
 }
