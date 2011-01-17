@@ -679,7 +679,7 @@ class ApplicationBase(VersionedDoc):
 
     """
 
-    recipients = StringProperty()
+    recipients = StringProperty(default="")
 
     @property
     def post_url(self):
