@@ -101,12 +101,12 @@ class CommCareUsersTestCase(TestCase):
         self.assertEquals(users_count, 1)
         couch_user_2 = CouchUser.view("users/commcare_accounts_by_domain", key=self.domain, include_docs=True).one()
         self.assertEquals(couch_user_2.commcare_accounts[0].domain,self.domain)
-        self.assertEquals(couch_user_2.commcare_accounts[0].django_user.username,self.commcare_username)
-        self.assertTrue(len(couch_user_2.commcare_accounts[0].django_user.password)>0)
-        self.assertEquals(couch_user_2.commcare_accounts[0].UUID,'uuid')
+        self.assertEquals(couch_user_2.commcare_accounts[0].login.username,self.commcare_username)
+        self.assertTrue(len(couch_user_2.commcare_accounts[0].login.password)>0)
+        self.assertEquals(couch_user_2.commcare_accounts[0].login_id,'uuid')
         self.assertEquals(couch_user_2.commcare_accounts[0].registering_device_id,'imei')
         # only one instance of that commcare user should exist
-        commcare_users_count = CouchUser.view("users/commcare_users_by_domain_username", key=[self.domain, self.commcare_username]).total_rows
+        commcare_users_count = CouchUser.view("users/commcare_users_by_login_id", key='uuid').total_rows
         self.assertEquals(commcare_users_count, 1)
         # TODO: add this back in once we've merged back the refactored users code
         users_count = CouchUser.view("users/all_users").total_rows

@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from corehq.apps.sms.util import send_sms
-from corehq.apps.users.models import CouchUser, PhoneUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import raw_username
@@ -42,8 +42,7 @@ def messaging(request, domain, template="sms/default.html"):
                     users = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
                     #user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=[domain, group.name]).all()]
                     #users = [m for m in CouchUser.view("users/all_users", keys=user_ids).all()]
-                    users = [m['doc'] for m in users]
-                    for user in users: 
+                    for user in users:
                         success = util.send_sms(domain, 
                                                 user.get_id, 
                                                 user.default_phone_number(), 
@@ -54,7 +53,11 @@ def messaging(request, domain, template="sms/default.html"):
                 context['errors'] = "Could not send %s messages" % num_errors
             else:
                 return HttpResponseRedirect( reverse("messaging", kwargs={ "domain": domain} ) )
-    phone_users = PhoneUser.view("users/phone_users_by_domain", key=domain)
+    phone_users = CouchUser.view("users/phone_users_by_domain",
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True
+    )
     groups = Group.view("groups/by_domain", key=domain)
     context['domain'] = domain
     context['phone_users'] = phone_users
@@ -135,6 +138,8 @@ def send_to_recipients(request, domain):
     users.extend(CouchUser.view('users/by_login', keys=login_ids, include_docs=True).all())
     phone_numbers.extend([user.default_phone_number() for user in users])
 
+    failed_numbers = []
     for number in phone_numbers:
-        send_sms(domain, "", number, message)
-    return HttpResponse(json.dumps({"phone_numbers": phone_numbers, "message": message}))
+        if not send_sms(domain, "", number, message):
+            failed_numbers.append(number)
+    return HttpResponse(json.dumps({"phone_numbers": phone_numbers, "message": message, "failed_numbers": failed_numbers}))

@@ -14,6 +14,11 @@ $(function() {
     $(".sidebar ul li div").addClass('ui-corner-top');
     $(".sidebar ul").addClass('ui-corner-bottom');
 
+
+    $('.submit_on_click').click(function(e){
+        e.preventDefault();
+        $(this).closest('form').submit();
+    });
     // trick to give a select menu an initial value
     $('select[data-value]').each(function(){
         var val = $(this).attr('data-value');

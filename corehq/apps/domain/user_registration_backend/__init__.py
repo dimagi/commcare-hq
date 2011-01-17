@@ -129,7 +129,7 @@ class UserRegistersSelfBackend( DefaultBackend ):
         new_user.save()
 
         couch_user = CouchUser.from_web_user(new_user)
-        couch_user.add_domain_membership(request.user.selected_domain.name)
+        couch_user.add_domain_membership(request.user.selected_domain.name, is_admin=True)
         couch_user.save()
 
         # Registration profile
@@ -359,21 +359,6 @@ def register_user(domain, first_name, last_name, email, password, is_active, is_
     # munge it back to 1970, but can't because it makes all keys look expired.
     new_user.date_joined = datetime.datetime.utcnow()
     new_user.save()
-
-    # Membership
-    ct = ContentType.objects.get_for_model(User)
-    mem = Membership()
-
-    # Domain that the current logged-on admin is in
-    mem.domain = Domain.objects.get(name=domain)
-    mem.member_type = ct
-    mem.member_id = new_user.id
-    mem.is_active = is_active_member
-    mem.save()
-
-    # domain admin?
-#    if is_domain_admin:
-#        new_user.add_row_perm(domain, Permissions.ADMINISTRATOR)
         
 
     _send_user_registration_email(new_user.email, domain, new_user.username, password)

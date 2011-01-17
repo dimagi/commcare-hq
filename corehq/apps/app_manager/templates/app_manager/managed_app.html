@@ -100,36 +100,39 @@
                     {% endif %}
                     {% if edit %}
                     <li class="sort-disabled">
-                        <a class="new_link dialog_opener" id="new_form" href="#">Form</a>
-                        <div class="dialog" title="Create New Form">
-                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}" method="post" enctype="multipart/form-data">
-                                <table>
-                                    {{ new_xform_form }}
-                                </table>
-                                <input type="submit" value="Create Form" />
-                            </form>
-                            <hr/>
-                            <h4>From Factory Form</h4>
-                            <form action="{% url corehq.apps.app_manager.views.import_factory_form domain app.id module.id %}" method="post">
-                                <table>
-                                    <td>
-                                        <select name="app_module_form_id">
-                                            <option value="" disabled="true">Select a form</option>
-                                            {% for fapp in factory_apps %}
-                                                <optgroup label="{{ fapp.name }}">
-                                                    {% for fmodule in fapp.modules %}
-                                                        {% for fform in fmodule.forms %}
-                                                            <option value="{{ fapp.id }}/{{ fmodule.id }}/{{ fform.id }}">{{ fmodule.name|trans:langs }} &gt; {{ fform.name|trans:langs }}</option>
-                                                        {% endfor %}
-                                                    {% endfor %}
-                                                </optgroup>
-                                            {% endfor %}
-                                        </select>
-                                    </td>
-                                </table>
-                                <input type="submit" value="Import Form" />
-                            </form>
-                        </div>
+                        <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}" method="post">
+                            <a class="new_link submit_on_click" id="new_form" href="#">Form</a>
+                        </form>
+{#                        <a class="new_link dialog_opener" id="new_form" href="#">Form</a>#}
+{#                        <div class="dialog" title="Create New Form">#}
+{#                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}" method="post" enctype="multipart/form-data">#}
+{#                                <table>#}
+{#                                    {{ new_xform_form }}#}
+{#                                </table>#}
+{#                                <input type="submit" value="Create Form" />#}
+{#                            </form>#}
+{#                            <hr/>#}
+{#                            <h4>From Factory Form</h4>#}
+{#                            <form action="{% url corehq.apps.app_manager.views.import_factory_form domain app.id module.id %}" method="post">#}
+{#                                <table>#}
+{#                                    <td>#}
+{#                                        <select name="app_module_form_id">#}
+{#                                            <option value="" disabled="true">Select a form</option>#}
+{#                                            {% for fapp in factory_apps %}#}
+{#                                                <optgroup label="{{ fapp.name }}">#}
+{#                                                    {% for fmodule in fapp.modules %}#}
+{#                                                        {% for fform in fmodule.forms %}#}
+{#                                                            <option value="{{ fapp.id }}/{{ fmodule.id }}/{{ fform.id }}">{{ fmodule.name|trans:langs }} &gt; {{ fform.name|trans:langs }}</option>#}
+{#                                                        {% endfor %}#}
+{#                                                    {% endfor %}#}
+{#                                                </optgroup>#}
+{#                                            {% endfor %}#}
+{#                                        </select>#}
+{#                                    </td>#}
+{#                                </table>#}
+{#                                <input type="submit" value="Import Form" />#}
+{#                            </form>#}
+{#                        </div>#}
                     </li>
                     {% endif %}
 
@@ -139,36 +142,39 @@
             {% endwith %}
             {% if edit and app.doc_type == "Application" %}
                 <li class="sort-disabled">
-                    <a href="#" class="new_link" id="new_module">Module</a>
-                    <div id="new_module_dialog" title="Create New Module">
-                        <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}" method="post">
-                            <table>
-                                {{ new_module_form.as_table }}
-                            </table>
-                            <input type="submit" value="Create Module" />
-                        </form>
-                        <hr/>
-                        <h4>From Factory Module</h4>
-                        <form action="{% url corehq.apps.app_manager.views.import_factory_module domain app.id %}" method="post">
-                            <table>
+                    <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}" method="post">
+                        <a href="#" class="new_link submit_on_click" id="new_module">Module</a>
+                    </form>
+{#                    <a href="#" class="new_link" id="new_module">Module</a>#}
+{#                    <div id="new_module_dialog" title="Create New Module">#}
+{#                        <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}" method="post">#}
+{#                            <table>#}
+{#                                {{ new_module_form.as_table }}#}
+{#                            </table>#}
+{#                            <input type="submit" value="Create Module" />#}
+{#                        </form>#}
+{#                        <hr/>#}
+{#                        <h4>From Factory Module</h4>#}
+{#                        <form action="{% url corehq.apps.app_manager.views.import_factory_module domain app.id %}" method="post">#}
+{#                            <table>#}
                                 {# <th>Name:</th> #}
                                 {# <td><input type="text" name="name" /></td> #}
-                                <td>
-                                    <select name="app_module_id">
-                                        <option value="" disabled="true">Select a module</option>
-                                        {% for fapp in factory_apps %}
-                                            <optgroup label="{{ fapp.name }}">
-                                                {% for fmodule in fapp.modules %}
-                                                    <option value="{{ fapp.id }}/{{ fmodule.id }}">{{ fmodule.name|trans:langs }}</option>
-                                                {% endfor %}
-                                            </optgroup>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                            </table>
-                            <input type="submit" value="Import Module" />
-                        </form>
-                    </div>
+{#                                <td>#}
+{#                                    <select name="app_module_id">#}
+{#                                        <option value="" disabled="true">Select a module</option>#}
+{#                                        {% for fapp in factory_apps %}#}
+{#                                            <optgroup label="{{ fapp.name }}">#}
+{#                                                {% for fmodule in fapp.modules %}#}
+{#                                                    <option value="{{ fapp.id }}/{{ fmodule.id }}">{{ fmodule.name|trans:langs }}</option>#}
+{#                                                {% endfor %}#}
+{#                                            </optgroup>#}
+{#                                        {% endfor %}#}
+{#                                    </select>#}
+{#                                </td>#}
+{#                            </table>#}
+{#                            <input type="submit" value="Import Module" />#}
+{#                        </form>#}
+{#                    </div>#}
                 </li>
             {% endif %}
         </ul>

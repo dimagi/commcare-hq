@@ -13,7 +13,7 @@
 	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
 	                    <tr><td>
-	                    Are you sure you want to leave the domain "{{ dom }}"?
+	                    Are you sure you want to remove {{ couch_user.web_account.username_html|safe }} from the domain "{{ dom }}"?
 	                    </td></tr>
 	                </table>
 	                <input type="submit" value="Delete" />
@@ -38,7 +38,7 @@
 	            <form  name="add_domain_membership" action="{% url add_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
 	                    <tr><td>
-	                    Are you sure you want to join the domain "{{ dom }}"?
+	                    Are you sure you want to add {{ couch_user.web_account.username_html|safe }} to the domain "{{ dom }}"?
 	                    </td></tr>
 	                </table>
 	                <input type="submit" value="Add" />

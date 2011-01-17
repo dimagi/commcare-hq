@@ -316,23 +316,18 @@ def new_app(req, domain):
             form_id = 0
     return back_to_main(**locals())
 
+@profile('new_module')
 @require_POST
 @login_and_domain_required
 def new_module(req, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    form = NewModuleForm(req.POST)
-    if form.is_valid():
-        cd = form.cleaned_data
-        name = cd['name']
-        if name in [m['name'].get(lang, "") for m in app.modules]:
-            error = "module_exists"
-        else:
-            module = app.new_module(name, lang)
-            app.save()
-            # for locals()
-            module_id = module.id
+    name = req.POST.get('name')
+    module = app.new_module(name, lang)
+    module_id = module.id
+    app.new_form(module_id, "Untitled Form", lang)
+    app.save()
     return back_to_main(**locals())
 
 @require_POST
@@ -341,15 +336,11 @@ def new_form(req, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    new_xform_form = NewXFormForm(req.POST, req.FILES)
-
-    if new_xform_form.is_valid():
-        cd = new_xform_form.cleaned_data
-        name = cd['name']
-        form = app.new_form(module_id, name, lang)
-        app.save()
-        # add form_id to locals()
-        form_id = form.id
+    name = req.POST.get('name')
+    form = app.new_form(module_id, name, lang)
+    app.save()
+    # add form_id to locals()
+    form_id = form.id
     return back_to_main(**locals())
 
 @require_POST

@@ -40,8 +40,7 @@ def _users_context(request, domain):
 def _get_user_commcare_account_tuples(domain):
     return get_db().view(
         "users/commcare_accounts_by_domain",
-        startkey=[domain],
-        endkey=[domain, {}],
+        key=domain,
         include_docs=True,
         # This wrapper returns tuples of (CouchUser, CommCareAccount)
         wrapper=doc_value_wrapper(CouchUser, CommCareAccount)

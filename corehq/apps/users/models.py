@@ -50,6 +50,10 @@ class DomainMembership(Document):
     class Meta:
         app_label = 'users'
 
+class Login(DocumentSchema):
+    username = StringProperty()
+    password = StringProperty()
+
 class Account(Document):
     # the UUID which is also the login doc's _id
     login_id = StringProperty()
@@ -57,7 +61,7 @@ class Account(Document):
     @property
     def login(self):
         try:
-            return get_db().get(self.login_id)['django_user']
+            return Login.wrap(get_db().get(self.login_id)['django_user'])
         except:
             return None
 
@@ -287,12 +291,6 @@ class CouchUser(Document, UnicodeMixIn):
         couch_user.last_name = user.last_name
         couch_user.email = user.email
         return couch_user
-
-class PhoneUser(Document):
-    """A wrapper for response returned by phone_users_by_domain, etc."""
-    id = StringProperty()
-    name = StringProperty()
-    phone_number = StringProperty()
 
 """
 Django  models go here

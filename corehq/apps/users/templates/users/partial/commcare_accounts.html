@@ -31,7 +31,7 @@
             {% endfor %}
         </table>
     {% else %}
-        <p class="big_border">You have no CommCare accounts.</p>
+        <p class="big_border">There are no CommCare accounts associated with {{ couch_user.web_account.username_html|safe }}.</p>
     {% endif %}
 
 	<h4>Other CommCare users in domain "{{ domain }}"</h4>

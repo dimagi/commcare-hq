@@ -606,6 +606,8 @@ class VersionedDoc(Document):
             del copy['_id']
             del copy['_rev']
             del copy['short_url']
+            if "recipients" in copy:
+                del copy['recipients']
             if '_attachments' in copy:
                 del copy['_attachments']
             cls = self.__class__
@@ -871,7 +873,7 @@ class Application(ApplicationBase):
     def new_module(self, name, lang):
         self.modules.append(
             Module(
-                name={lang: name},
+                name={lang if lang else "en": name if name else "Untitled Module"},
                 forms=[],
                 case_type='',
                 case_name={'en': "Case"},
@@ -891,7 +893,7 @@ class Application(ApplicationBase):
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
         form = Form(
-            name={lang: name},
+            name={lang if lang else "en": name if name else "Untitled Form"},
             contents=attachment,
         )
         module.forms.append(form)
