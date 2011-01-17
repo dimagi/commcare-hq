@@ -12,7 +12,12 @@
 	</tr>
 	{% for user in web_users %}
 	<tr><td></td>
-		<td><a href="{% url user_account domain user.couch_id %}">{{ user.web_account.username_html|safe }}</a></td>
+		<td>
+            <a href="{% url user_account domain user.couch_id %}">
+                {{ user.web_account.username_html|safe }}
+                {% if user.is_domain_admin %}(admin){% endif %}
+            </a>
+        </td>
 		<td>{{ user.first_name }}</td>
 		<td>{{ user.last_name }}</td>
 		<td>
@@ -26,7 +31,7 @@
 	</tr>
 	{% endfor %}
 	</table>
-	<a href="{% url create_web_user domain %}">Create New User</a>
+	<a class="new_link" href="{% url create_web_user domain %}">Web User</a>
 </div>
 {% endblock %}
 

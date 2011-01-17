@@ -8,7 +8,7 @@
 	{% for dom in domains %}
 	<tr><td></td>
 		<td>{{ dom }}</td>
-    	<td><a class="delete_link" href="domain_accounts.html#">>{% trans "Leave" %}</a>
+    	<td><a class="delete_link" href="domain_accounts.html#"></a>
 	        <div class="delete_dialog" title="Leave {{ dom }}?">
 	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
@@ -33,8 +33,8 @@
 	{% for dom in other_domains %}
 	<tr><td></td>
 		<td>{{ dom }}</a></td>
-    	<td><a class="add_link" href="domain_accounts.html#">Join</a>
-	        <div class="add_dialog" title="Add {{ dom }}?">
+    	<td><a class="new_link dialog_opener" href="#">Add</a>
+	        <div class="dialog" title="Add {{ dom }}?">
 	            <form  name="add_domain_membership" action="{% url add_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
 	                    <tr><td>

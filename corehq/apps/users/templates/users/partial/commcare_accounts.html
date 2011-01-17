@@ -34,46 +34,48 @@
         <p class="big_border">There are no CommCare accounts associated with {{ couch_user.web_account.username_html|safe }}.</p>
     {% endif %}
 
-	<h4>Other CommCare users in domain "{{ domain }}"</h4>
-    {% if other_commcare_accounts %}
-        <table class='big_border'>
-            <tr><th></th>
-                <th>{% trans "Web User" %}</th>
-                <th>{% trans "Username" %}</th>
-                <!--th>{% trans "Domain" %}</th-->
-                <th>{% trans "Registering Phone ID" %}</th>
-                <th>{% trans "Link To User" %}</th>
-            </tr>
-            {% for user, account in other_commcare_accounts %}
-                <tr><td></td>
-                <td>
-                    {% if user.web_account.login %}
-                        {{ user.web_account.username_html|safe }}
-                    {% else %}
-                        n/a
-                    {% endif %}
-                </td>
-                <td>{{ account.username_html|safe }}</a></td>
-                <!--td>{{ account.domain }}</td-->
-                <td>{{ account.registering_device_id }}</td>
-                <td><a class="add_link" href="commcare_accounts.html#"></a>
-                    <div class="add_dialog" title="Add {{ account.username_html|safe }}?">
-                        <form name="link_commcare_account" action="{% url link_commcare_account_to_user account.domain couch_user.couch_id account.login_id %}" method="POST">
-                            <table>
-                                <tr><td>
-                                Are you sure you want to associate user {{ couch_user.get_id }} with the commcare account "{{ account.username_html|safe }}"?
-                                </td></tr>
-                            </table>
-                            <input type="submit" value="Link" />
-                            <input type="hidden" name="commcare_couch_user_id" value="{{ user.get_id }}" />
-                        </form>
-                    </div>
-                </td>
+    {% if couch_user.is_domain_admin or request.user.is_superuser %}
+        <h4>Other CommCare users in domain "{{ domain }}"</h4>
+        {% if other_commcare_accounts %}
+            <table class='big_border'>
+                <tr><th></th>
+                    <th>{% trans "Web User" %}</th>
+                    <th>{% trans "Username" %}</th>
+                    <!--th>{% trans "Domain" %}</th-->
+                    <th>{% trans "Registering Phone ID" %}</th>
+                    <th>{% trans "Link To User" %}</th>
                 </tr>
-            {% endfor %}
-        {% else %}
-        <p class="big_border">There are no other CommCare accounts in this domain.</p>
-        {% endif %}
-	</table>
-	<a href="{% url add_commcare_account domain %}">Add New CommCare Account</a>
+                {% for user, account in other_commcare_accounts %}
+                    <tr><td></td>
+                    <td>
+                        {% if user.web_account.login %}
+                            {{ user.web_account.username_html|safe }}
+                        {% else %}
+                            n/a
+                        {% endif %}
+                    </td>
+                    <td>{{ account.username_html|safe }}</a></td>
+                    <!--td>{{ account.domain }}</td-->
+                    <td>{{ account.registering_device_id }}</td>
+                    <td><a class="add_link" href="commcare_accounts.html#"></a>
+                        <div class="add_dialog" title="Add {{ account.username_html|safe }}?">
+                            <form name="link_commcare_account" action="{% url link_commcare_account_to_user account.domain couch_user.couch_id account.login_id %}" method="POST">
+                                <table>
+                                    <tr><td>
+                                    Are you sure you want to associate user {{ couch_user.get_id }} with the commcare account "{{ account.username_html|safe }}"?
+                                    </td></tr>
+                                </table>
+                                <input type="submit" value="Link" />
+                                <input type="hidden" name="commcare_couch_user_id" value="{{ user.get_id }}" />
+                            </form>
+                        </div>
+                    </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+            <p class="big_border">There are no other CommCare accounts in this domain.</p>
+            {% endif %}
+        </table>
+        <a class="new_link" href="{% url add_commcare_account domain %}">CommCare Account</a>
+    {% endif %}
 </div>

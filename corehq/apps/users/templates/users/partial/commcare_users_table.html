@@ -3,7 +3,6 @@
 <tr><th></th>
     <th>{% trans "Web Account" %}</th>
     <th>{% trans "CommCare Account" %}</th>
-    <!--th>{% trans "Registering Phone ID" %}</th-->
     <th>{% trans "Date Registered" %}</th>
     <th>{% trans "Phone Numbers" %}</th>
 </tr>
@@ -16,7 +15,6 @@
         <td></td>
         <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
         <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
-        <!--td>{{ account.registering_device_id }}</td-->
         <td>{{ account.user_data.date_registered }}</td>
         <td>
         {% ifchanged %}

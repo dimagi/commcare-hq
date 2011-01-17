@@ -4,11 +4,15 @@
 {% block user-view %}
 <div class='all_users'>
 	<h1>CommCare accounts in domain "{{ domain }}"</h1>
-	<table class='big_border'>
-        {% include "users/partial/commcare_users_table.html" %}
-    </table>
-	<a href="{% url registration_admin_does_all domain %}">Link duplicate CommCare Users</a><br/>
-	<a href="{% url add_commcare_account domain %}">Add New CommCare Account</a>
+    {% if commcare_users %}
+        <table class='big_border'>
+            {% include "users/partial/commcare_users_table.html" %}
+        </table>
+    {% else %}
+        <p class="big_border">There are no CommCare users in this domain.</p>
+    {% endif %}
+{#	<a href="{% url registration_admin_does_all domain %}">Link duplicate CommCare Users</a><br/>#}
+	<a class="new_link" href="{% url add_commcare_account domain %}">CommCare Account</a>
 </div>
 {% endblock %}
 

@@ -23,18 +23,31 @@ from .util import doc_value_wrapper
 
 
 def require_permission_to_edit_user(view_func):
-    def _inner(request, domain, couch_id, *args, **kwargs):
-        if request.user.is_superuser or request.couch_user.is_domain_admin(domain) or request.couch_user._id == couch_id:
-            return view_func(request, domain, couch_id, *args, **kwargs)
+    def _inner(request, domain, couch_user_id, *args, **kwargs):
+        if request.user.is_superuser or request.couch_user.is_domain_admin(domain) or request.couch_user._id == couch_user_id:
+            return view_func(request, domain, couch_user_id, *args, **kwargs)
         else:
             raise Http404()
     return _inner
 
+def require_domain_admin(view_func):
+    def _inner(request, domain, *args, **kwargs):
+        if request.user.is_superuser or request.couch_user.is_domain_admin(domain):
+            return view_func(request, domain, *args, **kwargs)
+        else:
+            raise Http404()
+    return _inner
 
 def _users_context(request, domain):
+    couch_user = request.couch_user
+    couch_user.current_domain = domain
+    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True)
+    for web_user in web_users:
+        web_user.current_domain = domain
     return {
-         'web_users': CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True),
-         'domain': domain
+        'web_users': web_users,
+        'domain': domain,
+        'couch_user': couch_user,
     }
 
 def _get_user_commcare_account_tuples(domain):
@@ -52,12 +65,13 @@ def users(request, domain):
         "user_account",
         args=[domain, request.couch_user._id],
     ))
-@login_and_domain_required
+
+@require_domain_admin
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
     return render_to_response(request, template, context)
 
-@login_and_domain_required
+@require_domain_admin
 @transaction.commit_on_success
 def create_web_user(request, domain, template="users/create_web_user.html"):
     if request.method == "POST":
@@ -77,7 +91,7 @@ def create_web_user(request, domain, template="users/create_web_user.html"):
     )
     return render_to_response(request, template, context)
 
-@login_and_domain_required
+@require_domain_admin
 def commcare_users(request, domain, template="users/commcare_users.html"):
     context = _users_context(request, domain)
     users = _get_user_commcare_account_tuples(domain)
@@ -89,9 +103,9 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     return render_to_response(request, template, context)
 
 @require_permission_to_edit_user
-def account(request, domain, couch_id, template="users/account.html"):
-    context = {}
-    couch_user = CouchUser.get(couch_id)
+def account(request, domain, couch_user_id, template="users/account.html"):
+    context = _users_context(request, domain)
+    couch_user = CouchUser.get(couch_user_id)
 
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
@@ -118,26 +132,22 @@ def account(request, domain, couch_id, template="users/account.html"):
         my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
         other_domains = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
         context.update({"user": request.user,
-                        "domain": domain,
                         "domains": my_domains,
                         "other_domains": other_domains,
-                        "couch_user":couch_user })
+                        })
 
     context.update({
-        "domain": domain,
-        "couch_user":couch_user,
-
         # for phone-number tab
         'phone_numbers': couch_user.phone_numbers,
 
         # for commcare-accounts tab
         "other_commcare_accounts": other_commcare_accounts,
     })
-    context.update(handle_user_form(request, domain, couch_user))
+    context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
 
-@login_and_domain_required
-def delete_phone_number(request, domain, user_id):
+@require_permission_to_edit_user
+def delete_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters
     but it can be passed as %-encoded GET parameters
@@ -145,16 +155,16 @@ def delete_phone_number(request, domain, user_id):
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    user = CouchUser.get(user_id)
+    user = CouchUser.get(couch_user_id)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
             break
     user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, user_id )))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 @require_POST
-@login_and_domain_required
+@require_permission_to_edit_user
 def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
     user = CouchUser.get(couch_user_id)
     if 'commcare_couch_user_id' not in request.POST: 
@@ -165,7 +175,7 @@ def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_POST
-@login_and_domain_required
+@require_permission_to_edit_user
 def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
     user = CouchUser.get(couch_user_id)
     if commcare_user_index:
@@ -173,15 +183,15 @@ def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index)
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
-@login_and_domain_required
-def my_domains(request, domain):
-    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, request.couch_user.couch_id)))
+#@login_and_domain_required
+#def my_domains(request, domain):
+#    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, request.couch_user._id)))
 
 @require_superuser
 @login_and_domain_required
-def domain_accounts(request, domain, couch_id, template="users/domain_accounts.html"):
-    context = {}
-    couch_user = CouchUser.get(couch_id)
+def domain_accounts(request, domain, couch_user_id, template="users/domain_accounts.html"):
+    context = _users_context(request, domain)
+    couch_user = CouchUser.get(couch_user_id)
     if request.method == "POST" and 'domain' in request.POST:
         domain = request.POST['domain']
         couch_user.add_domain_membership(domain)
@@ -189,32 +199,32 @@ def domain_accounts(request, domain, couch_id, template="users/domain_accounts.h
         context['status'] = 'domain added'
     my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
-    context.update({"user": request.user, 
-                    "domain": domain,
+    context.update({"user": request.user,
                     "domains": [dm.domain for dm in couch_user.web_account.domain_memberships],
-                    "couch_user":couch_user })
+                    })
     return render_to_response(request, template, context)
 
 @require_POST
 @require_superuser
-def add_domain_membership(request, domain, user_id, domain_name):
+def add_domain_membership(request, domain, couch_user_id, domain_name):
     user = CouchUser.get(user_id)
     if domain_name:
         user.add_domain_membership(domain_name)
         user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, user_id)))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_POST
 @require_superuser
-def delete_domain_membership(request, domain, user_id, domain_name):
+def delete_domain_membership(request, domain, couch_user_id, domain_name):
     user = CouchUser.get(user_id)
     for i in range(0,len(user.web_account.domain_memberships)):
         if user.web_account.domain_memberships[i].domain == domain_name:
             del user.web_account.domain_memberships[i]
             break
     user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, user_id )))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
+# this view can only change the current user's password
 @login_and_domain_required
 def change_my_password(request, domain, template="users/change_my_password.html"):
     # copied from auth's password_change
@@ -232,8 +242,8 @@ def change_my_password(request, domain, template="users/change_my_password.html"
     return render_to_response(request, template, context)
 
 
-@login_and_domain_required
-def handle_user_form(request, domain, couch_user=None):
+
+def _handle_user_form(request, domain, couch_user=None):
     context = {}
     if couch_user:
         create_user = False
@@ -271,17 +281,19 @@ def httpdigest(request, domain):
 GROUP VIEWS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-@login_and_domain_required
+@require_domain_admin
 def all_groups(request, domain, template="groups/all_groups.html"):
+    context = _users_context(request, domain)
     all_groups = Group.view("groups/by_domain", key=domain)
-    return render_to_response(request, template, {
+    context.update({
         'domain': domain,
         'all_groups': all_groups
     })
+    return render_to_response(request, template, context)
 
-@login_and_domain_required
+@require_domain_admin
 def group_members(request, domain, group_name, template="groups/group_members.html"):
-    context = {}
+    context = _users_context(request, domain)
     group = Group.view("groups/by_name", key=group_name).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
@@ -297,13 +309,13 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
                     })
     return render_to_response(request, template, context)
 
-@login_and_domain_required
-def my_groups(request, domain, template="groups/groups.html"):
-    return group_membership(request, domain, request.couch_user._id, template)
+#@require_domain_admin
+#def my_groups(request, domain, template="groups/groups.html"):
+#    return group_membership(request, domain, request.couch_user._id, template)
 
-@login_and_domain_required
+@require_domain_admin
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
-    context = {}
+    context = _users_context(request, domain)
     couch_user = CouchUser.get(couch_user_id)
     if request.method == "POST" and 'group' in request.POST:
         group = request.POST['group']
@@ -323,11 +335,12 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
 
-@login_and_domain_required
+@require_domain_admin
 def add_commcare_account(request, domain, template="users/add_commcare_account.html"):
     """
     Create a new commcare account
     """
+    context = _users_context(request, domain)
     if request.method == "POST":
         form = CommCareAccountForm(request.POST)
         if form.is_valid():
@@ -340,10 +353,8 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
             return HttpResponseRedirect(reverse("commcare_users", args=[domain]))
     else:
         form = CommCareAccountForm()
-    return render_to_response(request, template, 
-                              {"form": form,
-                               "couch_user": request.couch_user,
-                               "domain": domain })
+    context.update(form=form)
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
 def test_autocomplete(request, domain, template="users/test_autocomplete.html"):

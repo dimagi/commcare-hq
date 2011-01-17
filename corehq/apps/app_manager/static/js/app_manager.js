@@ -1,8 +1,3 @@
-$.prototype.iconify = function(icon) {
-    $icon = $("<div/>").addClass('ui-icon ' + icon).css('float', 'left');
-    $(this).css('width', "16px").prepend($icon);
-};
-
 function resetIndexes($sortable) {
     var indexes = $sortable.find('> * > .index').get();
     for(var i in indexes) {
@@ -17,15 +12,6 @@ function updateDOM(update) {
 }
 
 $(function(){
-    $('.hidden').hide();
-    $('.delete_link').iconify('ui-icon-closethick');
-    $(".delete_link").addClass("dialog_opener");
-    $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('ui-icon-plusthick');
-    $('.edit_link').iconify('ui-icon-pencil');
-    var dragIcon = 'ui-icon-grip-dotted-horizontal';
-    $('.drag_handle').iconify(dragIcon);
-
 
     $("#form-tabs").tabs({
         cookie: {}

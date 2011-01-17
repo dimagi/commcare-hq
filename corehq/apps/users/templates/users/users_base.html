@@ -20,18 +20,20 @@
                     <li><a href="{% url user_account domain request.couch_user.get_id %}">Account Settings</a></li>
                     <li><a href="{% url change_my_password domain %}">Change Password</a></li>
                 </ul>
-                <strong>Domain "{{ domain }}"</strong>
-                <ul>
-                    <li><a href="{% url web_users domain %}">Web Users</a>
-                        {% block web_users_indicator %}{% endblock %}
-                    </li>
-                    <li><a href="{% url commcare_users domain %}">CommCare Users</a>
-                        {% block commcare_users_indicator %}{% endblock %}
-                    </li>
-                    <li><a href="{% url all_groups domain %}">CommCare Groups</a>
-                        {% block groups_indicator %}{% endblock %}
-                    </li>
-                </ul>
+                {% if request.couch_user.is_domain_admin or request.user.is_superuser %}
+                    <strong>Domain "{{ domain }}"</strong>
+                    <ul>
+                        <li><a href="{% url web_users domain %}">Web Users</a>
+                            {% block web_users_indicator %}{% endblock %}
+                        </li>
+                        <li><a href="{% url commcare_users domain %}">CommCare Users</a>
+                            {% block commcare_users_indicator %}{% endblock %}
+                        </li>
+                        <li><a href="{% url all_groups domain %}">CommCare Groups</a>
+                            {% block groups_indicator %}{% endblock %}
+                        </li>
+                    </ul>
+                {% endif %}
             </div>
 
             <div class="next-to-sidebar">

@@ -2,18 +2,14 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h4>All groups in domain "{{ domain }}"</h4>
-    {% if all_groups %}
         <table class='big_border'>
-        <!--tr><td></td>
-            <td>{% trans "Group Name" %}</td>
-            <td></td>
-        </tr-->
-        {% for group in all_groups %}
-        <tr><td></td>
-            <td><a href="{% url group_members domain group.name %}">{{ group.name }}</a></td>
-            <td><a class="delete_link" href="#">x</a>
-                      <div class="delete_dialog" title="Delete {{ group.name }}?">
+            {% for group in all_groups %}
+                <tr>
+                    <th>{% if forloop.first %}{% trans "Groups" %}:{% endif %}</th>
+                    <td><a href="{% url group_members domain group.name %}">{{ group.name }}</a></td>
+                    <td>
+                        <a class="delete_link" href="#"></a>
+                        <div class="delete_dialog" title="Delete {{ group.name }}?">
                           <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
                               <table>
                                   <tr><td>
@@ -22,24 +18,21 @@
                               </table>
                               <input type="submit" value="Delete" />
                           </form>
-                      </div>
-            </td>
-        </tr>
-        {% endfor %}
-        </table>
-    {% else %}
-        <p class="big_border">This domain has no groups.</p>
-    {% endif %}
-	<form name="add_group" method="POST" action="{% url add_group domain %}">
-		<h1>Add new group</h1>
-		<table>
-			<tr><td>{% trans "Group Name" %}</td><td></td></tr>
-			<tr>
-				<td><input type="text" name="group_name"></input></td>
-				<td><input type="submit" class="small" value="Add"/></td>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <th>{% trans "Add New Group" %}:</th>
+				<td>
+                    <form name="add_group" method="POST" action="{% url add_group domain %}">
+                        <input type="text" name="group_name"></input>
+                        <input type="submit" class="small" value="Add"/>
+                    </form>
+                </td>
+				<td></td>
 			</tr>
-		</table>
-	</form>
+        </table>
 </div>
 {% endblock %}
 

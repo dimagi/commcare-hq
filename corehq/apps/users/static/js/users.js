@@ -1,7 +1,3 @@
-$.prototype.iconify = function(icon) {
-    this.addClass('ui-icon ' + icon).css('float', 'left');
-};
-
 $(function(){
 
     $('#user-options li').each(function(){
@@ -18,11 +14,6 @@ $(function(){
         );
 
     });
-
-    $('.delete_link').iconify('ui-icon-closethick');
-    $('.add_link').iconify('ui-icon-plusthick');
-    $('.new_link').iconify('ui-icon-plusthick');
-    $('.edit_link').iconify('ui-icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));

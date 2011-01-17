@@ -15,7 +15,8 @@
         {% with member.default_account as account %}
             <tr><td></td>
                 <td>{{ account.username_html|safe }}</td>
-                <td><a class="delete_link" href="#">{% trans "Leave" %}</a>
+                <td>
+                    <a class="delete_link" href="#"></a>
                     <div class="delete_dialog" title="Leave {{ group.name }}?">
                         <form name="leave_group" action="{% url leave_group domain group.get_id member.get_id %}" method="POST">
                             <table>
@@ -40,8 +41,8 @@
         {% with nonmember.default_account as account %}
             <tr><td></td>
                 <td>{{ account.username_html|safe }}</td>
-                <td><a class="add_link" href="#">{% trans "Join" %}</a>
-                    <div class="add_dialog" title="Join {{ group.name }}?">
+                <td><a class="new_link dialog_opener" href="#">Add</a>
+                    <div class="dialog" title="Join {{ group.name }}?">
                         <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
                             <table>
                                 <tr><td>

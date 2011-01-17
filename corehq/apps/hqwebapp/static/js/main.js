@@ -1,4 +1,18 @@
+$.prototype.iconify = function(icon) {
+    $icon = $("<div/>").addClass('ui-icon ' + icon).css('float', 'left');
+    $(this).css('width', "16px").prepend($icon);
+};
+
 $(function() {
+    $('.hidden').hide();
+    $('.delete_link').iconify('ui-icon-closethick');
+    $(".delete_link").addClass("dialog_opener");
+    $(".delete_dialog").addClass("dialog");
+    $('.new_link').iconify('ui-icon-plusthick');
+    $('.edit_link').iconify('ui-icon-pencil');
+    var dragIcon = 'ui-icon-grip-dotted-horizontal';
+    $('.drag_handle').iconify(dragIcon);
+
     $(".button").button().wrap('<span />').addClass('shadow');
     $("input[type='submit']").button().addClass('shadow');
     $("input[type='text'], input[type='password'], textarea").addClass('shadow').addClass('ui-corner-all');

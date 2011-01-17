@@ -197,7 +197,10 @@ class CouchUser(Document, UnicodeMixIn):
                 return
         self.web_account.domain_memberships.append(DomainMembership(domain = domain,
                                                         **kwargs))
-    def is_domain_admin(self, domain):
+    def is_domain_admin(self, domain=None):
+        if not domain:
+            # hack for template
+            domain = self.current_domain
         for d in self.web_account.domain_memberships:
             if d.domain == domain and d.is_admin:
                 return True

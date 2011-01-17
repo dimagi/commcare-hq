@@ -9,9 +9,15 @@
                     // store cookie for a day
                     expires: 1
                 }
-            });
+            }).removeClass('ui-corner-all ui-widget-content').css({padding: "0px"})
+              .find('.ui-tabs-nav').removeClass('ui-corner-all');
         });
 	</script>
+    <style>
+        .next-to-sidebar {
+            padding: 0px;
+        }
+    </style>
 {% endblock %}
 
 {% block web_users_indicator %}
