@@ -165,14 +165,14 @@
                                 <li>
                                     {% if error.type == "invalid xml" %}
                                         Invalid xml in form
-                                        <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}">
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
                                             {{ error.form.name|trans:langs }}
                                         </a>
                                         in module "{{ error.module.name|trans:langs }}": {{ error.message }}
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
                                             {{ error.module.name|trans:langs }}
                                         </a>
                                         uses referrals but doesn't have
@@ -180,7 +180,9 @@
                                     {% else %}
                                     {% if error.type == "no case detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
+                                            {{ error.module.name|trans:langs }}
+                                        </a>
                                         uses cases but doesn't have
                                         detail screens configured for cases.
                                     {% else %}
@@ -189,12 +191,12 @@
                                     {% else %}
                                     {% if error.type == "no forms" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
                                         has no forms.
                                     {% else %}
                                     {% if error.type == "no case type" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have a
                                         case type defined.
                                     {% else %}
