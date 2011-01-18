@@ -67,26 +67,23 @@ class CommCareUsersTestCase(TestCase):
                                                                  self.commcare_username, 
                                                                  'password', 'uuid', 'imei', datetime.now())
         # link
-        couch_user_1.link_commcare_account(self.domain, couch_user_2.get_id, self.commcare_username)
+        couch_user_1.link_commcare_account(self.domain, couch_user_2.get_id, 'uuid')
         # verify that all the data got copied over correctly
         self.assertEquals(len(couch_user_1.commcare_accounts),1)
         self.assertEquals(couch_user_1.commcare_accounts[0].domain,self.domain)
-        self.assertEquals(couch_user_1.commcare_accounts[0].django_user.username,self.commcare_username)
-        self.assertTrue(len(couch_user_1.commcare_accounts[0].django_user.password)>0)
-        self.assertEquals(couch_user_1.commcare_accounts[0].UUID,'uuid')
+        self.assertEquals(couch_user_1.commcare_accounts[0].login.username,self.commcare_username)
+        self.assertTrue(len(couch_user_1.commcare_accounts[0].login.password)>0)
+        self.assertEquals(couch_user_1.commcare_accounts[0].login_id,'uuid')
         self.assertEquals(couch_user_1.commcare_accounts[0].registering_device_id,'imei')
         # verify that the data got cleared from the couch_user_2 properly
         couch_user_2 = CouchUser.get(couch_user_2.get_id) # refresh the couch user
         self.assertEquals(len(couch_user_2.commcare_accounts),0)
         # only one instance of that commcare user should exist
-        commcare_users = CouchUser.view("users/commcare_users_by_domain_username", key=[self.domain, self.commcare_username])
+        commcare_users = CouchUser.view("users/commcare_users_by_domain_login_id", key=[self.domain, 'uuid'])
         self.assertEquals(len(commcare_users), 1)
-        # only one instance of an hq user should contain that commcare user
-        users_count = CouchUser.view("users/by_commcare_username_domain", key=[self.domain, self.commcare_username]).total_rows
-        self.assertEquals(users_count, 1)
         # TODO: add this back in once we've merged back the refactored users code
-        #users_count = CouchUser.view("users/all_users").total_rows
-        #self.assertEquals(users_count, 2)
+        users_count = CouchUser.view("users/all_users").total_rows
+        self.assertEquals(users_count, 2)
 
     def testUnlinkOrphanCommCareUser(self):
         # parent

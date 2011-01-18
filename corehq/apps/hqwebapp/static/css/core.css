@@ -103,9 +103,11 @@ abbr {
 }
 #logo {
     float: left;
-    background: url('../img/commcarehq-logo.png') no-repeat scroll 0 0 transparent; width: 450px; height: 70px;
+    /*background: url('../img/commcarehq-logo.png') no-repeat scroll 0 0 transparent; width: 450px; height: 70px;*/
     /*background: url('../img/monstertruck-cc-logo.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
     /*background: url('../img/monstertruck-overlap.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
+    margin-top: 2px;
+    background: url('../img/hq-stamp-tilt.png') no-repeat scroll 0 0 transparent; width: 462px; height: 130px;
     text-indent: -10000%;
 }
 ul#top-nav{
@@ -119,9 +121,9 @@ ul#top-nav li {
 header {
     padding: 5px 0;
     /* curly hq */
-    height: 70px;
+    /*height: 70px;*/
     /* monstertruck hq */
-    /*height: 100px; */
+    height: 95px;
     background-color: #fff;
     border-bottom: 1px solid #eee;
 

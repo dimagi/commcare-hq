@@ -45,7 +45,7 @@ def messaging(request, domain, template="sms/default.html"):
                     for user in users:
                         success = util.send_sms(domain, 
                                                 user.get_id, 
-                                                user.default_phone_number(), 
+                                                user.default_phone_number,
                                                 text)
                         if not success:
                             num_errors = num_errors + 1
@@ -136,7 +136,7 @@ def send_to_recipients(request, domain):
 
     users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
     users.extend(CouchUser.view('users/by_login', keys=login_ids, include_docs=True).all())
-    phone_numbers.extend([user.default_phone_number() for user in users])
+    phone_numbers.extend([user.default_phone_number for user in users])
 
     failed_numbers = []
     for number in phone_numbers:

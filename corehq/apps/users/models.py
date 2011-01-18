@@ -267,7 +267,7 @@ class CouchUser(Document, UnicodeMixIn):
         del self.commcare_accounts[commcare_user_index]
         self.save()
         
-    def add_phone_device(self, device_id, default=False, **kwargs):
+    def add_device_id(self, device_id, default=False, **kwargs):
         """ Don't add phone devices if they already exist """
         self.device_ids = _add_to_list(self.device_ids, device_id, default)
     
@@ -276,7 +276,7 @@ class CouchUser(Document, UnicodeMixIn):
         if not isinstance(phone_number,basestring):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
-    
+    @property
     def default_phone_number(self):
         return _get_default(self.phone_numbers)
     
@@ -294,6 +294,15 @@ class CouchUser(Document, UnicodeMixIn):
         couch_user.last_name = user.last_name
         couch_user.email = user.email
         return couch_user
+
+    # Couch view wrappers
+    @classmethod
+    def phone_users_by_domain(cls, domain):
+        return CouchUser.view("users/phone_users_by_domain",
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True,
+        )
 
 """
 Django  models go here
@@ -335,7 +344,7 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     if not date:
         date = datetime.now()
     couch_user.add_commcare_account(login, domain, device_id, user_data)
-    couch_user.add_phone_device(device_id=device_id)
+    couch_user.add_device_id(device_id=device_id)
     couch_user.save()
     return couch_user
     

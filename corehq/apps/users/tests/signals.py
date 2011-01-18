@@ -52,7 +52,7 @@ class SignalsTestCase(TestCase):
         couch_user = django_user.get_profile().get_couch_user()
         """
         other_device_ID = 'otherdeviceid'
-        couch_user.add_phone_device(other_device_ID)
+        couch_user.add_device_id(other_device_ID)
         #couch_user.add_commcare_username(self.xform.domain, self.username)
         couch_user.create_commcare_user(self.xform.domain, self.username, 'password')
         couch_user.save()
