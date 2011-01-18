@@ -16,7 +16,6 @@ class TestMeta(TestCase):
                                                  settings.COUCH_PASSWORD)
         xform = XFormInstance.get(doc_id)
         self.assertNotEqual(None, xform.metadata)
-        self.assertEqual("5020280", xform.metadata.clinic_id)
         self.assertEqual(date(2010,07,22), xform.metadata.time_start.date())
         self.assertEqual(date(2010,07,23), xform.metadata.time_end.date())
         self.assertEqual("admin", xform.metadata.username)

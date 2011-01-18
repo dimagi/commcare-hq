@@ -24,7 +24,6 @@ class Metadata(object):
     Metadata of an xform, from a meta block structured like:
         
         <Meta>
-            <clinic_id />
             <TimeStart />
             <TimeEnd />
             <username />
@@ -35,14 +34,12 @@ class Metadata(object):
     Everything is optional.
     """
     """
-    clinic_id = StringProperty()
     time_start = DateTimeProperty()
     time_end = DateTimeProperty()
     username = StringProperty()
     user_id = StringProperty()
     uid = StringProperty()
     """
-    clinic_id = None
     time_start = None
     time_end = None
     username = None
@@ -67,7 +64,7 @@ class Metadata(object):
     
     def to_dict(self):
         return dict([(key, getattr(self, key)) for key in \
-                     ("clinic_id", "time_start", "time_end",
+                     ("time_start", "time_end",
                       "username", "user_id","uid")])
 
 class XFormInstance(Document):
