@@ -161,7 +161,8 @@ class CommCareCase(CaseBase):
     """
     
     case_id = StringProperty()
-    
+    xform_id = StringProperty()
+
     external_id = StringProperty()
     user_id = StringProperty()
     
@@ -176,8 +177,7 @@ class CommCareCase(CaseBase):
     start_date = DateProperty()      
     activation_date = DateProperty() # date the phone triggers it active
     due_date = DateProperty()        # date the phone thinks it's due
-    
-    
+
     class Meta:
         app_label = 'case'
         
