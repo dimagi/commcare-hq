@@ -176,9 +176,10 @@ def _create_new_domain_request( request, kind, form, now ):
 
     ############# Couch Domain Membership
     couch_user = CouchUser.from_web_user(new_user)
-    couch_user.add_domain_membership(d.name)
+    if kind == "new_user":
+        couch_user.add_domain_membership(d.name, is_admin=True)
     couch_user.save()
-    
+    print couch_user.to_json()
     # Django docs say "use is_authenticated() to see if you have a valid user"
     # request.user is an AnonymousUser if not, and that always returns False                
     if request.user.is_authenticated():

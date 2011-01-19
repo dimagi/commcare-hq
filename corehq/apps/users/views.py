@@ -238,7 +238,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect(reverse('my_account', args=[domain]))
+            return HttpResponseRedirect(reverse('user_account', args=[domain, request.couch_user._id]))
     else:
         form = PasswordChangeForm(user=request.user)
     context = _users_context(request, domain)

@@ -129,7 +129,7 @@ class UserRegistersSelfBackend( DefaultBackend ):
         new_user.save()
 
         couch_user = CouchUser.from_web_user(new_user)
-        couch_user.add_domain_membership(request.user.selected_domain.name, is_admin=True)
+        couch_user.add_domain_membership(request.user.selected_domain.name)
         couch_user.save()
 
         # Registration profile

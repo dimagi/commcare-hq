@@ -1,4 +1,5 @@
 import datetime as DT
+from couchdbkit.exceptions import ResourceNotFound
 import dateutil.parser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
@@ -20,6 +21,17 @@ iso_format = '%Y-%m-%dT%H:%M:%SZ'
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
 #    return render_to_response(request, template, {'domain': domain})
+
+def user_id_to_username(user_id):
+
+    try:
+        login = get_db().get(user_id)
+    except:
+        login = None
+    if not login:
+        return None
+    else:
+        return login['django_user']['username']
 
 @login_and_domain_required
 def default(request, domain):
@@ -99,18 +111,58 @@ def paging_submit_history(request, domain, individual):
         def view_to_table(row):
             time = row['value'].get('time')
             xmlns = row['value'].get('xmlns')
-            username = row['value'].get('username')
+            user_id = row['value'].get('user_id')
 
             #time = DT.datetime.strptime(time, iso_format)
             time = format_time(time)
-            xmlns = xmlns_to_name(xmlns)            
-            return [username, time, xmlns]
+            xmlns = xmlns_to_name(xmlns)
+            username = user_id_to_username(user_id)
+            if username:
+                return [username, time, xmlns]
         paginator = CouchPaginator('reports/all_submissions', view_to_table, search=False, view_args=dict(
             endkey=[domain],
             startkey=[domain, {}],
             #descending=True,
         ))
     return paginator.get_ajax_response(request)
+
+@login_and_domain_required
+def active_cases(request, domain, template="reports/partials/couch_report_partial.html"):
+
+    individual = request.GET.get('individual', '')
+    rows = []
+
+    if individual:
+        headings = ["Submit Time", "Form"]
+    else:
+        headings = ["Username", "Active Cases"]
+    return render_to_response(request, template, {
+        'headings': headings,
+        'rows': rows,
+        "ajax_source": reverse('paging_active_cases', args=[domain, individual]),
+    })
+
+@login_and_domain_required
+def paging_active_cases(request, domain, individual):
+
+    def view_to_table(row):
+        r = row['value']
+        username = user_id_to_username(r['user_id'])
+        if username:
+            return [username, r['active_cases']]
+
+    paginator = CouchPaginator(
+        "reports/active_cases",
+        view_to_table,
+        search=False,
+        view_args=dict(
+            group=True,
+            endkey=[domain],
+            startkey=[domain, {}],
+        )
+    )
+    return paginator.get_ajax_response(request)
+
 
 @login_and_domain_required
 def submit_time_punchcard(request, domain):
@@ -138,11 +190,11 @@ def user_summary(request, domain, template="reports/user_summary.html"):
         "report": {
             "name": report_name
         },
-        "ajax_source": reverse('paging_user_summary', args=[domain]), 
+        "ajax_source": reverse('paging_user_summary', args=[domain]),
     })
 
 @login_and_domain_required
-def paging_user_summary(request, domain, template="reports/user_summary.html"):
+def paging_user_summary(request, domain):
 
     def view_to_table(row):
         row['last_submission_date'] = dateutil.parser.parse(row['last_submission_date'])
@@ -165,8 +217,14 @@ def individual_summary(request, domain):
     if individual:
         pass
 
-    usernames = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
-    usernames = [result['key'][1] for result in usernames]
+    user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
+    user_ids = [result['key'][1] for result in user_ids]
+    users = []
+    for user_id in user_ids:
+        username = user_id_to_username(user_id)
+        if username:
+            users.append({'id': user_id, 'username': username})
+
     return render_to_response(request, "reports/individual_summary.html", {
         "domain": domain,
         "show_users": True,
@@ -175,7 +233,7 @@ def individual_summary(request, domain):
             "header": [],
             "rows": [],
         },
-        "usernames": usernames,
+        "users": users,
         "individual": individual,
     })
 
@@ -200,21 +258,26 @@ def daily_submissions(request, domain, view_name, title):
     ).all()
     print results
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
-    usernames = [result['key'][1] for result in all_users_results]
+    user_ids = [result['key'][1] for result in all_users_results]
 
     dates = [start_date]
     while dates[-1] < end_date:
         dates.append(dates[-1] + DT.timedelta(days=1))
     date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
-    username_map = dict([(username, i) for (i, username) in enumerate(usernames)])
-    rows = [[0]*(1+len(date_map)) for _ in usernames]
+    user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
+    rows = [[0]*(1+len(date_map)) for _ in user_ids]
     for result in results:
-        _, date, username = result['key']
+        _, date, user_id = result['key']
         val = result['value']
-        rows[username_map[username]][date_map[date]] = val
-    for i,username in enumerate(usernames):
-        rows[i][0] = username
+        rows[user_map[user_id]][date_map[date]] = val
+    for i,user_id in enumerate(user_ids):
+        rows[i][0] = user_id_to_username(user_id)
 
+    valid_rows = []
+    for row in rows:
+        if row[0]:
+            valid_rows.append(row)
+    rows = valid_rows
     headers = ["Username"] + dates
     return render_to_response(request, "reports/daily_submissions.html", {
         "domain": domain,

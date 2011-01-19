@@ -16,6 +16,7 @@ def get_or_update_cases(xformdoc):
     cases_touched = {}
     for case_block in case_blocks:
         case_doc = get_or_update_model(case_block)
+        case_doc.xform_id = xformdoc._id
         cases_touched[case_doc.case_id] = case_doc
     return cases_touched
 

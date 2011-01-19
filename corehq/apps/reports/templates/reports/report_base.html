@@ -77,6 +77,7 @@
                 });
 
                 $("#report-tabs").tabs({
+                    cookie: {},
                     ajaxOptions: {
                         error: function( xhr, status, index, anchor ) {
                             $( anchor.hash ).html(
@@ -133,8 +134,8 @@
                 <form action="" method="GET">
                     <select id="individual_select" name="individual">
                         <option  value=''>All Individuals</option>
-                        {% for username in usernames %}
-                            <option {% if username == individual %}selected="true"{% endif %}>{{ username }}</option>
+                        {% for user in users %}
+                            <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
                         {% endfor %}
                     </select>
                 </form>

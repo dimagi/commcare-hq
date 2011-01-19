@@ -2,11 +2,13 @@ from django.conf.urls.defaults import *
 
 actual_reports = patterns('corehq.apps.reports.views',
     url('submit_history', 'submit_history', name="submit_history_report"),
+    url('active_cases', 'active_cases', name="active_case_report"),
     url('submit_time_punchcard', 'submit_time_punchcard', name="submit_time_punchcard"),
 )
 
 paging_reports = patterns('corehq.apps.reports.views',
     url('submit_history/(?P<individual>.*)/', 'paging_submit_history', name='paging_submit_history'),
+    url('active_cases/(?P<individual>.*)/', 'paging_active_cases', name='paging_active_cases'),
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
