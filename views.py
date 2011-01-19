@@ -1,5 +1,6 @@
 import logging
 from django.http import HttpResponse
+from corehq.apps.case.models.couch import CommCareCase
 from couchforms.views import post as couchforms_post
 from corehq.apps.receiver.signals import post_received, ReceiverResult
 
@@ -14,7 +15,7 @@ def post(request, domain):
                             "chw_id": "userID",
                             "DeviceID": "deviceID",
                             "uid": "instanceID"}
-            
+
             # hack to make sure uppercase meta still ends up in the right place
             if "Meta" in doc.form:
                 doc.form["meta"] = doc.form["Meta"]
@@ -37,8 +38,19 @@ def post(request, domain):
                               % (func, doc._id))
                 logging.exception(resp)
             elif resp and isinstance(resp, ReceiverResult):
-                # use the first valid response if we get one 
+                # use the first valid response if we get one
                 responses.append(resp)
+
+        # hack the domain into any case that has been created
+        def case_domain_hack(xform):
+            case = CommCareCase.view('case/by_xform_id', key=xform._id, include_docs=True).one()
+            case.domain = xform.domain
+            case.save()
+        try:
+            case_domain_hack(doc)
+        except:
+            pass
+
         if responses:
             responses.sort()
             return HttpResponse(responses[-1].response)
