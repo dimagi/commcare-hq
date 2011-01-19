@@ -15,13 +15,16 @@
 		</ul>
 		{% else %}
 		<div class="footnote">
-		NO PHONE NUMBERS REGISTERED YET.
+		No phone numbers registered yet.
 		</div>
 		{% endif %}
 		<div class="footnote">
-		Person not showing up?<br/>
-		<a href="{% url registration_admin_does_all domain %}">Register a new person</a><br/>
-		<a href="{% url web_users domain %}">Add phone number to existing account</a>
+            {% if request.couch_user.is_domain_admin %}
+                <a href="{% url create_web_user domain %}">Register a new person</a><br/>
+                <a href="{% url web_users domain %}">Add phone number to existing account</a>
+            {% else %}
+                <p>If someone you want to contact is not showing up, please contact your administrator.</p>
+            {% endif %}
 		</div>
 		</div>
 	</div>

@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404
+from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from corehq.util.webutils import render_to_response
 from django.core.urlresolvers import reverse
@@ -56,7 +57,7 @@ def login(req, template_name="login_and_password/login.html"):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, **{"template_name" : template_name})
+    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
 
 def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE

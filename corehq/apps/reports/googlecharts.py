@@ -11,7 +11,7 @@ def get_punchcard_url(data, width=950, height=300):
     
     Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
     '''
-    if not data: return ""
+    no_data = not data
     try:
         from pygooglechart import ScatterChart
     except ImportError:
@@ -33,6 +33,9 @@ def get_punchcard_url(data, width=950, height=300):
     for d in days:
         sizes.extend([data["%d %02d" % (d, h)] for h in range(24)])
     sizes.extend([0] * 24)
+    if no_data:
+        # fill in a line out of view so that chart.get_url() doesn't crash
+        sizes.extend([1] * 24)
     chart.add_data(sizes)
 
     chart.set_axis_labels('x', [''] + [str(h) for h  in range(24)] + [''])

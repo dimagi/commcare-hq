@@ -207,7 +207,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
 @require_POST
 @require_superuser
 def add_domain_membership(request, domain, couch_user_id, domain_name):
-    user = CouchUser.get(user_id)
+    user = CouchUser.get(couch_user_id)
     if domain_name:
         user.add_domain_membership(domain_name)
         user.save()
@@ -216,7 +216,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @require_POST
 @require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    user = CouchUser.get(user_id)
+    user = CouchUser.get(couch_user_id)
     for i in range(0,len(user.web_account.domain_memberships)):
         if user.web_account.domain_memberships[i].domain == domain_name:
             del user.web_account.domain_memberships[i]

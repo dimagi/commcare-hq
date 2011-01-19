@@ -20,6 +20,8 @@ class UsersMiddleware(object):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if request.user and hasattr(request.user, 'get_profile'):
             request.couch_user = couch_user_from_django_user(request.user)
+            if 'domain' in view_kwargs:
+                request.couch_user.current_domain = view_kwargs['domain']
         return None
     
 ############################################################################################################

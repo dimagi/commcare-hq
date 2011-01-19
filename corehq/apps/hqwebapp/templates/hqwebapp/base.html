@@ -31,9 +31,9 @@
                     <nav>
                         <ul id="top-nav">
                             {% block tabs %}
-                                {% if domain %}
-                                    {% get_tabs as tabs %}
-                                    <ul id="tabs">
+                                <ul id="tabs">
+                                    {% if domain %}
+                                        {% get_tabs as tabs %}
                                         {% for tab in tabs %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
@@ -41,10 +41,10 @@
                                                 <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
                                             {% endif %}
                                         {% endfor %}
-                                {% endif %}
-                                {% if user.is_authenticated %}
-                                    <li><a href='/accounts/logout'>Sign Out</a></li>
-                                {% endif %}
+                                    {% endif %}
+                                    {% if user.is_authenticated %}
+                                        <li><a href='/accounts/logout'>Sign Out</a></li>
+                                    {% endif %}
                                 </ul>
                             {% endblock %}
                         </ul>

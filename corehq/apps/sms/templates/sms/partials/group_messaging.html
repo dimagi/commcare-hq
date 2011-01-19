@@ -13,12 +13,15 @@
                     </ul>
                 {% else %}
                     <div class="footnote">
-                    NO GROUPS DEFINED YET.
+                    No groups created yet.
                     </div>
                 {% endif %}
                 <div class="footnote">
-                    Group not showing up?<br/>
-                    <a href="{% url all_groups domain %}">Create a new group.</a>
+                    {% if request.couch_user.is_domain_admin %}
+                        <a href="{% url all_groups domain %}">Create a new group.</a>
+                    {% else %}
+                        <p>To create a group, please contact your administrator.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
