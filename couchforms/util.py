@@ -41,8 +41,7 @@ def post_xform_to_couch(instance):
                 for func, errors in feedback:
                     if errors:
                         logging.error("Problem sending post-save signal %s for xform %s" % (func, doc_id))
-                        log_exception(errors)
-                    
+                        logging.exception(errors)                    
                 return xform
             except Exception, e:
                 logging.error("Problem accessing %s" % doc_id)
