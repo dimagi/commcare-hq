@@ -11,6 +11,3 @@ def domain( request,
     return ret
 
 
-
-
-
