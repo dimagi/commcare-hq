@@ -1,5 +1,4 @@
 import datetime as DT
-from couchdbkit.exceptions import ResourceNotFound
 import dateutil.parser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
