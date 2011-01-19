@@ -19,7 +19,7 @@
         <td>
         {% ifchanged %}
                 {% if user.phone_numbers %}
-                    {{ user.phone_numbers.0 }}
+                    +{{ user.phone_numbers.0 }}
                     {% if user.phone_numbers.1 %}
                         (and more)
                     {% endif %}

@@ -1,3 +1,4 @@
+import re
 import urllib
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.contrib.auth.models import User
@@ -110,9 +111,13 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
         phone_number = request.POST['phone_number']
-        couch_user.add_phone_number(phone_number)
-        couch_user.save()
-        context['status'] = 'phone number added'
+        if re.match(r'\d+', phone_number):
+            couch_user.add_phone_number(phone_number)
+            couch_user.save()
+            context['status'] = 'phone number added'
+        else:
+            context['status'] = "please enter digits only"
+
 
     # commcare-accounts tab
     my_commcare_login_ids = set([c.login_id for c in couch_user.commcare_accounts])
@@ -137,6 +142,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                         })
 
     context.update({
+        'couch_user': couch_user,
         # for phone-number tab
         'phone_numbers': couch_user.phone_numbers,
 
@@ -249,6 +255,9 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = False
     else:
         create_user = True
+    can_change_admin_status = \
+        (request.user.is_superuser or request.couch_user.is_domain_admin(domain))\
+        and request.couch_user._id != couch_user._id
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST)
         if form.is_valid():
@@ -260,6 +269,11 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.first_name = form.cleaned_data['first_name']
             couch_user.last_name = form.cleaned_data['last_name']
             couch_user.email = form.cleaned_data['email']
+            if can_change_admin_status:
+                for dm in couch_user.web_account.domain_memberships:
+                    if dm.domain == domain:
+                        dm.is_admin = form.cleaned_data['is_admin']
+                        break
             couch_user.save()
             context['status'] = 'changes saved'
     else:
@@ -268,6 +282,12 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
+            print request.couch_user
+            if can_change_admin_status:
+                domain_membership = [dm for dm in couch_user.web_account.domain_memberships if dm.domain == domain][0]
+                form.initial['is_admin'] = domain_membership.is_admin or couch_user.web_account.login.is_superuser
+            else:
+                del form.fields['is_admin']
 
     context.update({"form": form})
     return context

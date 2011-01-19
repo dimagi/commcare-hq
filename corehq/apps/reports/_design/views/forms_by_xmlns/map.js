@@ -7,7 +7,7 @@ function(doc){
                 var form = module.forms[f];
                 emit([app.domain, form.xmlns], {
                     xmlns: form.xmlns,
-                    app: {name: app.name, langs: app.langs},
+                    app: {name: app.name, langs: app.langs, id: app._id},
                     module: {name: module.name, id: m},
                     form: {name: form.name, id: f}
                 });

@@ -15,14 +15,14 @@
 		<td>
             <a href="{% url user_account domain user.couch_id %}">
                 {{ user.web_account.username_html|safe }}
-                {% if user.is_domain_admin %}(admin){% endif %}
+                {% if user.is_domain_admin or user.web_account.login.is_superuser %}(admin){% endif %}
             </a>
         </td>
 		<td>{{ user.first_name }}</td>
 		<td>{{ user.last_name }}</td>
 		<td>
 			{% if user.phone_numbers %}
-				{{ user.default_phone_number }}
+				+{{ user.default_phone_number }}
 				{% if user.phone_numbers.1 %}
 					(and more)
 				{% endif %}

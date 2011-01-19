@@ -67,7 +67,9 @@ def paging_submit_history(request, domain, individual):
             form = None
 
         if form:
-            name = "%s > %s > %s" % (
+            name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
+                reverse("corehq.apps.app_manager.views.view_app", args=[domain, form['app']['id']])
+                + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
                 form['app']['name'],
                 form['module']['name'][lang],
                 form['form']['name'][lang]

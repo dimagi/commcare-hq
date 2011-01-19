@@ -12,6 +12,7 @@ class UserForm(forms.Form):
     first_name = forms.CharField(max_length=50)
     last_name = forms.CharField(max_length=50)
     email = forms.EmailField(label=_("E-mail"), max_length=75)
+    is_admin = forms.BooleanField(required=False)
     
     class Meta:
         app_label = 'users'
