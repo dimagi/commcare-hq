@@ -92,7 +92,9 @@ class CouchPaginator(object):
             if not startkey:
                 startkey = row["key"]
             endkey = row["key"]
-            all_json.append(self._generator_func(row))
+            row = self._generator_func(row)
+            if row:
+                all_json.append(row)
         
         to_return = {"sEcho": params.echo,
                      "iTotalDisplayRecords": total_display_rows,
@@ -138,7 +140,9 @@ class LucenePaginator(object):
         all_json = []
         try:
             for row in results:
-                all_json.append(self._generator_func(row))
+                row = self._generator_func(row)
+                if row is not None:
+                    all_json.append(row)
             total_rows = results.total_rows
         except RequestFailed, e:
             # just ignore poorly formatted search terms for now
