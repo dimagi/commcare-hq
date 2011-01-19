@@ -208,16 +208,20 @@ class CommCareCase(CaseBase):
         if not const.CASE_ACTION_CREATE in case_block:
             raise ValueError("No create tag found in case block!")
         
+        def _safe_get(dict, key):
+            return dict[key] if key in dict else None
+        
         # create case from required fields in the case/create block
         create_block = case_block[const.CASE_ACTION_CREATE]
-        id = case_block[const.CASE_TAG_ID]
-        opened_on = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED])
+        id = _safe_get(case_block, const.CASE_TAG_ID)
+        opened_on_str = _safe_get(case_block, const.CASE_TAG_MODIFIED)
+        opened_on = parsing.string_to_datetime(opened_on_str) if opened_on_str else datetime.utcnow()
         
         # create block
-        type = create_block[const.CASE_TAG_TYPE_ID]
-        name = create_block[const.CASE_TAG_NAME]
-        external_id = create_block[const.CASE_TAG_EXTERNAL_ID]
-        user_id = create_block[const.CASE_TAG_USER_ID] if const.CASE_TAG_USER_ID in create_block else ""
+        type = _safe_get(create_block, const.CASE_TAG_TYPE_ID)
+        name = _safe_get(create_block, const.CASE_TAG_NAME)
+        external_id = _safe_get(create_block, const.CASE_TAG_EXTERNAL_ID)
+        user_id = _safe_get(create_block, const.CASE_TAG_USER_ID)
         create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
                                                              opened_on, opened_on.date(),
                                                              create_block)

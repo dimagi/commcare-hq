@@ -4,7 +4,7 @@ from django_digest.decorators import *
 from corehq.apps.phone import xml
 from corehq.apps.phone.models import SyncLog, PhoneCase
 from django.views.decorators.http import require_POST
-from corehq.apps.phone.caselogic import cases_for_patient, get_pats_with_updated_cases, get_open_cases_to_send
+from corehq.apps.phone.caselogic import get_open_cases_to_send
 from dimagi.utils.timeout import timeout, TimeoutException
 import logging
 from dimagi.utils.web import render_to_response
@@ -77,18 +77,6 @@ def restore(request, domain):
     except TimeoutException:
         return HttpResponse(status=503)
     
-def patient_case_xml(request, patient_id):
-    """
-    Case xml for a single patient.  This is just a debug method, and as such
-    ignores the start date flag and always returns the full case xml block
-    """
-    template = \
-"""<cases>%s
-</cases>"""
-    return HttpResponse(template % "".join([xml.get_case_xml(PhoneCase.from_bhoma_case(case)) \
-                                 for case in cases_for_patient(patient_id)]), 
-                        mimetype="text/xml")
-
 def logs(request):
     # TODO: pagination, etc.
     logs = get_db().view("phone/sync_logs_by_chw", group=True, group_level=1).all()
