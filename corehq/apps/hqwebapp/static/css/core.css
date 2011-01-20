@@ -278,12 +278,13 @@ form table {
 
 #choose-application {
     float: left;
-    display: table;
+    /*display: table;*/
 }
 #choose-application > div >* {
-    float:left;
+
 }
 #choose-application > div > p {
+    float:left;
     height: 40px;
 }
 #edit {
