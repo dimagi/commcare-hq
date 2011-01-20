@@ -177,14 +177,6 @@ EMAIL_PASSWORD="changeme"
 EMAIL_SMTP_HOST="smtp.gmail.com"
 EMAIL_SMTP_PORT=587
 
-# these are the official django settings
-# which really we should be using over the
-# above
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "user@domain.com"
-EMAIL_HOST_PASSWORD = "changeme"
-EMAIL_USE_TLS = True
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -276,3 +268,12 @@ AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 
 logging.basicConfig(filename=DJANGO_LOG_FILE)
+
+# these are the official django settings
+# which really we should be using over the
+# above
+EMAIL_HOST = EMAIL_SMTP_HOST
+EMAIL_PORT = EMAIL_SMTP_PORT
+EMAIL_HOST_USER = EMAIL_LOGIN
+EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
+EMAIL_USE_TLS = True
