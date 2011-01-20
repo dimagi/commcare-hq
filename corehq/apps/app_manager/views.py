@@ -312,12 +312,13 @@ def new_app(req, domain):
             error="app_exists"
         else:
             app = cls.new_app(domain, name)
-            app.new_module("Untitled Module", lang)
-            app.new_form(0, "Untitled Form", lang)
-            app.save()
             app_id = app.id
-            module_id = 0
-            form_id = 0
+            if cls == Application:
+                app.new_module("Untitled Module", lang)
+                app.new_form(0, "Untitled Form", lang)
+                module_id = 0
+                form_id = 0
+            app.save()
     return back_to_main(**locals())
 
 @profile('new_module')

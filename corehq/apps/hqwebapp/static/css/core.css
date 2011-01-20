@@ -69,7 +69,7 @@ h1,h2,h3,h4,h5,h6 {
     sortable: auto;
 }
 
-a {
+a, .ui-widget-content a {
     color: #0067B1;
     text-decoration: none;
 }
@@ -205,6 +205,13 @@ footer {
 .sidebar {
     width: 200px;
     padding: 1em;
+}
+.sidebar a {
+    color: #222;
+}
+.sidebar a:hover {
+    color: #0067B1;
+    text-decoration: underline;
 }
 #modules-header {
     text-align: center;

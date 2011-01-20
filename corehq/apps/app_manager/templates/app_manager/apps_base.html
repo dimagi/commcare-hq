@@ -17,11 +17,11 @@
             padding: 10px;
         }
     </style>
-
-
+    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}
 {% endblock %}
 {% block content %}
+
     <div id="main_container">
         {% if error %}
         <div id="error">
@@ -160,7 +160,7 @@
                 {% if build_errors %}
                     <div class="message">
                         Build Failed!
-                        <ul>
+                        <ul id="build-errors">
                             {% for error in build_errors %}
                                 <li>
                                     {% if error.type == "invalid xml" %}

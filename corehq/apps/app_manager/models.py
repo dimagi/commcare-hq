@@ -767,7 +767,7 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
             return jar
     def validate_app(self):
-        pass
+        return []
     
 class Application(ApplicationBase):
     """

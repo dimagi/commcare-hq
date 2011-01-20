@@ -117,30 +117,17 @@
     {% if app.doc_type == "RemoteApp" %}
         <h4>Remote Setup</h4>
         <table class="config">
-            {% if edit %}
-                <tr class="form editable">
-                    <th>Profile URL</th>
-                    <td>
-                        <input type="text" class="code wide" name="profile_url" />
-                        <div class="immutable"><code>{{ app.profile_url }}</code></div>
-                    </td>
-                    <td>
-                        <a href="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}" class="submit button">
-                            Save
-                        </a>
-                        <div class="immutable">
-                            <a class="edit_link" href="#"></a>
-                        </div>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <th>Profile URL</th>
-                    <td>
+            <th>Profile URL</th>
+                <td>
+                    {% if edit %}
+                        <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
+                            <input type="text" class="autosave code wide" name="profile_url" value="{{ app.profile_url }}"/>
+                        </form>
+                    {% else %}
                         {{ app.profile_url }}
-                    </td>
-                </tr>
-            {% endif %}
+                    {% endif %}
+                </td>
+
         </table>
     {% endif %}
     <h4>Advanced</h4>

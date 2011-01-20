@@ -235,31 +235,18 @@
                     </form>
                 </td>
             </tr>
-            <tr>
-                <th>Show Count</th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'show_count' %}">
-                        <select class="autosave code" name="show_count">
-                            <option value="True">True</option>
-                            <option value="False" {% if not form.show_count %}selected="true"{% endif %}>False</option>
-                        </select>
-                    </form>
-                </td>
-
-            </tr>
-            <tr>
-                <th>Requires</th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" method="post">
-                        <select class="autosave code" name="requires" data-value="{{ form.requires }}">
-                            <option value="none">none</option>
-                            <option value="case">case</option>
-                            <option value="referral">referral</option>
-                        </select>
-                        <input type="hidden" name="ajax" value="false" />
-                    </form>
-                </td>
-            </tr>
+{#            <tr>#}
+{#                <th>Show Count</th>#}
+{#                <td>#}
+{#                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'show_count' %}">#}
+{#                        <select class="autosave code" name="show_count">#}
+{#                            <option value="True">True</option>#}
+{#                            <option value="False" {% if not form.show_count %}selected="true"{% endif %}>False</option>#}
+{#                        </select>#}
+{#                    </form>#}
+{#                </td>#}
+{##}
+{#            </tr>#}
         {% else %}
             <tr>
                 <th>Form Name</th>
@@ -267,18 +254,12 @@
                     {{ form.name|trans:langs }}
                 </td>
             </tr>
-            <tr>
-                <th>Show Count</th>
-                <td>
-                    <code>{% if form.show_count %}True{% else %}False{% endif %}</code>
-                </td>
-            </tr>
-            <tr>
-                 <th>Requires</th>
-                 <td>
-                     <code>{{ form.requires }}</code>
-                 </td>
-            </tr> 
+{#            <tr>#}
+{#                <th>Show Count</th>#}
+{#                <td>#}
+{#                    <code>{% if form.show_count %}True{% else %}False{% endif %}</code>#}
+{#                </td>#}
+{#            </tr>#}
         {% endif %}
     </table>
 
@@ -362,10 +343,22 @@
         </span>
     </div>
     {% if form.contents %}
-        <h4>Actions</h4>
+        <h4>Cases and Referrals</h4>
         {% if xform_questions != "[]"%}
             <div class="casexml {% if not edit %}no-edit{% endif %} config">
-                <p class="hidden" id="no_casexml_actions">This form does not perform any actions.</p>
+                <ul>
+                    <li>
+                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" method="post">
+                            Requires
+                            <select class="autosave code" name="requires" data-value="{{ form.requires }}">
+                                <option value="none">neither a case nor a referral</option>
+                                <option value="case">just a case</option>
+                                <option value="referral">a case and a referral</option>
+                            </select>
+                            <input type="hidden" name="ajax" value="false" />
+                        </form>
+                    </li>
+                </ul>
                 <ul>
                     {% if form.requires == "none" %}
                         <li class="action">
@@ -383,7 +376,7 @@
 
                     {% endif %}
                     <li class="action">
-                        <input type="checkbox" id="update-case"><label for="update-case">Updates a case</label>
+                        <input type="checkbox" id="update-case"><label for="update-case">Updates the case</label>
                         <div id="update-case-config">
                             <table class="config">
                                 <tr>
@@ -406,7 +399,7 @@
                     </li>
                     {% if form.requires != "none" %}
                         <li class="action">
-                            <input type="checkbox" id="close-case"><label for="close-case">Closes a case</label>
+                            <input type="checkbox" id="close-case"><label for="close-case">Closes the case</label>
                             <div class="config">
                                 <div class="condition"></div>
                             </div>
@@ -428,7 +421,7 @@
                     {% endif %}
                     {% if form.requires == "referral" %}
                         <li class="action">
-                            <input type="checkbox" id="update-referral"> <label for="update-referral">Updates a referral</label>
+                            <input type="checkbox" id="update-referral"> <label for="update-referral">Updates the referral</label>
                             <div class="config">
         {#                        <div class="condition"></div>#}
                                 <span>
@@ -440,12 +433,13 @@
                             </div>
                         </li>
                         <li class="action">
-                            <input type="checkbox" id="close-referral"> <label for="close-referral">Closes a referral</label>
+                            <input type="checkbox" id="close-referral"> <label for="close-referral">Closes the referral</label>
                             <div class="config">
                                 <div class="condition"></div>
                             </div>
                         </li>
                     {% endif %}
+                    <li class="hidden" id="no_casexml_actions">This form does not perform any actions.</li>
                 </ul>
                 <form action="{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}" method="POST">
                     <textarea id="casexml_json" class="hidden" name="actions" >{{ form_actions }}</textarea><br/>

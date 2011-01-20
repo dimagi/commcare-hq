@@ -1,3 +1,7 @@
+function getVar(name) {
+    var r = $('input[name="' + name + '"]').first().val();
+    return JSON.parse(r);
+}
 function resetIndexes($sortable) {
     var indexes = $sortable.find('> * > .index').get();
     for(var i in indexes) {
@@ -11,10 +15,22 @@ function updateDOM(update) {
     }
 }
 
+function makeBuildErrorLinksSwitchTabs() {
+    $("#build-errors a").click(function(){
+        $('#form-tabs').tabs("select", 0);
+    });
+}
+
 $(function(){
 
     $("#form-tabs").tabs({
-        cookie: {}
+        cookie: {},
+        select: function(event, ui){
+            if(ui.index == 1 && getVar('edit_mode')) {
+                // reload when Release Manager tab is clicked
+                location.href = location.href;
+            }
+        }
     }).removeClass('ui-corner-all').removeClass('ui-widget-content');
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
 
@@ -241,4 +257,5 @@ $(function(){
         var uuid = $(this).closest('tr').find('.delete_link').attr('data-uuid');
         $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="column_id"]').val($(this).text());
     });
+    makeBuildErrorLinksSwitchTabs();
 });
