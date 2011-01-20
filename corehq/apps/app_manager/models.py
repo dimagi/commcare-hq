@@ -223,6 +223,8 @@ class Form(IndexedSchema):
     def create_casexml(self):
         from xml_utils import XMLTag as __
         actions = self.active_actions()
+        # a list of functions to be applied to the file as a whole after it has been pieced together
+        additional_transformations = []
 
         if not actions:
             return "", []
@@ -272,6 +274,17 @@ class Form(IndexedSchema):
                     "calculate":actions['open_case'].name_path,
                     "relevant": r,
                 })
+                def require_case_name_source(xml, xmlns):
+                    "make sure that the question that provides the case_name is required"
+                    print ET.tostring(xml)
+                    name_path = actions['open_case'].name_path
+                    name_bind_path = ('.//{f}bind[@nodeset="%s"]' % name_path).format(**NS)
+                    name_bind = xml.find(name_bind_path)
+                    print name_bind
+                    name_bind.attrib['required'] = "true()"
+                    print name_bind
+                additional_transformations.append(require_case_name_source)
+
             else:
                 add_bind({"nodeset":"case/case_id", "{jr}preload":"case", "{jr}preloadParams":"case-id"})
             if 'update_case' in actions:
@@ -363,7 +376,10 @@ class Form(IndexedSchema):
                         "{jr}preloadParams":"end"
                     })
 
-            return casexml.render(), binds
+            def transformation(xml, xmlns):
+                for trans in additional_transformations:
+                    trans(xml, xmlns)
+            return casexml.render(), binds, transformation
 
 
     def get_questions(self, langs):
@@ -795,7 +811,7 @@ class Application(ApplicationBase):
         if case is not None:
             case_parent.remove(case)
 
-        casexml, binds = form.create_casexml()
+        casexml, binds, transformation = form.create_casexml()
         if casexml:
             # casexml has to be valid, 'cuz *I* made it
             casexml = ET.fromstring(casexml)
@@ -830,7 +846,10 @@ class Application(ApplicationBase):
         for bind in binds:
             bind = _make_elem('bind', bind)
             bind_parent.append(bind)
-        
+
+        # apply any other transformations
+        # necessary to make casexml work
+        transformation(tree, form.xmlns)
         return ET.tostring(tree)
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
