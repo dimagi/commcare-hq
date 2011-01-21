@@ -283,7 +283,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
             print request.couch_user
-            if can_change_admin_status:
+            if can_change_admin_status and couch_user.web_account.domain_memberships:
                 domain_membership = [dm for dm in couch_user.web_account.domain_memberships if dm.domain == domain][0]
                 form.initial['is_admin'] = domain_membership.is_admin or couch_user.web_account.login.is_superuser
             else:

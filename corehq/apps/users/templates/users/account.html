@@ -21,12 +21,20 @@
 {% endblock %}
 
 {% block web_users_indicator %}
-    {% if couch_user.get_id != request.couch_user.get_id %}
+    {% if couch_user.get_id != request.couch_user.get_id and couch_user.web_account.login_id %}
         <ul>
             <li class="selected">{{ couch_user.web_account.username_html|safe }}</li>
         </ul>
     {% endif %}
 {% endblock %}
+{% block commcare_users_indicator %}
+    {% if couch_user.get_id != request.couch_user.get_id and couch_user.commcare_accounts %}
+        <ul>
+            <li class="selected">{{ couch_user.default_commcare_account.username_html|safe }}</li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
 
 {% block user-view %}
     <div id="user_settings_tabs">
@@ -44,7 +52,7 @@
                 <table class="edit_single_user">
                     <tr>
                         <th>Username:</th>
-                        <td>{{ couch_user.web_account.username_html|safe }}</td>
+                        <td>{{ couch_user.default_account.username_html|safe }}</td>
                     </tr>
                     {{ form.as_table }}
                     <tr>

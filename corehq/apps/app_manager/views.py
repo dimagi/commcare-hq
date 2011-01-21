@@ -306,19 +306,15 @@ def new_app(req, domain):
         else:
             cls = Application
 
+        app = cls.new_app(domain, name)
+        if cls == Application:
+            app.new_module("Untitled Module", lang)
+            app.new_form(0, "Untitled Form", lang)
+            module_id = 0
+            form_id = 0
+        app.save()
+        app_id = app.id
 
-        all_apps = Application.view('app_manager/applications', key=[domain, None]).all()
-        if name in [a.name for a in all_apps]:
-            error="app_exists"
-        else:
-            app = cls.new_app(domain, name)
-            app_id = app.id
-            if cls == Application:
-                app.new_module("Untitled Module", lang)
-                app.new_form(0, "Untitled Form", lang)
-                module_id = 0
-                form_id = 0
-            app.save()
     return back_to_main(**locals())
 
 @profile('new_module')
