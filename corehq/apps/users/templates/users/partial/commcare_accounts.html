@@ -34,7 +34,7 @@
         <p class="big_border">There are no CommCare accounts associated with {{ couch_user.web_account.username_html|safe }}.</p>
     {% endif %}
 
-    {% if couch_user.is_domain_admin or request.user.is_superuser %}
+    {% if request.couch_user.is_domain_admin or request.user.is_superuser %}
         <h4>Other CommCare users in domain "{{ domain }}"</h4>
         {% if other_commcare_accounts %}
             <table class='big_border'>
