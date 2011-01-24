@@ -16,6 +16,9 @@
             height: 100px;
             padding: 10px;
         }
+        #build-errors a {
+            color: #0067B1 !important;
+        }
     </style>
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}
@@ -164,25 +167,26 @@
                             {% for error in build_errors %}
                                 <li>
                                     {% if error.type == "invalid xml" %}
-                                        Invalid xml in form
+                                        {% if eror.form.content %}
+                                            Invalid xml in form
+                                        {% else %}
+                                            Blank form
+                                        {% endif %}
                                         <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
-                                            {{ error.form.name|trans:langs }}
-                                        </a>
-                                        in module "{{ error.module.name|trans:langs }}": {{ error.message }}
+                                            {{ error.form.name|trans:langs }}</a>
+                                        in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
                                         <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
-                                            {{ error.module.name|trans:langs }}
-                                        </a>
+                                            {{ error.module.name|trans:langs }}</a>
                                         uses referrals but doesn't have
                                         detail screens configured for referrals.
                                     {% else %}
                                     {% if error.type == "no case detail" %}
                                         Module
                                         <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
-                                            {{ error.module.name|trans:langs }}
-                                        </a>
+                                            {{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have
                                         detail screens configured for cases.
                                     {% else %}
