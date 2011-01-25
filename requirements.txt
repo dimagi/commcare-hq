@@ -1,0 +1,10 @@
+django
+couchdbkit
+pytz
+python_digest
+psycopg2
+south
+gunicorn
+python-dateutil
+BeautifulSoup
+lxml
