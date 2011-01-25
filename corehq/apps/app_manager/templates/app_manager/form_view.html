@@ -8,6 +8,9 @@
         }
     </style>
     <script>
+        function doStyling() {
+            $(".xml-source").dialog({height: 700, width: 900});
+        }
         function initCondition() {
             $condition = $("#condition-template");
             $condition.removeAttr("id").remove();
@@ -178,6 +181,7 @@
             return JSON.parse($("#casexml_json").text());
         }
         $(function(){
+            doStyling();
             initCondition();
             $("#casexml_json, #xform_questions").hide();
             var questions = JSON.parse($("#xform_questions").text());
@@ -314,8 +318,8 @@
                 <td>
                     or
                     <a class="dialog_opener" href="#">View Source XML</a>
-                    <div class="dialog" title="XML Source">
-                        <textarea style="width: 500px; height: 500px;" disabled="true">{{ form.contents }}</textarea>
+                    <div class="xml-source dialog" title="XML Source">
+                        <pre>{{ form.contents }}</pre>
                     </div>
                 </td>
             </tr>
@@ -344,7 +348,7 @@
     </div>
     {% if form.contents %}
         <h4>Cases and Referrals</h4>
-        {% if xform_questions != "[]"%}
+        {% if xform_questions != "[]" %}
             <div class="casexml {% if not edit %}no-edit{% endif %} config">
                 <ul>
                     <li>

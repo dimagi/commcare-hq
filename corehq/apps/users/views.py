@@ -25,16 +25,16 @@ from .util import doc_value_wrapper
 
 def require_permission_to_edit_user(view_func):
     def _inner(request, domain, couch_user_id, *args, **kwargs):
-        if request.user.is_superuser or request.couch_user.is_domain_admin(domain) or request.couch_user._id == couch_user_id:
-            return view_func(request, domain, couch_user_id, *args, **kwargs)
+        if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.is_domain_admin(domain) or request.couch_user._id == couch_user_id):
+            return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
             raise Http404()
     return _inner
 
 def require_domain_admin(view_func):
     def _inner(request, domain, *args, **kwargs):
-        if request.user.is_superuser or request.couch_user.is_domain_admin(domain):
-            return view_func(request, domain, *args, **kwargs)
+        if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.is_domain_admin(domain)):
+            return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
         else:
             raise Http404()
     return _inner
@@ -114,7 +114,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         if re.match(r'\d+', phone_number):
             couch_user.add_phone_number(phone_number)
             couch_user.save()
-            context['status'] = 'phone number added'
+            #context['status'] = 'phone number added'
         else:
             context['status'] = "please enter digits only"
 
@@ -122,7 +122,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # commcare-accounts tab
     my_commcare_login_ids = set([c.login_id for c in couch_user.commcare_accounts])
 
-    all_commcare_accounts = _get_user_commcare_account_tuples(domain)
+    all_commcare_accounts = list(_get_user_commcare_account_tuples(domain))
+
     other_commcare_accounts = []
     for user, account in all_commcare_accounts:
         # we don't bother showing the duplicate commcare users.
@@ -202,7 +203,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         domain = request.POST['domain']
         couch_user.add_domain_membership(domain)
         couch_user.save()
-        context['status'] = 'domain added'
+        #context['status'] = 'domain added'
     my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
     context.update({"user": request.user,
@@ -283,7 +284,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
             print request.couch_user
-            if can_change_admin_status and couch_user.web_account.domain_memberships:
+            if can_change_admin_status:
                 domain_membership = [dm for dm in couch_user.web_account.domain_memberships if dm.domain == domain][0]
                 form.initial['is_admin'] = domain_membership.is_admin or couch_user.web_account.login.is_superuser
             else:
@@ -341,7 +342,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
         group = request.POST['group']
         group.add_user(couch_user)
         group.save()
-        context['status'] = '%s joined group %s' % (couch_user._id, group.name)
+        #context['status'] = '%s joined group %s' % (couch_user._id, group.name)
     my_groups = Group.view("groups/by_user", key=couch_user_id).all()
     all_groups = Group.view("groups/by_domain", key=domain).all()
     other_groups = []

@@ -35,7 +35,6 @@ $(function(){
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
 
     $('.config').wrap('<div />').parent().addClass('container block ui-corner-all');
-    $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
 
     $('.sortable .sort-action').addClass('sort-disabled');

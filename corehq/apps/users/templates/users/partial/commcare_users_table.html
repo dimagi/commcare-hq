@@ -15,7 +15,7 @@
         <td></td>
         <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
         <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
-        <td>{{ account.user_data.date_registered }}</td>
+        <td>{{ account.login.date_joined.date }}</td>
         <td>
         {% ifchanged %}
                 {% if user.phone_numbers %}

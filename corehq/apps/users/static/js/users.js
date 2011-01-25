@@ -15,6 +15,11 @@ $(function(){
 
     });
 
+    (function makeStatusMessageFade(){
+        $("#status_msg").css({height: $("#main_container").height(), width: $("#main_container").width()});
+        $("#status_msg").delay(900).fadeOut('slow');
+    })();
+
     $(".message").addClass('ui-state-highlight ui-corner-all');
     $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
     $('.container').addClass('ui-widget ui-widget-content');

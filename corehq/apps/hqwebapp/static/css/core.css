@@ -79,7 +79,7 @@ a:hover {
 }
 
 a.new_link {
-    color: #aaa;
+    color: #aaa !important;
 }
 
 body {
@@ -303,6 +303,7 @@ form table {
 .message {
     text-align: center;
     padding: 1em;
+    margin: 1em;
 }
 .warning {
     font-style: italic;

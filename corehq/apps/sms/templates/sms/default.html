@@ -31,31 +31,61 @@
         });
     }); 
     </script>
+    {% include "sms/partials/sms_autocomplete.html" %}
 {% endblock %}
 
 
 {% block content %}
     <div id="main_container">
-        <div id="sms-tabs">
-            <ul>
-                <li><a href="#tabs-1">People</a></li>
-                <li><a href="#tabs-2">Groups</a></li>
+        {% if messages %}
+            <ul class="message">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
             </ul>
+        {% endif %}
+{#        <div id="sms-tabs">#}
+{#            <ul>#}
+{#                <li><a href="#tabs-1">People</a></li>#}
+{#                <li><a href="#tabs-2">Groups</a></li>#}
+{#            </ul>#}
+{##}
+{#            {% if errors %}#}
+{#            <div class="errors">{{errors}}</div>#}
+{#            {% endif %}#}
+{#            #}
+{#            <div id="tabs-1">#}
+{#                {% include "sms/partials/user_messaging.html" %}#}
+{#            </div>#}
+{#            <div id="tabs-2">#}
+{#                {% include "sms/partials/group_messaging.html" %}#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="padded">#}
+{#            {% block sms_content %}#}
+{#            {% endblock %}#}
+{#        </div>#}
 
-            {% if errors %}
-            <div class="errors">{{errors}}</div>
-            {% endif %}
-            
-            <div id="tabs-1">
-                {% include "sms/partials/user_messaging.html" %}
+        <form action="{% url corehq.apps.sms.views.send_to_recipients domain %}" method="post">
+            <div>
+
+
+                <div id="send_message" class="ui-widget ui-corner-all">
+                    <h2 id="header" class="ui-widget-header ui-corner-top">Message</h2>
+                    <div id="content" class="ui-widget-content">
+                        <label>Recipients:</label>
+                        <textarea name="recipients" rows="3" cols="100" class="sms-autocomplete"></textarea>
+                        <label>Message:</label>
+                        <textarea name="message" cols="53" rows="3"></textarea><br/>
+                        <input name="send_sms_button" class="send ui-button ui-button-text-only" type="submit" value="Send Messages"/>
+                    </div>
+                </div>
             </div>
-            <div id="tabs-2">
-                {% include "sms/partials/group_messaging.html" %}
-            </div>
+        </form>
+        <div>
+            {% include "sms/partials/messagelog.html" %}
         </div>
-        <div class="padded">
-            {% block sms_content %}
-            {% endblock %}
+        <br style="clear: both;" />
         </div>
     </div>
 {% endblock %}

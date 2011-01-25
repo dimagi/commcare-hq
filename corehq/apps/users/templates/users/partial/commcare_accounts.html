@@ -36,8 +36,8 @@
 
     {% if request.couch_user.is_domain_admin or request.user.is_superuser %}
         <h4>Other CommCare users in domain "{{ domain }}"</h4>
-        {% if other_commcare_accounts %}
-            <table class='big_border'>
+        <table class='big_border'>
+            {% if other_commcare_accounts %}
                 <tr><th></th>
                     <th>{% trans "Web User" %}</th>
                     <th>{% trans "Username" %}</th>
@@ -57,8 +57,9 @@
                     <td>{{ account.username_html|safe }}</a></td>
                     <!--td>{{ account.domain }}</td-->
                     <td>{{ account.registering_device_id }}</td>
-                    <td><a class="add_link" href="commcare_accounts.html#"></a>
-                        <div class="add_dialog" title="Add {{ account.username_html|safe }}?">
+                    <td>
+                        <a class="new_link dialog_opener" href="#">Add</a>
+                        <div class="dialog" title="Add {{ account.username_html|safe }}?">
                             <form name="link_commcare_account" action="{% url link_commcare_account_to_user account.domain couch_user.couch_id account.login_id %}" method="POST">
                                 <table>
                                     <tr><td>

@@ -42,3 +42,11 @@
 	padding: 7px;
 	font-size: 80%;
 }
+
+#main_container {
+    padding: 10px;
+}
+
+textarea {
+    width: 95%;
+}

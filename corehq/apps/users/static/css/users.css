@@ -7,14 +7,21 @@ table.edit_single_user {
     text-align: left;
 }
 
-div #error_msg {
+div#error_msg {
     text-align: right;
     color: red;
 }
 
-div #status_msg {
-    text-align: right;
-    color: orange;
+div#status_msg {
+    text-align: center;
+    vertical-align: middle;
+    color: black;
+    background-color: #fff;
+    opacity: .8;
+    position: absolute;
+    z-index: 100;
+    font-size: 2em;
+    padding: 2em;
 }
 
 .all_users {
