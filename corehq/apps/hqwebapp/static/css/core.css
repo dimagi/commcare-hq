@@ -303,7 +303,7 @@ form table {
 .message {
     text-align: center;
     padding: 1em;
-    margin: 1em;
+    margin-bottom: 1em;
 }
 .warning {
     font-style: italic;

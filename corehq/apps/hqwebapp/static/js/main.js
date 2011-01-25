@@ -13,7 +13,7 @@ $(function() {
     var dragIcon = 'ui-icon-grip-dotted-horizontal';
     $('.drag_handle').iconify(dragIcon);
 
-    $(".message").addClass('ui-state-highlight ui-corner-all');
+    $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
     $(".button").button().wrap('<span />').addClass('shadow');
     $("input[type='submit']").button().addClass('shadow');

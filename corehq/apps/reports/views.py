@@ -14,6 +14,7 @@ from dimagi.utils.couch.pagination import CouchPaginator
 
 from couchexport.export import export_excel
 from StringIO import StringIO
+from django.contrib import messages
 
 iso_format = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -42,6 +43,9 @@ def export_data(req, domain):
     Download all data for a couchdbkit model
     """
     export_tag = req.GET.get("export_tag", "")
+    next = req.GET.get("next", "")
+    if not next:
+        next = reverse('excel_export_data_report', args=[domain])
     if not export_tag:
         raise Exception("You must specify a model to download!")
     tmp = StringIO()
@@ -52,7 +56,8 @@ def export_data(req, domain):
         tmp.close()
         return response
     else:
-        return HttpResponse("Sorry, there was no data found for the tag '%s'." % export_tag)
+        messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
+        return HttpResponseRedirect(next)
 
 
 @login_and_domain_required
