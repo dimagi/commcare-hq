@@ -227,7 +227,7 @@ class Form(IndexedSchema):
         additional_transformations = []
 
         if not actions:
-            return "", []
+            casexml_text, binds = "", []
         else:
             binds = []
             def add_bind(d):
@@ -375,11 +375,11 @@ class Form(IndexedSchema):
                         "{jr}preload":"timestamp",
                         "{jr}preloadParams":"end"
                     })
-
-            def transformation(xml, xmlns):
-                for trans in additional_transformations:
-                    trans(xml, xmlns)
-            return casexml.render(), binds, transformation
+            casexml_text = casexml.render()
+        def transformation(xml, xmlns):
+            for trans in additional_transformations:
+                trans(xml, xmlns)
+        return casexml_text, binds, transformation
 
 
     def get_questions(self, langs):
