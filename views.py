@@ -20,18 +20,21 @@ def post(request, domain):
                             "uid": "instanceID"}
 
             # hack to make sure uppercase meta still ends up in the right place
+            found_old = False
             if "Meta" in doc.form:
                 doc.form["meta"] = doc.form["Meta"]
                 del doc.form["Meta"]
-                logging.error("form %s contains old-format metadata.  You should update it!!" % doc.get_id)
+                found_old = True
             if "meta" in doc.form:
                 # scrub values from 0.9 to 1.0
                 for key in doc.form["meta"]:
                     if key in property_map and property_map[key] not in doc.form["meta"]:
-                        logging.error("Moving deprecated meta property %s to %s.  You should update your forms to be standards compliant!" % (key, property_map[key]))
                         doc.form["meta"][property_map[key]] = doc.form["meta"][key]
                         del doc.form["meta"][key]
-        _scrub_meta(doc)
+                        found_old = True
+            return found_old
+        if _scrub_meta(doc):
+            logging.error("form %s contains old-format metadata.  You should update it!!" % doc.get_id)
         doc.save()
         feedback = post_received.send_robust(sender="receiver", xform=doc)
         responses = []
