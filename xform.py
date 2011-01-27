@@ -5,6 +5,8 @@ Work on cases based on XForms. In our world XForms are special couch documents.
 """
 from corehq.apps.case.models import CommCareCase
 from couchdbkit.schema.properties_proxy import SchemaProperty
+import logging
+from couchdbkit.resource import ResourceNotFound
 
 def get_or_update_cases(xformdoc):
     """
@@ -16,8 +18,11 @@ def get_or_update_cases(xformdoc):
     cases_touched = {}
     for case_block in case_blocks:
         case_doc = get_or_update_model(case_block)
-        case_doc.xform_id = xformdoc._id
-        cases_touched[case_doc.case_id] = case_doc
+        if case_doc:
+            case_doc.xform_ids.append(xformdoc.get_id)
+            cases_touched[case_doc.case_id] = case_doc
+        else:
+            logging.error("Xform %s had a case block that wasn't able to create a case! This usually means it had a missing ID" % xformdoc.get_id)
     return cases_touched
 
 
@@ -26,12 +31,19 @@ def get_or_update_model(case_block):
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.
     """
-    if const.CASE_ACTION_CREATE in case_block:
+    if const.CASE_TAG_ID not in case_block:
+        return None # oops
+    case_id = case_block[const.CASE_TAG_ID]
+    
+    try: 
+        case_doc = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case_doc = None
+    
+    if case_doc == None:
         case_doc = CommCareCase.from_doc(case_block)
         return case_doc
     else:
-        case_id = case_block[const.CASE_TAG_ID]
-        case_doc = CommCareCase.get_by_case_id(case_id)
         case_doc.update_from_block(case_block)
         return case_doc
         

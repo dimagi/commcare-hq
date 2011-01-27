@@ -10,7 +10,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
         xml_data = f.read()
     doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override, 
                                                          referral_id_override=referral_id_override)  
-    case = CommCareCase.get_by_case_id(case_id)
+    case = CommCareCase.get(case_id)
     test_class.assertEqual(case_id, case.case_id)
     return case
             

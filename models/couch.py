@@ -4,7 +4,6 @@ from couchdbkit.ext.django.schema import *
 from corehq.apps.case import const
 from dimagi.utils import parsing
 from couchdbkit.schema.properties_proxy import SchemaListProperty
-import logging
 from datetime import datetime, date, time
 from couchdbkit.ext.django.schema import *
 from corehq.apps.case import const
@@ -160,8 +159,7 @@ class CommCareCase(CaseBase):
     the actions in sequence.
     """
     
-    case_id = StringProperty()
-    xform_id = StringProperty()
+    xform_ids = StringListProperty()
 
     external_id = StringProperty()
     user_id = StringProperty()
@@ -184,6 +182,11 @@ class CommCareCase(CaseBase):
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
     
+    
+    def __get_case_id(self):        return self._id
+    def __set_case_id(self, id):    self._id = id
+    case_id = property(__get_case_id, __set_case_id)
+    
     def get_version_token(self):
         """
         A unique token for this version. 
@@ -205,38 +208,38 @@ class CommCareCase(CaseBase):
         """
         Create a case object from a case block.
         """
-        if not const.CASE_ACTION_CREATE in case_block:
-            raise ValueError("No create tag found in case block!")
-        
+        case = CommCareCase()
+        case._id = case_block[const.CASE_TAG_ID]
         def _safe_get(dict, key):
             return dict[key] if key in dict else None
         
-        # create case from required fields in the case/create block
-        create_block = case_block[const.CASE_ACTION_CREATE]
-        id = _safe_get(case_block, const.CASE_TAG_ID)
-        opened_on_str = _safe_get(case_block, const.CASE_TAG_MODIFIED)
-        opened_on = parsing.string_to_datetime(opened_on_str) if opened_on_str else datetime.utcnow()
-        
-        # create block
-        type = _safe_get(create_block, const.CASE_TAG_TYPE_ID)
-        name = _safe_get(create_block, const.CASE_TAG_NAME)
-        external_id = _safe_get(create_block, const.CASE_TAG_EXTERNAL_ID)
-        user_id = _safe_get(create_block, const.CASE_TAG_USER_ID)
-        create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
-                                                             opened_on, opened_on.date(),
-                                                             create_block)
-        
-        case = CommCareCase(case_id=id, opened_on=opened_on, modified_on=opened_on, 
-                     type=type, name=name, user_id=user_id, external_id=external_id, 
-                     closed=False, actions=[create_action,])
+        modified_on_str = _safe_get(case_block, const.CASE_TAG_MODIFIED)
+        case.modified_on = parsing.string_to_datetime(modified_on_str) if modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        case.update_from_block(case_block)
+        case.update_from_block(case_block, case.modified_on)
         return case
     
-    @classmethod
-    def get_by_case_id(cls, id):
-        return cls.view(const.VIEW_BY_CASE_ID, key=id).one()
+    def apply_create_block(self, create_block, modified_on):
+        # create case from required fields in the case/create block
+        # create block
+        def _safe_replace(me, attr, dict, key):
+            if getattr(me, attr, None):
+                # attr exists and wasn't empty or false, for now don't do anything, 
+                # though in the future we want to do a date-based modification comparison
+                return
+            rep = dict[key] if key in dict else None
+            if rep:
+                setattr(me, attr, rep)
+            
+        _safe_replace(self, "type", create_block, const.CASE_TAG_TYPE_ID)
+        _safe_replace(self, "name", create_block, const.CASE_TAG_NAME)
+        _safe_replace(self, "external_id", create_block, const.CASE_TAG_EXTERNAL_ID)
+        _safe_replace(self, "user_id", create_block, const.CASE_TAG_USER_ID)
+        create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
+                                                             modified_on, modified_on.date(),
+                                                             create_block)
+        self.actions.append(create_action)
     
     def update_from_block(self, case_block, visit_date=None):
         
@@ -246,13 +249,19 @@ class CommCareCase(CaseBase):
         
         # you can pass in a visit date, to override the udpate/close action dates
         if not visit_date:
-            visit_date = mod_date.date()
+            visit_date = mod_date
+        
+        if const.CASE_ACTION_CREATE in case_block:
+            self.apply_create_block(case_block[const.CASE_ACTION_CREATE], visit_date)
+            if not self.opened_on or self.opened_on < visit_date:
+                self.opened_on = visit_date
+        
         
         if const.CASE_ACTION_UPDATE in case_block:
             
             update_block = case_block[const.CASE_ACTION_UPDATE]
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
-                                                                 mod_date, visit_date, 
+                                                                 mod_date, visit_date.date(), 
                                                                  update_block)
             self.apply_updates(update_action)
             self.actions.append(update_action)
@@ -260,7 +269,7 @@ class CommCareCase(CaseBase):
         if const.CASE_ACTION_CLOSE in case_block:
             close_block = case_block[const.CASE_ACTION_CLOSE]
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
-                                                                mod_date, visit_date, 
+                                                                mod_date, visit_date.date(), 
                                                                 close_block)
             self.apply_close(close_action)
             self.actions.append(close_action)
