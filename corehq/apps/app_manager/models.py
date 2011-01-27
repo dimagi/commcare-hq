@@ -807,12 +807,11 @@ class Application(ApplicationBase):
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
         bind_parent = tree.find(fmt('.//{f}model/'))
-        
-        if case is not None:
-            case_parent.remove(case)
 
         casexml, binds, transformation = form.create_casexml()
         if casexml:
+            if case is not None:
+                case_parent.remove(case)
             # casexml has to be valid, 'cuz *I* made it
             casexml = ET.fromstring(casexml)
             case_parent.append(casexml)

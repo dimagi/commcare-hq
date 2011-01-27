@@ -3,7 +3,10 @@ from django.http import HttpResponse
 from corehq.apps.case.models.couch import CommCareCase
 from couchforms.views import post as couchforms_post
 from corehq.apps.receiver.signals import post_received, ReceiverResult
+from django.views.decorators.http import require_POST
 
+
+@require_POST
 def post(request, domain):
     def callback(doc):
         doc['#export_tag'] = ["domain", "xmlns"]
