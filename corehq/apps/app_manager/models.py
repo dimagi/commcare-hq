@@ -23,6 +23,7 @@ import random
 from dimagi.utils.couch.database import get_db
 import json
 from lxml import etree as ET
+from dimagi.utils.make_uuid import random_hex
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -834,17 +835,18 @@ class Application(ApplicationBase):
             for tag in ('deviceID','timeStart', 'timeEnd','username','userID','uid'):
                 meta.append(ET.Element(fmt("{orx}%s")%tag, nsmap=nsmap))
             case_parent.append(meta)
-        binds = [
-            {"id": "hidden1", "nodeset": "meta/deviceID", "type": "xsd:string", "{jr}preload": "property", "{jr}preloadParams": "DeviceID"},
-            {"id": "hidden2", "nodeset": "meta/timeStart", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "start"},
-            {"id": "hidden3", "nodeset": "meta/timeEnd", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "end"},
-            {"id": "hidden4", "nodeset": "meta/username", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserName"},
-            {"id": "hidden5", "nodeset": "meta/userID", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserID"},
-            {"id": "hidden6", "nodeset": "meta/uid", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
-        ]
-        for bind in binds:
-            bind = _make_elem('bind', bind)
-            bind_parent.append(bind)
+            id = form.unique_id + "meta"
+            binds = [
+                {"id": "%s1" % id, "nodeset": "meta/deviceID", "type": "xsd:string", "{jr}preload": "property", "{jr}preloadParams": "DeviceID"},
+                {"id": "%s2" % id, "nodeset": "meta/timeStart", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "start"},
+                {"id": "%s3" % id, "nodeset": "meta/timeEnd", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "end"},
+                {"id": "%s4" % id, "nodeset": "meta/username", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserName"},
+                {"id": "%s5" % id, "nodeset": "meta/userID", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserID"},
+                {"id": "%s6" % id, "nodeset": "meta/uid", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
+            ]
+            for bind in binds:
+                bind = _make_elem('bind', bind)
+                bind_parent.append(bind)
 
         # apply any other transformations
         # necessary to make casexml work

@@ -20,6 +20,7 @@ from corehq.util.webutils import get_url_base
 from BeautifulSoup import BeautifulStoneSoup
 from lxml import etree as ET
 import json
+from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
 import urllib
 import urlparse
@@ -33,7 +34,7 @@ _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 class TemplateFunctions(object):
     @classmethod
     def make_uuid(cls):
-        return hex(random.getrandbits(160))[2:-1]
+        return random_hex()
 
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
