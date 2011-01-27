@@ -105,8 +105,8 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         django = None
         try:
             django = django_user_from_couch_id(uuid)
-            logging.error("Trying to create a new user %s from form %s!  This is not yet supported." % \
-                          (uuid, xform))
+            logging.error("Trying to create a new user %s from form %s!  Currently you can't submit multiple registration xmls for the same uuid." % \
+                          (uuid, xform.get_id))
             # this will just respond back with whatever was in the first
             # registration xml packet.
             return ReceiverResult(xml.get_response(couch_user_from_django_user(django)), Certainty.CERTAIN)
