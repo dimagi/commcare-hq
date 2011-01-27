@@ -13,6 +13,6 @@ class Command(LabelCommand):
         dir = args[0]
         url = args[1]
         for file in os.listdir(dir):
-            post_file(os.path.join(dir, file), url)
+            print post_file(os.path.join(dir, file), url)
 
 
