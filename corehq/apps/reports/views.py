@@ -1,4 +1,5 @@
 import datetime as DT
+import json
 import dateutil.parser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
@@ -63,6 +64,7 @@ def export_data(req, domain):
 @login_and_domain_required
 def submit_history(request, domain, template="reports/partials/couch_report_partial.html"):
     individual = request.GET.get('individual', '')
+    show_unregistered = request.GET.get('show_unregistered', 'false')
     rows = []
 
     if individual:
@@ -72,9 +74,10 @@ def submit_history(request, domain, template="reports/partials/couch_report_part
     return render_to_response(request, template, {
         'headings': headings,
         'rows': rows,
-        'ajax_source': reverse('paging_submit_history', args=[domain, individual]),
+        'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
     })
-def paging_submit_history(request, domain, individual):
+def paging_submit_history(request, domain, individual, show_unregistered="false"):
+    show_unregistered = json.loads(show_unregistered)
     def xmlns_to_name(xmlns):
         try:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
@@ -116,6 +119,7 @@ def paging_submit_history(request, domain, individual):
             time = row['value'].get('time')
             xmlns = row['value'].get('xmlns')
             user_id = row['value'].get('user_id')
+            fake_name = row['value'].get('username')
 
             #time = DT.datetime.strptime(time, iso_format)
             time = format_time(time)
@@ -123,6 +127,10 @@ def paging_submit_history(request, domain, individual):
             username = user_id_to_username(user_id)
             if username:
                 return [username, time, xmlns]
+            elif show_unregistered:
+                username = '"%s" (unregistered)' % fake_name if user_id else ""
+                return [username, time, xmlns]
+
         paginator = CouchPaginator('reports/all_submissions', view_to_table, search=False, view_args=dict(
             endkey=[domain],
             startkey=[domain, {}],
@@ -218,6 +226,7 @@ def paging_user_summary(request, domain):
 @login_and_domain_required
 def individual_summary(request, domain):
     individual = request.GET.get('individual', '')
+    show_unregistered = request.GET.get('show_unregistered', 'false')
     if individual:
         pass
 
@@ -239,6 +248,7 @@ def individual_summary(request, domain):
         },
         "users": users,
         "individual": individual,
+        "show_unregistered": show_unregistered,
     })
 
 @login_and_domain_required
@@ -260,7 +270,7 @@ def daily_submissions(request, domain, view_name, title):
         startkey=[domain, start_date.isoformat()],
         endkey=[domain, end_date.isoformat(), {}]
     ).all()
-    print results
+
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
 

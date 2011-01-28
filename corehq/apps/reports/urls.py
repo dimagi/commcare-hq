@@ -7,7 +7,7 @@ actual_reports = patterns('corehq.apps.reports.views',
 )
 
 paging_reports = patterns('corehq.apps.reports.views',
-    url('submit_history/(?P<individual>.*)/', 'paging_submit_history', name='paging_submit_history'),
+    url('submit_history/(?P<individual>.*)/(?P<show_unregistered>.*)/', 'paging_submit_history', name='paging_submit_history'),
     url('active_cases/(?P<individual>.*)/', 'paging_active_cases', name='paging_active_cases'),
 )
 
