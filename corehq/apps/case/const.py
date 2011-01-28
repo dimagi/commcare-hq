@@ -35,6 +35,3 @@ REFERRAL_TAG_FOLLOWUP_DATE = "followup_date"
 REFERRAL_TAG_TYPE = "referral_type"
 REFERRAL_TAG_TYPES = "referral_types"
 REFERRAL_TAG_DATE_CLOSED = "date_closed"
-
-
-VIEW_BY_CASE_ID = "case/by_case_id"
