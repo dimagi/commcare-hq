@@ -12,6 +12,14 @@ def post(request, domain):
         doc['#export_tag'] = ["domain", "xmlns"]
         doc['submit_ip'] = request.META['REMOTE_ADDR']
         doc['domain'] = domain
+
+        # a hack allowing you to specify the submit time to use
+        # instead of the actual time receiver
+        # useful for migrating data
+        received_on = request.META.get('HTTP_X_SUBMIT_TIME')
+        if received_on:
+            doc['received_on'] = received_on
+            
         def _scrub_meta(doc):
             property_map = {"TimeStart": "timeStart",
                             "TimeEnd": "timeEnd",
