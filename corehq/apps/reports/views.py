@@ -24,7 +24,8 @@ iso_format = '%Y-%m-%dT%H:%M:%SZ'
 #    return render_to_response(request, template, {'domain': domain})
 
 def user_id_to_username(user_id):
-
+    if not user_id:
+        return None
     try:
         login = get_db().get(user_id)
     except:
