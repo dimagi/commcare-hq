@@ -29,11 +29,8 @@ def user_id_to_username(user_id):
     try:
         login = get_db().get(user_id)
     except:
-        login = None
-    if not login:
         return None
-    else:
-        return login['django_user']['username']
+    return login['django_user']['username']
 
 @login_and_domain_required
 def default(request, domain):
@@ -146,7 +143,7 @@ def active_cases(request, domain, template="reports/partials/couch_report_partia
     rows = []
 
     if individual:
-        headings = ["Submit Time", "Form"]
+        headings = ["Username", "Active Cases"]
     else:
         headings = ["Username", "Active Cases"]
     return render_to_response(request, template, {
@@ -170,8 +167,8 @@ def paging_active_cases(request, domain, individual):
         search=False,
         view_args=dict(
             group=True,
-            endkey=[domain],
-            startkey=[domain, {}],
+            endkey=  [domain, individual]     if individual else [domain],
+            startkey=[domain, individual, {}] if individual else [domain, {}],
         )
     )
     return paginator.get_ajax_response(request)
