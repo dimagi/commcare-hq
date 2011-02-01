@@ -28,9 +28,9 @@ def post_authenticated_file(filename, url, username, password):
 def post_data(data, url,curl_command="curl", use_curl=False,
     content_type = "text/xml"):
     """
-    Do a POST of data with some options.  Returns a tuple of the response
-    from the server and any errors
-    """
+    Do a POST of data with some options.  Returns a tuple of the response
+    from the server and any errors
+    """
     tmp_file_handle, tmp_file_path = tempfile.mkstemp()
     tmp_file = open(tmp_file_path, "w")
     try:
