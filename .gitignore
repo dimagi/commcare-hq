@@ -12,3 +12,4 @@ bad/*
 rapidsms-django.log*
 rapidsms.log*
 *.log
+CommCare.ja*
