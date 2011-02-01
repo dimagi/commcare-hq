@@ -14,7 +14,7 @@ class Command(LabelCommand):
         domain = create_domain(domain_name)
         user = create_user(username, passwd)
         couch_user = CouchUser.from_web_user(user)
-        couch_user.add_domain_membership(domain_name)
+        couch_user.add_domain_membership(domain_name, is_admin=True)
         couch_user.save()
         
         print "user %s created and added to domain %s" % (user, domain)
