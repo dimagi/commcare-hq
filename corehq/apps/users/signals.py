@@ -95,6 +95,8 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
             ret = {}
             if "user_data" in xform.form and "data" in xform.form["user_data"]:
                 vals = xform.form["user_data"]["data"]
+                if not isinstance(vals, list):
+                    vals = [vals]
                 for item in vals:
                     # this is ugly, but how the data comes in
                     ret[item["@key"]] = item["#text"]
