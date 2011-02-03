@@ -8,6 +8,7 @@
     <property key="PostURL" value="{{ post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
     <property key="cur_locale" value="{{ app.langs.0 }}"/>
+    <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
     <!--property key="cc-send-procedure" value="cc-send-none" /-->
 
     <features>

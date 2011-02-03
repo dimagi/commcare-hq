@@ -3,9 +3,12 @@ from django.contrib.sites.models import Site
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.models import User
 
-def format_username(username, domain):
+def cc_user_domain(domain):
     sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
-    return ("%s@%s.%s" % (username, domain, sitewide_domain)).lower()
+    return ("%s.%s" % (domain, sitewide_domain)).lower()
+
+def format_username(username, domain):
+    return "%s@%s" % (username.lower(), cc_user_domain(domain))
 
 def raw_username(username):
     """
@@ -17,7 +20,7 @@ def raw_username(username):
         u, d = username.split("@")
     except:
         return username
-    if d == sitewide_domain:
+    if d.endswith('.' + sitewide_domain):
         return u
     else:
         return username

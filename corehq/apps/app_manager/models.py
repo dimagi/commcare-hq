@@ -1,6 +1,7 @@
 # coding=utf-8
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
+from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 from corehq.util.webutils import get_url_base, parse_int
 from copy import deepcopy
@@ -754,6 +755,7 @@ class ApplicationBase(VersionedDoc):
             'post_url': self.post_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
+            'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
