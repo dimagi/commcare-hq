@@ -41,6 +41,19 @@
                     {% endif %}
                 </td>
             </tr>
+            <tr>
+                <th>CommCare Sense Enabled</th>
+                <td>
+                    {% if edit %}
+                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'use_commcare_sense' %}">
+                            <input type="checkbox" name="use_commcare_sense" value="true"
+                                   class="autosave" {% if app.use_commcare_sense %}checked="true"{% endif %}/>
+                        </form>
+                    {% else %}
+                        {{ app.use_commcare_sense }}
+                    {% endif %}
+                </td>
+            </tr>
         </table>
         <h4>Supported Languages</h4>
         <table class="config">

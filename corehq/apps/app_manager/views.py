@@ -565,6 +565,10 @@ def edit_app_attr(req, domain, app_id, attr):
         app.name = name
         app.save()
         resp['update'].update({'.variable-app_name': name})
+    elif "use_commcare_sense" == attr:
+        use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
+        app.use_commcare_sense = use_commcare_sense
+        app.save()
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):

@@ -779,6 +779,7 @@ class Application(ApplicationBase):
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
+    use_commcare_sense = BooleanProperty(default=False)
 
     @property
     def suite_url(self):

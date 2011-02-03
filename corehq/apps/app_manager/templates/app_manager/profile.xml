@@ -14,6 +14,9 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
+        {% if app.use_commcare_sense %}
+        <sense active="true"/>
+        {% endif %}
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
