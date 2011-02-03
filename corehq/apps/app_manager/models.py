@@ -706,6 +706,12 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.receiver.views.post', args=[self.domain])
         )
     @property
+    def ota_restore_url(self):
+        return "%s%s" % (
+            get_url_base(),
+            reverse('corehq.apps.phone.views.restore', args=[self.domain])
+        )
+    @property
     def profile_url(self):
         return "%s%s" % (
             get_url_base(),
@@ -747,6 +753,7 @@ class ApplicationBase(VersionedDoc):
             'suite_loc': self.suite_loc,
             'post_url': self.post_url,
             'post_test_url': self.post_url,
+            'ota_restore_url': self.ota_restore_url,
         }).decode('utf-8')
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
