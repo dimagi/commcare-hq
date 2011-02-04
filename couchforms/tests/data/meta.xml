@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<general xmlns="http://cidrz.org/bhoma/general">
+<general xmlns="http://openrosa.org/app/general">
 	<meta>
 		<clinic_id>5020280</clinic_id>
 		<timeStart>2010-07-22T13:54:27.971</timeStart>
