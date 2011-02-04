@@ -1,6 +1,7 @@
 import datetime as DT
 import json
 import dateutil.parser
+from corehq.apps.users.util import raw_username
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
@@ -30,7 +31,7 @@ def user_id_to_username(user_id):
         login = get_db().get(user_id)
     except:
         return None
-    return login['django_user']['username']
+    return raw_username(login['django_user']['username'])
 
 @login_and_domain_required
 def default(request, domain):
@@ -75,7 +76,8 @@ def submit_history(request, domain, template="reports/partials/couch_report_part
         'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
     })
 def paging_submit_history(request, domain, individual, show_unregistered="false"):
-    show_unregistered = json.loads(show_unregistered)
+    #show_unregistered = json.loads(show_unregistered)
+    show_unregistered = True
     def xmlns_to_name(xmlns):
         try:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
@@ -126,13 +128,13 @@ def paging_submit_history(request, domain, individual, show_unregistered="false"
             if username:
                 return [username, time, xmlns]
             elif show_unregistered:
-                username = '"%s" (unregistered)' % fake_name if user_id else ""
+                username = '"%s" (unregistered)' % fake_name if fake_name else "(unregistered)"
                 return [username, time, xmlns]
 
         paginator = CouchPaginator('reports/all_submissions', view_to_table, search=False, view_args=dict(
             endkey=[domain],
             startkey=[domain, {}],
-            #descending=True,
+            descending=True,
         ))
     return paginator.get_ajax_response(request)
 
@@ -154,21 +156,37 @@ def active_cases(request, domain, template="reports/partials/couch_report_partia
 
 @login_and_domain_required
 def paging_active_cases(request, domain, individual):
+#    def view_to_table(row):
+#        r = row['value']
+#        username = user_id_to_username(r['user_id'])
+#        if username:
+#            return [username, r['active_cases']]
+#
+#    paginator = CouchPaginator(
+#        "reports/active_cases",
+#        view_to_table,
+#        search=False,
+#        view_args=dict(
+#            group=True,
+#            endkey=  [domain, individual]     if individual else [domain],
+#            startkey=[domain, individual, {}] if individual else [domain, {}],
+#        )
+#    )
+
 
     def view_to_table(row):
-        r = row['value']
-        username = user_id_to_username(r['user_id'])
-        if username:
-            return [username, r['active_cases']]
+        keys = row['value']
+        active_cases = get_db().view('reports/active_cases', keys=[[domain, key] for key in keys], group=True)
+        return [user_id_to_username(keys[0]), sum(map(lambda x: x['value']['active_cases'], active_cases))]
 
     paginator = CouchPaginator(
-        "reports/active_cases",
+        "users/collated_commcare_users",
         view_to_table,
         search=False,
         view_args=dict(
-            group=True,
-            endkey=  [domain, individual]     if individual else [domain],
-            startkey=[domain, individual, {}] if individual else [domain, {}],
+            startkey=[domain],
+            endkey=[domain, {}],
+            descending=False
         )
     )
     return paginator.get_ajax_response(request)
