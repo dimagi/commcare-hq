@@ -71,7 +71,6 @@ def post_xform_to_couch(instance):
                 # get and save the duplicate to ensure the doc types are set correctly
                 # so that it doesn't show up in our reports
                 dupe = XFormDuplicate.get(response)
-                dupe.release_lock()
                 dupe.save()
                 return dupe
             else:
