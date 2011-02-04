@@ -15,7 +15,7 @@
 {% endblock %}
 {% block reportcontent %}
 
-<table class="datatable">
+<table class="datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}>
     <thead>
         <tr>
             {% for header in report.headers %}

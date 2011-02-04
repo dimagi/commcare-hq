@@ -1,7 +1,8 @@
 <optgroup label="Reports">
-    <option value="{% url individual_summary_report domain %}">Individual Summary</option>
+    <option value="{% url submission_log_report domain %}">Submission Log</option>
     <option value="{% url daily_submissions_report domain %}">Daily Form Submissions</option>
     <option value="{% url daily_completions_report domain %}">Daily Form Completions</option>
+    <option value="{% url active_case_report domain %}">Open Cases</option>
 </optgroup>
 <optgroup label="Data">
     <option value="{% url excel_export_data_report domain %}">Export data to excel</option>

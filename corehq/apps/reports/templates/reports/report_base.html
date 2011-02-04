@@ -58,13 +58,20 @@
                 elem = document;
             }
             $('.datatable', elem).each(function(){
-                $(this).dataTable({
-                    "bServerSide": true,
-                    "sAjaxSource": $(this).attr('data-source'),
-                    "bJQueryUI": true,
-                    "bSort": false,
-                    "bFilter": false
-                });
+                params = {
+                    "bJQueryUI": true
+                };
+                sAjaxSource = $(this).attr('data-source');
+                if(sAjaxSource) {
+                    params = {
+                        "bJQueryUI": true,
+                        "bServerSide": true,
+                        "sAjaxSource": sAjaxSource,
+                        "bSort": false,
+                        "bFilter": false
+                    };
+                }
+                $(this).dataTable(params);
             });
         }
         $(document).ready(function() {

@@ -86,6 +86,15 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
 
 login_and_domain_required = login_and_domain_required_ex()
 
+# For views that are inside a class
+def cls_login_and_domain_required(func):
+    def __outer__(cls, request, domain, *args, **kwargs):
+        @login_and_domain_required
+        def __inner__(request, domain, *args, **kwargs):
+            return func(cls, request, domain, *args, **kwargs)
+        return __inner__(request, domain, *args, **kwargs)
+    return __outer__
+
 # when requiring a specific domain
 def require_domain(domain):
     return login_and_domain_required_ex(require_domain=domain)

@@ -10,9 +10,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required
 from corehq.apps.reports.templatetags.report_tags import render_user_inline
-from dimagi.utils.couch.pagination import CouchPaginator
+from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 
 from couchexport.export import export_excel
 from StringIO import StringIO
@@ -35,7 +35,7 @@ def user_id_to_username(user_id):
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse("individual_summary_report", args=[domain]))
+    return HttpResponseRedirect(reverse("submission_log_report", args=[domain]))
 
 @login_and_domain_required
 def export_data(req, domain):
@@ -60,119 +60,131 @@ def export_data(req, domain):
         return HttpResponseRedirect(next)
 
 
-@login_and_domain_required
-def submit_history(request, domain, template="reports/partials/couch_report_partial.html"):
-    individual = request.GET.get('individual', '')
-    show_unregistered = request.GET.get('show_unregistered', 'false')
-    rows = []
+class SubmitHistory(ReportBase):
+    def __init__(self, request, domain, individual, show_unregistered="false"):
+        self.request = request
+        self.domain = domain
+        self.individual = individual
+        self.show_unregistered = True #json.loads(show_unregistered)
+        
+    @classmethod
+    def view(cls, request, domain, template="reports/partials/couch_report_partial.html"):
 
-    if individual:
-        headings = ["Submit Time", "Form"]
-    else:
-        headings = ["Username", "Submit Time", "XMLNS"]
-    return render_to_response(request, template, {
-        'headings': headings,
-        'rows': rows,
-        'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
-    })
-def paging_submit_history(request, domain, individual, show_unregistered="false"):
-    #show_unregistered = json.loads(show_unregistered)
-    show_unregistered = True
-    def xmlns_to_name(xmlns):
-        try:
-            form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
-            lang = form['app']['langs'][0]
-        except:
-            form = None
+        individual = request.GET.get('individual', '')
+        show_unregistered = request.GET.get('show_unregistered', 'false')
+        rows = []
 
-        if form:
-            name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
-                reverse("corehq.apps.app_manager.views.view_app", args=[domain, form['app']['id']])
-                + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
-                form['app']['name'],
-                form['module']['name'][lang],
-                form['form']['name'][lang]
+        headings = ["Username", "Submit Time", "Form"]
+        return render_to_response(request, template, {
+            'headings': headings,
+            'rows': rows,
+            'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
+        })
+    def rows(self, skip, limit):
+        def xmlns_to_name(xmlns):
+            try:
+                form = get_db().view('reports/forms_by_xmlns', key=[self.domain, xmlns], group=True).one()['value']
+                lang = form['app']['langs'][0]
+            except:
+                form = None
+
+            if form:
+                name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
+                    reverse("corehq.apps.app_manager.views.view_app", args=[self.domain, form['app']['id']])
+                    + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
+                    form['app']['name'],
+                    form['module']['name'][lang],
+                    form['form']['name'][lang]
+                )
+            else:
+                name = xmlns
+            return name
+        def format_time(time):
+            "time is an ISO timestamp"
+            return time.replace('T', ' ').replace('Z', '')
+        if self.individual:
+            rows = get_db().view('reports/submit_history',
+                endkey=[self.domain, self.individual],
+                startkey=[self.domain, self.individual, {}],
+                descending=True,
+                reduce=False,
+                skip=skip,
+                limit=limit
             )
+            def view_to_table(row):
+                time = row['value'].get('time')
+                xmlns = row['value'].get('xmlns')
+                username = user_id_to_username(self.individual)
+
+                #time = DT.datetime.strptime(time, iso_format)
+                time = format_time(time)
+                xmlns = xmlns_to_name(xmlns)
+                return [username, time, xmlns]
+
         else:
-            name = xmlns
-        return name
-    def format_time(time):
-        "time is an ISO timestamp"
-        return time.replace('T', ' ').replace('Z', '')
+            rows = get_db().view('reports/all_submissions',
+                endkey=[self.domain],
+                startkey=[self.domain, {}],
+                descending=True,
+                reduce=False,
+                skip=skip,
+                limit=limit,
+            )
+            def view_to_table(row):
+                time = row['value'].get('time')
+                xmlns = row['value'].get('xmlns')
+                user_id = row['value'].get('user_id')
+                fake_name = row['value'].get('username')
 
-    if individual:
-        def view_to_table(row):
-            time = row['value'].get('time')
-            xmlns = row['value'].get('xmlns')
+                #time = DT.datetime.strptime(time, iso_format)
+                time = format_time(time)
+                xmlns = xmlns_to_name(xmlns)
+                username = user_id_to_username(user_id)
+                if username:
+                    return [username, time, xmlns]
+                elif self.show_unregistered:
+                    username = '"%s" (unregistered)' % fake_name if fake_name else "(unregistered)"
+                    return [username, time, xmlns]
 
-            #time = DT.datetime.strptime(time, iso_format)
-            time = format_time(time)
-            xmlns = xmlns_to_name(xmlns)
-            return [time, xmlns]
-        paginator = CouchPaginator('reports/submit_history', view_to_table, search=False, view_args=dict(
-            endkey=[domain, individual],
-            startkey=[domain, individual, {}],
-            #descending=True,
-        ))
-    else:
-        def view_to_table(row):
-            time = row['value'].get('time')
-            xmlns = row['value'].get('xmlns')
-            user_id = row['value'].get('user_id')
-            fake_name = row['value'].get('username')
-
-            #time = DT.datetime.strptime(time, iso_format)
-            time = format_time(time)
-            xmlns = xmlns_to_name(xmlns)
-            username = user_id_to_username(user_id)
-            if username:
-                return [username, time, xmlns]
-            elif show_unregistered:
-                username = '"%s" (unregistered)' % fake_name if fake_name else "(unregistered)"
-                return [username, time, xmlns]
-
-        paginator = CouchPaginator('reports/all_submissions', view_to_table, search=False, view_args=dict(
-            endkey=[domain],
-            startkey=[domain, {}],
-            descending=True,
-        ))
-    return paginator.get_ajax_response(request)
-
+        return [view_to_table(row) for row in rows]
+    def count(self):
+        try:
+            if self.individual:
+                return get_db().view('reports/submit_history',
+                    startkey=[self.domain, self.individual],
+                    endkey=[self.domain, self.individual, {}],
+                    group=True,
+                    group_level=2
+                ).one()['value']
+            else:
+                return get_db().view('reports/all_submissions',
+                    startkey=[self.domain],
+                    endkey=[self.domain, {}],
+                    group=True,
+                    group_level=1
+                ).one()['value']
+        except TypeError:
+            return 0
+        
 @login_and_domain_required
-def active_cases(request, domain, template="reports/partials/couch_report_partial.html"):
+def active_cases(request, domain):
 
-    individual = request.GET.get('individual', '')
     rows = []
 
-    if individual:
-        headings = ["Username", "Active Cases"]
-    else:
-        headings = ["Username", "Active Cases"]
-    return render_to_response(request, template, {
-        'headings': headings,
-        'rows': rows,
-        "ajax_source": reverse('paging_active_cases', args=[domain, individual]),
+    headings = ["Username", "Open Cases"]
+
+    return render_to_response(request, "reports/generic_report.html", {
+        "domain": domain,
+        "report": {
+            "name": "Open Cases",
+            "headers": headings,
+            "rows": rows,
+        },
+        "ajax_source": reverse('paging_active_cases', args=[domain]),
     })
 
 @login_and_domain_required
-def paging_active_cases(request, domain, individual):
-#    def view_to_table(row):
-#        r = row['value']
-#        username = user_id_to_username(r['user_id'])
-#        if username:
-#            return [username, r['active_cases']]
-#
-#    paginator = CouchPaginator(
-#        "reports/active_cases",
-#        view_to_table,
-#        search=False,
-#        view_args=dict(
-#            group=True,
-#            endkey=  [domain, individual]     if individual else [domain],
-#            startkey=[domain, individual, {}] if individual else [domain, {}],
-#        )
-#    )
-
+def paging_active_cases(request, domain):
 
     def view_to_table(row):
         keys = row['value']
@@ -240,7 +252,7 @@ def paging_user_summary(request, domain):
     return paginator.get_ajax_response(request)
 
 @login_and_domain_required
-def individual_summary(request, domain):
+def submission_log(request, domain):
     individual = request.GET.get('individual', '')
     show_unregistered = request.GET.get('show_unregistered', 'false')
     if individual:
@@ -254,11 +266,11 @@ def individual_summary(request, domain):
         if username:
             users.append({'id': user_id, 'username': username})
 
-    return render_to_response(request, "reports/individual_summary.html", {
+    return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,
         "report": {
-            "name": "Individual Summary",
+            "name": "Submission Log",
             "header": [],
             "rows": [],
         },
@@ -309,7 +321,7 @@ def daily_submissions(request, domain, view_name, title):
             valid_rows.append(row)
     rows = valid_rows
     headers = ["Username"] + dates
-    return render_to_response(request, "reports/daily_submissions.html", {
+    return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_dates": True,
         "start_date": start_date,
