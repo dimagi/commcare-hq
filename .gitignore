@@ -13,3 +13,4 @@ rapidsms-django.log*
 rapidsms.log*
 *.log
 CommCare.ja*
+startover.sh
