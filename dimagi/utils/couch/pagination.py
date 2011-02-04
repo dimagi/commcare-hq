@@ -77,10 +77,14 @@ class CouchPaginator(object):
         else:
             # only reduce if the _search param is set.  
             # TODO: get this more smartly from the couch view
+            kwargs = {}
             if self._search:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, reduce=False, **self._view_args)
+                kwargs.update(skip=params.start, limit=params.count, descending=params.desc, reduce=False)
+                kwargs.update(self._view_args)
             else:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, **self._view_args)
+                kwargs.update(skip=params.start, limit=params.count, descending=params.desc)
+                kwargs.update(self._view_args)
+            items = get_db().view(self._view, **kwargs)
             total_display_rows = items.total_rows
         
         # this startkey, endkey business is not currently used, 
@@ -88,6 +92,7 @@ class CouchPaginator(object):
         # for now the skip parameter is fast enough to suit our scale
         startkey, endkey = None, None
         all_json = []
+        print items.all()
         for row in items:
             if not startkey:
                 startkey = row["key"]
