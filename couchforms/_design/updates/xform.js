@@ -18,14 +18,21 @@ function(doc, req) {
     // like .uuid therefore we have to use the *:: annotation, which searches 
     // every namespace.
     // See: http://dispatchevent.org/roger/using-e4x-with-xhtml-watch-your-namespaces/
-    var getUuid = function(doc) {
+    var getUuid = function(form) {
         // search for a uuid in some known places
-        // CZUE: stop using the uid from the form.  It creates all kinds of other problems
-        // with document update conflicts
         
+        // this is when it's overridden in the query string (e.g. a duplicate)
         if (req.query && req.query.uid) return req.query.uid;
-        if (doc["uuid"]) return doc["uuid"];
-        if (doc["Meta"] && doc["Meta"]["uid"]) return doc["Meta"]["uid"];
+        
+        // this is super hacky, but here are some known places we keep this 
+        // in some known deployments
+        if (form.uuid) return form.uuid;
+        meta = null;
+        if (form.Meta) meta = form.Meta;  // bhoma, 0.9 commcare
+        else if (form.meta) meta = form.meta; // commcare 1.0
+        if (meta && meta.uid) return meta.uid; // bhoma 
+        if (meta && meta.instanceID) return meta.instanceID; // commcare 0.9, commcare 1.0
+        
         var guid = function() {
             // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
             // TODO: find a better guid generator / plug into couch uuid framework
@@ -38,7 +45,7 @@ function(doc, req) {
     }
     
     // Try to get an id from the form, or fall back to generating one randomly
-    uuid = getUuid(doc);
+    uuid = getUuid(doc.form);
     doc["_id"] = uuid.toString();
     
     // attach the raw xml as a file called "form.xml"
