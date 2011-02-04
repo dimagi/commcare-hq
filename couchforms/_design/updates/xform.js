@@ -26,7 +26,6 @@ function(doc, req) {
         
         // this is super hacky, but here are some known places we keep this 
         // in some known deployments
-        if (form.uuid) return form.uuid;
         meta = null;
         if (form.Meta) meta = form.Meta;  // bhoma, 0.9 commcare
         else if (form.meta) meta = form.meta; // commcare 1.0
