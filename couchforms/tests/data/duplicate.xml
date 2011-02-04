@@ -1,12 +1,13 @@
 <?xml version='1.0' ?>
 <general xmlns="http://openrosa.org/app/general">
-	<meta>
+	<Meta>
 		<clinic_id>5020280</clinic_id>
-		<timeStart>2010-07-22T13:54:27.971</timeStart>
-		<timeEnd>2010-07-23T13:55:11.648</timeEnd>
+		<TimeStart>2010-07-22T13:54:27.971</TimeStart>
+		<TimeEnd>2010-07-23T13:55:11.648</TimeEnd>
 		<username>admin</username>
-		<user_id>f7f0c79e-8b79-11df-b7de-005056c00008</user_id>
-	</meta>
+		<uid>7H46J37FGH3</uid>
+        <user_id>f7f0c79e-8b79-11df-b7de-005056c00008</user_id>
+	</Meta>
 	<case>
 		<patient_id>6713c1c211b3af6832c8ad781e310d98</patient_id>
 		<case_type>malaria</case_type>

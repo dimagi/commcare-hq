@@ -125,13 +125,9 @@ var e4xmlJsonClass = {
     },
 
     logObj: function(obj) {
-        this.log_func("length: " + obj.length());
         for (var prop in obj) {
             val = obj[prop];
             if (val) { 
-                this.log_func("prop: " + prop + ", name: " + val.name() + 
-                            ", localName: " + val.name().localName + 
-                            ",value: " + val);
                 if (val != obj) {
                     this.logObj(val);
                 }
@@ -140,7 +136,6 @@ var e4xmlJsonClass = {
     }, 
     // Internal methods
     toObj: function(xml) {
-        this.log_func("processing: " + xml);
         
         var attributes = xml.@*;
         
@@ -153,20 +148,16 @@ var e4xmlJsonClass = {
         
         // process attributes
         if (attributes.length() > 0) {
-            this.log_func("found " + attributes.length() + " attributes.");
             for (var i = 0; i < attributes.length(); i++) {
                 o["@" + attributes[i].name().localName] = (attributes[i] || "").toString();
-                this.log_func("attribute " + i + ": " + attributes[i].name().localName + ":" + attributes[i]);
             }
         }
         
         // process children
         if (this.hasChildren(xml)) {
             var children = xml.*;
-            this.log_func("found " + children.length() + " children.");
             
             for (var i = 0; i < children.length(); i++) {
-                this.log_func("child " + i + ": " + children[i].name() + ":" + children[i]);
                 if (xml.*::[children[i].name().localName].length() > 1) {
                     // there was more than one of these elements.  Make it a list.
                     if (!o[children[i].name().localName]) {
@@ -176,7 +167,6 @@ var e4xmlJsonClass = {
                 } else {
                     o[children[i].name().localName] = this.toObj(children[i]);
                 }
-                this.log_func("xml length: " + xml.*::[children[i].name()].length() + " and index: " + xml[children[i].name()]);
             }
         } 
         else {
