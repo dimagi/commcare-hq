@@ -19,7 +19,8 @@ from StringIO import StringIO
 from django.contrib import messages
 
 iso_format = '%Y-%m-%dT%H:%M:%SZ'
-
+def format_time(time):
+    return time.strftime(iso_format)
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
 #    return render_to_response(request, template, {'domain': domain})
@@ -171,12 +172,14 @@ def active_cases(request, domain):
 
     rows = []
 
-    headings = ["Username", "Open Cases"]
+    headings = ["Username", "Active/Open Cases (%)", "Late Cases", "Average Days Late", "Visits Last Week"
+        #"Open Referrals", "Active Referrals"
+    ]
 
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "report": {
-            "name": "Open Cases",
+            "name": "Case Activity",
             "headers": headings,
             "rows": rows,
         },
@@ -186,10 +189,59 @@ def active_cases(request, domain):
 @login_and_domain_required
 def paging_active_cases(request, domain):
 
+    days = 31
+    def get_active_cases(userid, days=days):
+        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        r = get_db().view('case/by_last_date',
+            startkey=[domain, userid, format_time(since_date)],
+            endkey=[domain, userid, {}],
+            group=True,
+            group_level=0
+        ).one()
+        return r['value']['count'] if r else 0
+    def get_late_cases(userid, days=days):
+        EPOCH = DT.datetime(1970, 1, 1)
+        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        DAYS = (since_date - EPOCH).days
+        r = get_db().view('case/by_last_date',
+            startkey=[domain, userid],
+            endkey=[domain, userid, format_time(since_date)],
+            group=True,
+            group_level=0
+        ).one()
+
+        return (r['value']['count']*DAYS-r['value']['sum'], r['value']['count']) if r else (0,0)
+    def get_forms_completed(userid, days=7):
+        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        r = get_db().view('reports/submit_history',
+            startkey=[domain, userid, format_time(since_date)],
+            endkey=[domain, userid, {}],
+            group=True,
+            group_level=0
+        ).one()
+        return r['value'] if r else 0
+        
     def view_to_table(row):
         keys = row['value']
-        active_cases = get_db().view('reports/active_cases', keys=[[domain, key] for key in keys], group=True)
-        return [user_id_to_username(keys[0]), sum(map(lambda x: x['value']['active_cases'], active_cases))]
+
+        open_cases = get_db().view('case/open_cases', keys=[[domain, key] for key in keys], group=True)
+        open_cases = sum(map(lambda x: x['value'], open_cases))
+
+        active_cases = sum(map(get_active_cases, keys))
+
+        days_late, cases_late = map(sum, zip(*map(get_late_cases, keys)))
+
+        visits = sum(map(get_forms_completed, keys))
+
+        assert(open_cases-active_cases == cases_late)
+        return [
+            user_id_to_username(keys[0]),
+            "%s/%s (%d%%)" % (active_cases, open_cases,  (active_cases*100/open_cases)) if open_cases else "--",
+            "%s cases" % cases_late if cases_late else "--",
+            "%.1f" % (days_late/cases_late) if cases_late > 1 else "%d" % (days_late/cases_late) if cases_late \
+            else "--",
+            visits
+        ]
 
     paginator = CouchPaginator(
         "users/collated_commcare_users",
