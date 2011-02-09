@@ -6,8 +6,8 @@
 {% endblock %}
 {% block head %}
     {{ block.super }}
-    <link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/sms/css/sms.css" />
-    <link type="text/css" rel="stylesheet" href="{{ MEDIA_URL }}/hqwebapp/css/splits.css" />
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}sms/css/sms.css" />
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
     <script type="text/javascript" charset="utf-8">
     $(function(){
         $("#sms-tabs").tabs().removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
