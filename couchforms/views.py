@@ -15,16 +15,19 @@ def post(request, callback=None):
     a different signature as play, only passing in the document
     (since we don't know what xform was being posted to)
     """
-    # just forward the post request to couch
-    # this won't currently work with ODK
-    # post to couch
+    # odk/javarosa preprocessing. These come in in different ways.
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         #it's an standard form submission (eg ODK)
         #this does an assumption that ODK submissions submit using the form parameter xml_submission_file
         #todo: this should be made more flexibly to handle differeing params for xform submission
         instance = request.FILES['xml_submission_file'].read()
+        for key, item in request.FILES.items():
+            if key != "xml_submission_file":
+                pass
+                # TODO: this is where we handle multimedia... somehow
+            
     else:
-        #else, this is a raw post via a j2me client of xml.
+        #else, this is a raw post via a j2me client of xml (or touchforms)
         #todo, multipart raw submissions need further parsing capacity.
         instance = request.raw_post_data
 
