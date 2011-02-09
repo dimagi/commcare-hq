@@ -21,12 +21,14 @@ def post(request, callback=None):
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         #it's an standard form submission (eg ODK)
         #this does an assumption that ODK submissions submit using the form parameter xml_submission_file
-        #todo: this should be made more flexibly
+        #todo: this should be made more flexibly to handle differeing params for xform submission
         instance = request.FILES['xml_submission_file'].read()
     else:
         #else, this is a raw post via a j2me client of xml.
         #todo, multipart raw submissions need further parsing capacity.
         instance = request.raw_post_data
+
+    #todo:  also multipart submissions be it odk or j2me need to be attached to instance after the document is created in couch.
     try:
         doc = post_xform_to_couch(instance)
         if callback:
