@@ -26,15 +26,23 @@ def post_authenticated_file(filename, url, username, password):
         file.close()
     
 def post_data(data, url,curl_command="curl", use_curl=False,
+<<<<<<< HEAD
                   content_type = "text/xml", use_chunked=False):
+=======
+    content_type = "text/xml"):
+>>>>>>> cdf75d687df7a5754c958e4b81a10cb18551eb3e
     """
     Do a POST of data with some options.  Returns a tuple of the response
     from the server and any errors
-    """     
+    """
     tmp_file_handle, tmp_file_path = tempfile.mkstemp()
     tmp_file = open(tmp_file_path, "w")
-    tmp_file.write(data)
-    tmp_file.close()
+    try:
+        tmp_file.write(data)
+    finally:
+        tmp_file.close()
+        os.close(tmp_file_handle)
+
     return post_file(tmp_file_path, url, curl_command, use_curl, content_type)
     
 def post_file(filename, url, curl_command="curl", use_curl=False,

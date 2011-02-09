@@ -40,7 +40,7 @@ class CouchPaginator(object):
     """
     
     
-    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x): 
+    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x, use_reduce_to_count=0, view_args={}):
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
@@ -51,6 +51,7 @@ class CouchPaginator(object):
         self._generator_func = generator_func
         self._search = search
         self._search_preprocessor = search_preprocessor
+        self._view_args = view_args
         
     def get_ajax_response(self, request, default_display_length=DEFAULT_DISPLAY_LENGTH, 
                           default_start=DEFAULT_START, extras={}):
@@ -61,41 +62,51 @@ class CouchPaginator(object):
         Extras allows you to override any individual paramater that gets 
         returned
         """
-        query = request.POST if request.method == "POST" else request.GET
+        query = request.REQUEST
         params = DatatablesParams.from_request_dict(query)
         
         # search
         search_key = query.get("sSearch", "")
         if self._search and search_key:
-            items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, key=self._search_preprocessor(search_key), reduce=False)
+            items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, key=self._search_preprocessor(search_key), reduce=False, **self._view_args)
             if params.start + len(items) < params.count:
                 total_display_rows = len(items)
             else:
                 total_display_rows = get_db().view(self._view, key=self._search_preprocessor(search_key), reduce=True).one()["value"]
+            total_rows = items.total_rows
                 
         else:
             # only reduce if the _search param is set.  
             # TODO: get this more smartly from the couch view
+            kwargs = {}
             if self._search:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, reduce=False)
+                kwargs.update(skip=params.start, limit=params.count, descending=params.desc, reduce=False)
+                kwargs.update(self._view_args)
             else:
-                items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc)
+                kwargs.update(skip=params.start, limit=params.count, descending=params.desc)
+                kwargs.update(self._view_args)
+            items = get_db().view(self._view, **kwargs)
+            total_rows = items.total_rows
             total_display_rows = items.total_rows
+
         
         # this startkey, endkey business is not currently used, 
         # but is a better way to search eventually.
         # for now the skip parameter is fast enough to suit our scale
         startkey, endkey = None, None
         all_json = []
+        print items.all()
         for row in items:
             if not startkey:
                 startkey = row["key"]
             endkey = row["key"]
-            all_json.append(self._generator_func(row))
+            row = self._generator_func(row)
+            if row:
+                all_json.append(row)
         
         to_return = {"sEcho": params.echo,
                      "iTotalDisplayRecords": total_display_rows,
-                     "iTotalRecords": items.total_rows,
+                     "iTotalRecords": total_rows,
                      "aaData": all_json}
         
         for key, val in extras.items():
@@ -137,7 +148,9 @@ class LucenePaginator(object):
         all_json = []
         try:
             for row in results:
-                all_json.append(self._generator_func(row))
+                row = self._generator_func(row)
+                if row is not None:
+                    all_json.append(row)
             total_rows = results.total_rows
         except RequestFailed, e:
             # just ignore poorly formatted search terms for now
@@ -152,3 +165,37 @@ class LucenePaginator(object):
             to_return[key] = val
         
         return HttpResponse(json.dumps(to_return))
+
+
+class ReportBase(object):
+    extras = {}
+    def __init__(self, request):
+        self.request = request
+    @classmethod
+    def ajax_view(cls, *args, **kwargs):
+        return cls(*args, **kwargs).get_ajax_response()
+    def get_ajax_response(self):
+        """
+        From a datatables generated ajax request, return the appropriate
+        httpresponse containing the appropriate objects objects.
+
+        Extras allows you to override any individual paramater that gets
+        returned
+        """
+        params = DatatablesParams.from_request_dict(self.request.REQUEST)
+
+
+        to_return = {
+            "sEcho": params.echo,
+            "iTotalDisplayRecords": self.count(),
+            "iTotalRecords": self.count(),
+            "aaData": self.rows(params.start, params.count)
+        }
+
+        to_return.update(self.extras)
+
+        return HttpResponse(json.dumps(to_return))
+    def count(self):
+        raise NotImplemented()
+    def rows(self, skip, limit):
+        raise NotImplemented()
