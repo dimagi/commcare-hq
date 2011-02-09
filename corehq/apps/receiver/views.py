@@ -4,6 +4,7 @@ from corehq.apps.case.models.couch import CommCareCase
 from couchforms.views import post as couchforms_post
 from corehq.apps.receiver.signals import post_received, ReceiverResult
 from django.views.decorators.http import require_POST
+from django.contrib.sites.models import Site
 
 
 @require_POST
@@ -67,7 +68,13 @@ def post(request, domain):
 
         if responses:
             responses.sort()
-            return HttpResponse(responses[-1].response)
-        # default to something generic
-        return HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'])
+            response = HttpResponse(responses[-1].response, status=201)
+        else:
+            # default to something generic 
+            response = HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'], status=201)
+        
+        # this hack is required for ODK
+        response["Location"] = "http://%s" % Site.objects.get_current().domain
+        return response 
+        
     return couchforms_post(request, callback)
