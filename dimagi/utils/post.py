@@ -26,11 +26,7 @@ def post_authenticated_file(filename, url, username, password):
         file.close()
     
 def post_data(data, url,curl_command="curl", use_curl=False,
-<<<<<<< HEAD
-                  content_type = "text/xml", use_chunked=False):
-=======
     content_type = "text/xml"):
->>>>>>> cdf75d687df7a5754c958e4b81a10cb18551eb3e
     """
     Do a POST of data with some options.  Returns a tuple of the response
     from the server and any errors
