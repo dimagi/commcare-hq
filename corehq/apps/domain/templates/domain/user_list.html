@@ -3,7 +3,7 @@
 {#################################################################################################################}p
 
 {% block hq-stylesheets %}
-<link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/domain/stylesheets/sfb.css?version=3"/>
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}domain/stylesheets/sfb.css?version=3"/>
 {% endblock hq-stylesheets %}
 
 {#################################################################################################################}
@@ -56,7 +56,7 @@
 {# pagination code taken right from Django dev docs #}
 <div class="pagination">
 	{% if rows.has_previous %}
-	    <a href="?page={{ rows.previous_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_left.gif" style="border:0" /></a>
+	    <a href="?page={{ rows.previous_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{STATIC_URL}}site_media/arrow_left.gif" style="border:0" /></a>
 	    <!--   <a href="?page={{ rows.previous_page_number }}">previous</a>a  -->
 	{% endif %}
 	
@@ -66,7 +66,7 @@
 	
 	{% if rows.has_next %}
 	     <!-- <a href="?page={{ rows.next_page_number }}">next</a> -->
-	    <a href="?page={{ rows.next_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{MEDIA_URL}}site_media/arrow_right.gif" style="border:0" /></a>
+	    <a href="?page={{ rows.next_page_number }}&sort={{sort}}{% for key,val in sort_vars.items %}&{{key}}={{val|urlencode}}{% endfor %}"><img src="{{STATIC_URL}}site_media/arrow_right.gif" style="border:0" /></a>
 	{% endif %}
 </div>
 

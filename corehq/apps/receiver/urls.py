@@ -1,6 +1,7 @@
-from django.conf.urls.defaults import patterns
+from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.receiver.views',
-    (r'$',  'post'),
+    url(r'^$', 'post', name='receiver_post'),
+    url(r'^/submission$',  'post', name="receiver_odk_post"), 
 
 )
