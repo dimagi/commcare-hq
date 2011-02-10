@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Audit Viewer" %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="span-6">
+            <h2>Audit Logs</h2>
+        </div>
+        <div>
+            <table>
+            <thead>
+            <tr><td>User</td><td>Path</td><td>Date</td></tr>
+            </thead>
+                {% for i in auditEvents %}
+                    <tr>
+                        <td>{{ i.user }}</td>
+                        <td>{{ i.path }}</td>
+                        <td>{{ i.date }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

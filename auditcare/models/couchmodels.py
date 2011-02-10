@@ -117,7 +117,7 @@ class NavigationEventAudit(AuditEvent):
         '''Creates an instance of a Access log.
         '''
         try:
-            audit = cls.create_audit(cls, user)
+            audit = cls.create_audit(cls, str(user))
             audit.description += "View"
             if len(request.GET.keys()) > 0:
                 audit.request_path = "%s?%s" % (request.path, '&'.join(["%s=%s" % (x, request.GET[x]) for x in request.GET.keys()]))
@@ -127,6 +127,7 @@ class NavigationEventAudit(AuditEvent):
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = unicode(request.META) #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
             audit.session_key = request.session.session_key
+            print("Saved couch object")
             audit.save()
         except Exception, ex:
             logging.error("NavigationEventAudit.audit_view error: %s" % (ex))

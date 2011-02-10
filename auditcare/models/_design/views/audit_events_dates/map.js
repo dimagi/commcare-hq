@@ -12,12 +12,12 @@ function(doc) {
     if(doc.base_type == 'AuditEvent') {
         var date = parse_date(doc.event_date);
         //raw time
-        emit([date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
+        //emit([date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
         //raw time, by event_class
-        emit([doc.event_class, date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
+        //emit([doc.event_class, date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
         //raw time, by user
         //emit([doc.user, date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
         //raw time, by user, event_class
-        emit([doc.user, doc.event_class, date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
+        emit([doc.user, doc.event_class, doc.request_path, date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()], null);
     }
 }
