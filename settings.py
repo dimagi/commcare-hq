@@ -176,7 +176,7 @@ LOGGEDOUT_TEMPLATE="loggedout.html"
 LOGTRACKER_ALERT_EMAILS = []
 LOGTRACKER_LOG_THRESHOLD = 30
 LOGTRACKER_ALERT_THRESHOLD = 40
-COUCHLOG_THRESHOLD = 70
+COUCHLOG_THRESHOLD = logging.WARNING
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="user@domain.com"
