@@ -8,3 +8,4 @@ gunicorn
 python-dateutil
 BeautifulSoup
 lxml
+django-staticfiles

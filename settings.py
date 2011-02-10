@@ -31,11 +31,13 @@ LOCALE_PATHS=['contrib/locale']
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = ''
+STATIC_ROOT = ''
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/static'
+MEDIA_URL = '/media/'
+STATIC_URL = '/static/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -69,6 +71,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
+    'staticfiles.context_processors.static',
     "corehq.util.context_processors.base_template" # sticks the base template inside all responses
 ]
 
@@ -91,6 +94,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     #'django.contrib.messages', # don't need this for messages and it's causing some error
+    'staticfiles', #soon to be django.contrib.staticfiles in 1.3
     'south',
 )
 
