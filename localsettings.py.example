@@ -1,3 +1,5 @@
+import os
+
 # Postgres config
 DATABASE_ENGINE = 'postgresql_psycopg2'
 DATABASE_NAME = 'commcarehq'
@@ -13,6 +15,8 @@ LOG_FILE    = "/var/log/datahq/datahq.log"
 LOG_FORMAT  = "[%(name)s]: %(message)s"
 LOG_BACKUPS = 256 # number of logs to keep
 
+filepath = os.path.abspath(os.path.dirname(__file__))
+STATIC_ROOT = os.path.join(filepath, 'staticmedia') #if you so wish to have your staticroot be defined here - this is necessary for staticfiles to merge all the static media from the management command.
 
 ####### Couch Forms ######
 COUCH_SERVER_ROOT = 'localhost:5984'
