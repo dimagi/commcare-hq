@@ -56,6 +56,8 @@ def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
+    if req.user.is_authenticated():
+        return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
     return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
 

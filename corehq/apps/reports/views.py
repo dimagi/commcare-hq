@@ -2,6 +2,7 @@ import datetime as DT
 import json
 import dateutil.parser
 from corehq.apps.users.util import raw_username
+from couchforms.models import XFormInstance
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
@@ -75,7 +76,7 @@ class SubmitHistory(ReportBase):
         show_unregistered = request.GET.get('show_unregistered', 'false')
         rows = []
 
-        headings = ["Username", "Submit Time", "Form"]
+        headings = ["View Form", "Username", "Submit Time", "Form"]
         return render_to_response(request, template, {
             'headings': headings,
             'rows': rows,
@@ -103,6 +104,8 @@ class SubmitHistory(ReportBase):
         def format_time(time):
             "time is an ISO timestamp"
             return time.replace('T', ' ').replace('Z', '')
+        def form_data_link(instance_id):
+            return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('render_form_data', args=[self.domain, instance_id])
         if self.individual:
             rows = get_db().view('reports/submit_history',
                 endkey=[self.domain, self.individual],
@@ -110,17 +113,17 @@ class SubmitHistory(ReportBase):
                 descending=True,
                 reduce=False,
                 skip=skip,
-                limit=limit
+                limit=limit,
             )
             def view_to_table(row):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
                 username = user_id_to_username(self.individual)
-
+                
                 #time = DT.datetime.strptime(time, iso_format)
                 time = format_time(time)
                 xmlns = xmlns_to_name(xmlns)
-                return [username, time, xmlns]
+                return [form_data_link(row['id']), username, time, xmlns]
 
         else:
             rows = get_db().view('reports/all_submissions',
@@ -142,10 +145,10 @@ class SubmitHistory(ReportBase):
                 xmlns = xmlns_to_name(xmlns)
                 username = user_id_to_username(user_id)
                 if username:
-                    return [username, time, xmlns]
+                    return [form_data_link(row['id']), username, time, xmlns]
                 elif self.show_unregistered:
                     username = '"%s" (unregistered)' % fake_name if fake_name else "(unregistered)"
-                    return [username, time, xmlns]
+                    return [form_data_link(row['id']), username, time, xmlns]
 
         return [view_to_table(row) for row in rows]
     def count(self):
@@ -446,4 +449,7 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         }
     })
 
-    
+def form_data(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert(domain == instance.domain)
+    return render_to_response(request, "reports/partials/form_data.html", dict(instance=instance))
