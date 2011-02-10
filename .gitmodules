@@ -1,21 +1,21 @@
 [submodule "submodules/core-hq-src"]
 	path = submodules/core-hq-src
-	url = git://github.com/dimagi/core-hq.git
+	url = git@github.com:dimagi/core-hq.git
 [submodule "submodules/couchforms-src"]
 	path = submodules/couchforms-src
-	url = git://github.com/dimagi/couchforms.git
+	url = git@github.com:dimagi/couchforms.git
 [submodule "submodules/couchexport-src"]
 	path = submodules/couchexport-src
-	url = git://github.com/dimagi/couchexport.git
+	url = git@github.com:dimagi/couchexport.git
 [submodule "submodules/djangocouch-src"]
 	path = submodules/djangocouch-src
-	url = git://github.com/dimagi/djangocouch.git
+	url = git@github.com:dimagi/djangocouch.git
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
-	url = git://github.com/dimagi/dimagi-utils.git
+	url = git@github.com:dimagi/dimagi-utils.git
 [submodule "submodules/xep_hq_server"]
 	path = submodules/xep_hq_server
-	url = git://github.com/dimagi/xep_hq_server.git
+	url = git@github.com:dimagi/xep_hq_server.git
 [submodule "submodules/couchlog-src"]
 	path = submodules/couchlog-src
-	url = git://github.com/dimagi/couchlog.git
+	url = git@github.com:dimagi/couchlog.git
