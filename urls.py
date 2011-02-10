@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^receiver', include('corehq.apps.receiver.urls')),
+    (r'^migration', include('corehq.apps.migration.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
     (r'^groups/', include('corehq.apps.groups.urls')),
     (r'^phone/', include('corehq.apps.phone.urls')),

@@ -90,7 +90,7 @@ DEFAULT_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    #'django.contrib.messages',
+    #'django.contrib.messages', # don't need this for messages and it's causing some error
     'south',
 )
 
@@ -112,6 +112,7 @@ HQ_APPS = (
     'couchexport',
     'couchlog',
     'corehq.apps.receiver',
+    'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.phone',
     'corehq.apps.users',
@@ -171,6 +172,7 @@ LOGGEDOUT_TEMPLATE="loggedout.html"
 LOGTRACKER_ALERT_EMAILS = []
 LOGTRACKER_LOG_THRESHOLD = 30
 LOGTRACKER_ALERT_THRESHOLD = 40
+COUCHLOG_THRESHOLD = 70
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="user@domain.com"
@@ -253,6 +255,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'groups',
         'domain',
         'reports',
+        'migration',
         'xep_hq_server'
     ]
 ]
