@@ -20,8 +20,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         outstring = """
-                Alias %(media_path)s
-                Alias %(static_path)s
+        <VirtualHost *:80>
+                Alias %(media_path)s %(media_root)s
+                Alias %(static_path)s %(static_root)s
 
                 <Directory %(static_root)s>
                     Order deny,allow
@@ -32,6 +33,7 @@ class Command(BaseCommand):
                     Order deny,allow
                     Allow from all
                 </Directory>
+        </VirtualHost>
         """
 
         arg_dict = {}
