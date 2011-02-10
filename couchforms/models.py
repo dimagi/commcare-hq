@@ -141,7 +141,7 @@ class XFormInstance(Document):
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
-            to_return[key] = self.xpath(key)
+            to_return[key] = self.xpath('form/' + key)
         return to_return
 
 class XFormDuplicate(XFormInstance):
