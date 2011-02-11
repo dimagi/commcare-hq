@@ -134,6 +134,8 @@ LOCAL_APPS = (
     #'django_extensions',
 )
 
+REFLEXIVE_URL_BASE = "localhost:8000"
+
 try:
     INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
 except:
