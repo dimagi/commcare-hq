@@ -7,6 +7,7 @@ from corehq.apps.migration.post import post_data
 from corehq.apps.receiver.views import post as receiver_post
 from corehq.util.webutils import get_url_base
 from dimagi.utils.couch.database import get_db
+from django.conf import settings
 
 
 class UserMap(object):
@@ -80,8 +81,8 @@ def post(request, domain):
     else:
         xml = add_user_id(xml, user_map)
     if submit:
-        url = get_url_base() + reverse(receiver_post, args=[domain])
-        results, errors = post_data(xml, url, submit_time=request.META.get('HTTP_X_SUBMIT_TIME'))
+        url = "http://%s%s" % (settings.REFLEXIVE_URL_BASE, reverse(receiver_post, args=[domain]))
+        results, errors = post_data(xml, url, submit_time=request.META.get('HTTP_X_SUBMIT_TIME', None))
         if errors:
             raise Exception(errors)
         return HttpResponse(results)
