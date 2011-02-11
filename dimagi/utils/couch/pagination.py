@@ -184,11 +184,11 @@ class ReportBase(object):
         """
         params = DatatablesParams.from_request_dict(self.request.REQUEST)
 
-
+        count = self.count()
         to_return = {
             "sEcho": params.echo,
-            "iTotalDisplayRecords": self.count(),
-            "iTotalRecords": self.count(),
+            "iTotalDisplayRecords": count,
+            "iTotalRecords": count,
             "aaData": self.rows(params.start, params.count)
         }
 
