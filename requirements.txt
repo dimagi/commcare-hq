@@ -9,3 +9,5 @@ python-dateutil
 BeautifulSoup
 lxml
 django-staticfiles
+django-celery
+django-kombu

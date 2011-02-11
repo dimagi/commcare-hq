@@ -96,6 +96,9 @@ DEFAULT_APPS = (
     #'django.contrib.messages', # don't need this for messages and it's causing some error
     'staticfiles', #soon to be django.contrib.staticfiles in 1.3
     'south',
+    'djcelery',    # pip install django-celery
+    #'ghettoq',     # pip install ghettoq
+    'djkombu',     # pip install django-kombu
 )
 
 HQ_APPS = (
@@ -208,6 +211,9 @@ LOG_BACKUPS = 256 # number of logs to keep
 
 SMS_GATEWAY_URL = "http://localhost:8001"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
+
+# celery
+CARROT_BACKEND = "django"
 
 # import local settings if we find them
 try:
