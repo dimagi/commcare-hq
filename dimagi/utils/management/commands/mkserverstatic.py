@@ -21,8 +21,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         outstring = """
         <VirtualHost *:80>
-                Alias %(media_path)s %(media_root)s
-                Alias %(static_path)s %(static_root)s
+                Alias %(media_path)s %(media_root)s/
+                Alias %(static_path)s %(static_root)s/
 
                 <Directory %(static_root)s>
                     Order deny,allow
