@@ -4,15 +4,12 @@ import dateutil.parser
 from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
 from dimagi.utils.web import render_to_response
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
-from collections import defaultdict
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
-from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required
-from corehq.apps.reports.templatetags.report_tags import render_user_inline
+from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 
 from couchexport.export import export_excel
@@ -453,3 +450,4 @@ def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     return render_to_response(request, "reports/partials/form_data.html", dict(instance=instance))
+

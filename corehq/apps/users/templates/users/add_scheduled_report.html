@@ -1,0 +1,45 @@
+{% extends "users/users_base.html" %}
+{% block head %}
+{{block.super}}
+<style>
+    .notice {
+        padding:.8em;margin:1em;border:2px solid #ddd;
+        background:#FFF6BF;color:#514721;border-color:#FFD324;
+    }
+</style>
+{% endblock %}
+{% block account_indicator %}
+<ul>
+    <li class="selected">New Scheduled Report</li>
+</ul>
+{% endblock %}
+{% block user-view %}
+    <h4>What should we send you?</h4>
+    <form method="post" action="">
+        <label for="report_type" id="report_type">Choose Report: </label> 
+        <select name="report_type" id="report_type">
+            {% for id, report in reports.items %}
+            <option value="{{id}}">{{report.title}}</option>
+            {% endfor %}
+        </select>
+        <label for="hour">at: </label>
+        <select name="hour" id="hour">
+            {% for hr, display in hours %}
+            <option value="{{hr}}" {% ifequal hr 9 %}selected{%endifequal%}>{{display}}</option>
+            {% endfor %}
+        </select>
+        <label for="day">on: </label>
+        <select name="day" id="day">
+            <optgroup label="Daily...">
+                <option value="all">Every Day</option>
+            </optgroup>
+            <optgroup label="Once a week on...">
+            {% for day, display in days %}
+            <option value="{{day}}">{{display}}</option>
+            {% endfor %}
+            </optgroup>
+        </select>
+        <input type="submit" value="Add Scheduled Report" />
+    </form>
+    <p class="notice">Sorry, right now all times are in GMT.</p>
+{% endblock %}

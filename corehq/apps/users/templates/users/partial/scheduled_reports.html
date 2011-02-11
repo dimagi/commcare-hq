@@ -1,0 +1,37 @@
+{% load i18n %}
+{% load report_tags %}
+<div class='all_users'>
+	<h4>Scheduled Reports for {{ couch_user.web_account.username_html|safe }}</h4>
+    {% if couch_user.get_scheduled_reports %}
+        <table class='big_border'>
+            <tr><th></th>
+                <th>{% trans "Report" %}</th>
+                <th>{% trans "Time" %}</th>
+                <th>{% trans "Day of week" %}</th>
+                <th>{% trans "Stop notifications" %}</th>
+            </tr>
+            {% for report in couch_user.get_scheduled_reports %}
+                <tr><td></td>
+                    <td>{{ report.report_slug }}</td>
+                    <td>{{ report.hours }}:00</td>
+                    <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>
+                    <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
+                        <div class="delete_dialog" title="Drop Report Schedule?">
+                            <form name="unlink_commcare_account" action="{% url drop_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
+                                <table>
+                                    <tr><td>
+                                    Are you sure you want to cancel this report?
+                                    </td></tr>
+                                </table>
+                                <input type="submit" value="Drop" />
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p class="big_border">There are no scheduled email reports for {{ couch_user.web_account.username_html|safe }}.</p>
+    {% endif %}
+    <a class="new_link" href="{% url add_scheduled_report domain couch_user.get_id %}">Schedule an email report</a>
+</div>

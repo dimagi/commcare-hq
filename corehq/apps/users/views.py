@@ -21,6 +21,11 @@ from corehq.apps.domain.decorators import login_and_domain_required, require_sup
 from corehq.apps.users.util import couch_user_from_django_user
 from dimagi.utils.couch.database import get_db
 from .util import doc_value_wrapper
+import calendar
+from corehq.apps.reports.schedule.config import SCHEDULABLE_REPORTS
+from corehq.apps.reports.models import WeeklyReportNotification,\
+    DailyReportNotification, ReportNotification
+from django.contrib import messages
 
 
 def require_permission_to_edit_user(view_func):
@@ -141,7 +146,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                         "domains": my_domains,
                         "other_domains": other_domains,
                         })
-
+    # scheduled reports tab
     context.update({
         'couch_user': couch_user,
         # for phone-number tab
@@ -296,6 +301,46 @@ def _handle_user_form(request, domain, couch_user=None):
 @login_and_domain_required
 def httpdigest(request, domain):
     return HttpResponse("ok")
+
+@login_and_domain_required
+def add_scheduled_report(request, domain, couch_user_id):
+    if request.method == "POST":
+        report_type = request.POST["report_type"]
+        hour = request.POST["hour"]
+        day = request.POST["day"]
+        if day=="all":
+            report = DailyReportNotification()
+        else:
+            report = WeeklyReportNotification()
+            report.day_of_week = int(day)
+        report.hours = int(hour)
+        report.domain = domain
+        report.report_slug = report_type
+        report.user_ids = [couch_user_id]
+        report.save()
+        messages.success(request, "New scheduled report added!")
+        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    
+    context = _users_context(request, domain)
+    context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
+                    "days":  [(val, calendar.day_name[val]) for val in range(7)],
+                    "reports": SCHEDULABLE_REPORTS})
+    return render_to_response(request, "users/add_scheduled_report.html", context)
+
+@login_and_domain_required
+@require_POST
+def drop_scheduled_report(request, domain, couch_user_id, report_id):
+    rep = ReportNotification.get(report_id)
+    try:
+        rep.user_ids.remove(couch_user_id)
+    except ValueError:
+        pass # odd, the user wasn't there in the first place
+    if len(rep.user_ids) == 0:
+        rep.delete()
+    else:
+        rep.save()
+    messages.success(request, "Scheduled report dropped!")
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 GROUP VIEWS

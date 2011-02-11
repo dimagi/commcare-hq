@@ -18,6 +18,7 @@ from corehq.apps.users.util import django_user_from_couch_id,\
     couch_user_from_django_user
 from dimagi.utils.mixins import UnicodeMixIn
 import logging
+from corehq.apps.reports.models import ReportNotification
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -171,6 +172,9 @@ class CouchUser(Document, UnicodeMixIn):
     def username(self):
         return self.default_django_user.username
         
+    def get_scheduled_reports(self):
+        return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
+    
     def save(self, *args, **kwargs):
         # Call the "real" save() method.
         super(CouchUser, self).save(*args, **kwargs) 

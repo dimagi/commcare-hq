@@ -42,9 +42,11 @@
             <li><a href="#basic-info">Basic</a></li>
             <li><a href="#phone-numbers">Phone Numbers</a></li>
             <li><a href="#commcare-accounts">CommCare Accounts</a></li>
+            <li><a href="#scheduled-reports">Scheduled Reports</a></li>
             {% if request.user.is_superuser %}
                 <li><a href="#domains">Domains</a></li>
             {% endif %}
+            
         </ul>
         <div id="basic-info">
             <form name="user_details" method="post">
@@ -67,6 +69,9 @@
         </div>
         <div id="commcare-accounts">
             {% include "users/partial/commcare_accounts.html" %}
+        </div>
+        <div id="scheduled-reports">
+            {% include "users/partial/scheduled_reports.html" %}
         </div>
         {% if request.user.is_superuser %}
             <div id="domains">
