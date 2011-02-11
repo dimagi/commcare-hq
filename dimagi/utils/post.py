@@ -41,11 +41,11 @@ def post_data(data, url,curl_command="curl", use_curl=False,
 
     return post_file(tmp_file_path, url, curl_command, use_curl, content_type)
     
-def post_file(filename, url,curl_command="curl", use_curl=False,
-              content_type = "text/xml"):
+def post_file(filename, url, curl_command="curl", use_curl=False,
+              content_type = "text/xml", use_chunked=False, is_odk=False):
     """
     Do a POST from file with some options.  Returns a tuple of the response
-    from the server and any errors.
+    from the server and any errors.  For more flexibility, use the curl option
     """     
     up = urlparse(url)
     dict = {}
@@ -54,19 +54,36 @@ def post_file(filename, url,curl_command="curl", use_curl=False,
     try:
         f = open(filename, "rb")
         data = f.read()
-        dict["content-type"] = content_type
-        dict["content-length"] = len(data)
         if use_curl:
-            p = subprocess.Popen([curl_command,
-                                  '--header','Content-type:%s' % content_type, 
-                                  '--header','"Content-length:%s' % len(data), 
-                                  '--data-binary', '@%s' % filename, 
-                                  '--request', 'POST', 
-                                  url],
+            params = [curl_command, '--request', 'POST' ]
+            if is_odk == False:
+                #it's legacy j2me
+                params.append('--header')
+                params.append('Content-type:%s' % content_type)
+                params.append('--data-binary')
+                params.append('@%s' % filename)
+            else:
+                params.append('-F')
+                params.append('xml_submission_file=@%s' % filename)
+
+            if use_chunked:
+                params.append('--header')
+                params.append('Transfer-encoding:chunked')
+            else:
+                if not is_odk:
+                    params.append('--header')
+                    params.append('"Content-length:%s"' % len(data))
+
+            params.append(url)
+            print params
+
+            p = subprocess.Popen(params,
                                   stdout=PIPE,stderr=PIPE,shell=False)
             errors = p.stderr.read()
             results = p.stdout.read()
         else:
+            dict["content-type"] = content_type
+            dict["content-length"] = len(data)
             conn = httplib.HTTPConnection(up.netloc)
             conn.request('POST', up.path, data, dict)
             resp = conn.getresponse()
