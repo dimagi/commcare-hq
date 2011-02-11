@@ -14,7 +14,7 @@
     </style>
 {% endblock %}
 {% block reportcontent %}
-
+<div id="report-content">
 <table class="datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}>
     <thead>
         <tr>
@@ -35,4 +35,5 @@
     {% endfor %}
 </tbody>
 </table>
+</div>
 {% endblock %}
