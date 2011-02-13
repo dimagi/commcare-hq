@@ -1,4 +1,4 @@
-from corehq.util.mixins import UnicodeMixIn
+from dimagi.utils.mixins import UnicodeMixIn
 import logging
 from django.utils.datastructures import SortedDict
 
