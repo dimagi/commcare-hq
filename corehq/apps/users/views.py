@@ -10,7 +10,6 @@ from corehq.apps.domain.user_registration_backend import register_user
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from corehq.apps.hqwebapp.views import password_change
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
 from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount
@@ -19,6 +18,7 @@ from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.users.util import couch_user_from_django_user
+from dimagi.utils.web import render_to_response
 from dimagi.utils.couch.database import get_db
 from .util import doc_value_wrapper
 import calendar

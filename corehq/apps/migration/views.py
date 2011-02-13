@@ -5,7 +5,6 @@ from corehq.apps.migration.add_user_id import add_user_id
 from corehq.apps.migration.models import MigrationUser
 from corehq.apps.migration.post import post_data
 from corehq.apps.receiver.views import post as receiver_post
-from corehq.util.webutils import get_url_base
 from dimagi.utils.couch.database import get_db
 from django.conf import settings
 

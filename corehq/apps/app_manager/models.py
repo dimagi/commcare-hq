@@ -3,7 +3,7 @@ from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
-from corehq.util.webutils import get_url_base, parse_int
+from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup

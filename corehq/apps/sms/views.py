@@ -13,7 +13,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import raw_username
-from corehq.util.webutils import render_to_response
+from dimagi.utils.web import render_to_response
 from . import util
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db

@@ -7,7 +7,7 @@ from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
-from corehq.util.webutils import render_to_response
+from dimagi.utils.web import render_to_response
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 
