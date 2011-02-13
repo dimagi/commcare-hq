@@ -19,9 +19,21 @@ def set_log_level(level):
     loglevel = LOG_LEVELS.get(level, logging.INFO)
     logging.basicConfig(level=loglevel)
     
-def log_exception(e):
+def log_exception(e=None, extra_info=""):
     """Log an exception, with a stacktrace"""
-    type, value, tb = sys.exc_info()
+    # you don't actually need the exception, since we rely on exc_info
+    # left as an optional param because of existing code calling it
+    # TODO: remove extra info, it's a relic of bhoma stuff
+    if extra_info: 
+        logging.error(extra_info)
+    exc_type, value, tb = sys.exc_info()
+    if e is not None:
+        # if they passed in an exception use it.  this should be always
+        # the same, otherwise the stack trace will be wrong.
+        value = e
+        exc_type = type(e)
     traceback_string = "".join(traceback.format_tb(tb))
-    logging.error(e)
+    logging.error("%s: %s" % (exc_type, value))
     logging.error(traceback_string)
+    #exception_logged.send(sender="logutil", exc_info=(exc_type, value, tb), extra_info=extra_info)
+
