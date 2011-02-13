@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta
-from bhoma.utils.render_to_response import render_to_response
+from dimagi.utils.web import render_to_response
 from django.http import HttpResponse
-from bhoma.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db
 import logging
 import itertools
 import re
