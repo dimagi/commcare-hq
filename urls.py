@@ -3,8 +3,6 @@ from django.conf import settings
 import os
 from corehq.apps.domain.urls import domain_re
 
-from corehq.util.modules import try_import
-
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 

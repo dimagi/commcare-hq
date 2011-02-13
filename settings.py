@@ -198,7 +198,7 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
 XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
-GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
+GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
 
 
 DJANGO_LOG_FILE = "/var/log/commcarehq.django.log"
