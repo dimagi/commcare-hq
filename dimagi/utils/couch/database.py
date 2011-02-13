@@ -1,5 +1,20 @@
 from couchdbkit.client import Database
 from django.conf import settings
+class DesignDoc(object):
+    """Data structure representing a design doc"""
+    
+    def __init__(self, database, id):
+        self.id = id
+        self._doc = database.get(id)
+        self.name = id.replace("_design/", "")
+    
+    @property
+    def views(self):
+        views = []
+        if "views" in self._doc:
+            for view_name, _ in self._doc["views"].items(): 
+                views.append(view_name)
+        return views
 
 def get_db():
     """
@@ -11,15 +26,19 @@ def get_db():
 
     return Database(settings.COUCH_DATABASE)
 
+
+def get_design_docs(database):
+    design_doc_rows = database.view("_all_docs", startkey="_design/", 
+                                    endkey="_design/zzzz")
+    ret = []
+    for row in design_doc_rows:
+        ret.append(DesignDoc(database, row["id"]))
+    return ret
+
 def get_view_names(database):
-    design_docs = database.view("_all_docs", startkey="_design/", 
-                                endkey="_design/zzzz")
+    design_docs = get_design_docs(database)
     views = []
-    for row in design_docs:
-        doc_id = row["id"]
-        doc = database.get(doc_id)
-        doc_name = doc_id.replace("_design/", "")
-        if "views" in doc:
-            for view_name, _ in doc["views"].items(): 
-                views.append("%s/%s" % (doc_name, view_name))
+    for doc in design_docs:
+        for view_name in doc.views:
+            views.append("%s/%s" % (doc.name, view_name))
     return views

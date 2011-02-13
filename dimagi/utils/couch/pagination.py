@@ -95,7 +95,6 @@ class CouchPaginator(object):
         # for now the skip parameter is fast enough to suit our scale
         startkey, endkey = None, None
         all_json = []
-        print items.all()
         for row in items:
             if not startkey:
                 startkey = row["key"]
