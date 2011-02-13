@@ -69,4 +69,4 @@ class ReportParser():
         
     def get_html(self):
         return "%(title)s\n%(body)s" % {"title": self._title_parser.get_html(),
-                                      "body": self._body_parser.get_html()}
+                                        "body": self._body_parser.get_html()}
