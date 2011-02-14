@@ -190,7 +190,7 @@ def _export_excel_2007(tables):
     except ImportError:
         raise Exception("It doesn't look like this machine is configured for "
                         "excel export. To export to excel you have to run the "
-                        "command:  easy_install xlutils")
+                        "command:  easy_install openpyxl")
     book = openpyxl.workbook.Workbook()
     book.remove_sheet(book.worksheets[0])
     for table_name, table in tables:
