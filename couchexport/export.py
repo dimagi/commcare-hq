@@ -3,7 +3,12 @@ from django.conf import settings
 import hashlib
 import csv
 
-def export_excel(schema_index, file):
+class Format(object):
+    XLS = "xls"
+    XLS_2007 = "xlsx"
+    
+
+def export(schema_index, file, format=Format.XLS_2007):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
@@ -14,7 +19,12 @@ def export_excel(schema_index, file):
     schema = schema_row['value']
     docs = [result['value'] for result in db.view("couchexport/schema_index", key=schema_index).all()]
     tables = format_tables(create_intermediate_tables(docs,schema))
-    _export_excel(tables).save(file)
+    if format == Format.XLS:
+        _export_excel(tables).save(file)
+    elif format == Format.XLS_2007:
+        _export_excel_2007(tables).save(file)
+    else:
+        raise Exception("Unsupported export format: %s!" % format)
     return True
 
 class Constant(object):
@@ -171,6 +181,31 @@ def _export_excel(tables):
         for i,row in enumerate(table):
             for j,val in enumerate(row):
                 sheet.write(i,j,unicode(val))
+    return book
+
+
+def _export_excel_2007(tables):
+    try:
+        import openpyxl
+    except ImportError:
+        raise Exception("It doesn't look like this machine is configured for "
+                        "excel export. To export to excel you have to run the "
+                        "command:  easy_install xlutils")
+    book = openpyxl.workbook.Workbook()
+    book.remove_sheet(book.worksheets[0])
+    for table_name, table in tables:
+        # this is in case the first 20 characters are the same, but we    
+        # should do something smarter.    
+        #sheet = book.add_sheet(table_name[-20:])
+        hack_table_name_prefix = table_name[-20:]
+        hack_table_name = hack_table_name_prefix[0:10] + hashlib.sha1(table_name).hexdigest()[0:10]
+        sheet = book.create_sheet()
+        sheet.title = hack_table_name
+        for i,row in enumerate(table):
+            # the docs claim this should work but the source claims it doesn't 
+            #sheet.append(row) 
+            for j,val in enumerate(row):
+                sheet.cell(row=i,column=j).value = unicode(val)
     return book
 
 
