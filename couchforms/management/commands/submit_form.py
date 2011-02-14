@@ -1,7 +1,7 @@
 from django.core.management.base import CommandError, BaseCommand
 from optparse import make_option
 import os
-from dimagi.utils.post import post_file
+from dimagi.utils.post import post_data
 
 
 class Command(BaseCommand):
@@ -39,6 +39,6 @@ class Command(BaseCommand):
             use_curl = True
         elif method == 'python':
             use_curl = False
-
-        print post_file(file, url, use_curl=use_curl, use_chunked=use_chunked, is_odk=is_odk)
+        
+        print post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked, is_odk=is_odk)
 
