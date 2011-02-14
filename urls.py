@@ -8,6 +8,8 @@ from django.contrib import admin
 
 admin.autodiscover()
 
+handler500 = 'corehq.apps.hqwebapp.views.server_error'
+handler404 = 'corehq.apps.hqwebapp.views.not_found'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 domain_specific = patterns('',
@@ -42,5 +44,4 @@ if settings.DEBUG:
     urlpatterns += patterns('staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-
 
