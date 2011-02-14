@@ -12,7 +12,7 @@ from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 
-from couchexport.export import export_excel
+from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
 
@@ -42,15 +42,16 @@ def export_data(req, domain):
     Download all data for a couchdbkit model
     """
     export_tag = req.GET.get("export_tag", "")
+    format = req.GET.get("format", Format.XLS_2007)
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
     if not export_tag:
         raise Exception("You must specify a model to download!")
     tmp = StringIO()
-    if export_excel([domain, export_tag], tmp):
+    if export([domain, export_tag], tmp, format=format):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s.xls' % export_tag
+        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (export_tag, format)
         response.write(tmp.getvalue())
         tmp.close()
         return response
