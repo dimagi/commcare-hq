@@ -351,26 +351,29 @@ def daily_submissions(request, domain, view_name, title):
         startkey=[domain, start_date.isoformat()],
         endkey=[domain, end_date.isoformat(), {}]
     ).all()
-
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
-
     dates = [start_date]
     while dates[-1] < end_date:
         dates.append(dates[-1] + DT.timedelta(days=1))
     date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
-    rows = [[0]*(1+len(date_map)) for _ in user_ids]
+    rows = [[0]*(1+len(date_map)) for i in range(len(user_ids) + 1)]
     for result in results:
         _, date, user_id = result['key']
         val = result['value']
-        rows[user_map[user_id]][date_map[date]] = val
+        if user_id in user_map:
+            rows[user_map[user_id]][date_map[date]] = val
+        else:
+            rows[-1][date_map[date]] = val # use the last row for unknown data
+            rows[-1][0] = "UNKNOWN USER" # use the last row for unknown data
     for i,user_id in enumerate(user_ids):
         rows[i][0] = user_id_to_username(user_id)
 
     valid_rows = []
     for row in rows:
-        if row[0]:
+        # include submissions from unknown/empty users that have them
+        if row[0] or sum(row[1:]): 
             valid_rows.append(row)
     rows = valid_rows
     headers = ["Username"] + dates
