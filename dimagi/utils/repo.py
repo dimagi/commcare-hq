@@ -1,6 +1,6 @@
 from system import shell_exec
 
-def get_revision(vcs, reporoot, dirtyfunc=lambda rev, rr: rev + '*'):
+def get_revision(vcs, reporoot, dirtyfunc=lambda rev, **kw: rev + '*'):
     """return a revision string for the current state of the repository.
     returns None if installation does not appear to be a repository.
     vcs -- version control system in use: 'git' or 'hg'
@@ -13,7 +13,7 @@ def get_revision(vcs, reporoot, dirtyfunc=lambda rev, rr: rev + '*'):
         return None
 
     rev, dirty = revinfo
-    return dirtyfunc(rev, reporoot) if dirty and dirtyfunc != None else rev
+    return dirtyfunc(rev, repo=reporoot, vcs=vcs) if dirty and dirtyfunc != None else rev
 
 def get_raw_revision(vcs, reporoot, untracked_is_dirty=False):
     """return the current revision of the repository and whether the working
@@ -56,7 +56,7 @@ def git_is_dirty(exec_, excl_untracked):
 def hg_is_dirty(exec_, excl_untracked):
     return bool(exec_('hg status %s' % ('-q' if excl_untracked else '')))
 
-def dirty_nonce(rev, reporoot, NONCE_LEN=5):
+def dirty_nonce(rev, NONCE_LEN=5, **kwargs):
     """a dirtyfunc for get_revision"""
     import uuid
     return '%s-%s' % (rev, uuid.uuid4().hex[:NONCE_LEN])
