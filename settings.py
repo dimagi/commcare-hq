@@ -217,8 +217,31 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 CARROT_BACKEND = "django"
 
+
+SKIP_SOUTH_TESTS = True
+AUTH_PROFILE_MODULE = 'users.HqUserProfile'
+TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
+
 #auditcare parameters
-AUDIT_VIEWS = []
+AUDIT_VIEWS = [
+    'corehq.apps.domain.views.registration_request',
+    'corehq.apps.domain.views.registration_confirm',
+    'corehq.apps.domain.views.admin_main',
+    'corehq.apps.domain.views.admin_own_account_update',
+    'corehq.apps.domain.views.password_change',
+    'corehq.apps.domain.views.password_change_done',
+
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.active_cases',
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.default',
+    'corehq.apps.reports.views.submission_log',
+    'corehq.apps.reports.views.form_data',
+    'corehq.apps.reports.views.export_data',
+    'corehq.apps.reports.views.excel_report_data',
+    'corehq.apps.reports.views.daily_submissions',
+]
 
 # import local settings if we find them
 try:
@@ -279,15 +302,9 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
 ]
 
 
-SKIP_SOUTH_TESTS = True
 
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 
 INSTALLED_APPS += LOCAL_APPS
-
-AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-
-XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 
 logging.basicConfig(filename=DJANGO_LOG_FILE)
 
