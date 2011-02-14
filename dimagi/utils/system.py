@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 
 from subprocess import Popen, PIPE
+import os
+import itertools
 import logging
 
-#TODO: $PATH is sometimes notably different in a deployment environment, and 
-#causes hard-to-catch bugs. this function should probably standardize the path,
-#but how to do so cross-platform?
 def shell_exec(cmd, cwd=None):
     """helper function to execute a command. returns stdout a la readlines().
     traps all exceptions. any stderr is logged, but not returned"""
@@ -15,9 +14,8 @@ def shell_exec(cmd, cwd=None):
             del output[-1]
         return output
 
-    #note: be mindful of what's on the PATH!
     try:
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, cwd=cwd)
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, cwd=cwd, env=make_env())
         (out, err) = [process_output(data) for data in p.communicate()]
         if err:
             logging.warn('command [%s] returned error output [%s]' % (cmd, str(err)))
@@ -27,4 +25,36 @@ def shell_exec(cmd, cwd=None):
         logging.exception('exception executing [%s]' % cmd)
         return None
 
+def make_env():
+    env = os.environ
+    env['PATH'] = fix_path(env.get('PATH', ''))
+    return env
 
+def fix_path(path, pathext=[]):
+    """add common directories to the syspath if missing. return path
+    unchanged for non-unix systems"""
+    OSINFO = {
+        'posix': {
+            'required_path': [
+                '/usr/local/sbin',
+                '/usr/local/bin',
+                '/usr/sbin',
+                '/usr/bin',
+                '/sbin',
+                '/bin',
+            ],
+            'path_sep': ':'
+        }
+    }
+
+    if os.name not in OSINFO:
+        return path
+
+    pathsep = OSINFO[os.name]['path_sep']
+    pathreq = OSINFO[os.name]['required_path']
+
+    paths = [p for p in path.split(pathsep) if p]
+    for rp in itertools.chain(pathext, pathreq):
+        if rp not in paths:
+            paths.append(rp)
+    return pathsep.join(paths)
