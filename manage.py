@@ -3,7 +3,6 @@
 import hashlib
 import random
 import threading
-import gunicorn
 
 from django.core.management import execute_manager
 import sys, os
@@ -20,6 +19,7 @@ sys.path.append(os.path.join(filedir,'submodules','couchexport-src'))
 sys.path.append(os.path.join(filedir,'submodules','couchlog-src'))
 sys.path.append(os.path.join(filedir,'submodules','djangocouch-src'))
 sys.path.append(os.path.join(filedir,'submodules','dimagi-utils-src'))
+sys.path.append(os.path.join(filedir,'submodules','auditcare-src'))
 
 
 try:

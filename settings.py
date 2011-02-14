@@ -61,6 +61,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'auditcare.middleware.AuditMiddleware',
 ]
 
 ROOT_URLCONF = "urls"
@@ -107,6 +108,7 @@ HQ_APPS = (
     'django_granular_permissions',
     'django_tables',
     'django_user_registration',
+    'auditcare',
     'djangocouch',
     'djangocouchuser',
     'corehq.apps.case',
@@ -215,6 +217,9 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 CARROT_BACKEND = "django"
 
+#auditcare parameters
+AUDIT_VIEWS = []
+
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -268,7 +273,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'domain',
         'reports',
         'migration',
-        'xep_hq_server'
+        'xep_hq_server',
+        'auditcare',
     ]
 ]
 
@@ -293,3 +299,4 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
