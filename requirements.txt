@@ -11,3 +11,4 @@ lxml
 django-staticfiles
 django-celery
 django-kombu
+openpyxl
