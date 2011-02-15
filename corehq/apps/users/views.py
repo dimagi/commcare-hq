@@ -26,6 +26,7 @@ from corehq.apps.reports.schedule.config import SCHEDULABLE_REPORTS
 from corehq.apps.reports.models import WeeklyReportNotification,\
     DailyReportNotification, ReportNotification
 from django.contrib import messages
+from corehq.apps.reports.tasks import send_report
 
 
 def require_permission_to_edit_user(view_func):
@@ -340,6 +341,15 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
     else:
         rep.save()
     messages.success(request, "Scheduled report dropped!")
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+@login_and_domain_required
+@require_POST
+def test_scheduled_report(request, domain, couch_user_id, report_id):
+    rep = ReportNotification.get(report_id)
+    user = CouchUser.get(couch_user_id)
+    send_report(rep, user)
+    messages.success(request, "Test message sent to %s" % user.default_django_user.email)
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

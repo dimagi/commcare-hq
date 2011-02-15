@@ -9,6 +9,7 @@
                 <th>{% trans "Time" %}</th>
                 <th>{% trans "Day of week" %}</th>
                 <th>{% trans "Stop notifications" %}</th>
+                <th>{% trans "Send test mail" %}</th>
             </tr>
             {% for report in couch_user.get_scheduled_reports %}
                 <tr><td></td>
@@ -17,7 +18,7 @@
                     <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>
                     <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
                         <div class="delete_dialog" title="Drop Report Schedule?">
-                            <form name="unlink_commcare_account" action="{% url drop_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
+                            <form name="drop_report" action="{% url drop_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
                                 <table>
                                     <tr><td>
                                     Are you sure you want to cancel this report?
@@ -26,6 +27,10 @@
                                 <input type="submit" value="Drop" />
                             </form>
                         </div>
+                    </td>
+                    <td><form name="test_report" action="{% url test_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
+                                <input type="submit" value="Send" />
+                        </form>
                     </td>
                 </tr>
             {% endfor %}

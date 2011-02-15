@@ -24,13 +24,17 @@ def weekly_reports():
                                         include_docs=True).all()
     _run_reports(reps)
     
+def send_report(scheduled_report, user):
+    report = config.SCHEDULABLE_REPORTS[scheduled_report.report_slug]
+    body = report.get_response(user.default_django_user, scheduled_report.domain)
+    send_HTML_email(report.title, user.default_django_user.email, 
+                    html2text(body), body)
+
 def _run_reports(reps):
     for rep in reps:
         for user_id in rep.user_ids:
             user = CouchUser.get(user_id)
-            report = config.SCHEDULABLE_REPORTS[rep.report_slug]
-            body = report.get_response(user.default_django_user, rep.domain)
-            send_HTML_email(report.title, user.default_django_user.email, 
-                            html2text(body), body)
+            send_report(rep, user)
+            
             
 
