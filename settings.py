@@ -222,6 +222,7 @@ SKIP_SOUTH_TESTS = True
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
+HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
 
 #auditcare parameters
 AUDIT_VIEWS = [
