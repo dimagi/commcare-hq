@@ -27,41 +27,9 @@ SYNC_TEMPLATE =\
         <restore_id>%(restore_id)s</restore_id> 
     </Sync>"""
     
-REGISTRATION_TEMPLATE = \
-"""
-    <Registration xmlns="http://openrosa.org/user/registration">
-        <username>%(username)s</username>
-        <password>%(password)s</password>
-        <uuid>%(uuid)s</uuid>
-        <date>%(date)s</date>%(user_data)s
-    </Registration>"""
-
-USER_DATA_TEMPLATE = \
-"""
-        <user_data>
-            %(data)s
-        </user_data>"""
 
 def get_sync_xml(restore_id):
     return SYNC_TEMPLATE % {"restore_id": restore_id} 
-
-def get_user_data_xml(dict):
-    if not dict:  return ""
-    return USER_DATA_TEMPLATE % \
-        {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
-                                       {"key": key, "value": val } for key, val in dict.items())}    
-
-def get_registration_xml(user):
-    commcare_account = commcare_account_from_django_user(user)
-    # TODO: this doesn't feel like a final way to do this
-            
-    # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
-    return REGISTRATION_TEMPLATE % {"username":  raw_username(user.username),
-                                    "password":  user.password,
-                                    "uuid":      commcare_account.login_id,
-                                    "date":      user.date_joined.strftime("%Y-%m-%d"),
-                                    "user_data": get_user_data_xml(commcare_account.user_data)
-                                    }
 
 CASE_TEMPLATE = \
 """
@@ -112,7 +80,6 @@ def get_case_xml(phone_case, create=True):
     
     update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": val} \
                                     for key, val in phone_case.dynamic_properties().items()])
-    print update_custom_data
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
                                   
