@@ -5,7 +5,23 @@ from couchforms.views import post as couchforms_post
 from corehq.apps.receiver.signals import post_received, ReceiverResult
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
+from dimagi.utils.couch.database import get_db
 
+
+def form_list(request, domain):
+    """
+    Serve forms for ODK. 
+    """
+    # based off: https://github.com/dimagi/data-hq/blob/moz/datahq/apps/receiver/views.py
+    # TODO: serve our forms here
+    #forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    xml = "<forms>\n"
+    forms = []
+    for form in forms:
+        xml += '\t<form url="%(url)s">%(name)s</form>\n' % {"url": form.url, "name": form.name}
+    xml += "</forms>"
+    return HttpResponse(xml, mimetype="text/xml")
+    
 
 @require_POST
 def post(request, domain):
