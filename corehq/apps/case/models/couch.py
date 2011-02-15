@@ -244,7 +244,7 @@ class CommCareCase(CaseBase):
     def update_from_block(self, case_block, visit_date=None):
         
         mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED])
-        if mod_date > self.modified_on:
+        if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
         
         # you can pass in a visit date, to override the udpate/close action dates
