@@ -2,6 +2,7 @@ from datetime import datetime
 from django.http import HttpResponse
 from django_digest.decorators import *
 from corehq.apps.phone import xml
+from corehq.apps.users import xml as user_xml
 from corehq.apps.phone.models import SyncLog, PhoneCase
 from django.views.decorators.http import require_POST
 from corehq.apps.phone.caselogic import get_open_cases_to_send
@@ -39,11 +40,10 @@ def generate_restore_payload(user, restore_id):
         case.save()
     
     saved_case_ids = [case.case_id for case, _ in cases_to_send]
-    print get_db().info()
     last_seq = get_db().info()["update_seq"]
     # create a sync log for this
     if last_sync == None:
-        reg_xml = xml.get_registration_xml(user)
+        reg_xml = user_xml.get_registration_xml(couch_user)
         synclog = SyncLog(user_id=commcare_account.login_id, last_seq=last_seq,
                           date=datetime.utcnow(), previous_log_id=None,
                           cases=saved_case_ids)
