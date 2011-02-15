@@ -29,7 +29,7 @@
                         </div>
                     </td>
                     <td><form name="test_report" action="{% url test_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
-                                <input type="submit" value="Send" />
+                                <a href="#" onclick="$(this).closest('form').submit()">Send</a>
                         </form>
                     </td>
                 </tr>
