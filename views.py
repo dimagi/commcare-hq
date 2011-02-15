@@ -5,7 +5,6 @@ from couchforms.views import post as couchforms_post
 from corehq.apps.receiver.signals import post_received, ReceiverResult
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
-from dimagi.utils.couch.database import get_db
 
 
 def form_list(request, domain):
