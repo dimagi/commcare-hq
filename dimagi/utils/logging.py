@@ -19,6 +19,7 @@ def set_log_level(level):
     loglevel = LOG_LEVELS.get(level, logging.INFO)
     logging.basicConfig(level=loglevel)
     
+# DEPRECATED: use logging.exception() instead
 def log_exception(e=None, extra_info=""):
     """Log an exception, with a stacktrace"""
     # you don't actually need the exception, since we rely on exc_info
