@@ -224,6 +224,9 @@ TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
 
+# couchlog
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+
 #auditcare parameters
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
