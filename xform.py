@@ -37,6 +37,10 @@ def get_or_update_model(case_block):
     
     try: 
         case_doc = CommCareCase.get(case_id)
+        # some forms recycyle case ids as other ids (like xform ids)
+        # disallow that hard.
+        if case_doc.doc_type != "CommCareCase":
+            raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
     except ResourceNotFound:
         case_doc = None
     
