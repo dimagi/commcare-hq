@@ -144,7 +144,19 @@ class XFormInstance(Document):
             to_return[key] = self.xpath('form/' + key)
         return to_return
 
-class XFormDuplicate(XFormInstance):
+class XFormError(XFormInstance):
+    """
+    Instances that have errors go here.
+    """
+    problem = StringProperty()
+    
+    def save(self, *args, **kwargs):
+        # we put this here, in case the doc hasn't been modified from an original 
+        # XFormInstance we'll force the doc_type to change. 
+        self["doc_type"] = "XFormError" 
+        super(XFormError, self).save(*args, **kwargs)
+
+class XFormDuplicate(XFormError):
     """
     Duplicates of instances go here.
     """
@@ -154,3 +166,4 @@ class XFormDuplicate(XFormInstance):
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormDuplicate" 
         super(XFormDuplicate, self).save(*args, **kwargs)
+

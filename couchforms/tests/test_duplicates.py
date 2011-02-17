@@ -16,4 +16,5 @@ class DuplicateFormTest(TestCase):
         doc = post_xform_to_couch(xml_data)
         self.assertNotEqual("7H46J37FGH3", doc.get_id)
         self.assertEqual("XFormDuplicate", doc.doc_type)
+        self.assertTrue("7H46J37FGH3" in doc.problem)
         

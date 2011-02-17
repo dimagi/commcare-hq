@@ -1,6 +1,5 @@
-import logging
 from django.conf import settings
-from couchforms.models import XFormInstance, XFormDuplicate
+from couchforms.models import XFormInstance, XFormDuplicate, XFormError
 from dimagi.utils.logging import log_exception
 import logging
 from couchdbkit.resource import RequestFailed
@@ -9,6 +8,7 @@ from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
 import re
 from dimagi.utils.post import post_authenticated_data, post_data
+from couchapp.errors import ResourceNotFound
 
 def post_from_settings(instance, extras={}):
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
@@ -37,15 +37,22 @@ def post_xform_to_couch(instance):
             try:
                 xform = XFormInstance.get(doc_id)
                 # fire signals
-                feedback = xform_saved.send_robust(sender="couchforms", xform=xform)
-                for func, errors in feedback:
-                    if errors:
-                        logging.error("Problem sending post-save signal %s for xform %s" % (func, doc_id))
-                        logging.exception(errors)                    
+                # We don't trap any exceptions here. This is by design. 
+                # If something fails (e.g. case processing), we quarantine the
+                # form into an error location.
+                xform_saved.send(sender="couchforms", xform=xform)
                 return xform
             except Exception, e:
-                logging.error("Problem accessing %s" % doc_id)
-                log_exception(e)
+                logging.error("Problem with form %s" % doc_id)
+                logging.exception(e)
+                # "rollback" by changing the doc_type to XFormError
+                try: 
+                    bad = XFormError.get(doc_id)
+                    bad.problem = "%s" % e
+                    bad.save()
+                    return bad
+                except ResourceNotFound: 
+                    pass # no biggie, the failure must have been in getting it back 
                 raise
         else:
             raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
@@ -70,6 +77,7 @@ def post_xform_to_couch(instance):
                 # get and save the duplicate to ensure the doc types are set correctly
                 # so that it doesn't show up in our reports
                 dupe = XFormDuplicate.get(response)
+                dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id 
                 dupe.save()
                 return dupe
             else:
