@@ -8,7 +8,8 @@ from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
 import re
 from dimagi.utils.post import post_authenticated_data, post_data
-from couchapp.errors import ResourceNotFound
+from restkit.errors import ResourceNotFound
+
 
 def post_from_settings(instance, extras={}):
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
