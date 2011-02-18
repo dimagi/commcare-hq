@@ -34,10 +34,12 @@
                                     {% if domain %}
                                         {% get_tabs as tabs %}
                                         {% for tab in tabs %}
+                                            {% if tab.visible %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
                                             {% else %}
                                                 <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                            {% endif %}
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}

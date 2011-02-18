@@ -12,29 +12,15 @@ from django.utils.importlib import import_module
 # loads this module via django.templatetags, we must do the same, to
 # share state. to avoid this confusion, explode with an explanation
 # unless this seemingly-arbitrary rule is followed.
-if not __name__.startswith("django."):
-    # because django 1.2 no longer has this requirement this whole thing
-    # is rendered unnecessary.  comment and code below is relevant for 
-    # 1.1 or earlier
-    pass
-    # python considers each module name to be a distinct module, with its
-    # own scope, even when they're the same file. since the {% load %} tag
-    # loads this module via django.templatetags, we must do the same, to
-    # share state. to avoid this confusion, explode with an explanation
-    # unless this seemingly-arbitrary rule is followed.
-    # raise ImportError(
-    #     "The   tabs_tags module must be imported via the " +\
-    #     "django.templatetags.tabs_tags package.")
-
-
 register = template.Library()
 
 class Tab(object):
-    def __init__(self, callback, caption, domain):
+    def __init__(self, callback, caption, permission=None, domain=None):
         self.callback = callback
         self._caption = caption
         self._view = None
         self.domain = domain
+        self._permission = permission
 
     @staticmethod
     def _looks_like(a, b):
@@ -86,6 +72,9 @@ class Tab(object):
     def caption(self):
         return self._caption or self._auto_caption()
 
+    def has_permission(self, user):
+        if self._permission:    return user.has_perm(self._permission)
+        else:                   return True
 
 # adapted from ubernostrum's django-template-utils. it didn't seem
 # substantial enough to add a dependency, so i've just pasted it.
@@ -96,9 +85,11 @@ class TabsNode(template.Node):
     def render(self, context):
         request = Variable("request").resolve(context)
         domain = Variable("domain").resolve(context)
-        tabs = [Tab(callback, caption, domain) for callback, caption in settings.TABS]
+        
+        tabs = [Tab(*args, domain=domain) for args in settings.TABS]
         for tab in tabs:
             tab.is_active = request.get_full_path().startswith(tab.url)
+            tab.visible = tab.has_permission(request.user)                    
         context[self.varname] = tabs
         return ""
 
