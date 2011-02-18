@@ -3,6 +3,7 @@ from django.views.decorators.http import require_POST
 from couchforms.util import post_xform_to_couch
 from django.http import HttpResponse, HttpResponseServerError
 import logging
+from couchforms.models import XFormInstance
 
 @require_POST
 @csrf_exempt
@@ -40,3 +41,12 @@ def post(request, callback=None):
     except Exception, e:
         logging.exception(e)
         return HttpResponseServerError("FAIL")
+
+def download_form(request, instance_id):
+    instance = XFormInstance.get(instance_id) 
+    response = HttpResponse(mimetype='application/xml')
+    response.write(instance.get_xml())
+    # if we want it to download like a file put somethingl like this
+    # HttpResponse(mimetype='application/vnd.ms-excel')
+    # response['Content-Disposition'] = 'attachment; filename=%s.xml' % instance_id
+    return response

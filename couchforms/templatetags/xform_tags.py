@@ -2,6 +2,7 @@ import types
 from datetime import date, datetime
 from django import template
 from couchforms import util
+from django.utils.html import escape
 
 register = template.Library()
 
@@ -12,11 +13,12 @@ def value_for_display(value):
 @register.simple_tag
 def render_form_data(form):
 
-    def render_node(nodekey, nodevalue):
+    def render_node(nodekey, nodevalue, show_hidden=True):
 
         def is_hidden_field(field_key):
             # hackity hack this static list of things we don't actually
             # want to display
+            if show_hidden: return False
             SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp", "info_hack_done")
             return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_") \
                    or field_key.lower() in SYSTEM_FIELD_NAMES
@@ -38,7 +40,7 @@ def render_form_data(form):
         if is_base_type(nodevalue):
             return render_base_type(nodekey, nodevalue)
         else:
-            header = "<li>%s</li>" % format_name(nodekey)
+            header = '<li class="group">%s</li>' % format_name(nodekey)
             # process a dictionary
             if isinstance(nodevalue, types.DictionaryType):
                 node_list = []
@@ -48,7 +50,7 @@ def render_form_data(form):
                     if node: node_list.append(node)
 
                 if node_list:
-                    return "%(header)s<ul>%(body)s</ul>" % \
+                    return '%(header)s<ul>%(body)s</ul>' % \
                             {"header": header,
                              "body": "".join(node_list)}
                 else:
@@ -77,3 +79,8 @@ def render_form_data(form):
                 return render_base_type(nodekey, nodevalue)
 
     return "<ul id='formdata'>%s</ul>" % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
+
+@register.simple_tag
+def render_form_xml(form):
+    return '<pre id="formxml">%s</pre>' % escape(form.get_xml())
+        
