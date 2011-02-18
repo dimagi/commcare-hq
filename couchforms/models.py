@@ -165,5 +165,6 @@ class XFormDuplicate(XFormError):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormDuplicate" 
-        super(XFormDuplicate, self).save(*args, **kwargs)
+        # we can't use super because XFormError also sets the doc type
+        XFormInstance.save(self, *args, **kwargs)
 
