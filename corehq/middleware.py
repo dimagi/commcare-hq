@@ -27,5 +27,4 @@ class OpenRosaMiddleware(object):
         
     def process_response(self, request, response):
         response[OPENROSA_VERSION_HEADER] = settings.OPENROSA_VERSION
-        response[OPENROSA_DATE_HEADER] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
         return response
