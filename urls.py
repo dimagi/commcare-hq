@@ -34,10 +34,12 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     (r'^a/(?P<domain>%s)/' % domain_re, include(domain_specific)),
     (r'^couch/', include('djangocouch.urls')),
-    (r'^couchlog/', include('couchlog.urls')),
     (r'^xep/', include('xep_hq_server.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
+    (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
+    (r'^hq/admin/couchlog/', include('couchlog.urls')),
+    
 )
 
 

@@ -114,6 +114,7 @@ HQ_APPS = (
     'djangocouchuser',
     'corehq.apps.case',
     'corehq.apps.domain',
+    'corehq.apps.hqadmin',
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
