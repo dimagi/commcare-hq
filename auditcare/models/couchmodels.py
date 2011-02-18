@@ -127,7 +127,6 @@ class NavigationEventAudit(AuditEvent):
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = unicode(request.META) #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
             audit.session_key = request.session.session_key
-            print("Saved couch object")
             audit.save()
         except Exception, ex:
             logging.error("NavigationEventAudit.audit_view error: %s" % (ex))

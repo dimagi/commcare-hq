@@ -38,7 +38,7 @@ class AuditMiddleware(object):
             if self.active:
                 user = request.user
                 if settings.AUDIT_VIEWS.__contains__(fqview):
-                    print("Auditing view " + fqview)
+                    logging.debug("Auditing view " + fqview)
                     AuditEvent.audit_view(request, request.user, view_func)
         return None
 
