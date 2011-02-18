@@ -17,7 +17,8 @@
         }
     </style>{% endblock %}
 {% block content %}
-<div id="report-title">
+<div id="main_container">
+    <div id="report-title">
     <h1>All Domains</h1>
 </div>
 <div id="report-content">
@@ -28,13 +29,13 @@
         <th># Web Users</th>        
         <th># CommCare Users</th>
         <th># Submitted Forms</th>
-        <th>Admins</th>
+        <th>Domain Admins</th>
     </tr>
 </thead>
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td>{{ domain.name }}</td>
+        <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
         <td>{{ domain.web_users }}</td>
         <td>{{ domain.commcare_users }}</td>
         <td>{{ domain.forms }}</td>
@@ -43,5 +44,6 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 </div>
 {% endblock %}
