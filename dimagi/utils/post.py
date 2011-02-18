@@ -42,7 +42,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
     if path is not None:
         with open(path) as f:
             data = f.read()
-	
+
     up = urlparse(url)
     try:
         if use_curl:
@@ -52,6 +52,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
                     tmp_file.write(data)
 
             params = [curl_command, '--request', 'POST' ]
+            params.append('--insecure')
             if is_odk == False:
                 #it's legacy j2me
                 params.append('--header')

@@ -13,6 +13,9 @@ from django.contrib.sites.models import Site
 def get_url_base():
     return 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
 
+def get_secure_url_base():
+    return 'https://%s' % Site.objects.get(id = settings.SITE_ID).domain
+
 def render_to_response(req, template_name, dictionary=None, **kwargs):
     """Proxies calls to django.shortcuts.render_to_response, to avoid having
        to include the global variables in every request. This is a giant hack,
