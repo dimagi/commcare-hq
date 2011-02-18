@@ -48,7 +48,7 @@ def require_domain_admin(view_func):
 def _users_context(request, domain):
     couch_user = request.couch_user
     couch_user.current_domain = domain
-    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True)
+    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True, reduce=False)
     for web_user in web_users:
         web_user.current_domain = domain
     return {
@@ -374,7 +374,7 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
     member_ids = set([member._id for member in members])
-    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True).all()
+    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True, reduce=False).all()
     nonmembers = [user for user in all_users if user._id not in member_ids]
 
     context.update({"domain": domain,
