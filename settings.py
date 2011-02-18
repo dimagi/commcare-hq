@@ -59,6 +59,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'auditcare.middleware.AuditMiddleware',
@@ -195,6 +196,8 @@ EMAIL_SMTP_PORT=587
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
+# OpenRosa Standards
+OPENROSA_VERSION = "1.0"
 
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
