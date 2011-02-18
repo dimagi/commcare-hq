@@ -151,6 +151,7 @@ TABS = [
     ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users"),
     ("corehq.apps.help.views.default", "Help"),
+    ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
 ]
 
 # after login, django redirects to this URL
@@ -324,4 +325,3 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
-
