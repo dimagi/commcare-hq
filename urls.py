@@ -38,7 +38,7 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
-    (r'^hq/admin/couchlog/', include('couchlog.urls')),
+    (r'^couchlog/', include('couchlog.urls')),
     
 )
 
