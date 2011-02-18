@@ -31,7 +31,10 @@ urlpatterns = patterns('corehq.apps.reports.views',
         name='daily_completions_report'
     ),
 
-    url(r'^partial/form_data/(?P<instance_id>.*)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>\w+)/download/$', 'download_form', name='download_form'),
+    
+    # url(r'^partial/form_data/(?P<instance_id>.*)/$', 'form_data', name='render_form_data'),
     url(r"^export/", 'export_data'),
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
     url(r'^r/', include(actual_reports)),

@@ -1,0 +1,25 @@
+{% extends base_template %}
+{% load xform_tags %}
+{% block head %}
+    {{block.super}}
+    <link rel="stylesheet" href="{{ STATIC_URL }}couchforms/stylesheets/xforms.css" />
+    <script>
+    $(function() {
+        $("#xformtabs").tabs();
+    });
+    </script>
+{% endblock %}
+{% block content %}
+<div id="xformtabs">
+    <ul>
+        <li><a href="#form_display">Form data display</a></li>
+        <li><a href="#raw_xml">Raw XML</a></li>
+    </ul>
+<div title="Form Data" id="form_display">
+    {% render_form_data instance %}
+</div>
+<div title="Download" id="raw_xml">
+    <a href="{% url download_form domain instance.get_id %}" target="_blank">show in new window</a>
+    {% render_form_xml instance %}
+</div>
+{% endblock %}

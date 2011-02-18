@@ -11,7 +11,7 @@ from .googlecharts import get_punchcard_url
 from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
-
+import couchforms.views as couchforms_views
 from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
@@ -450,8 +450,16 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         }
     })
 
+@login_and_domain_required
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
-    return render_to_response(request, "reports/partials/form_data.html", dict(instance=instance))
+    return render_to_response(request, "reports/form_data.html", dict(domain=domain,instance=instance))
+
+@login_and_domain_required
+def download_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert(domain == instance.domain)
+    return couchforms_views.download_form(request, instance_id)
+    
 
