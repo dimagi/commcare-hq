@@ -32,7 +32,7 @@ def post(request, domain):
             doc['#export_tag'] = ["domain", "xmlns"]
             doc['submit_ip'] = request.META['REMOTE_ADDR']
             doc['domain'] = domain
-    
+            doc['openrosa_headers'] = request.openrosa_headers 
             # a hack allowing you to specify the submit time to use
             # instead of the actual time receiver
             # useful for migrating data
