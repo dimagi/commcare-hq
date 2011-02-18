@@ -60,15 +60,16 @@
                 </div>
             </header>
             <div id="main" class="fixed-width">
+                {% block messages %}
                 {% if messages %}
                     <ul class="message">
                         {% for message in messages %}
-                            <li>{{ message }}</li>
+                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
+                {% endblock %}
                 {% block content %}
-
                 {% endblock %}
             </div>
         </div>
