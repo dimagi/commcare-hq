@@ -14,7 +14,9 @@ handler404 = 'corehq.apps.hqwebapp.views.not_found'
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
-    (r'^receiver/', include('corehq.apps.receiver.urls')),
+    # the receiver needs to accept posts at an endpoint that might 
+    # not have a slash, so don't include it at the root urlconf
+    (r'^receiver', include('corehq.apps.receiver.urls')),
     (r'^migration/', include('corehq.apps.migration.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
     (r'^groups/', include('corehq.apps.groups.urls')),
