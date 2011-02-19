@@ -438,6 +438,7 @@ class Form(IndexedSchema):
                 ref = bind.attrib['nodeset']
             return ref
         questions = []
+        # TODO: make this include everything but triggers; include things in groups
         for elem in tree.findall('{h}body/*'.format(**NS)):
             try:
                 label_ref = elem.find('{f}label'.format(**NS)).attrib['ref']
@@ -454,8 +455,12 @@ class Form(IndexedSchema):
             if question['tag'] == "select1":
                 options = []
                 for item in elem.findall('{f}item'.format(**NS)):
+                    try:
+                        translation = lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref'])
+                    except:
+                        translation = "(No label)"
                     options.append({
-                        'label': lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref']),
+                        'label': translation,
                         'value': item.findtext('{f}value'.format(**NS)).strip()
                     })
                 question.update({'options': options})
