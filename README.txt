@@ -1,25 +1,44 @@
+CommCareHQ is a server-side tool to help manage community health workers.
+It seamlessly integrates with CommCare mobile and CommCare ODK, as well as
+providing generic domain management and form data-collection functionality.
 
-Commcare-HQ Overall project structure.
+Key Components:
+ - CommCare application builder
+ - OpenRosa compliant xForms designer
+ - SMS integration 
+ - Domain/user/CHW management
+ - Xforms data collection
+ - Case management
+ - Over-the-air (ota) restore of user and cases
+ - Integrated web and email reporting
 
-apps/
-	Django apps that you will make
+Basic Project Structure:
+
+submodules/
+    submodule reference to the meat of the code (which lives in many other packages, particularly core-hq)
 
 libs/
-	Any third party libs (presumably python) that you'll need to reference
+	Third party libs (presumably python) that you'll need to reference
 	
 scripts/
 	Any helper scripts you'll want to write to deal with data and or other things.  This stuff should probably run outside the scope of the python environment
 	
-projects/
-	Directory where your django projects will reside.  This is taken from the pinax project structure
-	Projects will need to reference ../../apps/ to get to the apps that are referenced in the settings.py
-	As new apps are created, you'll either have to expand your project or make new projects that reference the new apps
-	Pinax uses these to show different configurations of their project.
-	
-projects/templates/
-	for each project, there needs to be templates unique to managing the templates for the main content portions.
-	within the confines of the application you're working in, you can make templates local and relative to the application you create.
-
-corehq/
-	submodule reference to the core hq apps, libs, and utilities
 	 
+
+== Setting up the Dimagi Form Designer ==
+
+1. Setup FormDesigner
+    - download latest zip form build server (FormDesigner project): http://build.dimagi.com:250/   
+    - serve it somewhere statically via something like apache or nginx
+2. Setup XEP (Xform Exchange Protocol) Server
+    - download standalone_xep_server from github: https://github.com/dimagi/standalone-xep-edit-server
+    - Configure
+        - couch db settings
+        - XEP settings (look at localsettings.py.example in that project for tiops)
+     - run syncdb and runserver where you are serving it 
+3. Configure xep_hq_server 
+    - in localsettings point EDITOR_URL to your XEP server above (the right addresss is 
+      http(s)://<xepservername>:<port>/xep/initiate
+    
+    
+    	 

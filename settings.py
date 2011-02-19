@@ -59,8 +59,10 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'auditcare.middleware.AuditMiddleware',
 ]
 
 ROOT_URLCONF = "urls"
@@ -107,10 +109,12 @@ HQ_APPS = (
     'django_granular_permissions',
     'django_tables',
     'django_user_registration',
+    'auditcare',
     'djangocouch',
     'djangocouchuser',
     'corehq.apps.case',
     'corehq.apps.domain',
+    'corehq.apps.hqadmin',
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
@@ -147,6 +151,7 @@ TABS = [
     ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users"),
     ("corehq.apps.help.views.default", "Help"),
+    ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
 ]
 
 # after login, django redirects to this URL
@@ -193,12 +198,14 @@ EMAIL_SMTP_PORT=587
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
+# OpenRosa Standards
+OPENROSA_VERSION = "1.0"
 
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
 XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
-GET_URL_BASE  = 'corehq.util.webutils.get_url_base'
+GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
 
 
 DJANGO_LOG_FILE = "/var/log/commcarehq.django.log"
@@ -214,6 +221,36 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 CARROT_BACKEND = "django"
+
+
+SKIP_SOUTH_TESTS = True
+AUTH_PROFILE_MODULE = 'users.HqUserProfile'
+TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
+HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
+
+# couchlog
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+
+#auditcare parameters
+AUDIT_VIEWS = [
+    'corehq.apps.domain.views.registration_request',
+    'corehq.apps.domain.views.registration_confirm',
+    'corehq.apps.domain.views.admin_main',
+    'corehq.apps.domain.views.admin_own_account_update',
+    'corehq.apps.domain.views.password_change',
+    'corehq.apps.domain.views.password_change_done',
+
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.active_cases',
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.default',
+    'corehq.apps.reports.views.submission_log',
+    'corehq.apps.reports.views.form_data',
+    'corehq.apps.reports.views.export_data',
+    'corehq.apps.reports.views.excel_report_data',
+    'corehq.apps.reports.views.daily_submissions',
+]
 
 # import local settings if we find them
 try:
@@ -268,20 +305,15 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'domain',
         'reports',
         'migration',
-        'xep_hq_server'
+        'xep_hq_server',
+        'auditcare',
     ]
 ]
 
 
-SKIP_SOUTH_TESTS = True
 
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 
 INSTALLED_APPS += LOCAL_APPS
-
-AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-
-XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 
 logging.basicConfig(filename=DJANGO_LOG_FILE)
 
