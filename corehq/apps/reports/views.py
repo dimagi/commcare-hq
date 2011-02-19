@@ -4,18 +4,15 @@ import dateutil.parser
 from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
 from dimagi.utils.web import render_to_response
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
-from collections import defaultdict
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
-from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required
-from corehq.apps.reports.templatetags.report_tags import render_user_inline
+from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
-
-from couchexport.export import export_excel
+import couchforms.views as couchforms_views
+from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
 
@@ -45,15 +42,16 @@ def export_data(req, domain):
     Download all data for a couchdbkit model
     """
     export_tag = req.GET.get("export_tag", "")
+    format = req.GET.get("format", Format.XLS_2007)
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
     if not export_tag:
         raise Exception("You must specify a model to download!")
     tmp = StringIO()
-    if export_excel([domain, export_tag], tmp):
+    if export([domain, export_tag], tmp, format=format):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s.xls' % export_tag
+        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (export_tag, format)
         response.write(tmp.getvalue())
         tmp.close()
         return response
@@ -353,26 +351,29 @@ def daily_submissions(request, domain, view_name, title):
         startkey=[domain, start_date.isoformat()],
         endkey=[domain, end_date.isoformat(), {}]
     ).all()
-
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
-
     dates = [start_date]
     while dates[-1] < end_date:
         dates.append(dates[-1] + DT.timedelta(days=1))
     date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
-    rows = [[0]*(1+len(date_map)) for _ in user_ids]
+    rows = [[0]*(1+len(date_map)) for i in range(len(user_ids) + 1)]
     for result in results:
         _, date, user_id = result['key']
         val = result['value']
-        rows[user_map[user_id]][date_map[date]] = val
+        if user_id in user_map:
+            rows[user_map[user_id]][date_map[date]] = val
+        else:
+            rows[-1][date_map[date]] = val # use the last row for unknown data
+            rows[-1][0] = "UNKNOWN USER" # use the last row for unknown data
     for i,user_id in enumerate(user_ids):
         rows[i][0] = user_id_to_username(user_id)
 
     valid_rows = []
     for row in rows:
-        if row[0]:
+        # include submissions from unknown/empty users that have them
+        if row[0] or sum(row[1:]): 
             valid_rows.append(row)
     rows = valid_rows
     headers = ["Username"] + dates
@@ -449,7 +450,16 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         }
     })
 
+@login_and_domain_required
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
-    return render_to_response(request, "reports/partials/form_data.html", dict(instance=instance))
+    return render_to_response(request, "reports/form_data.html", dict(domain=domain,instance=instance))
+
+@login_and_domain_required
+def download_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert(domain == instance.domain)
+    return couchforms_views.download_form(request, instance_id)
+    
+

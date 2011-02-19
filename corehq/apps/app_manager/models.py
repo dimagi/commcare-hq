@@ -3,7 +3,7 @@ from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
-from corehq.util.webutils import get_url_base, parse_int
+from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
@@ -38,8 +38,10 @@ NS = dict(
     xsd = "{http://www.w3.org/2001/XMLSchema}",
     h='{http://www.w3.org/1999/xhtml}',
     f='{http://www.w3.org/2002/xforms}',
+    ev="{http://www.w3.org/2001/xml-events}", 
     orx="{http://openrosa.org/jr/xforms}",
 )
+
 def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
@@ -278,13 +280,10 @@ class Form(IndexedSchema):
                 })
                 def require_case_name_source(xml, xmlns):
                     "make sure that the question that provides the case_name is required"
-                    print ET.tostring(xml)
                     name_path = actions['open_case'].name_path
                     name_bind_path = ('.//{f}bind[@nodeset="%s"]' % name_path).format(**NS)
                     name_bind = xml.find(name_bind_path)
-                    print name_bind
                     name_bind.attrib['required'] = "true()"
-                    print name_bind
                 additional_transformations.append(require_case_name_source)
 
             else:
@@ -426,7 +425,6 @@ class Form(IndexedSchema):
             if x is None:
                 x = tree.find('.//{f}translation'.format(**NS))
             x = x.find('{f}text[@id="%s"]'.format(**NS) % id)
-            #print ET.tostring(x, pretty_print=True)
             x = x.findtext('{f}value'.format(**NS)).strip()
             return x
         def get_ref(elem):
@@ -620,7 +618,6 @@ class VersionedDoc(Document):
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['.variable-version'] = self.version
-            print response_json
     def save_copy(self):
         copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version]).all()
         if copies:
@@ -814,16 +811,16 @@ class Application(ApplicationBase):
     def fetch_xform(self, module_id, form_id, DEBUG=False):
         form = self.get_module(module_id).get_form(form_id)
         tree = ET.fromstring(form.contents.encode('utf-8'))
-
         def fmt(s):
             return s.format(
                 x='{%s}' % form.xmlns,
                 **NS
             )
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
+        
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
         bind_parent = tree.find(fmt('.//{f}model/'))
-
+        
         casexml, binds, transformation = form.create_casexml()
         if casexml:
             if case is not None:
@@ -839,7 +836,6 @@ class Application(ApplicationBase):
                 if DEBUG:
                     xpath = ".//{x}" + bind.attrib['nodeset'].replace("/", "/{x}")
                     if tree.find(fmt(xpath)) is None:
-                        print casexml
                         raise Exception("Invalid XPath Expression %s" % xpath)
                 bind_parent.append(bind)
 

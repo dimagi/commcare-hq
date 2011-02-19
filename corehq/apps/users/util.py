@@ -1,10 +1,9 @@
 from django.conf import settings
-from django.contrib.sites.models import Site
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.models import User
 
 def cc_user_domain(domain):
-    sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 def format_username(username, domain):
@@ -14,7 +13,7 @@ def raw_username(username):
     """
     Strips the @domain.commcarehq.org from the username if it's there
     """
-    sitewide_domain = Site.objects.get(id = settings.SITE_ID).domain
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
     username = username.lower()
     try:
         u, d = username.split("@")

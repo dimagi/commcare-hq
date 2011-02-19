@@ -11,7 +11,7 @@ from corehq.apps.receiver.signals import post_received, ReceiverResult,\
     Certainty
 from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS,\
     create_hq_user_from_commcare_registration_info
-from corehq.util.xforms import get_unique_value
+from dimagi.utils.django.database import get_unique_value
 from corehq.apps.users.util import format_username, django_user_from_couch_id,\
     couch_user_from_django_user
 from dimagi.utils.logging import log_exception

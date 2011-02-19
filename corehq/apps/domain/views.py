@@ -20,7 +20,7 @@ from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUse
 from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser
 
-from corehq.util.webutils import render_to_response
+from dimagi.utils.web import render_to_response
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator

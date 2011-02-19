@@ -1,4 +1,5 @@
 from couchforms.signals import xform_saved
+import logging
 
 def process_cases(sender, xform, **kwargs):
     """Creates or updates case objects which live outside of the form"""

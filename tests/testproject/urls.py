@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 import os
-from corehq.util.modules import try_import
+from dimagi.utils.modules import try_import
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin

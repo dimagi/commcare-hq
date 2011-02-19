@@ -1,6 +1,6 @@
 from django.http import HttpResponse, Http404
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.util.webutils import render_to_response
+from dimagi.utils.web import render_to_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
@@ -15,8 +15,7 @@ from django.utils.http import urlencode
 
 from django.views.decorators.http import require_POST
 from django.conf import settings
-from corehq.util.xforms import readable_form
-from corehq.util.webutils import get_url_base
+from dimagi.utils.web import get_url_base
 from BeautifulSoup import BeautifulStoneSoup
 from lxml import etree as ET
 import json
@@ -177,7 +176,6 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         pass
     if xform:
         xform_contents = form.contents
-        #xform_contents, err, has_err = readable_form(xform_contents)
 
     if app:
         saved_apps = [x['value'] for x in get_db().view('app_manager/saved_app',

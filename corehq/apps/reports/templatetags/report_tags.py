@@ -3,6 +3,7 @@ from django import template
 import itertools
 from django.template.loader import render_to_string
 import json
+import calendar
 #from bhoma.apps.locations.models import Location
 
 register = template.Library()
@@ -12,6 +13,11 @@ def int_to_month(month_number):
     # there has to be a better way to do this
     d = datetime(2010, month_number, 1)
     return d.strftime("%b")
+
+@register.simple_tag
+def int_to_day(day_number):
+    # there has to be a better way to do this
+    return calendar.day_name[day_number]
     
 @register.simple_tag
 def js_int_to_month(month_number):

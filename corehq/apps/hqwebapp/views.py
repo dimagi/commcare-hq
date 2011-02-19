@@ -4,13 +4,38 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404,\
+    HttpResponseServerError, HttpResponseNotFound
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
-from corehq.util.webutils import render_to_response
+from dimagi.utils.web import render_to_response
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
+from django.template import loader
+from django.template.context import RequestContext
 
+
+def server_error(request, template_name='500.html'):
+    """
+    500 error handler.
+    """
+    # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
+    t = loader.get_template(template_name) 
+    return HttpResponseServerError(t.render(RequestContext(request, 
+                                                           {'MEDIA_URL': settings.MEDIA_URL,
+                                                            'STATIC_URL': settings.STATIC_URL
+                                                            })))
+    
+def not_found(request, template_name='404.html'):
+    """
+    404 error handler.
+    """
+    t = loader.get_template(template_name) 
+    return HttpResponseNotFound(t.render(RequestContext(request, 
+                                                        {'MEDIA_URL': settings.MEDIA_URL,
+                                                         'STATIC_URL': settings.STATIC_URL
+                                                         })))
+    
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():

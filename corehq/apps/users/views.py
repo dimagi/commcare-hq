@@ -10,7 +10,6 @@ from corehq.apps.domain.user_registration_backend import register_user
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from corehq.apps.hqwebapp.views import password_change
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.util.webutils import render_to_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
 from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount
@@ -19,8 +18,15 @@ from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.users.util import couch_user_from_django_user
+from dimagi.utils.web import render_to_response
 from dimagi.utils.couch.database import get_db
 from .util import doc_value_wrapper
+import calendar
+from corehq.apps.reports.schedule.config import SCHEDULABLE_REPORTS
+from corehq.apps.reports.models import WeeklyReportNotification,\
+    DailyReportNotification, ReportNotification
+from django.contrib import messages
+from corehq.apps.reports.tasks import send_report
 
 
 def require_permission_to_edit_user(view_func):
@@ -42,7 +48,7 @@ def require_domain_admin(view_func):
 def _users_context(request, domain):
     couch_user = request.couch_user
     couch_user.current_domain = domain
-    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True)
+    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True, reduce=False)
     for web_user in web_users:
         web_user.current_domain = domain
     return {
@@ -141,7 +147,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                         "domains": my_domains,
                         "other_domains": other_domains,
                         })
-
+    # scheduled reports tab
     context.update({
         'couch_user': couch_user,
         # for phone-number tab
@@ -297,6 +303,55 @@ def _handle_user_form(request, domain, couch_user=None):
 def httpdigest(request, domain):
     return HttpResponse("ok")
 
+@login_and_domain_required
+def add_scheduled_report(request, domain, couch_user_id):
+    if request.method == "POST":
+        report_type = request.POST["report_type"]
+        hour = request.POST["hour"]
+        day = request.POST["day"]
+        if day=="all":
+            report = DailyReportNotification()
+        else:
+            report = WeeklyReportNotification()
+            report.day_of_week = int(day)
+        report.hours = int(hour)
+        report.domain = domain
+        report.report_slug = report_type
+        report.user_ids = [couch_user_id]
+        report.save()
+        messages.success(request, "New scheduled report added!")
+        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    
+    context = _users_context(request, domain)
+    context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
+                    "days":  [(val, calendar.day_name[val]) for val in range(7)],
+                    "reports": SCHEDULABLE_REPORTS})
+    return render_to_response(request, "users/add_scheduled_report.html", context)
+
+@login_and_domain_required
+@require_POST
+def drop_scheduled_report(request, domain, couch_user_id, report_id):
+    rep = ReportNotification.get(report_id)
+    try:
+        rep.user_ids.remove(couch_user_id)
+    except ValueError:
+        pass # odd, the user wasn't there in the first place
+    if len(rep.user_ids) == 0:
+        rep.delete()
+    else:
+        rep.save()
+    messages.success(request, "Scheduled report dropped!")
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+@login_and_domain_required
+@require_POST
+def test_scheduled_report(request, domain, couch_user_id, report_id):
+    rep = ReportNotification.get(report_id)
+    user = CouchUser.get(couch_user_id)
+    send_report(rep, user)
+    messages.success(request, "Test message sent to %s" % user.default_django_user.email)
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 GROUP VIEWS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -319,7 +374,7 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
     member_ids = set([member._id for member in members])
-    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True).all()
+    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True, reduce=False).all()
     nonmembers = [user for user in all_users if user._id not in member_ids]
 
     context.update({"domain": domain,
