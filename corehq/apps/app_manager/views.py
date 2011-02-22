@@ -17,7 +17,6 @@ from django.views.decorators.http import require_POST
 from django.conf import settings
 from dimagi.utils.web import get_url_base
 from BeautifulSoup import BeautifulStoneSoup
-from lxml import etree as ET
 import json
 from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
@@ -26,7 +25,11 @@ import urlparse
 from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
-from lxml.etree import XMLSyntaxError
+try:
+    from lxml.etree import XMLSyntaxError
+except ImportError:
+    import logging
+    logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
