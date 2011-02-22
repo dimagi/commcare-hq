@@ -61,7 +61,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
                 params.append('@%s' % path)
             else:
                 params.append('-F')
-                params.append('xml_submission_file=@%s' % filename)
+                params.append('xml_submission_file=@%s' % path)
 
             if use_chunked:
                 params.append('--header')
