@@ -37,6 +37,10 @@ def get_or_update_model(case_block):
     
     try: 
         case_doc = CommCareCase.get(case_id)
+        # some forms recycyle case ids as other ids (like xform ids)
+        # disallow that hard.
+        if case_doc.doc_type != "CommCareCase":
+            raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
     except ResourceNotFound:
         case_doc = None
     
@@ -60,7 +64,12 @@ def extract_case_blocks(doc):
             if const.CASE_TAG == key:
                 # we explicitly don't support nested cases yet, so no need
                 # to check further
-                block_list.append(value) 
+                # BUT, it could be a list
+                if isinstance(value, list):
+                    for item in value:
+                        block_list.append(item)
+                else: 
+                    block_list.append(value) 
             else:
                 # recursive call
                 block_list.extend(extract_case_blocks(value))

@@ -1,5 +1,9 @@
 """ A singleton to process Python objects and spit out xml """
-from lxml import etree
+try:
+    from lxml import etree
+except ImportError:
+    import logging
+    logging.error("LXML isn't installed! REST API won't work")
 
 def xmlify(object_):
     """ a generic Python function to take a python object

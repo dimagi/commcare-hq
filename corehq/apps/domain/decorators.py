@@ -64,7 +64,10 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
             domains = Domain.objects.filter(name=domain)
             if user.is_authenticated() and user.is_active:
                 couch_user = couch_user_from_django_user(user)
-                if couch_user.is_member_of(domains) or (user.is_superuser and domains.count()):
+                if couch_user.is_member_of(domains):
+                    return view_func(req, domain_name, *args, **kwargs)
+                elif user.is_superuser and domains.count():
+                    # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404

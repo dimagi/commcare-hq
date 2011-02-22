@@ -6,16 +6,15 @@
         <meta charset="utf-8" />
         <title>CommCare HQ</title>
         
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="http://plugins.jquery.com/files/jquery.cookie.js.txt"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js"></script>
 
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/main.css" />
         <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon.png" />
 
         {% block head %}
-
         {% endblock %}
 
         {% block page_imports %}
@@ -35,10 +34,12 @@
                                     {% if domain %}
                                         {% get_tabs as tabs %}
                                         {% for tab in tabs %}
+                                            {% if tab.visible %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
                                             {% else %}
                                                 <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                            {% endif %}
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}
@@ -61,15 +62,16 @@
                 </div>
             </header>
             <div id="main" class="fixed-width">
+                {% block messages %}
                 {% if messages %}
                     <ul class="message">
                         {% for message in messages %}
-                            <li>{{ message }}</li>
+                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
+                {% endblock %}
                 {% block content %}
-
                 {% endblock %}
             </div>
         </div>
