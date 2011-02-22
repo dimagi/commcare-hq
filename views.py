@@ -94,13 +94,13 @@ def post(request, domain):
                 response = HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'], status=201)
                 
             # this hack is required for ODK
-            response["Location"] = "http://%s" % Site.objects.get_current().domain
+            response["Location"] = Site.objects.get_current().domain
             return response 
             
         
         def fail_actions_and_respond(doc):
             response = HttpResponse(xml.get_response(message=doc.problem), status=201)
-            response["Location"] = "http://%s" % Site.objects.get_current().domain
+            response["Location"] = Site.objects.get_current().domain
             return response
         
         
