@@ -22,10 +22,6 @@ function get_export_tag_value(doc) {
         }
         return key;
     }
-    else if (doc["doc_type"]) {
-        // This is the way other couchdbkit models are stored
-        return doc["doc_type"];
-    }
     return null;
 }
     
