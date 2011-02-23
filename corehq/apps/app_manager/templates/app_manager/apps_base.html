@@ -223,6 +223,8 @@
                         {% endif %}
                         <th>Version</th>
                         <th>Short URL</th>
+                        <th>Jad File</th>
+                        <th>Jar File</th>
                         {% if edit %}
                             <th></th>
                         {% endif %}
@@ -247,6 +249,12 @@
                                 {% if saved_app.short_url %}
                                     <a href="{{ saved_app.short_url }}">{{ saved_app.short_url }}</a>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">CommCare.jad</a>
+                            </td>
+                            <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">CommCare.jar</a>
                             </td>
                             <td>
                                 <a class="dialog_opener" href="">Send to Phones</a>
