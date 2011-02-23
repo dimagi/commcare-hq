@@ -82,8 +82,8 @@ def post_data(data, url, curl_command="curl", use_curl=False,
                 "content-type": content_type,
                 "content-length": len(data),
             }
-        
-            conn = httplib.HTTPConnection(up.netloc)
+            
+            conn = httplib.HTTPSConnection(up.netloc) if url.startswith("https") else httplib.HTTPConnection(up.netloc) 
             conn.request('POST', up.path, data, headers)
             resp = conn.getresponse()
             results = resp.read()
