@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
 from couchforms.models import XFormInstance
 from corehq.apps.phone import xml
+from django.conf import settings
 
 
 def form_list(request, domain):
@@ -116,5 +117,9 @@ def post(request, domain):
     return couchforms_post(request, callback)
 
 def get_location(request):
+    # this is necessary, because www.commcarehq.org always uses https,
+    # but is behind a proxy that won't necessarily look like https
+    if hasattr(settings, "OVERRIDE_LOCATION"):
+        return settings.OVERRIDE_LOCATION
     prefix = "https" if request.is_secure() else "http"
     return "%s://%s" % (prefix, Site.objects.get_current().domain)
