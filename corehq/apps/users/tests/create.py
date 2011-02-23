@@ -8,7 +8,6 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.signals import REGISTRATION_XMLNS, create_user_from_commcare_registration
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import create_hq_user_from_commcare_registration_info
-from lxml import etree as ET
 
 
 class CreateTestCase(TestCase):
@@ -95,7 +94,8 @@ class CreateTestCase(TestCase):
         """
         sender = "post"
         xml = create_user_from_commcare_registration(sender, self.xform).response
-        uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
+        # czue: removed lxml reference
+        #uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
         couch_user = CouchUser.view('users/commcare_users_by_login_id', include_docs=True).one()
         # django_user = couch_user.get_django_user()
         # self.assertEqual(django_user.username, random_uuid)

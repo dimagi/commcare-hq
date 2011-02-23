@@ -23,7 +23,12 @@ from django.db import models
 import random
 from dimagi.utils.couch.database import get_db
 import json
-from lxml import etree as ET
+try:
+    from lxml import etree as ET
+except ImportError:
+    import logging
+    logging.error("lxml not installed! apps won't work properly!!")
+
 from dimagi.utils.make_uuid import random_hex
 
 
