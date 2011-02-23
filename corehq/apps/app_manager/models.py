@@ -826,7 +826,7 @@ class Application(ApplicationBase):
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
         
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
-        bind_parent = tree.find(fmt('.//{f}model/'))
+        bind_parent = tree.find(fmt('.//{f}model'))
         
         casexml, binds, transformation = form.create_casexml()
         if casexml:
