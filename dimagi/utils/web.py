@@ -11,7 +11,11 @@ from django.contrib.sites.models import Site
 
 
 def get_url_base():
-    return 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
+    try:
+        protocol = settings.DEFAULT_PROTOCOL
+    except:
+        protocol = 'http'
+    return '%s://%s' % (protocol, Site.objects.get(id = settings.SITE_ID).domain)
 
 def get_secure_url_base():
     return 'https://%s' % Site.objects.get(id = settings.SITE_ID).domain
