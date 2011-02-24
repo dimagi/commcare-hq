@@ -1079,7 +1079,9 @@ class RemoteApp(ApplicationBase):
 class DomainError(Exception):
     pass
 
-
+class BuildErrors(Document):
+    
+    errors = ListProperty()
 
 def get_app(domain, app_id):
     """

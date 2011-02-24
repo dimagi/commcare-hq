@@ -8,7 +8,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions
+from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
+    BuildErrors
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -25,6 +26,7 @@ import urlparse
 from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
+from couchdbkit.resource import ResourceNotFound
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -213,7 +215,16 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     except:
         xform_questions = []
         messages.error(req, "Error in form")
-
+    
+    build_errors_id = req.GET.get('build_errors', "")
+    build_errors = []
+    if build_errors_id:
+        try:
+            error_doc = BuildErrors.get(build_errors_id)
+            build_errors = error_doc.errors
+            error_doc.delete()
+        except ResourceNotFound:
+            pass            
     context = {
         'domain': domain,
         'applications': applications,
@@ -244,7 +255,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'URL_BASE': get_url_base(),
         'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
 
-        'build_errors': map(json.loads, req.GET.getlist('build_errors')),
+        'build_errors': build_errors,
 
         'util': TemplateFunctions,
     }
@@ -644,9 +655,12 @@ def save_copy(req, domain, app_id):
         url = url._replace(query=urllib.urlencode(q, doseq=True))
         next = urlparse.urlunparse(url)
         return next
-    next = replace_params(next, build_errors=map(json.dumps, errors))
     if not errors:
         app.save_copy()
+    else:
+        errors = BuildErrors(errors=errors)
+        errors.save()
+        next = replace_params(next, build_errors=errors.get_id)
     return HttpResponseRedirect(next)
 
 @require_POST
