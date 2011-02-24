@@ -10,12 +10,11 @@ import simplejson
 
 import settings
 try:
-    from corehq.util.threadlocals import get_current_user
+    from dimagi.utils.threadlocals import get_current_user
 except:
     from auditcare.utils import get_current_user
 
 from django.db import transaction
-from models import *
 
 json_serializer = serializers.get_serializer("json")()
 
@@ -34,9 +33,11 @@ def django_audit_save(sender, instance, created, **kwargs):
             User.objects.get(id=usr.id)
         except:
             usr = None
+    from models.couchmodels import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
 def couch_audit_save(self, *args, **kwargs):
+    from models.couchmodels import AuditEvent
     print "wrapping the save function!"
     instance_json = self.to_json()
     usr = get_current_user()
@@ -45,7 +46,7 @@ def couch_audit_save(self, *args, **kwargs):
             User.objects.get(id=usr.id)
         except:
             usr = None
-    AuditEvent.objects.audit_django_save(self.__class__, self, instance_json, usr)
+    AuditEvent.audit_couch_save(self.__class__, self, instance_json, usr)
     self.__orig_save(*args, **kwargs)
     print "wrapped the save function!"
 

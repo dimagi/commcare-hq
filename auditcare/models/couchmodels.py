@@ -101,12 +101,11 @@ class ModelActionAudit(AuditEvent):
         audit = cls.create_audit(cls, user)
         audit.description += "Save %s" % (model_class.__name__)
         audit.object_type = model_class.__name__
-        audit.object_uuid = instance.id
+        audit.object_uuid = unicode(instance.id)
         audit.archived_data = instance_json
         #need to increment
-        audit.revision_id = 1
+        audit.revision_id = "1"
 
-        audit.revision_id = None
         audit.save()
 
 
@@ -150,7 +149,7 @@ class NavigationEventAudit(AuditEvent):
         '''Creates an instance of a Access log.
         '''
         try:
-            audit = cls.create_audit(cls, str(user))
+            audit = cls.create_audit(cls, user)
             audit.description += "View"
             if len(request.GET.keys()) > 0:
                 audit.request_path = "%s?%s" % (request.path, '&'.join(["%s=%s" % (x, request.GET[x]) for x in request.GET.keys()]))
@@ -162,6 +161,7 @@ class NavigationEventAudit(AuditEvent):
             audit.session_key = request.session.session_key
             audit.save()
         except Exception, ex:
+            print ex
             logging.error("NavigationEventAudit.audit_view error: %s" % (ex))
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
