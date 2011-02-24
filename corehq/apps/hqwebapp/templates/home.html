@@ -5,6 +5,7 @@
    	<link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/mainlogin.css"/>
     <link rel="stylesheet" href="../static/hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
 	<link rel="stylesheet" href="../static/hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
+	<link rel="stylesheet" href="../static/hqwebapp/stylesheets/buttons.css" type="text/css">	
     <link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/landingpage.css"/>
     <script src="{{ STATIC_URL }}domain/js/login.js"></script>
 {% endblock %}
@@ -30,6 +31,7 @@
 	</div>
 	
 	
+	
 	<div class="span-8">
 		<h3>What is CommCare?</h3>
 		<ul>
@@ -50,11 +52,11 @@
 	<div class = "span-8 last">
 	<h3>Highlights</h3>
 		<ul>
-		<li>Runs on mid-range cell phones<p/>
-		<li>Supports images and audio<p/>
+		<li>Runs on mid-range cell phones
+		<li>Supports images and audio
 		<li>Handles multiple languages<br>the pregnancy module is currently in English, Spanish, and Swahili
-
 	</ul>
+	<button class="custom" onClick="parent.location='{% url domain_registration_request %}'" value='click here'>Try it now!</button>
 	</div>
 	<div class="span-18 append-3 prepend-3 last">
 		<hr>
