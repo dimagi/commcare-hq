@@ -62,7 +62,7 @@ class AuditEvent(Document):
             audit.user = None
             audit.description='[NullUser] '
         else:
-            audit.user = user
+            audit.user = user.username
             audit.description = ''
         return audit
 
@@ -71,10 +71,23 @@ class AuditEvent(Document):
 class ModelActionAudit(AuditEvent):
     """
     Audit event to track the modification or editing of an auditable model
+
+    For django models:
+        the object_type will be the contenttype
+        the object_uuid will be the model instance's PK
+        the revision_id will be whatever is decided by the app
+
+    for couch models:
+        the object_type will be the doc_type
+        the object_uuid will be theh doc's doc_id
+        the revision_id will be the _rev as emitted by the 
+
     """
-    object_type = StringProperty() # The ContentType of the calling object (ContentType, verbose_name='Case linking content type', blank=True, null=True)
-    object_uuid = StringProperty #the object_uuid, max_length=32, db_index=True, blank=True, null=True)
-    #content_object = generic.GenericForeignKey('object_type', 'object_uuid')
+    object_type = StringProperty()
+    object_uuid = StringProperty()
+    revision_id = StringProperty()
+
+    archived_data = DictProperty()
 
     @property
     def summary(self):
@@ -84,14 +97,34 @@ class ModelActionAudit(AuditEvent):
         app_label = 'auditcare'
 
     @classmethod
-    def audit_save(cls, model_class, instance, user):
+    def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
         audit.description += "Save %s" % (model_class.__name__)
-        #audit.content_object = instance
         audit.object_type = model_class.__name__
-        audit.object_uuid = model_class.id
+        audit.object_uuid = instance.id
+        audit.archived_data = instance_json
+        #need to increment
+        audit.revision_id = 1
+
+        audit.revision_id = None
         audit.save()
-setattr(AuditEvent, 'audit_save', ModelActionAudit.audit_save)
+
+
+    @classmethod
+    def audit_couch_save(cls, model_class, instance, instance_json, user):
+        audit = cls.create_audit(cls, user)
+        audit.description += "Save %s" % (model_class.__name__)
+        audit.object_type = instance.doc_type
+        audit.object_uuid = instance._id
+        audit.revision_id = instance._rev
+        audit.archived_data = instance_json
+        audit.save()
+setattr(AuditEvent, 'audit_django_save', ModelActionAudit.audit_django_save)
+setattr(AuditEvent, 'audit_couch_save', ModelActionAudit.audit_couch_save)
+
+
+
+
 
 class NavigationEventAudit(AuditEvent):
     """
