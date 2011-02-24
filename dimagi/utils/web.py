@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
+from __future__ import absolute_import
 import os, re, traceback, sys
 from django.conf import settings
 from django.template import RequestContext
@@ -10,7 +11,14 @@ from django.contrib.sites.models import Site
 
 
 def get_url_base():
-    return 'http://%s' % Site.objects.get(id = settings.SITE_ID).domain
+    try:
+        protocol = settings.DEFAULT_PROTOCOL
+    except:
+        protocol = 'http'
+    return '%s://%s' % (protocol, Site.objects.get(id = settings.SITE_ID).domain)
+
+def get_secure_url_base():
+    return 'https://%s' % Site.objects.get(id = settings.SITE_ID).domain
 
 def render_to_response(req, template_name, dictionary=None, **kwargs):
     """Proxies calls to django.shortcuts.render_to_response, to avoid having

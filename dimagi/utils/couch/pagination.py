@@ -95,7 +95,6 @@ class CouchPaginator(object):
         # for now the skip parameter is fast enough to suit our scale
         startkey, endkey = None, None
         all_json = []
-        print items.all()
         for row in items:
             if not startkey:
                 startkey = row["key"]
@@ -184,11 +183,11 @@ class ReportBase(object):
         """
         params = DatatablesParams.from_request_dict(self.request.REQUEST)
 
-
+        count = self.count()
         to_return = {
             "sEcho": params.echo,
-            "iTotalDisplayRecords": self.count(),
-            "iTotalRecords": self.count(),
+            "iTotalDisplayRecords": count,
+            "iTotalRecords": count,
             "aaData": self.rows(params.start, params.count)
         }
 
