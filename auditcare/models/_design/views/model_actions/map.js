@@ -1,0 +1,11 @@
+function(doc) {
+    //basic emission of itemized audit events
+    if (doc.base_type == 'AuditEvent') {
+        if (doc.event_class == "ModelActionAudit") {
+            var val_dict = {};
+            val_dict['rev'] = doc.revision_id;
+            val_dict['checksum'] = doc.revision_checksum;
+            emit(['model_types', doc.object_type, doc.object_uuid], val_dict);
+        }
+    }
+}

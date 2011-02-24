@@ -1,3 +1,4 @@
+import copy
 from couchdbkit.ext.django.schema import Document
 from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty
 from django.db import models
@@ -13,7 +14,10 @@ from django.contrib.contenttypes import generic
 from django.db.models.query import QuerySet
 from django.utils.http import urlquote
 import logging
+import hashlib
+import simplejson
 from auditcare import utils
+from dimagi.utils.couch.database import get_db
 
 def make_uuid():
     return uuid.uuid1().hex
@@ -85,8 +89,8 @@ class ModelActionAudit(AuditEvent):
     """
     object_type = StringProperty()
     object_uuid = StringProperty()
+    revision_checksum = StringProperty()
     revision_id = StringProperty()
-
     archived_data = DictProperty()
 
     @property
@@ -97,27 +101,73 @@ class ModelActionAudit(AuditEvent):
         app_label = 'auditcare'
 
     @classmethod
+    def calculate_checksum(cls, instance_json, is_django=False):
+        if is_django:
+            json_string = simplejson.dumps(instance_json)
+        else:
+            instance_copy = copy.deepcopy(instance_json)
+            instance_copy.pop('_rev')
+            json_string = simplejson.dumps(instance_copy)
+        return hashlib.sha1(json_string).hexdigest()
+
+    @classmethod
+    def _save_model_audit(cls, audit, instance_id, instance_json, revision_id, model_class_name, is_django=False):
+        prior_revs = get_db().view('auditcare/model_actions', key=['model_types', model_class_name, instance_id]).all()
+
+        audit.description += "Save %s" % (model_class_name)
+        audit.object_type = model_class_name
+        audit.object_uuid = instance_id
+        audit.archived_data = instance_json
+        audit.revision_checksum = cls.calculate_checksum(instance_json, is_django=is_django)
+
+        print len(prior_revs)
+
+        if len(prior_revs) == 0:
+            if is_django:
+                audit.revision_id = "1"
+            else:
+                audit.revision_id = revision_id
+            audit.save()
+        else:
+            #this has been archived before.  Get the last one and compare the checksum.
+            sorted_revs = sorted(prior_revs, key=lambda x: x['value']['rev'])
+            last_rev = sorted_revs[-1]['value']['rev']
+            last_checksum = sorted_revs[-1]['value']['checksum']
+            if is_django:
+                #for django models, increment an integral counter.
+                try:
+                    audit.revision_id = str(int(last_rev) + 1)
+                except:
+                    logging.error("Error, last revision for object %s is not an integer, resetting to one")
+                    print "Error, last revision for object %s is not an integer, resetting to one"
+                    audit.revision_id = "1"
+            else:
+                #for django set the revision id to the current document's revision id.
+                audit.revision_id = revision_id
+
+            print last_checksum
+            print audit.revision_checksum
+            if last_checksum == audit.revision_checksum:
+                #no actual changes made on this save, do nothing
+                logging.debug("No data change, not creating audit event")
+                print "No change foolio!"
+            else:
+                audit.save()
+
+    @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        audit.description += "Save %s" % (model_class.__name__)
-        audit.object_type = model_class.__name__
-        audit.object_uuid = unicode(instance.id)
-        audit.archived_data = instance_json
-        #need to increment
-        audit.revision_id = "1"
-
-        audit.save()
+        instance_id = unicode(instance.id)
+        revision_id = None
+        cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 
 
     @classmethod
     def audit_couch_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        audit.description += "Save %s" % (model_class.__name__)
-        audit.object_type = instance.doc_type
-        audit.object_uuid = instance._id
-        audit.revision_id = instance._rev
-        audit.archived_data = instance_json
-        audit.save()
+        instance_id = instance._id
+        revision_id = instance._rev
+        cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=False)
 setattr(AuditEvent, 'audit_django_save', ModelActionAudit.audit_django_save)
 setattr(AuditEvent, 'audit_couch_save', ModelActionAudit.audit_couch_save)
 
