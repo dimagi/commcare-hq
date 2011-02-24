@@ -1,16 +1,77 @@
 {% extends base_template %}
 {% block title %}Welcome to CommCareHQ!{% endblock title %}
 {% block head %}
-    {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}domain/css/login.css"/>
+    <!--{{ block.super }}-->
+   	<link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/mainlogin.css"/>
+    <link rel="stylesheet" href="../static/hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="../static/hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
+    <link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/landingpage.css"/>
     <script src="{{ STATIC_URL }}domain/js/login.js"></script>
 {% endblock %}
 {% block content %}
-<div class="span-18">
-<h1>Welcome! Some custom content goes here.</h1>
-<p>blah blah blay</p>
-</div>
-<div class="span-6 last">
-{% include "login_and_password/partials/login_form.html" %}
-</div>
+
+
+
+    <div class="span-24 last">
+       	<center>      
+       	
+		<h2>Supporting the health of communities around the world</h2>
+		<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+		<h4>75,000 patient visits    -    
+		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
+		14 projects worldwide    -    
+		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
+		500 registered CHWs</h4>
+		</center>
+	</div>
+
+	
+	<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+	
+	
+	<div class="span-8">
+		<h3>What is CommCare?</h3>
+		<ul>
+			<li>An open-source software application
+			<li>A job aid for community health workers (CHWs)
+			<li>A tool for supervision and evidence-based change
+			<li>A way to capture data in an electronic repository that otherwise sits in thousands of paper notebooks
+		</ul> 
+	</div>
+	<div class = "span-8">
+		<h3>Why CommCare?</h3>
+		<ul>
+			<li>CHWs have demonstrated a potential to substantially improve health outcomes in areas of extreme poverty
+			<li>CHWs tend to have little training and operate independently
+			<li>CommCare provides phone-based tools that help support and manage large numbers of CHWs
+		</ul> 
+	</div>
+	<div class = "span-8 last">
+	<h3>Highlights</h3>
+		<ul>
+		<li>Runs on mid-range cell phones<p/>
+		<li>Supports images and audio<p/>
+		<li>Handles multiple languages<br>the pregnancy module is currently in English, Spanish, and Swahili
+
+	</ul>
+	</div>
+	<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+	<div class = "span-8">
+		<img src="https://dl-web.dropbox.com/get/Dimagi/CommCare/photos/hh_visit.jpg?w=75aed401" width=100%/>
+	</div>
+	<div class = "span-7 prepend-1">
+		<img src="https://dl-web.dropbox.com/get/Dimagi/CommCare/photos/mwajuma.jpg?w=76738133" width=100%/>
+	</div>
+	<div class = "span-7 prepend-1 last">
+		<img src="https://dl-web.dropbox.com/get/Dimagi/CommCare/photos/semeni.JPG?w=9d7e68f4" width=100%/>
+	</div>
+
+
+
 {% endblock content %}     
