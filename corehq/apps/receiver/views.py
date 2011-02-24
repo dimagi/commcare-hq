@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
 from couchforms.models import XFormInstance
 from corehq.apps.phone import xml
+from django.conf import settings
 
 
 def form_list(request, domain):
@@ -92,15 +93,15 @@ def post(request, domain):
             else:
                 # default to something generic 
                 response = HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'], status=201)
-                
+            
             # this hack is required for ODK
-            response["Location"] = Site.objects.get_current().domain
+            response["Location"] = get_location(request)
             return response 
             
         
         def fail_actions_and_respond(doc):
             response = HttpResponse(xml.get_response(message=doc.problem), status=201)
-            response["Location"] = Site.objects.get_current().domain
+            response["Location"] = get_location(request)
             return response
         
         
@@ -109,9 +110,16 @@ def post(request, domain):
         default_actions(instance)
         
         if instance.doc_type == "XFormInstance":
-            print "Good instance %s" % instance.get_id
             return success_actions_and_respond(instance)
         else: 
             return fail_actions_and_respond(instance)
         
     return couchforms_post(request, callback)
+
+def get_location(request):
+    # this is necessary, because www.commcarehq.org always uses https,
+    # but is behind a proxy that won't necessarily look like https
+    if hasattr(settings, "OVERRIDE_LOCATION"):
+        return settings.OVERRIDE_LOCATION
+    prefix = "https" if request.is_secure() else "http"
+    return "%s://%s" % (prefix, Site.objects.get_current().domain)

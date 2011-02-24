@@ -50,6 +50,9 @@ NS = dict(
 def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
+def _parse_xml(string):
+    return ET.fromstring(string, parser=ET.XMLParser(remove_comments=True))
+
 class JadJar(Document):
     """
     Has no properties except two attachments: CommCare.jad and CommCare.jar
@@ -414,8 +417,7 @@ class Form(IndexedSchema):
             return []
 
         # "Unicode strings with encoding declaration are not supported."
-        tree = ET.fromstring(xform.encode('utf-8'))
-
+        tree = _parse_xml(xform)
 
         NS = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
         def lookup_translation(s,pre = 'jr:itext(', post = ')'):
@@ -815,7 +817,7 @@ class Application(ApplicationBase):
 
     def fetch_xform(self, module_id, form_id, DEBUG=False):
         form = self.get_module(module_id).get_form(form_id)
-        tree = ET.fromstring(form.contents.encode('utf-8'))
+        tree = _parse_xml(form.contents)
         def fmt(s):
             return s.format(
                 x='{%s}' % form.xmlns,
@@ -824,16 +826,16 @@ class Application(ApplicationBase):
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
         
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
-        bind_parent = tree.find(fmt('.//{f}model/'))
+        bind_parent = tree.find(fmt('.//{f}model'))
         
         casexml, binds, transformation = form.create_casexml()
         if casexml:
             if case is not None:
                 case_parent.remove(case)
             # casexml has to be valid, 'cuz *I* made it
-            casexml = ET.fromstring(casexml)
+            casexml = _parse_xml(casexml)
             case_parent.append(casexml)
-            if DEBUG: tree = ET.fromstring(ET.tostring(tree))
+            # if DEBUG: tree = ET.fromstring(ET.tostring(tree))
             for bind in bind_parent.findall(fmt('{f}bind')):
                 if bind.attrib['nodeset'].startswith('case/'):
                     bind_parent.remove(bind)
@@ -987,7 +989,7 @@ class Application(ApplicationBase):
 
             for form in module.get_forms():
                 try:
-                    ET.fromstring(form.contents.encode('utf-8'))
+                    _parse_xml(form.contents)
                 except Exception as e:
                     errors.append({
                         'type': "invalid xml",
@@ -1058,7 +1060,7 @@ class RemoteApp(ApplicationBase):
         files = {
             'profile.xml': self.create_profile(),
         }
-        tree = ET.fromstring(files['profile.xml'])
+        tree = _parse_xml(files['profile.xml'])
         suite_loc = tree.find('suite/resource/location[@authority="local"]').text
         suite_loc, suite = self.fetch_file(suite_loc)
         files[suite_loc] = suite
