@@ -11,3 +11,22 @@ h1 {font-size:5em;}
 h2 {font-size:2.1em;}
 h3 {font-size:1.7em;color:#6666cc}
 h4 {font-size:1.5em;}
+
+button.custom {
+   display: -moz-inline-stack;
+   display: inline-block;
+   float:right;
+   margin-right:50px;
+   width: 148px;
+   height: 41px;
+   background: url("http://dabuttonfactory.com/b?t=Try%20it%20now!&f=Calibri-Bold&ts=24&tc=ffffff00&tshs=1&tshc=136b2900&it=png&c=5&bgt=gradient&bgc=38f218&ebgc=1a8f31&be=on&bs=1&bc=44a132&shs=1&shc=0d6e11&sho=se&hp=20&vp=11") no-repeat;
+   line-height: 41px;
+   vertical-align: text-middle;
+   text-align: center;
+   color: #ffffff;
+   font-family: Calibri;
+   font-size: 24px;
+   font-weight: bold;
+   font-style: normal;
+   text-shadow: #136b29 1px 1px 0;
+}
