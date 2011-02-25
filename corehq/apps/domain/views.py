@@ -21,6 +21,7 @@ from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser
 
 from dimagi.utils.web import render_to_response
+from corehq.apps.users.util import couch_user_from_django_user
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -175,11 +176,12 @@ def _create_new_domain_request( request, kind, form, now ):
     dom_req.new_user = new_user
 
     ############# Couch Domain Membership
-    couch_user = CouchUser.from_web_user(new_user)
     if kind == "new_user":
-        couch_user.add_domain_membership(d.name, is_admin=True)
+        couch_user = CouchUser.from_web_user(new_user)
+    else:
+        couch_user = couch_user_from_django_user(new_user)
+    couch_user.add_domain_membership(d.name, is_admin=True)
     couch_user.save()
-    print couch_user.to_json()
     # Django docs say "use is_authenticated() to see if you have a valid user"
     # request.user is an AnonymousUser if not, and that always returns False                
     if request.user.is_authenticated():
