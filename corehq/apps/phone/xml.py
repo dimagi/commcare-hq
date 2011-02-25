@@ -61,13 +61,17 @@ REFERRAL_BLOCK = \
 """
     <referral> 
         <referral_id>%(ref_id)s</referral_id>
-        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s
+        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s%(close_block)s
     </referral>"""
+
 REFERRAL_OPEN_BLOCK = \
 """
         <open>
             <referral_types>%(ref_type)s</referral_types>
         </open>"""
+REFERRAL_CLOSE_BLOCK = \
+"""
+        <close></close>"""
      
 def date_to_xml_string(date):
     if date: return date.strftime("%Y-%m-%d")
@@ -78,10 +82,12 @@ def get_referral_xml(referral):
     # break with sync
     open_block = REFERRAL_OPEN_BLOCK % {"ref_type": referral.type}
     update_block = "" # todo
+    close_block = REFERRAL_CLOSE_BLOCK if referral.closed else ""
     return REFERRAL_BLOCK % {"ref_id": referral.referral_id,
                              "fu_date": date_to_xml_string(referral.followup_on),
                              "open_block": open_block,
-                             "update_block": update_block
+                             "update_block": update_block,
+                             "close_block": close_block
                              }
 
 def get_case_xml(phone_case, create=True):
