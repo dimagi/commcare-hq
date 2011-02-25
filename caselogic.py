@@ -22,9 +22,6 @@ def get_open_cases_to_send(commcare_accounts, last_sync):
         cases = CommCareCase.view("case/by_user", key=[account.login_id, False],
                                   include_docs=True).all()
         for case in cases:
-            # TODO: recreate phone case objects
-            # phone_case = PhoneCase.from_bhoma_case(case)
-            
             # keep a running list of case ids sent down because the phone doesn't
             # deal well with duplicates.  There shouldn't be duplicates, but they
             # can come up with bugs, so arbitrarily only send down the first case
