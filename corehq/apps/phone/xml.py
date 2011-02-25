@@ -72,7 +72,8 @@ REFERRAL_OPEN_BLOCK = \
 
 REFERRAL_UPDATE_BLOCK = \
 """
-    <update>%(update_base_data)s%(close_data)s
+    <update>
+        <referral_type>%(ref_type)s</referral_type>%(close_data)s
     </update>"""
 
 REFERRAL_CLOSE_BLOCK = \
@@ -87,10 +88,13 @@ def get_referral_xml(referral):
     # TODO: support referrals not always opening, this will
     # break with sync
     open_block = REFERRAL_OPEN_BLOCK % {"ref_type": referral.type}
-    close_data = REFERRAL_CLOSE_BLOCK % {"close_date": date_to_xml_string(referral.closed_on)} \
-                if referral.closed else ""
-    update_block = REFERRAL_UPDATE_BLOCK % {"update_base_data": "", # todo
-                                            "close_data": close_data}
+    
+    if referral.closed:
+        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": date_to_xml_string(referral.closed_on)} 
+        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": referral.type,
+                                                "close_data": close_data}
+    else:
+        update_block = "" # TODO
     return REFERRAL_BLOCK % {"ref_id": referral.referral_id,
                              "fu_date": date_to_xml_string(referral.followup_on),
                              "open_block": open_block,
