@@ -1,7 +1,6 @@
 import logging
 from corehq.apps.users.util import couch_user_from_django_user,\
     commcare_account_from_django_user, raw_username
-from corehq.apps.ota.xml import date_to_xml_string
 
 
 # Response template according to 
