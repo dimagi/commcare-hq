@@ -1,6 +1,7 @@
 import logging
 from corehq.apps.users.util import couch_user_from_django_user,\
     commcare_account_from_django_user, raw_username
+from corehq.apps.ota.xml import date_to_xml_string
 
 
 # Response template according to 
@@ -61,7 +62,7 @@ REFERRAL_BLOCK = \
 """
     <referral> 
         <referral_id>%(ref_id)s</referral_id>
-        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s%(close_block)s
+        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s
     </referral>"""
 
 REFERRAL_OPEN_BLOCK = \
@@ -69,9 +70,15 @@ REFERRAL_OPEN_BLOCK = \
         <open>
             <referral_types>%(ref_type)s</referral_types>
         </open>"""
+
+REFERRAL_UPDATE_BLOCK = \
+"""
+    <update>%(update_base_data)s%(close_data)s
+    </update>"""
+
 REFERRAL_CLOSE_BLOCK = \
 """
-        <close></close>"""
+        <date_closed>%(close_date)s</date_closed>"""
      
 def date_to_xml_string(date):
     if date: return date.strftime("%Y-%m-%d")
@@ -81,13 +88,14 @@ def get_referral_xml(referral):
     # TODO: support referrals not always opening, this will
     # break with sync
     open_block = REFERRAL_OPEN_BLOCK % {"ref_type": referral.type}
-    update_block = "" # todo
-    close_block = REFERRAL_CLOSE_BLOCK if referral.closed else ""
+    close_data = REFERRAL_CLOSE_BLOCK % {"close_date": date_to_xml_string(referral.closed_on)} \
+                if referral.closed else ""
+    update_block = REFERRAL_UPDATE_BLOCK % {"update_base_data": "", # todo
+                                            "close_data": close_data}
     return REFERRAL_BLOCK % {"ref_id": referral.referral_id,
                              "fu_date": date_to_xml_string(referral.followup_on),
                              "open_block": open_block,
                              "update_block": update_block,
-                             "close_block": close_block
                              }
 
 def get_case_xml(phone_case, create=True):
