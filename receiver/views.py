@@ -1,16 +1,24 @@
 import logging
 from django.http import HttpResponse
-from corehq.apps.case.models.couch import CommCareCase
+from couchforms.models import XFormInstance
 from couchforms.views import post as couchforms_post
-from corehq.apps.receiver.signals import post_received, ReceiverResult
+from receiver.signals import post_received, ReceiverResult
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
-from couchforms.models import XFormInstance
-from corehq.apps.phone import xml
+from django.views.decorators.csrf import csrf_exempt
+from receiver import xml
 from django.conf import settings
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
+from dimagi.utils.couch.database import get_db
 
+def home(request):
+    forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
+    forms = dict([(x['key'], x['value']) for x in forms])
+    return render_to_response("receiver/home.html", {"forms": forms}, RequestContext(request))
+    
 
-def form_list(request, domain):
+def form_list(request):
     """
     Serve forms for ODK. 
     """
@@ -25,15 +33,17 @@ def form_list(request, domain):
     return HttpResponse(xml, mimetype="text/xml")
     
 
+@csrf_exempt
 @require_POST
-def post(request, domain):
+def post(request):
     def callback(doc):
         def default_actions(doc):
             """These are always done"""
-            doc['#export_tag'] = ["domain", "xmlns"]
+            #doc['#export_tag'] = ["domain", "xmlns"]
+            doc['#export_tag'] = ["xmlns"]
             doc['submit_ip'] = request.META['REMOTE_ADDR']
-            doc['domain'] = domain
-            doc['openrosa_headers'] = request.openrosa_headers 
+            #doc['domain'] = domain
+            #doc['openrosa_headers'] = request.openrosa_headers 
             # a hack allowing you to specify the submit time to use
             # instead of the actual time receiver
             # useful for migrating data
@@ -69,15 +79,15 @@ def post(request, domain):
         def success_actions_and_respond(doc):
             feedback = post_received.send_robust(sender="receiver", xform=doc)
             # hack the domain into any case that has been created
-            def case_domain_hack(xform):
-                cases = CommCareCase.view('case/by_xform_id', key=xform._id, include_docs=True).all()
-                for case in cases:
-                    case.domain = xform.domain
-                    case.save()
-            try:
-                case_domain_hack(doc)
-            except:
-                pass
+#            def case_domain_hack(xform):
+#                cases = CommCareCase.view('case/by_xform_id', key=xform._id, include_docs=True).all()
+#                for case in cases:
+#                    case.domain = xform.domain
+#                    case.save()
+#            try:
+#                case_domain_hack(doc)
+#            except:
+#                pass
             responses = []
             for func, resp in feedback:
                 if resp and isinstance(resp, Exception):
