@@ -7,10 +7,15 @@ def export_data(request, **kwargs):
     """
     Download all data for a couchdbkit model
     """
-    export_tag = json.loads(request.GET.get("export_tag", ""))
-    format = request.GET.get("format", Format.XLS_2007)
+    export_tag = request.GET.get("export_tag", "")
     if not export_tag:
         raise Exception("You must specify a model to download!")
+    try:
+        # try to parse this like a compound json list 
+        export_tag = json.loads(request.GET.get("export_tag", ""))
+    except ValueError:
+        pass # assume it was a string
+    format = request.GET.get("format", Format.XLS_2007)
     tmp = StringIO()
     if export(export_tag, tmp, format=format):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
