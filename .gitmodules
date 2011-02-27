@@ -22,3 +22,6 @@
 [submodule "submodules/auditcare-src"]
 	path = submodules/auditcare-src
 	url = git://github.com/dimagi/auditcare.git
+[submodule "submodules/receiver-src"]
+	path = submodules/receiver-src
+	url = git://github.com/dimagi/receiver.git

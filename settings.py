@@ -84,10 +84,6 @@ TEMPLATE_DIRS = [
 ]
 
 
-# ====================
-# INJECT RAPIDSMS APPS
-# ====================
-
 DEFAULT_APPS = (
     'corehq.apps.userhack', # this has to be above auth
     'django.contrib.admin',
@@ -122,7 +118,8 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'corehq.apps.receiver',
+    'receiver',
+    'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.phone',
