@@ -5,6 +5,7 @@ from corehq.apps.case.models.couch import CommCareCase
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 from corehq.apps.case.tests.util import check_xml_line_by_line
+from corehq.apps.case.signals import process_cases
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
@@ -20,12 +21,14 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
         [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
         self.assertEqual(0, len(newcase.referrals))
         file_path = os.path.join(os.path.dirname(__file__), "data", "case_refer.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
         [updated_case] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
         c = Client()

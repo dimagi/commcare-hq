@@ -2,6 +2,8 @@ import os
 import uuid
 from couchforms.util import post_xform_to_couch
 from corehq.apps.case.models.couch import CommCareCase
+from couchforms.models import XFormInstance
+from corehq.apps.case.signals import process_cases
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
@@ -10,6 +12,8 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
         xml_data = f.read()
     doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override, 
                                                          referral_id_override=referral_id_override)  
+    doc = XFormInstance.get(doc_id)
+    process_cases(sender="testharness", xform=doc)
     case = CommCareCase.get(case_id)
     test_class.assertEqual(case_id, case.case_id)
     return case
