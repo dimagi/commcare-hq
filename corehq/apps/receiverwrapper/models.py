@@ -1,3 +1,4 @@
 from django.db import models
 
-# Create your models here.
+# import signals
+from corehq.apps.receiverwrapper import signals
