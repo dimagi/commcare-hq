@@ -45,4 +45,5 @@ class ReceiverResult(object):
     def __str__(self):
         return self.response
     
-post_received = Signal(providing_args=["posted"])
+form_received = Signal(providing_args=["posted"])
+successful_form_received = Signal(providing_args=["posted"])

@@ -2,7 +2,7 @@ import logging
 from django.http import HttpResponse
 from couchforms.models import XFormInstance
 from couchforms.views import post as couchforms_post
-from receiver.signals import post_received, ReceiverResult
+from receiver.signals import successful_form_received, ReceiverResult, form_received
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import Site
 from django.views.decorators.csrf import csrf_exempt
@@ -39,12 +39,14 @@ def post(request):
     def callback(doc):
         def default_actions(doc):
             """These are always done"""
-            #doc['#export_tag'] = ["domain", "xmlns"]
             doc['#export_tag'] = ["xmlns"]
             doc['submit_ip'] = request.META['REMOTE_ADDR']
             doc['path'] = request.path
-            #doc['domain'] = domain
-            #doc['openrosa_headers'] = request.openrosa_headers 
+            
+            # if you have OpenRosaMiddleware running the headers appear here
+            if hasattr(request, 'openrosa_headers'):
+                doc['openrosa_headers'] = request.openrosa_headers 
+            
             # a hack allowing you to specify the submit time to use
             # instead of the actual time receiver
             # useful for migrating data
@@ -52,54 +54,31 @@ def post(request):
             if received_on:
                 doc['received_on'] = received_on
                 
-            def _scrub_meta(doc):
-                property_map = {"TimeStart": "timeStart",
-                                "TimeEnd": "timeEnd",
-                                "chw_id": "userID",
-                                "DeviceID": "deviceID",
-                                "uid": "instanceID"}
-    
-                # hack to make sure uppercase meta still ends up in the right place
-                found_old = False
-                if "Meta" in doc.form:
-                    doc.form["meta"] = doc.form["Meta"]
-                    del doc.form["Meta"]
-                    found_old = True
-                if "meta" in doc.form:
-                    # scrub values from 0.9 to 1.0
-                    for key in doc.form["meta"]:
-                        if key in property_map and property_map[key] not in doc.form["meta"]:
-                            doc.form["meta"][property_map[key]] = doc.form["meta"][key]
-                            del doc.form["meta"][key]
-                            found_old = True
-                return found_old
-            if _scrub_meta(doc):
-                logging.error("form %s contains old-format metadata.  You should update it!!" % doc.get_id)
-            
+            # fire signals
+            # We don't trap any exceptions here. This is by design, since
+            # nothing is supposed to be able to raise an exception here
+            form_received.send(sender="receiver", xform=doc)
             doc.save()
         
         def success_actions_and_respond(doc):
-            feedback = post_received.send_robust(sender="receiver", xform=doc)
-            # hack the domain into any case that has been created
-#            def case_domain_hack(xform):
-#                cases = CommCareCase.view('case/by_xform_id', key=xform._id, include_docs=True).all()
-#                for case in cases:
-#                    case.domain = xform.domain
-#                    case.save()
-#            try:
-#                case_domain_hack(doc)
-#            except:
-#                pass
+            feedback = successful_form_received.send_robust(sender="receiver", xform=doc)
             responses = []
+            errors = []
             for func, resp in feedback:
                 if resp and isinstance(resp, Exception):
                     logging.error("Receiver app: problem sending post-save signal %s for xform %s" \
                                   % (func, doc._id))
                     logging.exception(resp)
+                    errors.append(str(resp))
                 elif resp and isinstance(resp, ReceiverResult):
-                    # use the first valid response if we get one
                     responses.append(resp)
-            if responses:
+            if errors:
+                # in the event of errors, respond with the errors, and mark the problem
+                doc.problem = ", ".join(errors)
+                doc.save()
+                response = HttpResponse(xml.get_response(message=doc.problem), status=201)
+            elif responses:
+                # use the response with the highest priority if we got any
                 responses.sort()
                 response = HttpResponse(responses[-1].response, status=201)
             else:
