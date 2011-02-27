@@ -30,8 +30,8 @@ def scrub_meta(sender, xform, **kwargs):
             
 def add_domain(sender, xform, **kwargs):
     matches = DOMAIN_RE.search(xform.path)
-    if matches and len(matches.groups) == 1:
-        domain = matches.groups[0]
+    if matches and len(matches.groups()) == 1:
+        domain = matches.groups()[0]
         xform['domain'] = domain
         xform['#export_tag'] = ["domain", "xmlns"]
         xform.save()
