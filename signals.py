@@ -11,7 +11,7 @@ def process_cases(sender, xform, **kwargs):
         def attach_domain(case):
             case.domain = domain
             return case
-        cases = [attach_domain(case) for case in cases]
-    map(lambda pair: pair[1].save(), cases.items())
+        cases = [attach_domain(case) for case in cases.values()]
+    map(lambda case: case.save(), cases.values())
     
 successful_form_received.connect(process_cases)
