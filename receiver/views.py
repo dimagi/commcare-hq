@@ -42,6 +42,7 @@ def post(request):
             #doc['#export_tag'] = ["domain", "xmlns"]
             doc['#export_tag'] = ["xmlns"]
             doc['submit_ip'] = request.META['REMOTE_ADDR']
+            doc['path'] = request.path
             #doc['domain'] = domain
             #doc['openrosa_headers'] = request.openrosa_headers 
             # a hack allowing you to specify the submit time to use
@@ -74,6 +75,7 @@ def post(request):
                 return found_old
             if _scrub_meta(doc):
                 logging.error("form %s contains old-format metadata.  You should update it!!" % doc.get_id)
+            
             doc.save()
         
         def success_actions_and_respond(doc):
@@ -102,7 +104,8 @@ def post(request):
                 response = HttpResponse(responses[-1].response, status=201)
             else:
                 # default to something generic 
-                response = HttpResponse("Success! Received XForm id is: %s\n" % doc['_id'], status=201)
+                response = HttpResponse(xml.get_response(message="Success! Received XForm id is: %s\n" % doc['_id']), 
+                                        status=201)
             
             # this hack is required for ODK
             response["Location"] = get_location(request)
