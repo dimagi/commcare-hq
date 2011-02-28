@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import SiteProfileNotAvailable, User
 from djangocouchuser.signals import couch_user_post_save
 from couchforms.models import XFormInstance
-from corehq.apps.receiver.signals import post_received, ReceiverResult,\
+from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
 from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCREATED_STATUS,\
     create_hq_user_from_commcare_registration_info
@@ -138,4 +138,4 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         logging.exception(e)
         raise
 
-post_received.connect(create_user_from_commcare_registration)
+successful_form_received.connect(create_user_from_commcare_registration)

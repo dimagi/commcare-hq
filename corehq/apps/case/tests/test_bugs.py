@@ -2,6 +2,7 @@ from django.test import TestCase
 import os
 from corehq.apps.case.models.couch import CommCareCase
 from couchforms.util import post_xform_to_couch
+from corehq.apps.case.signals import process_cases
 
 class CaseBugTest(TestCase):
     """
@@ -21,6 +22,11 @@ class CaseBugTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        self.assertEqual("XFormError", form.doc_type)
+        try:
+            process_cases(sender="testharness", xform=form)
+            self.fail("Previous statement should have raised an exception")
+        except Exception:
+            pass
+
         
     

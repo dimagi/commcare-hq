@@ -713,7 +713,7 @@ class ApplicationBase(VersionedDoc):
     def post_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.receiver.views.post', args=[self.domain])
+            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
         )
     @property
     def ota_restore_url(self):

@@ -35,7 +35,7 @@ CASE_TEMPLATE = \
 """
 <case>
     <case_id>%(case_id)s</case_id> 
-    <date_modified>%(date_modified)s</date_modified>%(create_block)s%(update_block)s
+    <date_modified>%(date_modified)s</date_modified>%(create_block)s%(update_block)s%(referral_block)s
 </case>"""
 
 CREATE_BLOCK = \
@@ -56,10 +56,51 @@ UPDATE_BLOCK = \
         %(update_custom_data)s
     </update>"""
 
+
+REFERRAL_BLOCK = \
+"""
+    <referral> 
+        <referral_id>%(ref_id)s</referral_id>
+        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s
+    </referral>"""
+
+REFERRAL_OPEN_BLOCK = \
+"""
+        <open>
+            <referral_types>%(ref_type)s</referral_types>
+        </open>"""
+
+REFERRAL_UPDATE_BLOCK = \
+"""
+    <update>
+        <referral_type>%(ref_type)s</referral_type>%(close_data)s
+    </update>"""
+
+REFERRAL_CLOSE_BLOCK = \
+"""
+        <date_closed>%(close_date)s</date_closed>"""
+     
 def date_to_xml_string(date):
-        if date: return date.strftime("%Y-%m-%d")
-        return ""
+    if date: return date.strftime("%Y-%m-%d")
+    return ""
+
+def get_referral_xml(referral):
+    # TODO: support referrals not always opening, this will
+    # break with sync
+    open_block = REFERRAL_OPEN_BLOCK % {"ref_type": referral.type}
     
+    if referral.closed:
+        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": date_to_xml_string(referral.closed_on)} 
+        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": referral.type,
+                                                "close_data": close_data}
+    else:
+        update_block = "" # TODO
+    return REFERRAL_BLOCK % {"ref_id": referral.referral_id,
+                             "fu_date": date_to_xml_string(referral.followup_on),
+                             "open_block": open_block,
+                             "update_block": update_block,
+                             }
+
 def get_case_xml(phone_case, create=True):
     if phone_case is None: 
         logging.error("Can't generate case xml for empty case!")
@@ -82,9 +123,10 @@ def get_case_xml(phone_case, create=True):
                                     for key, val in phone_case.dynamic_properties().items()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
-                                  
+    referral_block = "".join([get_referral_xml(ref) for ref in phone_case.referrals])
     return CASE_TEMPLATE % {"case_id": phone_case.case_id,
                             "date_modified": date_to_xml_string(phone_case.modified_on),
                             "create_block": create_block,
-                            "update_block": update_block
+                            "update_block": update_block,
+                            "referral_block": referral_block
                             } 

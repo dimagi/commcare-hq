@@ -13,6 +13,7 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.users.util import couch_user_from_django_user,\
     commcare_account_from_django_user, raw_username
 from corehq.apps.users.models import CouchUser
+from corehq.apps.case.models import CommCareCase
 
 
 def generate_restore_payload(user, restore_id):
@@ -96,120 +97,10 @@ def logs_for_chw(request, chw_id):
                               {"chw": chw })
                                
 
-@httpdigest
-def test(request, domain):
+def xml_for_case(request, domain, case_id):
     """
-    Test view
+    Test view to get the xml for a particular case
     """
-    return HttpResponse(TESTING_RESTORE_DATA, mimetype="text/xml")
-
-
-TESTING_RESTORE_DATA=\
-"""<restoredata> 
-<n0:registration xmlns:n0="http://openrosa.org/user-registration">
-  <username>bhoma</username>
-  <password>234</password>
-  <uuid>O9KNJQO8V951GSOXDV7604I1Q</uuid>
-  <date>2010-07-28</date>
-  <registering_phone_id>SSNCFBLR8U12WB3I8RMKRTACC</registering_phone_id>
-  <user_data>
-    <data key="providertype">hbcp</data>
-    <data key="training">yes</data>
-    <data key="sex">m</data>
-    <data key="user_type">standard</data>
-  </user_data>
-</n0:registration>
-<case>
-<case_id>PZHBCC9647XX0V4YAZ2UUPQ9M</case_id>
-<date_modified>2010-07-28T14:49:57.930</date_modified>
-<create>
-  <case_type_id>bhoma_followup</case_type_id>
-  <user_id>O9KNJQO8V951GSOXDV7604I1Q</user_id>
-  <case_name>6</case_name>
-  <external_id>bhoma8972837492818239</external_id>
-</create>
-<update>
-  <first_name>DREW</first_name>
-  <last_name>ROOS</last_name>
-  <birth_date>1983-10-06</birth_date>
-  <birth_date_est>1</birth_date_est>
-  <age>26</age>
-  <sex>m</sex>
-  <village>SOMERVILLE</village>
-  <contact>9183739767</contact>
-
-  <followup_type>missed_appt</followup_type>
-  <orig_visit_type>general</orig_visit_type>
-  <orig_visit_diagnosis>malaria</orig_visit_diagnosis>
-  <orig_visit_date>2010-07-12</orig_visit_date>
-
-  <activation_date>2010-07-27</activation_date>
-  <due_date>2010-07-31</due_date>
-
-  <missed_appt_date>2010-07-24</missed_appt_date>
-  <ttl_missed_appts>1</ttl_missed_appts>
-</update>
-</case>
-
-<case>
-<case_id>UJ3IN4HBLNTBRNV2SVCE6F5VU</case_id>
-<date_modified>2010-07-28T14:49:57.930</date_modified>
-<create>
-
-  <case_type_id>bhoma_followup</case_type_id>
-  <user_id>O9KNJQO8V951GSOXDV7604I1Q</user_id>
-  <case_name>7</case_name>
-  <external_id>bhoma20938968738923</external_id>
-</create>
-<update>
-  <first_name>LESTER</first_name>
-  <last_name>JENKINS</last_name>
-  <birth_date>1934-02-23</birth_date>
-  <birth_date_est>0</birth_date_est>
-  <age>76</age>
-  <sex>m</sex>
-  <village>DORCHESTER</village>
-  <contact>7814359283</contact>
-
-  <followup_type>hospital</followup_type>
-  <orig_visit_type>general</orig_visit_type>
-  <orig_visit_diagnosis>pneumonia</orig_visit_diagnosis>
-  <orig_visit_date>2010-07-24</orig_visit_date>
-
-  <activation_date>2010-08-03</activation_date>
-  <due_date>2010-08-07</due_date>
-</update>
-</case>
-
-<case>
-<case_id>MYTF9AFKZPX8TGYOAXXLUEKCE</case_id>
-<date_modified>2010-07-28T14:49:57.930</date_modified>
-<create>
-  <case_type_id>bhoma_followup</case_type_id>
-  <user_id>O9KNJQO8V951GSOXDV7604I1Q</user_id>
-  <case_name>8</case_name>
-  <external_id>bhoma9989500849805480848</external_id>
-</create>
-<update>
-  <first_name>HEZRAH</first_name>
-  <last_name>D'MAGI</last_name>
-  <birth_date>2007-11-01</birth_date>
-  <birth_date_est>0</birth_date_est>
-  <age>2</age>
-  <sex>f</sex>
-  <village>CHARLESTOWN</village>
-  <contact></contact>
-
-  <followup_type>chw_followup</followup_type>
-  <orig_visit_type>under_five</orig_visit_type>
-  <orig_visit_diagnosis>diarrhea</orig_visit_diagnosis>
-  <orig_visit_date>2010-07-31</orig_visit_date>
-
-  <activation_date>2010-08-03</activation_date>
-  <due_date>2010-08-07</due_date>
-</update>
-</case>
-
-
-</restoredata>
-"""
+    case = CommCareCase.get(case_id)
+    return HttpResponse(xml.get_case_xml(case), mimetype="text/xml")
+    
