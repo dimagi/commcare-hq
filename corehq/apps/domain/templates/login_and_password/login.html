@@ -8,5 +8,10 @@
 {% endblock %}
 
 {% block content %}
-{% include "login_and_password/partials/login_form.html" %}
+<div class="login-block">
+    {% block login-content %}
+    {% include "login_and_password/partials/login_form.html" %}
+    {% endblock %}
+</div>
+
 {% endblock content %}     
