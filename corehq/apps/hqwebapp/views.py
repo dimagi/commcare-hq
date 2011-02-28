@@ -34,12 +34,12 @@ def not_found(request, template_name='404.html'):
     return HttpResponseNotFound(t.render(RequestContext(request, 
                                                         {'MEDIA_URL': settings.MEDIA_URL,
                                                          'STATIC_URL': settings.STATIC_URL
-                                                         })))
+                                                        })))
     
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
-        url = reverse('corehq.apps.hqwebapp.views.login')
+        url = reverse('corehq.apps.hqwebapp.views.landing_page')
     else:
         if domain:
             domains = Domain.objects.filter(name=domain)
@@ -55,6 +55,15 @@ def redirect_to_default(req, domain=None):
     return HttpResponseRedirect(url)
 
 
+def landing_page(req, template_name="home.html"):
+    # this view, and the one below, is overridden because
+    # we need to set the base template to use somewhere
+    # somewhere that the login page can access it.
+    if req.user.is_authenticated():
+        return HttpResponseRedirect(reverse('homepage'))
+    req.base_template = settings.BASE_TEMPLATE
+    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    
 @login_required()
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
