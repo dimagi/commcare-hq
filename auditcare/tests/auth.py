@@ -3,7 +3,7 @@ from django.contrib.auth.models import User, AnonymousUser
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 import unittest
 import settings
-from auditcare.util import _thread_locals
+from auditcare.utils import _thread_locals
 
 
 def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):
@@ -39,14 +39,14 @@ class authenticationTestCase(unittest.TestCase):
         if hasattr(_thread_locals, 'user'):
             delattr(_thread_locals, 'user')
         User.objects.all().delete()
-        delete_all(AuditEvent, 'auditor/all_events')
+        delete_all(AuditEvent, 'auditcare/all_events')
         self.client = Client()
         self._createUser()
             
     def _createUser(self):
         print "Creating Mock User"
-        model_count = ModelActionAudit.objects.all().count()
-        total_count = AuditEvent.objects.all().count()        
+        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        total_count = AuditEvent.view("auditcare/all_events").count()
         
         usr = User()
         usr.username = 'mockmock'
@@ -55,23 +55,23 @@ class authenticationTestCase(unittest.TestCase):
         usr.last_name = 'mock'
         usr.save()
 
-        model_count2 = ModelActionAudit.objects.all().count()
-        total_count2 = AuditEvent.objects.all().count()
+        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        total_count2 = AuditEvent.view("auditcare/all_events").count()
         
         self.assertEqual(model_count+1, model_count2)    
         self.assertEqual(total_count+1, total_count2)
     
     def testModifyUser(self):
         print "testModifyUser"
-        model_count = ModelActionAudit.objects.all().count()
-        total_count = AuditEvent.objects.all().count()        
+        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        total_count = AuditEvent.view("auditcare/all_events").count()
         
         usr = User.objects.get(username='mockmock')
         usr.first_name='aklsjfl'
         usr.save()
         
-        model_count2 = ModelActionAudit.objects.all().count()
-        total_count2 = AuditEvent.objects.all().count()
+        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        total_count2 = AuditEvent.view("auditcare/all_events").count()
                 
         self.assertEqual(model_count+1, model_count2)    
         self.assertEqual(total_count+1, total_count2)
@@ -79,26 +79,28 @@ class authenticationTestCase(unittest.TestCase):
     
     def testLogin(self):
         print "testLogin"
-        start_count = AccessAudit.objects.all().count()        
-        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'mockmock'})                
-        login_count = AccessAudit.objects.all().count()     
-        self.assertEqual(start_count+1, login_count)        
+        start_count = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit']).count()
+        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'mockmock'})
+        login_count = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit']).count()
+        self.assertEqual(start_count+1, login_count)
           
-        response = self.client.post('/accounts/logout/', {})        
-        logout_count = AccessAudit.objects.all().count()        
-        self.assertEqual(start_count+1, logout_count)
+        response = self.client.post('/accounts/logout/', {})
+        logout_count = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit']).count()
+        self.assertEqual(start_count+2, logout_count)
         
         
     def testFailedLogin(self):
         print "testFailedLogin"
-        start_count = AccessAudit.objects.all().count()        
-        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'asdfsdaf'})                
-        access = AccessAudit.objects.order_by('-event_date')[0]
-        
+        start_count = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit']).count()
+        response = self.client.post('/accounts/login/', {'username': 'mockmock', 'password': 'asdfsdaf'})
+
+        login_count = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit']).count()
+        self.assertEquals(start_count+1, login_count)
+
+        access = AccessAudit.view('auditcare/by_date_events', key=['event', 'AccessAudit'], include_docs=True).all()
         self.assertEquals('failed', access.access_type)
-        login_count = AccessAudit.objects.all().count()     
-        self.assertEqual(start_count+1, login_count)
-    
+
+
     def testAuditViews(self):
         for v in settings.AUDIT_VIEWS:
             pass

@@ -72,6 +72,7 @@ class AuditEvent(Document):
 
 
 
+
 class ModelActionAudit(AuditEvent):
     """
     Audit event to track the modification or editing of an auditable model
@@ -106,6 +107,8 @@ class ModelActionAudit(AuditEvent):
             json_string = simplejson.dumps(instance_json)
         else:
             instance_copy = copy.deepcopy(instance_json)
+            #if instance_copy.has_key('_rev'):
+                #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = simplejson.dumps(instance_copy)
         return hashlib.sha1(json_string).hexdigest()

@@ -38,7 +38,7 @@ def django_audit_save(sender, instance, created, **kwargs):
 
 def couch_audit_save(self, *args, **kwargs):
     from models.couchmodels import AuditEvent
-    print "wrapping the save function!"
+    self.__orig_save(*args, **kwargs)
     instance_json = self.to_json()
     usr = get_current_user()
     if usr != None:
@@ -47,8 +47,6 @@ def couch_audit_save(self, *args, **kwargs):
         except:
             usr = None
     AuditEvent.audit_couch_save(self.__class__, self, instance_json, usr)
-    self.__orig_save(*args, **kwargs)
-    print "wrapped the save function!"
 
 
 if hasattr(settings, 'AUDIT_MODEL_SAVE'):
