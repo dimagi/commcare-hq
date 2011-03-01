@@ -16,20 +16,11 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
-from django.http import HttpResponseForbidden
 
-
-from django.db import models
 import random
 from dimagi.utils.couch.database import get_db
 import json
-try:
-    from lxml import etree as ET
-except ImportError:
-    import logging
-    logging.error("lxml not installed! apps won't work properly!!")
-
-from dimagi.utils.make_uuid import random_hex
+from lxml import etree as ET
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -51,7 +42,11 @@ def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
 def _parse_xml(string):
-    return ET.fromstring(string, parser=ET.XMLParser(remove_comments=True))
+    # Work around: ValueError: Unicode strings with encoding
+    # declaration are not supported.  
+    if isinstance(string, unicode):
+        string = string.encode("utf-8")
+    return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
 
 class JadJar(Document):
     """
@@ -412,7 +407,7 @@ class Form(IndexedSchema):
             self.contents = xform
             self._parent._parent.save()
         #</hack>
-
+        
         if not xform:
             return []
 
