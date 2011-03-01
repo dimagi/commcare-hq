@@ -19,6 +19,9 @@ import simplejson
 from auditcare import utils
 from dimagi.utils.couch.database import get_db
 
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from auditcare.signals import user_login_failed
+
 def make_uuid():
     return uuid.uuid1().hex
 def getdate():
@@ -65,6 +68,9 @@ class AuditEvent(Document):
         elif user == None:
             audit.user = None
             audit.description='[NullUser] '
+        elif isinstance(user, User):
+            audit.user = user.username
+            audit.description = user.first_name + " " + user.last_name
         else:
             audit.user = user.username
             audit.description = ''
@@ -239,24 +245,29 @@ class AccessAudit(AuditEvent):
 
 
     @classmethod
-    def audit_login(cls, request, user, success, username_attempt=None, *args, **kwargs):
+    def audit_login(cls, request, user, *args, **kwargs):
         '''Creates an instance of a Access log.
         '''
         audit = cls.create_audit(cls, user)
         audit.ip_address = utils.get_ip(request)
-        if success:
-            audit.access_type = 'login'
-            audit.description = "Login Success"
-        else:
-            audit.access_type = 'failed'
-            if username_attempt != None:
-                audit.description = "Login Failure: %s" % (username_attempt)
-            else:
-                audit.description = "Login Failure"
-
+        audit.access_type = 'login'
+        audit.description = "Login Success"
         audit.session_key = request.session.session_key
         audit.save()
 
+    @classmethod
+    def audit_login_failed(cls, request, username, *args, **kwargs):
+        '''Creates an instance of a Access log.
+        '''
+        audit = cls.create_audit(cls, username)
+        audit.ip_address = utils.get_ip(request)
+        audit.access_type = 'failed'
+        if username != None:
+            audit.description = "Login Failure: %s" % (username)
+        else:
+            audit.description = "Login Failure"
+        audit.session_key = request.session.session_key
+        audit.save()
 
     @classmethod
     def audit_logout(cls, request, user):
@@ -270,8 +281,21 @@ class AccessAudit(AuditEvent):
         audit.save()
 
 setattr(AuditEvent, 'audit_login', AccessAudit.audit_login)
+setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
 setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
 
+
+def audit_login(sender, **kwargs):
+    AuditEvent.audit_login(kwargs["request"], kwargs["user"], True) # success
+user_logged_in.connect(audit_login)
+
+def audit_logout(sender, **kwargs):
+    AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
+user_logged_out.connect(audit_logout)
+
+def audit_login_failed(sender, **kwargs):
+    AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
+user_login_failed.connect(audit_login_failed)
 
 
 class FieldAccess(models.Model):
