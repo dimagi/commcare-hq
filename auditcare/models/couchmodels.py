@@ -19,7 +19,13 @@ import simplejson
 from auditcare import utils
 from dimagi.utils.couch.database import get_db
 
-from django.contrib.auth.signals import user_logged_in, user_logged_out
+try:
+    from django.contrib.auth.signals import user_logged_in, user_logged_out
+except:
+    logging.error("Error, django.contrib.auth signals not available in this version of django yet.")
+    user_logged_in = None
+    user_logged_out = None
+
 from auditcare.signals import user_login_failed
 
 def make_uuid():
@@ -287,11 +293,15 @@ setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
 
 def audit_login(sender, **kwargs):
     AuditEvent.audit_login(kwargs["request"], kwargs["user"], True) # success
-user_logged_in.connect(audit_login)
+
+if user_logged_in:
+    user_logged_in.connect(audit_login)
 
 def audit_logout(sender, **kwargs):
     AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
-user_logged_out.connect(audit_logout)
+
+if user_logged_out:
+    user_logged_out.connect(audit_logout)
 
 def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])

@@ -2,7 +2,6 @@ from django.db.models.signals import post_init, post_save, pre_save, pre_delete
 from couchdbkit.ext.django.schema import Document
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db.models import Q
 import logging
 from datetime import datetime
