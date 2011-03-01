@@ -27,6 +27,7 @@ from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
+import logging
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -212,9 +213,10 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_questions = []
 #        xform_errors = e.msg
         messages.error(req, e.msg)
-    except:
+    except Exception, e:
+        logging.exception(e)
         xform_questions = []
-        messages.error(req, "Error in form")
+        messages.error(req, "Error in form: %s" % e)
     
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
