@@ -64,7 +64,6 @@ urlpatterns =\
         url(r'^domain/registration_resend_confirm_email/$', 'registration_resend_confirm_email', name='domain_registration_resend_confirm_email'),
         
         # domain admin functions
-        url(r'^domain/admin/edit_user/(?P<user_id>\d{1,10})/$', 'edit_user', name='domain_edit_user'),
         url(r'^accounts/admin_own/$', 'admin_own_account_main', name='admin_own_account_main'),
         url(r'^accounts/admin_own/update/$', 'admin_own_account_update', name='admin_own_account_update')
     ) +\
