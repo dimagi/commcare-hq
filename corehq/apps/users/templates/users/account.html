@@ -42,11 +42,10 @@
             <li><a href="#basic-info">Basic</a></li>
             <li><a href="#phone-numbers">Phone Numbers</a></li>
             <li><a href="#commcare-accounts">CommCare Accounts</a></li>
-            <li><a href="#scheduled-reports">Scheduled Reports</a></li>
-            {% if request.user.is_superuser %}
-                <li><a href="#domains">Domains</a></li>
+            {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
+            <li><a href="#scheduled-reports">My Scheduled Reports</a></li>
+            <li><a href="#domains">My Domains</a></li>
             {% endif %}
-            
         </ul>
         <div id="basic-info">
             <form name="user_details" method="post">

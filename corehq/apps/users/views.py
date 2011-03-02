@@ -210,10 +210,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # domain-accounts tab
     if request.user.is_superuser:
         my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
-        other_domains = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
         context.update({"user": request.user,
-                        "domains": my_domains,
-                        "other_domains": other_domains,
+                        "domains": my_domains
                         })
     # scheduled reports tab
     context.update({
