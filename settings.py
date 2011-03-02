@@ -235,8 +235,6 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
-    'corehq.apps.domain.views.admin_main',
-    'corehq.apps.domain.views.admin_own_account_update',
     'corehq.apps.domain.views.password_change',
     'corehq.apps.domain.views.password_change_done',
 
