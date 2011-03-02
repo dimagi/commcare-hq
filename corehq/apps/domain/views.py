@@ -334,47 +334,7 @@ class UserTable(tables.Table):
     invite_status = tables.Column(verbose_name="Invite status")    
         
 ########################################################################################################        
-#
-# Reused by all views that render a user list
-#
-# DUPLICATE OF patient_list_paging...this needs to be factored to a common library. Leaving it alone
-# for now, though, as they're technically different applications, and we haven't put out a common 
-# library yet.
 
-def user_list_paging(request, queryset, sort_vars=None):
-    # django_table checks to see if sort field is allowable - won't raise an error if the field isn't present
-    # (unlike filtering of a raw queryset)
-    
-    order_by=request.GET.get('sort', 'username')
-    user_table = UserTable(queryset, order_by)
-    
-    paginator = Paginator(user_table.rows, 20, orphans=2)
-
-    # Code taken from Django dev docs explaining pagination
-
-    # Make sure page request is an int. If not, deliver first page.
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-
-    # If page request (9999) is out of range, deliver last page of results.
-    try:
-        users = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        users = paginator.page(paginator.num_pages)
-    
-    sort_index = -1
-    counter = 0
-    for name in user_table.columns.names():
-        if order_by == name or order_by == "-%s" % name:
-            sort_index = counter
-            break
-        counter += 1
-    return render_to_response(request, 'domain/user_list.html', 
-                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars,
-                                "sort_index": sort_index})
-    
 ########################################################################################################
 
 def _bool_to_yes_no( b ):
@@ -416,20 +376,6 @@ def _dict_for_one_user( user, domain ):
 
     return retval                     
            
-########################################################################################################
-
-@login_and_domain_required
-@domain_admin_required
-def user_list(request):
-    # Info we want to summarize for users is convoluted, and taken from several models. I don't know
-    # an obvious way to get this natively from Django, and the web doesn't have an answer, so I will 
-    # just walk the ORM. We might want to move to custom SQL down the line, but the total number
-    # of users is likely to be small, so there's probably no performance reason to do so.
-    selected_domain = request.user.selected_domain
-    users = User.objects.filter(domain_membership__domain = selected_domain).select_related().all()
-    table_vals = [_dict_for_one_user(u, selected_domain) for u in users]
-    return user_list_paging(request, table_vals)
-
 ########################################################################################################
 
 class AdminEditsUserForm( AdminRegistersUserForm ):
