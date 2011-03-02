@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% block page_title %}<h1>Web Users</h1>{% endblock %}
 {% block user-view %}
 <div class='all_users'>
 	<h1>All users in domain "{{ domain }}"</h1>
@@ -31,7 +32,7 @@
 	</tr>
 	{% endfor %}
 	</table>
-	<a class="new_link" href="{% url create_web_user domain %}">Web User</a>
+	<a class="new_link" href="{% url invite_web_user domain %}">Web User</a>
 </div>
 {% endblock %}
 

@@ -10,30 +10,12 @@ from django.views.generic.simple import direct_to_template
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from django_user_registration.views import activate
 from django_user_registration.views import register
-from corehq.apps.domain.user_registration_backend import activate_by_form, register_with_possible_errors, register_admin_does_all
+from corehq.apps.domain.user_registration_backend import activate_by_form, register_with_possible_errors
 
 
 urlpatterns = patterns('',
                        
-                       # Registration of new users might fail, but the default 'register' doesn't
-                       # handle this possibility. Had to rewrite it.
-                       url(r'^register/invite_user/$',
-                           register_with_possible_errors,
-                           { 'backend': 'corehq.apps.domain.user_registration_backend.UserRegistersSelfBackend',
-                             'template_name':'domain/user_registration/registration_invite_form.html' },
-                           name='registration_invite_user'),
-                        
-                        url(r'^register/admin_does_all/$',
-                            # Traditional view - not done in the registration framework
-                           register_admin_does_all,                           
-                           name='registration_admin_does_all'),
-                       url(r'^register/complete/$',
-                           # Normally don't like login decorators in URLConfs, but there's no 
-                           # choice here - we're using a generic view
-                           login_and_domain_required(domain_admin_required(direct_to_template)),
-                           { 'template': 'domain/user_registration/registration_request_complete.html' },
-                           name='registration_request_complete'),
-                        url(r'^register/closed/$',
+                       url(r'^register/closed/$',
                            direct_to_template,
                            { 'template': 'domain/user_registration/registration_closed.html' },
                            name='registration_disallowed'),      

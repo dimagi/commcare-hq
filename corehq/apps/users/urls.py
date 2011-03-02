@@ -27,8 +27,10 @@ urlpatterns = patterns('corehq.apps.users.views',
         'link_commcare_account_to_user',
         name='link_commcare_account_to_user'),
     url(r'web/create/$', 'create_web_user', name='create_web_user'),
+    url(r'web/invite/$', 'invite_web_user', name='invite_web_user'),
     url(r'web/$', 'web_users', name='web_users'),
-
+    url(r'join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='accept_invitation'),
+    
 
     url(r'commcare/?$', 'commcare_users', name='commcare_users'),
     url(r'^httpdigest/?$', 'httpdigest'),

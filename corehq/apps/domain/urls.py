@@ -49,7 +49,6 @@ urlpatterns =\
     patterns('corehq.apps.domain.views',
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
-                        
         url(r'^domain/select/$', 'select', name='domain_select'),
         
         # Fancy regexp lets us get URLs that have an optional path component after registration_request/.

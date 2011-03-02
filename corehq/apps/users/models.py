@@ -14,11 +14,14 @@ from couchdbkit.schema.properties_proxy import SchemaListProperty
 from djangocouch.utils import model_to_doc
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.users.util import django_user_from_couch_id,\
+from corehq.apps.users.util import django_user_from_couch_id, \
     couch_user_from_django_user
 from dimagi.utils.mixins import UnicodeMixIn
 import logging
 from corehq.apps.reports.models import ReportNotification
+from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
+from django.core.urlresolvers import reverse
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -162,6 +165,10 @@ class CouchUser(Document, UnicodeMixIn):
         return django_user_from_couch_id(login_id)
 
     @property
+    def formatted_name(self):
+        return "%s %s" % (self.first_name, self.last_name)
+    
+    @property
     def default_account(self):
         if self.web_account.login_id:
             return self.web_account
@@ -192,14 +199,14 @@ class CouchUser(Document, UnicodeMixIn):
         raise NotImplementedError
 
     def get_django_user(self):
-        return User.objects.get(username = self.web_account.login_id)
+        return User.objects.get(username=self.web_account.login_id)
 
     def add_domain_membership(self, domain, **kwargs):
         for d in self.web_account.domain_memberships:
             if d.domain == domain:
                 # membership already exists
                 return
-        self.web_account.domain_memberships.append(DomainMembership(domain = domain,
+        self.web_account.domain_memberships.append(DomainMembership(domain=domain,
                                                         **kwargs))
     def is_domain_admin(self, domain=None):
         if not domain:
@@ -277,7 +284,7 @@ class CouchUser(Document, UnicodeMixIn):
     
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(phone_number,basestring):
+        if not isinstance(phone_number, basestring):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
     @property
@@ -311,7 +318,36 @@ class CouchUser(Document, UnicodeMixIn):
 """
 Django  models go here
 """
+class Invitation(Document):
+    """
+    When we invite someone to a domain it gets stored here.
+    """
+    domain = StringProperty()
+    email = StringProperty()
+    is_domain_admin = BooleanProperty()
+    invited_by = StringProperty()
+    invited_on = DateTimeProperty()
+    is_accepted = BooleanProperty(default=False)
+    
+    _inviter = None
+    def get_inviter(self):
+        if self._inviter == None:
+            self._inviter = CouchUser.get(self.invited_by)
+        return self._inviter
+    
+    def send_activation_email(self):
+        from corehq.apps.domain.views import send_HTML_email
 
+        url = "http://%s%s" % (Site.objects.get_current().domain, 
+                               reverse("accept_invitation", args=[self.domain, self.get_id]))
+        params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name}
+        text_content = render_to_string("domain/email/domain_invite.txt", params)
+        html_content = render_to_string("domain/email/domain_invite.html", params)
+        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name        
+        send_HTML_email(subject, self.email, text_content, html_content)
+
+    
+    
 class HqUserProfile(CouchUserProfile):
     """
     The CoreHq Profile object, which saves the user data in couch along
@@ -328,9 +364,9 @@ class HqUserProfile(CouchUserProfile):
     def get_couch_user(self):
         return couch_user_from_django_user(self.user)
         
-def create_hq_user_from_commcare_registration_info(domain, username, password, 
-                                                   uuid='', device_id='', 
-                                                   date='', user_data={}, 
+def create_hq_user_from_commcare_registration_info(domain, username, password,
+                                                   uuid='', device_id='',
+                                                   date='', user_data={},
                                                    **kwargs):
     """ na 'commcare user' is a couch user which:
     * does not have a web user
