@@ -63,9 +63,6 @@ urlpatterns =\
         url(r'^domain/registration_confirm(?:/(?P<guid>\w+))?/$', 'registration_confirm',  name='domain_registration_confirm'),        
         url(r'^domain/registration_resend_confirm_email/$', 'registration_resend_confirm_email', name='domain_registration_resend_confirm_email'),
         
-        # domain admin functions
-        url(r'^accounts/admin_own/$', 'admin_own_account_main', name='admin_own_account_main'),
-        url(r'^accounts/admin_own/update/$', 'admin_own_account_update', name='admin_own_account_update')
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
