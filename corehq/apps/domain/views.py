@@ -321,13 +321,6 @@ def registration_resend_confirm_email(request):
     return render_to_response(request, 'domain/registration_resend_confirm_email.html', vals)
 
 ########################################################################################################
-
-@login_and_domain_required
-@domain_admin_required
-def admin_main(request):
-    return render_to_response(request, 'domain/admin_main.html',  {})
-
-########################################################################################################
         
 class UserTable(tables.Table):
     id = tables.Column(verbose_name="Id")
