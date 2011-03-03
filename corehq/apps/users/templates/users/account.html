@@ -69,13 +69,13 @@
         <div id="commcare-accounts">
             {% include "users/partial/commcare_accounts.html" %}
         </div>
+        {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
         <div id="scheduled-reports">
             {% include "users/partial/scheduled_reports.html" %}
         </div>
-        {% if request.user.is_superuser %}
-            <div id="domains">
-                {% include "users/partial/domain_accounts.html" %}
-            </div>
+        <div id="domains">
+            {% include "users/partial/domain_accounts.html" %}
+        </div>
         {% endif %}
     </div>
 {% endblock %}
