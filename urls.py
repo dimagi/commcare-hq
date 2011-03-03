@@ -12,6 +12,7 @@ handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
+from corehq.apps.domain.urls import domain_specific as domain_domain_specific
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     # the receiver needs to accept posts at an endpoint that might 
@@ -24,6 +25,7 @@ domain_specific = patterns('',
     (r'^sms/', include('corehq.apps.sms.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
     # include only those urls in hqwebapp which are domain-specific
+    (r'^domain/', include(domain_domain_specific)),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^', include('django_user_registration.urls')),
     (r'^help/', include('corehq.apps.help.urls')),
