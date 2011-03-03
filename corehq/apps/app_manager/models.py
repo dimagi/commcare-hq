@@ -16,15 +16,11 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
-from django.http import HttpResponseForbidden
 
-
-from django.db import models
 import random
 from dimagi.utils.couch.database import get_db
 import json
 from lxml import etree as ET
-from dimagi.utils.make_uuid import random_hex
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -44,6 +40,13 @@ NS = dict(
 
 def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
+
+def _parse_xml(string):
+    # Work around: ValueError: Unicode strings with encoding
+    # declaration are not supported.  
+    if isinstance(string, unicode):
+        string = string.encode("utf-8")
+    return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
 
 class JadJar(Document):
     """
@@ -257,6 +260,7 @@ class Form(IndexedSchema):
                         __("case_type_id")[self.get_case_type()],
                         __("case_name"),
                         __("user_id"),
+                        __("external_id"),
                     ]
                 ]
                 r = relevance(actions['open_case'])
@@ -404,13 +408,12 @@ class Form(IndexedSchema):
             self.contents = xform
             self._parent._parent.save()
         #</hack>
-
+        
         if not xform:
             return []
 
         # "Unicode strings with encoding declaration are not supported."
-        tree = ET.fromstring(xform.encode('utf-8'))
-
+        tree = _parse_xml(xform)
 
         NS = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
         def lookup_translation(s,pre = 'jr:itext(', post = ')'):
@@ -436,6 +439,7 @@ class Form(IndexedSchema):
                 ref = bind.attrib['nodeset']
             return ref
         questions = []
+        # TODO: make this include everything but triggers; include things in groups
         for elem in tree.findall('{h}body/*'.format(**NS)):
             try:
                 label_ref = elem.find('{f}label'.format(**NS)).attrib['ref']
@@ -452,8 +456,12 @@ class Form(IndexedSchema):
             if question['tag'] == "select1":
                 options = []
                 for item in elem.findall('{f}item'.format(**NS)):
+                    try:
+                        translation = lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref'])
+                    except:
+                        translation = "(No label)"
                     options.append({
-                        'label': lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref']),
+                        'label': translation,
                         'value': item.findtext('{f}value'.format(**NS)).strip()
                     })
                 question.update({'options': options})
@@ -701,7 +709,7 @@ class ApplicationBase(VersionedDoc):
     def post_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.receiver.views.post', args=[self.domain])
+            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
         )
     @property
     def ota_restore_url(self):
@@ -744,8 +752,9 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jad, 'CommCare.jad')
             return jad
 
-    def create_profile(self, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         return render_to_string(template, {
+            'is_odk': is_odk,
             'app': self,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
@@ -754,6 +763,7 @@ class ApplicationBase(VersionedDoc):
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
+        
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -805,7 +815,7 @@ class Application(ApplicationBase):
 
     def fetch_xform(self, module_id, form_id, DEBUG=False):
         form = self.get_module(module_id).get_form(form_id)
-        tree = ET.fromstring(form.contents.encode('utf-8'))
+        tree = _parse_xml(form.contents)
         def fmt(s):
             return s.format(
                 x='{%s}' % form.xmlns,
@@ -814,16 +824,16 @@ class Application(ApplicationBase):
         case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
         
         case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
-        bind_parent = tree.find(fmt('.//{f}model/'))
+        bind_parent = tree.find(fmt('.//{f}model'))
         
         casexml, binds, transformation = form.create_casexml()
         if casexml:
             if case is not None:
                 case_parent.remove(case)
             # casexml has to be valid, 'cuz *I* made it
-            casexml = ET.fromstring(casexml)
+            casexml = _parse_xml(casexml)
             case_parent.append(casexml)
-            if DEBUG: tree = ET.fromstring(ET.tostring(tree))
+            # if DEBUG: tree = ET.fromstring(ET.tostring(tree))
             for bind in bind_parent.findall(fmt('{f}bind')):
                 if bind.attrib['nodeset'].startswith('case/'):
                     bind_parent.remove(bind)
@@ -977,7 +987,7 @@ class Application(ApplicationBase):
 
             for form in module.get_forms():
                 try:
-                    ET.fromstring(form.contents.encode('utf-8'))
+                    _parse_xml(form.contents)
                 except Exception as e:
                     errors.append({
                         'type': "invalid xml",
@@ -1031,7 +1041,8 @@ class RemoteApp(ApplicationBase):
 
     # def fetch_suite(self):
     #     return urlopen(self.suite_url).read()
-    def create_profile(self):
+    def create_profile(self, is_odk=False):
+        # we don't do odk for now anyway
         return urlopen(self.profile_url).read()
         
     def fetch_file(self, location):
@@ -1048,7 +1059,7 @@ class RemoteApp(ApplicationBase):
         files = {
             'profile.xml': self.create_profile(),
         }
-        tree = ET.fromstring(files['profile.xml'])
+        tree = _parse_xml(files['profile.xml'])
         suite_loc = tree.find('suite/resource/location[@authority="local"]').text
         suite_loc, suite = self.fetch_file(suite_loc)
         files[suite_loc] = suite
@@ -1067,7 +1078,9 @@ class RemoteApp(ApplicationBase):
 class DomainError(Exception):
     pass
 
-
+class BuildErrors(Document):
+    
+    errors = ListProperty()
 
 def get_app(domain, app_id):
     """

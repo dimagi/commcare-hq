@@ -21,6 +21,9 @@ from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser
 
 from dimagi.utils.web import render_to_response
+from corehq.apps.users.util import couch_user_from_django_user
+from corehq.apps.users.views import require_domain_admin
+from dimagi.utils.django.email import send_HTML_email
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -100,35 +103,6 @@ Thereafter, you'll be able to log on to your new domain with username "{user}".
     send_HTML_email(subject, recipient, text_content, html_content)
 
 ########################################################################################################
-# 
-# Raises exception on error - returns nothing
-#
-
-def send_HTML_email( subject, recipient, text_content, html_content ):
-
-    # If you get the return_path header wrong, this may impede mail delivery. It appears that the SMTP server
-    # has to recognize the return_path as being valid for the sending host. If we set it to, say, our SMTP
-    # server, this will always be the case (as the server is explicitly serving the host).
-    email_return_path = getattr(settings, 'DOMAIN_EMAIL_RETURN_PATH', None)
-    if email_return_path is None: 
-        # Get last two parts of the SMTP server as a proxy for the domain name from which this mail is sent.
-        # This works for gmail, anyway.
-        email_return_path =  settings.EMAIL_LOGIN
-    
-    email_from = getattr(settings, 'DOMAIN_EMAIL_FROM', None)
-    if email_from is None:
-        email_from = email_return_path
-    from_header = {'From': email_from}  # From-header
-    connection = SMTPConnection(username=settings.EMAIL_LOGIN,
-                                   port=settings.EMAIL_SMTP_PORT,
-                                   host=settings.EMAIL_SMTP_HOST,
-                                   password=settings.EMAIL_PASSWORD,
-                                   use_tls=True,
-                                   fail_silently=False)
-    
-    msg = EmailMultiAlternatives(subject, text_content, email_return_path, [recipient], headers=from_header, connection=connection)
-    msg.attach_alternative(html_content, "text/html")
-    msg.send()
 
 ########################################################################################################
 
@@ -175,11 +149,12 @@ def _create_new_domain_request( request, kind, form, now ):
     dom_req.new_user = new_user
 
     ############# Couch Domain Membership
-    couch_user = CouchUser.from_web_user(new_user)
     if kind == "new_user":
-        couch_user.add_domain_membership(d.name, is_admin=True)
+        couch_user = CouchUser.from_web_user(new_user)
+    else:
+        couch_user = couch_user_from_django_user(new_user)
+    couch_user.add_domain_membership(d.name, is_admin=True)
     couch_user.save()
-    print couch_user.to_json()
     # Django docs say "use is_authenticated() to see if you have a valid user"
     # request.user is an AnonymousUser if not, and that always returns False                
     if request.user.is_authenticated():
@@ -319,13 +294,6 @@ def registration_resend_confirm_email(request):
     return render_to_response(request, 'domain/registration_resend_confirm_email.html', vals)
 
 ########################################################################################################
-
-@login_and_domain_required
-@domain_admin_required
-def admin_main(request):
-    return render_to_response(request, 'domain/admin_main.html',  {})
-
-########################################################################################################
         
 class UserTable(tables.Table):
     id = tables.Column(verbose_name="Id")
@@ -339,47 +307,7 @@ class UserTable(tables.Table):
     invite_status = tables.Column(verbose_name="Invite status")    
         
 ########################################################################################################        
-#
-# Reused by all views that render a user list
-#
-# DUPLICATE OF patient_list_paging...this needs to be factored to a common library. Leaving it alone
-# for now, though, as they're technically different applications, and we haven't put out a common 
-# library yet.
 
-def user_list_paging(request, queryset, sort_vars=None):
-    # django_table checks to see if sort field is allowable - won't raise an error if the field isn't present
-    # (unlike filtering of a raw queryset)
-    
-    order_by=request.GET.get('sort', 'username')
-    user_table = UserTable(queryset, order_by)
-    
-    paginator = Paginator(user_table.rows, 20, orphans=2)
-
-    # Code taken from Django dev docs explaining pagination
-
-    # Make sure page request is an int. If not, deliver first page.
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-
-    # If page request (9999) is out of range, deliver last page of results.
-    try:
-        users = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        users = paginator.page(paginator.num_pages)
-    
-    sort_index = -1
-    counter = 0
-    for name in user_table.columns.names():
-        if order_by == name or order_by == "-%s" % name:
-            sort_index = counter
-            break
-        counter += 1
-    return render_to_response(request, 'domain/user_list.html', 
-                              { 'columns': user_table.columns, 'rows':users, 'sort':order_by, 'sort_vars':sort_vars,
-                                "sort_index": sort_index})
-    
 ########################################################################################################
 
 def _bool_to_yes_no( b ):
@@ -421,169 +349,6 @@ def _dict_for_one_user( user, domain ):
 
     return retval                     
            
-########################################################################################################
-
-@login_and_domain_required
-@domain_admin_required
-def user_list(request):
-    # Info we want to summarize for users is convoluted, and taken from several models. I don't know
-    # an obvious way to get this natively from Django, and the web doesn't have an answer, so I will 
-    # just walk the ORM. We might want to move to custom SQL down the line, but the total number
-    # of users is likely to be small, so there's probably no performance reason to do so.
-    selected_domain = request.user.selected_domain
-    users = User.objects.filter(domain_membership__domain = selected_domain).select_related().all()
-    table_vals = [_dict_for_one_user(u, selected_domain) for u in users]
-    return user_list_paging(request, table_vals)
-
-########################################################################################################
-
-class AdminEditsUserForm( AdminRegistersUserForm ):
-    
-    def __init__(self, existing_username, editing_self, *args, **kwargs):
-        super(AdminEditsUserForm, self).__init__(*args, **kwargs)
-        self.existing_username = existing_username
-        self.editing_self = editing_self
-        self.fields['password_1'].required = False
-        self.fields['password_2'].required = False
-    
-    def clean_username(self):
-        data = self.cleaned_data['username'].strip()
-        # Only throw an error if we try to CHANGE our username, and if that change will conflict with
-        # another existing name
-        if data != self.existing_username and User.objects.filter(username__iexact=data).count() > 0:
-            raise forms.ValidationError('Email already in use; please try another')        
-        return data
-
-    def clean_password_1(self):
-        # Can't get pwd_2 here yet; it hasn't been put in cleaned_data
-        pwd_1 = self.cleaned_data['password_1'].strip()        
-        if pwd_1:
-            return clean_password(self.cleaned_data.get('password_1'))
-        return pwd_1
-                                  
-    def clean_password_2(self):
-        # Could get pwd_1 here, but no point - the overall clean
-        # routine will flag the whole form if they don't match
-        pwd_2 = self.cleaned_data['password_2'].strip()        
-        if pwd_2:
-            return clean_password(self.cleaned_data.get('password_2'))
-        return pwd_2
-
-    def _protect_user_self_edits(self, field, msg):
-        data = self.cleaned_data[field]
-        if self.editing_self and data == False:
-            raise forms.ValidationError(msg)
-        return data
-
-    def clean_is_active(self):
-        return self._protect_user_self_edits('is_active', "Can't disable your own account")
-    
-    def clean_is_active_member(self):
-        return self._protect_user_self_edits('is_active_member', "Can't remove yourself from this domain")
-    
-    def clean_is_domain_admin(self):
-        return self._protect_user_self_edits('is_domain_admin', "Can't remove your own admin privileges")
-
-########################################################################################################    
-
-@login_and_domain_required
-@domain_admin_required
-@transaction.commit_manually
-def edit_user(request, user_id):
-    
-    users = User.objects.filter(domain_membership__domain = request.user.selected_domain, id = user_id).all()
-    if len(users) != 1:
-        detail = 'There is no user with id = ' + user_id + ' in domain "' + request.user.selected_domain.name + '"'
-        vals = {'error_msg':'There was a problem with your request',
-              'error_details':[detail],
-              'show_homepage_link': 1 }
-        return render_to_response(request, 'error.html', vals)
-    user = users[0]
-    membership = user.domain_membership.filter(domain = request.user.selected_domain)[0]
-    # Protect user from accidentally disabling himself
-    editing_self = (request.user.id == int(user_id))
-    
-    if request.method == 'POST': # If the form has been submitted...
-        form = AdminEditsUserForm(user.username, editing_self, request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
-            try:                
-                user.first_name = form.cleaned_data['first_name']
-                user.last_name  = form.cleaned_data['last_name']
-                user.username = form.cleaned_data['username']
-                user.email = form.cleaned_data['email']
-                # Only put in new password if it appears to have been changed
-                if form.cleaned_data['password_1']:
-                    assert(form.cleaned_data['password_2'])
-                    user.set_password(form.cleaned_data['password_1'])                
-                user.is_active = form.cleaned_data['is_active']
-                user.save()
-                
-                # membership            
-                membership.is_active = form.cleaned_data['is_active_member']
-                membership.save()
-                
-                # domain admin?
-                if form.cleaned_data['is_domain_admin']:
-                    pass
-                else:
-                    # TODO: user.remove_permission(domain_admin) 
-                    pass
-            except:
-                transaction.rollback()                
-                vals = {'error_msg':'There was a problem with your request',
-                        'error_details':sys.exc_info(),
-                        'show_homepage_link': 1 }
-                return render_to_response(request, 'error.html', vals)
-            else:
-                transaction.commit()
-                return render_to_response(request, 'domain/user_edit_complete.html', {})
-    else:
-        initial = dict(first_name = user.first_name,
-                       last_name = user.last_name,
-                       username=user.username,
-                       email=user.email,
-                       # PASSWORD!
-                       is_active=user.is_active,
-                       is_active_member=membership.is_active,
-                       # TODO: migrate this to latest couch user permissions
-                       is_domain_admin=False) #user.has_row_perm(request.user.selected_domain, Permissions.ADMINISTRATOR, do_active_test=False) )
-        form = AdminEditsUserForm(user.username, editing_self, initial=initial) # An unbound form
-   
-    vals = dict(form=form, title=' edit user in domain',form_title='Edit user - leave passwords blank if no change required')
-    return render_to_response(request, 'domain/user_registration/registration_admin_does_all_form.html', vals)
-
-########################################################################################################
-
-########################################################################################################
-
-@login_and_domain_required
-def admin_own_account_main(request):
-    return render_to_response(request, 'admin_own_account_main.html',  {})
-
-########################################################################################################
-
-@login_and_domain_required
-def admin_own_account_update(request):
-    if request.method == 'POST': # If the form has been submitted...
-        form = UpdateSelfForm(request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
-            user_from_db = User.objects.get(id = request.user.id)            
-            table_vals = [ {'property':form.base_fields[x].label,
-                            'old_val':user_from_db.__dict__[x],
-                            'new_val':form.cleaned_data[x]} for x in form.cleaned_data.keys() ]
-
-            table = UpdateSelfTable(table_vals, order_by=('Property',))              
-                    
-            user_from_db.__dict__.update(form.cleaned_data)
-            user_from_db.save()
-            return render_to_response(request, 'admin_own_account_update_done.html', dict(table=table))
-    else:
-        initial_vals = {}
-        for x in UpdateSelfForm.base_fields.keys():            
-            initial_vals[x] = request.user.__dict__[x]
-        form = UpdateSelfForm(initial=initial_vals) # An unbound form - can render, but it can't validate
-
-    vals = dict(form=form)
-    return render_to_response(request, 'admin_own_account_update_form.html', vals)
-
-########################################################################################################
+@require_domain_admin
+def manage_domain(request, domain):
+    return render_to_response(request, "domain/manage_domain.html", {})

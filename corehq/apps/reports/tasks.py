@@ -4,8 +4,8 @@ from celery.decorators import periodic_task
 from corehq.apps.reports.models import DailyReportNotification
 from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule import config
-from corehq.apps.domain.views import send_HTML_email
 from corehq.apps.reports.schedule.html2text import html2text
+from dimagi.utils.django.email import send_HTML_email
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    

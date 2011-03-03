@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from corehq.apps.receiver.signals import post_received, ReceiverResult,\
+from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
 from corehq.apps.phone import xml as xml
 from datetime import datetime
@@ -36,4 +36,4 @@ def send_default_response(sender, xform, **kwargs):
         return ReceiverResult(xml.get_response("Thanks for submitting!"), Certainty.MILD)
 
 
-post_received.connect(send_default_response)
+successful_form_received.connect(send_default_response)

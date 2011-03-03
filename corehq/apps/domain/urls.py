@@ -49,7 +49,6 @@ urlpatterns =\
     patterns('corehq.apps.domain.views',
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
-                        
         url(r'^domain/select/$', 'select', name='domain_select'),
         
         # Fancy regexp lets us get URLs that have an optional path component after registration_request/.
@@ -63,12 +62,6 @@ urlpatterns =\
         url(r'^domain/registration_confirm(?:/(?P<guid>\w+))?/$', 'registration_confirm',  name='domain_registration_confirm'),        
         url(r'^domain/registration_resend_confirm_email/$', 'registration_resend_confirm_email', name='domain_registration_resend_confirm_email'),
         
-        # domain admin functions
-        url(r'^domain/admin/$', 'admin_main', name='domain_admin_main'),
-        url(r'^domain/admin/user_list/$', 'user_list', name='domain_user_list'),
-        url(r'^domain/admin/edit_user/(?P<user_id>\d{1,10})/$', 'edit_user', name='domain_edit_user'),
-        url(r'^accounts/admin_own/$', 'admin_own_account_main', name='admin_own_account_main'),
-        url(r'^accounts/admin_own/update/$', 'admin_own_account_update', name='admin_own_account_update')
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
@@ -79,4 +72,7 @@ urlpatterns =\
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
     )
         
-        
+   
+domain_specific = patterns('corehq.apps.domain.views',
+    url(r'^$', 'manage_domain', name='manage_domain'),
+)

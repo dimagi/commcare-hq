@@ -8,7 +8,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions
+from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
+    BuildErrors
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -17,7 +18,6 @@ from django.views.decorators.http import require_POST
 from django.conf import settings
 from dimagi.utils.web import get_url_base
 from BeautifulSoup import BeautifulStoneSoup
-from lxml import etree as ET
 import json
 from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
@@ -26,7 +26,14 @@ import urlparse
 from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
-from lxml.etree import XMLSyntaxError
+from couchdbkit.resource import ResourceNotFound
+import logging
+try:
+    from lxml.etree import XMLSyntaxError
+except ImportError:
+    import logging
+    logging.error("lxml not installed! apps won't work properly!!")
+from django.contrib import messages
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
@@ -204,8 +211,22 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_errors = None
     except XMLSyntaxError as e:
         xform_questions = []
-        xform_errors = e.msg
-
+#        xform_errors = e.msg
+        messages.error(req, e.msg)
+    except Exception, e:
+        logging.exception(e)
+        xform_questions = []
+        messages.error(req, "Error in form: %s" % e)
+    
+    build_errors_id = req.GET.get('build_errors', "")
+    build_errors = []
+    if build_errors_id:
+        try:
+            error_doc = BuildErrors.get(build_errors_id)
+            build_errors = error_doc.errors
+            error_doc.delete()
+        except ResourceNotFound:
+            pass            
     context = {
         'domain': domain,
         'applications': applications,
@@ -218,7 +239,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         #'xform_contents': xform_contents,
         #'form_err': err if form and has_err else None,
         "xform_questions": xform_questions,
-        "xform_errors": xform_errors,
+        #"xform_errors": xform_errors,
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
         'case_fields': json.dumps(case_fields),
 
@@ -236,7 +257,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'URL_BASE': get_url_base(),
         'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
 
-        'build_errors': map(json.loads, req.GET.getlist('build_errors')),
+        'build_errors': build_errors,
 
         'util': TemplateFunctions,
     }
@@ -636,9 +657,12 @@ def save_copy(req, domain, app_id):
         url = url._replace(query=urllib.urlencode(q, doseq=True))
         next = urlparse.urlunparse(url)
         return next
-    next = replace_params(next, build_errors=map(json.dumps, errors))
     if not errors:
         app.save_copy()
+    else:
+        errors = BuildErrors(errors=errors)
+        errors.save()
+        next = replace_params(next, build_errors=errors.get_id)
     return HttpResponseRedirect(next)
 
 @require_POST
@@ -707,6 +731,17 @@ def download_profile(req, domain, app_id):
     return HttpResponse(
         get_app(domain, app_id).create_profile()
     )
+
+def download_odk_profile(req, domain, app_id):
+    """
+    See ApplicationBase.create_profile
+
+    """
+    return HttpResponse(
+        get_app(domain, app_id).create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
 def download_suite(req, domain, app_id):
     """
     See Application.create_suite

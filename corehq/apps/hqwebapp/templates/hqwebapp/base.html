@@ -6,9 +6,9 @@
         <meta charset="utf-8" />
         <title>CommCare HQ</title>
         
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="http://plugins.jquery.com/files/jquery.cookie.js.txt"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js"></script>
 
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/main.css" />
@@ -24,7 +24,7 @@
         <div id="wrapper">
             <header>
                 <div class="fixed-width">
-                    <a id="logo" href="/{% if domain %}a/{{ domain }}/{% endif %}">
+                    <a id="logo" href="{% url homepage %}">
                         CommCare HQ
                     </a>
                     <nav>
@@ -58,6 +58,8 @@
                             {% endif %}
                             as <strong>{{ user.username }}</strong>
                         </p>
+                    {% else %}
+                    	<p style="float:right;">Already have an account? <a href="{% url login %}">Sign in</a></p>
                     {% endif %}
                 </div>
             </header>

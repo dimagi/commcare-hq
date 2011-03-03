@@ -223,6 +223,8 @@
                         {% endif %}
                         <th>Version</th>
                         <th>Short URL</th>
+                        <th>Jad File</th>
+                        <th>Jar File</th>
                         {% if edit %}
                             <th></th>
                         {% endif %}
@@ -249,6 +251,12 @@
                                 {% endif %}
                             </td>
                             <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">CommCare.jad</a>
+                            </td>
+                            <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">CommCare.jar</a>
+                            </td>
+                            <td>
                                 <a class="dialog_opener" href="">Send to Phones</a>
                                 <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
                                     <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
@@ -259,6 +267,10 @@
                                     </form>
                                 </div>
                             </td>
+                            <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_odk_profile domain saved_app.id %}">Download to CommCare ODK</a>
+                            </td>
+                            
                             {% if edit %}
                                 <td>
                                     {% if saved_app.version != app.version %}

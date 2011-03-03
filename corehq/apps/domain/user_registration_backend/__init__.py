@@ -15,7 +15,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
-from corehq.apps.domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm, UserRegistersSelfForm, AdminRegistersUserForm
+from corehq.apps.domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm
 from django_user_registration import signals
 from django_user_registration.backends import get_backend
 from django_user_registration.backends.default import DefaultBackend
@@ -23,215 +23,7 @@ from django_user_registration.models import RegistrationProfile
 
 ########################################################################################################
 from corehq.apps.users.models import CouchUser
-
-class UserRegistersSelfBackend( DefaultBackend ):
-    """
-    Workflow is slightly different than that  given by the default; a domain 
-    administrator can send an invite to a user, who fills out the rest of 
-    his/her info.
-
-    1. Admin inputs email of user to invite, and a dummy inactive account 
-       is created. Username and password are meaningless.
-
-    2. Email is sent to user with activation link.
-
-    3. User clicks activation link and recieves a form that solicits the
-       "real" username, first name, last name, and password. Upon successful
-       receipt, the account is made active.
-
-    Using this backend requires that
-
-    * ``registration`` be listed in the ``INSTALLED_APPS`` setting
-      (since this backend makes use of models defined in this
-      application).
-
-    * The setting ``ACCOUNT_ACTIVATION_DAYS`` be supplied, specifying
-      (as an integer) the number of days from registration during
-      which a user may activate their account (after that period
-      expires, activation will be disallowed).
-
-    * The creation of the templates
-      ``registration/activation_email_subject.txt`` and
-      ``registration/activation_email.txt``, which will be used for
-      the activation email. See the notes for this backends
-      ``register`` method for details regarding these templates.
-
-    Additionally, registration can be temporarily closed by adding the
-    setting ``REGISTRATION_OPEN`` and setting it to
-    ``False``. Omitting this setting, or setting it to ``True``, will
-    be interpreted as meaning that registration is currently open and
-    permitted.
-
-    Internally, this is accomplished via storing an activation key in
-    an instance of ``registration.models.RegistrationProfile``. See
-    that model and its custom manager for full documentation of its
-    fields and supported operations.
-    
-    """    
-    @transaction.commit_on_success
-    def register(self, request, **kwargs):
-        """
-        Given an email address, create a dummy user account, with a 
-        nonsense username and password. They'll be filled out properly
-        by the user when he/she responds to the invitation email.
-
-        Along with the new ``User`` object, a new
-        ``registration.models.RegistrationProfile`` will be created,
-        tied to that ``User``, containing the activation key which
-        will be used for this account. That dummy user will be given
-        a membership in the domain to which the active admin (the 
-        user who is sending the invitation) belongs.
-
-        An email will be sent to the supplied email address; this
-        email should contain an activation link. The email will be
-        rendered using two templates. See the documentation for
-        ``RegistrationProfile.send_activation_email()`` for
-        information about these templates and the contexts provided to
-        them.
-
-        After the ``User`` and ``RegistrationProfile`` are created and
-        the activation email is sent, the signal
-        ``registration.signals.user_registered`` will be sent, with
-        the new ``User`` as the keyword argument ``user`` and the
-        class of this backend as the sender.
-
-        """
-        
-        email = kwargs['email']
-        if Site._meta.installed:
-            site = Site.objects.get_current()
-        else:
-            site = RequestSite(request)
-        
-        username_max_len = User._meta.get_field('username').max_length
-        username = uuid.uuid1().hex[:username_max_len]
-        password = uuid.uuid1().hex # will be cut down to db field size during hashing        
-    
-        # Can't call create_inactive_user, because that has a commit_on_success
-        # transaction wrapper. That won't work here; only the outermost function
-        # (this one) can call commit or rollback. So, we'll manually carry out the
-        # requisite steps: create user, create registration profile, create domain
-        # membership
-        
-        new_user = User()
-        new_user.first_name = 'unregistered'
-        new_user.last_name  = 'unregistered'
-        new_user.username = username
-        new_user.email = email
-        new_user.set_password(password)
-        new_user.is_staff = False # Can't log in to admin site
-        new_user.is_active = False # Activated upon receipt of confirmation
-        new_user.is_superuser = True # For now make people superusers because permissions are a pain
-        new_user.last_login =  datetime.datetime(1970,1,1)
-        # date_joined is used to determine expiration of the invitation key - I'd like to
-        # munge it back to 1970, but can't because it makes all keys look expired.
-        new_user.date_joined = datetime.datetime.utcnow()
-        new_user.save()
-
-        couch_user = CouchUser.from_web_user(new_user)
-        couch_user.add_domain_membership(request.user.selected_domain.name)
-        couch_user.save()
-
-        # Registration profile
-        registration_profile = RegistrationProfile.objects.create_profile(new_user)
-
-        registration_profile.send_activation_email(site)
-
-                         
-        signals.user_registered.send(sender=self.__class__,
-                                     user=new_user,
-                                     request=request)
-        return new_user
-        
-        
-########################################################################################################        
-    
-    def get_form_class(self, request):
-        """
-        Return the default form class used for user user_registration.
-        
-        """
-        return UserEmailOnlyRegistrationRequestForm
-
-########################################################################################################
-    
-    def post_registration_redirect(self, request, user):
-        """
-        Return the name of the URL to redirect to after successful
-        user registration.
-        
-        """
-        return ('registration_request_complete', (), {})
-        
-########################################################################################################        
-    
-    def post_activation_redirect(self, request, user):
-        """
-        Return the name of the URL to redirect to after successful
-        account activation.
-        
-        """
-        return ('registration_activation_complete', (), {'caller':'user', 'account':user.username}) 
-    
-########################################################################################################
-    
-    @transaction.commit_manually
-    def activate(self, request, activation_key):
-        """
-        Given an an activation key, look up and activate the user
-        account corresponding to that key (if possible).
-
-        After successful activation, the signal
-        ``registration.signals.user_activated`` will be sent, with the
-        newly activated ``User`` as the keyword argument ``user`` and
-        the class of this backend as the sender.
-        
-        """ 
-        
-        # After a user has successfully registered, the activation key is overwritten. Thus, we
-        # may not be able to look it up. Downside to this design is that you can't distinguish bad
-        # keys from keys that have already been used.
-        try:
-            profile = RegistrationProfile.objects.get(activation_key=activation_key)
-        except:
-            return None # Error page displayed by caller
-        if profile.activation_key_expired():
-            msg = "The activation key for this invitation has expired. Typical expiration is seven days from creation of the invitation."
-            return render_to_response('domain/user_registration/activation_failed.html', {'msg': msg}, context_instance = RequestContext(request))    
-        
-        if request.method == 'POST': # If the form has been submitted...
-            form = UserRegistersSelfForm(request.POST) # A form bound to the POST data
-            if form.is_valid(): # All validation rules pass
-                try:
-                    activated = RegistrationProfile.objects.activate_user(activation_key)                               
-                    if activated:                                              
-                        activated.first_name = form.cleaned_data['first_name']
-                        activated.last_name  = form.cleaned_data['last_name']
-                        activated.username = form.cleaned_data['email']        
-                        assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
-                        activated.set_password(form.cleaned_data['password_1'])                                                                
-                        activated.date_joined = datetime.datetime.utcnow() 
-                        # is_active is already set by the above activate_user call
-                        activated.save()
-                        signals.user_activated.send(sender=self.__class__, user=activated, request=request)
-                    else: 
-                        # Couldn't activate - some problem with the key? Kill the transaction and return
-                        # None, which prompts caller (activate_by_form) to return the error screen                        
-                        transaction.rollback()
-                        return None                                          
-                except:
-                    transaction.rollback()                
-                    vals = {'error_msg':'There was a problem with your request',
-                            'error_details':sys.exc_info(),
-                            'show_homepage_link': 1 }
-                    return render_to_response('error.html', vals, context_instance = RequestContext(request))                  
-                else:
-                    transaction.commit()  
-                    return activated
-        else:
-            form = UserRegistersSelfForm() # An unbound form
-    
-        return render_to_response('domain/user_registration/activation_form.html', {'form': form}, context_instance = RequestContext(request))    
+from dimagi.utils.django.email import send_HTML_email
 
 ########################################################################################################
 #
@@ -338,13 +130,11 @@ To login, navigate to the following link:
 
     subject = 'New CommCareHQ account'
     
-    from corehq.apps.domain.views import send_HTML_email
-
     send_HTML_email(subject, recipient, text_content, html_content)
 
 ########################################################################################################
 
-def register_user(domain, first_name, last_name, email, password, is_active, is_active_member, is_domain_admin):
+def register_user(domain, first_name, last_name, email, password, is_domain_admin, send_email):
     new_user = User()
     new_user.first_name = first_name
     new_user.last_name  = last_name
@@ -352,7 +142,7 @@ def register_user(domain, first_name, last_name, email, password, is_active, is_
     new_user.email = email
     new_user.set_password(password)
     new_user.is_staff = False # Can't log in to admin site
-    new_user.is_active = is_active
+    new_user.is_active = True
     new_user.is_superuser = False
     new_user.last_login =  datetime.datetime(1970,1,1)
     # date_joined is used to determine expiration of the invitation key - I'd like to
@@ -360,42 +150,12 @@ def register_user(domain, first_name, last_name, email, password, is_active, is_
     new_user.date_joined = datetime.datetime.utcnow()
     new_user.save()
         
-
-    _send_user_registration_email(new_user.email, domain, new_user.username, password)
+    if send_email:
+        _send_user_registration_email(new_user.email, domain, new_user.username, password)
     # Add membership info to Couch
-    #couch_user = new_user.get_profile().get_couch_user()
     couch_user = CouchUser.from_web_user(new_user)
     couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
     couch_user.save()
     return new_user
-
-@transaction.commit_manually
-@login_and_domain_required
-def register_admin_does_all(request, domain, *args, **kwargs):
-    if request.method == 'POST': # If the form has been submitted...
-        form = AdminRegistersUserForm(request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
-            data = form.cleaned_data
-            data['password'] = data['password_1']
-            del data['password_1']
-            del data['password_2']
-            try:
-                new_user = register_user(domain, **data)
-                transaction.commit()
-                # Redirect after POST
-                return HttpResponseRedirect( reverse('registration_activation_complete', kwargs={'caller':'admin', 'account':new_user.username}) )
-            except:
-                transaction.rollback()
-                vals = {'error_msg':'There was a problem with your request',
-                'error_details':sys.exc_info(),
-                'show_homepage_link': 1 }
-                return render_to_response('error.html', vals, context_instance = RequestContext(request))
-    else:
-        form = AdminRegistersUserForm() # An unbound form
-        
-    context = {'form': form, 'domain': domain}
-    return render_to_response('domain/user_registration/registration_admin_does_all_form.html', 
-                              context, 
-                              context_instance = RequestContext(request)) 
 
 ########################################################################################################

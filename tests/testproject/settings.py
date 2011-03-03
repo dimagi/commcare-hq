@@ -167,7 +167,7 @@ DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
 ####### Shared/Global/UI Settings ######
 
 # restyle some templates
-BASE_TEMPLATE="hq-layout.html"
+BASE_TEMPLATE="hqwebapp/base.html"
 LOGIN_TEMPLATE="login_and_password/login.html"
 LOGGEDOUT_TEMPLATE="loggedout.html"
 

@@ -37,15 +37,21 @@ class UserRegistersSelfForm(RegistrationRequestForm):
         # Value of 'kind' is irrelevant in this context
         super(UserRegistersSelfForm, self).__init__(None, *args, **kwargs)
         del self.fields['domain_name']
-        del self.fields['email']        
+        
         
 ########################################################################################################
         
+class AdminInvitesUserForm(_BaseForm, forms.Form):
+    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
+    # and do need to relabel some things.
+    email       =  forms.EmailField(label="User's email address", 
+                                    max_length=User._meta.get_field('email').max_length)
+    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
+    
+    
 class AdminRegistersUserForm(RegistrationRequestForm): 
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
-    is_active = forms.BooleanField(label='User is active (can login)', initial=True, required=False)
-    is_active_member = forms.BooleanField(label='User is active member of this domain', initial=True, required=False)
     is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
            
     def __init__(self, *args, **kwargs):
