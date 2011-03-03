@@ -267,6 +267,10 @@
                                     </form>
                                 </div>
                             </td>
+                            <td>
+                                <a href="{% url corehq.apps.app_manager.views.download_odk_profile domain saved_app.id %}">Download to CommCare ODK</a>
+                            </td>
+                            
                             {% if edit %}
                                 <td>
                                     {% if saved_app.version != app.version %}

@@ -731,6 +731,17 @@ def download_profile(req, domain, app_id):
     return HttpResponse(
         get_app(domain, app_id).create_profile()
     )
+
+def download_odk_profile(req, domain, app_id):
+    """
+    See ApplicationBase.create_profile
+
+    """
+    return HttpResponse(
+        get_app(domain, app_id).create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
 def download_suite(req, domain, app_id):
     """
     See Application.create_suite

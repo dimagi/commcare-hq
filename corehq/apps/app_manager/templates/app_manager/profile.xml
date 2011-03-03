@@ -23,6 +23,10 @@
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
+    {% if is_odk %}
+        <location authority="remote">{{ suite_url }}</location>
+    {% else %}
         <location authority="local">jr://resource/{{ suite_loc }}</location>
+    {% endif %}
     </resource></suite>
 </profile>

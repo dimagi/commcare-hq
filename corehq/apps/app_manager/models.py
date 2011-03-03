@@ -751,8 +751,9 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jad, 'CommCare.jad')
             return jad
 
-    def create_profile(self, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         return render_to_string(template, {
+            'is_odk': is_odk,
             'app': self,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
@@ -761,6 +762,7 @@ class ApplicationBase(VersionedDoc):
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
+        
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -1038,7 +1040,8 @@ class RemoteApp(ApplicationBase):
 
     # def fetch_suite(self):
     #     return urlopen(self.suite_url).read()
-    def create_profile(self):
+    def create_profile(self, is_odk=False):
+        # we don't do odk for now anyway
         return urlopen(self.profile_url).read()
         
     def fetch_file(self, location):
