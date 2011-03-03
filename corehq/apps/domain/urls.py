@@ -72,4 +72,7 @@ urlpatterns =\
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
     )
         
-        
+   
+domain_specific = patterns('corehq.apps.domain.views',
+    url(r'^$', 'manage_domain', name='manage_domain'),
+)

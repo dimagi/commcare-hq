@@ -350,5 +350,5 @@ def _dict_for_one_user( user, domain ):
     return retval                     
            
 @require_domain_admin
-def manage_domain(self, request, domain):
+def manage_domain(request, domain):
     return render_to_response(request, "domain/manage_domain.html", {})
