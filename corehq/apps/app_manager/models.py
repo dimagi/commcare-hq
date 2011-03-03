@@ -260,6 +260,7 @@ class Form(IndexedSchema):
                         __("case_type_id")[self.get_case_type()],
                         __("case_name"),
                         __("user_id"),
+                        __("external_id"),
                     ]
                 ]
                 r = relevance(actions['open_case'])
