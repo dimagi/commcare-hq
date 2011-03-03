@@ -778,7 +778,7 @@ class ApplicationBase(VersionedDoc):
                 from pygooglechart import QRChart
             except ImportError:
                 raise Exception(MISSING_DEPENDECY)
-            HEIGHT = WIDTH = 125
+            HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url)
             
