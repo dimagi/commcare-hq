@@ -23,6 +23,7 @@ from django_user_registration.models import RegistrationProfile
 
 ########################################################################################################
 from corehq.apps.users.models import CouchUser
+from dimagi.utils.django.email import send_HTML_email
 
 ########################################################################################################
 #
@@ -129,8 +130,6 @@ To login, navigate to the following link:
 
     subject = 'New CommCareHQ account'
     
-    from corehq.apps.domain.views import send_HTML_email
-
     send_HTML_email(subject, recipient, text_content, html_content)
 
 ########################################################################################################

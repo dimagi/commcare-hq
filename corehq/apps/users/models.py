@@ -22,6 +22,7 @@ from corehq.apps.reports.models import ReportNotification
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
+from dimagi.utils.django.email import send_HTML_email
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -336,7 +337,6 @@ class Invitation(Document):
         return self._inviter
     
     def send_activation_email(self):
-        from corehq.apps.domain.views import send_HTML_email
 
         url = "http://%s%s" % (Site.objects.get_current().domain, 
                                reverse("accept_invitation", args=[self.domain, self.get_id]))
