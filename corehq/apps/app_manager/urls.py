@@ -47,6 +47,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'download/(?P<app_id>\w+)/CommCare_raw.jar',                          'download_jar'),
     (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_zipped_jar'),
 
+    (r'odk/(?P<app_id>\w+)/qr_code$',                                       'odk_qr_code'),
+    (r'odk/(?P<app_id>\w+)/install$',                                       'odk_install'),
+    
     (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
     (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),
     (r'delete_copy/(?P<app_id>\w+)/$',                                      'delete_copy'),

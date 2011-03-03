@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>odk install</title>
+</head>
+<body>
+<div style="background-color:white; border:1px solid #555; padding:2em;">
+<h3>Install to CommCare ODK by taking a picture of the image below on your phone.</h3>
+<p style="text-align:center;">
+<img src="{% url corehq.apps.app_manager.views.odk_qr_code domain app.get_id %}" width=100 alt="Download" >
+</p> 
+<p>You can also visit: <a href="{{app.odk_profile_url}}">{{ app.odk_profile_url }}</a> in your mobile browser.</p>
+</div>
+</body> 
+</html>

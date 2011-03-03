@@ -2,8 +2,15 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% block head %}
-    
+    {% include "imports/jqmodal.html" %}
     <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>
+    <script type="text/javascript">
+    $().ready(function() {
+        $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
+                                   ajaxText: "Please wait while we load that for you..." });
+    });
+    </script>
+    
     <style type="text/css">
         #main_container {
             padding: 0;
@@ -268,7 +275,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="{% url corehq.apps.app_manager.views.download_odk_profile domain saved_app.id %}">Download to CommCare ODK</a>
+                                <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
                             </td>
                             
                             {% if edit %}
@@ -295,5 +302,8 @@
                 {% endif %}
             </div>
         {% endif %}
+    </div>
+    <div class="jqmWindow" id="odk-install-placeholder">
+    Please wait while that loads... 
     </div>
 {% endblock %}

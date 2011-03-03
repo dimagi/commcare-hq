@@ -732,6 +732,14 @@ def download_profile(req, domain, app_id):
         get_app(domain, app_id).create_profile()
     )
 
+def odk_install(req, domain, app_id):
+    return render_to_response(req, "app_manager/odk_install.html", 
+                              {"domain": domain, "app": get_app(domain, app_id)})
+
+def odk_qr_code(req, domain, app_id):
+    qr_code = get_app(domain, app_id).get_odk_qr_code()
+    return HttpResponse(qr_code, mimetype="image/png")
+
 def download_odk_profile(req, domain, app_id):
     """
     See ApplicationBase.create_profile

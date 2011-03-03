@@ -21,7 +21,16 @@ import random
 from dimagi.utils.couch.database import get_db
 import json
 from lxml import etree as ET
+from couchdbkit.resource import ResourceNotFound
+from tempfile import NamedTemporaryFile
+import tempfile
+import os
 
+MISSING_DEPENDECY = \
+"""Aw shucks, someone forgot to install the google chart library 
+on this machine and this feature needs it. To get it, run 
+easy_install pygooglechart.  Until you do that this won't work.
+"""
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -751,6 +760,37 @@ class ApplicationBase(VersionedDoc):
             jad = jad.render()
             self.put_attachment(jad, 'CommCare.jad')
             return jad
+    
+    @property
+    def odk_profile_url(self):
+        
+        return "%s%s" % (
+            get_url_base(),
+            reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
+        )
+        
+    def get_odk_qr_code(self):
+        """Returns a QR code, as a PNG to install on CC-ODK"""
+        try:
+            return self.fetch_attachment("qrcode.png")
+        except ResourceNotFound, e:
+            try:
+                from pygooglechart import QRChart
+            except ImportError:
+                raise Exception(MISSING_DEPENDECY)
+            HEIGHT = WIDTH = 125
+            code = QRChart(HEIGHT, WIDTH)
+            code.add_data(self.odk_profile_url)
+            
+            # "Level H" error correction with a 0 pixel margin
+            code.set_ec('H', 0)
+            f, fname = tempfile.mkstemp()
+            code.download(fname)
+            os.close(f)
+            with open(fname, "rb") as f:
+                png_data = f.read()
+                self.put_attachment(png_data, "qrcode.png", content_type="image/png")
+            return png_data
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         return render_to_string(template, {
@@ -770,7 +810,7 @@ class ApplicationBase(VersionedDoc):
     def create_zipped_jar(self):
         try:
             return self.fetch_attachment('CommCare.jar')
-        except:
+        except Exception:
             jar = self.fetch_jar()
             files = self.create_all_files()
             buffer = StringIO(jar)
