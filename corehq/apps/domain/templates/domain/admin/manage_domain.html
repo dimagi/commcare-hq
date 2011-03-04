@@ -1,14 +1,12 @@
-{% extends base_template %}
+{% extends "domain/admin/domain_admin_base.html" %}
 {% load i18n %}
-{% block head %}
-{{ super.head }}
-    <script type="text/javascript" src="/static/domain/js/dialog.js"></script>
-{% endblock %}
 {% block content %}
-<div id="main_container", class="container">
-    <h1>Domain Forwarding</h1>
-    {% if repeaters %}
-    <h2>Forwarding to the following URLS</h2>
+<div id="main_container">
+    <div id="domain_forwarding" class="ui-widget ui-corner-all">
+          <h2 id="header" class="ui-widget-header ui-corner-top">Domain Forwarding</h2>
+          <div id="content" class="ui-widget-content">
+          {% if repeaters %}
+    <p>Currently forwarding forms to the following urls:</p>
     <table style="position:relative;">
     {% for repeater in repeaters %}
         <tr>
@@ -32,5 +30,9 @@
     <p>You haven't configured any urls to forward to yet.</p>
     {% endif %}
     <a class="new_link" href="{% url add_repeater domain %}">Add a forwarding location</a>
+    </div>
+      </div>
+  
+    
 </div>
 {% endblock %}
