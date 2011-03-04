@@ -1,0 +1,36 @@
+{% extends base_template %}
+{% load i18n %}
+{% block head %}
+{{ super.head }}
+    <script type="text/javascript" src="/static/domain/js/dialog.js"></script>
+{% endblock %}
+{% block content %}
+<div id="main_container", class="container">
+    <h1>Domain Forwarding</h1>
+    {% if repeaters %}
+    <h2>Forwarding to the following URLS</h2>
+    <table style="position:relative;">
+    {% for repeater in repeaters %}
+        <tr>
+            <td>{{ repeater.url }}</td>
+            <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
+                        <div class="delete_dialog" title="Cancel Forwarding?">
+                            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="POST">
+                                <table>
+                                    <tr><td>
+                                    Are you sure you want to stop forwarding to: {{ repeater.url }}?
+                                    </td></tr>
+                                </table>
+                                <input type="submit" value="Stop" />
+                            </form>
+                        </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% else %}
+    <p>You haven't configured any urls to forward to yet.</p>
+    {% endif %}
+    <a class="new_link" href="{% url add_repeater domain %}">Add a forwarding location</a>
+</div>
+{% endblock %}

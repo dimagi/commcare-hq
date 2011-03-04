@@ -43,21 +43,23 @@
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}
-                                    {% if user.is_authenticated %}
-                                        <li><a href='/accounts/logout'>Sign Out</a></li>
-                                    {% endif %}
                                 </ul>
                             {% endblock %}
                         </ul>
                     </nav>
                     {% if request.user.is_authenticated %}
-                        <p id="logged-in">
+                        <div id="logged-in">
+                            <p>
                             Signed in
                             {% if domain %}
                                 to <strong>{{ domain }}</strong>
                             {% endif %}
                             as <strong>{{ user.username }}</strong>
-                        </p>
+                             | <a href='/accounts/logout'>Sign Out</a></p>
+                            </p>
+                            <p style="text-align:right;">
+                        </div>
+                        
                     {% else %}
                     	<p style="float:right;">Already have an account? <a href="{% url login %}">Sign in</a></p>
                     {% endif %}
@@ -78,7 +80,12 @@
             </div>
         </div>
         <footer>
-            <div class="fixed-width">
+            <div class="fixed-width span-12">
+                {% if domain %}
+                <p id="help">Confused? Try the <a href="{% url corehq.apps.help.views.default domain %}">Help Pages</a>.</p>
+                {% endif %}
+            </div>
+            <div class="fixed-width span-12 last">
                 <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
             </div>
         </footer>

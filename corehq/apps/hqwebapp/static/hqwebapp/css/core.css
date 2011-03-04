@@ -151,7 +151,7 @@ header {
     header #logged-in {
         clear: right;
         float: right;
-        margin-top: 10px;
+        margin-top: 4em;
         padding: 0;
     }
 
@@ -163,6 +163,10 @@ footer {
     #copyright {
         color: #555;
         text-align: right;
+    }
+    #help {
+        color: #555;
+        float: left;
     }
 
 #main {
@@ -336,6 +340,10 @@ input[type='text'], input[type='password'] {
     margin: 1px;
     padding: 2px;
 }
+input[type='text'].url {
+    min-width: 500px;
+}
+
 input[type='text'], input[type='password'], textarea {
     border: 1px solid #ccc;
     background-color: #f5f5ff;

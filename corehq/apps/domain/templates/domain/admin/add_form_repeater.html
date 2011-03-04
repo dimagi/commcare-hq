@@ -1,0 +1,12 @@
+{% extends base_template %}
+{% block content %}
+<div id="main_container">
+    <h1>Configure Domain Forwarding</h1>
+    <form method="post">
+    <table>
+        {{form.as_table}}
+        <tr><td></td><td><input type="submit" value="Start Forwarding" /></td></tr>
+    </table>
+    </form>
+</div>
+{% endblock %}
