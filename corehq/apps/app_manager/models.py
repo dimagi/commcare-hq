@@ -887,7 +887,15 @@ class Application(ApplicationBase):
                     if tree.find(fmt(xpath)) is None:
                         raise Exception("Invalid XPath Expression %s" % xpath)
                 bind_parent.append(bind)
-
+        
+        if case_parent is None:
+            raise XFormError("Couldn't get the case XML from one of your forms. "
+                             "A common reason for this is if you don't have the "
+                             "xforms namespace defined in your form. Please verify "
+                             'that the xmlns="http://www.w3.org/2002/xforms" '
+                             "attribute exists in your form.")
+            
+        
         if case_parent.find(fmt('{orx}meta')) is None:
             orx = fmt("{orx}")[1:-1]
             nsmap = {"orx": orx}
