@@ -116,9 +116,10 @@ def accept_invitation(request, domain, invitation_id):
         # list of domains
         couch_user = couch_user_from_django_user(request.user)
         couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
-        messages.success(request, "You have been added to the %s domain" % domain)
+        couch_user.save()
         invitation.is_accepted = True
         invitation.save()
+        messages.success(request, "You have been added to the %s domain" % domain)
         return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
     else:
         # if you're not authenticated we need you to fill out your information
