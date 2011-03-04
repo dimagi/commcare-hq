@@ -35,11 +35,23 @@
                                         {% get_tabs as tabs %}
                                         {% for tab in tabs %}
                                             {% if tab.visible %}
+                                            {# hack for domain admins only seeing domain tab #}
+                                            {% ifequal tab.caption "My Domain" %}
+                                            {% if request.couch_user.is_domain_admin %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
                                             {% else %}
                                                 <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
                                             {% endif %}
+                                            {% endif %}
+                                            {# endhack for domain admins only seeing domain tab #}
+                                            {% else %}
+                                            {% if tab.is_active %}
+                                                <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
+                                            {% else %}
+                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                            {% endif %}
+                                            {% endifequal %}
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}
