@@ -298,7 +298,9 @@ def view_app(req, domain, app_id=''):
         app_id = context['applications'][0]['id']
         return back_to_main(edit=False, **locals())
     if app and app.copy_of:
-        raise Http404
+        # don't fail hard.
+        #raise Http404
+        return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
     force_edit = False
     if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
         edit = True
