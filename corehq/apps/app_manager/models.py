@@ -55,7 +55,11 @@ def _parse_xml(string):
     # declaration are not supported.  
     if isinstance(string, unicode):
         string = string.encode("utf-8")
-    return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
+    try:
+        return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
+    except ET.ParseError, e:
+        raise XFormError("Problem parsing an XForm. The parsing error is: %s" % (e if e.message else "unknown"))
+    
 
 class JadJar(Document):
     """
@@ -408,7 +412,7 @@ class Form(IndexedSchema):
             ...
         ]
 
-        if the xform is bad, it will raise an XMLSyntaxError
+        if the xform is bad, it will raise an XFormError
 
         """        
         #<hack>
@@ -747,7 +751,7 @@ class ApplicationBase(VersionedDoc):
     def create_jad(self, template="app_manager/CommCare.jad"):
         try:
             return self.fetch_attachment('CommCare.jad')
-        except:
+        except ResourceNotFound:
             jad = self.get_jadjar().jad_dict()
             jar = self.create_zipped_jar()
             jad.update({
@@ -773,7 +777,7 @@ class ApplicationBase(VersionedDoc):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.fetch_attachment("qrcode.png")
-        except ResourceNotFound, e:
+        except ResourceNotFound:
             try:
                 from pygooglechart import QRChart
             except ImportError:
@@ -810,7 +814,7 @@ class ApplicationBase(VersionedDoc):
     def create_zipped_jar(self):
         try:
             return self.fetch_attachment('CommCare.jar')
-        except Exception:
+        except ResourceNotFound:
             jar = self.fetch_jar()
             files = self.create_all_files()
             buffer = StringIO(jar)
@@ -1116,6 +1120,12 @@ class RemoteApp(ApplicationBase):
         return files
 
 class DomainError(Exception):
+    pass
+
+class AppError(Exception):
+    pass
+
+class XFormError(AppError):
     pass
 
 class BuildErrors(Document):

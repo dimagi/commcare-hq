@@ -9,7 +9,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors
+    BuildErrors, AppError
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -28,6 +28,7 @@ import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
 import logging
+from corehq.apps.app_manager.decorators import safe_download
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -695,7 +696,7 @@ def delete_copy(req, domain, app_id):
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
 
-
+@safe_download
 def download_zipped_jar(req, domain, app_id):
     """
     See ApplicationBase.create_zipped_jar
@@ -711,6 +712,7 @@ def download_zipped_jar(req, domain, app_id):
     response.write(app.create_zipped_jar())
     return response
 
+@safe_download
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
@@ -723,6 +725,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
         'files': sorted(app.create_all_files().items()),
     })
 
+@safe_download
 def download_profile(req, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -740,6 +743,7 @@ def odk_qr_code(req, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
     return HttpResponse(qr_code, mimetype="image/png")
 
+@safe_download
 def download_odk_profile(req, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -750,6 +754,7 @@ def download_odk_profile(req, domain, app_id):
         mimetype="commcare/profile"
     )
 
+@safe_download
 def download_suite(req, domain, app_id):
     """
     See Application.create_suite
@@ -759,6 +764,7 @@ def download_suite(req, domain, app_id):
         get_app(domain, app_id).create_suite()
     )
 
+@safe_download
 def download_app_strings(req, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -768,6 +774,7 @@ def download_app_strings(req, domain, app_id, lang):
         get_app(domain, app_id).create_app_strings(lang)
     )
 
+@safe_download
 def download_xform(req, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
@@ -777,6 +784,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         get_app(domain, app_id).fetch_xform(module_id, form_id)
     )
 
+@safe_download
 def download_jad(req, domain, app_id):
     """
     See ApplicationBase.create_jad
@@ -790,6 +798,8 @@ def download_jad(req, domain, app_id):
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
 
+        
+@safe_download        
 def download_jar(req, domain, app_id):
     """
     See ApplicationBase.fetch_jar
@@ -800,3 +810,4 @@ def download_jar(req, domain, app_id):
     )
     response['Content-Type'] = "application/java-archive"
     return response
+
