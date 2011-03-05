@@ -6,8 +6,8 @@
           <h2 id="header" class="ui-widget-header ui-corner-top">Domain Forwarding</h2>
           <div id="content" class="ui-widget-content">
           {% if repeaters %}
-    <p>Currently forwarding forms to the following urls:</p>
-    <table style="position:relative;">
+    <p>You are currently forwarding forms to the following urls:</p>
+    <table>
     {% for repeater in repeaters %}
         <tr>
             <td>{{ repeater.url }}</td>
