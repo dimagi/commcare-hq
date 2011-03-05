@@ -3,7 +3,7 @@ from celery.decorators import periodic_task
 from celery.task import task
 from couchforms.models import XFormInstance
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.post import post_data
+from dimagi.utils.post import post_data, simple_post
 
 @periodic_task(run_every=crontab(hour="*", minute="*/15", day_of_week="*"))
 def check_repeaters():
@@ -33,8 +33,8 @@ def send_repeats(form_id, max_tries=3):
                 while tries < max_tries:
                     tries += 1
                     try:
-                        resp, errors = post_data(form.get_xml(), repeat.url)
-                        if not errors:
+                        resp = simple_post(form.get_xml(), repeat.url)
+                        if 200 <= resp.status < 300:
                             repeat.update_success()
                             break
                     except Exception:
