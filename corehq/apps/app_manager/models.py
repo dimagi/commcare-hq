@@ -300,6 +300,10 @@ class Form(IndexedSchema):
                     name_path = actions['open_case'].name_path
                     name_bind_path = ('.//{f}bind[@nodeset="%s"]' % name_path).format(**NS)
                     name_bind = xml.find(name_bind_path)
+                    if name_bind is None:
+                        raise CaseError("You must set the source attribute that creates the case name! "
+                                        "Check your form that opens a case and choose a value for "
+                                        "the 'Name according to question' field")
                     name_bind.attrib['required'] = "true()"
                 additional_transformations.append(require_case_name_source)
 
@@ -1134,6 +1138,9 @@ class AppError(Exception):
     pass
 
 class XFormError(AppError):
+    pass
+
+class CaseError(AppError):
     pass
 
 class BuildErrors(Document):
