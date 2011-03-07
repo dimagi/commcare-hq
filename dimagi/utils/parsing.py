@@ -30,3 +30,13 @@ def string_to_datetime(val):
         return datetime.combine(val, time())
     return parse(val)
     
+# some date to json tricks from 
+# http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
+ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+def json_format_datetime(time):
+    return time.strftime(ISO_FORMAT)
+
+ISO_MIN = datetime(1900, 1, 1)
+
+# use: json.dumps(datetime.datetime.now(), default=json_dt_handler)
+json_dt_handler = lambda obj: obj.isoformat() if isinstance(obj, datetime.datetime) else None
