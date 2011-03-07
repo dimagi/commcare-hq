@@ -7,7 +7,7 @@
         </tr>
         <tr>
             <td>CommCare.jar</td>
-            <td>{% url corehq.apps.app_manager.views.download_zipped_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url corehq.apps.app_manager.views.download_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
         <tr>
             <td>profile.xml</td>

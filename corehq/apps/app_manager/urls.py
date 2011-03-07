@@ -34,7 +34,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'delete_app_lang/(?P<app_id>\w+)/$',                                  'delete_app_lang'),
     (r'edit_app_attr/(?P<app_id>\w+)/(?P<attr>\w+)/$',                      'edit_app_attr'),
 
-    (r'rearrange/(?P<app_id>\w+)/(?P<key>\w+)/$',                                'rearrange'),
+    (r'rearrange/(?P<app_id>\w+)/(?P<key>\w+)/$',                           'rearrange'),
 
     (r'download/(?P<app_id>\w+)/$',                                         'download_index'),
     (r'download/(?P<app_id>\w+)/suite.xml$',                                'download_suite'),
@@ -44,8 +44,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'download/(?P<app_id>\w+)/m(?P<module_id>\d+)/f(?P<form_id>\d+).xml$',
                                                                             'download_xform'),
     (r'download/(?P<app_id>\w+)/CommCare.jad',                              'download_jad'),
-    (r'download/(?P<app_id>\w+)/CommCare_raw.jar',                          'download_jar'),
-    (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_zipped_jar'),
+    (r'download/(?P<app_id>\w+)/CommCare_raw.jar',                          'download_raw_jar'),
+    (r'download/(?P<app_id>\w+)/CommCare.jar',                              'download_jar'),
 
     (r'odk/(?P<app_id>\w+)/qr_code$',                                       'odk_qr_code'),
     (r'odk/(?P<app_id>\w+)/install$',                                       'odk_install'),
@@ -53,4 +53,4 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
     (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),
     (r'delete_copy/(?P<app_id>\w+)/$',                                      'delete_copy'),
-)
+)   

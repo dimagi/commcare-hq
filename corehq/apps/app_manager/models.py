@@ -1,13 +1,13 @@
 # coding=utf-8
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
+import commcare_translations
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
-from datetime import datetime
 import hashlib
 from django.template.loader import render_to_string
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -747,7 +747,7 @@ class ApplicationBase(VersionedDoc):
     def jar_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
+            reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
         return JadJar.view('app_manager/jadjar', descending=True).all()[0]
@@ -926,10 +926,21 @@ class Application(ApplicationBase):
         return ET.tostring(tree)
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
-        return render_to_string(template, {
+
+        # traverse languages in order of priority to find a non-empty commcare-translation
+        for l in [lang] + self.langs:
+            messages = commcare_translations.load_translations(l)
+            if messages: break
+        
+        custom = render_to_string(template, {
             'app': self,
             'langs': [lang] + self.langs,
         })
+
+        custom = commcare_translations.loads(custom)
+        messages.update(custom)
+        return commcare_translations.dumps(messages)
+    
     def create_suite(self, template='app_manager/suite.xml'):
         return render_to_string(template, {
             'app': self,

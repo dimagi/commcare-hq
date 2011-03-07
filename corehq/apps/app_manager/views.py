@@ -699,7 +699,7 @@ def delete_copy(req, domain, app_id):
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
 
 @safe_download
-def download_zipped_jar(req, domain, app_id):
+def download_jar(req, domain, app_id):
     """
     See ApplicationBase.create_zipped_jar
 
@@ -800,9 +800,8 @@ def download_jad(req, domain, app_id):
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
 
-        
-@safe_download        
-def download_jar(req, domain, app_id):
+@safe_download
+def download_raw_jar(req, domain, app_id):
     """
     See ApplicationBase.fetch_jar
 
