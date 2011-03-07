@@ -1,0 +1,75 @@
+{% extends base_template %}
+{% block title %}Welcome to CommCareHQ!{% endblock title %}
+{% block head %}
+    <!--{{ block.super }}-->
+   	<link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/mainlogin.css"/>
+    <link rel="stylesheet" href="../static/hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="../static/hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
+    <link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/landingpage.css"/>
+    <script src="{{ STATIC_URL }}domain/js/login.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="span-24 last">
+       	<center>      
+       	
+		<h2>Supporting the health of communities around the world</h2>
+		<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+		<h4>75,000 patient visits    -    
+		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
+		14 projects worldwide    -    
+		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
+		500 registered CHWs</h4>
+		</center>
+	</div>
+
+	
+	<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+	
+	
+	
+	<div class="span-8">
+		<h3>What is CommCare?</h3>
+		<ul>
+			<li>An open-source software application</li>
+			<li>A job aid for community health workers (CHWs)</li>
+			<li>A tool for supervision and evidence-based change</li>
+			<li>A way to capture data in an electronic repository that otherwise sits in thousands of paper notebooks</li>
+		</ul> 
+	</div>
+	<div class = "span-8">
+		<h3>Why CommCare?</h3>
+		<ul>
+			<li>CHWs have demonstrated a potential to substantially improve health outcomes in areas of extreme poverty</li>
+			<li>CHWs tend to have little training and operate independently</li>
+			<li>CommCare provides phone-based tools that help support and manage large numbers of CHWs</li>
+		</ul> 
+	</div>
+	<div class = "span-8 last">
+	<h3>Highlights</h3>
+		<ul>
+		<li>Runs on mid-range cell phones</li>
+		<li>Supports images and audio</li>
+		<li>Handles multiple languages<br>the pregnancy module is currently in English, Spanish, and Swahili</li>
+	</ul>
+	<button class="custom" onClick="parent.location='{% url domain_registration_request %}'" value='click here'>Try it now!</button>
+	</div>
+	<div class="span-18 append-3 prepend-3 last">
+		<hr>
+	</div>
+	<div class = "span-8">
+		<img src="http://dl.dropbox.com/u/2466341/hh_visit.jpg" width=100%/>
+	</div>
+	<div class = "span-7 prepend-1">
+		<img src="http://dl.dropbox.com/u/2466341/mwajuma.jpg" width=100%/>
+	</div>
+	<div class = "span-7 prepend-1 last">
+		<img src="http://dl.dropbox.com/u/2466341/semeni.JPG" width=100%/>
+	</div>
+
+
+
+{% endblock content %}     

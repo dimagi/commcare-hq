@@ -1,0 +1,18 @@
+{% extends "users/users_base.html" %}
+{% block page_title %}<h1>Invite Web User</h1>{% endblock %}
+{% block web_users_indicator %}
+<ul>
+    <li class="selected">Invite Web User</li>
+</ul>
+{% endblock %}
+
+{% block user-view %}
+    <h1>Enter user's information below to invite them to your domain.</h1>
+    <form method="post" action="">
+        <table>
+            {{ registration_form.as_table }}
+        </table>
+        <input type="submit" value="Send Invite" />
+    </form>
+
+{% endblock %}

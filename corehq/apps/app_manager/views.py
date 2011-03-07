@@ -8,7 +8,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
-from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions
+from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
+    BuildErrors, AppError
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -25,6 +26,9 @@ import urlparse
 from collections import defaultdict
 import random
 from dimagi.utils.couch.database import get_db
+from couchdbkit.resource import ResourceNotFound
+import logging
+from corehq.apps.app_manager.decorators import safe_download
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -210,10 +214,20 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_questions = []
 #        xform_errors = e.msg
         messages.error(req, e.msg)
-    except:
+    except Exception, e:
+        logging.exception(e)
         xform_questions = []
-        messages.error(req, "Error in form")
-
+        messages.error(req, "Error in form: %s" % e)
+    
+    build_errors_id = req.GET.get('build_errors', "")
+    build_errors = []
+    if build_errors_id:
+        try:
+            error_doc = BuildErrors.get(build_errors_id)
+            build_errors = error_doc.errors
+            error_doc.delete()
+        except ResourceNotFound:
+            pass            
     context = {
         'domain': domain,
         'applications': applications,
@@ -244,7 +258,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'URL_BASE': get_url_base(),
         'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
 
-        'build_errors': map(json.loads, req.GET.getlist('build_errors')),
+        'build_errors': build_errors,
 
         'util': TemplateFunctions,
     }
@@ -284,7 +298,9 @@ def view_app(req, domain, app_id=''):
         app_id = context['applications'][0]['id']
         return back_to_main(edit=False, **locals())
     if app and app.copy_of:
-        raise Http404
+        # don't fail hard.
+        #raise Http404
+        return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
     force_edit = False
     if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
         edit = True
@@ -644,9 +660,12 @@ def save_copy(req, domain, app_id):
         url = url._replace(query=urllib.urlencode(q, doseq=True))
         next = urlparse.urlunparse(url)
         return next
-    next = replace_params(next, build_errors=map(json.dumps, errors))
     if not errors:
         app.save_copy()
+    else:
+        errors = BuildErrors(errors=errors)
+        errors.save()
+        next = replace_params(next, build_errors=errors.get_id)
     return HttpResponseRedirect(next)
 
 @require_POST
@@ -679,7 +698,7 @@ def delete_copy(req, domain, app_id):
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
 
-
+@safe_download
 def download_jar(req, domain, app_id):
     """
     See ApplicationBase.create_zipped_jar
@@ -695,6 +714,7 @@ def download_jar(req, domain, app_id):
     response.write(app.create_zipped_jar())
     return response
 
+@safe_download
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
@@ -707,6 +727,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
         'files': sorted(app.create_all_files().items()),
     })
 
+@safe_download
 def download_profile(req, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -715,6 +736,27 @@ def download_profile(req, domain, app_id):
     return HttpResponse(
         get_app(domain, app_id).create_profile()
     )
+
+def odk_install(req, domain, app_id):
+    return render_to_response(req, "app_manager/odk_install.html", 
+                              {"domain": domain, "app": get_app(domain, app_id)})
+
+def odk_qr_code(req, domain, app_id):
+    qr_code = get_app(domain, app_id).get_odk_qr_code()
+    return HttpResponse(qr_code, mimetype="image/png")
+
+@safe_download
+def download_odk_profile(req, domain, app_id):
+    """
+    See ApplicationBase.create_profile
+
+    """
+    return HttpResponse(
+        get_app(domain, app_id).create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
+@safe_download
 def download_suite(req, domain, app_id):
     """
     See Application.create_suite
@@ -724,6 +766,7 @@ def download_suite(req, domain, app_id):
         get_app(domain, app_id).create_suite()
     )
 
+@safe_download
 def download_app_strings(req, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -733,6 +776,7 @@ def download_app_strings(req, domain, app_id, lang):
         get_app(domain, app_id).create_app_strings(lang)
     )
 
+@safe_download
 def download_xform(req, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
@@ -742,6 +786,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         get_app(domain, app_id).fetch_xform(module_id, form_id)
     )
 
+@safe_download
 def download_jad(req, domain, app_id):
     """
     See ApplicationBase.create_jad
@@ -755,6 +800,7 @@ def download_jad(req, domain, app_id):
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
 
+@safe_download
 def download_raw_jar(req, domain, app_id):
     """
     See ApplicationBase.fetch_jar
@@ -765,3 +811,4 @@ def download_raw_jar(req, domain, app_id):
     )
     response['Content-Type'] = "application/java-archive"
     return response
+

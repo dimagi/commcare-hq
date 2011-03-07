@@ -17,19 +17,20 @@ from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
 
-
-from django.db import models
 import random
 from dimagi.utils.couch.database import get_db
 import json
-try:
-    from lxml import etree as ET
-except ImportError:
-    import logging
-    logging.error("lxml not installed! apps won't work properly!!")
+from lxml import etree as ET
+from couchdbkit.resource import ResourceNotFound
+from tempfile import NamedTemporaryFile
+import tempfile
+import os
 
-from dimagi.utils.make_uuid import random_hex
-
+MISSING_DEPENDECY = \
+"""Aw shucks, someone forgot to install the google chart library 
+on this machine and this feature needs it. To get it, run 
+easy_install pygooglechart.  Until you do that this won't work.
+"""
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -50,7 +51,15 @@ def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
 def _parse_xml(string):
-    return ET.fromstring(string, parser=ET.XMLParser(remove_comments=True))
+    # Work around: ValueError: Unicode strings with encoding
+    # declaration are not supported.  
+    if isinstance(string, unicode):
+        string = string.encode("utf-8")
+    try:
+        return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
+    except ET.ParseError, e:
+        raise XFormError("Problem parsing an XForm. The parsing error is: %s" % (e if e.message else "unknown"))
+    
 
 class JadJar(Document):
     """
@@ -264,6 +273,7 @@ class Form(IndexedSchema):
                         __("case_type_id")[self.get_case_type()],
                         __("case_name"),
                         __("user_id"),
+                        __("external_id"),
                     ]
                 ]
                 r = relevance(actions['open_case'])
@@ -402,7 +412,7 @@ class Form(IndexedSchema):
             ...
         ]
 
-        if the xform is bad, it will raise an XMLSyntaxError
+        if the xform is bad, it will raise an XFormError
 
         """        
         #<hack>
@@ -411,7 +421,7 @@ class Form(IndexedSchema):
             self.contents = xform
             self._parent._parent.save()
         #</hack>
-
+        
         if not xform:
             return []
 
@@ -712,7 +722,7 @@ class ApplicationBase(VersionedDoc):
     def post_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.receiver.views.post', args=[self.domain])
+            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
         )
     @property
     def ota_restore_url(self):
@@ -741,7 +751,7 @@ class ApplicationBase(VersionedDoc):
     def create_jad(self, template="app_manager/CommCare.jad"):
         try:
             return self.fetch_attachment('CommCare.jad')
-        except:
+        except ResourceNotFound:
             jad = self.get_jadjar().jad_dict()
             jar = self.create_zipped_jar()
             jad.update({
@@ -754,9 +764,41 @@ class ApplicationBase(VersionedDoc):
             jad = jad.render()
             self.put_attachment(jad, 'CommCare.jad')
             return jad
+    
+    @property
+    def odk_profile_url(self):
+        
+        return "%s%s" % (
+            get_url_base(),
+            reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
+        )
+        
+    def get_odk_qr_code(self):
+        """Returns a QR code, as a PNG to install on CC-ODK"""
+        try:
+            return self.fetch_attachment("qrcode.png")
+        except ResourceNotFound:
+            try:
+                from pygooglechart import QRChart
+            except ImportError:
+                raise Exception(MISSING_DEPENDECY)
+            HEIGHT = WIDTH = 250
+            code = QRChart(HEIGHT, WIDTH)
+            code.add_data(self.odk_profile_url)
+            
+            # "Level H" error correction with a 0 pixel margin
+            code.set_ec('H', 0)
+            f, fname = tempfile.mkstemp()
+            code.download(fname)
+            os.close(f)
+            with open(fname, "rb") as f:
+                png_data = f.read()
+                self.put_attachment(png_data, "qrcode.png", content_type="image/png")
+            return png_data
 
-    def create_profile(self, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         return render_to_string(template, {
+            'is_odk': is_odk,
             'app': self,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
@@ -765,13 +807,14 @@ class ApplicationBase(VersionedDoc):
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
+        
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
     def create_zipped_jar(self):
         try:
             return self.fetch_attachment('CommCare.jar')
-        except:
+        except ResourceNotFound:
             jar = self.fetch_jar()
             files = self.create_all_files()
             buffer = StringIO(jar)
@@ -844,7 +887,15 @@ class Application(ApplicationBase):
                     if tree.find(fmt(xpath)) is None:
                         raise Exception("Invalid XPath Expression %s" % xpath)
                 bind_parent.append(bind)
-
+        
+        if case_parent is None:
+            raise XFormError("Couldn't get the case XML from one of your forms. "
+                             "A common reason for this is if you don't have the "
+                             "xforms namespace defined in your form. Please verify "
+                             'that the xmlns="http://www.w3.org/2002/xforms" '
+                             "attribute exists in your form.")
+            
+        
         if case_parent.find(fmt('{orx}meta')) is None:
             orx = fmt("{orx}")[1:-1]
             nsmap = {"orx": orx}
@@ -1053,7 +1104,8 @@ class RemoteApp(ApplicationBase):
 
     # def fetch_suite(self):
     #     return urlopen(self.suite_url).read()
-    def create_profile(self):
+    def create_profile(self, is_odk=False):
+        # we don't do odk for now anyway
         return urlopen(self.profile_url).read()
         
     def fetch_file(self, location):
@@ -1089,7 +1141,15 @@ class RemoteApp(ApplicationBase):
 class DomainError(Exception):
     pass
 
+class AppError(Exception):
+    pass
 
+class XFormError(AppError):
+    pass
+
+class BuildErrors(Document):
+    
+    errors = ListProperty()
 
 def get_app(domain, app_id):
     """

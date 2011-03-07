@@ -1,0 +1,48 @@
+    {% if next %}
+        <h4>You will be transferred to your original destination after you log in</h4>
+    {% endif %}
+    <form class="sfb" name="form" method="post" action="{% url login %}">
+		{% csrf_token %}
+		<h1>Login</h1>
+		{% if form.non_field_errors %}
+		    <div class="non_field_errors">
+		        {{ form.non_field_errors }}
+		    </div>
+		{% endif %}
+		
+		{% if next %}
+		    <input name="next" type="hidden" value="{{next}}" />
+		{% endif %}
+		
+		<table>
+		    {% for field in form.visible_fields %}
+		        <tr>
+		            <td>{{ field.label_tag }}</td>
+		            <td>{{ field }}</td>
+		        </tr>
+		        {% if field.name == "password" %}
+		            <tr>
+		                <td></td>
+		                <td>
+		                    <p>
+		                        <a href="{% url password_reset_email %}">Forgot password?</a>
+		                    </p>
+		                </td>
+		            </tr>
+		        {% endif %}
+		        {% if field.errors %}
+		            <tr class="field_errors">
+		                <td></td><td>{{field.errors}}</td>
+		            </tr>
+		        {% endif %}
+		    {% endfor %}
+		    <tr>
+		        <td></td><td><input type="submit" value="Submit"/></td>
+		    </tr>
+		</table>
+    </form>
+    <div>
+        <p>New here?
+        <a href="{% url domain_registration_request %}">Sign up</a> for free.</p>
+    </div>
+    <!--div><a href="{% url domain_registration_resend_confirm_email %}">Resend confirm email?</a></div-->
