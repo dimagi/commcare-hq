@@ -212,7 +212,11 @@ class CouchUser(Document, UnicodeMixIn):
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
-            domain = self.current_domain
+            if hasattr(self, 'current_domain'):
+                # this is a hack needed because we can't pass parameters from views
+                domain = self.current_domain
+            else: 
+                return False # no domain, no admin
         for d in self.web_account.domain_memberships:
             if d.domain == domain and d.is_admin:
                 return True
