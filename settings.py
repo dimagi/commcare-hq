@@ -59,6 +59,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -73,6 +74,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
+    "django.contrib.messages.context_processors.messages",
     'staticfiles.context_processors.static',
     "corehq.util.context_processors.base_template" # sticks the base template inside all responses
 ]
@@ -83,10 +85,6 @@ TEMPLATE_DIRS = [
     # Don't forget to use absolute paths, not relative paths.
 ]
 
-
-# ====================
-# INJECT RAPIDSMS APPS
-# ====================
 
 DEFAULT_APPS = (
     'corehq.apps.userhack', # this has to be above auth
@@ -122,7 +120,8 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'corehq.apps.receiver',
+    'receiver',
+    'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.phone',
@@ -150,7 +149,7 @@ TABS = [
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users"),
-    ("corehq.apps.help.views.default", "Help"),
+    ("corehq.apps.domain.views.manage_domain", "My Domain"),
     ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
 ]
 
@@ -236,8 +235,6 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
-    'corehq.apps.domain.views.admin_main',
-    'corehq.apps.domain.views.admin_own_account_update',
     'corehq.apps.domain.views.password_change',
     'corehq.apps.domain.views.password_change_done',
 
@@ -301,6 +298,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'case',
         'users',
         'phone',
+        'receiverwrapper',
         'groups',
         'domain',
         'reports',
