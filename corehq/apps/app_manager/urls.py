@@ -49,4 +49,4 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
     (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),
     (r'delete_copy/(?P<app_id>\w+)/$',                                      'delete_copy'),
-)
+)   
