@@ -149,7 +149,7 @@ TABS = [
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.users.views.users", "Users"),
-    ("corehq.apps.help.views.default", "Help"),
+    ("corehq.apps.domain.views.manage_domain", "My Domain"),
     ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
 ]
 
@@ -298,6 +298,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'case',
         'users',
         'phone',
+        'receiverwrapper',
         'groups',
         'domain',
         'reports',
