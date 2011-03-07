@@ -29,6 +29,20 @@ def tmpfile(*args, **kwargs):
     fd, path = tempfile.mkstemp(*args, **kwargs)
     return (os.fdopen(fd, 'w'), path)
 
+def simple_post(data, url, content_type="text/xml"):
+    """
+    POST with a cleaner API, and return the actual HTTPResponse object, so
+    that error codes can be interpreted.
+    """
+    headers = {"content-type": content_type,
+               "content-length": len(data),
+               }
+            
+    up = urlparse(url)
+    conn = httplib.HTTPSConnection(up.netloc) if url.startswith("https") else httplib.HTTPConnection(up.netloc) 
+    conn.request('POST', up.path, data, headers)
+    return conn.getresponse()
+    
 def post_data(data, url, curl_command="curl", use_curl=False, 
               content_type="text/xml", path=None, use_chunked=False, 
               is_odk=False):
@@ -43,7 +57,6 @@ def post_data(data, url, curl_command="curl", use_curl=False,
         with open(path) as f:
             data = f.read()
 
-    up = urlparse(url)
     try:
         if use_curl:
             if path is None:
@@ -78,15 +91,8 @@ def post_data(data, url, curl_command="curl", use_curl=False,
             errors = p.stderr.read()
             results = p.stdout.read()
         else:
-            headers = {
-                "content-type": content_type,
-                "content-length": len(data),
-            }
+            results = simple_post(data, url, content_type).read()
             
-            conn = httplib.HTTPSConnection(up.netloc) if url.startswith("https") else httplib.HTTPConnection(up.netloc) 
-            conn.request('POST', up.path, data, headers)
-            resp = conn.getresponse()
-            results = resp.read()
     except Exception, e:
         errors = str(e)
 
