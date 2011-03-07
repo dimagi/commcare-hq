@@ -15,7 +15,7 @@ from django.db.models.query import QuerySet
 from django.utils.http import urlquote
 import logging
 import hashlib
-import simplejson
+import json
 from auditcare import utils
 from dimagi.utils.couch.database import get_db
 
@@ -116,13 +116,13 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def calculate_checksum(cls, instance_json, is_django=False):
         if is_django:
-            json_string = simplejson.dumps(instance_json)
+            json_string = json.dumps(instance_json)
         else:
             instance_copy = copy.deepcopy(instance_json)
             #if instance_copy.has_key('_rev'):
                 #if it's an existing version, then save it
             instance_copy.pop('_rev')
-            json_string = simplejson.dumps(instance_copy)
+            json_string = json.dumps(instance_copy)
         return hashlib.sha1(json_string).hexdigest()
 
     @classmethod
