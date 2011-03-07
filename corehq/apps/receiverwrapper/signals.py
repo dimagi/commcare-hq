@@ -4,6 +4,7 @@ import logging
 import re
 from corehq.apps.receiverwrapper.tasks import send_repeats
 from corehq.apps.receiverwrapper.models import RepeatRecord
+import types
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver/?.*$')
 
@@ -22,11 +23,22 @@ def scrub_meta(sender, xform, **kwargs):
         found_old = True
     if "meta" in xform.form:
         # scrub values from 0.9 to 1.0
-        for key in xform.form["meta"]:
-            if key in property_map and property_map[key] not in xform.form["meta"]:
-                xform.form["meta"][property_map[key]] = xform.form["meta"][key]
-                del xform.form["meta"][key]
-                found_old = True
+        if isinstance(xform.form["meta"], types.ListType):
+            if isinstance(xform.form["meta"][0], types.DictionaryType):
+                # if it's a list of dictionaries, arbitrarily pick the first 
+                # one. this is a pretty serious error, but it's also recoverable.
+                xform.form["meta"] = xform.form["meta"][0]
+                logging.error("form %s contains multiple meta blocks. this is not correct but we picked one abitrarily" % xform.get_id)
+            else:
+                # if it's a list of something other than dictionaries. 
+                # don't bother scrubbing. 
+                logging.error("form %s contains a poorly structured meta block. this might cause data display problems.")
+        if isinstance(xform.form["meta"], dict):
+            for key in xform.form["meta"]:
+                if key in property_map and property_map[key] not in xform.form["meta"]:
+                    xform.form["meta"][property_map[key]] = xform.form["meta"][key]
+                    del xform.form["meta"][key]
+                    found_old = True
     if found_old:
         logging.error("form %s contains old-format metadata.  You should update it!!" % xform.get_id)
         xform.save()
