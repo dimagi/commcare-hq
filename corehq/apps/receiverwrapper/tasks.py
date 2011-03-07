@@ -1,15 +1,22 @@
 from celery.schedules import crontab
 from celery.decorators import periodic_task
 from celery.task import task
+from datetime import datetime
 from couchforms.models import XFormInstance
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.post import post_data, simple_post
+from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 
 @periodic_task(run_every=crontab(hour="*", minute="*/15", day_of_week="*"))
 def check_repeaters():
-    # this should get called every hour by celery
-    # TODO
-    pass
+    # this should get called every 15 minutes by celery
+    now = datetime.utcnow()
+    pending_forms = XFormInstance.get_db().view("receiverwrapper/forms_with_pending_repeats", 
+                                                startkey=json_format_datetime(ISO_MIN), 
+                                                endkey=json_format_datetime(now)).all()
+    for row in pending_forms:
+        send_repeats(row["id"])
+            
 
 @task(ignore_result=True)
 def send_repeats(form_id, max_tries=3):
