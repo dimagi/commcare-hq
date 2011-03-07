@@ -15,10 +15,8 @@ import couchforms.views as couchforms_views
 from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
+from dimagi.utils.parsing import json_format_datetime
 
-iso_format = '%Y-%m-%dT%H:%M:%SZ'
-def format_time(time):
-    return time.strftime(iso_format)
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
 #    return render_to_response(request, template, {'domain': domain})
@@ -118,7 +116,6 @@ class SubmitHistory(ReportBase):
                 xmlns = row['value'].get('xmlns')
                 username = user_id_to_username(self.individual)
                 
-                #time = DT.datetime.strptime(time, iso_format)
                 time = format_time(time)
                 xmlns = xmlns_to_name(xmlns)
                 return [form_data_link(row['id']), username, time, xmlns]
@@ -138,7 +135,6 @@ class SubmitHistory(ReportBase):
                 user_id = row['value'].get('user_id')
                 fake_name = row['value'].get('username')
 
-                #time = DT.datetime.strptime(time, iso_format)
                 time = format_time(time)
                 xmlns = xmlns_to_name(xmlns)
                 username = user_id_to_username(user_id)
@@ -194,7 +190,7 @@ def paging_active_cases(request, domain):
     def get_active_cases(userid, days=days):
         since_date = DT.datetime.now() - DT.timedelta(days=days)
         r = get_db().view('case/by_last_date',
-            startkey=[domain, userid, format_time(since_date)],
+            startkey=[domain, userid, json_format_datetime(since_date)],
             endkey=[domain, userid, {}],
             group=True,
             group_level=0
@@ -206,7 +202,7 @@ def paging_active_cases(request, domain):
         DAYS = (since_date - EPOCH).days
         r = get_db().view('case/by_last_date',
             startkey=[domain, userid],
-            endkey=[domain, userid, format_time(since_date)],
+            endkey=[domain, userid, json_format_datetime(since_date)],
             group=True,
             group_level=0
         ).one()
@@ -215,7 +211,7 @@ def paging_active_cases(request, domain):
     def get_forms_completed(userid, days=7):
         since_date = DT.datetime.now() - DT.timedelta(days=days)
         r = get_db().view('reports/submit_history',
-            startkey=[domain, userid, format_time(since_date)],
+            startkey=[domain, userid, json_format_datetime(since_date)],
             endkey=[domain, userid, {}],
             group=True,
             group_level=0

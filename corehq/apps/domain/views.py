@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.core.mail import EmailMultiAlternatives, SMTPConnection
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 
 from django_tables import tables
 
@@ -24,6 +24,12 @@ from dimagi.utils.web import render_to_response
 from corehq.apps.users.util import couch_user_from_django_user
 from corehq.apps.users.views import require_domain_admin
 from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.receiverwrapper.forms import FormRepeaterForm
+from corehq.apps.receiverwrapper.models import FormRepeater
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+import json
+from dimagi.utils.post import post_data, simple_post
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -116,7 +122,7 @@ def _create_new_domain_request( request, kind, form, now ):
  
     dom_is_active = False
     if kind == 'existing_user':
-        dom_req.confirm_time = datetime.datetime.now()
+        dom_req.confirm_time = datetime.datetime.utcnow()
         dom_req.confirm_ip = request.META['REMOTE_ADDR']     
         dom_is_active = True  
      
@@ -247,7 +253,7 @@ def registration_confirm(request, guid=None):
     
     # Set confirm time and IP; activate domain and new user who is in the 
     try:
-        req.confirm_time = datetime.datetime.now()
+        req.confirm_time = datetime.datetime.utcnow()
         req.confirm_ip = request.META['REMOTE_ADDR']     
         req.domain.is_active = True
         req.domain.save()
@@ -351,4 +357,59 @@ def _dict_for_one_user( user, domain ):
            
 @require_domain_admin
 def manage_domain(request, domain):
-    return render_to_response(request, "domain/manage_domain.html", {})
+    repeaters = FormRepeater.view("receiverwrapper/repeaters", key=domain, include_docs=True).all()
+    return render_to_response(request, "domain/admin/manage_domain.html", 
+                              {"domain": domain,
+                               "repeaters": repeaters})
+
+@require_POST
+@require_domain_admin
+def drop_repeater(request, domain, repeater_id):
+    rep = FormRepeater.get(repeater_id)
+    rep.delete()
+    messages.success(request, "Form forwarding stopped!")
+    return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
+    
+@require_POST
+@require_domain_admin
+def test_repeater(request, domain):
+    url = request.POST["url"]
+    form = FormRepeaterForm({"url": url})
+    if form.is_valid():
+        url = form.cleaned_data["url"]
+        # now we fake a post
+        fake_post = "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" \
+                    % (datetime.datetime.utcnow())
+        
+        try:
+            resp = simple_post(fake_post, url)
+            if 200 <= resp.status < 300:
+                return HttpResponse(json.dumps({"success": True, 
+                                                "response": resp.read(), 
+                                                "status": resp.status}))
+            else:
+                return HttpResponse(json.dumps({"success": False, 
+                                                "response": resp.read(), 
+                                                "status": resp.status}))
+                
+        except Exception, e:
+            errors = str(e)        
+        return HttpResponse(json.dumps({"success": False, "response": errors}))
+    else:
+        return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
+    
+    
+@require_domain_admin
+def add_repeater(request, domain):
+    if request.method == "POST":
+        form = FormRepeaterForm(request.POST)
+        if form.is_valid():
+            repeater = FormRepeater(domain=domain, url=form.cleaned_data["url"])
+            repeater.save()
+            messages.success(request, "Forwarding setup to %s" % repeater.url)
+            return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
+    else:
+        form = FormRepeaterForm()
+    return render_to_response(request, "domain/admin/add_form_repeater.html", 
+                              {"domain": domain, 
+                               "form": form})
