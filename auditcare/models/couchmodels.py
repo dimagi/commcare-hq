@@ -67,7 +67,6 @@ class AuditEvent(Document):
         """
         audit = cls()
         audit.event_class= cls.__name__
-        #print cls.__name__
         if isinstance(user, AnonymousUser):
             audit.user = None
             audit.description = "[AnonymousAccess] "
@@ -135,8 +134,6 @@ class ModelActionAudit(AuditEvent):
         audit.archived_data = instance_json
         audit.revision_checksum = cls.calculate_checksum(instance_json, is_django=is_django)
 
-        print len(prior_revs)
-
         if len(prior_revs) == 0:
             if is_django:
                 audit.revision_id = "1"
@@ -154,18 +151,14 @@ class ModelActionAudit(AuditEvent):
                     audit.revision_id = str(int(last_rev) + 1)
                 except:
                     logging.error("Error, last revision for object %s is not an integer, resetting to one")
-                    print "Error, last revision for object %s is not an integer, resetting to one"
                     audit.revision_id = "1"
             else:
                 #for django set the revision id to the current document's revision id.
                 audit.revision_id = revision_id
 
-            print last_checksum
-            print audit.revision_checksum
             if last_checksum == audit.revision_checksum:
                 #no actual changes made on this save, do nothing
                 logging.debug("No data change, not creating audit event")
-                print "No change foolio!"
             else:
                 audit.save()
 
@@ -222,11 +215,10 @@ class NavigationEventAudit(AuditEvent):
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
-            #audit.headers = unicode(request.META) #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
+            #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
             audit.session_key = request.session.session_key
             audit.save()
         except Exception, ex:
-            print ex
             logging.error("NavigationEventAudit.audit_view error: %s" % (ex))
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)

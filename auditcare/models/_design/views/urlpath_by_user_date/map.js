@@ -2,6 +2,7 @@ function(doc) {
     // these lines magically import our other javascript files.  DON'T REMOVE THEM!
     // !code util/shared_funcs.js
 
+    //urlpath by user date
     if (doc.base_type == 'AuditEvent') {
         //by username, and the events they do
         if (doc.event_class == "NavigationEventAudit") {
