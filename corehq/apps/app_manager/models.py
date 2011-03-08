@@ -668,7 +668,7 @@ class VersionedDoc(Document):
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
-        app = deepcopy(copy).to_json()
+        app = deepcopy(copy.to_json())
         app['_rev'] = self._rev
         app['_id'] = self._id
         app['version'] = self.version
