@@ -1,6 +1,8 @@
 import os
 import tempfile
 import time
+import re
+from datetime import datetime, timedelta, tzinfo
 try:
     import simplejson as json
 except ImportError:
@@ -61,11 +63,16 @@ def convert_data(e):
     """recursively convert parsed json into easy wrappers"""
     if isinstance(e, type({})):
         for k in e.keys():
-            e[k] = convert(e[k])
+            e[k] = convert_data(e[k])
         return EasyDict(e)
     elif hasattr(e, '__iter__'):
-        return [convert(c) for c in e]
+        return [convert_data(c) for c in e]
     else:
+        try:
+            e = parse_date(e)
+        except (ValueError, TypeError):
+            pass
+
         return e
 
 class EasyDict(object):
@@ -95,3 +102,83 @@ class EasyDict(object):
 
     def __repr__(self):
         return repr(self._)
+
+def parse_date(s):
+    for pattern, parsefunc in DATE_REGEXP:
+        match = pattern.match(s)
+        if match:
+            return parsefunc(**match.groupdict())
+    raise ValueError('did not match any date pattern')
+
+def parse_iso_date(p):
+    return datetime.strptime(p, '%Y-%m-%d').date()
+
+def parse_iso_timestamp(p, frac, tz):
+    return parse_full_timestamp('%Y-%m-%dT%H:%M:%S', p, frac, tz)
+
+def parse_js_timestamp(p, tz):
+    return parse_full_timestamp('%b %d %Y %H:%M:%S', p, None, tz)
+
+def parse_full_timestamp(pattern, p, frac, tz):
+    stamp = datetime.strptime(p, pattern)
+    if frac:
+        stamp += timedelta(seconds=float(frac))
+    if tz:
+        try:
+            stamp = stamp.replace(tzinfo=TZ(tz))
+        except ValueError:
+            pass
+    return stamp
+
+DATE_REGEXP = [
+    (re.compile('(?P<p>\d{4}-\d{2}-\d{2})$'), parse_iso_date),
+    (re.compile('(?P<p>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?P<frac>\.\d+)?(?P<tz>Z|[+-]\d{2,4})?$'), parse_iso_timestamp),
+    (re.compile('\w{3} (?P<p>\w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2}) (GMT|UTC)?(?P<tz>[+-]\d{4})'), parse_js_timestamp),
+]
+
+#do i really have to define this myself???
+class TZ(tzinfo):
+    def __init__(self, tz):
+        if tz in ('Z', 'UTC'):
+            tz = '+0000'
+
+        self.name = tz
+        try:
+            sign = {'+': 1, '-': -1}[tz[0]]
+            h = int(tz[1:3])
+            m = int(tz[3:5]) if len(tz) == 5 else 0
+        except:
+            raise ValueError('invalid tz spec')
+        self.offset = sign * (60 * h + m)
+
+    def utcoffset(self, dt):
+        return timedelta(minutes=self.offset)
+
+    def tzname(self, dt):
+        return self.name
+
+    def dst(self, dt):
+        return timedelta()
+
+    def __repr__(self):
+        return self.name
+
+
+
+
+
+
+
+
+
+def dumpall(o):
+    if isinstance(o, EasyDict):
+        for k, v in o._.iteritems():
+            for p in dumpall(v):
+                yield p
+    elif hasattr(o, '__iter__'):
+        for e in o:
+            for p in dumpall(e):
+                yield p
+    else:
+        yield o
