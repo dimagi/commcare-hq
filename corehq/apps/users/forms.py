@@ -23,7 +23,7 @@ class CommCareAccountForm(forms.Form):
     """
     username = forms.CharField(max_length=15)
     password = forms.CharField(widget=PasswordInput())
-    password_2 = forms.CharField(widget=PasswordInput())
+    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput())
     domain = forms.CharField(widget=HiddenInput())
     
     class Meta:
