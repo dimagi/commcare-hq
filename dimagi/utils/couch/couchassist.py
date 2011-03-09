@@ -59,18 +59,13 @@ def load(path=None, convert=True, convert_args={'dates': True}):
 
     print 'data loaded: %d docs, %.2fs' % (len(db), end - start)
 
-def map_reduce(emitfunc=lambda e: (e, e), reducefunc=lambda v: v, data=None):
+def map_reduce(emitfunc=lambda e: [(e, e)], reducefunc=lambda v: v, data=None):
     if data == None:
         data = db
 
     mapped = {}
     for rec in data:
-        emits = emitfunc(rec)
-        if hasattr(emits, '__iter__'):
-            emits = list(emits)
-        else:
-            emits = [emits]
-        for k, v in emits:
+        for k, v in emitfunc(rec):
             if k not in mapped:
                 mapped[k] = []
             mapped[k].append(v)
