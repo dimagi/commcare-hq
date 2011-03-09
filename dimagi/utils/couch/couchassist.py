@@ -38,7 +38,7 @@ def dumpdb(db, server='localhost', user=None, passwd=None):
     fetch_cmd = 'wget -O %s --progress=dot:mega %s 1>&2' % (dumpfile, url)
     os.popen(fetch_cmd)
 
-def load(path=None, convert=True):
+def load(path=None, convert=True, convert_args={'dates': True}):
     """parse the dump file and load the data into memory. 'db' will be set to
     the loaded data"""
     global db
@@ -53,25 +53,43 @@ def load(path=None, convert=True):
     raw = json.load(open(path))
     db = [row['doc'] for row in raw['rows']]
     if convert:
-        db = convert_data(db)
+        db = convert_data(db, **convert_args)
 
     end = time.time()
 
     print 'data loaded: %d docs, %.2fs' % (len(db), end - start)
 
-def convert_data(e):
+def map_reduce(emitfunc=lambda e: (e, e), reducefunc=lambda v: v, data=None):
+    if data == None:
+        data = db
+
+    mapped = {}
+    for rec in data:
+        emits = emitfunc(rec)
+        if hasattr(emits, '__iter__'):
+            emits = list(emits)
+        else:
+            emits = [emits]
+        for k, v in emits:
+            if k not in mapped:
+                mapped[k] = []
+            mapped[k].append(v)
+    return dict((k, reducefunc(v)) for k, v in mapped.iteritems())
+
+def convert_data(e, **kw):
     """recursively convert parsed json into easy wrappers"""
     if isinstance(e, type({})):
         for k in e.keys():
-            e[k] = convert_data(e[k])
+            e[k] = convert_data(e[k], **kw)
         return EasyDict(e)
     elif hasattr(e, '__iter__'):
-        return [convert_data(c) for c in e]
+        return [convert_data(c, **kw) for c in e]
     else:
-        try:
-            e = parse_date(e)
-        except (ValueError, TypeError):
-            pass
+        if kw.get('dates'):
+            try:
+                e = parse_date(e)
+            except (ValueError, TypeError):
+                pass
 
         return e
 
@@ -88,11 +106,17 @@ class EasyDict(object):
     def __init__(self, _dict):
         self.__dict__ = _dict
 
-    def __call__(self, key):
-        if key == '_':
-            return self.__dict__[key]
-        else:
-            return self.__getattribute__(key)
+    def __call__(self, key, fallback='_ex'):
+        try:
+            if key == '_':
+                return self.__dict__[key]
+            else:
+                return self.__getattribute__(key)
+        except AttributeError:
+            if fallback == '_ex':
+                raise
+            else:
+                return fallback
 
     def __getattribute__(self, key):
         if key == '_':
@@ -139,17 +163,21 @@ DATE_REGEXP = [
 #do i really have to define this myself???
 class TZ(tzinfo):
     def __init__(self, tz):
-        if tz in ('Z', 'UTC'):
-            tz = '+0000'
+        if isinstance(tz, int):
+            self.offset = tz
+            self.name = '%s%02d%02d' % ('+' if tz >= 0 else '-', abs(tz) / 60, abs(tz) % 60)
+        else:
+            if tz in ('Z', 'UTC'):
+                tz = '+0000'
 
-        self.name = tz
-        try:
-            sign = {'+': 1, '-': -1}[tz[0]]
-            h = int(tz[1:3])
-            m = int(tz[3:5]) if len(tz) == 5 else 0
-        except:
-            raise ValueError('invalid tz spec')
-        self.offset = sign * (60 * h + m)
+            self.name = tz
+            try:
+                sign = {'+': 1, '-': -1}[tz[0]]
+                h = int(tz[1:3])
+                m = int(tz[3:5]) if len(tz) == 5 else 0
+            except:
+                raise ValueError('invalid tz spec')
+            self.offset = sign * (60 * h + m)
 
     def utcoffset(self, dt):
         return timedelta(minutes=self.offset)
@@ -162,23 +190,3 @@ class TZ(tzinfo):
 
     def __repr__(self):
         return self.name
-
-
-
-
-
-
-
-
-
-def dumpall(o):
-    if isinstance(o, EasyDict):
-        for k, v in o._.iteritems():
-            for p in dumpall(v):
-                yield p
-    elif hasattr(o, '__iter__'):
-        for e in o:
-            for p in dumpall(e):
-                yield p
-    else:
-        yield o
