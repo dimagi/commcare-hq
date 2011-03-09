@@ -29,7 +29,11 @@ def generate_restore_payload(user, restore_id):
     commcare_account = commcare_account_from_django_user(user)
     
     if not couch_user.commcare_accounts:
-        raise Exception("No linked chw found for %s" % username)
+        response = HttpResponse("No linked chw found for %s" % username)
+        response.status_code = 401 # Authentication Failure
+        yield response
+        return
+
     
     last_sync_id = 0 if not last_sync else last_sync.last_seq
     
