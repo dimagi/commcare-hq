@@ -9,6 +9,7 @@
     <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
     <property key="cur_locale" value="{{ app.langs.0 }}"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
+    <property key="jr_openrosa_api" value="1.0"/>
     <!--property key="cc-send-procedure" value="cc-send-none" /-->
 
     <features>
