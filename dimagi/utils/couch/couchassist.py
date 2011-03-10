@@ -92,23 +92,28 @@ class EasyDict(object):
     """helper object to work with json dicts more intuitively.
     given source dict 'd' and EasyDict e:
     e = EasyDict(d)
-    e.x == d['x']
-    e('#x') == d['#x']
+    e.x == d['x'], AttributeError if no 'x'
+    e('#x') == d['#x'], None if no '#x'
+    e('#x', 'def') == d['#x'], 'def' if no '#x'
+    e('#x', ex=1) == d['#x'], AttributeError if no '#x'
     e._ == d
-    e('_') == d['_']
+    e['a', 'b', 'c'] == e.a.b.c, None if e through e.a.b.c don't exist, or if e.a, e.a.b aren't EasyDicts
+    e.__('a.b.c') == e['a', 'b', 'c']
+    e('_') == d['_'], e('__') == d['__']
     """
 
     def __init__(self, _dict):
         self.__dict__ = _dict
 
-    def __call__(self, key, fallback='_ex'):
+    def __call__(self, key, fallback=None, ex=False):
+        RESERVED = ['_', '__']
         try:
-            if key == '_':
+            if key in RESERVED:
                 return self.__dict__[key]
             else:
                 return self.__getattribute__(key)
         except AttributeError:
-            if fallback == '_ex':
+            if ex:
                 raise
             else:
                 return fallback
@@ -116,8 +121,13 @@ class EasyDict(object):
     def __getattribute__(self, key):
         if key == '_':
             return self.__dict__
+        elif key == '__':
+            return lambda path: self[path.split('.')]
         else:
             return super(EasyDict, self).__getattribute__(key)
+
+    def __getitem__(self, key):
+        return chain(self, to_it(key))
 
     def __repr__(self):
         return repr(self._)
@@ -185,3 +195,27 @@ class TZ(tzinfo):
 
     def __repr__(self):
         return self.name
+
+def tx(val, translatefunc):
+    return translatefunc(val) if val is not None else None
+
+def to_it(val):
+    return val if hasattr(val, '__iter__') else [val]
+
+def coalesce(*args):
+    for arg in args:
+        if arg is not None:
+            return arg
+    return None
+
+def chain(o, keys):
+    if keys:
+        try:
+            e = o(keys[0])
+        except TypeError:
+            #handle if o is not an EasyDict
+            e = None
+        return chain(e, keys[1:]) if e is not None else None
+    else:
+        return o
+

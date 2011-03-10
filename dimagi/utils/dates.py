@@ -31,3 +31,7 @@ def add_months(year, months, offset):
     months_offset = nextmonths % 12 + 1 # 1 index it going out
     years_offset = nextmonths / 12
     return (year + years_offset, months_offset)
+
+def delta_secs(td):
+    """convert a timedelta to seconds"""
+    return 86400. * td.days + td.seconds + 1.0e-6 * td.microseconds
