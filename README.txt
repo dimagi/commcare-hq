@@ -31,7 +31,7 @@ scripts/
     - download latest zip form build server (FormDesigner project): http://build.dimagi.com:250/   
     - serve it somewhere statically via something like apache or nginx
 2. Setup XEP (Xform Exchange Protocol) Server
-    - download standalone_xep_server from github: https://github.com/dimagi/standalone-xep-edit-server
+    - download standalone_xep_edit_server from github: https://github.com/dimagi/standalone-xep-edit-server
     - Configure
         - couch db settings
         - XEP settings (look at localsettings.py.example in that project for tiops)
