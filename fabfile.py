@@ -23,6 +23,7 @@ def production():
     env.sudo_user = 'cchqwww'
     env.hosts = ['10.84.168.241']
     env.environment = 'production'
+    env.user = prompt("Username: ", default=env.user)
     _setup_path()
 
     
