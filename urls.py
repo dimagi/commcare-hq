@@ -41,7 +41,7 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.domain.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
     (r'^couchlog/', include('couchlog.urls')),
-    
+    (r'^formtranslate/', include('formtranslate.urls')),
 )
 
 

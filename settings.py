@@ -120,6 +120,7 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
+    'formtranslate',
     'receiver',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
