@@ -646,7 +646,8 @@ class VersionedDoc(Document):
             copy = deepcopy(self.to_json())
             del copy['_id']
             del copy['_rev']
-            del copy['short_url']
+            if 'short_url' in copy:
+                del copy['short_url']
             if "recipients" in copy:
                 del copy['recipients']
             if '_attachments' in copy:
@@ -673,7 +674,8 @@ class VersionedDoc(Document):
         app['_id'] = self._id
         app['version'] = self.version
         app['copy_of'] = None
-        del app['_attachments']
+        if '_attachments' in app:
+            del app['_attachments']
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
