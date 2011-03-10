@@ -60,4 +60,6 @@ def deploy():
 def apache_restart():
     """ restart Apache on remote host """
     require('root', provided_by=('staging', 'production'))
-    run('restart cchq_www')
+
+    with settings(sudo_user="root"):
+        sudo('restart cchq_www', user=env.sudo_user)
