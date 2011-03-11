@@ -14,8 +14,10 @@ def send_sms(domain, id, phone_number, text):
     phone_number = clean_phone_number(phone_number)
     outgoing_sms_text = clean_outgoing_sms_text(text)
     # print "sending %s to %s" % (text, phone_number)
-    context = {'message':outgoing_sms_text,
-               'phone_number':phone_number}
+    context = {
+        'message': urllib.quote_plus(outgoing_sms_text),
+        'phone_number': urllib.quote(phone_number),
+    }
     url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
     try:
         response = urllib2.urlopen(url)
@@ -35,7 +37,7 @@ def clean_phone_number(text):
     strip non-numeric characters and add '%2B' at the front
     """
     non_decimal = re.compile(r'[^\d.]+')
-    plus = '%2B'
+    plus = '+'
     cleaned_text = "%s%s" % (plus, non_decimal.sub('', text))
     return cleaned_text
 
