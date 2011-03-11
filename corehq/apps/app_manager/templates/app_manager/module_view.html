@@ -8,6 +8,7 @@
                 var $row = $(this);
                 var data = $row.my_serialize();
                 $('*', $row).attr('disabled', true);
+                $('.detail-column-add', $row).button('disable');
                 $.postGo($row.attr('data-action'), $.unparam(data)/*, function(data){
                     var $new_row = $(data);
                     var $sortable = $row.closest('.sortable');
@@ -18,8 +19,22 @@
             });
             $('.detail-column-add').click(function(e){
                 e.preventDefault();
+                if($(this).button("option", "disabled")) {
+                    return;
+                }
                 var $form = $(this).closest('.form');
                 $form.submit();
+            })
+            .button('disable')
+            .each(function(){
+                var $button = $(this);
+                $(this).closest('tr').find('input[name="field"]').blur(function(){
+                    if($(this).val()) {
+                        $button.button('enable');
+                    } else {
+                        $button.button('disable');
+                    }
+                });
             });
         }
         function configureDetailColumnDelete(){
@@ -283,7 +298,7 @@
                         {% include "app_manager/partials/detail_column.html" %}
                     {% endfor %}
                     {% if edit %}
-                        <tr class="sort-disabled form"
+                        <tr class="sort-disabled form new-detail-header"
                             data-action="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
                             <td class="buttons-column">
                                 <input type="hidden" name="detail_type" value="{{ detail.type }}" />
