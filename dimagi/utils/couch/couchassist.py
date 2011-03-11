@@ -59,13 +59,30 @@ def load(path=None, convert=True, convert_args={'dates': True}):
 
     print 'data loaded: %d docs, %.2fs' % (len(db), end - start)
 
-def map_reduce(emitfunc=lambda e: [(e, e)], reducefunc=lambda v: v, data=None):
+def map_reduce(emitfunc=lambda rec: [(None,)], reducefunc=lambda v: v, data=None, include_docs=False):
+    """perform a "map-reduce" on the data
+
+    emitfunc(rec): return an iterable of key-value pairings as (key, value). alternatively, may
+        simply emit (key,) (useful for include_docs=True)
+    reducefunc(values): applied to each list of values with the same key; defaults to just
+        returning the list
+    data: list of records to operate on. defaults to data loaded from load()
+    include_docs: if True, each emitted value v will be implicitly converted to (v, doc) (if
+        only key is emitted, v == doc)
+    """
+
     if data == None:
         data = db
 
     mapped = {}
     for rec in data:
-        for k, v in emitfunc(rec):
+        for emission in emitfunc(rec):
+            try:
+                k, v = emission
+                if include_docs:
+                    v = (v, rec)
+            except ValueError:
+                k, v = emission[0], rec if include_docs else None
             if k not in mapped:
                 mapped[k] = []
             mapped[k].append(v)
@@ -97,7 +114,7 @@ class EasyDict(object):
     e('#x', 'def') == d['#x'], 'def' if no '#x'
     e('#x', ex=1) == d['#x'], AttributeError if no '#x'
     e._ == d
-    e['a', 'b', 'c'] == e.a.b.c, None if e through e.a.b.c don't exist, or if e.a, e.a.b aren't EasyDicts
+    e['a', 'b', 'c'] == e.a.b.c, None if e.a through e.a.b.c don't exist, or if e.a, e.a.b aren't EasyDicts
     e.__('a.b.c') == e['a', 'b', 'c']
     e('_') == d['_'], e('__') == d['__']
     """
