@@ -336,12 +336,16 @@ table.config th {
 }
 
 input[type='text'], input[type='password'] {
-    width: 100px;
+    width: 200px;
     margin: 1px;
     padding: 2px;
 }
 input[type='text'].url {
     min-width: 500px;
+}
+
+input.short {
+    width: 50px;
 }
 
 input[type='text'], input[type='password'], textarea {
