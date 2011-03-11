@@ -210,6 +210,9 @@ class TZ(tzinfo):
     def dst(self, dt):
         return timedelta()
 
+    def __getinitargs__(self):
+        return (self.offset,)
+
     def __repr__(self):
         return self.name
 
