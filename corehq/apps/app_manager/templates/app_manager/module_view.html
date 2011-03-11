@@ -179,26 +179,26 @@
                     </form>
                 </td>
             </tr>
-            <tr class="form editable">
-                <th>
-                    Case Name
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_name'%}">
-                        <input class="autosave" type="text" name="case_name" value="{{ module.case_name|trans:langs }}"/>
-                    </form>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Referral Name
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'ref_name'%}">
-                        <input type="text" name="ref_name" value="{{ module.ref_name|trans:langs }}"/>
-                    </form>
-                </td>
-            </tr>
+{#            <tr class="form editable">#}
+{#                <th>#}
+{#                    Case Name#}
+{#                </th>#}
+{#                <td>#}
+{#                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_name'%}">#}
+{#                        <input class="autosave" type="text" name="case_name" value="{{ module.case_name|trans:langs }}"/>#}
+{#                    </form>#}
+{#                </td>#}
+{#            </tr>#}
+{#            <tr class="form editable">#}
+{#                <th>#}
+{#                    Referral Name#}
+{#                </th>#}
+{#                <td>#}
+{#                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'ref_name'%}">#}
+{#                        <input type="text" name="ref_name" value="{{ module.ref_name|trans:langs }}"/>#}
+{#                    </form>#}
+{#                </td>#}
+{#            </tr>#}
         {% else %}
             <tr>
                 <th>Module Name</th>
@@ -214,22 +214,22 @@
                     <code>{{ module.case_type }}</code>
                 </td>
             </tr>
-            <tr>
-                <th>
-                    Case Name
-                </th>
-                <td>
-                    {{ module.case_name|trans:langs }}
-                </td>
-            </tr>
-            <tr>
-                <th>
-                    Referral Name
-                </th>
-                <td>
-                    {{ module.ref_name|trans:langs }}
-                </td>
-            </tr>
+{#            <tr>#}
+{#                <th>#}
+{#                    Case Name#}
+{#                </th>#}
+{#                <td>#}
+{#                    {{ module.case_name|trans:langs }}#}
+{#                </td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th>#}
+{#                    Referral Name#}
+{#                </th>#}
+{#                <td>#}
+{#                    {{ module.ref_name|trans:langs }}#}
+{#                </td>#}
+{#            </tr>#}
         {% endif %}
         </tr>
     </table>

@@ -553,8 +553,8 @@ class Module(IndexedSchema):
 
     """
     name = DictProperty()
-    case_name = DictProperty()
-    ref_name = DictProperty()
+#    case_name = DictProperty()
+#    ref_name = DictProperty()
     forms = SchemaListProperty(Form)
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
@@ -909,7 +909,7 @@ class Application(ApplicationBase):
             for tag in ('deviceID','timeStart', 'timeEnd','username','userID','uid'):
                 meta.append(ET.Element(fmt("{orx}%s")%tag, nsmap=nsmap))
             case_parent.append(meta)
-            id = form.unique_id + "meta"
+            id = form.get_unique_id() + "meta"
             binds = [
                 {"id": "%s1" % id, "nodeset": "meta/deviceID", "type": "xsd:string", "{jr}preload": "property", "{jr}preloadParams": "DeviceID"},
                 {"id": "%s2" % id, "nodeset": "meta/timeStart", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "start"},
@@ -982,8 +982,8 @@ class Application(ApplicationBase):
                 name={lang if lang else "en": name if name else "Untitled Module"},
                 forms=[],
                 case_type='',
-                case_name={'en': "Case"},
-                ref_name={'en': "Referral"},
+#                case_name={'en': "Case"},
+#                ref_name={'en': "Referral"},
                 details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
             )
         )

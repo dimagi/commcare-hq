@@ -408,7 +408,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if   "case_type" == attr:
         case_type = req.POST.get("case_type", None)
         module.case_type = case_type
-    elif ("name", "case_name", "ref_name").__contains__(attr):
+    #elif ("name", "case_name", "ref_name").__contains__(attr):
+    elif "name" == attr:
         name = req.POST.get(attr, None)
         module[attr][lang] = name
         if attr == "name":
