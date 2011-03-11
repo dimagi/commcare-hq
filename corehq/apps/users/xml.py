@@ -6,6 +6,7 @@ Spec: https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI
 """
 # this should eventually be harmonized with the other responses, but 
 # has been implemented quick and dirty
+from django.http import HttpResponse
 from corehq.apps.users.util import raw_username
 REGISTRATION_TEMPLATE = \
 """
@@ -25,7 +26,9 @@ USER_DATA_TEMPLATE = \
 def get_registration_xml(couch_user):
     cc_account = couch_user.default_commcare_account
     if not cc_account:
-        raise Exception("can't restore a user without a commcare account!")
+        response = HttpResponse("Can't restore a user without a commcare account!")
+        response.status_code = 401 # Authentication Failure
+        return response
     
     # TODO: this doesn't feel like a final way to do this
     # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
