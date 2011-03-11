@@ -11,7 +11,7 @@ class UtilTestCase(TestCase):
     def testCleanPhoneNumber(self):
         phone_number = "  324 23-23421241"
         cleaned = clean_phone_number(phone_number)
-        self.assertEquals(cleaned, "%2B3242323421241")
+        self.assertEquals(cleaned, "+3242323421241")
 
     def testCleanOutgoingSMSText(self):
         text = u"+this is a test شسیبشسی"

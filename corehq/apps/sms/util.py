@@ -15,7 +15,7 @@ def send_sms(domain, id, phone_number, text):
     outgoing_sms_text = clean_outgoing_sms_text(text)
     # print "sending %s to %s" % (text, phone_number)
     context = {
-        'message': urllib.quote_plus(outgoing_sms_text),
+        'message': outgoing_sms_text,
         'phone_number': urllib.quote(phone_number),
     }
     url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
