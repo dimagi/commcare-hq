@@ -46,3 +46,7 @@ tr.same_as_last td {
     text-indent: 2em;
     font-size: .8em;
 }
+
+form th {
+    text-align: left;
+}
