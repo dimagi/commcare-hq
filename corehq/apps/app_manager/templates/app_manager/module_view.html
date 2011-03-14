@@ -126,8 +126,8 @@
             vertical-align: middle;
         }
 
-        .detail-headers .buttons-column {
-            width: 42px;
+        .detail-headers .drag-button-column, .detail-headers .delete-button-column{
+            width: 21px;
         }
         .detail-headers .model-column {
             font-size: .9em;
@@ -265,7 +265,8 @@
                 <thead>
                     <tr>
                         {% if edit %}
-                            <th class="buttons-column"></th>
+                            <th class="drag-button-column"></th>
+                            <th class="delete-button-column"></th>
                         {% endif %}
                         <th class="model-column">
                             {% if detail.type.0 == 'r' %}
@@ -300,9 +301,10 @@
                     {% if edit %}
                         <tr class="sort-disabled form new-detail-header"
                             data-action="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
-                            <td class="buttons-column">
+                            <td class="drag-button-column">
                                 <input type="hidden" name="detail_type" value="{{ detail.type }}" />
                             </td>
+                            <td class="delete-button-column"></td>
                             <td class="model-column">
                                 {% if detail.type.0 == 'r' %}
                                     <select name="model" data-value="case">

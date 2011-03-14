@@ -83,6 +83,7 @@ $(function(){
 
                         // disable sortable
                         $sortable.find('.drag_handle .ui-icon').hide('slow');
+//                        $sortable.find('.drag_handle .ui-icon').removeClass('ui-icon').addClass('disabled-ui-icon');
                         $sortable.sortable('option', 'disabled', true);
                         if($form.find('input[name="ajax"]').first().val() == "true") {
                             resetIndexes($sortable);
@@ -91,6 +92,7 @@ $(function(){
                                 // re-enable sortable
                                 $sortable.sortable('option', 'disabled', false);
                                 $sortable.find('.drag_handle .ui-icon').show(1000);
+//                                $sortable.find('.drag_handle .disabled-ui-icon').removeClass('disabled-ui-icon').addClass('ui-icon');
                             });
                         }
                         else {

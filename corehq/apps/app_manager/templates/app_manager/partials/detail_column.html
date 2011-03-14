@@ -3,9 +3,10 @@
 <tr class="form" data-action="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
     {% if edit %}
         <td class="index">{{ column.id }}</td>
-        <td>
+        <td class="drag-button-column">
             <span class="drag_handle"></span>
-
+        </td>
+        <td class="delete-button-column">
             {% with util.make_uuid as uuid %}
             <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
             <div class="delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
