@@ -85,14 +85,14 @@ def clean_password(txt):
     return txt
     
 class RegistrationRequestForm(_BaseForm, forms.Form):
-    domain_name =  forms.CharField(label='Domain name', max_length=Domain._meta.get_field('name').max_length)
-    first_name  =  forms.CharField(label='Your first name', max_length=User._meta.get_field('first_name').max_length)
-    last_name   =  forms.CharField(label='Your last (family) name', max_length=User._meta.get_field('last_name').max_length)    
-    email       =  forms.EmailField(label='Your email address', 
+    first_name  =  forms.CharField(label='First Name', max_length=User._meta.get_field('first_name').max_length)
+    last_name   =  forms.CharField(label='Last Name', max_length=User._meta.get_field('last_name').max_length)
+    email       =  forms.EmailField(label='Email Address',
                                     max_length=User._meta.get_field('email').max_length, 
-                                    help_text='(This will be the unique login.)')
-    password_1   =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
-    password_2   =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
+                                    help_text='You will use this to log in')
+    domain_name =  forms.CharField(label='Domain Name', max_length=Domain._meta.get_field('name').max_length)
+    password_1  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
+    password_2  =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     
     tos_confirmed = forms.BooleanField(required=False) # Must be set to False to have the clean_*() routine called        
         
@@ -116,13 +116,13 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
         if not re.match(r"^[\w\.]+$", data):
             raise forms.ValidationError('Only lowercase letters and periods (".") allowed in domain name')
         if Domain.objects.filter(name__iexact=data).count() > 0:
-            raise forms.ValidationError('Domain name already taken; please try another')        
+            raise forms.ValidationError('Domain name already taken; please try another')
         return data
  
     def clean_email(self):
         data = self.cleaned_data['email'].strip()
         if User.objects.filter(username__iexact=data).count() > 0:
-            raise forms.ValidationError('Username already taken; please try another')        
+            raise forms.ValidationError('Username already taken; please try another')
         return data
  
     def clean_tos_confirmed(self):
@@ -130,18 +130,21 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
         if data != True:
             raise forms.ValidationError('You must agree to our Terms Of Service when submitting your registration request')        
         return data
- 
+
     def clean_password_1(self):
         return clean_password(self.cleaned_data.get('password_1'))
-                               
+
     def clean_password_2(self):
-        return clean_password(self.cleaned_data.get('password_2'))                              
+        pw2 = clean_password(self.cleaned_data.get('password_2'))
+        if self.clean_password_1() != pw2:
+            raise forms.ValidationError("Passwords do not match")
+        return pw2
+
     
     def clean(self):
         super(_BaseForm, self).clean()
         cleaned_data = self.cleaned_data
-        if cleaned_data.get('password_1') != cleaned_data.get('password_2'):                    
-            raise forms.ValidationError("Passwords do not match")
+
         return cleaned_data
 
 ########################################################################################################    

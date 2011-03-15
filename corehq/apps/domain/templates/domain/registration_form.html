@@ -5,6 +5,12 @@
 {% block head  %}
     {{ block.super }}
     {% include "imports/jqmodal.html" %}
+    <style>
+        label[for="id_tos_confirmed"] {
+            font-size: .9em;
+            color: #333;
+        }
+    </style>
 {% endblock %}
 {% block login-content %}
 
@@ -17,15 +23,15 @@
 
     <form name="form" method="post" action="{% url domain_registration_request kind=kind %}">
         {% csrf_token %}
-        <h1>Request a new domain</h1>
-        {% if form.non_field_errors %}
-          <div class="non_field_errors">
-          {{ form.non_field_errors }}
-          </div>
-        {% endif %}
         <table>
             {% for field in form.visible_fields %}
-                <tr>                
+                {% if field.errors %}
+                    <tr>
+                        <td></td>
+                        <td>{{field.errors}}</td>
+                    </tr>
+                {% endif %}
+                <tr>
                     {% ifnotequal field.name 'tos_confirmed' %}
                         <td>{{ field.label_tag }}
                         	<br/><span class="helptext">{{field.help_text}}</span>
@@ -33,18 +39,19 @@
                         <td>{{ field }}</td>
                     {%else%}
                         <td colspan="2">
-                            <label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
                             <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" />
+                            <label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
                         </td>
                     {% endifnotequal %}
                 </tr>  
-                {% if field.errors %}
-                    <tr>
-                        <td></td>
-                        <td>{{field.errors}}</td>
-                    </tr>
-                {% endif %}
             {% endfor %}
+                <h1>Request a new domain</h1>
+            {% if form.non_field_errors %}
+                <tr class="non_field_errors">
+                    <td></td>
+                    <td>{{ form.non_field_errors }}</td>
+                </tr>
+            {% endif %}
             <tr>
                 <td></td>
                 <td><input type="submit" value="Submit" /></td>
