@@ -99,12 +99,6 @@
                 }
             }).trigger('change');
 
-
-            // make sure that column_id changes when index changes (after drag-drop)
-            $('.index').change(function(){
-                $(this).closest('tr').find('[name="column_id"]').val($(this).text());
-            }).trigger('change');
-
             configureDetailColumnAdd();
             configureDetailColumnDelete();
         });

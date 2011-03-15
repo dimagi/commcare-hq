@@ -253,10 +253,17 @@ $(function(){
         $.postGo(action, $.unparam(data));
     });
 
+
     $('.index').change(function(){
         // really annoying hack: the delete dialog is stored at bottom of page so is not found by the above
         var uuid = $(this).closest('tr').find('.delete_link').attr('data-uuid');
-        $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="column_id"]').val($(this).text());
+        $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="index"]').val($(this).text());
     });
+
+    $('.index').change(function(){
+        // make sure that column_id changes when index changes (after drag-drop)
+        $(this).closest('tr').find('[name="index"]').val($(this).text());
+    }).trigger('change');
+    
     makeBuildErrorLinksSwitchTabs();
 });

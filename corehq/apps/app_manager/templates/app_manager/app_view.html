@@ -76,7 +76,7 @@
                                     <div class="delete_dialog" title="Remove Language" data-uuid="{{ uuid }}">
                                         <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
                                             <p>Removing this language will not permanently delete any translations you have made for it.</p>
-                                            <input type="hidden" name="lang_id" value="{# filled in by js #}" />
+                                            <input type="hidden" name="index" value="{# filled in by js #}" />
                                             <input type="submit" value="Remove" />
                                         </form>
                                     </div>

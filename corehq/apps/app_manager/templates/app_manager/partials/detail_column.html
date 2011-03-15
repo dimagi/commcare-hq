@@ -12,7 +12,7 @@
             <div class="delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
                 <form class="delete-detail-column" method="post"
                     action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
-                    <input type="hidden" name="column_id" value="{# filled in by js #}" /> {# must be recomputed!! #}
+                    <input type="hidden" name="index" value="{# filled in by js #}" /> {# must be recomputed!! #}
                     <input type="hidden" name="detail_type" value="{{ detail.type }}" />
                     <input type="hidden" name="ajax" value="true" />
                     <input type="submit" value="Delete" />
@@ -20,7 +20,7 @@
             </div>
             {% endwith %}
 
-            <input type="hidden" name="column_id" value="{# filled in by js #}">
+            <input type="hidden" name="index" value="{# filled in by js #}">
             <input type="hidden" name="detail_type" value="{{ detail.type }}">
         </td>
     {% endif %}

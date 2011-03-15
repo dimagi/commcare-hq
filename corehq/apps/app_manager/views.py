@@ -479,7 +479,7 @@ def delete_module_detail(req, domain, app_id, module_id):
     Called when a module detail column is to be deleted
 
     """
-    column_id = int(req.POST['column_id'])
+    column_id = int(req.POST['index'])
     detail_type = req.POST['detail_type']
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -561,7 +561,7 @@ def delete_app_lang(req, domain, app_id):
     Called when a language (such as 'zh') is to be deleted from app.langs
 
     """
-    lang_id = int(req.POST['lang_id'])
+    lang_id = int(req.POST['index'])
     app = get_app(domain, app_id)
     del app.langs[lang_id]
     app.save()
