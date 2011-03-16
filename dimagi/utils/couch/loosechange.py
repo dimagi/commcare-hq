@@ -113,9 +113,9 @@ class EasyDict(object):
     e('#x') == d['#x'], None if no '#x'
     e('#x', 'def') == d['#x'], 'def' if no '#x'
     e('#x', ex=1) == d['#x'], AttributeError if no '#x'
-    e._ == d
+    e.__ == d
     e['a', 'b', 'c'] == e.a.b.c, None if e.a through e.a.b.c don't exist, or if e.a, e.a.b aren't EasyDicts
-    e.__('a.b.c') == e['a', 'b', 'c']
+    e._('a.b.c') == e['a', 'b', 'c']
     e('_') == d['_'], e('__') == d['__']
     """
 
@@ -136,9 +136,9 @@ class EasyDict(object):
                 return fallback
 
     def __getattribute__(self, key):
-        if key == '_':
+        if key == '__':
             return self.__dict__
-        elif key == '__':
+        elif key == '_':
             return lambda path: self[path.split('.')]
         else:
             return super(EasyDict, self).__getattribute__(key)
@@ -147,7 +147,7 @@ class EasyDict(object):
         return chain(self, to_it(key))
 
     def __repr__(self):
-        return repr(self._)
+        return repr(self.__)
 
 def parse_date(s):
     for pattern, parsefunc in DATE_REGEXP:
