@@ -76,7 +76,8 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     'staticfiles.context_processors.static',
-    "corehq.util.context_processors.base_template" # sticks the base template inside all responses
+    "corehq.util.context_processors.base_template", # sticks the base template inside all responses
+    #"corehq.util.context_processors.google_analytics",
 ]
 
 TEMPLATE_DIRS = [
@@ -324,3 +325,5 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
+GOOGLE_ANALYTICS_ID = '' # i.e. don't use google analytics
