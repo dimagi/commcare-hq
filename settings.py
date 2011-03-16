@@ -251,6 +251,9 @@ AUDIT_VIEWS = [
     'corehq.apps.reports.views.daily_submissions',
 ]
 
+# Don't use google analytics unless overridden in localsettings
+GOOGLE_ANALYTICS_ID = ''
+
 # import local settings if we find them
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -325,5 +328,3 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
-
-GOOGLE_ANALYTICS_ID = '' # i.e. don't use google analytics
