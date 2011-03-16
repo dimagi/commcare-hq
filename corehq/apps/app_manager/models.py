@@ -902,7 +902,7 @@ class Application(ApplicationBase):
                              "attribute exists in your form.")
             
         
-        if case_parent.find(fmt('{orx}meta')) is None:
+        if case_parent.find(fmt('{orx}meta')) is None and case_parent.find(fmt('meta')) is None:
             orx = fmt("{orx}")[1:-1]
             nsmap = {"orx": orx}
             meta = ET.Element(fmt("{orx}meta"), nsmap=nsmap)
