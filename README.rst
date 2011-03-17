@@ -21,9 +21,22 @@ To turn on auditing, you'll need to add a few settings to your settings.py file.
 
 To your INSTALLED_APPS, add the 'auditcare' app.
 
+View Audits
+===========
 To your MIDDLEWARE_CLASSES, add 'auditcare.middleware.AuditMiddleware', to the END of the list.
 
 Add an array, AUDIT_VIEWS = [].  The elements of this list should be the fully qualified viewnames of the views you want to log and audit.
+
+Login/Logout Events
+===================
+
+By default the django standard login/logout views will be audited.  Custom login/logout views are a work in progress
+
+
+Model Saves
+===========
+
+By default, the setting AUDIT_DJANGO_USER is set to True, you will need to explicitly set it to false.
 
 For django models you want to audit the save event of, add the fully qualified model name to the AUDIT_MODEL_SAVE array.
 

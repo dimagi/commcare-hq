@@ -1,7 +1,11 @@
 from django.conf import settings
 import django.core.exceptions
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
 import logging
 from auditcare.models import AuditEvent
+from auditcare.decorators import watch_login
+from auditcare.decorators import watch_logout
 
 class AuditMiddleware(object):
     def __init__(self):
@@ -18,6 +22,19 @@ class AuditMiddleware(object):
             self.active=False
         else:
             self.active=True
+
+
+        #from django-axes
+        #http://code.google.com/p/django-axes/source/browse/axes/middleware.py
+        # watch the admin login page
+        admin.site.login = watch_login(admin.site.login)
+        admin.site.logout = watch_logout(admin.site.logout)
+        # and the regular auth login page
+
+
+        #and monitor logouts
+        auth_views.login = watch_login(auth_views.login)
+        auth_views.logout = watch_logout(auth_views.logout)
 
 
     def process_view(self, request, view_func, view_args, view_kwargs):

@@ -1,6 +1,7 @@
 import copy
 from couchdbkit.ext.django.schema import Document
-from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty
+from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+from couchdbkit.schema.properties_proxy import SchemaListProperty
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import uuid
@@ -189,6 +190,7 @@ class NavigationEventAudit(AuditEvent):
     """
     request_path = StringProperty()
     ip_address = StringProperty()
+    user_agent = StringProperty()
 
     view = StringProperty() #the fully qualifid view name
     headers = DictProperty() #the request.META?
@@ -214,6 +216,7 @@ class NavigationEventAudit(AuditEvent):
             else:
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
+            audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
             audit.session_key = request.session.session_key
@@ -223,16 +226,37 @@ class NavigationEventAudit(AuditEvent):
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
+
+ACCESS_LOGIN = 'login'
+ACCESS_LOGOUT = 'logout'
+ACCESS_FAILED = 'login_failed'
+ACCESS_USER_LOCKOUT = 'user_lockout'
+ACCESS_IP_LOCKOUT = 'ip_lockout'
+ACCESS_PASSWORD = 'password_change'
+ACCESS_CHOICES = (
+                  (ACCESS_LOGIN, "Login"),
+                  (ACCESS_LOGOUT, "Logout"),
+                  (ACCESS_FAILED, "Failed Login"),
+                  (ACCESS_USER_LOCKOUT, "User Lockout"),
+                  (ACCESS_IP_LOCKOUT, "IP Lockout"),
+                  (ACCESS_PASSWORD, "Password Change"),
+                  )
+
 class AccessAudit(AuditEvent):
-    ACCESS_CHOICES = (
-                      ('login', "Login"),
-                      ('logout', "Logout"),
-                      ('failed', "Failed Login"),
-                      ('password', "Password Change"),
-                      )
+
     access_type = StringProperty(choices=ACCESS_CHOICES)
     ip_address = StringProperty()
-    session_key = StringProperty()
+    session_key = StringProperty() #the django auth session key
+
+    user_agent = StringProperty()
+
+    get_data = StringListProperty()
+    post_data = StringListProperty()
+    http_accept = StringProperty()
+    path_info = StringProperty()
+
+    failures_since_start = IntegerProperty()
+
 
     class Meta:
         app_label = 'auditcare'
@@ -278,9 +302,11 @@ class AccessAudit(AuditEvent):
         audit.session_key = request.session.session_key
         audit.save()
 
+
 setattr(AuditEvent, 'audit_login', AccessAudit.audit_login)
 setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
 setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
+
 
 
 def audit_login(sender, **kwargs):

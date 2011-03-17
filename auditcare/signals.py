@@ -54,25 +54,34 @@ def couch_audit_save(self, *args, **kwargs):
     AuditEvent.audit_couch_save(self.__class__, self, instance_json, usr)
 
 
-if hasattr(settings, 'AUDIT_MODEL_SAVE'):
-    for full_str in settings.AUDIT_MODEL_SAVE:
-        comps = full_str.split('.')
-        model_class = comps[-1]
-        mod_str = '.'.join(comps[0:-1])
-        mod = __import__(mod_str, {},{},[model_class])        
-        if hasattr(mod, model_class):
-            #ok so we have the model class itself.
-            audit_model = getattr(mod, model_class)
-
-            if issubclass(audit_model, models.Model):
-                #it's a django model subclass.
-                post_save.connect(django_audit_save, sender=audit_model, dispatch_uid="audit_save_" + str(model_class)) #note, you should add a unique dispatch_uid to this else you might get dupes
-                #source; http://groups.google.com/group/django-users/browse_thread/thread/0f8db267a1fb036f
-            elif issubclass(audit_model, Document):
-                #it's a couchdbkit Document subclass
-                audit_model.__orig_save = audit_model.save
-                audit_model.save = couch_audit_save
-                #audit_model.save = CouchSavePatch(orig_save, audit_model)
-                pass
-else:
+if not hasattr(settings, 'AUDIT_MODEL_SAVE'):
     logging.warning("You do not have the AUDIT_MODEL_SAVE settings variable setup.  If you want to setup model save audit events, please add the property and populate it with fully qualified model names.")
+    settings.AUDIT_MODEL_SAVE = []
+
+if hasattr(settings, 'AUDIT_DJANGO_USER'):
+    do_audit_django_user = settings.AUDIT_DJANGO_USER
+else:
+    do_audit_django_user = True
+
+if do_audit_django_user:
+    settings.AUDIT_MODEL_SAVE.append('django.contrib.auth.models.User')
+
+for full_str in settings.AUDIT_MODEL_SAVE:
+    comps = full_str.split('.')
+    model_class = comps[-1]
+    mod_str = '.'.join(comps[0:-1])
+    mod = __import__(mod_str, {},{},[model_class])
+    if hasattr(mod, model_class):
+        #ok so we have the model class itself.
+        audit_model = getattr(mod, model_class)
+
+        if issubclass(audit_model, models.Model):
+            #it's a django model subclass.
+            post_save.connect(django_audit_save, sender=audit_model, dispatch_uid="audit_save_" + str(model_class)) #note, you should add a unique dispatch_uid to this else you might get dupes
+            #source; http://groups.google.com/group/django-users/browse_thread/thread/0f8db267a1fb036f
+        elif issubclass(audit_model, Document):
+            #it's a couchdbkit Document subclass
+            audit_model.__orig_save = audit_model.save
+            audit_model.save = couch_audit_save
+            #audit_model.save = CouchSavePatch(orig_save, audit_model)
+            pass
