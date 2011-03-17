@@ -7,6 +7,7 @@ try:
     import simplejson as json
 except ImportError:
     import json
+import unittest
 
 # this is a utility toolkit to perform data analysis on couchdb. couchdb temp views are
 # excruciatingly slow. this toolkit dumps the entire db into memory in python, where
@@ -105,49 +106,60 @@ def convert_data(e, **kw):
 
         return e
 
-class EasyDict(object):
-    """helper object to work with json dicts more intuitively.
-    given source dict 'd' and EasyDict e:
-    e = EasyDict(d)
-    e.x == d['x'], AttributeError if no 'x'
-    e('#x') == d['#x'], None if no '#x'
-    e('#x', 'def') == d['#x'], 'def' if no '#x'
-    e('#x', ex=1) == d['#x'], AttributeError if no '#x'
-    e.__ == d
-    e['a', 'b', 'c'] == e.a.b.c, None if e.a through e.a.b.c don't exist, or if e.a, e.a.b aren't EasyDicts
-    e._('a.b.c') == e['a', 'b', 'c']
-    e('_') == d['_'], e('__') == d['__']
-    """
+class AssocArray(object):
+    """helper object to work with json dicts more intuitively, and make them behave
+    more like javascript objects.
 
+    given source dict 'd':
+    e = EasyDict(d)
+    e.a == e('a') == e['a'] == e.__('a') == d.get('a') (None if 'a' not in d)
+    e('@xmlns') == d.get('@xmlns') (e.@xmlns is syntax error)
+    e._ == d
+    e.__('a', '--') == d.get('a', '--') ('--' if 'a' not in d)
+    e.__('a', ex=1) == d['a'] (AttributeError if 'a' not in d)
+    e['a', 'b', 'c'] == e.a.b.c, None if e.a through e.a.b.c don't exist, or if e.a, e.a.b aren't AssocArrays
+    e('a.b.c') == e['a', 'b', 'c']
+    e('_') == d.get('_'), e('__') == d.get('__')
+    """
     def __init__(self, _dict):
         self.__dict__ = _dict
 
-    def __call__(self, key, fallback=None, ex=False):
-        RESERVED = ['_', '__']
-        try:
-            if key in RESERVED:
-                return self.__dict__[key]
-            else:
-                return self.__getattribute__(key)
-        except AttributeError:
-            if ex:
-                raise
-            else:
-                return fallback
+    def __call__(self, key):
+        return self[key.split('.')]
 
     def __getattribute__(self, key):
-        if key == '__':
+        if key == '_':
             return self.__dict__
-        elif key == '_':
-            return lambda path: self[path.split('.')]
+        elif key == '__':
+            return lambda field, fallback=None, ex=False: aa_get(self, field, fallback, ex)
         else:
-            return super(EasyDict, self).__getattribute__(key)
+            return self.__(key)
 
     def __getitem__(self, key):
-        return chain(self, to_it(key))
+        return aa_chain(self, to_it(key))
 
     def __repr__(self):
-        return repr(self.__)
+        return repr(self._)
+
+def aa_get(aa, key, fallback, throw_ex):
+    try:
+        return super(AssocArray, aa).__getattribute__(key)
+    except AttributeError:
+        if throw_ex:
+            raise
+        else:
+            return fallback
+
+def aa_chain(o, keys):
+    if keys:
+        try:
+            child = o.__(keys[0])
+        except TypeError:
+            #handle if o is not an EasyDict
+            child = None
+        return aa_chain(child, keys[1:]) if child is not None else None
+    else:
+        return o
 
 def parse_date(s):
     for pattern, parsefunc in DATE_REGEXP:
@@ -228,14 +240,75 @@ def coalesce(*args):
             return arg
     return None
 
-def chain(o, keys):
-    if keys:
-        try:
-            e = o(keys[0])
-        except TypeError:
-            #handle if o is not an EasyDict
-            e = None
-        return chain(e, keys[1:]) if e is not None else None
-    else:
-        return o
+
+
+class Test(unittest.TestCase):
+    def test_assoc_array(self):
+        d1 = {'a': 3, 'b': None, '@c': 'ss'}
+        aa1 = AssocArray(d1)
+
+        self.assertEqual(aa1._, d1)
+        self.assertEqual(repr(aa1), repr(d1))
+
+        self.assertEqual(aa1.a, 3)
+        self.assertEqual(aa1('a'), 3)
+        self.assertEqual(aa1['a'], 3)
+        #key 'b' exists but val is None
+        self.assertEqual(aa1.b, None)
+        self.assertEqual(aa1('b'), None)
+        self.assertEqual(aa1['b'], None)
+        self.assertEqual(aa1('@c'), 'ss')
+        self.assertEqual(aa1['@c'], 'ss')
+        #key 'd' doesn't exist
+        self.assertEqual(aa1.d, None)
+        self.assertEqual(aa1('d'), None)
+        self.assertEqual(aa1['d'], None)
+
+        self.assertEqual(aa1.__('@c'), 'ss')
+        self.assertEqual(aa1.__('@c', '__none'), 'ss')
+        self.assertEqual(aa1.__('@c', ex=1), 'ss')
+        self.assertEqual(aa1.__('b', 'default'), None)
+        self.assertEqual(aa1.__('b', ex=1), None)
+        self.assertEqual(aa1.__('d', 'default'), 'default')
+        self.assertRaises(AttributeError, lambda: aa1.__('d', ex=1))
+
+        aa2 = AssocArray({'_': True, '__': 4})
+
+        self.assertNotEqual(aa2._, True)
+        self.assertNotEqual(aa2.__, 4)
+        self.assertEqual(aa2('_'), True)
+        self.assertEqual(aa2['_'], True)
+        self.assertEqual(aa2.__('_'), True)
+        self.assertEqual(aa2('__'), 4)
+        self.assertEqual(aa2['__'], 4)
+        self.assertEqual(aa2.__('__'), 4)
+        self.assertEqual(aa1('_'), None)
+        self.assertEqual(aa1.__('__', 'missing'), 'missing')
+
+        d3 = {'a': 1, 'b': aa1, 'a.b': 'x'}
+        aa3 = AssocArray(d3)
+
+        self.assertEqual(aa3.b, aa1)
+        self.assertEqual(aa3._, d3)
+        self.assertEqual(aa3['b'], aa1)
+        self.assertEqual(aa3['b', '@c'], 'ss')
+        self.assertEqual(aa3['b', 'd'], None) #aa3.b.d doesn't exist
+        self.assertEqual(aa3['f', 'f'], None) #aa3.f doesn't exist
+        self.assertEqual(aa3('b.@c'), 'ss')
+        self.assertEqual(aa3('b.d'), None)
+        self.assertEqual(aa3('f.f'), None)
+        self.assertEqual(aa3['a.b'], 'x') #'a.b' is a single key
+        self.assertEqual(aa3.__('a.b'), 'x')
+
+        aa4 = AssocArray({'a': AssocArray({'b': AssocArray({'c': AssocArray({'d': 1})})})})
+        self.assertEqual(aa4('a.b.c.d'), 1)
+        self.assertEqual(aa4('a.b.f'), None)
+        self.assertEqual(aa4('a.q'), None)
+
+        aa5 = AssocArray({'_': AssocArray({'__': AssocArray({'_': 2})})})
+        self.assertEqual(aa5('_.__._'), 2)
+
+        aa6 = AssocArray({'a.b': AssocArray({'c.d': 3})})
+        self.assertEqual(aa6['a.b', 'c.d'], 3)
+        self.assertNotEqual(aa6('a.b.c.d'), 3)
 
