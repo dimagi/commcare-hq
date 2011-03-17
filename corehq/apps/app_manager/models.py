@@ -2,6 +2,7 @@
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 import commcare_translations
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 from dimagi.utils.web import get_url_base, parse_int
@@ -38,28 +39,10 @@ def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
 #DocumentSchema.__repr__ = _dsstr
 
-NS = dict(
-    jr = "{http://openrosa.org/javarosa}",
-    xsd = "{http://www.w3.org/2001/XMLSchema}",
-    h='{http://www.w3.org/1999/xhtml}',
-    f='{http://www.w3.org/2002/xforms}',
-    ev="{http://www.w3.org/2001/xml-events}", 
-    orx="{http://openrosa.org/jr/xforms}",
-)
-
 def _make_elem(tag, attr):
     return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
-def _parse_xml(string):
-    # Work around: ValueError: Unicode strings with encoding
-    # declaration are not supported.  
-    if isinstance(string, unicode):
-        string = string.encode("utf-8")
-    try:
-        return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
-    except ET.ParseError, e:
-        raise XFormError("Problem parsing an XForm. The parsing error is: %s" % (e if e.message else "unknown"))
-    
+
 
 class JadJar(Document):
     """
@@ -405,87 +388,7 @@ class Form(IndexedSchema):
 
 
     def get_questions(self, langs):
-        """
-        parses out the questions from the xform, into the format:
-        [
-            {
-                "label": label,
-                "tag": tag,
-                "value": value,
-            },
-            ...
-        ]
-
-        if the xform is bad, it will raise an XFormError
-
-        """        
-        #<hack>
-        xform = self.contents.replace('xmlns=""', '')
-        if xform != self.contents:
-            self.contents = xform
-            self._parent._parent.save()
-        #</hack>
-        
-        if not xform:
-            return []
-
-        # "Unicode strings with encoding declaration are not supported."
-        tree = _parse_xml(xform)
-
-        NS = {'h': '{http://www.w3.org/1999/xhtml}', 'f': '{http://www.w3.org/2002/xforms}'}
-        def lookup_translation(s,pre = 'jr:itext(', post = ')'):
-            if s.startswith(pre) and post[-len(post):] == post:
-                s = s[len(pre):-len(post)]
-            if s[0] == s[-1] and s[0] in ('"', "'"):
-                id = s[1:-1]
-            for lang in langs:
-                x = tree.find('.//{f}translation[@lang="%s"]'.format(**NS) % lang)
-                if x is not None:
-                    break
-            if x is None:
-                x = tree.find('.//{f}translation'.format(**NS))
-            x = x.find('{f}text[@id="%s"]'.format(**NS) % id)
-            x = x.findtext('{f}value'.format(**NS)).strip()
-            return x
-        def get_ref(elem):
-            try:
-                ref = elem.attrib['ref']
-            except:
-                bind_id = elem.attrib['bind']
-                bind = tree.find('.//{f}bind[@id="%s"]'.format(**NS) % bind_id)
-                ref = bind.attrib['nodeset']
-            return ref
-        questions = []
-        # TODO: make this include everything but triggers; include things in groups
-        for elem in tree.findall('{h}body/*'.format(**NS)):
-            try:
-                label_ref = elem.find('{f}label'.format(**NS)).attrib['ref']
-            except:
-                label_ref = None
-            if label_ref:
-                question = {
-                    "label": lookup_translation(label_ref),
-                    "tag": elem.tag.split('}')[-1],
-                    "value": get_ref(elem),
-                }
-            else:
-                continue
-            if question['tag'] == "select1":
-                options = []
-                for item in elem.findall('{f}item'.format(**NS)):
-                    try:
-                        translation = lookup_translation(item.find('{f}label'.format(**NS)).attrib['ref'])
-                    except:
-                        translation = "(No label)"
-                    options.append({
-                        'label': translation,
-                        'value': item.findtext('{f}value'.format(**NS)).strip()
-                    })
-                question.update({'options': options})
-            questions.append(question)
-#        if not questions:
-#            questions = [{"label": "Unable to get questions from xform", "tag": "", "value": ""}]
-        return questions
+        return XForm(self.contents).get_questions(langs)
     
     def export_json(self):
         source = self.to_json()
@@ -1148,9 +1051,6 @@ class DomainError(Exception):
     pass
 
 class AppError(Exception):
-    pass
-
-class XFormError(AppError):
     pass
 
 class CaseError(AppError):
