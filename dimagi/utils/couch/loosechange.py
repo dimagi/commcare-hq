@@ -94,7 +94,7 @@ def convert_data(e, **kw):
     if isinstance(e, type({})):
         for k in e.keys():
             e[k] = convert_data(e[k], **kw)
-        return EasyDict(e)
+        return AssocArray(e)
     elif hasattr(e, '__iter__'):
         return [convert_data(c, **kw) for c in e]
     else:
@@ -111,7 +111,7 @@ class AssocArray(object):
     more like javascript objects.
 
     given source dict 'd':
-    e = EasyDict(d)
+    e = AssocArray(d)
     e.a == e('a') == e['a'] == e.__('a') == d.get('a') (None if 'a' not in d)
     e('@xmlns') == d.get('@xmlns') (e.@xmlns is syntax error)
     e._ == d
@@ -155,7 +155,7 @@ def aa_chain(o, keys):
         try:
             child = o.__(keys[0])
         except TypeError:
-            #handle if o is not an EasyDict
+            #handle if o is not an AssocArray
             child = None
         return aa_chain(child, keys[1:]) if child is not None else None
     else:
