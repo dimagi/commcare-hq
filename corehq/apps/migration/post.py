@@ -10,12 +10,17 @@ def post_data(data, url, submit_time=None, content_type = "text/xml"):
     headers = {}
     results = None
     errors = None
+    Connection = {
+        'http': httplib.HTTPConnection,
+        'https': httplib.HTTPSConnection
+    }[up.scheme]
+
     try:
         headers["content-type"] = content_type
         headers["content-length"] = len(data)
         if submit_time:
             headers["x-submit-time"] = submit_time
-        conn = httplib.HTTPConnection(up.netloc)
+        conn = Connection(up.netloc)
         conn.request('POST', up.path, data, headers)
         resp = conn.getresponse()
         results = resp.read()
