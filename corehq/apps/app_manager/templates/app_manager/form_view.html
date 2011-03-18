@@ -16,6 +16,10 @@
             $condition.removeAttr("id").remove();
             $('.casexml .action .config .condition').html($condition.html());
         }
+        function truncateLabel(label) {
+            var MAXLEN = 40;
+            return (label.length <= MAXLEN) ? (label) : (label.slice(0, MAXLEN) + "...");
+        }
         function makeConditionInteractive(questions) {
             $(".condition select[name='condition-question']").change(function(){
                 $answers = $(this).next("select[name='condition-answer']");
@@ -33,7 +37,9 @@
                     $answers.show();
                     for(i in q.options) {
                         o = q.options[i];
-                        option = "<option value='" + o.value + "'>" + o.label + "</option>";
+                        option = "<option value='" + o.value + "' title='" + o.label + "'>" +
+                                truncateLabel(o.label)
+                                + "</option>";
                         $answers.append($(option));
                     }
                 }
@@ -49,7 +55,7 @@
                        ($(this).hasClass('questions-select1') && q.tag == "select1") ||
                        ($(this).hasClass('questions-select') && q.tag == "select") ||
                        ($(this).hasClass('questions-input') && q.tag == "input")) {
-                        option = "<option value='" + q.value + "'>" + q.label + "</option>";
+                        option = "<option value='" + q.value + "' title='" + q.label + "'>" + truncateLabel(q.label) + "</option>";
                         $(this).append($(option));
                     }
                 }
@@ -354,7 +360,7 @@
                     <li>
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}" method="post">
                             Requires
-                            <select class="autosave code" name="requires" data-value="{{ form.requires }}">
+                            <select class="autosave" name="requires" data-value="{{ form.requires }}">
                                 <option value="none">neither a case nor a referral</option>
                                 <option value="case">just a case</option>
                                 <option value="referral">a case and a referral</option>

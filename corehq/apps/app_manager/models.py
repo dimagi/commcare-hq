@@ -2,7 +2,7 @@
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 import commcare_translations
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 from dimagi.utils.web import get_url_base, parse_int

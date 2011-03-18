@@ -23,13 +23,59 @@ namespaces = dict(
     orx="{http://openrosa.org/jr/xforms}",
 )
 
-class XForm(object):
+class WrappedNode(object):
+    def __init__(self, xml, namespaces=namespaces):
+        if isinstance(xml, basestring):
+            self.xml = parse_xml(xml) if xml else None
+        else:
+            self.xml = xml
+        self.namespaces=namespaces
+        
+    def __getattr__(self, name):
+        if name in ('find', 'findall', 'findtext'):
+            wrap = {
+                'find': WrappedNode,
+                'findall': lambda list: map(WrappedNode, list),
+                'findtext': lambda text: text
+            }[name]
+            def _fn(xpath, *args, **kwargs):
+                return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
+            return _fn
+        else:
+            return getattr(self.xml, name)
 
-    def __init__(self, xml):
-        self.xml = parse_xml(xml) if xml else None
+    @property
+    def tag_xmlns(self):
+        return self.tag.split('}')[0][1:]
+
+    @property
+    def tag_name(self):
+        return self.tag.split('}')[1]
 
 
-    def itext(self, id, lang=None, form=None):
+class XForm(WrappedNode):
+    def __init__(self, *args, **kwargs):
+        super(XForm, self).__init__(*args, **kwargs)
+        xmlns = self.data_node.tag_xmlns
+        self.namespaces.update(x=xmlns)
+
+    @property
+    def model_node(self):
+        return self.find('{h}head/{f}model')
+
+    @property
+    def instance_node(self):
+        return self.find('{h}head/{f}model')
+
+    @property
+    def data_node(self):
+        return self.model_node.find('{f}instance/*')
+
+    @property
+    def itext_node(self):
+        return self.model_node.find('{f}itext')
+
+    def localize(self, id, lang=None, form=None):
         pre = 'jr:itext('
         post = ')'
 
@@ -39,26 +85,26 @@ class XForm(object):
             id = id[1:-1]
 
         if lang is None:
-            x = self.xml.find('.//{f}translation'.format(**namespaces))
+            trans_node = self.itext_node.find('{f}translation')
         else:
-            x = self.xml.find('.//{f}translation[@lang="%s"]'.format(**namespaces) % lang)
-            if x is None:
+            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
+            if trans_node is None:
                 return None
-        x = x.find('{f}text[@id="%s"]'.format(**namespaces) % id)
+        text_node = trans_node.find('{f}text[@id="%s"]' % id)
         if form:
-            x = x.findtext('{f}value[@form="%s"]'.format(**namespaces) % form).strip()
+            text = text_node.findtext('{f}value[@form="%s"]' % form).strip()
         else:
-            x = x.findtext('{f}value'.format(**namespaces)).strip()
+            text = text_node.findtext('{f}value').strip()
 
-        return x
+        return text
 
     def get_label_text(self, prompt, langs, form=None):
-        label_node = prompt.find('{f}label'.format(**namespaces))
+        label_node = prompt.find('{f}label')
         label = ""
         if label_node is not None:
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
-                    label = self.itext(label_node.attrib['ref'], lang, form)
+                    label = self.localize(label_node.attrib['ref'], lang, form)
                     if label is not None:
                         break
             else:
@@ -80,15 +126,15 @@ class XForm(object):
 
         def get_path(prompt):
             try:
-                ref = prompt.attrib['ref']
-            except KeyError:
+                path = prompt.attrib['ref']
+            except:
                 bind_id = prompt.attrib['bind']
-                bind = self.xml.find('.//{f}bind[@id="%s"]'.format(**namespaces) % bind_id)
-                ref = bind.attrib['nodeset']
-            return ref
+                bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
+                path = bind.attrib['nodeset']
+            return path
         questions = []
 
-        def build_questions(group):
+        def build_questions(group, context=""):
             for prompt in group.findall('*'):
                 if prompt.tag == namespaces['f'] + "group":
                     build_questions(prompt)
@@ -97,19 +143,19 @@ class XForm(object):
                 else:
                     question = {
                         "label": self.get_label_text(prompt, langs),
-                        "tag": prompt.tag.split('}')[-1],
+                        "tag": prompt.tag_name,
                         "value": get_path(prompt),
                     }
 
                     if question['tag'] == "select1":
                         options = []
-                        for item in prompt.findall('{f}item'.format(**namespaces)):
+                        for item in prompt.findall('{f}item'):
                             translation = self.get_label_text(item, langs)
                             options.append({
                                 'label': translation,
-                                'value': item.findtext('{f}value'.format(**namespaces)).strip()
+                                'value': item.findtext('{f}value').strip()
                             })
                         question.update({'options': options})
                     questions.append(question)
-        build_questions(self.xml.find('{h}body'.format(**namespaces)))
+        build_questions(self.find('{h}body'))
         return questions
