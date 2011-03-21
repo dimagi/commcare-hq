@@ -45,6 +45,9 @@
                 }
             });
         }
+        function escapeQuotes(string){
+            return string.replace("'", "&apos;").replace("\"", "&quot;");
+        }
         function populateQuestions(questions) {
             $("select.questions").each(function(){
                 //$answers = $(this).next("select[name='trigger_answer']");
@@ -55,7 +58,7 @@
                        ($(this).hasClass('questions-select1') && q.tag == "select1") ||
                        ($(this).hasClass('questions-select') && q.tag == "select") ||
                        ($(this).hasClass('questions-input') && q.tag == "input")) {
-                        option = "<option value='" + q.value + "' title='" + q.label + "'>" + truncateLabel(q.label) + "</option>";
+                        option = "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
                         $(this).append($(option));
                     }
                 }

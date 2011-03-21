@@ -26,6 +26,7 @@ from couchdbkit.resource import ResourceNotFound
 from tempfile import NamedTemporaryFile
 import tempfile
 import os
+from utilities.profile import profile
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library 
@@ -38,9 +39,6 @@ DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
 #DocumentSchema.__repr__ = _dsstr
-
-def _make_elem(tag, attr):
-    return ET.Element(tag, dict([(key.format(**NS), val) for key,val in attr.items()]))
 
 
 
@@ -221,170 +219,6 @@ class Form(IndexedSchema):
             if a.is_active():
                 actions[action_type] = a
         return actions
-
-    
-    def create_casexml(self):
-        from xml_utils import XMLTag as __
-        actions = self.active_actions()
-        # a list of functions to be applied to the file as a whole after it has been pieced together
-        additional_transformations = []
-
-        if not actions:
-            casexml_text, binds = "", []
-        else:
-            binds = []
-            def add_bind(d):
-                binds.append(_make_elem('bind', d))
-            casexml = __('case')[
-                __("case_id"),
-                __("date_modified")
-            ]
-
-            add_bind({"nodeset":"case/date_modified", "type":"dateTime", "{jr}preload":"timestamp", "{jr}preloadParams":"end"})
-
-
-            def relevance(action):
-                if action.condition.type == 'always':
-                    return 'true()'
-                elif action.condition.type == 'if':
-                    return "%s = '%s'" % (action.condition.question, action.condition.answer)
-                else:
-                    return 'false()'
-            if 'open_case' in actions:
-                casexml[
-                    __('create')[
-                        __("case_type_id")[self.get_case_type()],
-                        __("case_name"),
-                        __("user_id"),
-                        __("external_id"),
-                    ]
-                ]
-                r = relevance(actions['open_case'])
-                add_bind({
-                    "nodeset":"case/case_id",
-                    "{jr}preload":"uid",
-                    "{jr}preloadParams":"general",
-                    "relevant": r,
-                })
-                add_bind({
-                    'nodeset':"case/create/user_id",
-                    'type':"xsd:string",
-                    '{jr}preload': "meta",
-                    '{jr}preloadParams': "UserID",
-                    "relevant": r,
-                })
-                add_bind({
-                    "nodeset":"case/create/case_name",
-                    "calculate":actions['open_case'].name_path,
-                    "relevant": r,
-                })
-                def require_case_name_source(xml, xmlns):
-                    "make sure that the question that provides the case_name is required"
-                    name_path = actions['open_case'].name_path
-                    name_bind_path = ('.//{f}bind[@nodeset="%s"]' % name_path).format(**NS)
-                    name_bind = xml.find(name_bind_path)
-                    if name_bind is None:
-                        raise CaseError("You must set the source attribute that creates the case name! "
-                                        "Check your form that opens a case and choose a value for "
-                                        "the 'Name according to question' field")
-                    name_bind.attrib['required'] = "true()"
-                additional_transformations.append(require_case_name_source)
-
-            else:
-                add_bind({"nodeset":"case/case_id", "{jr}preload":"case", "{jr}preloadParams":"case-id"})
-            if 'update_case' in actions:
-                # no condition
-                casexml[
-                    __('update')[
-                        (__(key) for key in actions['update_case'].update.keys())
-                    ]
-                ]
-                for key, path in actions['update_case'].update.items():
-                    add_bind({"nodeset":"case/update/%s" % key, "calculate": path})
-            if 'close_case' in actions:
-                casexml[
-                    __('close')
-                ]
-                r = relevance(actions['close_case'])
-                add_bind({
-                    "nodeset": "case/close",
-                    "relevant": r,
-                })
-
-            if 'open_referral' in actions or 'update_referral' in actions or 'close_referral' in actions:
-                referral = __('referral')[
-                    __('referral_id'),
-                ]
-                if 'open_referral' in actions or 'update_referral' in actions:
-                    referral[__('followup_date')]
-                casexml[referral]
-
-                if 'open_referral' in actions:
-                    # no condition
-                    referral[
-                        __("open")[
-                            __("referral_types")
-                        ]
-                    ]
-                    add_bind({
-                        "nodeset":"case/referral",
-                        "relevant":"count-selected(%s) > 0" % actions['open_referral'].name_path
-                    })
-                    add_bind({
-                        "nodeset":"case/referral/referral_id",
-                        "{jr}preload":"uid",
-                        "{jr}preloadParams":"general",
-                    })
-                    add_bind({
-                        "nodeset":"case/referral/followup_date",
-                        "type":"date",
-                        "calculate": "date(today() + 2)"
-                    })
-                    add_bind({
-                        "nodeset":"case/referral/open/referral_types",
-                        "calculate": actions['open_referral'].name_path,
-                    })
-                if 'update_referral' in actions or 'close_referral' in actions:
-                    # no condition
-                    referral_update = __("update")[
-                        __("referral_type")
-                    ]
-                    referral[referral_update]
-
-                    add_bind({
-                        "nodeset":"case/referral/referral_id",
-                        "{jr}preload":"patient_referral",
-                        "{jr}preloadParams":"id"
-                    })
-                    add_bind({
-                        "nodeset":"case/referral/update/referral_type",
-                        "{jr}preload":"patient_referral",
-                        "{jr}preloadParams":"type"
-                    })
-
-                if 'update_referral' in actions:
-                    # no condition
-                    add_bind({
-                        "nodeset": "case/referral/followup_date",
-                        "type":"xsd:date",
-                        "calculate": "if(date(%(followup_date)s) >= date(today() + 2), %(followup_date)s, date(today() + 2))" % {
-                            'followup_date': actions['update_referral'].followup_date,
-                        },
-                    })
-                if 'close_referral' in actions:
-                    referral_update[__("date_closed")]
-                    r = relevance(actions['close_referral'])
-                    add_bind({
-                        "nodeset":"case/referral/update/date_closed",
-                        "relevant": r,
-                        "{jr}preload":"timestamp",
-                        "{jr}preloadParams":"end"
-                    })
-            casexml_text = casexml.render()
-        def transformation(xml, xmlns):
-            for trans in additional_transformations:
-                trans(xml, xmlns)
-        return casexml_text, binds, transformation
 
 
     def get_questions(self, langs):
@@ -765,70 +599,12 @@ class Application(ApplicationBase):
 #            get_url_base(),
 #            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
 #        )
-
-    def fetch_xform(self, module_id, form_id, DEBUG=False):
+    #@profile('fetch_xform.prof')
+    def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        tree = _parse_xml(form.contents)
-        def fmt(s):
-            return s.format(
-                x='{%s}' % form.xmlns,
-                **NS
-            )
-        case = tree.find(fmt('.//{f}model/{f}instance/*/{x}case'))
-        
-        case_parent = tree.find(fmt('.//{f}model/{f}instance/*'))
-        bind_parent = tree.find(fmt('.//{f}model'))
-        
-        casexml, binds, transformation = form.create_casexml()
-        if casexml:
-            if case is not None:
-                case_parent.remove(case)
-            # casexml has to be valid, 'cuz *I* made it
-            casexml = _parse_xml(casexml)
-            case_parent.append(casexml)
-            # if DEBUG: tree = ET.fromstring(ET.tostring(tree))
-            for bind in bind_parent.findall(fmt('{f}bind')):
-                if bind.attrib['nodeset'].startswith('case/'):
-                    bind_parent.remove(bind)
-            for bind in binds:
-                if DEBUG:
-                    xpath = ".//{x}" + bind.attrib['nodeset'].replace("/", "/{x}")
-                    if tree.find(fmt(xpath)) is None:
-                        raise Exception("Invalid XPath Expression %s" % xpath)
-                bind_parent.append(bind)
-        
-        if case_parent is None:
-            raise XFormError("Couldn't get the case XML from one of your forms. "
-                             "A common reason for this is if you don't have the "
-                             "xforms namespace defined in your form. Please verify "
-                             'that the xmlns="http://www.w3.org/2002/xforms" '
-                             "attribute exists in your form.")
-            
-        
-        if case_parent.find(fmt('{orx}meta')) is None and case_parent.find(fmt('meta')) is None:
-            orx = fmt("{orx}")[1:-1]
-            nsmap = {"orx": orx}
-            meta = ET.Element(fmt("{orx}meta"), nsmap=nsmap)
-            for tag in ('deviceID','timeStart', 'timeEnd','username','userID','uid'):
-                meta.append(ET.Element(fmt("{orx}%s")%tag, nsmap=nsmap))
-            case_parent.append(meta)
-            id = form.get_unique_id() + "meta"
-            binds = [
-                {"id": "%s1" % id, "nodeset": "meta/deviceID", "type": "xsd:string", "{jr}preload": "property", "{jr}preloadParams": "DeviceID"},
-                {"id": "%s2" % id, "nodeset": "meta/timeStart", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "start"},
-                {"id": "%s3" % id, "nodeset": "meta/timeEnd", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "end"},
-                {"id": "%s4" % id, "nodeset": "meta/username", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserName"},
-                {"id": "%s5" % id, "nodeset": "meta/userID", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserID"},
-                {"id": "%s6" % id, "nodeset": "meta/uid", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
-            ]
-            for bind in binds:
-                bind = _make_elem('bind', bind)
-                bind_parent.append(bind)
-
-        # apply any other transformations
-        # necessary to make casexml work
-        transformation(tree, form.xmlns)
-        return ET.tostring(tree)
+        xform = XForm(form.contents)
+        xform.add_case_and_meta(form)
+        return xform.render()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
@@ -1051,9 +827,6 @@ class DomainError(Exception):
     pass
 
 class AppError(Exception):
-    pass
-
-class CaseError(AppError):
     pass
 
 class BuildErrors(Document):
