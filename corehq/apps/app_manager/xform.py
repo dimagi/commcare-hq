@@ -75,10 +75,11 @@ class XForm(WrappedNode):
     """
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
-        xmlns = self.data_node.tag_xmlns
-        self.namespaces.update(x="{%s}" % xmlns)
-        self.validate()
-        #print "Incoming XForm %s OK" % xmlns
+        if self.xml:
+            xmlns = self.data_node.tag_xmlns
+            self.namespaces.update(x="{%s}" % xmlns)
+            self.validate()
+            #print "Incoming XForm %s OK" % xmlns
 
     def validate(self):
         r = formtranslate.api.validate(ET.tostring(self.xml))
@@ -236,7 +237,11 @@ class XForm(WrappedNode):
                              "attribute exists in your form.")
 
 
-        if not case_parent.find('{orx}meta').exists() and not case_parent.find('meta').exists():
+        # Test all of the possibilities so that we don't end up with two "meta" blocks
+        if  not case_parent.find('{orx}meta').exists() and \
+            not case_parent.find('{x}meta').exists() and \
+            not case_parent.find('{orx}Meta').exists() and \
+            not case_parent.find('{x}Meta').exists():
             orx = namespaces['orx'][1:-1]
             nsmap = {"orx": orx}
             meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
