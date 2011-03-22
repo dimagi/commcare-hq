@@ -32,7 +32,7 @@ class PerseverentDatabase(object):
                     _fn(*args, **kwargs)
             return _fn
         else:
-            return getattr(self.database)
+            return getattr(self.database, name)
 
             
 
