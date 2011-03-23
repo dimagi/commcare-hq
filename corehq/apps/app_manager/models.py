@@ -639,7 +639,7 @@ class VersionedDoc(Document):
                 response_json['update'] = {}
             response_json['update']['.variable-version'] = self.version
     def save_copy(self):
-        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version]).all()
+        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
         if copies:
             copy = copies[0]
         else:
@@ -752,7 +752,7 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
-        return JadJar.view('app_manager/jadjar', descending=True).all()[0]
+        return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
 
     def create_jad(self, template="app_manager/CommCare.jad"):
         try:
