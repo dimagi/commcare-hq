@@ -17,6 +17,11 @@ class Command(BaseCommand):
             ProxyPass / http://%(host)s:%(port)s/
             ProxyPassReverse / http://%(host)s:%(port)s/
             ServerName yourproject.com
+            <Proxy *>
+                AddDefaultCharset off
+                Order deny,allow
+                Allow from all
+            </Proxy>
         </VirtualHost>
         """
 
