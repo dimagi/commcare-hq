@@ -1,5 +1,8 @@
+from time import sleep
 from couchdbkit.client import Database
 from django.conf import settings
+from restkit.errors import RequestFailed
+
 class DesignDoc(object):
     """Data structure representing a design doc"""
     
@@ -16,6 +19,23 @@ class DesignDoc(object):
                 views.append(view_name)
         return views
 
+class PerseverentDatabase(object):
+    def __init__(self, db):
+        self.database = Database(db)
+    def __getattr__(self, name):
+        if name in ('get', 'save_doc', 'view', 'delete_doc'):
+            def _fn(*args, **kwargs):
+                try:
+                    return getattr(self.database, name)(*args, **kwargs)
+                except RequestFailed:
+                    sleep(1)
+                    _fn(*args, **kwargs)
+            return _fn
+        else:
+            return getattr(self.database, name)
+
+            
+
 def get_db():
     """
     Get the couch database.
@@ -24,7 +44,7 @@ def get_db():
     # db.  that said a lot of our code relies on that assumption.
     # this import is here because of annoying dependencies
 
-    return Database(settings.COUCH_DATABASE)
+    return PerseverentDatabase(settings.COUCH_DATABASE)
 
 
 def get_design_docs(database):

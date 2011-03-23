@@ -64,7 +64,7 @@ def map_reduce(emitfunc=lambda rec: [(None,)], reducefunc=lambda v: v, data=None
     """perform a "map-reduce" on the data
 
     emitfunc(rec): return an iterable of key-value pairings as (key, value). alternatively, may
-        simply emit (key,) (useful for include_docs=True)
+        simply emit (key,) (useful for include_docs=True or reducefunc=len)
     reducefunc(values): applied to each list of values with the same key; defaults to just
         returning the list
     data: list of records to operate on. defaults to data loaded from load()
@@ -154,7 +154,7 @@ def aa_chain(o, keys):
     if keys:
         try:
             child = o.__(keys[0])
-        except TypeError:
+        except (AttributeError, TypeError):
             #handle if o is not an AssocArray
             child = None
         return aa_chain(child, keys[1:]) if child is not None else None
@@ -300,10 +300,11 @@ class Test(unittest.TestCase):
         self.assertEqual(aa3['a.b'], 'x') #'a.b' is a single key
         self.assertEqual(aa3.__('a.b'), 'x')
 
-        aa4 = AssocArray({'a': AssocArray({'b': AssocArray({'c': AssocArray({'d': 1})})})})
+        aa4 = AssocArray({'a': AssocArray({'b': AssocArray({'c': AssocArray({'d': 1})})}), 'x': 5})
         self.assertEqual(aa4('a.b.c.d'), 1)
         self.assertEqual(aa4('a.b.f'), None)
         self.assertEqual(aa4('a.q'), None)
+        self.assertEqual(aa4('x.x'), None) #aa4.x exists, but is not an AssocArray
 
         aa5 = AssocArray({'_': AssocArray({'__': AssocArray({'_': 2})})})
         self.assertEqual(aa5('_.__._'), 2)
