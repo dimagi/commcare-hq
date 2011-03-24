@@ -1,8 +1,6 @@
-from couchdbkit.client import Database
-from django.conf import settings
+from couchexport.schema import get_docs, get_schema
 import hashlib
 import csv
-from couchexport import schema
 
 class Format(object):
     XLS = "xls"
@@ -14,8 +12,8 @@ def export(schema_index, file, format=Format.XLS_2007):
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-    docs = schema.get_docs(schema_index)
-    schema = schema.get_schema(docs)
+    docs = get_docs(schema_index)
+    schema = get_schema(docs)
     tables = format_tables(create_intermediate_tables(docs,schema))
     if format == Format.XLS:
         _export_excel(tables).save(file)
