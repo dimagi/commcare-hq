@@ -1,6 +1,7 @@
 # coding=utf-8
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
+from django.http import Http404
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
 from corehq.apps.users.util import cc_user_domain
@@ -840,13 +841,16 @@ def get_app(domain, app_id):
 
     """
 
-    app = get_db().get(app_id)
+    try:
+        app = get_db().get(app_id)
+    except:
+        raise Http404
 
     try:    Domain.objects.get(name=domain)
     except: raise DomainError("domain %s does not exist" % domain)
 
     if app['domain'] != domain:
-        raise DomainError("%s not in domain %s" % (app._id, domain))
+        raise DomainError("%s not in domain %s" % (app['_id'], domain))
     cls = {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app
