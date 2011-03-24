@@ -109,16 +109,17 @@ function generateCasexmlJson(){
         actions[id] = action;
 
     });
-    return JSON.stringify(actions);
+return JSON.stringify(actions);
+}
+function action_is_active(action) {
+    return action.condition && action.condition.type in {'if': true, 'always': true};
 }
 function populateCasexmlForm(actions){
     //actions = JSON.parse(actions);
-    function is_active(action) {
-        return action.condition && action.condition.type in {'if': true, 'always': true};
-    }
+
     for(a in actions) {
         action = actions[a];
-        if(!is_active(action)) continue;
+        if(!action_is_active(action)) continue;
         id = a.replace('_', '-');
         $checkbox = $("#"+id);
         $action = $checkbox.parent();
@@ -166,9 +167,11 @@ CaseXML = (function(){
         this.requires = params.requires;
         this.save_requires_url = params.save_requires_url;
         this.template = new EJS({element:"casexml-template"});
+        $("#casexml-template").remove();
     }
     CaseXML.prototype.init = (function(){
         this.template.update(this.home, this);
+        initBlock("#" + this.home);
         initCondition();
         $("#casexml_json").hide();
         var questions = this.questions;

@@ -3,6 +3,21 @@ $.prototype.iconify = function(icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+function initBlock($elem) {
+    $('.submit_on_click', $elem).click(function(e){
+        e.preventDefault();
+        $(this).closest('form').submit();
+    });
+    // trick to give a select menu an initial value
+    $('select[data-value]', $elem).each(function(){
+        var val = $(this).attr('data-value');
+        if(val) {
+            $(this).find('option').removeAttr('selected');
+            $(this).find('option[value="' + val + '"]').attr('selected', 'true');
+        }
+    });
+}
+
 $(function() {
     $('.hidden').hide();
     $('.delete_link').iconify('ui-icon-closethick');
@@ -30,20 +45,7 @@ $(function() {
     $(".sidebar ul li div").addClass('ui-corner-top');
     $(".sidebar ul").addClass('ui-corner-bottom');
 
-
-    $('.submit_on_click').click(function(e){
-        e.preventDefault();
-        $(this).closest('form').submit();
-    });
-    // trick to give a select menu an initial value
-    $('select[data-value]').each(function(){
-        var val = $(this).attr('data-value');
-        if(val) {
-            $(this).find('option').removeAttr('selected');
-            $(this).find('option[value="' + val + '"]').attr('selected', 'true');
-        }
-    });
-
+    initBlock($("body"));
 });
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin

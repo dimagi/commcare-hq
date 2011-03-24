@@ -240,7 +240,7 @@ $(function(){
         }
       });
     });
-    $(".autosave").change(function(){
+    $(".autosave").live('change', function(){
         $(this).closest_form().submit();
     });
 
