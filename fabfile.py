@@ -56,10 +56,17 @@ def deploy():
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
-    apache_restart()
+    service_restart()
 
-def apache_restart():
-    """ restart Apache on remote host """
+def intictl_update():
+    """Updates the initctl scripts because symlinked configurations don't automatically update in upstart"""
+    require('root', provided_by=('staging', 'production'))
+    with settings(sudo_user="root"):
+        sudo('initctl reload-configuration', user=env.sudo_user)
+
+
+def service_restart():
+    """ restart cchq_www service on remote host """
     require('root', provided_by=('staging', 'production'))
 
     with settings(sudo_user="root"):
