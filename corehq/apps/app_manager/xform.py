@@ -44,7 +44,7 @@ class WrappedNode(object):
     def __getattr__(self, name):
         if name in ('find', 'findall', 'findtext'):
             wrap = {
-                'find': WrappedNode,
+                'find': lambda x: WrappedNode(x) if x is not None else None,
                 'findall': lambda list: map(WrappedNode, list),
                 'findtext': lambda text: text
             }[name]
@@ -65,6 +65,17 @@ class WrappedNode(object):
     def exists(self):
         return self.xml is not None
 
+
+def raise_if_none(exception):
+    def decorator(fn):
+        def _fn(*args, **kwargs):
+            n = fn(*args, **kwargs)
+            if n is None:
+                raise exception
+            else:
+                return n
+        return _fn
+    return decorator
 
 class XForm(WrappedNode):
     """
@@ -93,18 +104,22 @@ class XForm(WrappedNode):
         return ET.tostring(self.xml)
     
     @property
+    @raise_if_none(XFormError("Can't find <model>"))
     def model_node(self):
         return self.find('{h}head/{f}model')
 
     @property
+    @raise_if_none(XFormError("Can't find <instance>"))
     def instance_node(self):
         return self.find('{h}head/{f}model')
 
     @property
+    @raise_if_none(XFormError("Can't find data node"))
     def data_node(self):
         return self.model_node.find('{f}instance/*')
 
     @property
+    @raise_if_none(XFormError("Can't find <itext>"))
     def itext_node(self):
         return self.model_node.find('{f}itext')
 
@@ -297,8 +312,7 @@ class XForm(WrappedNode):
             if 'open_case' in actions:
                 casexml[
                     __('create')[
-                        #todo: figure out what to do with "case_type_id"
-                        __("case_type_id")["hq_case"],
+                        __("case_type_id")[form.get_case_type()],
                         __("case_name"),
                         __("user_id"),
                         __("external_id"),
