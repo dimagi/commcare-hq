@@ -3,7 +3,7 @@ function(doc) {
     // !code util/schema.js
     tag = get_export_tag_value(doc); 
     if (tag) {
-        emit(tag, doc);
+        emit(tag, null);
     }
     
 }
