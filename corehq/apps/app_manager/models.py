@@ -492,7 +492,7 @@ class ApplicationBase(VersionedDoc):
     def get_jadjar(self):
         return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
 
-    def create_jad(self, template="app_manager/CommCare.jad"):
+    def create_jad(self):
         try:
             return self.fetch_attachment('CommCare.jad')
         except ResourceNotFound:

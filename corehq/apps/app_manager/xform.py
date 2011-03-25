@@ -44,7 +44,7 @@ class WrappedNode(object):
     def __getattr__(self, name):
         if name in ('find', 'findall', 'findtext'):
             wrap = {
-                'find': lambda x: WrappedNode,
+                'find': WrappedNode,
                 'findall': lambda list: map(WrappedNode, list),
                 'findtext': lambda text: text
             }[name]
@@ -86,7 +86,7 @@ class XForm(WrappedNode):
     """
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
-        if self.xml:
+        if self.exists():
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
             self.validate()
@@ -128,6 +128,8 @@ class XForm(WrappedNode):
         return self.data_node.find('{x}case')
     
     def localize(self, id, lang=None, form=None):
+        if not self.itext_node.exists():
+            return None
         pre = 'jr:itext('
         post = ')'
 
@@ -143,6 +145,8 @@ class XForm(WrappedNode):
             if not trans_node.exists():
                 return None
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
+        if not text_node.exists():
+            return None
         if form:
             text = text_node.findtext('{f}value[@form="%s"]' % form).strip()
         else:

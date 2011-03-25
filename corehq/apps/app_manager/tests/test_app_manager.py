@@ -39,6 +39,10 @@ class AppManagerTest(TestCase):
         for module in self.app.get_modules():
             self.failUnlessEqual(len(module.forms), 3)
 
+#    def testCreateJadJar(self):
+#        # make sure this doesn't raise an error
+#        self.app.create_jad()
+
     def testDeleteForm(self):
         self.app.delete_form(0,0)
         self.failUnlessEqual(len(self.app.modules), 3)
