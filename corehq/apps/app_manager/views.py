@@ -216,14 +216,18 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 #        xform_errors = e.msg
         messages.error(req, e.msg)
     except AppError, e:
-        logging.exception(e)
+        #logging.exception(e)
         xform_questions = []
         messages.error(req, "Error in application: %s" % e)
     except XFormError, e:
-        logging.exception(e)
+        #logging.exception(e)
         xform_questions = []
         messages.error(req, "Error in form: %s" % e)
-    # any other kind of error should fail hard
+    # any other kind of error should fail hard, but for now there are too many for that to be practical
+    except Exception, e:
+        logging.exception(e)
+        xform_questions = []
+        messages.error(req, "Unexpected System Error: %s" % e)
     
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
