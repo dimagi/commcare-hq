@@ -66,12 +66,18 @@ class WrappedNode(object):
         return self.xml is not None
 
 
-def raise_if_none(exception):
+def raise_if_none(message):
+    """
+    raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
+    whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
+    an XFormException with the message given
+
+    """
     def decorator(fn):
         def _fn(*args, **kwargs):
             n = fn(*args, **kwargs)
-            if n is None:
-                raise exception
+            if not n.exists():
+                raise XFormError(message)
             else:
                 return n
         return _fn
@@ -104,22 +110,22 @@ class XForm(WrappedNode):
         return ET.tostring(self.xml)
     
     @property
-    @raise_if_none(XFormError("Can't find <model>"))
+    @raise_if_none("Can't find <model>")
     def model_node(self):
         return self.find('{h}head/{f}model')
 
     @property
-    @raise_if_none(XFormError("Can't find <instance>"))
+    @raise_if_none("Can't find <instance>")
     def instance_node(self):
-        return self.find('{h}head/{f}model')
+        return self.model_node.find('{f}instance')
 
     @property
-    @raise_if_none(XFormError("Can't find data node"))
+    @raise_if_none("Can't find data node")
     def data_node(self):
-        return self.model_node.find('{f}instance/*')
+        return self.instance_node.find('*')
 
     @property
-    @raise_if_none(XFormError("Can't find <itext>"))
+    @raise_if_none("Can't find <itext>")
     def itext_node(self):
         return self.model_node.find('{f}itext')
 
@@ -128,8 +134,6 @@ class XForm(WrappedNode):
         return self.data_node.find('{x}case')
     
     def localize(self, id, lang=None, form=None):
-        if not self.itext_node.exists():
-            return None
         pre = 'jr:itext('
         post = ')'
 

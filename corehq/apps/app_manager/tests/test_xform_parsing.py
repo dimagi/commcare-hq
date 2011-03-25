@@ -1,6 +1,6 @@
 import os
 from django.test import TestCase
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import XForm, XFormError
 
 class XFormParsingTest(TestCase):
     def setUp(self):
@@ -15,12 +15,18 @@ class XFormParsingTest(TestCase):
             xform.data_node
             xform.model_node
             xform.instance_node
-            xform.itext_node
             xform.case_node
+            try:
+                xform.itext_node
+            except XFormError as e:
+                self.failUnlessEqual(e.message, "Can't find <itext>")                
 
     def test_localize(self):
-        for filename, xform in self.xforms.items():
-            self.failUnlessEqual(xform.localize(id="pork", lang="kosher"), None)
-
+        try:
+            self.failUnlessEqual(self.xforms["label_form.xml"].localize(id="pork", lang="kosher"), None)
+            self.fail()
+        except XFormError as e:
+            self.failUnlessEqual(e.message, "Can't find <itext>")
+        self.failUnlessEqual(self.xforms["itext_form.xml"].localize(id="pork", lang="kosher"), None)
         self.failUnlessEqual(self.xforms["itext_form.xml"].localize(id="question1", lang="pt"), "P1")
     
