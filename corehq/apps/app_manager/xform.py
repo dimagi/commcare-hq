@@ -44,7 +44,7 @@ class WrappedNode(object):
     def __getattr__(self, name):
         if name in ('find', 'findall', 'findtext'):
             wrap = {
-                'find': lambda x: WrappedNode(x) if x is not None else None,
+                'find': lambda x: WrappedNode,
                 'findall': lambda list: map(WrappedNode, list),
                 'findtext': lambda text: text
             }[name]
@@ -140,7 +140,7 @@ class XForm(WrappedNode):
             trans_node = self.itext_node.find('{f}translation')
         else:
             trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
-            if trans_node is None:
+            if not trans_node.exists():
                 return None
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
         if form:
@@ -153,7 +153,7 @@ class XForm(WrappedNode):
     def get_label_text(self, prompt, langs, form=None):
         label_node = prompt.find('{f}label')
         label = ""
-        if label_node is not None:
+        if label_node.exists():
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
                     label = self.localize(label_node.attrib['ref'], lang, form)
