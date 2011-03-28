@@ -42,7 +42,7 @@ def messaging(request, domain, template="sms/default.html"):
 #                    group = Group.get(group_id)
 #                    users = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
 #                    #user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=[domain, group.name]).all()]
-#                    #users = [m for m in CouchUser.view("users/all_users", keys=user_ids).all()]
+#                    #users = [m for m in CouchUser.view("users/all_users", keys=user_ids, include_docs=True).all()]
 #                    for user in users:
 #                        success = util.send_sms(domain,
 #                                                user.get_id,

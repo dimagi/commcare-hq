@@ -66,6 +66,23 @@ class WrappedNode(object):
         return self.xml is not None
 
 
+def raise_if_none(message):
+    """
+    raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
+    whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
+    an XFormException with the message given
+
+    """
+    def decorator(fn):
+        def _fn(*args, **kwargs):
+            n = fn(*args, **kwargs)
+            if not n.exists():
+                raise XFormError(message)
+            else:
+                return n
+        return _fn
+    return decorator
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -75,7 +92,7 @@ class XForm(WrappedNode):
     """
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
-        if self.xml:
+        if self.exists():
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
             self.validate()
@@ -93,18 +110,22 @@ class XForm(WrappedNode):
         return ET.tostring(self.xml)
     
     @property
+    @raise_if_none("Can't find <model>")
     def model_node(self):
         return self.find('{h}head/{f}model')
 
     @property
+    @raise_if_none("Can't find <instance>")
     def instance_node(self):
-        return self.find('{h}head/{f}model')
+        return self.model_node.find('{f}instance')
 
     @property
+    @raise_if_none("Can't find data node")
     def data_node(self):
-        return self.model_node.find('{f}instance/*')
+        return self.instance_node.find('*')
 
     @property
+    @raise_if_none("Can't find <itext>")
     def itext_node(self):
         return self.model_node.find('{f}itext')
 
@@ -125,9 +146,11 @@ class XForm(WrappedNode):
             trans_node = self.itext_node.find('{f}translation')
         else:
             trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
-            if trans_node is None:
+            if not trans_node.exists():
                 return None
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
+        if not text_node.exists():
+            return None
         if form:
             text = text_node.findtext('{f}value[@form="%s"]' % form).strip()
         else:
@@ -138,7 +161,7 @@ class XForm(WrappedNode):
     def get_label_text(self, prompt, langs, form=None):
         label_node = prompt.find('{f}label')
         label = ""
-        if label_node is not None:
+        if label_node.exists():
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
                     label = self.localize(label_node.attrib['ref'], lang, form)
@@ -297,8 +320,7 @@ class XForm(WrappedNode):
             if 'open_case' in actions:
                 casexml[
                     __('create')[
-                        #todo: figure out what to do with "case_type_id"
-                        __("case_type_id")["hq_case"],
+                        __("case_type_id")[form.get_case_type()],
                         __("case_name"),
                         __("user_id"),
                         __("external_id"),

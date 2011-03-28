@@ -5,7 +5,7 @@ from corehq.apps.users.models import CouchUser
 class PhoneUsersTestCase(TestCase):
     
     def setUp(self):
-        all_users = CouchUser.view("users/all_users")
+        all_users = CouchUser.view("users/all_users", include_docs=True)
         for user in all_users:
             user.delete()
         self.name = 'name'

@@ -8,7 +8,7 @@ from corehq.apps.users.util import couch_user_from_django_user
 class CommCareUsersTestCase(TestCase):
     
     def setUp(self):
-        all_users = CouchUser.view("users/all_users")
+        all_users = CouchUser.view("users/all_users", include_docs=True)
         for user in all_users:
             user.delete()
         self.domain = 'mockdomain'

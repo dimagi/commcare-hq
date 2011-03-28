@@ -1,6 +1,7 @@
 # coding=utf-8
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
+from django.http import Http404
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
 from corehq.apps.users.util import cc_user_domain
@@ -376,7 +377,7 @@ class VersionedDoc(Document):
                 response_json['update'] = {}
             response_json['update']['.variable-version'] = self.version
     def save_copy(self):
-        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version]).all()
+        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
         if copies:
             copy = copies[0]
         else:
@@ -489,9 +490,9 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
-        return JadJar.view('app_manager/jadjar', descending=True).all()[0]
+        return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
 
-    def create_jad(self, template="app_manager/CommCare.jad"):
+    def create_jad(self):
         try:
             return self.fetch_attachment('CommCare.jad')
         except ResourceNotFound:
@@ -840,13 +841,16 @@ def get_app(domain, app_id):
 
     """
 
-    app = get_db().get(app_id)
+    try:
+        app = get_db().get(app_id)
+    except:
+        raise Http404
 
     try:    Domain.objects.get(name=domain)
     except: raise DomainError("domain %s does not exist" % domain)
 
     if app['domain'] != domain:
-        raise DomainError("%s not in domain %s" % (app._id, domain))
+        raise DomainError("%s not in domain %s" % (app['_id'], domain))
     cls = {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app

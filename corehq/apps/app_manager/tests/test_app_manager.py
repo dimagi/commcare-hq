@@ -4,14 +4,16 @@ unittest). These will both pass when you run "manage.py test".
 
 Replace these with more appropriate tests for your application.
 """
+import os
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn
+from corehq.apps.app_manager.models import Application, DetailColumn, JadJar
 from corehq.apps.domain.models import Domain
 
 class AppManagerTest(TestCase):
-    xform_xmlns = "http://mrsexypants.com/test_form"
-    xform_str = '<instance><test_form xmlns="%s"></test_form></instance>' % xform_xmlns
+    with open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml")) as f:
+        xform_str = f.read()
+
     def setUp(self):
         Domain.objects.get_or_create(name="test_domain")
         self.app = Application.new_app("test_domain", "TestApp")
@@ -38,6 +40,16 @@ class AppManagerTest(TestCase):
         self.failUnlessEqual(len(self.app.modules), 3)
         for module in self.app.get_modules():
             self.failUnlessEqual(len(module.forms), 3)
+
+    def testCreateJadJar(self):
+        def make_sure_there_is_a_jadjar():
+            path = os.path.join(os.path.dirname(__file__), "jadjar")
+            jad_path = os.path.join(path, 'CommCare.jad')
+            jar_path = os.path.join(path, 'CommCare.jar')
+            JadJar.new(open(jad_path), open(jar_path))
+        make_sure_there_is_a_jadjar()
+        # make sure this doesn't raise an error
+        self.app.create_jad()
 
     def testDeleteForm(self):
         self.app.delete_form(0,0)
