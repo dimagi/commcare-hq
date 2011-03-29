@@ -16,6 +16,12 @@ function initBlock($elem) {
             $(this).find('option[value="' + val + '"]').attr('selected', 'true');
         }
     });
+
+    $(".button", $elem).button().wrap('<span />').addClass('shadow');
+    $("input[type='submit']", $elem).button().addClass('shadow');
+    $("input[type='text'], input[type='password'], textarea", $elem).addClass('shadow').addClass('ui-corner-all');
+    $('.container', $elem).addClass('ui-widget ui-widget-content');
+    $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 }
 
 $(function() {
@@ -30,13 +36,8 @@ $(function() {
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
-    $(".button").button().wrap('<span />').addClass('shadow');
-    $("input[type='submit']").button().addClass('shadow');
-    $("input[type='text'], input[type='password'], textarea").addClass('shadow').addClass('ui-corner-all');
-
     $("#title-bar").addClass('container ui-corner-top');
     $('#main_container').addClass('ui-corner-all container shadow');
-    $('.container').addClass('ui-widget ui-widget-content');
 
 
     $(".sidebar").addClass('ui-widget ui-widget-content ui-corner-bl');

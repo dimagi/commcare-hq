@@ -9,7 +9,7 @@ function truncateLabel(label) {
 }
 function makeConditionInteractive(questions) {
     $(".condition select[name='condition-question']").change(function(){
-        $answers = $(this).next("select[name='condition-answer']");
+        var $answers = $(this).next("select[name='condition-answer']");
         $answers.html("");
         value = $(this).attr('value');
         found = false;
@@ -35,22 +35,23 @@ function makeConditionInteractive(questions) {
 function escapeQuotes(string){
     return string.replace("'", "&apos;").replace("\"", "&quot;");
 }
-function populateQuestions(questions) {
-    $("select.questions").each(function(){
-        //$answers = $(this).next("select[name='trigger_answer']");
-        //$answers.hide();
-        for(i in questions) {
-            q = questions[i];
-            if(($(this).hasClass("questions-all")) ||
-               ($(this).hasClass('questions-select1') && q.tag == "select1") ||
-               ($(this).hasClass('questions-select') && q.tag == "select") ||
-               ($(this).hasClass('questions-input') && q.tag == "input")) {
-                option = "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
-                $(this).append($(option));
-            }
-        }
-    });
-}
+//function populateQuestions(questions) {
+//    $("select.questions").each(function(){
+//        //$answers = $(this).next("select[name='trigger_answer']");
+//        //$answers.hide();
+//        for(i in questions) {
+//            q = questions[i];
+//            if(($(this).hasClass("questions-all")) ||
+//               ($(this).hasClass('questions-select1') && q.tag == "select1") ||
+//               ($(this).hasClass('questions-select') && q.tag == "select") ||
+//               ($(this).hasClass('questions-input') && q.tag == "input")) {
+//                option = "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
+//                $(this).append($(option));
+//            }
+//        }
+//    });
+//}
+
 function add_update_row(){
     $new_row = initUpdateCase.template.clone();
     $new_row.addClass('action-update');
@@ -70,49 +71,8 @@ function initUpdateCase() {
     });
 }
 
-function generateCasexmlJson(){
-    actions = {};
-    function lookup(root, key){
-        return $(root).find('[name="' + key + '"]').attr('value');
-    }
-    $(".casexml .action").each(function(){
-
-        $checkbox = $(this).find('input[type="checkbox"]');
-        if(!$checkbox.is(":checked")) return;
-        action = {};
-        id = $checkbox.attr('id').replace('-','_');
-        if(id=="update_case") {
-            action.update = {};
-            $('.action-update', this).each(function(){
-                key = lookup(this, "action-update-key");
-                val = lookup(this, "action-update-value");
-                if(key || val) {
-                    action.update[key] = val;
-                }
-            });
-        }
-        else if (id=="open_referral" || id=="open_case") {
-            action.name_path = lookup(this, 'name_path');
-        }
-        else if (id=="update_referral") {
-            action.followup_date = lookup(this, 'followup_date');
-        }
-        action.condition = {'type': 'always'}; // default value
-        $('.condition', this).each(function(){ // there is only one
-            action.condition = {};
-            action.condition.type = $('input[name="if"]', this).is(':checked') ? 'if' : 'always';
-            if(action.condition.type == 'if') {
-                action.condition.question = lookup(this, 'condition-question');
-                action.condition.answer = lookup(this, 'condition-answer');
-            }
-        });
-        actions[id] = action;
-
-    });
-return JSON.stringify(actions);
-}
 function action_is_active(action) {
-    return action.condition && action.condition.type in {'if': true, 'always': true};
+    return action && action.condition && action.condition.type in {'if': true, 'always': true};
 }
 function populateCasexmlForm(actions){
     //actions = JSON.parse(actions);
@@ -166,25 +126,26 @@ CaseXML = (function(){
         this.save_url = params.save_url;
         this.requires = params.requires;
         this.save_requires_url = params.save_requires_url;
-        this.template = new EJS({element:"casexml-template"});
+        this.template = new EJS({url:"/static/app_manager/ejs/casexml.ejs", type: "["});
         $("#casexml-template").remove();
     }
-    CaseXML.prototype.init = (function(){
+    CaseXML.prototype.render = (function(){
+        var casexml = this;
         this.template.update(this.home, this);
         initBlock("#" + this.home);
         initCondition();
-        $("#casexml_json").hide();
         var questions = this.questions;
         if(questions.length) {
-            populateQuestions(questions);
-
+            //populateQuestions(questions);
             makeConditionInteractive(questions);
-            initUpdateCase();
-            populateCasexmlForm(get_actions());
+            //initUpdateCase();
+            //populateCasexmlForm(this.actions);
             $(".casexml").delegate('*', 'change', function(){
                 // recompute casexml_json
-                $("#casexml_json").text(generateCasexmlJson());
-            }).find('*').first().trigger('change');
+                casexml.refreshActions();
+                $("#casexml_json").text(JSON.stringify(casexml.actions));
+                casexml.render();
+            }).find('*').first();
             $(".no-edit *").each(function(){
                 if( ($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) ||
                     (($(this).is('input[type="text"]') || $(this).is('select')) && !$(this).attr('value')) ||
@@ -201,5 +162,82 @@ CaseXML = (function(){
             //checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
         }
     });
+    CaseXML.prototype.init = (function(){
+        $("#casexml_json").hide();
+        this.render();
+    });
+
+    CaseXML.prototype.renderQuestions = (function(filter) {
+        // filter can be "all", or any of "select1", "select", or "input" separated by spaces
+        filter = filter.split(" ");
+        var html = "";
+        for(i in this.questions) {
+            var q = this.questions[i];
+            if(filter[0] == "all" || filter.indexOf(q.tag) != -1) {
+                html += "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
+            }
+        }
+        return html;
+    });
+    CaseXML.prototype.renderChecked = (function(action){
+        if(action_is_active(action)) {
+            return 'checked="true"';
+        }
+        else {
+            return "";
+        }
+    });
+
+    CaseXML.prototype.refreshActions = (function(){
+        var actions = {};
+        function lookup(root, key){
+            return $(root).find('[name="' + key + '"]').attr('value');
+        }
+        $(".casexml .action").each(function(){
+
+            var $checkbox = $(this).find('input[type="checkbox"]');
+            var action = {};
+            if(!$checkbox.is(":checked")) return;
+
+            id = $checkbox.attr('id').replace('-','_');
+            if(id=="update_case") {
+                action.update = {};
+                $('.action-update', this).each(function(){
+                    key = lookup(this, "action-update-key");
+                    val = lookup(this, "action-update-value");
+                    if(key || val) {
+                        action.update[key] = val;
+                    }
+                });
+            }
+            else if (id=="open_referral" || id=="open_case") {
+                action.name_path = lookup(this, 'name_path');
+            }
+            else if (id=="update_referral") {
+                action.followup_date = lookup(this, 'followup_date');
+            }
+            action.condition = {'type': 'always'}; // default value
+            $('.condition', this).each(function(){ // there is only one
+                action.condition = {};
+//                if($checkbox.is(":checked")) {
+//                    action.condition.type = "never";
+//                }
+                if($('input[name="if"]', this).is(':checked')) {
+                    action.condition.type = "if";
+                }
+                else {
+                    action.condition.type = 'always';
+                }
+                if(action.condition.type == 'if') {
+                    action.condition.question = lookup(this, 'condition-question');
+                    action.condition.answer = lookup(this, 'condition-answer');
+                }
+            });
+            actions[id] = action;
+
+        });
+        this.actions = actions;
+    });
+
     return CaseXML;
 })();
