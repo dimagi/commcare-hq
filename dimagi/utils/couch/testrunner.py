@@ -26,6 +26,7 @@ class CouchDbKitTestSuiteRunner(DjangoTestSuiteRunner):
         # first pass: just implement this as a monkey-patch to the loading module
         # overriding all the existing couchdb settings
         self.dbs = [(app, self.get_test_db_name(url)) for app, url in getattr(settings, "COUCHDB_DATABASES", [])]
+        settings.COUCH_DATABASE = self.get_test_db_name(settings.COUCH_DATABASE)
         old_handler = loading.couchdbkit_handler
         couchdbkit_handler = loading.CouchdbkitHandler(self.dbs)
         loading.couchdbkit_handler = couchdbkit_handler
