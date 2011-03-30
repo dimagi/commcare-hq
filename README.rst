@@ -17,7 +17,7 @@ What It does
 
 Requirements
 ===========
-Auditcare relies on dimagi-utils
+Auditcare relies on dimagi-utils and couchdbkit
 
 Usage
 =====
@@ -69,6 +69,8 @@ Model Saves
 By default, the setting AUDIT_DJANGO_USER is set to True, you will need to explicitly set it to false.
 
 For django models you want to audit the save event of, add the fully qualified model name to the AUDIT_MODEL_SAVE array.
+
+This auditing application also audits the save events of couchdbkit Document models too.
 
 You can also audit the admin views by specifying specific AUDIT_ADMIN_VIEWS = [].  If this setting is not in the settings variable, it'll default to auditing ALL admin views.
 
