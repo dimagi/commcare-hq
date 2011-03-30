@@ -1,5 +1,5 @@
 from django.http import HttpResponse, Http404
-from corehq.apps.app_manager.xform import XFormError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from dimagi.utils.web import render_to_response
 
@@ -214,11 +214,18 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     except XMLSyntaxError as e:
         xform_questions = []
 #        xform_errors = e.msg
-        messages.error(req, e.msg)
+        messages.error(req, "%s" % e)
     except AppError, e:
         #logging.exception(e)
         xform_questions = []
         messages.error(req, "Error in application: %s" % e)
+    except XFormValidationError, e:
+        #logging.exception(e)
+        xform_questions = []
+        message = unicode(e)
+        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+        for msg in message.split("\n")[2:]:
+            messages.error(req, "%s" % msg)
     except XFormError, e:
         #logging.exception(e)
         xform_questions = []
