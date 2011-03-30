@@ -1,3 +1,4 @@
+import sys
 from django.test.simple import DjangoTestSuiteRunner
 from django.conf import settings
 from couchdbkit.ext.django import loading as loading
@@ -64,3 +65,43 @@ class CouchDbKitTestSuiteRunner(DjangoTestSuiteRunner):
         if skipcount:
             print "skipped deleting %s app databases that were already deleted" % skipcount
         return super(CouchDbKitTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
+
+try:
+
+    import xmlrunner
+    from django.test.simple import *
+    class CouchDbKitXMLTestSuiteRunner(CouchDbKitTestSuiteRunner):
+        def __init__(self, *args, **kwargs):
+            CouchDbKitTestSuiteRunner.__init__(self)
+
+        def setup_databases(self, **kwargs):
+            return CouchDbKitTestSuiteRunner.setup_databases(self, **kwargs)
+            #return super(CouchDbKitXMLTestSuiteRunner, self).setup_databases(**kwargs)
+        def teardown_databases(self, old_config, **kwargs):
+            #return super(CouchDbKitXMLTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
+            return CouchDbKitTestSuiteRunner.teardown_databases(self, old_config, **kwargs)
+
+        def run_tests(self, test_labels, verbosity=1, interactive=True, extra_tests=[]):
+            """
+            adapted from xmlrunner.extra.djangotestrunner.run_tests
+            """
+            self.setup_test_environment()
+
+            settings.DEBUG = False
+
+            verbose = getattr(settings, 'TEST_OUTPUT_VERBOSE', False)
+            descriptions = getattr(settings, 'TEST_OUTPUT_DESCRIPTIONS', False)
+            output = getattr(settings, 'TEST_OUTPUT_DIR', '.')
+
+            suite = self.build_suite(test_labels, extra_tests) #unittest.TestSuite()
+            old_config=self.setup_databases()
+            result = xmlrunner.XMLTestRunner(verbose=verbose, descriptions=descriptions, output=output).run(suite)
+
+            self.teardown_databases(old_config)
+            self.teardown_test_environment()
+            return len(result.failures) + len(result.errors)
+            #return self.suite_result(suite, result)
+
+
+except:
+    pass
