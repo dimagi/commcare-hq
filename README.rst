@@ -15,11 +15,21 @@ What It does
 - Uses threadlocals for accessing the user in said signals
 - Login/Logout and failed login attempts (AccessAudit)
 
+Requirements
+===========
+Auditcare relies on dimagi-utils
+
 Usage
 =====
 To turn on auditing, you'll need to add a few settings to your settings.py file.
 
 To your INSTALLED_APPS, add the 'auditcare' app.
+To setup couchdb, you need to use dimagi's convention for connecting to CouchDB.  Specifically:
+settings.COUCH_SERVER_ROOT='127.0.0.1:5984'
+COUCH_USERNAME = 'foo'
+COUCH_PASSWORD = 'bar'
+COUCH_DATABASE_NAME = 'foobardb'
+COUCHDB_APPS = ['auditcare', ...]
 
 View Audits
 ===========
@@ -31,7 +41,17 @@ Login/Logout Events
 ===================
 
 By default the django standard login/logout views will be audited.  Custom login/logout views are a work in progress
-
+####### Couch Forms & Couch DB Kit Settings #######
+def get_server_url(server_root, username, password):
+    if username and password:
+        return "http://%(user)s:%(pass)s@%(server)s" % \
+            {"user": username,
+             "pass": password,
+             "server": server_root }
+    else:
+        return "http://%(server)s" % {"server": server_root }
+COUCH_SERVER = get_server_url(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD)
+COUCH_DATABASE = "%(server)s/%(database)s" % {"server": COUCH_SERVER, "database": COUCH_DATABASE_NAME }
 
 Model Saves
 ===========
