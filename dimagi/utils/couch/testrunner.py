@@ -31,7 +31,13 @@ class CouchDbKitTestSuiteRunner(DjangoTestSuiteRunner):
         loading.register_schema = couchdbkit_handler.register_schema
         loading.get_schema = couchdbkit_handler.get_schema
         loading.get_db = couchdbkit_handler.get_db
-        
+
+        #if couchforms exists, monkey patch the XFORMS_POST_URL
+        for app, url in self.dbs:
+            if app == "couchforms":
+                settings.XFORMS_POST_URL = "%s/_design/couchforms/_update/xform/" % (url)
+                break
+
         # register our dbs with the extension document classes
         for app, value in old_handler.app_schema.items():
             for name, cls in value.items():
