@@ -46,7 +46,9 @@ def get_server_url(server_root, username, password):
              "server": server_root }
     else:
         return "http://%(server)s" % {"server": server_root }
+
 COUCH_SERVER = get_server_url(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD)
+
 COUCH_DATABASE = "%(server)s/%(database)s" % {"server": COUCH_SERVER, "database": COUCH_DATABASE_NAME }
 
 View Audits
