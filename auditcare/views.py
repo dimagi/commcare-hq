@@ -7,16 +7,20 @@ import datetime
 
 
 def auditAll(request, template="auditcare/index.html"):
-    auditEvents = couchmodels.AuditEvent.view("auditcare/by_user_date").all()
+    auditEvents = couchmodels.AuditEvent.view("auditcare/by_date_events", include_docs=True).all()
     context = RequestContext(request)
 
-    realEvents = [{"user":a["key"][0], "path":a["value"], "date":
-                    datetime.datetime(year=int(a["key"][1]),
-                                      month=int(a["key"][2]),
-                                      day=int(a["key"][3]),
-                                      hour=a["key"][4],
-                                      minute=a["key"][5],
-                                      second=a["key"][6])} for a in auditEvents]
+    realEvents = [{'user': a.user, 'date': a.event_date, 'class': a.event_class} for a in auditEvents]
+
+#    realEvents = [{"user":a["key"][0], "path":a["value"], "date":
+#                    datetime.datetime(year=int(a["key"][1]),
+#                                      month=int(a["key"][2]),
+#                                      day=int(a["key"][3]),
+#                                      hour=a["key"][4],
+#                                      minute=a["key"][5],
+#                                      second=a["key"][6])
+#                  }
+#                  for a in auditEvents]
     context['auditEvents'] = realEvents
     return render_to_response(template, context)
 
