@@ -1,0 +1,5 @@
+[%= renderCondition(actions.open_case.condition) %]
+<span>
+    Name according to question
+    [%= renderOptions(getQuestions("all"), actions.open_case.name_path, 'name_path') %]
+</span>

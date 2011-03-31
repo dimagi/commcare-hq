@@ -1,120 +1,14 @@
-function initCondition() {
-    $condition = $("#condition-template");
-    $condition.removeAttr("id").remove();
-    $('.casexml .action .config .condition').html($condition.html());
-}
 function truncateLabel(label) {
     var MAXLEN = 40;
     return (label.length <= MAXLEN) ? (label) : (label.slice(0, MAXLEN) + "...");
 }
-function makeConditionInteractive(questions) {
-    $(".condition select[name='condition-question']").change(function(){
-        var $answers = $(this).next("select[name='condition-answer']");
-        $answers.html("");
-        value = $(this).attr('value');
-        found = false;
-        for(i in questions) {
-            q = questions[i];
-            if(q.value == value) {
-                found = true;
-                break;
-            }
-        }
-        if(found){
-            $answers.show();
-            for(i in q.options) {
-                o = q.options[i];
-                option = "<option value='" + o.value + "' title='" + o.label + "'>" +
-                        truncateLabel(o.label)
-                        + "</option>";
-                $answers.append($(option));
-            }
-        }
-    });
-}
+
 function escapeQuotes(string){
     return string.replace("'", "&apos;").replace("\"", "&quot;");
-}
-//function populateQuestions(questions) {
-//    $("select.questions").each(function(){
-//        //$answers = $(this).next("select[name='trigger_answer']");
-//        //$answers.hide();
-//        for(i in questions) {
-//            q = questions[i];
-//            if(($(this).hasClass("questions-all")) ||
-//               ($(this).hasClass('questions-select1') && q.tag == "select1") ||
-//               ($(this).hasClass('questions-select') && q.tag == "select") ||
-//               ($(this).hasClass('questions-input') && q.tag == "input")) {
-//                option = "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
-//                $(this).append($(option));
-//            }
-//        }
-//    });
-//}
-
-function add_update_row(){
-    $new_row = initUpdateCase.template.clone();
-    $new_row.addClass('action-update');
-    $("#update-case-config").find('table').append($new_row);
-}
-function initUpdateCase() {
-    $update_template = $("#action-update-template");
-    $update_template.removeAttr("id").remove();
-    initUpdateCase.template = $update_template;
-
-    add_update_row();
-
-    $('.casexml [name="action-update-value"]').live('change', function (){
-        if($(this).closest('tr').is(':last-child')) {
-            add_update_row();
-        }
-    });
 }
 
 function action_is_active(action) {
     return action && action.condition && action.condition.type in {'if': true, 'always': true};
-}
-function populateCasexmlForm(actions){
-    //actions = JSON.parse(actions);
-
-    for(a in actions) {
-        action = actions[a];
-        if(!action_is_active(action)) continue;
-        id = a.replace('_', '-');
-        $checkbox = $("#"+id);
-        $action = $checkbox.parent();
-        $checkbox.attr('checked', true).trigger('change');
-
-        if(action.condition.type == 'if') {
-            $if = $('.condition input[name="if"]', $action);
-            $if.attr('checked', true).trigger('change');
-            $('.condition [name="condition-question"]', $action).attr('value', action.condition.question).trigger('change');
-            $('.condition [name="condition-answer"]', $action).attr('value', action.condition.answer);
-        }
-
-        if(a == 'update_case') {
-
-            update = action.update;
-            for(key in update) {
-                val = update[key];
-                $row = $('.action-update:last-child');
-                $('[name="action-update-key"]', $row).attr('value', key);
-                $('[name="action-update-value"]', $row).attr('value', val)
-                        .trigger('change'); // create new row
-            }
-        }
-        else if(a == "open_referral" || a == "open_case") {
-            name_path = action.name_path;
-            $('[name="name_path"]', $action).attr('value', name_path);
-        }
-        else if(a == "update_referral") {
-            followup_date = action.followup_date;
-            $('[name="followup_date"]', $action).attr('value', followup_date);
-        }
-    }
-}
-function get_actions() {
-    return JSON.parse($("#casexml_json").text());
 }
 
 CaseXML = (function(){
@@ -127,39 +21,29 @@ CaseXML = (function(){
         this.requires = params.requires;
         this.save_requires_url = params.save_requires_url;
         this.template = new EJS({url:"/static/app_manager/ejs/casexml.ejs", type: "["});
+        this.condition_ejs = new EJS({url:"/static/app_manager/ejs/condition.ejs", type: "["});
+        this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
+        this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
+        this.action_templates = {};
+        for(var a in this.actions) {
+            if(a == "doc_type") continue;
+            this.action_templates[a] = new EJS({url: "/static/app_manager/ejs/actions/" + a + ".ejs", type: "["});
+        }
         $("#casexml-template").remove();
     }
+    //CaseXML.action_types = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral"];
     CaseXML.prototype.render = (function(){
         var casexml = this;
         this.template.update(this.home, this);
+        $("#requires_form [name='requires']").addClass('autosave');
         initBlock("#" + this.home);
-        initCondition();
-        var questions = this.questions;
-        if(questions.length) {
-            //populateQuestions(questions);
-            makeConditionInteractive(questions);
-            //initUpdateCase();
-            //populateCasexmlForm(this.actions);
+        if(this.questions.length && this.edit) {
             $(".casexml").delegate('*', 'change', function(){
                 // recompute casexml_json
                 casexml.refreshActions();
                 $("#casexml_json").text(JSON.stringify(casexml.actions));
                 casexml.render();
             }).find('*').first();
-            $(".no-edit *").each(function(){
-                if( ($(this).is('input[type="checkbox"]') && !$(this).is(":checked")) ||
-                    (($(this).is('input[type="text"]') || $(this).is('select')) && !$(this).attr('value')) ||
-                    ($(this).is('input[type="submit"]'))){
-                    $(this).parent().hide();
-                }
-            }).attr("disabled", true);
-            if($('.no-edit').size()) {
-                if(actions.length == 0) {
-                    $("#no_casexml_actions").show();
-                }
-            }
-            //checkboxShowHide($("#open-case"), $("#update-case, #open-referral").parent());
-            //checkboxShowHide($(".action input[type='checkbox']"), function(){return $(this).next();});
         }
     });
     CaseXML.prototype.init = (function(){
@@ -167,17 +51,50 @@ CaseXML = (function(){
         this.render();
     });
 
-    CaseXML.prototype.renderQuestions = (function(filter) {
+    CaseXML.prototype.renderCondition = (function(condition){
+        return this.condition_ejs.render({casexml: this, condition: condition});;
+    });
+    CaseXML.prototype.getQuestions = (function(filter){
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         filter = filter.split(" ");
-        var html = "";
-        for(i in this.questions) {
+        var options = [];
+        for(var i in this.questions) {
             var q = this.questions[i];
             if(filter[0] == "all" || filter.indexOf(q.tag) != -1) {
-                html += "<option value='" + q.value + "' title='" + escapeQuotes(q.label) + "'>" + truncateLabel(q.label) + "</option>";
+                options.push(q);
             }
         }
+        return options;
+    });
+    CaseXML.prototype.renderOptions = (function(options, value, name){
+        return this.options_ejs.render({casexml: this, options: options, value: value, name: name});
+    });
+    CaseXML.prototype.renderQuestions = (function(filter) {
+        var options = this.getQuestions(filter);
+        var html = "";
+        options.forEach(function(o){
+            html += "<option value='" + o.value + "' title='" + escapeQuotes(o.label) + "'>" + truncateLabel(o.label) + "</option>";
+        });
         return html;
+    });
+    CaseXML.prototype.getAnswers = (function(condition){
+        var value = condition.question;
+        var found = false;
+        var options = [];
+        for(var i in this.questions) {
+            q = this.questions[i];
+            if(q.value == value) {
+                found = true;
+                break;
+            }
+        }
+        if(found){
+            for(i in q.options) {
+                o = q.options[i];
+                options.push(o);
+            }
+        }
+        return options;
     });
     CaseXML.prototype.renderChecked = (function(action){
         if(action_is_active(action)) {
@@ -196,15 +113,20 @@ CaseXML = (function(){
         $(".casexml .action").each(function(){
 
             var $checkbox = $(this).find('input[type="checkbox"]');
-            var action = {};
-            if(!$checkbox.is(":checked")) return;
+            var id = $checkbox.attr('id').replace('-','_');
 
-            id = $checkbox.attr('id').replace('-','_');
+            if(!$checkbox.is(":checked")) {
+                actions[id] = {};
+                return;
+            }
+
+            var action = {};
+            
             if(id=="update_case") {
                 action.update = {};
                 $('.action-update', this).each(function(){
-                    key = lookup(this, "action-update-key");
-                    val = lookup(this, "action-update-value");
+                    var key = lookup(this, "action-update-key");
+                    var val = lookup(this, "action-update-value");
                     if(key || val) {
                         action.update[key] = val;
                     }
@@ -237,6 +159,24 @@ CaseXML = (function(){
 
         });
         this.actions = actions;
+    });
+
+    CaseXML.prototype.renderAction = (function(action_type, label){
+        var html =  this.action_ejs.render({
+            casexml: this,
+            id: action_type.replace("_", "-"),
+            action_type: action_type,
+            label: label,
+            action_body: this.action_templates[action_type].render(this)
+        });
+        return html;
+    });
+    CaseXML.prototype.hasActions = (function(){
+        for(a in this.actions) {
+            if(action_is_active(this.actions[a])) {
+                return true;
+            }
+        }
     });
 
     return CaseXML;

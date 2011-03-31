@@ -1,0 +1,24 @@
+<table>
+    <tr>
+        <th></th>
+        <th>Question</th>
+        <th>Case Property</th>
+    </tr>
+    [% for(var p in actions.update_case.update) { %]
+        <tr class="action-update">
+            <td></td>
+            <td>
+                [%= renderOptions(getQuestions("all"), actions.update_case.update[p], 'action-update-value') %]
+            </td>
+            <td><input class="code" type="text" name="action-update-key" value="[%= p %]" /></td>
+        </tr>
+    [% } %]
+    <tr class="action-update">
+        <td></td>
+        <td>
+            [%= renderOptions(getQuestions("all"), "", 'action-update-value') %]
+        </td>
+        <td><input class="code" type="text" name="action-update-key" /></td>
+    </tr>
+
+</table>

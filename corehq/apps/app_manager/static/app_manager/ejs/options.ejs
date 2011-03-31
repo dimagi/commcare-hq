@@ -1,0 +1,17 @@
+[% if(casexml.edit) { %]
+    <select name="[%= name %]">
+        <option></option>
+        [% options.forEach(function(o){ %]
+            <option value='[%= o.value %]' title='[%= escapeQuotes(o.label) %]'
+                    [% if(value == o.value) { %]selected='true'[% } %]>
+                [%= truncateLabel(o.label) %]
+            </option>;
+        [% }); %]
+    </select>
+[% } else { %]
+    [% options.forEach(function(o){ %]
+        [% if(value == o.value) { %]
+            <span class="no-edit-select">[%= o.label %]</span>
+        [% } %]
+    [% }); %]
+[% } %]
