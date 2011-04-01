@@ -716,6 +716,8 @@ def delete_copy(req, domain, app_id):
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
 
+BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
+
 @safe_download
 def download_jar(req, domain, app_id):
     """
@@ -729,7 +731,11 @@ def download_jar(req, domain, app_id):
     response = HttpResponse(mimetype="application/java-archive")
     app = get_app(domain, app_id)
     response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
-    response.write(app.create_zipped_jar())
+    try:
+        response.write(app.create_zipped_jar())
+    except:
+        messages.error(req, BAD_BUILD_MESSAGE)
+        return back_to_main(**locals())
     return response
 
 @safe_download
@@ -811,9 +817,13 @@ def download_jad(req, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    response = HttpResponse(
-        app.create_jad()
-    )
+    try:
+        response = HttpResponse(
+            app.create_jad()
+        )
+    except:
+        messages.error(req, BAD_BUILD_MESSAGE)
+        return back_to_main(**locals())
     response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response
