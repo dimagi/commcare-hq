@@ -13,6 +13,8 @@ def export(schema_index, file, format=Format.XLS_2007):
     Returns true if it finds data, otherwise nothing
     """
     docs = get_docs(schema_index)
+    if not docs:
+        return False
     schema = get_schema(docs)
     tables = format_tables(create_intermediate_tables(docs,schema))
     if format == Format.XLS:
