@@ -57,7 +57,7 @@
                             {% endif %}
                     </td>
                     <td>
-                        <a href="{% url corehq.apps.reports.views.export_data domain %}?export_tag={{ form.xmlns }}">
+                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag={% if form.xmlns != None %}"{{ form.xmlns }}"{% endif %}'>
                             Download
                         </a>
                     </td>

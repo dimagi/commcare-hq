@@ -39,13 +39,11 @@ def export_data(req, domain):
     """
     Download all data for a couchdbkit model
     """
-    export_tag = req.GET.get("export_tag", "")
+    export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     format = req.GET.get("format", Format.XLS_2007)
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
-    if not export_tag:
-        raise Exception("You must specify a model to download!")
     tmp = StringIO()
     if export([domain, export_tag], tmp, format=format):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
