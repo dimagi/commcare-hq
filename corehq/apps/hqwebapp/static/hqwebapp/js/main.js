@@ -3,6 +3,17 @@ $.prototype.iconify = function(icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+function initHelp(){
+    $('.help-link').each(function(){
+        var HELP_KEY_ATTR = "data-help-key";
+        var $help_link = $(this);
+        var help_key = $help_link.attr(HELP_KEY_ATTR);
+        var $help_text = $('.help-text[' + HELP_KEY_ATTR + '="' + help_key + '"]');
+        $help_text.addClass('shadow');
+        new InlineHelp($help_link, $help_text, help_key).init();
+    });
+}
+
 $(function() {
     $('.hidden').hide();
     $('.delete_link').iconify('ui-icon-closethick');
@@ -43,7 +54,7 @@ $(function() {
             $(this).find('option[value="' + val + '"]').attr('selected', 'true');
         }
     });
-
+    initHelp();
 });
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin

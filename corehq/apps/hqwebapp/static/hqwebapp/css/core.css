@@ -403,3 +403,17 @@ th {
     color: #555;
     font-weight: normal;
 }
+
+/* Inline Help */
+.help-text {
+    border: 1px solid #eaeaff;
+    background-color: #fff;
+    padding: 20px !important;
+    position: absolute;
+    margin-top: 10px;
+}
+.help-text
+    p {
+        text-align: justify;
+        margin: 5px 0 5px 0;
+    }

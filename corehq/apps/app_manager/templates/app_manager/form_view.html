@@ -356,7 +356,8 @@
         </span>
     </div>
     {% if form.contents %}
-        <h4>Cases and Referrals</h4>
+        <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+        <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
         {% if xform_questions != "[]" %}
             <div class="casexml {% if not edit %}no-edit{% endif %} config">
                 <ul>
