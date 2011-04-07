@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 import json
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -11,6 +12,7 @@ def json_response(obj):
 def json_request(params):
     return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
 
+@login_and_domain_required
 def submissions_json(request, domain):
     def query(limit=100, userID=None, group=False, username__exclude=["demo_user", "admin"], **kwargs):
         if group:
@@ -79,8 +81,11 @@ def submissions_json(request, domain):
         })
     return query(**json_request(request.GET))
 
+@login_and_domain_required
 def users_json(request, domain):
     users = [{"username": "danny", "userID": "alsdkfjalskdfj"}]
     return json_response(users)
+
+@login_and_domain_required
 def submissions(request, domain, template="cleanup/submissions.html"):
     return render_to_response(request, template, {'domain': domain})
