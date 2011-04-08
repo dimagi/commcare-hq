@@ -72,8 +72,9 @@ var CaseXML = (function(){
         }
         return options;
     };
-    CaseXML.prototype.renderOptions = function(options, value, name){
-        return this.options_ejs.render({casexml: this, options: options, value: value, name: name});
+    CaseXML.prototype.renderOptions = function(options, value, name, allowNull){
+        if(allowNull === undefined) {allowNull = true;}
+        return this.options_ejs.render({casexml: this, options: options, value: value, name: name, allowNull: allowNull});
     };
     CaseXML.prototype.renderQuestions = function(filter) {
         var options = this.getQuestions(filter);

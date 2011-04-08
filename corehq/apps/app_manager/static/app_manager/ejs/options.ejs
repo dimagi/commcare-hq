@@ -1,6 +1,6 @@
 [% if(casexml.edit) { %]
     <select name="[%= name %]">
-        <option></option>
+        [% if(allowNull) { %]<option></option>[% } %]
         [% options.forEach(function(o){ %]
             <option value='[%= o.value %]' title='[%= casexml.escapeQuotes(o.label) %]'
                     [% if(value == o.value) { %]selected='true'[% } %]>
