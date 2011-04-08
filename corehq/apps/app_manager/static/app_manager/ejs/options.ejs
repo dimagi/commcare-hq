@@ -2,9 +2,9 @@
     <select name="[%= name %]">
         <option></option>
         [% options.forEach(function(o){ %]
-            <option value='[%= o.value %]' title='[%= escapeQuotes(o.label) %]'
+            <option value='[%= o.value %]' title='[%= casexml.escapeQuotes(o.label) %]'
                     [% if(value == o.value) { %]selected='true'[% } %]>
-                [%= truncateLabel(o.label) %]
+                [%= casexml.truncateLabel(o.label) %]
             </option>;
         [% }); %]
     </select>

@@ -147,6 +147,7 @@ class OpenReferralAction(FormAction):
     name_path   = StringProperty()
 class OpenCaseAction(FormAction):
     name_path   = StringProperty()
+    external_id = StringProperty()
 class UpdateReferralAction(FormAction):
     followup_date   = StringProperty()
 class FormActions(DocumentSchema):

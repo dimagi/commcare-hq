@@ -37,7 +37,7 @@
         </ul>
         [% if(edit) { %]
             <form action="[%= save_url %]" method="POST">
-                <textarea id="casexml_json" class="hidden" name="actions" >[%= JSON.stringify(actions) %]</textarea><br/>
+                <textarea id="casexml_json" class="hidden" name="actions" >[%= JSON.stringify(actions) %]</textarea>
                 <input type="submit" value="Save Actions"/>
             </form>
         [% } %]

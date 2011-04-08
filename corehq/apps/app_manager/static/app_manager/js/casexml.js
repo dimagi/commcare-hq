@@ -1,18 +1,9 @@
-function truncateLabel(label) {
-    var MAXLEN = 40;
-    return (label.length <= MAXLEN) ? (label) : (label.slice(0, MAXLEN) + "...");
-}
+var $, EJS, COMMCAREHQ;
 
-function escapeQuotes(string){
-    return string.replace("'", "&apos;").replace("\"", "&quot;");
-}
-
-function action_is_active(action) {
-    return action && action.condition && action.condition.type in {'if': true, 'always': true};
-}
-
-CaseXML = (function(){
-    function CaseXML(params) {
+var CaseXML = (function(){
+    var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral"];
+    var CaseXML = function (params) {
+        var i;
         this.home = params.home;
         this.actions = params.actions;
         this.questions = params.questions;
@@ -25,18 +16,32 @@ CaseXML = (function(){
         this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
         this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
         this.action_templates = {};
-        for(var a in this.actions) {
-            if(a == "doc_type") continue;
-            this.action_templates[a] = new EJS({url: "/static/app_manager/ejs/actions/" + a + ".ejs", type: "["});
+        for(i=0; i<action_names.length; i++) {
+            this.action_templates[action_names[i]] = new EJS({url: "/static/app_manager/ejs/actions/" + action_names[i] + ".ejs", type: "["});
         }
         $("#casexml-template").remove();
-    }
-    //CaseXML.action_types = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral"];
-    CaseXML.prototype.render = (function(){
+    };
+    CaseXML.prototype = {
+        truncateLabel: function (label) {
+            var MAXLEN = 40;
+            return (label.length <= MAXLEN) ? (label) : (label.slice(0, MAXLEN) + "...");
+        },
+        escapeQuotes: function (string){
+            return string.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+        },
+        action_is_active: function (action) {
+            return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
+        }
+    };
+
+
+
+    CaseXML.prototype.render = function(){
         var casexml = this;
+
         this.template.update(this.home, this);
         $("#requires_form [name='requires']").addClass('autosave');
-        initBlock("#" + this.home);
+        COMMCAREHQ.initBlock("#" + this.home);
         if(this.questions.length && this.edit) {
             $(".casexml").delegate('*', 'change', function(){
                 // recompute casexml_json
@@ -45,67 +50,69 @@ CaseXML = (function(){
                 casexml.render();
             }).find('*').first();
         }
-    });
-    CaseXML.prototype.init = (function(){
+    };
+    CaseXML.prototype.init = function(){
         $("#casexml_json").hide();
         this.render();
-    });
+    };
 
-    CaseXML.prototype.renderCondition = (function(condition){
-        return this.condition_ejs.render({casexml: this, condition: condition});;
-    });
-    CaseXML.prototype.getQuestions = (function(filter){
+    CaseXML.prototype.renderCondition = function(condition){
+        return this.condition_ejs.render({casexml: this, condition: condition});
+    };
+    CaseXML.prototype.getQuestions = function(filter){
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
+        var i;
         filter = filter.split(" ");
         var options = [];
-        for(var i in this.questions) {
+        for(i=0; i < this.questions.length; i++) {
             var q = this.questions[i];
-            if(filter[0] == "all" || filter.indexOf(q.tag) != -1) {
+            if(filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
                 options.push(q);
             }
         }
         return options;
-    });
-    CaseXML.prototype.renderOptions = (function(options, value, name){
+    };
+    CaseXML.prototype.renderOptions = function(options, value, name){
         return this.options_ejs.render({casexml: this, options: options, value: value, name: name});
-    });
-    CaseXML.prototype.renderQuestions = (function(filter) {
+    };
+    CaseXML.prototype.renderQuestions = function(filter) {
         var options = this.getQuestions(filter);
         var html = "";
         options.forEach(function(o){
-            html += "<option value='" + o.value + "' title='" + escapeQuotes(o.label) + "'>" + truncateLabel(o.label) + "</option>";
+            html += "<option value='" + o.value + "' title='" + this.escapeQuotes(o.label) + "'>" + this.truncateLabel(o.label) + "</option>";
         });
         return html;
-    });
-    CaseXML.prototype.getAnswers = (function(condition){
+    };
+    CaseXML.prototype.getAnswers = function(condition){
+        var i, q, o;
         var value = condition.question;
         var found = false;
         var options = [];
-        for(var i in this.questions) {
+        for(i=0; i < this.questions.length; i++) {
             q = this.questions[i];
-            if(q.value == value) {
+            if(q.value === value) {
                 found = true;
                 break;
             }
         }
         if(found){
-            for(i in q.options) {
+            for(i=0; i < q.options.length; i++) {
                 o = q.options[i];
                 options.push(o);
             }
         }
         return options;
-    });
-    CaseXML.prototype.renderChecked = (function(action){
-        if(action_is_active(action)) {
+    };
+    CaseXML.prototype.renderChecked = function(action){
+        if(this.action_is_active(action)) {
             return 'checked="true"';
         }
         else {
             return "";
         }
-    });
+    };
 
-    CaseXML.prototype.refreshActions = (function(){
+    CaseXML.prototype.refreshActions = function(){
         var actions = {};
         function lookup(root, key){
             return $(root).find('[name="' + key + '"]').attr('value');
@@ -122,7 +129,10 @@ CaseXML = (function(){
 
             var action = {};
             
-            if(id=="update_case") {
+            if(id === "open_case"){
+                action.name_path = lookup(this, 'name_path');
+                action.external_id = lookup(this, 'external_id');
+            } else if(id==="update_case") {
                 action.update = {};
                 $('.action-update', this).each(function(){
                     var key = lookup(this, "action-update-key");
@@ -132,10 +142,10 @@ CaseXML = (function(){
                     }
                 });
             }
-            else if (id=="open_referral" || id=="open_case") {
+            else if (id==="open_referral") {
                 action.name_path = lookup(this, 'name_path');
             }
-            else if (id=="update_referral") {
+            else if (id==="update_referral") {
                 action.followup_date = lookup(this, 'followup_date');
             }
             action.condition = {'type': 'always'}; // default value
@@ -150,7 +160,7 @@ CaseXML = (function(){
                 else {
                     action.condition.type = 'always';
                 }
-                if(action.condition.type == 'if') {
+                if(action.condition.type === 'if') {
                     action.condition.question = lookup(this, 'condition-question');
                     action.condition.answer = lookup(this, 'condition-answer');
                 }
@@ -159,9 +169,9 @@ CaseXML = (function(){
 
         });
         this.actions = actions;
-    });
+    };
 
-    CaseXML.prototype.renderAction = (function(action_type, label){
+    CaseXML.prototype.renderAction = function(action_type, label){
         var html =  this.action_ejs.render({
             casexml: this,
             id: action_type.replace("_", "-"),
@@ -170,14 +180,17 @@ CaseXML = (function(){
             action_body: this.action_templates[action_type].render(this)
         });
         return html;
-    });
-    CaseXML.prototype.hasActions = (function(){
+    };
+    CaseXML.prototype.hasActions = function(){
+        var a;
         for(a in this.actions) {
-            if(action_is_active(this.actions[a])) {
-                return true;
+            if(this.actions.hasOwnProperty(a)) {
+                if(this.action_is_active(this.actions[a])) {
+                    return true;
+                }
             }
         }
-    });
+    };
 
     return CaseXML;
-})();
+}());
