@@ -1,5 +1,5 @@
 from django.http import HttpResponse, Http404
-from corehq.apps.app_manager.xform import XFormError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from dimagi.utils.web import render_to_response
 
@@ -214,11 +214,18 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     except XMLSyntaxError as e:
         xform_questions = []
 #        xform_errors = e.msg
-        messages.error(req, e.msg)
+        messages.error(req, "%s" % e)
     except AppError, e:
         #logging.exception(e)
         xform_questions = []
         messages.error(req, "Error in application: %s" % e)
+    except XFormValidationError, e:
+        #logging.exception(e)
+        xform_questions = []
+        message = unicode(e)
+        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+        for msg in message.split("\n")[2:]:
+            messages.error(req, "%s" % msg)
     except XFormError, e:
         #logging.exception(e)
         xform_questions = []
@@ -709,6 +716,8 @@ def delete_copy(req, domain, app_id):
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
 
+BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
+
 @safe_download
 def download_jar(req, domain, app_id):
     """
@@ -722,7 +731,11 @@ def download_jar(req, domain, app_id):
     response = HttpResponse(mimetype="application/java-archive")
     app = get_app(domain, app_id)
     response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
-    response.write(app.create_zipped_jar())
+    try:
+        response.write(app.create_zipped_jar())
+    except:
+        messages.error(req, BAD_BUILD_MESSAGE)
+        return back_to_main(**locals())
     return response
 
 @safe_download
@@ -804,9 +817,13 @@ def download_jad(req, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    response = HttpResponse(
-        app.create_jad()
-    )
+    try:
+        response = HttpResponse(
+            app.create_jad()
+        )
+    except:
+        messages.error(req, BAD_BUILD_MESSAGE)
+        return back_to_main(**locals())
     response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     return response

@@ -22,6 +22,15 @@ function initBlock($elem) {
     $("input[type='text'], input[type='password'], textarea", $elem).addClass('shadow').addClass('ui-corner-all');
     $('.container', $elem).addClass('ui-widget ui-widget-content');
     $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+
+    $('.help-link', $elem).each(function(){
+        var HELP_KEY_ATTR = "data-help-key";
+        var $help_link = $(this);
+        var help_key = $help_link.attr(HELP_KEY_ATTR);
+        var $help_text = $('.help-text[' + HELP_KEY_ATTR + '="' + help_key + '"]');
+        $help_text.addClass('shadow');
+        new InlineHelp($help_link, $help_text, help_key).init();
+    });
 }
 
 $(function() {

@@ -61,7 +61,7 @@
                     "date-due",
                     "date-created"
                 ],
-                "case": JSON.parse($("#case-fields").remove().text())
+                "case": ["date-opened"].concat(JSON.parse($("#case-fields").remove().text()))
             };
             if(fields['case'] != "") {
                 $('#case-properties-warning').hide();
@@ -165,13 +165,16 @@
             </tr>
             <tr class="form editable">
                 <th>
-                    Case Type
+                    Case Type <span class="help-link" data-help-key="app_manager/case_type"></span>
                 </th>
                 <td>
                     <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_type'%}">
                         <input class="autosave code" type="text" name="case_type" value="{{ module.case_type }}"/>
                     </form>
                 </td>
+            </tr>
+            <tr>
+                <td colspan="2"><div class="help-text" data-help-key="app_manager/case_type"></div></td>
             </tr>
 {#            <tr class="form editable">#}
 {#                <th>#}

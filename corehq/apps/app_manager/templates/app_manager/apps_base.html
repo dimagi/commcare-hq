@@ -185,7 +185,7 @@
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
                                             {{ error.module.name|trans:langs }}</a>
                                         uses referrals but doesn't have
                                         detail screens configured for referrals.
@@ -211,7 +211,11 @@
                                         uses cases but doesn't have a
                                         case type defined.
                                     {% else %}
+                                    {% if error.type == "form error" %}
+                                        One or more forms are invalid: check all your forms for error messages.
+                                    {% else %}
                                         {{ error }}
+                                    {% endif %} 
                                     {% endif %}
                                     {% endif %}
                                     {% endif %}
