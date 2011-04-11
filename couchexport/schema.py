@@ -50,7 +50,10 @@ def extend_schema(schema, doc):
     if schema_kind != "list" and doc_kind == "list":
         schema_kind = "list"
         schema = [schema]
-    
+    if doc_kind != "list" and schema_kind == "list":
+        doc_kind = "list"
+        doc = [doc]
+        
     if schema_kind == "null":
         return make_schema(doc)
     elif schema_kind == "dict":
