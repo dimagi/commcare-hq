@@ -64,6 +64,9 @@ def post(request):
                     date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
                     date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
                 except:
+                    logging.error("Receiver app: incoming submission has a date header that we can't parse: '%s'"
+                        % date_header
+                    )
                     date = date_header
                 doc['date_header'] = date
             # fire signals
