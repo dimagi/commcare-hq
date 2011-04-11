@@ -20,6 +20,15 @@
             (function doStyling() {
                 $(".xml-source").dialog({height: 700, width: 900});
             })();
+            (function doFileUploadCheck(){
+                $("#xform_file_input").change(function(){
+                    if ($(this).val()) {
+                        $("#xform_file_submit").show();
+                    } else {
+                        $("#xform_file_submit").hide();
+                    }
+                }).trigger('change');
+            })();
             var casexml = new CaseXML({
                 home: "casexml_home",
                 actions: {{ form_actions|safe }},
@@ -106,9 +115,9 @@
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
-                            <input type="file" name="xform" />
+                            <input id="xform_file_input" type="file" name="xform" />
                             <input type="hidden" name="ajax" value="false" />
-                            <input type="submit" value="Upload" />
+                            <input id="xform_file_submit"type="submit" value="Upload" />
                         </form>
                     </div>
                 </td>

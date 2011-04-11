@@ -531,10 +531,13 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         form.name[lang] = name
         resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
-        xform = req.FILES['xform']
-        xform = xform.read()
-        form.contents = unicode(xform, encoding="utf-8")
-        form.refresh()
+        xform = req.FILES.get('xform')
+        if xform:
+            xform = xform.read()
+            form.contents = unicode(xform, encoding="utf-8")
+            form.refresh()
+        else:
+            messages.error(req, "You didn't select a form to upload")
     elif "show_count" == attr:
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False
