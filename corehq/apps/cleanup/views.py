@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 import json
+from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.models import CommCareAccount
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -83,9 +85,31 @@ def submissions_json(request, domain):
 
 @login_and_domain_required
 def users_json(request, domain):
-    users = [{"username": "danny", "userID": "alsdkfjalskdfj"}]
+    userIDs = [account.login_id for account in CommCareAccount.view(
+        "users/commcare_accounts_by_domain",
+        key=domain,
+    )]
+    logins = [get_db().get(userID) for userID in userIDs]
+    users = [{"username": l['django_user']['username'], "userID": l['_id']} for l in logins]
     return json_response(users)
 
 @login_and_domain_required
 def submissions(request, domain, template="cleanup/submissions.html"):
     return render_to_response(request, template, {'domain': domain})
+
+@require_POST
+@login_and_domain_required
+def relabel_submissions(request, domain):
+    userID = request.POST['userID']
+    data = json.loads(request.POST['data'])
+    group = data['group']
+    keys = data['submissions']
+    submissions = []
+    if group:
+        for key in keys:
+            for sub in get_db().view('cleanup/submissions', reduce=False,
+                                     key=[domain, key['userID'], key['username'], key['deviceID']]
+            ).all():
+                submissions.append(sub['id'])
+    return json_response(submissions)
+    

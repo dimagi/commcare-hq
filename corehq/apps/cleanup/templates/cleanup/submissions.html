@@ -10,7 +10,7 @@
             $(function(){
                 var renderCode = (function(code){
                     return "<code>" + code + "</code>";
-                })
+                });
                 var state = {
                     get_url: function(){
                         return '{% url corehq.apps.cleanup.views.submissions_json domain %}' +
@@ -68,16 +68,24 @@
                     state.reload();
                     return false;
                 }).trigger('click');
-                $("#user_reassignment select[name='user']").each(function(){
+                $("#user_reassignment select[name='userID']").each(function(){
+                    var that = this;
                     $.get('users.json', function(data){
                         var users = JSON.parse(data);
                         for(var i in users) {
                             var $option = $("<option />");
                             $option.attr("value", users[i].userID);
                             $option.text(users[i].username);
-                            $("#user_reassignment select[name='user']").append($option);
+                            $(that).append($option);
                         }
                     });
+                });
+                $("#user_reassignment").submit(function(){
+                    var data = {
+                        submissions: state.table.getSelected(),
+                        group: state.get_group()
+                    };
+                    $("[name='data']", this).val(JSON.stringify(data));
                 });
             });
         </script>
@@ -115,10 +123,12 @@
                 <p>Reassign the following submissions:</p>
                 <div id="selected"></div>
                 <p>to the following user:</p>
-                <form id="user_reassignment" action="" method="POST">
-                    <select name="user">
+                <form id="user_reassignment" action="{% url corehq.apps.cleanup.views.relabel_submissions domain %}" method="POST">
+                    <select name="userID">
                         
                     </select>
+                    <input type="hidden" name="data" value="" />
+                    <input type="submit" value="Reassign" />
                 </form>
             </td>
             </tr>
