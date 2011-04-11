@@ -46,6 +46,10 @@ def extend_schema(schema, doc):
     doc_kind = get_kind(doc)
     if doc_kind == "null":
         return schema
+
+    if schema_kind != "list" and doc_kind == "list":
+        schema_kind = "list"
+        schema = [schema]
     
     if schema_kind == "null":
         return make_schema(doc)
@@ -55,7 +59,7 @@ def extend_schema(schema, doc):
                 schema[key] = extend_schema(schema.get(key, None), doc[key])
             return schema
     elif schema_kind == "list":
-        if isinstance(doc, list):
+        if doc_kind == "list":
             for doc_ in doc:
                 schema[0] = extend_schema(schema[0], doc_)
             return schema
