@@ -44,6 +44,9 @@ class TemplateFunctions(object):
     def make_uuid(cls):
         return random_hex()
 
+
+def _encode_if_unicode(s):
+    return s.encode('utf-8') if isinstance(s, unicode) else s
 @login_and_domain_required
 def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
     """
@@ -328,7 +331,7 @@ def view_app(req, domain, app_id=''):
         'app': app,
     })
     response = render_to_response(req, template, context)
-    response.set_cookie('lang', context['lang'].encode('utf-8'))
+    response.set_cookie('lang', _encode_if_unicode(context['lang'].encode('utf-8')))
     return response
 
 @require_POST
