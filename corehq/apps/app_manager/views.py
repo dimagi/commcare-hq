@@ -331,7 +331,7 @@ def view_app(req, domain, app_id=''):
         'app': app,
     })
     response = render_to_response(req, template, context)
-    response.set_cookie('lang', _encode_if_unicode(context['lang'].encode('utf-8')))
+    response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
 @require_POST
