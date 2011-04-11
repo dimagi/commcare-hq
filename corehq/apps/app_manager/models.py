@@ -653,8 +653,8 @@ class Application(ApplicationBase):
         return self.modules[i].with_id(i%len(self.modules), self)
 
     @classmethod
-    def new_app(cls, domain, name):
-        app = cls(domain=domain, modules=[], name=name, langs=["en"])
+    def new_app(cls, domain, name, lang="en"):
+        app = cls(domain=domain, modules=[], name=name, langs=[lang])
         return app
 
     def new_module(self, name, lang):

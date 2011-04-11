@@ -349,7 +349,7 @@ def new_app(req, domain):
         else:
             cls = Application
 
-        app = cls.new_app(domain, name)
+        app = cls.new_app(domain, name, lang)
         if cls == Application:
             app.new_module("Untitled Module", lang)
             app.new_form(0, "Untitled Form", lang)
