@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from django.http import HttpResponse
 from couchforms.models import XFormInstance
@@ -55,8 +56,16 @@ def post(request):
             if received_on:
                 doc['received_on'] = received_on
             if date_header:
-                doc['date_header'] = date_header
-                
+                # comes in as:
+                # Mon, 11 Apr 2011 18:24:43 GMT
+                # goes out as:
+                # 2011-04-11T18:24:43Z
+                try:
+                    date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
+                    date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
+                except:
+                    date = date_header
+                doc['date_header'] = date
             # fire signals
             # We don't trap any exceptions here. This is by design, since
             # nothing is supposed to be able to raise an exception here
