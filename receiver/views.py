@@ -51,8 +51,11 @@ def post(request):
             # instead of the actual time receiver
             # useful for migrating data
             received_on = request.META.get('HTTP_X_SUBMIT_TIME')
+            date_header = request.META.get('HTTP_DATE')
             if received_on:
                 doc['received_on'] = received_on
+            if date_header:
+                doc['date_header'] = date_header
                 
             # fire signals
             # We don't trap any exceptions here. This is by design, since
