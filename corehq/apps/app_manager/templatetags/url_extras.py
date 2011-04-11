@@ -54,4 +54,9 @@ class URLEncodeNode(template.Node):
         for key in self.delete_params:
             key = template.Variable(key).resolve(context)
             params.pop(key, None)
+
+        # clean up
+        for key in params:
+            if isinstance(params[key], unicode):
+                params[key] = params[key].encode('utf-8')
         return "%s?%s" % (path, urllib.urlencode(params)) if params else path
