@@ -534,8 +534,11 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         xform = req.FILES.get('xform')
         if xform:
             xform = xform.read()
-            form.contents = unicode(xform, encoding="utf-8")
-            form.refresh()
+            try:
+                form.contents = unicode(xform, encoding="utf-8")
+                form.refresh()
+            except:
+                messages.error(req, "Error uploading form: Please make sure your form is encoded in UTF-8")
         else:
             messages.error(req, "You didn't select a form to upload")
     elif "show_count" == attr:
