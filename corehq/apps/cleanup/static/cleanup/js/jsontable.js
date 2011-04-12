@@ -1,38 +1,33 @@
+/*globals $ */
 var JsonTable, JsonRow;
-(function($) {
-    var cmp = (function(f){
-        return (function(a,b){
-            var f_a = f(a);
-            var f_b = f(b);
-            if(f_a > f_b) return 1;
-            else if(f_a == f_b) return 0;
-            else return -1;
-        });
-    });
-
-
+(function() {
     JsonRow = (function(){
         function JsonRow(options){
-            var self = this;
+            var self = this,
+                key;
             this.data = options.data;
             this.order = options.order || {};
             this._render = options.render || {};
             this.table = options.table;
             this.cells = [];
             this._getId = options.getId;
-            for(var key in this.data) {
-                this.cells.push({key: key, value: this.data[key]});
+            for(key in this.data) {
+                if (this.data.hasOwnProperty(key)) {
+                    this.cells.push({key: key, value: this.data[key]});
+                }
             }
-            this.cells.sort(cmp(function(cell){
-                return self.order.indexOf(cell.key);
-            }));
+            this.cells.sortBy(function(){
+                return self.order.indexOf(this.key);
+            });
         }
         JsonRow.prototype = {
             render: function(options){
-                if(!options) {options = {copy: false};}
-                var copy = options.copy;
-                var self = this;
-                var $row = $("<tr></tr>");
+                var copy,
+                    self = this,
+                    $row = $("<tr></tr>"),
+                    i;
+                options = options || {copy: false};
+                copy = options.copy;
                 if(!copy){
                     $row.append($("<td><input type='checkbox' /></td>"));
                     this.$checkbox = $("[type='checkbox']", $row);
@@ -40,7 +35,7 @@ var JsonTable, JsonRow;
                         self.table.setSelected(self, self.isSelected());
                     });
                 }
-                for(var i in this.cells) {
+                for(i = 0; i < this.cells.length; i += 1) {
                     $row.append("<td>" + this.renderCell(this.cells[i]) + "</td>");
                 }
 
@@ -51,7 +46,7 @@ var JsonTable, JsonRow;
                return this.$checkbox.is(":checked");
             },
             renderCell: function(cell) {
-                if(cell.key in this._render) {
+                if(this._render.hasOwnProperty(cell.key)) {
                     return this._render[cell.key](cell.value);
                 } else {
                     return cell.value;
@@ -62,11 +57,12 @@ var JsonTable, JsonRow;
             }
         };
         return JsonRow;
-    })();
+    }());
 
     JsonTable = (function(){
         function JsonTable(options){
-            var self = this;
+            var self = this,
+                h, i;
             this.data = options.data;
             this.order = options.order || [];
             this._render = options.render || {};
@@ -76,13 +72,16 @@ var JsonTable, JsonRow;
             this.rows = [];
             this.selected = {};
 
-            for(var h in this.data[0]) {
-                this.headers.push(h);
+            for(h in this.data[0]) {
+                if (this.data[0].hasOwnProperty(h)) {
+                    this.headers.push(h);
+                }
             }
-            this.headers.sort(cmp(function(h){
+            this.headers.sortBy(function(h){
                 return self.order.indexOf(h);
-            }));
-            for(var i in this.data) {
+            });
+
+            for(i = 0; i < this.data.length; i += 1) {
                 var row = new JsonRow({
                     data: this.data[i],
                     order: this.order,
@@ -96,13 +95,14 @@ var JsonTable, JsonRow;
         }
         JsonTable.prototype = {
             render: function() {
-                var $table = $("<table></table>");
-                var $hrow = $("<tr><th>Select</th></tr>");
-                for(var h in this.headers) {
+                var $table = $("<table></table>"),
+                    $hrow = $("<tr><th>Select</th></tr>"),
+                    h, i;
+                for(h = 0; h < this.headers.length; h += 1) {
                     $hrow.append($("</th><th>" + this.headers[h] + "</th>"));
                 }
                 $table.append($hrow);
-                for(var i in this.rows) {
+                for(i = 0; i < this.rows.length; i += 1) {
                     $table.append(this.rows[i].render());
                 }
                 return $table;
@@ -120,14 +120,17 @@ var JsonTable, JsonRow;
                 this.$element.trigger('change-selected');
             },
             getSelected: function(){
-                var selected = [];
-                for(var id in this.selected) {
-                    selected.push(this.selected[id].data);
+                var selected = [],
+                    id;
+                for(id in this.selected) {
+                    if (this.selected.hasOwnProperty(id)) {
+                        selected.push(this.selected[id].data);
+                    }
                 }
                 return selected;
             }
         };
         return JsonTable;
-    })();
+    }());
 
-})(jQuery);
+}());

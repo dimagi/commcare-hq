@@ -1,6 +1,8 @@
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect
 import json
 from django.views.decorators.http import require_POST
+from corehq.apps.case.models.couch import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.models import CommCareAccount
 from corehq.apps.users.util import format_username
@@ -47,7 +49,8 @@ def submissions_json(request, domain):
                     startkey=[domain],
                     endkey=[domain, {}],
                     group_level=1
-                ).one()['value']
+                ).one()
+                total = total['value'] if total else 0
             else:
                 subs = XFormInstance.view('reports/submit_history',
                     startkey=[domain, userID, {}],
@@ -61,7 +64,8 @@ def submissions_json(request, domain):
                     startkey=[domain, userID],
                     endkey=[domain, userID, {}],
                     group_level=2
-                ).one()['value']
+                ).one()
+                total = total['value'] if total else 0
             _subs = []
             for s in subs:
                 try:
@@ -104,12 +108,27 @@ def relabel_submissions(request, domain):
     data = json.loads(request.POST['data'])
     group = data['group']
     keys = data['submissions']
-    submissions = []
+    xform_ids = []
+    case_ids = []
     if group:
         for key in keys:
             for sub in get_db().view('cleanup/submissions', reduce=False,
-                                     key=[domain, key['userID'], key['username'], key['deviceID']]
+                key=[domain, key['userID'], key['username'], key['deviceID']]
             ).all():
-                submissions.append(sub['id'])
-    return json_response(submissions)
+                xform_ids.append(sub['id'])
+    for case in get_db().view('case/by_xform_id', keys=xform_ids).all():
+        case_ids.append(case['id'])
+
+    # Oh, yeah, here we go baby!
+    for xform_id in xform_ids:
+        xform = XFormInstance.get(xform_id)
+        xform.form['meta']['userID'] = userID
+        xform.save()
+    for case_id in case_ids:
+        case = CommCareCase.get(case_id)
+        case.user_id = userID
+        case.save()
+
+    
+    return HttpResponseRedirect(reverse('corehq.apps.cleanup.views.submissions', args=[domain]))
     

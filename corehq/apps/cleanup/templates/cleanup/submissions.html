@@ -1,26 +1,24 @@
-<!DOCTYPE html>
-
-<html>
-    <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <!--script src="{{ STATIC_URL }}hqwebapp/js/jsonreport.js"></script-->
-        <script src="{{ STATIC_URL }}hqwebapp/js/ejs.min.js"></script>
+{% extends base_template %}
+{% block head %}
+{#        <script src="{{ STATIC_URL }}hqwebapp/js/ejs.min.js"></script>#}
+        <script src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
         <script src="{{ STATIC_URL }}cleanup/js/jsontable.js"></script>
         <script>
             $(function(){
                 var renderCode = (function(code){
                     return "<code>" + code + "</code>";
                 });
+                var none_selected_str = "<p>(None Selected)</p>";
                 var state = {
                     get_url: function(){
                         return '{% url corehq.apps.cleanup.views.submissions_json domain %}' +
-                                '?group=' + JSON.stringify(this.get_group()) +
-                                '&userID=' + JSON.stringify(this.get_userID()) +
-                                '&limit=' + this.get_limit() +
-                                '&username__exclude=' + this.get_username__exclude();
+                                '?group=' + encodeURIComponent(JSON.stringify(this.get_group())) +
+                                '&userID=' + encodeURIComponent(JSON.stringify(this.get_userID())) +
+                                '&limit=' + encodeURIComponent(this.get_limit()) +
+                                '&username__exclude=' + encodeURIComponent(this.get_username__exclude());
                     },
                     get_group: function(){
-                        return $("#group").is(':checked');
+                        return !($("#dont_group").is(':checked'));
                     },
                     get_userID: function(){
                         return $("#use_userID").is(':checked') ? $("#userID").val() : null;
@@ -34,9 +32,10 @@
 
                     reload: function(){
                         $("#case_report").html("Loading...");
+                        $("#result_info").html("");
+                        $("#selected").html(none_selected_str);
                         $.get(this.get_url(), function(data){
                             $("#case_report").html("Processing...");
-                            $("#selected").html("");
                             var data = JSON.parse(data);
                             //var report = _.jsonreport(JSON.stringify(data.results));
                             state.table = new JsonTable({
@@ -55,31 +54,48 @@
                             });
                             $("#case_report").bind('change-selected', function(){
                                 var self = state.table;
+                                var nSelected = self.getSelected().length;
                                 $("#selected").html("<table></table>");
                                 for(var id in self.selected) {
-                                    $('table', $("#selected")).append(self.selected[id].render({copy: true}));
+                                    if (self.selected.hasOwnProperty(id)) {
+                                        $('table', $("#selected")).append(self.selected[id].render({copy: true}));
+                                    }
                                 }
-                            });
-                            $("#message").html(data.total);
+                                if(!nSelected) {
+                                    $("#selected").html(none_selected_str);
+                                }
+                                $("#user_reassignment [type='submit']").each(function(){
+                                    if(nSelected) {
+                                        $(this).show();
+                                    } else {
+                                        $(this).hide();
+                                    }
+                                });
+                            }).trigger('change-selected');
+                            $("#result_info").html("Number of results: " + data.total);
                         });
                     }
                 };
-                $("#reload").click(function(){
-                    state.reload();
-                    return false;
-                }).trigger('click');
                 $("#user_reassignment select[name='userID']").each(function(){
-                    var that = this;
+                    var i,
+                        that = this;
                     $.get('users.json', function(data){
                         var users = JSON.parse(data);
-                        for(var i in users) {
+                        users.sortBy(function(){
+                            return this.username;
+                        });
+                        for(i = 0; i < users.length; i += 1) {
                             var $option = $("<option />");
                             $option.attr("value", users[i].userID);
-                            $option.text(users[i].username);
+                            $option.text(users[i].username.split('@')[0]);
                             $(that).append($option);
                         }
                     });
                 });
+                $("#reload").click(function(){
+                    state.reload();
+                    return false;
+                }).trigger('click');
                 $("#user_reassignment").submit(function(){
                     var data = {
                         submissions: state.table.getSelected(),
@@ -89,49 +105,71 @@
                 });
             });
         </script>
-    </head>
-    <body>
-        <table>
+    <style>
+    #submissions_config_layout_table {
+        height: 250px;
+    }
+    h1 {
+        padding: 10px;
+        font-size: 2em;
+        text-align: center;
+    }
+    #main_container {
+        padding: 20px;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <h1>Reassign Submissions to Users</h1>
+        <table id="submissions_config_layout_table">
             <tr>
             <td>
-                <table>
-                    <tr>
-                        <td><label for="group">Collapse</label></td>
-                        <td><input type="checkbox" id="group"/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="userID">User ID</label></td>
-                        <td><input type="checkbox" id="use_userID" value="null"/><input type="text" id="userID" value=""/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="limit">Limit results to</label></td>
-                        <td><input type="text" id="limit" value="100"/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="username__exclude">Exclude usernames:</label></td>
-                        <td><input type="text" id="username__exclude" value='["demo_user", "admin"]' /></td>
-                    </tr>
-                </table>
-                <!--input type="text" id="query" value='userID=""&limit=100'/-->
-                <a id="reload" href="#">Reload</a>
-                <div id="message"></div>
-                <div id="case_report" class="jsontable">
-
+                <h2>1. Filter</h2>
+                <div class="config">
+                    <table>
+                        <tr>
+                            <th><label for="dont_group">List individual submissions</label></th>
+                            <td><input type="checkbox" id="dont_group"/></td>
+                        </tr>
+                        <tr>
+                            <th><label for="userID">User ID</label></th>
+                            <td><input type="checkbox" id="use_userID" value="null"/><input type="text" id="userID" value=""/></td>
+                        </tr>
+                        <tr class="hidden">
+                            <th><label for="limit">Limit results to</label></th>
+                            <td><input type="hidden" id="limit" value="100"/></td>
+                        </tr>
+                        <tr class="hidden">
+                            <th><label for="username__exclude">Exclude usernames:</label></th>
+                            <td><input type="hidden" id="username__exclude" value='["demo_user", "admin"]' /></td>
+                        </tr>
+                    </table>
+                    <!--input type="text" id="query" value='userID=""&limit=100'/-->
+                    <a id="reload" href="#" class="button">Reload</a>
                 </div>
             </td>
-            <td style="vertical-align:top;">
-                <p>Reassign the following submissions:</p>
-                <div id="selected"></div>
-                <p>to the following user:</p>
-                <form id="user_reassignment" action="{% url corehq.apps.cleanup.views.relabel_submissions domain %}" method="POST">
-                    <select name="userID">
-                        
-                    </select>
-                    <input type="hidden" name="data" value="" />
-                    <input type="submit" value="Reassign" />
-                </form>
+            <td>
+                <h2>3. Reassign</h2>
+                <div class="config">
+                    <p>Reassign the following submissions:</p>
+                    <div id="selected"></div>
+                    <p>to the following user:</p>
+                    <form id="user_reassignment" action="{% url corehq.apps.cleanup.views.relabel_submissions domain %}" method="POST">
+                        <select name="userID"></select> <br />
+                        <input type="hidden" name="data" value="" /> <br />
+                        <input type="submit" value="Reassign" />
+                    </form>
+                </div>
             </td>
             </tr>
         </table>
-    </body>
-</html>
+        <h2>2. Select Results</h2>
+        <div class="config">
+            <div id="result_info"></div>
+            <div id="case_report" class="jsontable">
+        </div>
+
+        </div>
+    </div>
+{% endblock %}
