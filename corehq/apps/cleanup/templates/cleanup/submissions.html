@@ -95,7 +95,7 @@
                         for(i = 0; i < users.length; i += 1) {
                             var $option = $("<option />");
                             $option.attr("value", users[i].userID);
-                            $option.text(users[i].username.split('@')[0]);
+                            $option.text(users[i].username.split('@')[0] + "  (" + users[i].userID + ")");
                             $(that).append($option);
                         }
                     });
