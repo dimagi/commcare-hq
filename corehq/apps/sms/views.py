@@ -117,42 +117,47 @@ def get_sms_autocomplete_context(request, domain):
 def send_to_recipients(request, domain):
     recipients = request.POST.get('recipients')
     message = request.POST.get('message')
-    recipients = [x.strip() for x in recipients.split(',') if x.strip()]
-    phone_numbers = []
-    # formats: GroupName (group), "Username", +15555555555
-    group_names = []
-    usernames = []
-    phone_numbers = []
+    if not recipients:
+        messages.error(request, "You didn't specify any recipients")
+    elif not message:
+        messages.error(request, "You can't send an empty message")
+    else:
+        recipients = [x.strip() for x in recipients.split(',') if x.strip()]
+        phone_numbers = []
+        # formats: GroupName (group), "Username", +15555555555
+        group_names = []
+        usernames = []
+        phone_numbers = []
 
-    unknown_usernames = []
-    for recipient in recipients:
-        if recipient.endswith("(group)"):
-            name = recipient.strip("(group)").strip()
-            group_names.append(name)
-        elif re.match(r'[\w\.]+', recipient):
-            usernames.append(recipient)
-        elif re.match(r'\+\d+', recipient):
-            phone_numbers.append(recipient)
-            
+        unknown_usernames = []
+        for recipient in recipients:
+            if recipient.endswith("(group)"):
+                name = recipient.strip("(group)").strip()
+                group_names.append(name)
+            elif re.match(r'[\w\.]+', recipient):
+                usernames.append(recipient)
+            elif re.match(r'\+\d+', recipient):
+                phone_numbers.append(recipient)
 
-    login_ids = dict([(r['key'], r['value']) for r in get_db().view("users/logins_by_username", keys=usernames).all()])
-    for username in usernames:
-        if username not in login_ids:
-            unknown_usernames.append(username)
-    login_ids = login_ids.values()
 
-    users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
-    users.extend(CouchUser.view('users/by_login', keys=login_ids, include_docs=True).all())
-    phone_numbers.extend([user.default_phone_number for user in users])
+        login_ids = dict([(r['key'], r['value']) for r in get_db().view("users/logins_by_username", keys=usernames).all()])
+        for username in usernames:
+            if username not in login_ids:
+                unknown_usernames.append(username)
+        login_ids = login_ids.values()
 
-    failed_numbers = []
-    for number in phone_numbers:
-        if not send_sms(domain, "", number, message):
-            failed_numbers.append(number)
-    if not failed_numbers and not unknown_usernames:
-        messages.success(request, "Message sent")
-    if failed_numbers:
-        messages.error(request, "Couldn't send to the following number(s): +%s" % (', +'.join(failed_numbers)))
-    if unknown_usernames:
-        messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
+        users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
+        users.extend(CouchUser.view('users/by_login', keys=login_ids, include_docs=True).all())
+        phone_numbers.extend([user.default_phone_number for user in users])
+
+        failed_numbers = []
+        for number in phone_numbers:
+            if not send_sms(domain, "", number, message):
+                failed_numbers.append(number)
+        if not failed_numbers and not unknown_usernames:
+            messages.success(request, "Message sent")
+        if failed_numbers:
+            messages.error(request, "Couldn't send to the following number(s): +%s" % (', +'.join(failed_numbers)))
+        if unknown_usernames:
+            messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
     return HttpResponseRedirect(reverse(messaging, args=[domain]))
