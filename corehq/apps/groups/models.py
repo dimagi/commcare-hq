@@ -5,6 +5,7 @@ http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 """
 from __future__ import absolute_import
 import datetime
+import re
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from corehq.apps.domain.models import Domain
@@ -75,3 +76,7 @@ class Group(Document):
                 break
         self.path = self.path[index:]
         self.save()
+    def save(self, *args, **kwargs):
+        # forcibly replace all non alphanumeric characters with '-'
+        self.name = re.sub(r'[^\w-]', '-', self.name)
+        super(Group, self).save()

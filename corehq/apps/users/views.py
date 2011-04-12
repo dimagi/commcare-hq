@@ -423,10 +423,21 @@ def test_scheduled_report(request, domain, couch_user_id, report_id):
 GROUP VIEWS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+
+def _get_groups(domain):
+    groups = Group.view("groups/by_domain", key=domain)
+    for group in groups:
+        name = re.sub(r'[^\w-]', '-', group.name)
+        if group.name != name:
+            group.name = name
+            group.save()
+    return groups
+
+
 @require_domain_admin
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
-    all_groups = Group.view("groups/by_domain", key=domain)
+    all_groups = _get_groups(domain)
     context.update({
         'domain': domain,
         'all_groups': all_groups
