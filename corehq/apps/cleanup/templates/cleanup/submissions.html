@@ -64,11 +64,19 @@
                                 if(!nSelected) {
                                     $("#selected").html(none_selected_str);
                                 }
-                                $("#user_reassignment [type='submit']").each(function(){
+                                $("#reassign_submit_wrapper").each(function(){
+                                    // right now changing single submissions is not supported
                                     if(nSelected) {
                                         $(this).show();
                                     } else {
                                         $(this).hide();
+                                    }
+                                });
+                                $("#reassign_div").each(function(){
+                                    if (state.get_group()) {
+                                        $(this).parent().parent().show();
+                                    } else {
+                                        $(this).parent().parent().hide();
                                     }
                                 });
                             }).trigger('change-selected');
@@ -102,6 +110,7 @@
                         group: state.get_group()
                     };
                     $("[name='data']", this).val(JSON.stringify(data));
+                    return confirm("You cannot undo this action. Are you sure you want to continue?");
                 });
             });
         </script>
@@ -116,6 +125,9 @@
     }
     #main_container {
         padding: 20px;
+    }
+    code {
+        font-size: .8em;
     }
     </style>
 {% endblock %}
@@ -151,14 +163,16 @@
             </td>
             <td>
                 <h2>3. Reassign</h2>
-                <div class="config">
+                <div class="config" id="reassign_div">
                     <p>Reassign the following submissions:</p>
                     <div id="selected"></div>
                     <p>to the following user:</p>
                     <form id="user_reassignment" action="{% url corehq.apps.cleanup.views.relabel_submissions domain %}" method="POST">
                         <select name="userID"></select> <br />
                         <input type="hidden" name="data" value="" /> <br />
-                        <input type="submit" value="Reassign" />
+                        <div id="reassign_submit_wrapper">
+                            <input type="submit" value="Reassign" />
+                        </div>
                     </form>
                 </div>
             </td>
