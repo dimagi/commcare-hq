@@ -1,0 +1,14 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Audit Viewer" %}
+{% endblock %}
+
+{% block content %}
+    <table>
+{% for p in patient_groups %}
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+{% endfor %}
+{% endblock %}
+
