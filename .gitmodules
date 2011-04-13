@@ -33,4 +33,4 @@
 	url = git://github.com/dimagi/formtranslate.git
 [submodule "submodules/langcodes"]
 	path = submodules/langcodes
-	url = git@github.com:dimagi/langcodes.git
+	url = git://github.com/dimagi/langcodes.git
