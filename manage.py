@@ -23,6 +23,7 @@ sys.path.append(os.path.join(filedir,'submodules','formtranslate-src'))
 sys.path.append(os.path.join(filedir,'submodules','receiver-src')) 
 sys.path.append(os.path.join(filedir,'submodules','auditcare-src'))
 sys.path.append(os.path.join(filedir,'submodules','commcare-translations'))
+sys.path.append(os.path.join(filedir,'submodules','langcodes'))
 
 
 try:

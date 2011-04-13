@@ -124,6 +124,7 @@ HQ_APPS = (
     'couchlog',
     'formtranslate',
     'receiver',
+    'langcodes',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
