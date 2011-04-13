@@ -174,7 +174,9 @@ class XForm(WrappedNode):
         return label
 
     def resolve_path(self, path, path_context=""):
-        if path[0] == "/":
+        if path == "":
+            return path_context
+        elif path[0] == "/":
             return path
         elif not path_context:
             return "/%s/%s" % (self.data_node.tag_name, path)
@@ -194,38 +196,43 @@ class XForm(WrappedNode):
             return []
 
         def get_path(prompt):
-            try:
+            path = None
+            if 'ref' in prompt.attrib:
                 path = prompt.attrib['ref']
-            except:
+            elif 'bind' in prompt.attrib:
                 bind_id = prompt.attrib['bind']
                 bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
                 path = bind.attrib['nodeset']
+            elif prompt.tag_name == "group":
+                path = ""
+            else:
+                raise XFormError("Node <%s> has no 'ref' or 'bind'" % prompt.tag_name)
             return path
+        
         questions = []
 
         def build_questions(group, path_context=""):
             for prompt in group.findall('*'):
-                if prompt.tag == namespaces['f'] + "group":
-                    build_questions(prompt, path_context=self.resolve_path(get_path(prompt), path_context))
-                elif prompt.tag == namespaces['f'] + "trigger":
-                    continue
-                else:
-                    question = {
-                        "label": self.get_label_text(prompt, langs),
-                        "tag": prompt.tag_name,
-                        "value": self.resolve_path(get_path(prompt), path_context)
-                    }
+                if prompt.tag_xmlns == namespaces['f'][1:-1]:
+                    if prompt.tag_name == "group":
+                        build_questions(prompt, path_context=self.resolve_path(get_path(prompt), path_context))
+                    elif prompt.tag_name not in ("trigger", "repeat", "label"):
+                        question = {
+                            "label": self.get_label_text(prompt, langs),
+                            "tag": prompt.tag_name,
+                            "value": self.resolve_path(get_path(prompt), path_context)
+                        }
 
-                    if question['tag'] == "select1":
-                        options = []
-                        for item in prompt.findall('{f}item'):
-                            translation = self.get_label_text(item, langs)
-                            options.append({
-                                'label': translation,
-                                'value': item.findtext('{f}value').strip()
-                            })
-                        question.update({'options': options})
-                    questions.append(question)
+                        if question['tag'] == "select1":
+                            options = []
+                            for item in prompt.findall('{f}item'):
+                                translation = self.get_label_text(item, langs)
+                                options.append({
+                                    'label': translation,
+                                    'value': item.findtext('{f}value').strip()
+                                })
+                            question.update({'options': options})
+                        questions.append(question)
         build_questions(self.find('{h}body'))
         return questions
 
