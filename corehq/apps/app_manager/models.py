@@ -230,6 +230,10 @@ class Form(IndexedSchema):
         source = self.to_json()
         del source['unique_id']
         return source
+    def rename_lang(self, old_lang, new_lang):
+        self.name[new_lang] = self.name[old_lang]
+        del self.name[old_lang]
+        
 
 class DetailColumn(IndexedSchema):
     """
@@ -249,6 +253,12 @@ class DetailColumn(IndexedSchema):
     format  = StringProperty()
     enum    = DictProperty()
 
+
+    def rename_lang(self, old_lang, new_lang):
+        for dct in (self.header, self.enum):
+            dct[new_lang] = dct[old_lang]
+            del dct[old_lang]
+            
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -285,6 +295,10 @@ class Detail(DocumentSchema):
     def delete_column(self, column_id):
         del self.columns[column_id]
 
+    def rename_lang(self, old_lang, new_lang):
+        for column in self.columns:
+            column.rename_lang(old_lang, new_lang)
+
 class Module(IndexedSchema):
     """
     A group of related forms, and configuration that applies to them all.
@@ -297,6 +311,15 @@ class Module(IndexedSchema):
     forms = SchemaListProperty(Form)
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
+
+
+    def rename_lang(self, old_lang, new_lang):
+        self.name[new_lang] = self.name[old_lang]
+        del self.name[old_lang]
+        for form in self.forms:
+            form.rename_lang(old_lang, new_lang)
+        for detail in self.details:
+            detail.rename_lang(old_lang, new_lang)
 
     def get_forms(self):
         l = len(self.forms)
@@ -702,6 +725,17 @@ class Application(ApplicationBase):
         module = self.get_module(module_id)
         del module['forms'][int(form_id)]
 
+    def rename_lang(self, old_lang, new_lang):
+        if old_lang == new_lang:
+            return
+        if new_lang in self.langs:
+            raise AppError("Language %s already exists!" % new_lang)
+        for i,lang in enumerate(self.langs):
+            if lang == old_lang:
+                self.langs[i] = new_lang
+        for module in self.modules:
+            module.rename_lang(old_lang, new_lang)
+        
     def rearrange_langs(self, i, j):
         langs = self.langs
         langs.insert(i, langs.pop(j))
@@ -758,10 +792,10 @@ class Application(ApplicationBase):
                 errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
             if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
                 errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
-            try:
-                self.create_all_files()
-            except:
-                errors.append({'type': "form error"})
+            #try:
+            self.create_all_files()
+            #except:
+                #errors.append({'type': "form error"})
         return errors
     
 class NotImplementedYet(Exception):

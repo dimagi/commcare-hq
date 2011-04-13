@@ -1,6 +1,7 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% block head %}
+    <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     {{ block.super }}
     <script>
         $(function(){
@@ -83,25 +84,19 @@
                                 {% endwith %}
                             </td>
                             <td>
-                                <!--input class="code" type="text" name="lang" value={{ lang }} /-->
-                                <div class="immutable"><code>{{ lang }}</code></div>
+                                <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
+                                    <input type="hidden" name="ajax" value="false" />
+                                    <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
+                                    <input type="hidden" name="index" value="{# filled in by js #}" />
+                                </form>
                             </td>
-                            <!--td>
-                                <input type="hidden" name="lang_id" value="{{ forloop.counter|add:-1 }}" />
-                                <a href="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}" class="submit button">
-                                    Save
-                                </a>
-                                <div class="immutable">
-                                    <a class="edit_link" href="#"></a>
-                                </div>
-                            </td-->
                         </tr>
                     {% endfor %}
                     <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
                         <td>
                         </td>
                         <td>
-                            <input class="code short" type="text" name="lang" />
+                            <input class="code short langcodes" type="text" name="lang" />
                         </td>
                         <td>
                             <a href="#" class="submit button">

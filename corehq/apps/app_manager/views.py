@@ -201,8 +201,9 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         # the best we can do is add 'en' if there's nothing else.
         app.langs.append('en')
         app.save()
-    if app and not lang:
+    if app and (not lang or lang not in app.langs):
         lang = app.langs[0]
+
     langs = [lang] + (app.langs if app else [])
 
     case_fields = set()
@@ -234,10 +235,10 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         xform_questions = []
         messages.error(req, "Error in form: %s" % e)
     # any other kind of error should fail hard, but for now there are too many for that to be practical
-    except Exception, e:
-        logging.exception(e)
-        xform_questions = []
-        messages.error(req, "Unexpected System Error: %s" % e)
+#    except Exception, e:
+#        logging.exception(e)
+#        xform_questions = []
+#        messages.error(req, "Unexpected System Error: %s" % e)
     
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
@@ -571,13 +572,22 @@ def edit_app_lang(req, domain, app_id):
 
     """
     lang = req.POST['lang']
-    lang_id = int(req.POST.get('lang_id', -1))
+    lang_id = int(req.POST.get('index', -1))
     app = get_app(domain, app_id)
     if lang_id == -1:
-        app.langs.append(lang)
+        if lang in app.langs:
+            messages.error("Language %s already exists")
+        else:
+            app.langs.append(lang)
+            app.save()
     else:
-        app.langs[lang_id] = lang
-    app.save()
+        try:
+            app.rename_lang(app.langs[lang_id], lang)
+        except AppError as e:
+            messages.error(req, unicode(e))
+        else:
+            app.save()
+
     return back_to_main(**locals())
 
 @require_POST
