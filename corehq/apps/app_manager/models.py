@@ -42,6 +42,10 @@ def _dsstr(self):
 #DocumentSchema.__repr__ = _dsstr
 
 
+def _rename_key(dct, old, new):
+    if old in dct:
+        dct[new] = dct[old]
+        del dct[old]
 
 class JadJar(Document):
     """
@@ -231,8 +235,7 @@ class Form(IndexedSchema):
         del source['unique_id']
         return source
     def rename_lang(self, old_lang, new_lang):
-        self.name[new_lang] = self.name[old_lang]
-        del self.name[old_lang]
+        _rename_key(self.name, old_lang, new_lang)
         
 
 class DetailColumn(IndexedSchema):
@@ -256,8 +259,7 @@ class DetailColumn(IndexedSchema):
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
-            dct[new_lang] = dct[old_lang]
-            del dct[old_lang]
+            _rename_key(dct, old_lang, new_lang)
             
 class Detail(DocumentSchema):
     """
@@ -314,8 +316,7 @@ class Module(IndexedSchema):
 
 
     def rename_lang(self, old_lang, new_lang):
-        self.name[new_lang] = self.name[old_lang]
-        del self.name[old_lang]
+        _rename_key(self.name, old_lang, new_lang)
         for form in self.forms:
             form.rename_lang(old_lang, new_lang)
         for detail in self.details:
