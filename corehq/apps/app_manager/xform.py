@@ -444,13 +444,14 @@ class XForm(WrappedNode):
 
                 if 'update_referral' in actions:
                     # no condition
-                    add_bind({
-                        "nodeset": "case/referral/followup_date",
-                        "type":"xsd:date",
-                        "calculate": "if(date(%(followup_date)s) >= date(today() + 2), %(followup_date)s, date(today() + 2))" % {
-                            'followup_date': actions['update_referral'].followup_date,
-                        },
-                    })
+                    if actions['update_referral'].followup_date:
+                        add_bind({
+                            "nodeset": "case/referral/followup_date",
+                            "type":"xsd:date",
+                            "calculate": "if(date(%(followup_date)s) >= date(today() + 2), %(followup_date)s, date(today() + 2))" % {
+                                'followup_date': actions['update_referral'].followup_date,
+                            },
+                        })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]
                     r = relevance(actions['close_referral'])
