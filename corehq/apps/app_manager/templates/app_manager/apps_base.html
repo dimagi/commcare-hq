@@ -214,7 +214,11 @@
                                     {% if error.type == "form error" %}
                                         One or more forms are invalid: check all your forms for error messages.
                                     {% else %}
+                                    {% if error.type == "duplicate xmlns" %}
+                                        You have two forms with the xmlns "{{ error.xmlns }}"
+                                    {% else %}
                                         {{ error }}
+                                    {% endif %}
                                     {% endif %} 
                                     {% endif %}
                                     {% endif %}

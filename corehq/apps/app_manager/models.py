@@ -1,4 +1,5 @@
 # coding=utf-8
+from collections import defaultdict
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -760,6 +761,7 @@ class Application(ApplicationBase):
             for f,form in enumerate(module['forms']):
                 del source['modules'][m]['forms'][f]['unique_id']
     def validate_app(self):
+        xmlns_count = defaultdict(int)
         errors = []
         if not self.modules:
             errors.append({"type": "no modules"})
@@ -780,6 +782,7 @@ class Application(ApplicationBase):
                         "form": {"id": form.id, "name": form.name},
                         'message': unicode(e),
                     })
+                xmlns_count[form.xmlns] += 1
                 if form.requires in ('case', 'referral'):
                     needs_case_detail = True
                     needs_case_type = True
@@ -793,10 +796,17 @@ class Application(ApplicationBase):
                 errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
             if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
                 errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+
+            # Make sure that putting together all the files actually works
             try:
                 self.create_all_files()
             except:
                 errors.append({'type': "form error"})
+
+            # make sure that there aren't duplicate xmlns's
+            for xmlns in xmlns_count:
+                if xmlns_count[xmlns] > 1:
+                    errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
         return errors
     
 class NotImplementedYet(Exception):
