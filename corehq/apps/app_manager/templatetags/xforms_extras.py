@@ -13,6 +13,9 @@ def trans(name, langs=["default"]):
     for lang in langs:
         if lang in name:
             return name[lang]
+    # ok, nothing yet... just return anything in name
+    for _, n in sorted(name.items()):
+        return n
 
 @register.filter
 def format_enum(enum, langs):
