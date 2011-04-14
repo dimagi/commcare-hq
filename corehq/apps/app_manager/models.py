@@ -793,10 +793,10 @@ class Application(ApplicationBase):
                 errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
             if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
                 errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
-            #try:
-            self.create_all_files()
-            #except:
-                #errors.append({'type': "form error"})
+            try:
+                self.create_all_files()
+            except:
+                errors.append({'type': "form error"})
         return errors
     
 class NotImplementedYet(Exception):
