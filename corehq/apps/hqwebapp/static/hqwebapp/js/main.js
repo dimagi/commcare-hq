@@ -29,6 +29,9 @@ COMMCAREHQ = {
             var $help_link = $(this);
             var help_key = $help_link.attr(HELP_KEY_ATTR);
             var $help_text = $('.help-text[' + HELP_KEY_ATTR + '="' + help_key + '"]');
+            if(!$help_text.length) {
+                $help_text = $('<div class="help-text" />').insertAfter($help_link);
+            }
             $help_text.addClass('shadow');
             new InlineHelp($help_link, $help_text, help_key).init();
         });
