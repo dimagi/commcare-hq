@@ -196,6 +196,7 @@ class XForm(WrappedNode):
             return []
 
         def get_path(prompt):
+            # TODO: add safety tests so that when something fails it fails with a good error
             path = None
             if 'ref' in prompt.attrib:
                 path = prompt.attrib['ref']
@@ -205,35 +206,58 @@ class XForm(WrappedNode):
                 path = bind.attrib['nodeset']
             elif prompt.tag_name == "group":
                 path = ""
+            elif prompt.tag_name == "repeat":
+                path = prompt.attrib['nodeset']
             else:
                 raise XFormError("Node <%s> has no 'ref' or 'bind'" % prompt.tag_name)
             return path
         
         questions = []
+        excluded_paths = set()
 
-        def build_questions(group, path_context=""):
+        def build_questions(group, path_context="", exclude=False):
             for prompt in group.findall('*'):
                 if prompt.tag_xmlns == namespaces['f'][1:-1]:
+                    path = self.resolve_path(get_path(prompt), path_context)
+                    excluded_paths.add(path)
                     if prompt.tag_name == "group":
-                        build_questions(prompt, path_context=self.resolve_path(get_path(prompt), path_context))
-                    elif prompt.tag_name not in ("trigger", "repeat", "label"):
-                        question = {
-                            "label": self.get_label_text(prompt, langs),
-                            "tag": prompt.tag_name,
-                            "value": self.resolve_path(get_path(prompt), path_context)
-                        }
+                        build_questions(prompt, path_context=path)
+                    elif prompt.tag_name == "repeat":
+                        build_questions(prompt, path_context=path, exclude=True)
+                    elif prompt.tag_name not in ("trigger", "label"):
+                        if not exclude:
+                            question = {
+                                "label": self.get_label_text(prompt, langs),
+                                "tag": prompt.tag_name,
+                                "value": path
+                            }
 
-                        if question['tag'] == "select1":
-                            options = []
-                            for item in prompt.findall('{f}item'):
-                                translation = self.get_label_text(item, langs)
-                                options.append({
-                                    'label': translation,
-                                    'value': item.findtext('{f}value').strip()
-                                })
-                            question.update({'options': options})
-                        questions.append(question)
+                            if question['tag'] == "select1":
+                                options = []
+                                for item in prompt.findall('{f}item'):
+                                    translation = self.get_label_text(item, langs)
+                                    options.append({
+                                        'label': translation,
+                                        'value': item.findtext('{f}value').strip()
+                                    })
+                                question.update({'options': options})
+                            questions.append(question)
         build_questions(self.find('{h}body'))
+
+
+        def build_non_question_paths(parent, path_context=""):
+            for child in parent.findall('*'):
+                path = self.resolve_path(child.tag_name, path_context)
+                build_non_question_paths(child, path_context=path)
+            if not parent.findall('*'):
+                path = path_context
+                if path not in excluded_paths:
+                    questions.append({
+                        "label": path + " (Hidden)",
+                        "tag": None,
+                        "value": path
+                    })
+        build_non_question_paths(self.data_node)
         return questions
 
     def add_case_and_meta(self, form):
