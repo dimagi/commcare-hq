@@ -14,7 +14,8 @@
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/casexml.js"></script>
-    
+    <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier.js"></script>
+
     <script>
         $(function(){
             (function doStyling() {
@@ -29,6 +30,10 @@
                     }
                 }).trigger('change');
             })();
+            var langcodeValidator = new LangcodeValidator({
+                home: 'langcode_validator',
+                langcodes: {{ xform_languages|safe }},
+            });
             var casexml = new CaseXML({
                 home: "casexml_home",
                 actions: {{ form_actions|safe }},
@@ -145,6 +150,12 @@
                     <div class="xml-source dialog" title="XML Source">
                         <pre>{{ form.contents }}</pre>
                     </div>
+                </td>
+            </tr>
+            <tr>
+                <th>Supported Languages</td>
+                <td>
+                    <div id="langcode_validator"></div>
                 </td>
             </tr>
         {% else %}

@@ -191,6 +191,8 @@ class Form(IndexedSchema):
             return form, app
         else:
             return form
+    def wrapped_xform(self):
+        return XForm(self.contents)
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]

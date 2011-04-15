@@ -306,14 +306,17 @@ def view_app(req, domain, app_id=''):
     """
     module_id = req.GET.get('m', '')
     form_id = req.GET.get('f', '')
+    context = _apps_context(req, domain, app_id, module_id, form_id)
     if form_id:
         template="app_manager/form_view.html"
+        context.update({
+            'xform_languages': json.dumps(context['form'].wrapped_xform().get_languages())
+        })
     elif module_id:
         template="app_manager/module_view.html"
     else:
         template="app_manager/app_view.html"
     error = req.GET.get('error', '')
-    context = _apps_context(req, domain, app_id, module_id, form_id)
     app = context['app']
     if not app and context['applications']:
         app_id = context['applications'][0]['id']

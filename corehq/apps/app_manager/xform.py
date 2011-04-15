@@ -183,6 +183,19 @@ class XForm(WrappedNode):
         else:
             return "%s/%s" % (path_context, path)
 
+    def get_languages(self):
+        if not self.exists():
+            return []
+        try:
+            itext = self.itext_node
+        except:
+            return []
+        langs = []
+        for translation in itext.findall('{f}translation'):
+            langs.append(translation.attrib['lang'])
+        return langs
+
+
     def get_questions(self, langs):
         """
         parses out the questions from the xform, into the format:
