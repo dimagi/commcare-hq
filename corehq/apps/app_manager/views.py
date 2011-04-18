@@ -304,8 +304,17 @@ def view_app(req, domain, app_id=''):
     This is the main view for the app. All other views redirect to here.
 
     """
+    def bail():
+        module_id=''
+        form_id=''
+        messages.error(req, 'Oops! We could not complete your request. Please try again')
+        return back_to_main(req, domain, app_id)
+
     module_id = req.GET.get('m', '')
     form_id = req.GET.get('f', '')
+    if form_id and not module_id:
+        return bail()
+
     if form_id:
         template="app_manager/form_view.html"
     elif module_id:
@@ -313,7 +322,10 @@ def view_app(req, domain, app_id=''):
     else:
         template="app_manager/app_view.html"
     error = req.GET.get('error', '')
-    context = _apps_context(req, domain, app_id, module_id, form_id)
+    try:
+        context = _apps_context(req, domain, app_id, module_id, form_id)
+    except IndexError:
+        return bail()
     app = context['app']
     if not app and context['applications']:
         app_id = context['applications'][0]['id']
