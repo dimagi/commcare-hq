@@ -101,7 +101,7 @@
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
-                <td>
+                <td style="background-color: yellow;">
                      <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
@@ -109,6 +109,12 @@
 
                         <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
                     </form>
+                    <div style="font-size: .9em">
+                        This feature is currently <br />
+                        only supported in Google Chrome <br />
+                        due to a bug. <br />
+                        We are hard at work finding a fix!
+                    </div>
                 </td>
                 <td>
                     or 
