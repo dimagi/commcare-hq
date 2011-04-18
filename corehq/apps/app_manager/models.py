@@ -1,5 +1,6 @@
 # coding=utf-8
 from collections import defaultdict
+from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -529,6 +530,10 @@ class ApplicationBase(VersionedDoc):
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
+                                # e.g. 2011-Apr-11 20:45
+                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
+                'CommCare-Release': "true",
+                'Build-Number': self.version,
             })
             jad = sign_jar(jad, jar)
             jad = jad.render()
