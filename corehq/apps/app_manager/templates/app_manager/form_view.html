@@ -159,12 +159,14 @@
                     </div>
                 </td>
             </tr>
-            <tr>
-                <th>Languages in this XForm</td>
-                <td>
-                    <div id="langcode_validator"></div>
-                </td>
-            </tr>
+            {% if edit %}
+                <tr>
+                    <th>Languages in this XForm</td>
+                    <td>
+                        <div id="langcode_validator"></div>
+                    </td>
+                </tr>
+            {% endif %}
         {% else %}
             {% if not edit %}
                 <tr><td class="warning">
