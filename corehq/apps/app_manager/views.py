@@ -309,8 +309,12 @@ def view_app(req, domain, app_id=''):
     context = _apps_context(req, domain, app_id, module_id, form_id)
     if form_id:
         template="app_manager/form_view.html"
+        try:
+            languages = json.dumps(context['form'].wrapped_xform().get_languages())
+        except:
+            languages = []
         context.update({
-            'xform_languages': json.dumps(context['form'].wrapped_xform().get_languages())
+            'xform_languages': languages
         })
     elif module_id:
         template="app_manager/module_view.html"
@@ -556,6 +560,16 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(**locals())
+
+def rename_language(req, domain, form_unique_id):
+    old_code = req.POST.get('oldCode')
+    new_code = req.POST.get('newCode')
+    form, app = Form.get_form(form_unique_id, and_app=True)
+    if app.domain != domain:
+        raise Http404
+    form.rename_xform_language(old_code, new_code)
+    app.save()
+    return HttpResponse(json.dumps({"status": "ok"}))
 
 @require_POST
 @login_and_domain_required

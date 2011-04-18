@@ -33,6 +33,7 @@
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
                 langcodes: {{ xform_languages|safe }},
+                renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
             var casexml = new CaseXML({
                 home: "casexml_home",
@@ -153,7 +154,7 @@
                 </td>
             </tr>
             <tr>
-                <th>Supported Languages</td>
+                <th>Languages in this XForm</td>
                 <td>
                     <div id="langcode_validator"></div>
                 </td>

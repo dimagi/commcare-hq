@@ -240,6 +240,11 @@ class Form(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         
+    def rename_xform_language(self, old_code, new_code):
+        contents = XForm(self.contents)
+        contents.rename_language(old_code, new_code)
+        contents = contents.render()
+        self.contents = contents
 
 class DetailColumn(IndexedSchema):
     """
@@ -303,6 +308,7 @@ class Detail(DocumentSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
 
 class Module(IndexedSchema):
     """
