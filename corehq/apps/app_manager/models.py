@@ -192,6 +192,8 @@ class Form(IndexedSchema):
             return form, app
         else:
             return form
+    def wrapped_xform(self):
+        return XForm(self.contents)
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
@@ -239,6 +241,11 @@ class Form(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         
+    def rename_xform_language(self, old_code, new_code):
+        contents = XForm(self.contents)
+        contents.rename_language(old_code, new_code)
+        contents = contents.render()
+        self.contents = contents
 
 class DetailColumn(IndexedSchema):
     """
@@ -302,6 +309,7 @@ class Detail(DocumentSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
 
 class Module(IndexedSchema):
     """

@@ -133,7 +133,13 @@ class XForm(WrappedNode):
     @property
     def case_node(self):
         return self.data_node.find('{x}case')
-    
+
+    def rename_language(self, old_code, new_code):
+        trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
+        if not trans_node.exists():
+            raise XFormError("There's no language called '%s'" % old_code)
+        trans_node.attrib['lang'] = new_code
+
     def localize(self, id, lang=None, form=None):
         pre = 'jr:itext('
         post = ')'
@@ -182,6 +188,19 @@ class XForm(WrappedNode):
             return "/%s/%s" % (self.data_node.tag_name, path)
         else:
             return "%s/%s" % (path_context, path)
+
+    def get_languages(self):
+        if not self.exists():
+            return []
+        try:
+            itext = self.itext_node
+        except:
+            return []
+        langs = []
+        for translation in itext.findall('{f}translation'):
+            langs.append(translation.attrib['lang'])
+        return langs
+
 
     def get_questions(self, langs):
         """

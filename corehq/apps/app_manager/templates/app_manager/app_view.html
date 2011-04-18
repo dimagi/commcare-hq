@@ -1,7 +1,6 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% block head %}
-    <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     {{ block.super }}
     <script>
         $(function(){
@@ -10,6 +9,7 @@
                     $("#app_source").text(data);
                 });
             });
+            $('.langcodes').langcodes();
         });
     </script>
 {% endblock %}
