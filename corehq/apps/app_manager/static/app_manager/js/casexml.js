@@ -52,7 +52,6 @@ var CaseXML = (function(){
         }
     };
     CaseXML.prototype.init = function(){
-        $("#casexml_json").hide();
         this.render();
     };
 
@@ -120,15 +119,16 @@ var CaseXML = (function(){
         }
         $(".casexml .action").each(function(){
 
-            var $checkbox = $(this).find('input[type="checkbox"]');
+            var $checkbox = $(this).find('input[type="checkbox"].action-checkbox');
             var id = $checkbox.attr('id').replace('-','_');
 
+            var action = {"condition": {"type": "never"}};
+
             if(!$checkbox.is(":checked")) {
-                actions[id] = {};
+                actions[id] = action;
                 return;
             }
 
-            var action = {};
             
             if(id === "open_case"){
                 action.name_path = lookup(this, 'name_path');
@@ -142,16 +142,14 @@ var CaseXML = (function(){
                         action.update[key] = val;
                     }
                 });
-            }
-            else if (id==="open_referral") {
+            } else if (id==="open_referral") {
                 action.name_path = lookup(this, 'name_path');
-            }
-            else if (id==="update_referral") {
+            } else if (id==="update_referral") {
                 action.followup_date = lookup(this, 'followup_date');
             }
             action.condition = {'type': 'always'}; // default value
             $('.condition', this).each(function(){ // there is only one
-                action.condition = {};
+                // action.condition = {};
 //                if($checkbox.is(":checked")) {
 //                    action.condition.type = "never";
 //                }
