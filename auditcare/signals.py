@@ -1,10 +1,8 @@
-from django.db.models.signals import post_init, post_save, pre_save, pre_delete
+from django.db.models.signals import  post_save
 from couchdbkit.ext.django.schema import Document
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models import Q
 import logging
-from datetime import datetime
 from django.core import serializers
 import json
 
@@ -14,8 +12,6 @@ try:
 except:
     from auditcare.utils import get_current_user
 
-from django.db import transaction
-from models import *
 from django.dispatch import Signal
 
 user_login_failed = Signal(providing_args=['request', 'username'])
@@ -38,11 +34,11 @@ def django_audit_save(sender, instance, created, **kwargs):
             User.objects.get(id=usr.id)
         except:
             usr = None
-    from models.couchmodels import AuditEvent
+    from auditcare.models.couchmodels import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
 def couch_audit_save(self, *args, **kwargs):
-    from models.couchmodels import AuditEvent
+    from auditcare.models.couchmodels import AuditEvent
     self.__orig_save(*args, **kwargs)
     instance_json = self.to_json()
     usr = get_current_user()

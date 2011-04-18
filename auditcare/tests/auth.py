@@ -36,7 +36,7 @@ def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):
 
 
 def get_latest_access(key):
-    access_events = AccessAudit.view('auditcare/access_events', key=key, include_docs=True).all()
+    access_events = AccessAudit.view('auditcare/login_events', key=key, include_docs=True).all()
     access_events = sorted(access_events, key=lambda x: x.event_date, reverse=True)
     return access_events[0]
 
@@ -87,9 +87,9 @@ class authenticationTestCase(unittest.TestCase):
         print "testLogin"
 
         #login
-        start_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
-        login_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEqual(start_count+1, login_count)
 
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
@@ -100,16 +100,16 @@ class authenticationTestCase(unittest.TestCase):
 #        response = self.client.get('/accounts/logout')
 #        logging.error(response.content)
 #        #self.client.logout()
-#        logout_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com'], include_docs=True).count()
+#        logout_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com'], include_docs=True).count()
 #        self.assertEqual(start_count+2, logout_count)
         
         
     def testSingleFailedLogin(self):
         print "testFailedLogin"
-        start_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
-        login_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, login_count)
         #got the basic count, now let's inspect this value to see what kind of result it is.
 
@@ -125,10 +125,10 @@ class authenticationTestCase(unittest.TestCase):
         login.LOCK_OUT_AT_FAILURE=True
         login.COOLOFF_TIME = timedelta(seconds=4)
 
-        start_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
-        firstlogin_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+        firstlogin_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, firstlogin_count)
 
 
@@ -140,7 +140,7 @@ class authenticationTestCase(unittest.TestCase):
         for n in range(1,3):
             #we are logging in within the cooloff period, so let's check to see if it doesn't increment.
             response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
-            next_count = AccessAudit.view('auditcare/access_events', key=['user', 'mockmock@mockmock.com']).count()
+            next_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
             self.assertEquals(firstlogin_count, next_count)
 
             next_audit = get_latest_access(['user', 'mockmock@mockmock.com'])

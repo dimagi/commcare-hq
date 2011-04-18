@@ -4,6 +4,6 @@ function(doc) {
 
     if (doc.base_type == 'AuditEvent') {
         //user event classes
-        emit(['user', doc.user, doc.event_class], null);
+        emit(['user', doc.user, doc.doc_type], null);
     }
 }

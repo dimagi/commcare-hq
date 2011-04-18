@@ -39,16 +39,17 @@ def getdate():
 
 
 class AuditEvent(Document):
-    user = StringProperty()
+    user = StringProperty() #the user committing the action
     base_type = StringProperty(default="AuditEvent") #for subclassing this needs to stay consistent
+    #subclasses will be know directly from the doc_type, so it's not here.
+    #doc_type = StringProperty() #Descriptor classifying this particular instance - this will be the child class's class name, with some modifications if need be
     event_date = DateTimeProperty(default = getdate)
-    event_class = StringProperty() #Descriptor classifying this particular instance - this will be the child class's class name
     description = StringProperty() #particular instance details of this audit event
 
     @property
     def summary(self):
         try:
-            ct = ContentType.objects.get(model=self.event_class.lower())
+            ct = ContentType.objects.get(model=self.doc_type.lower())
             return ct.model_class().objects.get(id=self.id).summary
         except Exception, e:
             return ""
@@ -58,7 +59,7 @@ class AuditEvent(Document):
 
 
     def __unicode__(self):
-        return "[%s] %s" % (self.event_class, self.description)
+        return "[%s] %s" % (self.doc_type, self.description)
 
 
     @classmethod
@@ -67,7 +68,6 @@ class AuditEvent(Document):
         Returns a premade audit object in memory to be completed by the subclasses.
         """
         audit = cls()
-        audit.event_class= cls.__name__
         if isinstance(user, AnonymousUser):
             audit.user = None
             audit.description = "[AnonymousAccess] "
@@ -216,6 +216,8 @@ class NavigationEventAudit(AuditEvent):
             else:
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
+            print request.META.keys()
+            print request.META.get('HTTP_USER_AGENT')
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.

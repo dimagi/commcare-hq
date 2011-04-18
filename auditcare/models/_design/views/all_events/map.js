@@ -11,7 +11,7 @@ function(doc) {
             date.getHours(),
             date.getMinutes(),
             date.getSeconds(),
-            doc.event_class,
+            doc.doc_type,
             doc.user ],
                 null);
     }

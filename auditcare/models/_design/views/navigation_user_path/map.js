@@ -6,6 +6,6 @@ function(doc) {
         //by username, and the events they do
         var event_date = parse_date(doc.event_date);
         //user event dates, emit to the class
-        emit(['user_date', doc.user, event_date.getFullYear(), event_date.getMonth() +1, event_date.getDate(), event_date.getHours(), event_date.getMinutes(), event_date.getSeconds()], doc.event_class);
+        emit(['user_date', doc.user, event_date.getFullYear(), event_date.getMonth() +1, event_date.getDate(), event_date.getHours(), event_date.getMinutes(), event_date.getSeconds()], doc.doc_type);
     }
 }

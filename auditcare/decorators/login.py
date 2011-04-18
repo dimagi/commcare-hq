@@ -63,11 +63,11 @@ def get_user_attempt(request):
     if USE_USER_AGENT:
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
 
-        attempts = AccessAudit.view('auditcare/access_events', key=['ip_ua',ip, ua], include_docs=True, limit=25).all()
+        attempts = AccessAudit.view('auditcare/login_events', key=['ip_ua',ip, ua], include_docs=True, limit=25).all()
 
         #attempts = AccessAttempt.objects.filter( user_agent=ua, ip_address=ip )
     else:
-        attempts = AccessAudit.view('auditcare/access_events',key=['ip', ip], include_docs=True, limit=25).all()
+        attempts = AccessAudit.view('auditcare/login_events',key=['ip', ip], include_docs=True, limit=25).all()
         #attempts = AccessAttempt.objects.filter( ip_address=ip )
 
     attempts = sorted(attempts, key=lambda x: x.event_date, reverse=True)
@@ -111,7 +111,7 @@ def watch_logout(func):
         ip = request.META.get('REMOTE_ADDR', '')
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         attempt = AccessAudit()
-        attempt.event_class=AccessAudit.__name__
+        attempt.doc_type=AccessAudit.__name__
         attempt.access_type = models.ACCESS_LOGOUT
         attempt.user_agent=ua
         attempt.user = user.username
@@ -245,7 +245,7 @@ def check_request(request, login_unsuccessful):
             ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
             attempt = AccessAudit()
             attempt.event_date = datetime.utcnow()
-            attempt.event_class=AccessAudit.__name__
+            attempt.doc_type=AccessAudit.__name__
             attempt.access_type = models.ACCESS_FAILED
             attempt.user_agent=ua
             attempt.user = attempted_username
@@ -262,7 +262,7 @@ def check_request(request, login_unsuccessful):
         ip = request.META.get('REMOTE_ADDR', '')
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         attempt = AccessAudit()
-        attempt.event_class=AccessAudit.__name__
+        attempt.doc_type=AccessAudit.__name__
         attempt.access_type = models.ACCESS_LOGIN
         attempt.user_agent=ua
         attempt.user = request.user.username
