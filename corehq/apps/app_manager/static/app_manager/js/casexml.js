@@ -1,4 +1,4 @@
-var $, EJS, COMMCAREHQ;
+/*globals $, EJS, COMMCAREHQ */
 
 var CaseXML = (function(){
     var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral"];
@@ -22,9 +22,11 @@ var CaseXML = (function(){
         $("#casexml-template").remove();
     };
     CaseXML.prototype = {
-        truncateLabel: function (label) {
+        truncateLabel: function (label, suffix) {
+            suffix = suffix || "";
             var MAXLEN = 40;
-            return (label.length <= MAXLEN) ? (label) : (label.slice(0, MAXLEN) + "...");
+            var maxlen = MAXLEN - suffix.length;
+            return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
         escapeQuotes: function (string){
             return string.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
@@ -58,10 +60,14 @@ var CaseXML = (function(){
     CaseXML.prototype.renderCondition = function(condition){
         return this.condition_ejs.render({casexml: this, condition: condition});
     };
-    CaseXML.prototype.getQuestions = function(filter){
+    CaseXML.prototype.getQuestions = function(filter, excludeHidden){
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i;
+        excludeHidden = excludeHidden || false;
         filter = filter.split(" ");
+        if (!excludeHidden) {
+            filter.push('hidden');
+        }
         var options = [];
         for(i=0; i < this.questions.length; i++) {
             var q = this.questions[i];
@@ -129,7 +135,7 @@ var CaseXML = (function(){
                 return;
             }
 
-            
+
             if(id === "open_case"){
                 action.name_path = lookup(this, 'name_path');
                 action.external_id = lookup(this, 'external_id');

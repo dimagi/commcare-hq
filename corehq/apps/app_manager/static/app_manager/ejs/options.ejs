@@ -5,7 +5,7 @@
         [% options.forEach(function(o){ %]
             <option value='[%= o.value %]' title='[%= casexml.escapeQuotes(o.label) %]'
                     [% if(!something_is_selected && value === o.value) { something_is_selected=true; %]selected='true'[% } %]>
-                [%= casexml.truncateLabel(o.label) %]
+                [%= casexml.truncateLabel(o.label, o.tag === "hidden" ? " (Hidden)" : "") %]
             </option>
         [% }); %]
         [% if(value && !something_is_selected) { %]

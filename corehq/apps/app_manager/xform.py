@@ -272,7 +272,7 @@ class XForm(WrappedNode):
                 path = path_context
                 if path not in excluded_paths:
                     questions.append({
-                        "label": path + " (Hidden)",
+                        "label": path,
                         "tag": "hidden",
                         "value": path
                     })
