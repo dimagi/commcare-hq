@@ -2,7 +2,7 @@ InlineHelp = (function($){
     function InlineHelp(link, text, key) {
         this.$link = $(link);
         this.$text = $(text);
-        this.url = InlineHelp.get_url(key);
+        this.url = this.$text.text() === "" ? InlineHelp.get_url(key) : null;
     }
     InlineHelp.get_url = (function(key) {
         var parts = key.split('/');
@@ -17,9 +17,11 @@ InlineHelp = (function($){
     });
     InlineHelp.prototype.renderText = (function(callback){
         var self = this;
-        $.get(this.url, function(data){
-            self.$text.html(data);
-        });
+        if (this.url) {
+            $.get(this.url, function(data){
+                self.$text.html(data);
+            });
+        }
     });
     InlineHelp.prototype.init = (function(){
         var self = this;

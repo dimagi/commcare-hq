@@ -4,13 +4,18 @@
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>
     <property key="ota-restore-url" value="{{ ota_restore_url }}"/>
     <property key="ota-restore-url-testing" value="{{ ota_restore_url }}"/>
-    <property key="purge-freq" value="7" force="true"/>
     <property key="PostURL" value="{{ post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
     <property key="cur_locale" value="{{ app.langs.0 }}"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
     <property key="jr_openrosa_api" value="1.0"/>
-    <!--property key="cc-send-procedure" value="cc-send-none" /-->
+
+    <!-- Properties configured on CommCare HQ 1.0 -->
+    {% for key, value in app.profile.properties.items %}{% if value != None %}
+        <property key="{{ key }}" value="{{ value }}" />
+    {% endif %}{% endfor %}
+
+    <!-- end -->
 
     <features>
         <checkoff active="false"/>
@@ -18,9 +23,9 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
-        {% if app.use_commcare_sense %}
-        <sense active="true"/>
-        {% endif %}
+        {% for feature, value in app.profile.features.items %}
+            <{{ feature }} active="{{ value }}" />
+        {% endfor %}
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">

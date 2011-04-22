@@ -2,6 +2,44 @@
 {% load xforms_extras %}
 {% block head %}
     {{ block.super }}
+    <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js"></script>
+    <script>
+        var settings;
+        $(function () {
+            var saveURL = "{% url corehq.apps.app_manager.views.edit_commcare_profile domain app.id %}",
+                defaultHome = $('#commcare-settings'),
+                senseHome = $('#commcare-sense-properties'),
+                logHome = $('#log-properties'),
+                languageHome = $('#language-properties'),
+                $block;
+            $.get('{% url corehq.apps.app_manager.views.commcare_profile domain app.id %}', function (initialValues) {
+                initialValues = JSON.parse(initialValues);
+                $.get('{{ STATIC_URL }}app_manager/json/custom-commcare-properties-1_1.json', function (profile_spec) {
+                    settings = CommcareSettings.wrap(
+                            profile_spec,
+                            initialValues,
+//                            $('#commcare-settings'),
+                            function (p) {
+                                if (p.group === 'sense') {
+                                    return senseHome;
+                                } else if (p.group === 'log') {
+                                    return logHome;
+                                } else if (p.group === 'language') {
+                                    return languageHome;
+                                }
+                                return defaultHome;
+                            },
+                            saveURL,
+                            {% if edit %}true{% else %}false{% endif %}
+                    );
+                    $block = settings.render();
+                    $block.find('[name="cur_locale"]').addClass('langcodes');
+                    COMMCAREHQ.initBlock($block);
+                });
+            });
+
+        });
+    </script>
     <script>
         $(function(){
             $("#view_source").click(function(){
@@ -39,19 +77,6 @@
                         </form>
                     {% else %}
                         {{ app.recipients }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>CommCare Sense Enabled</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'use_commcare_sense' %}">
-                            <input type="checkbox" name="use_commcare_sense" value="true"
-                                   class="autosave" {% if app.use_commcare_sense %}checked="true"{% endif %}/>
-                        </form>
-                    {% else %}
-                        {{ app.use_commcare_sense }}
                     {% endif %}
                 </td>
             </tr>
@@ -120,7 +145,21 @@
                     {% endfor %}
                 {% endif %}
             </tbody>
+            <!--tbody id="language-properties"></tbody-->
         </table>
+        <h4>Logging</h4>
+        <table class="config">
+            <tbody id="log-properties"></tbody>
+        </table>
+        <h4>CommCare Sense</h4>
+        <table class="config">
+            <tbody id="commcare-sense-properties"></tbody>
+        </table>
+        <h4>CommCare Properties</h4>
+        <table class="config">
+            <tbody id="commcare-settings"></tbody>
+        </table>
+
     {% endif %}
     {% if app.doc_type == "RemoteApp" %}
         <h4>Remote Setup</h4>

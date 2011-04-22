@@ -1,4 +1,4 @@
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from dimagi.utils.web import render_to_response
@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc,
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
 
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from dimagi.utils.web import get_url_base
 from BeautifulSoup import BeautifulStoneSoup
@@ -95,7 +95,7 @@ def form_casexml(req, domain, form_unique_id):
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(json.dumps(app.export_json()))
-    
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
@@ -151,7 +151,7 @@ def import_factory_form(req, domain, app_id, module_id):
     app.new_form_from_source(module_id, source)
     app.save()
     return back_to_main(**locals())
-    
+
 
 #@profile("apps_context.prof")
 def _apps_context(req, domain, app_id='', module_id='', form_id=''):
@@ -165,7 +165,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
     )
-    
+
     factory_apps = [app['value'] for app in get_db().view('app_manager/factory_apps')]
 
     applications = []
@@ -239,7 +239,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         logging.exception(e)
         xform_questions = []
         messages.error(req, "Unexpected System Error: %s" % e)
-    
+
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
     if build_errors_id:
@@ -248,7 +248,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
             build_errors = error_doc.errors
             error_doc.delete()
         except ResourceNotFound:
-            pass            
+            pass
     context = {
         'domain': domain,
         'applications': applications,
@@ -285,7 +285,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     }
     context.update(get_sms_autocomplete_context(req, domain))
     return context
-    
+
 def default(req, domain):
     """
     Handles a url that does not include an app_id.
@@ -598,6 +598,33 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
+
+@require_GET
+@login_and_domain_required
+def commcare_profile(req, domain, app_id):
+    app = get_app(domain, app_id)
+    return HttpResponse(json.dumps(app.profile))
+
+@require_POST
+@login_and_domain_required
+def edit_commcare_profile(req, domain, app_id):
+    try:
+        profile = json.loads(req.POST.get('profile'))
+    except TypeError:
+        return HttpResponseBadRequest(json.dumps({
+            'reason': "Must have a param called profile set to: {\"properites\": {...}, \"features\": {...}}"
+        }))
+    app = get_app(domain, app_id)
+    changed = defaultdict(dict)
+    for type in ["features", "properties"]:
+        for name, value in profile.get(type, {}).items():
+            if type not in app.profile:
+                app.profile[type] = {}
+            app.profile[type][name] = value
+            changed[type][name] = value
+    app.save()
+    return HttpResponse(json.dumps({"status": "ok", "changed": changed}))
+
 @require_POST
 @login_and_domain_required
 def edit_app_lang(req, domain, app_id):
@@ -816,7 +843,7 @@ def download_profile(req, domain, app_id):
     )
 
 def odk_install(req, domain, app_id):
-    return render_to_response(req, "app_manager/odk_install.html", 
+    return render_to_response(req, "app_manager/odk_install.html",
                               {"domain": domain, "app": get_app(domain, app_id)})
 
 def odk_qr_code(req, domain, app_id):

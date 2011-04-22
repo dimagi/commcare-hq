@@ -612,6 +612,11 @@ class ApplicationBase(VersionedDoc):
             return jar
     def validate_app(self):
         return []
+
+
+#class Profile(DocumentSchema):
+#    features = DictProperty()
+#    properties = DictProperty()
     
 class Application(ApplicationBase):
     """
@@ -623,6 +628,7 @@ class Application(ApplicationBase):
     name = StringProperty()
     langs = StringListProperty()
     use_commcare_sense = BooleanProperty(default=False)
+    profile = DictProperty() #SchemaProperty(Profile)
 
     @property
     def suite_url(self):

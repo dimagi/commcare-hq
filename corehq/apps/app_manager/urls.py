@@ -31,6 +31,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'edit_module_attr/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<attr>\w+)/$','edit_module_attr'),
     (r'delete_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',          'delete_module_detail'),
 
+    (r'^commcare_profile/(?P<app_id>\w+)/$',                                'commcare_profile'),
+    (r'^edit_commcare_profile/(?P<app_id>\w+)/$',                           'edit_commcare_profile'),
     (r'edit_app_lang/(?P<app_id>\w+)/$',                                    'edit_app_lang'),
     (r'delete_app_lang/(?P<app_id>\w+)/$',                                  'delete_app_lang'),
     (r'edit_app_attr/(?P<app_id>\w+)/(?P<attr>\w+)/$',                      'edit_app_attr'),
