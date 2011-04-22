@@ -515,16 +515,6 @@ def edit_module_detail(req, domain, app_id, module_id):
     column = detail.get_column(column_id)
     if(ajax):
         return HttpResponse(json.dumps(resp))
-#        return render_to_response(req, "app_manager/partials/detail_column.html", {
-#            'domain': domain,
-#            'app': app,
-#            'module': module,
-#            'detail': detail,
-#            'column': column,
-#            'util': TemplateFunctions,
-#            'langs': [lang] + app.langs,
-#            'edit': True,
-#        })
     else:
         return back_to_main(**locals())
 

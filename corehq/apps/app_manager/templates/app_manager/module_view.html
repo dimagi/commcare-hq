@@ -61,7 +61,7 @@
                     "date-due",
                     "date-created"
                 ],
-                "case": ["date-opened"].concat(JSON.parse($("#case-fields").remove().text()))
+                "case": ["external-id", "date-opened", "name", "status"].concat({{ case_fields|safe }})
             };
             if(fields['case'] != "") {
                 $('#case-properties-warning').hide();
@@ -194,9 +194,6 @@
             </tr>
         {% endif %}
     </table>
-    
-    {# just a json list used for the case field autocomplete #}
-    <div id="case-fields">{{ case_fields }}</div>
 
     {% comment %}
     <div class="message" id="case-properties-warning">

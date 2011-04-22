@@ -22,6 +22,7 @@ var CaseXML = (function(){
         $("#casexml-template").remove();
     };
     CaseXML.prototype = {
+        reserved_words: ["date-opened", "external-id", "status", "name"],
         truncateLabel: function (label, suffix) {
             suffix = suffix || "";
             var MAXLEN = 40;

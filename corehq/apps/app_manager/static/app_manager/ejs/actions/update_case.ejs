@@ -11,6 +11,15 @@
                 [%= renderOptions(getQuestions("all"), actions.update_case.update[p], 'action-update-value') %]
             </td>
             <td><input class="code" type="text" name="action-update-key" value="[%= p %]" /></td>
+            <td>
+                [% if (p === "") { %]
+                    <span class="invalid">Can't be blank</span>
+                [% } else if (!/^[a-zA-Z][\w_-]*$/.test(p)) { %]
+                    <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= p %]"</span>
+                [% } else if (reserved_words.indexOf(p) !== -1) { %]
+                    <span class="invalid">Can't name a case property "[%= p %]"</span>
+                [% } %]
+            </td>
         </tr>
     [% } %]
     <tr class="action-update">

@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+import re
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -246,6 +247,18 @@ class Form(IndexedSchema):
         contents.rename_language(old_code, new_code)
         contents = contents.render()
         self.contents = contents
+
+    def check_actions(self):
+        errors = []
+        # reserved_words are hard-coded in three different places! Very lame of me
+        # Here, casexml.js, and module_view.html
+        reserved_words = ["date-opened", "external-id", "status", "name"]
+        for key in self.actions['update_case'].update:
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
+            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                errors.append({'type': 'update_case word illegal', 'word': key})
+        return errors
 
 class DetailColumn(IndexedSchema):
     """
@@ -792,6 +805,13 @@ class Application(ApplicationBase):
             needs_referral_detail = False
 
             for form in module.get_forms():
+                errors_ = form.check_actions()
+                for error_ in errors_:
+                    error_.update(
+                        module={"id": module.id, "name": module.name},
+                        form={"id": form.id, "name": form.name}
+                    )
+                errors.extend(errors_)
                 try:
                     _parse_xml(form.contents)
                 except Exception as e:

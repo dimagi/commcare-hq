@@ -218,7 +218,21 @@
                                     {% if error.type == "duplicate xmlns" %}
                                         You have two forms with the xmlns "{{ error.xmlns }}"
                                     {% else %}
+                                    {% if error.type == "update_case uses reserved word" %}
+                                        Case Update uses reserved word "{{ error.word }}"
+                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                            {{ error.form.name|trans:langs }}</a>
+                                        in module "{{ error.module.name|trans:langs }}"
+                                    {% else %}
+                                    {% if error.type == "update_case word illegal" %}
+                                        Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
+                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                            {{ error.form.name|trans:langs }}</a>
+                                        in module "{{ error.module.name|trans:langs }}"
+                                    {% else %}
                                         {{ error }}
+                                    {% endif %}
+                                    {% endif %}
                                     {% endif %}
                                     {% endif %} 
                                     {% endif %}
