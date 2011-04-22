@@ -176,26 +176,7 @@
             <tr>
                 <td colspan="2"><div class="help-text" data-help-key="app_manager/case_type"></div></td>
             </tr>
-{#            <tr class="form editable">#}
-{#                <th>#}
-{#                    Case Name#}
-{#                </th>#}
-{#                <td>#}
-{#                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_name'%}">#}
-{#                        <input class="autosave" type="text" name="case_name" value="{{ module.case_name|trans:langs }}"/>#}
-{#                    </form>#}
-{#                </td>#}
-{#            </tr>#}
-{#            <tr class="form editable">#}
-{#                <th>#}
-{#                    Referral Name#}
-{#                </th>#}
-{#                <td>#}
-{#                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'ref_name'%}">#}
-{#                        <input type="text" name="ref_name" value="{{ module.ref_name|trans:langs }}"/>#}
-{#                    </form>#}
-{#                </td>#}
-{#            </tr>#}
+
         {% else %}
             <tr>
                 <th>Module Name</th>
@@ -211,24 +192,7 @@
                     <code>{{ module.case_type }}</code>
                 </td>
             </tr>
-{#            <tr>#}
-{#                <th>#}
-{#                    Case Name#}
-{#                </th>#}
-{#                <td>#}
-{#                    {{ module.case_name|trans:langs }}#}
-{#                </td>#}
-{#            </tr>#}
-{#            <tr>#}
-{#                <th>#}
-{#                    Referral Name#}
-{#                </th>#}
-{#                <td>#}
-{#                    {{ module.ref_name|trans:langs }}#}
-{#                </td>#}
-{#            </tr>#}
         {% endif %}
-        </tr>
     </table>
     
     {# just a json list used for the case field autocomplete #}
@@ -266,6 +230,7 @@
                             <th class="delete-button-column"></th>
                         {% endif %}
                         <th class="model-column">
+                            {# if we're dealing with a referral screen #}
                             {% if detail.type.0 == 'r' %}
                                 Model
                             {% endif %}
@@ -339,171 +304,4 @@
             </table>
         {% endif %}
     {% endfor %}
-
-    {% comment %}
-        {% for detail in module.details %}
-        <h4>
-            {% if detail.type == "case_short" %}
-                Case Inline View
-            {% endif %}
-            {% if detail.type == "case_long" %}
-                Case Full View
-            {% endif %}
-            {% if detail.type == "ref_short" %}
-                Referral Inline View
-            {% endif %}
-            {% if detail.type == "ref_long" %}
-                Referral Full View
-            {% endif %}
-        </h4>
-        {% if edit or detail.columns %}
-        <table class="config detail-headers">
-            <thead>
-                <tr>
-                    {% if edit %}
-                        <th>
-
-                        </th>
-                    {% endif %}
-                    <th>
-                        Heading
-                    </th>
-                    <th>
-                        Model
-                    </th>
-                    <th>
-                        Property
-                    </th>
-                    <th>
-                        Format
-                    </th>
-                    {% if edit %}<th></th>{% endif %}
-                </tr>
-            </thead>
-            <tbody {% if edit %}class="sortable"{% endif %}>
-                <tr class="sort-action">
-                    <td>
-                        <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'detail' %}">
-                            <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                            <input type="hidden" name="module_id" value="{{ module.id  }}" />
-                        </form>
-                    </td>
-                </tr>
-                {% for d in detail.columns %}
-                    {% if edit %}
-                        <tr class="editable detail-row form">
-                            <td class="index">{{ forloop.counter0 }}</td>
-                            <td>
-                                <span class="drag_handle"></span>
-                                <a class="delete_link" href="#"></a>
-                                <div class="delete_dialog" title="Delete Header?">
-                                    <form method="post"
-                                        action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
-                                        <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}" />
-                                        <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                                        <input type="submit" value="Delete" />
-                                    </form>
-                                </div>
-                            </td>
-
-                            <td>
-                                <input type="text" name="header" value="{{ d.header|trans:langs }}"/>
-                                <div class="immutable">{{ d.header|trans:langs }}</div>
-                            </td>
-                            <td>
-                                <select class="code" name="model">
-                                    <option value="case">case</option>
-                                    <option value="referral">referral</option>
-                                </select>
-                                <div class="immutable"><code>{{ d.model }}</code></div>
-                            </td>
-                            <td>
-                                <input class="code" type="text" name="field" value="{{ d.field }}"/>
-                                <div class="immutable"><code>{{ d.field }}</code></div>
-                            </td>
-                            <td>
-
-                                <select class="format code" name="format">
-                                    <option value="plain">plain</option>
-                                    <option value="date">date</option>
-                                    <option value="years-ago">years-ago</option>
-                                    <option value="enum">enum</option>
-                                    <option value="advanced">advanced</option>
-                                </select>
-                                <div class="immutable"><code>{{ d.format }}</code></div>
-                            </td>
-                            <td>
-                                <input type="text" name="enum" value="{{ d.enum|format_enum:langs }}" />
-                                <div class="immutable">{{ d.enum|format_enum:langs }}</div>
-                            </td>
-                            <td>
-                                <input type="hidden" name="column_id" value="{{ forloop.counter|add:-1 }}">
-                                <input type="hidden" name="detail_type" value="{{ detail.type }}">
-                                <a class="submit button" href="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
-                                    Save
-                                </a>
-                                <div class="immutable">
-                                    <a href="#" class="edit_link edit-row"></a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td>{{ d.header|trans:langs }}</td>
-                            <td><code>{{ d.model }}</code></td>
-                            <td><code>{{ d.field }}</code></td>
-                            <td><code>{{ d.format }}</code></td>
-                            <td>{% if d.format == "enum"%}{{ d.enum|format_enum:langs }}{% endif %}</td>
-
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                {% if edit %}
-                    <tr class="editable detail-row form sort-disabled">
-                        <td></td>
-                        <td>
-                            <input type="text" name="header"/>
-                            <div class="immutable"></div>
-                        </td>
-                        <td>
-                            <select class="code" name="model">
-                                <option value="case" selected="">case</option>
-                                <option value="referral">referral</option>
-                            </select>
-                            <div class="immutable"></div>
-                        </td>
-                        <td>
-                            <input class="code" type="text" name="field"/>
-                            <div class="immutable"></div>
-                        </td>
-                        <td>
-                            <select class="format code" name="format">
-                                <option value="plain" selected="">plain</option>
-                                <option value="date">date</option>
-                                <option value="years-ago">years-ago</option>
-                                <option value="enum">enum</option>
-                                <option value="advanced">advanced</option>
-                            </select>
-                            <div class="immutable"></div>
-                        </td>
-                        <td>
-                            <input class="code" type="text" name="enum"/>
-                            <div class="immutable"></div>
-                        </td>
-                        <td>
-                            <input type="hidden" name="detail_type" value="{{ detail.type }}">
-                            <a class="submit button" href="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">Add</a>
-                            <div class="immutable">
-                                <a href="#" class="new_link edit-row">Property</a>
-                            </div>
-                        </td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-        {% else %}
-            <p class="warning">Not configured</p>
-        {% endif %}
-        {% endfor %}
-    {% endcomment %}
 {% endblock %}

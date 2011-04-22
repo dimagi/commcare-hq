@@ -480,7 +480,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     Called to add a new module detail column or edit an existing one
 
     """
-    column_id = int(req.POST.get('column_id', -1))
+    column_id = int(req.POST.get('index', -1))
     detail_type = req.POST.get('detail_type', '')
     assert(detail_type in DETAIL_TYPES)
 
