@@ -873,8 +873,8 @@ class RemoteApp(ApplicationBase):
     #             raise NotImplementedYet()
 
     @classmethod
-    def new_app(cls, domain, name):
-        app = cls(domain=domain, name=name, langs=["en"])
+    def new_app(cls, domain, name, lang='en'):
+        app = cls(domain=domain, name=name, langs=[lang])
         return app
 
     # def fetch_suite(self):
