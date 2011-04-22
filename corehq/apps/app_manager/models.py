@@ -627,7 +627,7 @@ class Application(ApplicationBase):
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
-    use_commcare_sense = BooleanProperty(default=False)
+    #use_commcare_sense = BooleanProperty(default=False)
     profile = DictProperty() #SchemaProperty(Profile)
 
     @property

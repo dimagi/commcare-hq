@@ -188,6 +188,16 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     if xform:
         xform_contents = form.contents
 
+
+    if app and 'use_commcare_sense' in app:
+        # grandfather in people who set commcare sense earlier
+        if app['use_commcare_sense']:
+            if 'features' not in app.profile:
+                app.profile['features'] = {}
+            app.profile['features']['sense'] = 'true'
+        del app['use_commcare_sense']
+        app.save()
+
     if app:
         saved_apps = [x['value'] for x in get_db().view('app_manager/saved_app',
             startkey=[domain, app_id, {}],
