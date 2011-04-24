@@ -90,6 +90,15 @@
     "values_txt": "Chatterbox displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features",
     "default": "v_chatterbox"
 }, {
+    "id": "users",
+    "type": "features",
+    "name": "Use Users",
+    "description": "Whether to use user logins or not",
+    "values": ["true", "false"],
+    "value_names": ["True", "False"],
+    "default": "true",
+    "group": "sense"
+}, {
     "id": "sense",
     "type": "features",
     "name": "CommCare Sense",
