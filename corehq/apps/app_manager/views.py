@@ -638,7 +638,7 @@ def edit_app_lang(req, domain, app_id):
     app = get_app(domain, app_id)
     if lang_id == -1:
         if lang in app.langs:
-            messages.error("Language %s already exists")
+            messages.error(req, "Language %s already exists")
         else:
             app.langs.append(lang)
             app.save()
