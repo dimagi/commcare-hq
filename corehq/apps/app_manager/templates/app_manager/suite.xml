@@ -22,7 +22,6 @@
         </resource>
     </locale>
  {% endfor %}
-
  {% for module in app.get_modules %}
   {% for detail in module.details %}
    {% if detail.columns %}
@@ -66,9 +65,9 @@
                  </xpath>
              </text></template>
          {% else %}{% ifequal d.format "years-ago" %}
-             <template><text><xpath function="string(int((today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})) div 365.25))"/></text></template>
+             <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}, string(int((today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})) div 365.25)), '')"/></text></template>
          {% else %}{% ifequal d.format "late-flag"%}
-             <template><text><xpath function="if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) > {{ d.late_flag }}, '*', '')"/></text></template>
+             <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}, if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) > {{ d.late_flag }}, '*', ''), '')"/></text></template>
          {% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}
 
         </field>
