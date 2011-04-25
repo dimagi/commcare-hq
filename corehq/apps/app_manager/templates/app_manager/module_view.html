@@ -91,7 +91,8 @@
             $('.format-column').live('change', function(){
                 var format = $(this).find('[name="format"]').val(),
                     $enum = $(this).parent().find('.enum-column'),
-                    $late_flag = $(this).parent().find('.late-flag-column');
+                    $late_flag = $(this).parent().find('.late-flag-column'),
+                    $advanced = $(this).parent().find('.advanced-column');
                 if(format === "enum") {
                     $enum.show();
                 } else {
@@ -101,6 +102,11 @@
                     $late_flag.show();
                 } else {
                     $late_flag.hide();
+                }
+                if(format === "advanced") {
+                    $advanced.show();
+                } else {
+                    $advanced.hide();
                 }
             }).trigger('change');
 

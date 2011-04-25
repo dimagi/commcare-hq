@@ -49,7 +49,7 @@
                 <option value="years-ago">years-ago</option>
                 <option value="enum">enum</option>
                 <option value="late-flag">late-flag</option>
-                <option value="advanced">advanced</option>
+                <!--option value="advanced">advanced</option-->
             </select>
         {% else %}
             {{ column.format }}
@@ -71,6 +71,13 @@
             {{ column.late_flag }}
         {% endif %}
         <span>days.</span>
+    </td>
+    <td class="autosave advanced-column">
+        {% if edit %}
+            <input type="text" name="advanced" value="{{ column.advanced }}" />
+        {% else %}
+            {{ column.advanced }}
+        {% endif %}
     </td>
     <td>
         <input type="hidden" name="ajax" value="true" />

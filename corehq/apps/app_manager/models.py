@@ -279,6 +279,7 @@ class DetailColumn(IndexedSchema):
 
     enum        = DictProperty()
     late_flag   = IntegerProperty(default=30)
+    advanced    = StringProperty(default="")
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
@@ -310,6 +311,7 @@ class Detail(DocumentSchema):
         my_column.field  = column.field
         my_column.format = column.format
         my_column.late_flag = column.late_flag
+        my_column.advanced = column.advanced
 
         for lang in column.header:
             my_column.header[lang] = column.header[lang]
