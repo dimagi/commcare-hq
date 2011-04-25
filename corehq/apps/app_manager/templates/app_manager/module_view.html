@@ -89,13 +89,18 @@
             });
 
             $('.format-column').live('change', function(){
-                var format = $(this).find('[name="format"]').val();
-                var $enum = $(this).next('.enum-column');
-                if(format == "enum") {
+                var format = $(this).find('[name="format"]').val(),
+                    $enum = $(this).parent().find('.enum-column'),
+                    $late_flag = $(this).parent().find('.late-flag-column');
+                if(format === "enum") {
                     $enum.show();
-                }
-                else {
+                } else {
                     $enum.hide();
+                }
+                if(format === "late-flag") {
+                    $late_flag.show();
+                } else {
+                    $late_flag.hide();
                 }
             }).trigger('change');
 
@@ -143,6 +148,9 @@
         }
         .detail-headers .enum-column textarea{
             width: 90px;
+        }
+        .detail-headers .late-flag-column {
+            width: 100px;
         }
     </style>
 {% endblock %}

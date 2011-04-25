@@ -67,7 +67,9 @@
              </text></template>
          {% else %}{% ifequal d.format "years-ago" %}
              <template><text><xpath function="string(int((today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})) div 365.25))"/></text></template>
-         {% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}
+         {% else %}{% ifequal d.format "late-flag"%}
+             <template><text><xpath function="if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) > {{ d.late_flag }}, '*', '')"/></text></template>
+         {% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}
 
         </field>
      {% endfor %}

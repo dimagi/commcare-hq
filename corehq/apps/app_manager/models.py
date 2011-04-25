@@ -272,12 +272,13 @@ class DetailColumn(IndexedSchema):
         }
 
     """
-    header  = DictProperty()
-    model   = StringProperty()
-    field   = StringProperty()
-    format  = StringProperty()
-    enum    = DictProperty()
+    header      = DictProperty()
+    model       = StringProperty()
+    field       = StringProperty()
+    format      = StringProperty()
 
+    enum        = DictProperty()
+    late_flag   = IntegerProperty(default=30)
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
@@ -308,6 +309,7 @@ class Detail(DocumentSchema):
         my_column.model  = column.model
         my_column.field  = column.field
         my_column.format = column.format
+        my_column.late_flag = column.late_flag
 
         for lang in column.header:
             my_column.header[lang] = column.header[lang]
