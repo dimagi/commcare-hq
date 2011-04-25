@@ -1,0 +1,18 @@
+[
+    "case_name", "date_opened", "external_id", "status",
+    "name",      "date-opened", "external-id",
+    
+    "opened_on",
+    "modified_on",
+    "type",
+    "closed",
+    "closed_on",
+    "xform_ids",
+    "user_id",
+    "referrals",
+    "actions",
+    "followup_type",
+    "start_date",
+    "activation_date",
+    "due_date"
+]

@@ -10,7 +10,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError
+    BuildErrors, AppError, load_case_reserved_words
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -294,6 +294,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'util': TemplateFunctions,
     }
     context.update(get_sms_autocomplete_context(req, domain))
+    if form:
+        context.update({'case_reserved_words_json': json.dumps(load_case_reserved_words())})
     return context
 
 def default(req, domain):

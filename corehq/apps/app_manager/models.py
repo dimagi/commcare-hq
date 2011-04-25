@@ -50,6 +50,10 @@ def _rename_key(dct, old, new):
         dct[new] = dct[old]
         del dct[old]
 
+def load_case_reserved_words():
+    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+        return json.load(f)
+
 class JadJar(Document):
     """
     Has no properties except two attachments: CommCare.jad and CommCare.jar
@@ -252,7 +256,7 @@ class Form(IndexedSchema):
         errors = []
         # reserved_words are hard-coded in three different places! Very lame of me
         # Here, casexml.js, and module_view.html
-        reserved_words = ["date-opened", "external-id", "status", "name"]
+        reserved_words = load_case_reserved_words()
         for key in self.actions['update_case'].update:
             if key in reserved_words:
                 errors.append({'type': 'update_case uses reserved word', 'word': key})

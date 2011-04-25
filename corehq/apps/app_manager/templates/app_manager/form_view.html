@@ -43,6 +43,7 @@
                 save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
                 requires: "{{ form.requires }}",
                 save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
+                reserved_words: {{ case_reserved_words_json|safe }}
             });
             casexml.init();
         });

@@ -16,13 +16,13 @@ var CaseXML = (function(){
         this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
         this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
         this.action_templates = {};
+        this.reserved_words = params.reserved_words;
         for(i=0; i<action_names.length; i++) {
             this.action_templates[action_names[i]] = new EJS({url: "/static/app_manager/ejs/actions/" + action_names[i] + ".ejs", type: "["});
         }
         $("#casexml-template").remove();
     };
     CaseXML.prototype = {
-        reserved_words: ["date-opened", "external-id", "status", "name"],
         truncateLabel: function (label, suffix) {
             suffix = suffix || "";
             var MAXLEN = 40;
