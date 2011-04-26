@@ -3,6 +3,7 @@
 <tr><th></th>
     <th>{% trans "Web Account" %}</th>
     <th>{% trans "CommCare Account" %}</th>
+    <th>{% trans "Reset Password" %}</th>
     <th>{% trans "Date Registered" %}</th>
     <th>{% trans "Phone Numbers" %}</th>
 </tr>
@@ -15,6 +16,11 @@
         <td></td>
         <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
         <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
+        <td>
+            <a href="#" class="dialog_opener">reset</a>
+            <div class="dialog" title="Reset Password" data-src="{% url change_password domain account.login_id %}">
+            </div>
+        </td>
         <td>{{ account.login.date_joined.date }}</td>
         <td>
         {% ifchanged %}
