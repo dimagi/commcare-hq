@@ -174,9 +174,6 @@ footer {
 }
 #main > div {
 }
-#app_name {
-    padding: 0 1em;
-}
 
 #main_container {
     border: 0;
@@ -286,18 +283,6 @@ form table {
 	padding: 0;
 }
 
-
-#choose-application {
-    float: left;
-    /*display: table;*/
-}
-#choose-application > div >* {
-
-}
-#choose-application > div > p {
-    float:left;
-    height: 40px;
-}
 #edit {
     float: right;
 }

@@ -51,7 +51,6 @@ $(function() {
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
-    $("#title-bar").addClass('container ui-corner-top');
     $('#main_container').addClass('ui-corner-all container shadow');
 
 
