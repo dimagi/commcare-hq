@@ -486,7 +486,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     detail_type = req.POST.get('detail_type', '')
     assert(detail_type in DETAIL_TYPES)
 
-    column = dict((key, req.POST[key]) for key in (
+    column = dict((key, req.POST.get(key)) for key in (
         'header', 'model', 'field', 'format',
         'enum', 'late_flag', 'advanced'
     ))
