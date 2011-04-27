@@ -423,7 +423,7 @@ class XForm(WrappedNode):
                     ]
                 ]
                 for key, path in actions['update_case'].update.items():
-                    add_bind({"nodeset":"case/update/%s" % key, "calculate": path})
+                    add_bind({"nodeset":"case/update/%s" % key, "calculate": path, "relevant": "count(%s) > 0" % path})
             if 'close_case' in actions:
                 casexml[
                     __('close')
