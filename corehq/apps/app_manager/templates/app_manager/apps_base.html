@@ -11,6 +11,34 @@
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
                                    ajaxText: "Please wait while we load that for you..." });
     });
+    $(function() {
+        var hidden = false,
+            $appsMenu = $("#apps-menu"),
+            $appsMenuBorder = $("#apps-menu-border"),
+            $toggleDiv = $("#apps-menu-toggle"),
+            $toggleLink = $("#apps-menu-toggle a");
+        $appsMenu.addClass('ui-corner-top');
+        $appsMenuBorder.addClass('ui-corner-top');
+        function correctToggleText() {
+            $toggleLink.text(hidden ? "Change Apps" : "Hide");
+        }
+        correctToggleText();
+        $toggleDiv.addClass('ui-corner-bottom');
+        $toggleLink.click(function(){
+            var that = this;
+            $("#apps-menu").slideToggle();
+            hidden = !hidden;
+            correctToggleText();
+            return false;
+        });
+        if(hidden) {
+            $appsMenu.hide();
+        } else {
+            window.setTimeout(function(){
+                $toggleLink.trigger('click');
+            }, 400);
+        }
+    });
     </script>
     
     <style type="text/css">
@@ -18,10 +46,10 @@
             padding: 0;
         }
         #apps-menu {
-            padding: 1em;
+            padding: 1em 1em .5em 1em;
             background-color: #EEE;
-            border-bottom: 1px solid #CCC;
         }
+
         #apps-menu ul, #app-info ul {
             display: table-row;
         }
@@ -32,6 +60,25 @@
         }
         #apps-menu li:last-child, #app-info li:last-child {
             border-right: none;
+        }
+        #apps-menu-toggle {
+            background-color: #EEE;
+            border: 1px solid #CCC;
+            border-top: none;
+            padding: .5em;
+            position: absolute;
+            right: 300px;
+            top: -1px;
+            width: 10em;
+            text-align: center;
+        }
+        #apps-menu-border {
+            background-color: #EEE;
+            border-bottom: 1px solid #CCC;
+            height: .5em;
+        }
+        #title-bar {
+            position: relative;            
         }
         input.sms-autocomplete {
             width: 90%;
@@ -77,16 +124,16 @@
                     {% endfor %}
                 </select>
                 </li>
-                <li>
-                    <a class="dialog_opener" id="new_app" href="#">Create Application</a>
-                    <div class="dialog" title="Create a New Application">
-                        <h4>Start from scratch</h4>
-                        <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
-                            <table>
-                                {{ new_app_form.as_table }}
-                            </table>
-                            <input type="submit" value="Create Application"/>
-                        </form>
+{#                <li>#}
+{#                    <a class="dialog_opener" id="new_app" href="#">Create Application</a>#}
+{#                    <div class="dialog" title="Create a New Application">#}
+{#                        <h4>Start from scratch</h4>#}
+{#                        <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">#}
+{#                            <table>#}
+{#                                {{ new_app_form.as_table }}#}
+{#                            </table>#}
+{#                            <input type="submit" value="Create Application"/>#}
+{#                        </form>#}
 {#                        <hr/>#}
 {#                        <h4>From Factory Application</h4>#}
 {#                        <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">#}
@@ -124,11 +171,25 @@
 {#                            </table>#}
 {#                            <input type="submit" value="Import Application">#}
 {#                        </form>#}
-                    </div>
+{#                    </div>#}
+{#                </li>#}
+                <li>
+                    <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                        <input type="hidden" name="type" value="Application" />
+                        <input type="submit" value="{% trans 'New Application' %}" />
+                    </form>
+                </li>
+                <li>
+                    <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                        <input type="hidden" name="type" value="RemoteApp" />
+                        <input type="submit" value="{% trans 'New Remote Application' %}" />
+                    </form>
                 </li>
             </ul>
         </div>
+        <div id="apps-menu-border"></div>
         <div id="title-bar">
+            <div id="apps-menu-toggle"><a href="#"></a></div>
             <div id="app-info">
                 {% if app %}
                     <ul>
@@ -136,8 +197,8 @@
                             <strong id="app_name" class="variable-app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
                             <span id="version" class="variable-version">version {{ app.version }}</span>
                         </li>
-                        <li>
-                            {% if edit %}
+                        {% if edit %}
+                            <li>
                                 <a class="dialog_opener" href="#">Delete this Application</a>
                                 <div class="dialog" title="Delete Application?">
                                     <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
@@ -151,8 +212,8 @@
                                         <input type="submit" value="Delete" />
                                     </form>
                                 </div>
-                            {% endif %}
-                        </li>
+                            </li>
+                        {% endif %}
                     </ul>
                 {% endif %}
             </div>

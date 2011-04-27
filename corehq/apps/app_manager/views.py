@@ -275,8 +275,6 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
         'case_fields': json.dumps(case_fields),
 
-
-        'new_app_form': NewAppForm(),
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
         'edit': edit,
@@ -377,24 +375,16 @@ def view_app(req, domain, app_id=''):
 def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
-    form = NewAppForm(req.POST)
-    if form.is_valid():
-        cd = form.cleaned_data
-        name = cd['name']
-        if " (remote)" == name[-9:]:
-            name = name[:-9]
-            cls = RemoteApp
-        else:
-            cls = Application
-
-        app = cls.new_app(domain, name, lang)
-        if cls == Application:
-            app.new_module("Untitled Module", lang)
-            app.new_form(0, "Untitled Form", lang)
-            module_id = 0
-            form_id = 0
-        app.save()
-        app_id = app.id
+    type = req.POST["type"]
+    cls = _str_to_cls[type]
+    app = cls.new_app(domain, "Untitled Application", lang)
+    if cls == Application:
+        app.new_module("Untitled Module", lang)
+        app.new_form(0, "Untitled Form", lang)
+        module_id = 0
+        form_id = 0
+    app.save()
+    app_id = app.id
 
     return back_to_main(**locals())
 
