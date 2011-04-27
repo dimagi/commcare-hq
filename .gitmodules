@@ -31,3 +31,6 @@
 [submodule "submodules/formtranslate-src"]
 	path = submodules/formtranslate-src
 	url = git://github.com/dimagi/formtranslate.git
+[submodule "submodules/langcodes"]
+	path = submodules/langcodes
+	url = git://github.com/dimagi/langcodes.git
