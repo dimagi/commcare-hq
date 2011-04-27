@@ -1,4 +1,3 @@
-import mimetypes
 from django.conf import settings
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError
 from dimagi.utils.logging import log_exception
@@ -10,7 +9,6 @@ from dimagi.utils.couch import uid
 import re
 from dimagi.utils.post import post_authenticated_data, post_data
 from restkit.errors import ResourceNotFound
-import mimetypes
 
 def post_from_settings(instance, extras={}):
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
