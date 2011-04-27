@@ -17,6 +17,7 @@ def post(request, callback=None):
     (since we don't know what xform was being posted to)
     """
     # odk/javarosa preprocessing. These come in in different ways.
+    attachments = {}
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         #it's an standard form submission (eg ODK)
         #this does an assumption that ODK submissions submit using the form parameter xml_submission_file
@@ -24,9 +25,8 @@ def post(request, callback=None):
         instance = request.FILES['xml_submission_file'].read()
         for key, item in request.FILES.items():
             if key != "xml_submission_file":
-                pass
-                # TODO: this is where we handle multimedia... somehow
-            
+                attachments[key] = item
+
     else:
         #else, this is a raw post via a j2me client of xml (or touchforms)
         #todo, multipart raw submissions need further parsing capacity.
@@ -34,10 +34,10 @@ def post(request, callback=None):
 
     #todo:  also multipart submissions be it odk or j2me need to be attached to instance after the document is created in couch.
     try:
-        doc = post_xform_to_couch(instance)
+        doc = post_xform_to_couch(instance, attachments=attachments)
         if callback:
             return callback(doc)
-        return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"])
+        return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"], status=201)
     except Exception, e:
         logging.exception(e)
         return HttpResponseServerError("FAIL")
