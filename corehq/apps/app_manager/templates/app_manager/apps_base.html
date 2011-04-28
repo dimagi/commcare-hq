@@ -12,23 +12,29 @@
                                    ajaxText: "Please wait while we load that for you..." });
     });
     $(function() {
-        var hidden = false,
+        var hidden,
             $appsMenu = $("#apps-menu"),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
-            $toggleLink = $("#apps-menu-toggle a");
+            $toggleIcon = $("#apps-menu-toggle div.ui-icon"),
+            $toggleLink = $("#apps-menu-toggle a"),
+            down = 'ui-icon-carat-1-s',
+            up = 'ui-icon-carat-1-n';
         $appsMenu.addClass('ui-corner-top');
         $appsMenuBorder.addClass('ui-corner-top');
-        function correctToggleText() {
+        function setHidden(val) {
+            hidden = val;
+            $.cookie('appsMenuHidden', JSON.stringify(hidden), {path: '/'});
+            $toggleIcon.addClass(hidden ? down : up)
+                    .removeClass(hidden ? up : down);
             $toggleLink.text(hidden ? "Change Apps" : "Hide");
+            console.log($.cookie('appsMenuHidden'));
         }
-        correctToggleText();
+        setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
         $toggleDiv.addClass('ui-corner-bottom');
         $toggleLink.click(function(){
-            var that = this;
             $("#apps-menu").slideToggle();
-            hidden = !hidden;
-            correctToggleText();
+            setHidden(!hidden);
             return false;
         });
         if(hidden) {
@@ -69,8 +75,7 @@
             position: absolute;
             right: 300px;
             top: -1px;
-            width: 10em;
-            text-align: center;
+            width: 8em;
         }
         #apps-menu-border {
             background-color: #EEE;
@@ -189,7 +194,7 @@
         </div>
         <div id="apps-menu-border"></div>
         <div id="title-bar">
-            <div id="apps-menu-toggle"><a href="#"></a></div>
+            <div id="apps-menu-toggle"><div class="ui-icon"></div><a href="#"></a></div>
             <div id="app-info">
                 {% if app %}
                     <ul>
