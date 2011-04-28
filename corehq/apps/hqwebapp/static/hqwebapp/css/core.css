@@ -417,3 +417,7 @@ th {
         text-align: justify;
         margin: 5px 0 5px 0;
     }
+
+.ui-icon {
+    float: left;
+}

@@ -109,7 +109,7 @@
   {% endfor %}
  {% endfor %}
  {% for module in app.get_modules %}
-  {% if module.name|trans:app.langs == "root" %}
+  {% if module.name|trans:app.langs == "root" or module.put_in_root %}
     <menu id="root">
   {% else %}
     <menu id="m{{ module.id }}">
