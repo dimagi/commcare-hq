@@ -454,9 +454,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     lang = req.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}}
     if   "case_type" == attr:
-        case_type = req.POST.get("case_type", None)
-        module.case_type = case_type
-    #elif ("name", "case_name", "ref_name").__contains__(attr):
+        module[attr] = req.POST.get(attr, None)
+    elif "put_in_root" == attr:
+        module[attr] = json.loads(req.POST.get(attr))
     elif "name" == attr:
         name = req.POST.get(attr, None)
         module[attr][lang] = name
@@ -476,7 +476,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     detail_type = req.POST.get('detail_type', '')
     assert(detail_type in DETAIL_TYPES)
 
-    column = dict((key, req.POST[key]) for key in (
+    column = dict((key, req.POST.get(key)) for key in (
         'header', 'model', 'field', 'format',
         'enum', 'late_flag', 'advanced'
     ))

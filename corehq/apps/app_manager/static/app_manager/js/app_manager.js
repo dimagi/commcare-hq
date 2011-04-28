@@ -215,11 +215,11 @@ $(function(){
 
     $.fn.closest_form = function(){
         return this.closest('form, .form');
-    }
+    };
     $.fn.my_serialize = function() {
         var data = this.find('[name]').serialize();
         return data;
-    }
+    };
     $(".autosave").closest('form').append($("<span />"));
     $(".autosave").closest('.form').append("<td />");
     $(".autosave").closest_form().each(function(){

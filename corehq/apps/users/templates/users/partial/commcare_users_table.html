@@ -1,8 +1,53 @@
 {% load i18n %}
 
-<tr><th></th>
-    <th>{% trans "Web Account" %}</th>
+<tr>
+    <th>
+        <script>
+            $(function(){
+                $(".reset_password").each(function(){
+                    var that = this,
+                        url = $(this).attr('data-src'),
+                        loadingMessage = "<p>Loading...</p>";
+                    function setContent(html) {
+                        var $content = $(html);
+                        $(that).find('> div').html($content);
+                        COMMCAREHQ.initBlock($content);
+                    }
+                    $(this).bind('dialogopen', function(){
+                        setContent(loadingMessage);
+                        $.ajax({
+                            url: url,
+                            dataType: "json",
+                            type: "GET",
+                            success: function(data){
+                                setContent(data.formHTML);
+                            }
+                        });
+                        $(that).dialog('widget').css({width: "400px"});
+                    }).delegate('form', 'submit', function(){
+                        setContent(loadingMessage);
+                        $.ajax({
+                            url: url,
+                            data: $(this).serialize(),
+                            dataType: "json",
+                            type: "POST",
+                            success: function(data){
+                                if(data.status === "ok") {
+                                    window.location.reload();
+                                } else {
+                                    setContent(data.formHTML);
+                                }
+                            }
+                        });
+                        return false;
+                    });
+                });
+            });
+        </script>
+    </th>
+    <th>{# {% trans "Web Account" %} #}</th>
     <th>{% trans "CommCare Account" %}</th>
+    <th>{% trans "Reset Password" %}</th>
     <th>{% trans "Date Registered" %}</th>
     <th>{% trans "Phone Numbers" %}</th>
 </tr>
@@ -15,6 +60,13 @@
         <td></td>
         <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
         <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
+        <td>
+            <a href="#" class="dialog_opener">reset</a>
+            <div class="dialog reset_password" title="Reset Password" data-src="{% url change_password domain account.login_id %}">
+                <p>Reset Password for {{ account.username_html|safe }}</p>
+                <div></div>
+            </div>
+        </td>
         <td>{{ account.login.date_joined.date }}</td>
         <td>
         {% ifchanged %}

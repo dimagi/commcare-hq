@@ -183,8 +183,7 @@ class Form(IndexedSchema):
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
     contents    = StringProperty()
-    put_in_root = BooleanProperty(default=False)
-
+    
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
@@ -344,6 +343,7 @@ class Module(IndexedSchema):
     forms = SchemaListProperty(Form)
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
+    put_in_root = BooleanProperty(default=False)
 
 
     def rename_lang(self, old_lang, new_lang):
