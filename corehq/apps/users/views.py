@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.user_registration_backend import register_user
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm,\
@@ -305,9 +306,8 @@ def delete_domain_membership(request, domain, couch_user_id, domain_name):
     user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
-@require_POST
 @login_and_domain_required
-def change_password(request, domain, login_id, template="users/partials/reset_password.html"):
+def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
 
     exists = get_db().view('users/commcare_users_by_domain_login_id', key=[domain, login_id]).one()
@@ -329,7 +329,7 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
     context.update({
         'form': form,
     })
-    return render_to_response(request, template, context)
+    return HttpResponse(json.dumps({'formHTML': render_to_string(template, context)}))
 
 
 # this view can only change the current user's password
