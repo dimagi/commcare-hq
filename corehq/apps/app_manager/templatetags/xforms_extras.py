@@ -16,6 +16,7 @@ def trans(name, langs=["default"]):
     # ok, nothing yet... just return anything in name
     for _, n in sorted(name.items()):
         return n
+    return ""
 
 @register.filter
 def format_enum(enum, langs):

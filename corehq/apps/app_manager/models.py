@@ -519,6 +519,7 @@ class ApplicationBase(VersionedDoc):
     """
 
     recipients = StringProperty(default="")
+    success_message = DictProperty()
 
     @property
     def post_url(self):

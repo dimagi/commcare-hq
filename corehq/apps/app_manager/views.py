@@ -685,23 +685,24 @@ def edit_app_attr(req, domain, app_id, attr):
     if   "recipients" == attr:
         recipients = req.POST['recipients']
         app.recipients = recipients
-        app.save()
     elif "name" == attr:
         name = req.POST["name"]
         app.name = name
-        app.save()
         resp['update'].update({'.variable-app_name': name})
+    elif "success_message" == attr:
+        success_message = req.POST['success_message']
+        app.success_message[lang] = success_message
     elif "use_commcare_sense" == attr:
         use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
         app.use_commcare_sense = use_commcare_sense
-        app.save()
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
-        app.save()
-    #return back_to_main(**locals())
+    else:
+        raise Http404
+    app.save(resp)
     return HttpResponse(json.dumps(resp))
 
 

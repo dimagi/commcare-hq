@@ -213,6 +213,14 @@
         </table>
         <div id="scary-settings">
     {% endif %}
+
+        <h4>Success Message <span class="help-link" data-help-key="app_manager/success_message"></span></h4>
+        <div class="help-text" data-help-key="app_manager/success_message"></div>
+        <div class="config">
+            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'success_message' %}">
+                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
+            </form>
+        </div>
             {% if user.is_superuser %}
                 <h4>Advanced</h4>
                 <div class="config">
