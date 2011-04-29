@@ -76,7 +76,7 @@ var LangcodeValidator = (function () {
 //                }
                 $row = $("<tr></tr>");
                 $td = $("<td></td>").html(this.validation.isValid[langcode] ? langcode : "<strike>" + langcode + "</strike>").appendTo($row);
-                $td = $("<td></td>").text(this.validation.name[langcode] || "").appendTo($row);
+                $td = $("<td></td>").text(this.validation.name[langcode] || "?").appendTo($row);
                 if(this.edit) {
                     $td = $("<td></td>").appendTo($row).html(this.validation.isValid[langcode] ? "" : $links);
                 }
