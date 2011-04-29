@@ -11,9 +11,9 @@ DAILY_COMPLETION_REPORT = BasicReportSchedule(daily_submissions,
                                                "Daily Completions by user")
 
 ADMIN_DOMAIN_REPORT = ReportSchedule(domain_list, 
-                                     title="Domain Summary")
+                                     title="Domain Summary", auth=lambda user: user.is_superuser)
 
 SCHEDULABLE_REPORTS = {"daily_submissions": DAILY_SUBMISSIONS_REPORT,
                        "daily_completions": DAILY_COMPLETION_REPORT,
-# not until we have permissions                       "admin_domains": ADMIN_DOMAIN_REPORT,
+                       "admin_domains": ADMIN_DOMAIN_REPORT,
                        }

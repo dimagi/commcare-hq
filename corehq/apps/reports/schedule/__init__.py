@@ -10,11 +10,12 @@ class ReportSchedule(object):
     understand exactly what to pass to the view at runtime.
     """
     def __init__(self, view_func, view_args={}, title="unspecified", 
-                 processor=RequestProcessor()):
+                 processor=RequestProcessor(), auth=None):
         self._view_func = view_func
         self._view_args = view_args
         self._processor = processor
         self._title = title
+        self.auth = auth if auth else (lambda user: True)
     
     @property
     def title(self):
@@ -38,6 +39,7 @@ class BasicReportSchedule(object):
         self._view_func = view_func
         self._couch_view = couch_view
         self._title = title
+        self.auth = lambda user: True
     
     @property
     def title(self):
