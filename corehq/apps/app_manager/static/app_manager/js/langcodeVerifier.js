@@ -5,6 +5,7 @@ var LangcodeValidator = (function () {
         this.$home = $("#" + options.home);
         this.langcodes = options.langcodes;
         this.renameURL = options.renameURL;
+        this.edit = options.edit;
         this.validation = {
             isValid: {},
             name: {},
@@ -76,7 +77,9 @@ var LangcodeValidator = (function () {
                 $row = $("<tr></tr>");
                 $td = $("<td></td>").html(this.validation.isValid[langcode] ? langcode : "<strike>" + langcode + "</strike>").appendTo($row);
                 $td = $("<td></td>").text(this.validation.name[langcode] || "").appendTo($row);
-                $td = $("<td></td>").appendTo($row).html(this.validation.isValid[langcode] ? "" : $links);
+                if(this.edit) {
+                    $td = $("<td></td>").appendTo($row).html(this.validation.isValid[langcode] ? "" : $links);
+                }
                 $table.append($row);
             }
             this.$home.html("").append($table);

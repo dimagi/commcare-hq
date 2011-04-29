@@ -30,16 +30,18 @@
                     }
                 }).trigger('change');
             })();
+            var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
                 langcodes: {{ xform_languages|safe }},
+                edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
             var casexml = new CaseXML({
                 home: "casexml_home",
                 actions: {{ form_actions|safe }},
                 questions: {{ xform_questions|safe }},
-                edit: {% if edit %}true{% else %}false{% endif %},
+                edit: edit,
                 save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
                 requires: "{{ form.requires }}",
                 save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
@@ -160,14 +162,12 @@
                     </div>
                 </td>
             </tr>
-            {% if edit %}
-                <tr>
-                    <th>Languages in this XForm</td>
-                    <td>
-                        <div id="langcode_validator"></div>
-                    </td>
-                </tr>
-            {% endif %}
+            <tr>
+                <th>Languages in this XForm</td>
+                <td>
+                    <div id="langcode_validator"></div>
+                </td>
+            </tr>
         {% else %}
             {% if not edit %}
                 <tr><td class="warning">
