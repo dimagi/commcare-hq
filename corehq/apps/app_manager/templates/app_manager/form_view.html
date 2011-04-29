@@ -30,6 +30,15 @@
                     }
                 }).trigger('change');
             })();
+            (function configNonChromeWarning() {
+                
+                if ($.browser.webkit) {
+                    $("#nonChromeWarning").hide();
+                } else {
+                    $("#editXFormTD").css({backgroundColor: "yellow"}).
+                            find('form input[type="submit"]').button('disable');
+                }
+            }());
             var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
@@ -110,7 +119,7 @@
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
-                <td style="background-color: yellow;">
+                <td id="editXFormTD">
                      <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
@@ -118,7 +127,7 @@
 
                         <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
                     </form>
-                    <div style="font-size: .9em">
+                    <div id="nonChromeWarning" style="font-size: .9em">
                         This feature is currently <br />
                         only supported in Google Chrome <br />
                         due to a bug. <br />
