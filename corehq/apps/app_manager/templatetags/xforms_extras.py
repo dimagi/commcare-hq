@@ -12,10 +12,10 @@ def translate(t, lang, langs=[]):
 def trans(name, langs=["default"]):
     for lang in langs:
         if lang in name:
-            return name[lang]
+            return name[lang] + ("" if langs and lang == langs[0] else " [%s]" % lang)
     # ok, nothing yet... just return anything in name
-    for _, n in sorted(name.items()):
-        return n
+    for lang, n in sorted(name.items()):
+        return n + " [%s]" % lang
     return ""
 
 @register.filter

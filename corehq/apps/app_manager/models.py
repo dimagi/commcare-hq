@@ -21,6 +21,8 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
+import util
+
 
 import random
 from dimagi.utils.couch.database import get_db
@@ -858,7 +860,12 @@ class Application(ApplicationBase):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
         return errors
-    
+
+    def get_by_xmlns(self, domain, xmlns):
+        r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
+        return r['app'] if r else None
+        
+
 class NotImplementedYet(Exception):
     pass
 class RemoteApp(ApplicationBase):
@@ -955,3 +962,5 @@ def get_app(domain, app_id):
     app = cls.wrap(app)
     return app
 
+
+import corehq.apps.app_manager.signals

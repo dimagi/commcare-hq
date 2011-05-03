@@ -1,27 +1,36 @@
-function getVar(name) {
-    var r = $('input[name="' + name + '"]').first().val();
-    return JSON.parse(r);
-}
-function resetIndexes($sortable) {
-    var indexes = $sortable.find('> * > .index').get();
-    for(var i in indexes) {
-        $(indexes[i]).text(i).trigger('change');
-    }
-}
-
-function updateDOM(update) {
-    for(var key in update) {
-        $(key).text(update[key]);
-    }
-}
-
-function makeBuildErrorLinksSwitchTabs() {
-    $("#build-errors a").click(function(){
-        $('#form-tabs').tabs("select", 0);
-    });
-}
-
 $(function(){
+    function getVar(name) {
+        var r = $('input[name="' + name + '"]').first().val();
+        return JSON.parse(r);
+    }
+    function resetIndexes($sortable) {
+        var indexes = $sortable.find('> * > .index').get();
+        for(var i in indexes) {
+            $(indexes[i]).text(i).trigger('change');
+        }
+    }
+
+    function updateDOM(update) {
+        for(var key in update) {
+            $(key).text(update[key]);
+        }
+    }
+
+    function makeBuildErrorLinksSwitchTabs() {
+        $("#build-errors a").click(function(){
+            $('#form-tabs').tabs("select", 0);
+        });
+    }
+//    (function makeLangsFloat() {
+//        var $langsDiv = $("#langs"),
+//            top = parseInt($langsDiv.css("top").substring(0,$langsDiv.css("top").indexOf("px"))),
+//            offset = $langsDiv.offset().top;
+//        $(window).scroll(function () {
+//            var newTop = top+$(document).scrollTop()-offset+49;
+//            newTop = newTop > 0 ? newTop : 0;
+//            $langsDiv.animate({top:newTop + "px"},{duration:100,queue:false});
+//        });
+//    }());
 
     $("#form-tabs").tabs({
         cookie: {},
