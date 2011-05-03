@@ -23,9 +23,9 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
-        {% for feature, value in app.profile.features.items %}
+        {% for feature, value in app.profile.features.items %}{% if value != None %}
             <{{ feature }} active="{{ value }}" />
-        {% endfor %}
+        {% endif %}{% endfor %}
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
