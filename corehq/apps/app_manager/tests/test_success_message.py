@@ -1,12 +1,13 @@
 from StringIO import StringIO
 from django.test.client import Client
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import SuccessMessage, format_time
 from corehq.apps.users.models import create_hq_user_from_commcare_registration_info
 from lib.django_digest.tests import TestCase
 from datetime import datetime, timedelta
 
 submission_template = """<?xml version='1.0' ?>
-<data xmlns="http://dimagi.com/does_not_matter">
+<data xmlns="%(xmlns)s">
 	<meta>
 		<timeStart></timeStart>
 		<timeEnd></timeEnd>
@@ -23,6 +24,7 @@ class SuccessMessageTest(TestCase):
     first_name = "Danny"
     last_name = "Roberts"
     password = "123"
+    xmlns = "http://dimagi.com/does_not_matter"
     tz = timedelta(hours=-4)
     def setUp(self):
         couch_user = create_hq_user_from_commcare_registration_info(self.domain, self.username, self.password)
@@ -33,10 +35,19 @@ class SuccessMessageTest(TestCase):
         self.sm = SuccessMessage(self.message, userID, tz=self.tz)
         
         c = Client()
-        def fake_form_submission(userID=userID, username=self.username, time=None):
+
+        app = Application.new_app(self.domain, "Test App", "en")
+        app.new_module("Test Module", "en")
+        form = app.new_form(0, "Test Form", "en")
+        form.xmlns = self.xmlns
+        app.success_message = {"en": self.message}
+        app.save()
+
+        def fake_form_submission(userID=userID, username=self.username, xmlns=self.xmlns, time=None):
             submission = submission_template % {
                 "userID": userID,
-                "username": username
+                "username": username,
+                "xmlns": xmlns
             }
             f = StringIO(submission.encode('utf-8'))
             f.name = "tempfile.xml"
@@ -44,8 +55,7 @@ class SuccessMessageTest(TestCase):
             response = c.post("/a/{self.domain}/receiver/".format(self=self), {
                 'xml_submission_file': f,
             }, **kwargs)
-            if response.status_code != 200:
-                print response
+            print response
 
 
         self.num_forms_today = 0
@@ -62,8 +72,6 @@ class SuccessMessageTest(TestCase):
                 self.num_forms_this_week += 1
             if time > day_start:
                 self.num_forms_today += 1
-
-            
             
     def testRender(self):
         self.failUnlessEqual(

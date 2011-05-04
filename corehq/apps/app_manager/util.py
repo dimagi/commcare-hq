@@ -43,7 +43,7 @@ class SuccessMessage(object):
 
     def get_num_forms_since(self, time):
         if not hasattr(self, 'domain'):
-            self.domain = CommCareAccount.view('users/commcare_users_by_login_id', key=self.userID).one()
+            self.domain = CommCareAccount.get_by_userID(self.userID).domain
         r = get_db().view('reports/submit_history',
             startkey=[self.domain, self.userID, format_time(time)],
             endkey=[self.domain, self.userID, {}],

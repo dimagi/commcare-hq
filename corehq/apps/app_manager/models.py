@@ -861,9 +861,10 @@ class Application(ApplicationBase):
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
         return errors
 
-    def get_by_xmlns(self, domain, xmlns):
+    @classmethod
+    def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
-        return r['app'] if r else None
+        return cls.get(r['value']['app']['id']) if r else None
         
 
 class NotImplementedYet(Exception):
