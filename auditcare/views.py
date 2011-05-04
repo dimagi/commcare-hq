@@ -7,7 +7,7 @@ import datetime
 
 
 def auditAll(request, template="auditcare/index.html"):
-    auditEvents = couchmodels.AuditEvent.view("auditcare/by_date_events", include_docs=True).all()
+    auditEvents = couchmodels.AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     context = RequestContext(request)
 
     realEvents = [{'user': a.user, 'date': a.event_date, 'type': a.doc_type} for a in auditEvents]
