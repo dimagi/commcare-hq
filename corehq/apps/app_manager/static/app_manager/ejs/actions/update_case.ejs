@@ -10,7 +10,13 @@
             <td>
                 [%= renderOptions(getQuestions("all"), actions.update_case.update[p], 'action-update-value') %]
             </td>
-            <td><input class="code" type="text" name="action-update-key" value="[%= p %]" /></td>
+            <td>
+                [% if (edit) { %]
+                    <input class="code" type="text" name="action-update-key" value="[%= p %]" />
+                [% } else { %]
+                    <code>[%= p %]</code>
+                [% } %]
+            </td>
             <td>
                 [% if (p === "") { %]
                     <span class="invalid">Can't be blank</span>
@@ -22,12 +28,14 @@
             </td>
         </tr>
     [% } %]
-    <tr class="action-update">
-        <td></td>
-        <td>
-            [%= renderOptions(getQuestions("all"), "", 'action-update-value') %]
-        </td>
-        <td><input class="code" type="text" name="action-update-key" /></td>
-    </tr>
+    [% if (edit) { %]
+        <tr class="action-update">
+            <td></td>
+            <td>
+                [%= renderOptions(getQuestions("all"), "", 'action-update-value') %]
+            </td>
+            <td><input class="code" type="text" name="action-update-key" /></td>
+        </tr>
+    [% } %]
 
 </table>

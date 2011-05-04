@@ -321,6 +321,8 @@ class Detail(DocumentSchema):
 
         for key in column.enum:
             for lang in column.enum[key]:
+                if key not in my_column.enum:
+                    my_column.enum[key] = {}
                 my_column.enum[key][lang] = column.enum[key][lang]
 
     def delete_column(self, column_id):

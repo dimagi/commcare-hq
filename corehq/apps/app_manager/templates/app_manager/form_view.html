@@ -30,16 +30,27 @@
                     }
                 }).trigger('change');
             })();
+            (function configNonChromeWarning() {
+                
+                if ($.browser.webkit) {
+                    $("#nonChromeWarning").hide();
+                } else {
+                    $("#editXFormTD").css({backgroundColor: "yellow"}).
+                            find('form input[type="submit"]').button('disable');
+                }
+            }());
+            var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
                 langcodes: {{ xform_languages|safe }},
+                edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
             var casexml = new CaseXML({
                 home: "casexml_home",
                 actions: {{ form_actions|safe }},
                 questions: {{ xform_questions|safe }},
-                edit: {% if edit %}true{% else %}false{% endif %},
+                edit: edit,
                 save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
                 requires: "{{ form.requires }}",
                 save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
@@ -108,7 +119,7 @@
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
-                <td style="background-color: yellow;">
+                <td id="editXFormTD">
                      <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
@@ -116,7 +127,7 @@
 
                         <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
                     </form>
-                    <div style="font-size: .9em">
+                    <div id="nonChromeWarning" style="font-size: .9em">
                         This feature is currently <br />
                         only supported in Google Chrome <br />
                         due to a bug. <br />
@@ -160,14 +171,12 @@
                     </div>
                 </td>
             </tr>
-            {% if edit %}
-                <tr>
-                    <th>Languages in this XForm</td>
-                    <td>
-                        <div id="langcode_validator"></div>
-                    </td>
-                </tr>
-            {% endif %}
+            <tr>
+                <th>Languages in this XForm</td>
+                <td>
+                    <div id="langcode_validator"></div>
+                </td>
+            </tr>
         {% else %}
             {% if not edit %}
                 <tr><td class="warning">
