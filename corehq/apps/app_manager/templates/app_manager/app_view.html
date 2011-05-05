@@ -199,7 +199,20 @@
     {% if app.doc_type == "RemoteApp" %}
         <h4>Remote Setup</h4>
         <table class="config">
-            <th>Profile URL</th>
+            <tr>
+                <th>Name</th>
+                <td>
+                    {% if edit %}
+                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'name' %}">
+                            <input type="text" name="name" class="autosave" value="{{ app.name }}" />
+                        </form>
+                    {% else %}
+                        {{ app.name }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Profile URL</th>
                 <td>
                     {% if edit %}
                         <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
@@ -209,6 +222,7 @@
                         {{ app.profile_url }}
                     {% endif %}
                 </td>
+            </tr>
 
         </table>
         <div id="scary-settings">

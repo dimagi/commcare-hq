@@ -5,7 +5,8 @@
 {% block head %}
     {% include "imports/jqmodal.html" %}
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
-    <script type="text/javascript" src="/static/app_manager/js/app_manager.js"></script>
+    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager.js"></script>
     <script type="text/javascript">
     $().ready(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
@@ -13,6 +14,7 @@
     });
     $(function() {
         var hidden,
+            bootstrap = {% if applications %}false{% else %}true{% endif %};
             $appsMenu = $("#apps-menu"),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
@@ -28,7 +30,6 @@
             $toggleIcon.addClass(hidden ? down : up)
                     .removeClass(hidden ? up : down);
             $toggleLink.text(hidden ? "Change Apps" : "Hide");
-            console.log($.cookie('appsMenuHidden'));
         }
         setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
         $toggleDiv.addClass('ui-corner-bottom');
@@ -37,8 +38,11 @@
             setHidden(!hidden);
             return false;
         });
+        $("#new_app_menu").dropdown();
         if(hidden) {
             $appsMenu.hide();
+        } else if (bootstrap) {
+            $toggleDiv.hide();
         } else {
             window.setTimeout(function(){
                 $toggleLink.trigger('click');
@@ -56,15 +60,15 @@
             background-color: #EEE;
         }
 
-        #apps-menu ul, #app-info ul {
+        #apps-menu > ul, #app-info > ul {
             display: table-row;
         }
-        #apps-menu li, #app-info li {
+        #apps-menu > ul > li, #app-info > ul > li {
             border-right: 1px solid #CCC;
             padding: 0 .5em;
             display: table-cell;
         }
-        #apps-menu li:last-child, #app-info li:last-child {
+        #apps-menu > ul > li:last-child, #app-info > ul > li:last-child {
             border-right: none;
         }
         #apps-menu-toggle {
@@ -115,20 +119,6 @@
         {% endif %}
         <div id="apps-menu">
             <ul>
-                <li>
-                    {% trans "Go to: " %}
-                    <select class="applications">
-                    {% if not app %}
-                        <option value="#" disabled="" selected="">No Application Selected</option>
-                    {% endif %}
-                    {% for a in applications %}
-                    <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
-                            {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
-                        {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-                </li>
 {#                <li>#}
 {#                    <a class="dialog_opener" id="new_app" href="#">Create Application</a>#}
 {#                    <div class="dialog" title="Create a New Application">#}
@@ -179,17 +169,42 @@
 {#                    </div>#}
 {#                </li>#}
                 <li>
-                    <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
-                        <input type="hidden" name="type" value="Application" />
-                        <input type="submit" value="{% trans 'New Application' %}" />
-                    </form>
+                    <div id="new_app_menu">
+                        <div>
+                            <a href="#">New Application</a>
+                        </div>
+                        <ul>
+                            <li>
+                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                    <input type="hidden" name="type" value="Application" />
+                                    <a href="#" class="submit">{% trans 'Blank Application' %}</a>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                    <input type="hidden" name="type" value="RemoteApp" />
+                                    <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
+                {% if applications|length > 1 %}
                 <li>
-                    <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
-                        <input type="hidden" name="type" value="RemoteApp" />
-                        <input type="submit" value="{% trans 'New Remote Application' %}" />
-                    </form>
+                    {% trans "Go to: " %}
+                    <select class="applications">
+                    {% if not app %}
+                        <option value="#" disabled="" selected="">No Application Selected</option>
+                    {% endif %}
+                    {% for a in applications %}
+                    <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
+                            {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
+                        {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
                 </li>
+                {% endif %}
             </ul>
         </div>
         <div id="apps-menu-border"></div>
@@ -402,14 +417,6 @@
                 </table>
             </div>
         </div>
-        {% else %}
-            <div id="empty">
-                {% if applications %}
-                    <h2 class="message">Select an application above.</h2>
-                {% else %}
-                    <h2 class="message"><a href="#" id="new_app_message">Click here to start your first app.</a></h2>
-                {% endif %}
-            </div>
         {% endif %}
     </div>
     <div class="jqmWindow" id="odk-install-placeholder">

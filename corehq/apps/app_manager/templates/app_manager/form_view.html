@@ -46,17 +46,20 @@
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
-            var casexml = new CaseXML({
-                home: "casexml_home",
-                actions: {{ form_actions|safe }},
-                questions: {{ xform_questions|safe }},
-                edit: edit,
-                save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
-                requires: "{{ form.requires }}",
-                save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
-                reserved_words: {{ case_reserved_words_json|safe }}
-            });
-            casexml.init();
+            var form_empty = {% if form.contents %}false{% else %}true{% endif %};
+            if (!form_empty) {
+                var casexml = new CaseXML({
+                    home: "casexml_home",
+                    actions: {{ form_actions|safe }},
+                    questions: {{ xform_questions|safe }},
+                    edit: edit,
+                    save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
+                    requires: "{{ form.requires }}",
+                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
+                    reserved_words: {{ case_reserved_words_json|safe }}
+                });
+                casexml.init();
+            }
         });
     </script>
     {% include "app_manager/partials/casexml.html" %}

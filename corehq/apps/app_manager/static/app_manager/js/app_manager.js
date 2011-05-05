@@ -206,10 +206,6 @@ $(function(){
         }
     });
 
-    $("#new_app_message").click(function(){
-        $("#new_app_dialog").dialog('open');
-    });
-
     // autosave forms have one input only, and when that input loses focus,
     // the form is automatically sent AJAX style
 
@@ -247,9 +243,9 @@ $(function(){
 
     $('.submit').click(function(e){
         e.preventDefault();
-        var $form = $(this).closest('.form');
+        var $form = $(this).closest('.form, form');
         var data = $form.my_serialize();
-        var action = $form.attr('data-action');
+        var action = $form.attr('action') || $form.attr('data-action');
         $.postGo(action, $.unparam(data));
     });
 
