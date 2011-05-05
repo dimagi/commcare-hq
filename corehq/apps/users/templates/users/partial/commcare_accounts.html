@@ -16,7 +16,7 @@
                     <td>{{ account.domain }}</td>
                     <td>{{ account.registering_device_id }}</td>
                     <td><a class="delete_link" href="commcare_accounts.html#">{% trans "Unlink" %}</a>
-                        <div class="delete_dialog" title="Unlink {{ account.username_html|safe }}?">
+                        <div class="dialog delete_dialog" title="Unlink {{ account.username_html|safe }}?">
                             <form name="unlink_commcare_account" action="{% url unlink_commcare_account account.domain couch_user.couch_id forloop.counter0 %}" method="POST">
                                 <table>
                                     <tr><td>

@@ -196,6 +196,8 @@ footer {
 #form-tabs {
     padding: 0px !important;
     margin-bottom: 3em;
+    /* to avoid flicker!!*/
+    display: none;
 }
 #forms {
     padding: 0px;

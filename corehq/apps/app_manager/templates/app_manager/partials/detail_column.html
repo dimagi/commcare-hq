@@ -9,7 +9,7 @@
         <td class="delete-button-column">
             {% with util.make_uuid as uuid %}
             <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
-            <div class="delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
+            <div class="dialog delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
                 <form class="delete-detail-column" method="post"
                     action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
                     <input type="hidden" name="index" value="{# filled in by js #}" /> {# must be recomputed!! #}

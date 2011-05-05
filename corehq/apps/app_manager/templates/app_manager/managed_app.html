@@ -49,7 +49,7 @@
                                     {% if edit %}
                                         <span class="drag_handle"></span>
                                         <a class="delete_link" href="#"></a>
-                                        <div class="delete_dialog" title="Delete Module?">
+                                        <div class="dialog delete_dialog" title="Delete Module?">
                                             <form action="{% url corehq.apps.app_manager.views.delete_module domain app.id module.id %}"
                                                   method="POST">
                                                 <table>
@@ -88,7 +88,7 @@
                                                 {% if edit %}
                                                     <span class="drag_handle"></span>
                                                     <a class="delete_link" href="#"></a>
-                                                    <div class="delete_dialog" title="Delete Form?">
+                                                    <div class="dialog delete_dialog" title="Delete Form?">
                                                         <form action="{% url corehq.apps.app_manager.views.delete_form domain app.id module.id form.id %}"
                                                               method="POST">
                                                             <table>

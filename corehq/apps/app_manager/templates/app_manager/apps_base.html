@@ -14,8 +14,8 @@
     });
     $(function() {
         var hidden,
-            bootstrap = {% if applications %}false{% else %}true{% endif %};
-            $appsMenu = $("#apps-menu"),
+            bootstrap = {% if applications %}false{% else %}true{% endif %},
+            $appsMenu = $("#apps-menu").show(),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
             $toggleIcon = $("#apps-menu-toggle div.ui-icon"),
@@ -42,8 +42,10 @@
         if(hidden) {
             $appsMenu.hide();
         } else if (bootstrap) {
+            $appsMenu.show();
             $toggleDiv.hide();
         } else {
+            $appsMenu.show();
             window.setTimeout(function(){
                 $toggleLink.trigger('click');
             }, 400);
@@ -58,6 +60,7 @@
         #apps-menu {
             padding: 1em 1em .5em 1em;
             background-color: #EEE;
+            display: none;
         }
 
         #apps-menu > ul, #app-info > ul {
@@ -365,7 +368,7 @@
                             {% if edit %}
                                 <td>
                                     <a class="delete_link" href=""></a>
-                                    <div class="delete_dialog" title="Delete Build {{ saved_app.version }}">
+                                    <div class="dialog delete_dialog" title="Delete Build {{ saved_app.version }}">
                                         <p>Are you sure you want to delete this build?</p>
                                         <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}" method="post">
                                             <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />

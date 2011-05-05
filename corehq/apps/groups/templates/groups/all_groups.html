@@ -9,7 +9,7 @@
                     <td><a href="{% url group_members domain group.name %}">{{ group.name }}</a></td>
                     <td>
                         <a class="delete_link" href="#"></a>
-                        <div class="delete_dialog" title="Delete {{ group.name }}?">
+                        <div class="dialog delete_dialog" title="Delete {{ group.name }}?">
                           <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
                               <table>
                                   <tr><td>

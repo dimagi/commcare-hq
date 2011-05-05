@@ -12,7 +12,7 @@
 	<tr><td></td>
 		<td>{{ group.name }}</td>
     	<td><a class="delete_link" href="#">>{% trans "Leave" %}</a>
-	        <div class="delete_dialog" title="Leave {{ group }}?">
+	        <div class="dialog delete_dialog" title="Leave {{ group }}?">
 	            <form  name="leave_group" action="{% url leave_group domain group.get_id couch_user.couch_id %}" method="POST">
 	                <table>
 	                    <tr><td>

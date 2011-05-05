@@ -132,7 +132,7 @@
                                 <span class="drag_handle"></span>
                                 {% with util.make_uuid as uuid %}
                                     <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
-                                    <div class="delete_dialog" title="Remove Language" data-uuid="{{ uuid }}">
+                                    <div class="dialog delete_dialog" title="Remove Language" data-uuid="{{ uuid }}">
                                         <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
                                             <p>Removing this language will not permanently delete any translations you have made for it.</p>
                                             <input type="hidden" name="index" value="{# filled in by js #}" />

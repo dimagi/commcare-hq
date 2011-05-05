@@ -12,7 +12,7 @@
         <tr>
             <td>{{ repeater.url }}</td>
             <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
-                        <div class="delete_dialog" title="Cancel Forwarding?">
+                        <div class="dialog delete_dialog" title="Cancel Forwarding?">
                             <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="POST">
                                 <table>
                                     <tr><td>

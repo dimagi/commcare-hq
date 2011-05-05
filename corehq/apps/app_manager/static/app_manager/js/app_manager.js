@@ -31,7 +31,7 @@ $(function(){
                 location.href = location.href;
             }
         }
-    }).removeClass('ui-corner-all').removeClass('ui-widget-content');
+    }).removeClass('ui-corner-all').removeClass('ui-widget-content').show();
     $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
 
 
