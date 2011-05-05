@@ -19,14 +19,14 @@ class XFormParsingTest(TestCase):
             try:
                 xform.itext_node
             except XFormError as e:
-                self.failUnlessEqual(e.message, "Can't find <itext>")                
+                self.failUnlessEqual(str(e), "Can't find <itext>")
 
     def test_localize(self):
         try:
             self.failUnlessEqual(self.xforms["label_form.xml"].localize(id="pork", lang="kosher"), None)
             self.fail()
         except XFormError as e:
-            self.failUnlessEqual(e.message, "Can't find <itext>")
+            self.failUnlessEqual(str(e), "Can't find <itext>")  
         self.failUnlessEqual(self.xforms["itext_form.xml"].localize(id="pork", lang="kosher"), None)
         self.failUnlessEqual(self.xforms["itext_form.xml"].localize(id="question1", lang="pt"), "P1")
     

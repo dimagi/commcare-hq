@@ -105,7 +105,10 @@ class CommCareAccount(Account):
     class Meta:
         app_label = 'users'
 
-
+    @classmethod
+    def get_by_userID(cls, userID):
+        return cls.view('users/commcare_users_by_login_id', key=userID).one()
+    
 class WebAccount(Account):
     domain_memberships = SchemaListProperty(DomainMembership)
     

@@ -21,6 +21,8 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.app_manager.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
+import util
+
 
 import random
 from dimagi.utils.couch.database import get_db
@@ -519,6 +521,7 @@ class ApplicationBase(VersionedDoc):
     """
 
     recipients = StringProperty(default="")
+    success_message = DictProperty()
 
     @property
     def post_url(self):
@@ -857,7 +860,13 @@ class Application(ApplicationBase):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
         return errors
-    
+
+    @classmethod
+    def get_by_xmlns(cls, domain, xmlns):
+        r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
+        return cls.get(r['value']['app']['id']) if r else None
+        
+
 class NotImplementedYet(Exception):
     pass
 class RemoteApp(ApplicationBase):
@@ -954,3 +963,5 @@ def get_app(domain, app_id):
     app = cls.wrap(app)
     return app
 
+
+import corehq.apps.app_manager.signals
