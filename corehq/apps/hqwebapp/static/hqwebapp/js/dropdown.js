@@ -4,7 +4,7 @@
     jQuery.fn.dropdown = function () {
         var $dropdown = this.addClass('dropdown'),
             $button = $('> *:first-child', this).addClass('ui-corner ui-corner-top'),
-            $list = $('> ul', this).css({zIndex: 1001, top: $button.outerHeight(true)-1, left: 0}).addClass("shadow ui-corner ui-corner-bottom"),
+            $list = $('> ul', this).css({zIndex: 1001, left: 0}).addClass("shadow ui-corner ui-corner-bottom"),
             $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}).appendTo('body'),
             $window = $(window),
             isOpen,
@@ -16,7 +16,7 @@
                     if (isOpen) {
                         $dropdown.addClass('dropdown-open');
                         $button.addClass('shadow');
-                        $list.show();
+                        $list.css({top: $button.outerHeight(true)-1}).show();
                         $shield.show();
                     } else {
                         $dropdown.removeClass('dropdown-open');
@@ -30,8 +30,6 @@
                 $shield.css({width: $window.width(), height: $window.height()});
             },
             downIcon = 'ui-icon-triangle-1-s';
-            goIcon = 'ui-icon-triangle-1-e';
-        $button.css({width: $button.find('> *').outerWidth() + 16});
         $('<div class="ui-icon" />').addClass(downIcon).prependTo($button);
         initShield();
         $(window).resize(initShield);
@@ -56,6 +54,7 @@
                 white-space: nowrap;\
             }\
             .dropdown > *:first-child {\
+                display: table;\
                 border: 1px solid #CCC;\
                 background-color: white;\
                 padding: .5em 1em;\

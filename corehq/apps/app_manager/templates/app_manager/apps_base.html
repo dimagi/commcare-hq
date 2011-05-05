@@ -15,7 +15,7 @@
     $(function() {
         var hidden,
             bootstrap = {% if applications %}false{% else %}true{% endif %},
-            $appsMenu = $("#apps-menu").show(),
+            $appsMenu = $("#apps-menu"),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
             $toggleIcon = $("#apps-menu-toggle div.ui-icon"),
