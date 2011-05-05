@@ -1,7 +1,8 @@
 var LangcodeValidator = (function () {
     function LangcodeValidator(options) {
         var i,
-            that = this;
+            that = this,
+            validationsComplete = 0;
         this.$home = $("#" + options.home);
         this.langcodes = options.langcodes;
         this.renameURL = options.renameURL;
@@ -11,13 +12,18 @@ var LangcodeValidator = (function () {
             name: {},
             suggestions: {}
         };
+        this.isReady = function () {
+            return validationsComplete >= this.langcodes.length;
+        };
+
+
         for (i = 0; i < this.langcodes.length; i += 1) {
             LangcodeValidator.validate(this.langcodes[i], function(langcode, match, suggestions){
                 that.updateValidation(langcode, match, suggestions);
+                validationsComplete += 1;
                 that.render();
             });
         }
-        this.render();
     }
     LangcodeValidator.validate = function (langcode, callback) {
         var validateURL = "/langcodes/validate.json";
@@ -38,6 +44,9 @@ var LangcodeValidator = (function () {
             });
         },
         render: function () {
+            if (!this.isReady()) {
+                return;
+            }
             var $table = $("<table></table>"),
                 $row,
                 $td,
