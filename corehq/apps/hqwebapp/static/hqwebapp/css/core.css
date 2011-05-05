@@ -171,6 +171,8 @@ footer {
 
 #main {
     margin-top: 40px;
+    /* to prevent flicker */
+    display: none;
 }
 #main > div {
 }
