@@ -406,3 +406,7 @@ th {
 .ui-icon {
     float: left;
 }
+
+.dialog {
+    display: none;
+}

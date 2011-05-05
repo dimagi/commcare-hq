@@ -35,6 +35,7 @@
                 if ($.browser.webkit) {
                     $("#nonChromeWarning").hide();
                 } else {
+                    $("#nonChromeWarning").show();
                     $("#editXFormTD").css({backgroundColor: "yellow"}).
                             find('form input[type="submit"]').button('disable');
                 }
@@ -84,18 +85,6 @@
                     </form>
                 </td>
             </tr>
-{#            <tr>#}
-{#                <th>Show Count</th>#}
-{#                <td>#}
-{#                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'show_count' %}">#}
-{#                        <select class="autosave code" name="show_count">#}
-{#                            <option value="True">True</option>#}
-{#                            <option value="False" {% if not form.show_count %}selected="true"{% endif %}>False</option>#}
-{#                        </select>#}
-{#                    </form>#}
-{#                </td>#}
-{##}
-{#            </tr>#}
         {% else %}
             <tr>
                 <th>Form Name</th>
@@ -103,22 +92,12 @@
                     {{ form.name|trans:langs }}
                 </td>
             </tr>
-{#            <tr>#}
-{#                <th>Show Count</th>#}
-{#                <td>#}
-{#                    <code>{% if form.show_count %}True{% else %}False{% endif %}</code>#}
-{#                </td>#}
-{#            </tr>#}
         {% endif %}
     </table>
 
 
         <h4>XForm</h4>
     <table class="config">
-        <!--tr>
-            <th>XMLNS</th>
-            <td>{{ form.xmlns }}</td>
-        </tr-->
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
@@ -130,7 +109,7 @@
 
                         <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
                     </form>
-                    <div id="nonChromeWarning" style="font-size: .9em">
+                    <div id="nonChromeWarning" style="font-size: .9em; display: none">
                         This feature is currently <br />
                         only supported in Google Chrome <br />
                         due to a bug. <br />
