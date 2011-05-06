@@ -9,14 +9,22 @@ def translate(t, lang, langs=[]):
             return t[lang]
 
 @register.filter
-def trans(name, langs=["default"]):
+def trans(name, langs=["default"], include_lang=True):
+    if include_lang:
+        suffix = lambda lang: " [%s]" % lang
+    else:
+        suffix = lambda lang: ""
     for lang in langs:
         if lang in name:
-            return name[lang] + ("" if langs and lang == langs[0] else " [%s]" % lang)
+            return name[lang] + ("" if langs and lang == langs[0] else suffix(lang))
     # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
-        return n + " [%s]" % lang
+        return n + suffix(lang)
     return ""
+
+@register.filter
+def clean_trans(name, langs=["default"]):
+    return trans(name, langs, False)
 
 @register.filter
 def format_enum(enum, langs):
