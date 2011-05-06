@@ -402,6 +402,12 @@ class XForm(WrappedNode):
                         "calculate":actions['open_case'].external_id,
                         "relevant": r,
                     })
+                else:
+                    add_bind({
+                        "nodeset":"case/create/external_id",
+                        "calculate":"case/create/case_id",
+                        "relevant": r,
+                    })
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
                     name_path = actions['open_case'].name_path
