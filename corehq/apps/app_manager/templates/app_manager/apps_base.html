@@ -171,6 +171,7 @@
 {#                        </form>#}
 {#                    </div>#}
 {#                </li>#}
+                {% if request.couch_user.is_domain_admin %}
                 <li>
                     <div id="new_app_menu">
                         <div>
@@ -192,6 +193,7 @@
                         </ul>
                     </div>
                 </li>
+                {% endif %}
                 {% if applications|length > 1 %}
                 <li>
                     {% trans "Go to: " %}
@@ -240,7 +242,7 @@
                     </ul>
                 {% endif %}
             </div>
-            {% if applications %}
+            {% if applications and request.couch_user.is_domain_admin %}
                 <div id="edit">
                     {% if edit  %}
                         <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
