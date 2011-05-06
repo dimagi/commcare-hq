@@ -28,7 +28,7 @@ class ReportSchedule(object):
         self._processor.preprocess(request, user=user, domain=domain)
         response = self._view_func(request, **self._view_args)
         parser = ReportParser(response.content)
-        return render_to_string("reports/report_email.html", { "report_body": parser.get_html()})
+        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
 
 class BasicReportSchedule(object):
     """
@@ -53,5 +53,5 @@ class BasicReportSchedule(object):
         processor.preprocess(request, user=user)
         response = self._view_func(request, domain, self._couch_view, self._title)
         parser = ReportParser(response.content)
-        return render_to_string("reports/report_email.html", { "report_body": parser.get_html()})
+        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
         

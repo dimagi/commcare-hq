@@ -27,7 +27,7 @@ def weekly_reports():
 def send_report(scheduled_report, user):
     report = config.SCHEDULABLE_REPORTS[scheduled_report.report_slug]
     body = report.get_response(user.default_django_user, scheduled_report.domain)
-    send_HTML_email(report.title, user.default_django_user.email, 
+    send_HTML_email("[%s] %s" % (scheduled_report.domain, report.title), user.default_django_user.email,
                     html2text(body), body)
 
 def _run_reports(reps):
