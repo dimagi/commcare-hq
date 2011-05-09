@@ -168,6 +168,9 @@ class CouchUser(Document, UnicodeMixIn):
             raise User.DoesNotExist("This couch user doesn't have a linked django login!")
         return django_user_from_couch_id(login_id)
 
+
+    def get_email(self):
+        return self.email or self.default_django_user.email
     @property
     def formatted_name(self):
         return "%s %s" % (self.first_name, self.last_name)

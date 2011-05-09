@@ -1,5 +1,6 @@
 import json
 import re
+from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm, SetPasswordForm
@@ -443,8 +444,13 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 def test_scheduled_report(request, domain, couch_user_id, report_id):
     rep = ReportNotification.get(report_id)
     user = CouchUser.get(couch_user_id)
-    send_report(rep, user)
-    messages.success(request, "Test message sent to %s" % user.default_django_user.email)
+    try:
+        send_report(rep, user)
+    except SMTPRecipientsRefused:
+        messages.error(request, "You have no email address configured")
+    else:
+        messages.success(request, "Test message sent to %s" % user.get_email())
+
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
