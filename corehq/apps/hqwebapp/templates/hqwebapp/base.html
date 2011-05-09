@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load tabs_tags %}
+{% load permissions %}
 {% load i18n %}
 <html lang="en">
     <head>
@@ -59,7 +60,7 @@
                                             {% if tab.visible %}
                                             {# hack for domain admins only seeing domain tab #}
                                             {% ifequal tab.caption "My Domain" %}
-                                            {% if request.couch_user.is_domain_admin %}
+                                            {% if request.couch_user|is_admin:domain %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
                                             {% else %}

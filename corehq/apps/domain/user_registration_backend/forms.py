@@ -47,6 +47,7 @@ class AdminInvitesUserForm(_BaseForm, forms.Form):
     email       =  forms.EmailField(label="User's email address", 
                                     max_length=User._meta.get_field('email').max_length)
     is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
+
     
     
 class AdminRegistersUserForm(RegistrationRequestForm): 

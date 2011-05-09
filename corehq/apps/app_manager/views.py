@@ -1,7 +1,7 @@
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.users.views import require_domain_admin
+from corehq.apps.users.models import DomainMembership, require_permission
 from dimagi.utils.web import render_to_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
@@ -115,7 +115,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     else:
         return render_to_response(req, template, {'domain': domain})
 
-@require_domain_admin
+@require_permission('edit-apps')
 @require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
@@ -129,7 +129,7 @@ def import_factory_app(req, domain):
     app_id = app._id
     return back_to_main(**locals())
 
-@require_domain_admin
+@require_permission('edit-apps')
 @require_POST
 def import_factory_module(req, domain, app_id):
     fapp_id, fmodule_id = req.POST['app_module_id'].split('/')
@@ -141,7 +141,7 @@ def import_factory_module(req, domain, app_id):
     app.save()
     return back_to_main(**locals())
 
-@require_domain_admin
+@require_permission('edit-apps')
 @require_POST
 def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
@@ -162,7 +162,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     that clear; for that reason, this may soon be revisited and merged with view_app
 
     """
-    edit = (req.GET.get('edit', '') == 'true') and req.couch_user.is_domain_admin(domain)
+    edit = (req.GET.get('edit', '') == 'true') and req.couch_user.can_edit_apps(domain)
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
     )
@@ -372,7 +372,7 @@ def view_app(req, domain, app_id=''):
     return response
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
@@ -390,7 +390,7 @@ def new_app(req, domain):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def new_module(req, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
@@ -403,7 +403,7 @@ def new_module(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def new_form(req, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
@@ -416,7 +416,7 @@ def new_form(req, domain, app_id, module_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_app(req, domain, app_id):
     "Deletes an app from the database"
     get_app(domain, app_id).delete()
@@ -424,7 +424,7 @@ def delete_app(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_module(req, domain, app_id, module_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
@@ -434,7 +434,7 @@ def delete_module(req, domain, app_id, module_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_form(req, domain, app_id, module_id, form_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
@@ -444,7 +444,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
@@ -466,7 +466,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     return HttpResponse(json.dumps(resp))
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_module_detail(req, domain, app_id, module_id):
     """
     Called to add a new module detail column or edit an existing one
@@ -514,7 +514,7 @@ def edit_module_detail(req, domain, app_id, module_id):
         return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_module_detail(req, domain, app_id, module_id):
     """
     Called when a module detail column is to be deleted
@@ -531,7 +531,7 @@ def delete_module_detail(req, domain, app_id, module_id):
     #return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -575,7 +575,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def rename_language(req, domain, form_unique_id):
     old_code = req.POST.get('oldCode')
     new_code = req.POST.get('newCode')
@@ -587,7 +587,7 @@ def rename_language(req, domain, form_unique_id):
     return HttpResponse(json.dumps({"status": "ok"}))
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
@@ -603,7 +603,7 @@ def commcare_profile(req, domain, app_id):
     return HttpResponse(json.dumps(app.profile))
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_commcare_profile(req, domain, app_id):
     try:
         profile = json.loads(req.POST.get('profile'))
@@ -623,7 +623,7 @@ def edit_commcare_profile(req, domain, app_id):
     return HttpResponse(json.dumps({"status": "ok", "changed": changed}))
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_app_lang(req, domain, app_id):
     """
     Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
@@ -650,7 +650,7 @@ def edit_app_lang(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_app_lang(req, domain, app_id):
     """
     Called when a language (such as 'zh') is to be deleted from app.langs
@@ -663,7 +663,7 @@ def delete_app_lang(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def edit_app_attr(req, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -699,7 +699,7 @@ def edit_app_attr(req, domain, app_id, attr):
 
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def rearrange(req, domain, app_id, key):
     """
     This function handels any request to switch two items in a list.
@@ -735,7 +735,7 @@ def rearrange(req, domain, app_id, key):
 # Saving multiple versions of the same app
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def save_copy(req, domain, app_id):
     """
     Saves a copy of the app to a new doc.
@@ -766,7 +766,7 @@ def save_copy(req, domain, app_id):
     return HttpResponseRedirect(next)
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def revert_to_copy(req, domain, app_id):
     """
     Copies a saved doc back to the original.
@@ -779,7 +779,7 @@ def revert_to_copy(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_POST
-@require_domain_admin
+@require_permission('edit-apps')
 def delete_copy(req, domain, app_id):
     """
     Deletes a saved copy permanently from the database.

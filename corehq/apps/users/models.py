@@ -7,6 +7,8 @@ from __future__ import absolute_import
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
+from django.http import Http404
+from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db
 from djangocouchuser.models import CouchUserProfile
 from couchdbkit.ext.django.schema import *
@@ -41,13 +43,19 @@ def _add_to_list(list, obj, default):
 def _get_default(list):
     return list[0] if list else None
 
+class Permissions(object):
+    EDIT_USERS = 'edit-users'
+    EDIT_APPS = 'edit-apps'
+    AVAILABLE_PERMISSIONS = [EDIT_USERS, EDIT_APPS]
+    
 class DomainMembership(Document):
     """
     Each user can have multiple accounts on the 
     web domain. This is primarily for Dimagi staff.
     """
+
     domain = StringProperty()
-    is_admin = BooleanProperty()
+    is_admin = BooleanProperty(default=False)
     permissions = StringListProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
@@ -111,7 +119,7 @@ class CommCareAccount(Account):
     
 class WebAccount(Account):
     domain_memberships = SchemaListProperty(DomainMembership)
-    
+
     class Meta:
         app_label = 'users'
 
@@ -205,6 +213,11 @@ class CouchUser(Document, UnicodeMixIn):
     def get_django_user(self):
         return User.objects.get(username=self.web_account.login_id)
 
+    def get_domain_membership(self, domain):
+        for d in self.web_account.domain_memberships:
+            if d.domain == domain:
+                return d
+    
     def add_domain_membership(self, domain, **kwargs):
         for d in self.web_account.domain_memberships:
             if d.domain == domain:
@@ -212,18 +225,16 @@ class CouchUser(Document, UnicodeMixIn):
                 return
         self.web_account.domain_memberships.append(DomainMembership(domain=domain,
                                                         **kwargs))
+
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
             if hasattr(self, 'current_domain'):
                 # this is a hack needed because we can't pass parameters from views
                 domain = self.current_domain
-            else: 
+            else:
                 return False # no domain, no admin
-        for d in self.web_account.domain_memberships:
-            if d.domain == domain and d.is_admin:
-                return True
-        return False
+        return self.get_domain_membership(domain).is_admin
 
     @property
     def domain_names(self):
@@ -322,6 +333,48 @@ class CouchUser(Document, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
+
+    def set_permission(self, domain, permission, value, save=True):
+        assert(permission in Permissions.AVAILABLE_PERMISSIONS)
+        if self.has_permission(domain, permission) == value:
+            return
+        dm = self.get_domain_membership(domain)
+        if value:
+            dm.permissions.append(permission)
+        else:
+            dm.permissions = [p for p in dm.permissions if p != permission]
+        if save:
+            self.save()
+    def reset_permissions(self, domain, permissions, save=True):
+        dm = self.get_domain_membership(domain)
+        dm.permissions = permissions
+        if save:
+            self.save()
+
+    def has_permission(self, domain, permission):
+        # is_admin is the same as having all the permissions set
+        dm = self.get_domain_membership(domain)
+        if dm.is_admin:
+            return True
+        else:
+            return permission in dm.permissions
+
+    # these functions help in templates
+    def can_edit_apps(self, domain):
+        return self.has_permission(domain, Permissions.EDIT_APPS)
+    def can_edit_users(self, domain):
+        return self.has_permission(domain, Permissions.EDIT_USERS)
+
+
+def require_permission(permission):
+    def decorator(view_func):
+        def _inner(request, domain, *args, **kwargs):
+            if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.has_permission(domain, permission)):
+                return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
+            else:
+                raise Http404()
+        return _inner
+    return decorator
 
 """
 Django  models go here

@@ -1,6 +1,7 @@
 {% extends base_template %}
 {% load xforms_extras %}
 {% load url_extras %}
+{% load permissions %}
 {% load i18n %}
 {% block head %}
     {% include "imports/jqmodal.html" %}
@@ -171,7 +172,7 @@
 {#                        </form>#}
 {#                    </div>#}
 {#                </li>#}
-                {% if request.couch_user.is_domain_admin %}
+                {% if request.couch_user|can_edit_apps:domain %}
                 <li>
                     <div id="new_app_menu">
                         <div>
@@ -242,7 +243,7 @@
                     </ul>
                 {% endif %}
             </div>
-            {% if applications and request.couch_user.is_domain_admin %}
+            {% if applications and request.couch_user|can_edit_apps:domain %}
                 <div id="edit">
                     {% if edit  %}
                         <a class="button" href="{% urlencode request.path request.GET without "edit" %}">

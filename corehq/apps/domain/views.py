@@ -22,7 +22,7 @@ from corehq.apps.users.models import CouchUser
 
 from dimagi.utils.web import render_to_response
 from corehq.apps.users.util import couch_user_from_django_user
-from corehq.apps.users.views import require_domain_admin
+from corehq.apps.users.views import require_can_edit_users
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater
@@ -355,7 +355,7 @@ def _dict_for_one_user( user, domain ):
 
     return retval                     
            
-@require_domain_admin
+@require_can_edit_users
 def manage_domain(request, domain):
     repeaters = FormRepeater.view("receiverwrapper/repeaters", key=domain, include_docs=True).all()
     return render_to_response(request, "domain/admin/manage_domain.html", 
@@ -363,7 +363,7 @@ def manage_domain(request, domain):
                                "repeaters": repeaters})
 
 @require_POST
-@require_domain_admin
+@require_can_edit_users
 def drop_repeater(request, domain, repeater_id):
     rep = FormRepeater.get(repeater_id)
     rep.delete()
@@ -371,7 +371,7 @@ def drop_repeater(request, domain, repeater_id):
     return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
     
 @require_POST
-@require_domain_admin
+@require_can_edit_users
 def test_repeater(request, domain):
     url = request.POST["url"]
     form = FormRepeaterForm({"url": url})
@@ -399,7 +399,7 @@ def test_repeater(request, domain):
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
     
     
-@require_domain_admin
+@require_can_edit_users
 def add_repeater(request, domain):
     if request.method == "POST":
         form = FormRepeaterForm(request.POST)
