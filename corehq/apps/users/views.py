@@ -461,7 +461,7 @@ GROUP VIEWS
 def _get_groups(domain):
     groups = Group.view("groups/by_domain", key=domain)
     for group in groups:
-        name = re.sub(r'[^\w-]', '-', group.name)
+        name = re.sub(r'[^\w-]', '-', group.name) if group.name else '-'
         if group.name != name:
             group.name = name
             group.save()
@@ -481,7 +481,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 @require_domain_admin
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    group = Group.view("groups/by_name", key=group_name).one()
+    group = Group.view("groups/by_name", key=[domain, group_name]).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
