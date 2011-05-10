@@ -58,16 +58,14 @@ def deploy():
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
     service_restart()
 
-def intictl_update():
-    """Updates the initctl scripts because symlinked configurations don't automatically update in upstart"""
-    require('root', provided_by=('staging', 'production'))
-    with settings(sudo_user="root"):
-        sudo('initctl reload-configuration', user=env.sudo_user)
 
 
 def service_restart():
-    """ restart cchq_www service on remote host """
+    """ restart cchq_www service on remote host.  This will call a stop, reload the initctl to
+    have any config file updates be reloaded into intictl, then start cchqwww again.
+    """
     require('root', provided_by=('staging', 'production'))
-
     with settings(sudo_user="root"):
-        sudo('restart cchq_www', user=env.sudo_user)
+        sudo('stop cchq_www', user=env.sudo_user)
+        sudo('initctl reload-configuration', user=env.sudo_user)
+        sudo('start cchq_www', user=env.sudo_user)
