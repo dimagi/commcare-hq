@@ -68,6 +68,6 @@ def intictl_update():
 def service_restart():
     """ restart cchq_www service on remote host """
     require('root', provided_by=('staging', 'production'))
-
+    initctl_update()
     with settings(sudo_user="root"):
         sudo('restart cchq_www', user=env.sudo_user)
