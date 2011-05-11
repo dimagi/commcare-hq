@@ -87,7 +87,7 @@
                 $("#user_reassignment select[name='userID']").each(function(){
                     var i,
                         that = this;
-                    $.get('users.json', function(data){
+                    $.get('../users.json', function(data){
                         var users = JSON.parse(data);
                         users.sortBy(function(){
                             return this.username;

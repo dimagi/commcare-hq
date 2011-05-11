@@ -47,7 +47,7 @@ var JsonTable, JsonRow;
             },
             renderCell: function(cell) {
                 if(this._render.hasOwnProperty(cell.key)) {
-                    return this._render[cell.key](cell.value);
+                    return this._render[cell.key].apply(this.data, [cell.value]);
                 } else {
                     return cell.value;
                 }
@@ -67,7 +67,6 @@ var JsonTable, JsonRow;
             this.order = options.order || [];
             this._render = options.render || {};
             this.$element = $(options.element);
-            this.$selected = $(options.selected);
             this.headers = [];
             this.rows = [];
             this.selected = {};
