@@ -100,15 +100,11 @@ def post(request):
                 # default to something generic 
                 response = HttpResponse(xml.get_response(message="Success! Received XForm id is: %s\n" % doc['_id']), 
                                         status=201)
-            
-            # this hack is required for ODK
-            response["Location"] = get_location(request)
-            return response 
+            return response
             
         
         def fail_actions_and_respond(doc):
             response = HttpResponse(xml.get_response(message=doc.problem), status=201)
-            response["Location"] = get_location(request)
             return response
         
         
@@ -117,10 +113,15 @@ def post(request):
         default_actions(instance)
         
         if instance.doc_type == "XFormInstance":
-            return success_actions_and_respond(instance)
+            response = success_actions_and_respond(instance)
         else: 
-            return fail_actions_and_respond(instance)
-        
+            response = fail_actions_and_respond(instance)
+
+        # this hack is required for ODK
+        response["Location"] = get_location(request)
+        response['X-CommCareHQ-FormID'] = doc.get_id
+        return response
+
     return couchforms_post(request, callback)
 
 def get_location(request):
