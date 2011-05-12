@@ -21,4 +21,4 @@ def get_success_message(sender, xform, **kwargs):
     return ReceiverResult(xml.get_response(success_message), Certainty.CERTAIN)
 
 
-successful_form_received.connect(get_success_message)
+#successful_form_received.connect(get_success_message)
