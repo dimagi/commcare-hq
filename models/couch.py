@@ -1,7 +1,12 @@
 from __future__ import absolute_import
+
 from datetime import datetime, date, time
+import os
 from couchdbkit.ext.django.schema import *
+from django.test.client import Client
 from corehq.apps.case import const
+from corehq.apps.case.util import get_close_case_xml, get_close_referral_xml
+from corehq.apps.receiverwrapper.util import spoof_submission
 from dimagi.utils import parsing
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from datetime import datetime, date, time
@@ -158,7 +163,7 @@ class CommCareCase(CaseBase):
     representation of the case - the result of playing all
     the actions in sequence.
     """
-    
+    domain = StringProperty()
     xform_ids = StringListProperty()
 
     external_id = StringProperty()
@@ -318,5 +323,15 @@ class CommCareCase(CaseBase):
         self.closed = True
         self.closed_on = datetime.combine(close_action.visit_date, time())
 
+
+    def force_close(self):
+        if not self.closed:
+            submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
+            spoof_submission(self.domain, submission, name="close.xml")
+
+    def force_close_referral(self, referral):
+        if not referral.closed:
+            submission = get_close_referral_xml(time=datetime.utcnow(), case_id=self._id, referral_id=referral.referral_id, referral_type=referral.type)
+            spoof_submission(self.domain, submission, name="close_referral.xml")
 
 import corehq.apps.case.signals
