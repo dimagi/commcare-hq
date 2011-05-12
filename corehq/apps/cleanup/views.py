@@ -150,7 +150,7 @@ def cases_json(request, domain):
              startkey=[domain],
              endkey=[domain, {}],
              group=True,
-             stale=stale
+#             stale=stale
         )]
         subs.sort(key=lambda sub: (sub['userID'], sub['end']))
 

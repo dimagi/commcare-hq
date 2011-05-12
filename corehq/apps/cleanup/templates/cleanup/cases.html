@@ -5,6 +5,7 @@
         <script src="{{ STATIC_URL }}cleanup/js/jsontable.js"></script>
         <script>
             $(function(){
+                $("#form_submit_wrapper").hide();
                 var renderCode = function(code){
                     return "<code>" + code + "</code>";
                 };
@@ -99,7 +100,11 @@
                         submissions: state.table.getSelected(),
                     };
                     $("[name='data']", this).val(JSON.stringify(data));
-                    return confirm("You cannot undo this action. Are you sure you want to continue?");
+                    var submit = confirm("You cannot undo this action. Are you sure you want to continue?");
+                    if (submit) {
+                        $("#form_submit_wrapper").replaceWith("<p>Sit tight. This may take a while...</p>");
+                    }
+                    return submit;
                 });
             });
         </script>
