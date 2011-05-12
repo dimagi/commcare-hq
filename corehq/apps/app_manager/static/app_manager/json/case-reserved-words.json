@@ -3,6 +3,7 @@
     "name",      "date-opened", "external-id",
 
     "doc_type",
+    "domain",
     "opened_on",
     "modified_on",
     "type",

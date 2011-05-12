@@ -22,20 +22,27 @@
                     }
                     return output.join("<span class='light'>-</span>");
                 };
-                var renderLost = function (d) {
+                var renderOld = function (d) {
                     if (d) {
-                        return "LOST";
+                        var msg = "OLD",
+                            classname = this.cases !== 0 ? "different" : "light";
+                        return "<span class='" + classname + "'>" + msg + "</span>";
                     } else {
                         return "";
                     }
                 };
+                var renderNumber = function (d) {
+                    var classname = d !== 0 ? "different" : "light";
+                    return "<span class='" + classname + "'>" + d + "</span>";
+
+                }
                 var none_selected_str = "<p>(None Selected)</p>";
                 var state = {
                     get_url: function(){
                         return '{% url corehq.apps.cleanup.views.cases_json domain %}';
                     },
                     reload: function(){
-                        $("#case_report").html("Loading...");
+                        $("#case_report").html("You have a lot of cases, so this may take a while...");
                         $("#result_info").html("");
                         $("#selected").html(none_selected_str);
                         $.get(this.get_url(), function(data){
@@ -44,14 +51,15 @@
                             //var report = _.jsonreport(JSON.stringify(data.results));
                             state.table = new JsonTable({
                                 data: data.results,
-                                order: ["lost", "username", "userID", "deviceID", "start", "end", "submissions"],
+                                order: ["cases", "old", "username", "userID", "deviceID", "start", "end", "submissions"],
                                 element: $("#case_report"),
                                 render: {
+                                    cases: renderNumber,
                                     userID: renderCode,
                                     deviceID: renderCode,
                                     start: renderDateDiff,
                                     end: function (date) { return renderDateDiff(date, this.start);},
-                                    lost: renderLost
+                                    old: renderOld
                                 },
                                 getId: function(x){
                                     return "All submissions from " + x.username + " (" + renderCode(x.userID) + ") on phone " + renderCode(x.deviceID);
@@ -69,7 +77,7 @@
                                 if(!nSelected) {
                                     $("#selected").html(none_selected_str);
                                 }
-                                $("#reassign_submit_wrapper").each(function(){
+                                $("#form_submit_wrapper").each(function(){
                                     // right now changing single submissions is not supported
                                     if(nSelected) {
                                         $(this).show();
@@ -77,7 +85,7 @@
                                         $(this).hide();
                                     }
                                 });
-                                $("#reassign_div").each(function(){
+                                $("#form_div").each(function(){
                                     $(this).parent().parent().show();
                                 });
                             }).trigger('change-selected');
@@ -86,7 +94,7 @@
                     }
                 };
                 state.reload();
-                $("#user_reassignment").submit(function(){
+                $("#case_cleanup_form").submit(function(){
                     var data = {
                         submissions: state.table.getSelected(),
                     };
@@ -130,9 +138,15 @@
         </div>
         
         <h2>3. Close Cases</h2>
-        <div class="config" id="reassign_div">
+        <div class="config" id="form_div">
             <p>Permanently close cases created by the following submissions:</p>
             <div id="selected"></div>
+            <form id="case_cleanup_form" action="{% url corehq.apps.cleanup.views.close_cases domain %}" method="POST">
+                <input type="hidden" name="data" value="" /> <br />
+                <div id="form_submit_wrapper">
+                    <input type="submit" value="Close Cases" />
+                </div>
+            </form>
         </div>
     </div>
 {% endblock %}

@@ -114,24 +114,16 @@ def relabel_submissions(request, domain):
     data = json.loads(request.POST['data'])
     group = data['group']
     keys = data['submissions']
-    xform_ids = []
-    case_ids = []
+    xforms = []
     if group:
-        for key in keys:
-            for sub in get_db().view('cleanup/submissions', reduce=False,
-                key=[domain, key['userID'], key['username'], key['deviceID']]
-            ).all():
-                xform_ids.append(sub['id'])
-    for case in get_db().view('case/by_xform_id', keys=xform_ids).all():
-        case_ids.append(case['id'])
+        xforms = _get_submissions(domain, keys)
+    cases = _get_cases(xforms)
 
     # Oh, yeah, here we go baby!
-    for xform_id in xform_ids:
-        xform = XFormInstance.get(xform_id)
+    for xform in xforms:
         xform.form['meta']['userID'] = userID
         xform.save()
-    for case_id in case_ids:
-        case = CommCareCase.get(case_id)
+    for case in cases:
         case.user_id = userID
         case.save()
 
@@ -161,23 +153,66 @@ def cases_json(request, domain):
              stale=stale
         )]
         subs.sort(key=lambda sub: (sub['userID'], sub['end']))
+
+        # Try and help identify lost devices
         latest_start = defaultdict(lambda: None)
         for sub in subs:
             latest_start[sub['userID']] = max(sub['start'], latest_start[sub['userID']])
         for sub in subs:
             if sub['end'] < latest_start[sub['userID']]:
-                sub['lost'] = True
+                sub['old'] = True
             else:
-                sub['lost'] = False
-#        total = get_db().view('cleanup/case_submissions',
-#            startkey=[domain],
-#            endkey=[domain, {}],
-#            stale=stale
-#        ).one()
-#        total = total['value']['count'] if total else 0
+                sub['old'] = False
+
+
+        # show the number of cases made by these xforms
+#        for sub in subs:
+#            cases = _get_cases(_get_submissions(domain, [sub]))
+#            sub['cases'] = len([None for case in cases if not case.closed])
+
+        open_cases = CommCareCase.view('case/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
+        xform_ids = [case.xform_ids[0] for case in open_cases]
+        case_count = defaultdict(int)
+        for xform_id in xform_ids:
+            xform = XFormInstance.get(xform_id)
+            meta = xform.form['meta']
+            case_count[(meta['userID'], meta['username'], meta['deviceID'])] += 1
+        for sub in subs:
+            sub['cases'] = case_count[(sub['userID'], sub['username'], sub['deviceID'])]
 
         return json_response({
             "results": subs,
             "total": len(subs),
         })
     return query(**json_request(request.GET))
+
+@require_domain_admin
+@require_POST
+def close_cases(request, domain):
+    data = json.loads(request.POST['data'])
+    keys = data['submissions']
+    def actually_close_cases(cases):
+        for case in cases:
+            for referral in case.referrals:
+                case.force_close_referral(referral)
+            case.force_close()
+    xforms = _get_submissions(domain, keys)
+    cases = _get_cases(xforms)
+    actually_close_cases(cases)
+    return HttpResponseRedirect(reverse('corehq.apps.cleanup.views.cases', args=[domain]))
+
+def _get_submissions(domain, keys):
+    xforms = []
+    for key in keys:
+        for sub in XFormInstance.view('cleanup/submissions', reduce=False,
+            key=[domain, key['userID'], key['username'], key['deviceID']],
+            include_docs=True
+        ).all():
+            xforms.append(sub)
+    return xforms
+
+def _get_cases(xforms):
+    cases = []
+    for case in CommCareCase.view('case/by_xform_id', keys=[xform.get_id for xform in xforms], include_docs=True).all():
+        cases.append(case)
+    return cases

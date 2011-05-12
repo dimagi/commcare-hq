@@ -11,4 +11,5 @@ urlpatterns = patterns('corehq.apps.cleanup.views',
 
     (r'^cases\.json', 'cases_json'),
     (r'^cases/', 'cases'),
+    (r'^close_cases/', 'close_cases'),
 )
