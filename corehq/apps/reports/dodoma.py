@@ -51,7 +51,6 @@ def household_verification_json(request, domain):
         cc_account = user.default_commcare_account
         userID = cc_account.login_id
         username = user_id_to_username(userID)
-        print userID, username
         if userID in stats_by_userID:
             stats_by_userID[userID]['username'] = username
         else:
