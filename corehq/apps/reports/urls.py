@@ -13,6 +13,10 @@ paging_reports = patterns('corehq.apps.reports.views',
     url('active_cases/', 'paging_active_cases', name='paging_active_cases'),
 )
 
+dodoma_reports = patterns('corehq.apps.reports.dodoma',
+    url('household_verification_json', 'household_verification_json'),
+)
+
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="default_report"),
 
@@ -39,4 +43,5 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
     url(r'^r/', include(actual_reports)),
     url(r'^paging/', include(paging_reports)),
+    url(r'^dodoma/', include(dodoma_reports)),
 )

@@ -325,7 +325,13 @@ class CouchUser(Document, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
-
+    @classmethod
+    def commcare_users_by_domain(cls, domain):
+        return CouchUser.view("users/commcare_users_by_domain",
+            reduce=False,
+            key=domain,
+            include_docs=True,
+        )
 """
 Django  models go here
 """

@@ -23,7 +23,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 def user_id_to_username(user_id):
     if not user_id:
-        return None
+        return user_id
     try:
         login = get_db().get(user_id)
     except:
