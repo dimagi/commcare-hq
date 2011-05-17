@@ -5,9 +5,8 @@ import json
 from django.views.decorators.http import require_POST
 from corehq.apps.case.models.couch import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.users.models import CommCareAccount
+from corehq.apps.users.models import CommCareAccount, require_permission, Permissions
 from corehq.apps.users.util import format_username
-from corehq.apps.users.views import require_domain_admin
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response
@@ -18,15 +17,16 @@ def json_response(obj):
 def json_request(params):
     return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
 
+require_can_cleanup = require_permission(Permissions.EDIT_DATA)
 
 
 # -----------submissions-------------
 
-@require_domain_admin
+@require_can_cleanup
 def submissions(request, domain, template="cleanup/submissions.html"):
     return render_to_response(request, template, {'domain': domain})
 
-@require_domain_admin
+@require_can_cleanup
 def submissions_json(request, domain):
     def query(limit=100, userID=None, group=False, username__exclude=["demo_user", "admin"], **kwargs):
         if group:
@@ -97,7 +97,7 @@ def submissions_json(request, domain):
         })
     return query(**json_request(request.GET))
 
-@require_domain_admin
+@require_can_cleanup
 def users_json(request, domain):
     userIDs = [account.login_id for account in CommCareAccount.view(
         "users/commcare_accounts_by_domain",
@@ -108,7 +108,7 @@ def users_json(request, domain):
     return json_response(users)
 
 @require_POST
-@require_domain_admin
+@require_can_cleanup
 def relabel_submissions(request, domain):
     userID = request.POST['userID']
     data = json.loads(request.POST['data'])
@@ -132,11 +132,11 @@ def relabel_submissions(request, domain):
 
 # -----------cases-------------
 
-@require_domain_admin
+@require_can_cleanup
 def cases(request, domain, template="cleanup/cases.html"):
     return render_to_response(request, template, {'domain': domain})
 
-@require_domain_admin
+@require_can_cleanup 
 def cases_json(request, domain):
     def query(stale="ok", **kwargs):
         subs = [dict(
@@ -186,7 +186,7 @@ def cases_json(request, domain):
         })
     return query(**json_request(request.GET))
 
-@require_domain_admin
+@require_can_cleanup 
 @require_POST
 def close_cases(request, domain):
     data = json.loads(request.POST['data'])
