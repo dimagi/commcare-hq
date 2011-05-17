@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from corehq.apps.migration.add_user_id import add_user_id
 from corehq.apps.migration.models import MigrationUser
 from corehq.apps.migration.post import post_data
+from corehq.apps.receiverwrapper.util import spoof_submission
 from corehq.apps.receiverwrapper.views import post as receiver_post
 from dimagi.utils.couch.database import get_db
 from django.conf import settings
@@ -80,10 +81,8 @@ def post(request, domain):
     else:
         xml = add_user_id(xml, user_map)
     if submit:
-        url = "http://%s%s" % (settings.REFLEXIVE_URL_BASE, reverse(receiver_post, args=[domain]))
-        results, errors = post_data(xml, url, submit_time=request.META.get('HTTP_X_SUBMIT_TIME', None))
-        if errors:
-            raise Exception(errors)
-        return HttpResponse(results)
+        submit_time = request.META.get('HTTP_X_SUBMIT_TIME', None)
+        headers = {"HTTP_X_SUBMIT_TIME": submit_time} if submit_time else {}
+        return spoof_submission(domain, xml, hqsubmission=False, headers=headers)
     else:
         return HttpResponse("user already exists")

@@ -5,7 +5,7 @@ from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
 from dimagi.utils.web import render_to_response
 from dimagi.utils.couch.database import get_db
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
@@ -23,11 +23,11 @@ from dimagi.utils.parsing import json_format_datetime
 
 def user_id_to_username(user_id):
     if not user_id:
-        return None
+        return user_id
     try:
         login = get_db().get(user_id)
     except:
-        return None
+        return user_id
     return raw_username(login['django_user']['username'])
 
 @login_and_domain_required
@@ -39,7 +39,11 @@ def export_data(req, domain):
     """
     Download all data for a couchdbkit model
     """
-    export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
+    try:
+        export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
+    except ValueError:
+        return HttpResponseBadRequest()
+        
     format = req.GET.get("format", Format.XLS_2007)
     next = req.GET.get("next", "")
     if not next:

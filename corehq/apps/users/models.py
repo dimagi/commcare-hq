@@ -176,6 +176,9 @@ class CouchUser(Document, UnicodeMixIn):
             raise User.DoesNotExist("This couch user doesn't have a linked django login!")
         return django_user_from_couch_id(login_id)
 
+
+    def get_email(self):
+        return self.email or self.default_django_user.email
     @property
     def formatted_name(self):
         return "%s %s" % (self.first_name, self.last_name)
@@ -333,6 +336,13 @@ class CouchUser(Document, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
+    @classmethod
+    def commcare_users_by_domain(cls, domain):
+        return CouchUser.view("users/commcare_users_by_domain",
+            reduce=False,
+            key=domain,
+            include_docs=True,
+        )
 
     def set_permission(self, domain, permission, value, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
@@ -375,6 +385,8 @@ def require_permission(permission):
                 raise Http404()
         return _inner
     return decorator
+
+
 
 """
 Django  models go here

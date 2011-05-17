@@ -1,5 +1,6 @@
 import json
 import re
+from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm, SetPasswordForm
@@ -454,8 +455,13 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 def test_scheduled_report(request, domain, couch_user_id, report_id):
     rep = ReportNotification.get(report_id)
     user = CouchUser.get(couch_user_id)
-    send_report(rep, user)
-    messages.success(request, "Test message sent to %s" % user.default_django_user.email)
+    try:
+        send_report(rep, user)
+    except SMTPRecipientsRefused:
+        messages.error(request, "You have no email address configured")
+    else:
+        messages.success(request, "Test message sent to %s" % user.get_email())
+
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -466,7 +472,7 @@ GROUP VIEWS
 def _get_groups(domain):
     groups = Group.view("groups/by_domain", key=domain)
     for group in groups:
-        name = re.sub(r'[^\w-]', '-', group.name)
+        name = re.sub(r'[^\w-]', '-', group.name) if group.name else '-'
         if group.name != name:
             group.name = name
             group.save()
@@ -486,7 +492,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 @require_can_edit_users
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    group = Group.view("groups/by_name", key=group_name).one()
+    group = Group.view("groups/by_name", key=[domain, group_name]).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
