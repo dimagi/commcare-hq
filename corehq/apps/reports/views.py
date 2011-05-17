@@ -27,7 +27,7 @@ def user_id_to_username(user_id):
     try:
         login = get_db().get(user_id)
     except:
-        return None
+        return user_id
     return raw_username(login['django_user']['username'])
 
 @login_and_domain_required

@@ -2,7 +2,7 @@ from django.test.client import Client
 from django.test.testcases import TestCase
 import json
 from corehq.apps.receiverwrapper.util import spoof_submission
-from corehq.apps.reports.dodoma import get_household_verification_data
+from corehq.apps.reports.dodoma import get_household_verification_data, _household_verification_json
 
 def mk_json_sub(userID, caseID, time, last_hvid, next_hvid):
     return {
@@ -64,9 +64,7 @@ class HouseholdVerificationTest(TestCase):
 #        for sub in xml_subs:
 #            spoof_submission(domain, sub, hqsubmission=False)
 #        c = Client()
-#        response = c.get('/a/dodoma/reports/dodoma/household_verification_json/')
-#        print response.content
-#        stats = json.loads(response.content)
+#        stats = _household_verification_json(domain=domain)
 #        self._helper(stats)
     def testData(self):
         stats = get_household_verification_data(

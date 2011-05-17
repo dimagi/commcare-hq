@@ -15,6 +15,7 @@ paging_reports = patterns('corehq.apps.reports.views',
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('household_verification_json', 'household_verification_json'),
+    url('household_verification', 'household_verification'),
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',

@@ -2,25 +2,51 @@ from _collections import defaultdict
 from collections import namedtuple
 from datetime import datetime, timedelta
 import json
+from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.views import user_id_to_username
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
+from dimagi.utils.web import render_to_response
 
 DOMAIN = "dodoma"
 
+def call(fn, GET, **kwargs):
+    request_kwargs = dict([(str(key), json.loads(val)) for key, val in GET])
+    request_kwargs.update(kwargs)
+    return fn(**request_kwargs)
+
+def viewify(fn, GET, **kwargs):
+    return HttpResponse(json.dumps(
+        call(fn, GET, **kwargs)
+    ))
+
 @login_and_domain_required
-def household_verification_json(request, domain):
-    XMLNS = 'http://openrosa.org/formdesigner/9DAACA82-A414-499A-9C40-BC43775CEE79'
+def household_verification(request, domain):
     if domain != DOMAIN:
         raise Http404
-    last_hvid_path = json.loads(request.GET.get('household_verification', '["household_verification"]'))
-    next_hvid_path = json.loads(request.GET.get('household_follow_id', '["household_follow_id"]'))
-    xmlns = json.loads(request.GET.get('xmlns', "null")) or XMLNS
-    range = json.loads(request.GET.get('range', 'null'))
+    report = call(_household_verification_json, request.GET, domain=domain)
+    report['name'] = "Household Verification"
+    return render_to_response(request, 'reports/generic_report.html', {
+        "domain": domain,
+        "report": report,
+    })
 
+@login_and_domain_required
+def household_verification_json(request, domain):
+    if domain != DOMAIN:
+        raise Http404
+    return viewify(_household_verification_json, request.GET, domain=domain)
+
+def _household_verification_json(
+    domain="dodoma",
+    last_hvid_path=["household_verification"],
+    next_hvid_path=["household_follow_id"],
+    xmlns='http://openrosa.org/formdesigner/9DAACA82-A414-499A-9C40-BC43775CEE79',
+    range=None
+):
     if range:
         start, end = map(string_to_datetime, range)
     else:
@@ -44,7 +70,7 @@ def household_verification_json(request, domain):
     stats_by_userID = {}
     for s in stats:
         stats_by_userID[s['userID']] = s
-        s['username'] = None
+        s['username'] = "*%s" % s['userID']
     users = CouchUser.commcare_users_by_domain(domain)
 
     for user in users:
@@ -58,7 +84,15 @@ def household_verification_json(request, domain):
     stats.sort(key=lambda s: s['username'])
 
     
-    return HttpResponse(json.dumps(stats))
+    return {
+        "headers": ["Username", "Correct", "Total", "Percent Correct"],
+        "rows": [[
+            s['username'],
+            s['correct'],
+            s['total'],
+            ("%s%%" % int(s['correct']*100/s['total']) if s['total'] else "---")
+        ] for s in stats],
+    }
 
 HVSub = namedtuple("HVSub", "userID  caseID  time  next_hvid  last_hvid")
 
