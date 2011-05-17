@@ -63,12 +63,18 @@ def household_verification_json(request, domain):
 HVSub = namedtuple("HVSub", "userID  caseID  time  next_hvid  last_hvid")
 
 def get_household_verification_data(submissions, next_hvid_path, last_hvid_path):
+    def follow_path(d, path):
+        try:
+            return reduce(dict.__getitem__, path, d)
+        except:
+            return None
+
     submissions = map(lambda s: HVSub(
         userID      = s['form']['meta']['userID'],
         caseID      = s['form']['case']['case_id'],
         time        = s['received_on'],
-        next_hvid   = reduce(dict.__getitem__, next_hvid_path, s['form']),
-        last_hvid   = reduce(dict.__getitem__, last_hvid_path, s['form']),
+        next_hvid   = follow_path(s['form'], next_hvid_path),
+        last_hvid   = follow_path(s['form'], last_hvid_path),
     ), submissions)
 
     submissions.sort()
