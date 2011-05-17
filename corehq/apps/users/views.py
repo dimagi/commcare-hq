@@ -376,6 +376,7 @@ def _handle_user_form(request, domain, couch_user=None):
             if can_change_admin_status:
                 dm = couch_user.get_domain_membership(domain)
                 role = form.cleaned_data['role']
+                dm.is_admin = False
                 if role == "admin":
                     dm.is_admin = True
                 elif role == "edit-apps":
