@@ -361,7 +361,7 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = True
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_users(domain))\
-        and request.couch_user._id != couch_user._id
+        and request.couch_user._id != couch_user._id and couch_user.web_account.domain_memberships
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST)
         if form.is_valid():
@@ -390,7 +390,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
-            print request.couch_user
+
             if can_change_admin_status:
                 if couch_user.is_domain_admin(domain):
                     form.initial['role'] = 'admin'
@@ -398,7 +398,6 @@ def _handle_user_form(request, domain, couch_user=None):
                     form.initial['role'] = "edit-apps"
                 else:
                     form.initial['role'] = "read-only"
-
             else:
                 del form.fields['role']
 
