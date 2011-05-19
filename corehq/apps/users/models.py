@@ -371,7 +371,7 @@ class CouchUser(Document, UnicodeMixIn):
     def has_permission(self, domain, permission):
         # is_admin is the same as having all the permissions set
         dm = self.get_domain_membership(domain)
-        if dm.is_admin:
+        if self.is_domain_admin(domain):
             return True
         else:
             return permission in dm.permissions
