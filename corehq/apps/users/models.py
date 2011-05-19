@@ -238,7 +238,13 @@ class CouchUser(Document, UnicodeMixIn):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        return self.get_domain_membership(domain).is_admin
+        if self.web_account.login.is_superuser:
+            return True
+        dm = self.get_domain_membership(domain)
+        if dm:
+            return dm.is_admin
+        else:
+            return False
 
     @property
     def domain_names(self):
