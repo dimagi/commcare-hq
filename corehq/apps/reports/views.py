@@ -502,6 +502,7 @@ def submissions_by_form(request, domain):
     counts = submissions_by_form_json(domain=domain, userIDs=userIDs, **json_request(request.GET))
     form_types = _relevant_form_types(domain=domain, userIDs=userIDs, **json_request(request.GET))
     form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
+    form_names = [name.replace("/", " / ") for name in form_names]
 
     form_names, form_types = zip(*sorted(zip(form_names, form_types)))
 
@@ -525,7 +526,7 @@ def submissions_by_form(request, domain):
     rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
     report = {
         "name": "Case Activity",
-        "headers": ['User'] + ['\n'.join(list(unicode(name))) for name in form_names] + ['All Forms'],
+        "headers": ['User'] + list(form_names) + ['All Forms'],
         "rows": rows,
     }
     return render_to_response(request, 'reports/generic_report.html', {
