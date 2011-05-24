@@ -849,16 +849,16 @@ class Application(ApplicationBase):
             if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
                 errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
 
-            # Make sure that putting together all the files actually works
-            try:
-                self.create_all_files()
-            except:
-                errors.append({'type': "form error"})
-
             # make sure that there aren't duplicate xmlns's
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+        # Make sure that putting together all the files actually works
+        try:
+            self.create_all_files()
+        except:
+            errors.append({'type': "form error"})
+        
         return errors
 
     @classmethod
