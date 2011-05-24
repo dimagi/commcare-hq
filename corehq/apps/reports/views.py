@@ -527,7 +527,7 @@ def submissions_by_form(request, domain):
     
     rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
     report = {
-        "name": "Case Activity",
+        "name": "Submissions by Form (in the last 7 days)",
         "headers": ['User'] + list(form_names) + ['All Forms'],
         "rows": rows,
     }
