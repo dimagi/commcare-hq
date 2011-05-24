@@ -4,10 +4,12 @@
 from __future__ import absolute_import
 import os, re, traceback, sys
 from django.conf import settings
+from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response as django_r_to_r
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.sites.models import Site
+import json
 
 
 def get_url_base():
@@ -161,3 +163,9 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
             return fn(*args, **kwargs)
         return _fn
     return _parse_int
+
+def json_response(obj):
+    return HttpResponse(json.dumps(obj))
+
+def json_request(params):
+    return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
