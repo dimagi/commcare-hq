@@ -225,6 +225,9 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
     try:
         xform_questions = json.dumps(form.get_questions(langs) if form else [])
+        # this is just to validate that the case and meta blocks can be created
+        if form_id:
+            app.fetch_xform(module_id, form_id)
         xform_errors = None
     except XMLSyntaxError as e:
         xform_questions = []
@@ -247,6 +250,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         messages.error(req, "Error in form: %s" % e)
     # any other kind of error should fail hard, but for now there are too many for that to be practical
     except Exception, e:
+        if settings.DEBUG:
+            raise
         logging.exception(e)
         xform_questions = []
         messages.error(req, "Unexpected System Error: %s" % e)
