@@ -135,7 +135,7 @@ class SubmitHistory(ReportBase):
                 username = user_id_to_username(self.individual)
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, html=True)
+                xmlns = xmlns_to_name(xmlns, self.domain, html=True)
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
@@ -154,7 +154,7 @@ class SubmitHistory(ReportBase):
                 fake_name = row['value'].get('username')
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, html=True)
+                xmlns = xmlns_to_name(xmlns, self.domain, html=True)
                 username = user_id_to_username(user_id)
                 if username:
                     return [form_data_link(row['id']), username, time, xmlns]
@@ -504,7 +504,9 @@ def submissions_by_form(request, domain):
     form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
     form_names = [name.replace("/", " / ") for name in form_names]
 
-    form_names, form_types = zip(*sorted(zip(form_names, form_types)))
+    if form_types:
+        # this fails if form_names, form_types is [], []
+        form_names, form_types = zip(*sorted(zip(form_names, form_types)))
 
     rows = []
     totals_by_form = defaultdict(int)
