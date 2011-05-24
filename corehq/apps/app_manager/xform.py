@@ -411,12 +411,18 @@ class XForm(WrappedNode):
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
                     name_path = actions['open_case'].name_path
+                    if not name_path:
+                        raise CaseError("Please set 'Name according to question'. "
+                                        "This will give each case a 'name' attribute")
                     name_bind = self.model_node.find('{f}bind[@nodeset="%s"]' % name_path)
-                    if not name_bind.exists():
-                        raise CaseError("You must set the source attribute that creates the case name! "
-                                        "Check your form that opens a case and choose a value for "
-                                        "the 'Name according to question' field")
-                    name_bind.attrib['required'] = "true()"
+
+                    if name_bind.exists():
+                        name_bind.attrib['required'] = "true()"
+                    else:
+                        self.model_node.xml.append(_make_elem('bind', {
+                            "nodeset": name_path,
+                            "required": "true()"
+                        }))
                 additional_transformations.append(require_case_name_source)
 
             else:

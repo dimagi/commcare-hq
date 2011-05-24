@@ -1,5 +1,5 @@
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
 from dimagi.utils.web import render_to_response
@@ -226,8 +226,6 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     try:
         xform_questions = json.dumps(form.get_questions(langs) if form else [])
         # this is just to validate that the case and meta blocks can be created
-        if form_id:
-            app.fetch_xform(module_id, form_id)
         xform_errors = None
     except XMLSyntaxError as e:
         xform_questions = []
@@ -255,6 +253,15 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         logging.exception(e)
         xform_questions = []
         messages.error(req, "Unexpected System Error: %s" % e)
+
+    try:
+        if form_id:
+            app.fetch_xform(module_id, form_id)
+    except CaseError, e:
+        messages.error(req, "Error in Case Management: %s" % e)
+    except Exception, e:
+        logging.exception(e)
+        messages.error(req, "Unexpected Error: %s" % e)
 
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
