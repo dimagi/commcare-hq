@@ -216,8 +216,6 @@ class NavigationEventAudit(AuditEvent):
             else:
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
-            print request.META.keys()
-            print request.META.get('HTTP_USER_AGENT')
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
