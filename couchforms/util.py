@@ -10,7 +10,6 @@ import re
 from dimagi.utils.post import post_authenticated_data, post_data
 from restkit.errors import ResourceNotFound
 
-
 def post_from_settings(instance, extras={}):
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
         (settings.XFORMS_POST_URL, "&".join(["%s=%s" % (k, v) for k, v in extras.items()]))
@@ -21,11 +20,13 @@ def post_from_settings(instance, extras={}):
     else:
         return post_data(instance, url)
 
-def post_xform_to_couch(instance):
+def post_xform_to_couch(instance, attachments={}):
     """
     Post an xform to couchdb, based on the settings.XFORMS_POST_URL.
     Returns the newly created document from couchdb, or raises an
-    exception if anything goes wrong
+    exception if anything goes wrong.
+
+    attachments is a dictionary of the request.FILES that are not the xform.  Key is the parameter name, and the value is the django MemoryFile object stream.
     """
     def _has_errors(response, errors):
         return errors or "error" in response
@@ -37,6 +38,10 @@ def post_xform_to_couch(instance):
             doc_id = response
             try:
                 xform = XFormInstance.get(doc_id)
+                #put attachments onto the saved xform instance
+                for key, val in attachments.items():
+                    res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
+
                 # fire signals
                 # We don't trap any exceptions here. This is by design. 
                 # If something fails (e.g. case processing), we quarantine the
