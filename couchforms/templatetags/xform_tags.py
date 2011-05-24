@@ -24,7 +24,9 @@ def render_form_data(form):
                    or field_key.lower() in SYSTEM_FIELD_NAMES
 
         def format_name(value):
-            return str(value).replace("_", " ")
+            if not isinstance(value, basestring):
+                value = unicode(value)
+            return value.replace("_", " ")
 
         def render_base_type(key, value):
             if not value: return ""
