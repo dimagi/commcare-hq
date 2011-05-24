@@ -19,7 +19,7 @@
     <thead>
         <tr>
             {% for header in report.headers %}
-                <th>{{ header }}</th>
+                <th>{{ header|linebreaksbr }}</th>
             {% endfor %}
         </tr>
     </thead>

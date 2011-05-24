@@ -190,10 +190,26 @@ class CouchUser(Document, UnicodeMixIn):
             return self.web_account
         else:
             return self.default_commcare_account
-            
+
+    @property
+    def account_type(self):
+        if self.web_account.login_id:
+            return "WebAccount"
+        else:
+            return "CommCareAccount"
+        
     @property
     def username(self):
         return self.default_account.login.username
+    @property
+    def raw_username(self):
+        if self.account_type == "CommCareAccount":
+            return self.username.split("@")[0]
+        else:
+            return self.username
+    @property
+    def userID(self):
+        return self.default_account.login_id
         
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
@@ -208,7 +224,7 @@ class CouchUser(Document, UnicodeMixIn):
             user.delete()
         except User.DoesNotExist:
             pass
-        super(CouchUser, self).delete(*args, **kwargs) # Call the "real" save() method.
+        super(CouchUser, self).delete(*args, **kwargs) # Call the "real" delete() method.
     
     def add_django_user(self, username, password, **kwargs):
         # DO NOT implement this. It will create an endless loop.

@@ -9,13 +9,7 @@ from corehq.apps.users.models import CommCareAccount, require_permission, Permis
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.web import render_to_response
-
-def json_response(obj):
-    return HttpResponse(json.dumps(obj))
-
-def json_request(params):
-    return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
+from dimagi.utils.web import render_to_response, json_request, json_response
 
 require_can_cleanup = require_permission(Permissions.EDIT_DATA)
 
