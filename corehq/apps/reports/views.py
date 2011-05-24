@@ -1,9 +1,10 @@
-import datetime as DT
+from collections import defaultdict
+from datetime import datetime, timedelta
 import json
 import dateutil.parser
 from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import json_response, json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
@@ -198,7 +199,7 @@ def paging_active_cases(request, domain):
 
     days = 31
     def get_active_cases(userid, days=days):
-        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        since_date = datetime.utcnow() - timedelta(days=days)
         r = get_db().view('case/by_last_date',
             startkey=[domain, userid, json_format_datetime(since_date)],
             endkey=[domain, userid, {}],
@@ -207,8 +208,8 @@ def paging_active_cases(request, domain):
         ).one()
         return r['value']['count'] if r else 0
     def get_late_cases(userid, days=days):
-        EPOCH = DT.datetime(1970, 1, 1)
-        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        EPOCH = datetime(1970, 1, 1)
+        since_date = datetime.utcnow() - timedelta(days=days)
         DAYS = (since_date - EPOCH).days
         r = get_db().view('case/by_last_date',
             startkey=[domain, userid],
@@ -219,7 +220,7 @@ def paging_active_cases(request, domain):
 
         return (r['value']['count']*DAYS-r['value']['sum'], r['value']['count']) if r else (0,0)
     def get_forms_completed(userid, days=7):
-        since_date = DT.datetime.now() - DT.timedelta(days=days)
+        since_date = datetime.utcnow() - timedelta(days=days)
         r = get_db().view('reports/submit_history',
             startkey=[domain, userid, json_format_datetime(since_date)],
             endkey=[domain, userid, {}],
@@ -343,14 +344,14 @@ def daily_submissions(request, domain, view_name, title):
     start_date = request.GET.get('startdate')
     end_date = request.GET.get('enddate')
     if end_date:
-        end_date = DT.date(*map(int, end_date.split('-')))
+        end_date = date(*map(int, end_date.split('-')))
     else:
-        end_date = DT.datetime.utcnow().date()
+        end_date = datetime.utcnow().date()
 
     if start_date:
-        start_date = DT.date(*map(int, start_date.split('-')))
+        start_date = date(*map(int, start_date.split('-')))
     else:
-        start_date = (end_date- DT.timedelta(days=6))
+        start_date = (end_date- timedelta(days=6))
     results = get_db().view(
         view_name,
         group=True,
@@ -361,7 +362,7 @@ def daily_submissions(request, domain, view_name, title):
     user_ids = [result['key'][1] for result in all_users_results]
     dates = [start_date]
     while dates[-1] < end_date:
-        dates.append(dates[-1] + DT.timedelta(days=1))
+        dates.append(dates[-1] + timedelta(days=1))
     date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
     rows = [[0]*(1+len(date_map)) for i in range(len(user_ids) + 1)]
@@ -469,3 +470,52 @@ def download_form(request, domain, instance_id):
     return couchforms_views.download_form(request, instance_id)
     
 
+# Weekly submissions by xmlns
+
+def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
+    if not end:
+        end = datetime.utcnow()
+    if not start:
+        start = end - ago
+    if iso:
+        return json_format_datetime(start), json_format_datetime(end)
+    else:
+        return start, end
+
+def submissions_by_form(request, domain):
+    return json_response(
+        submissions_by_form_json(domain=domain, **json_request(request.GET))
+    )
+
+def submissions_by_form_json(domain, start=None, end=None):
+    start, end = mk_date_range(start, end)
+    form_types = _relevant_form_types(domain, start, end)
+    return form_types
+    
+
+def _relevant_form_types(domain, start=None, end=None):
+    start, end = mk_date_range(start, end, iso=True)
+    submissions = XFormInstance.view('reports/all_submissions',
+        startkey=[domain, start],
+        endkey=[domain, end],
+        include_docs=True,
+        reduce=False
+    )
+    form_types = set()
+    for submission in submissions:
+        try:
+            xmlns = submission['xmlns']
+        except KeyError:
+            xmlns = None
+        form_types.add(xmlns)
+    return sorted(form_types)
+
+def _submissions_by_form_json(domain, form_types, start=None, end=None):
+    counts = defaultdict(int)
+    start, end = mk_date_range(start, end, iso=True)
+    for form_type in form_types:
+        counts[form_type] = get_db().view('reports/submissions_by_domain_xmlns',
+            startkey=[domain, form_type, start],
+            endkey=[domain, form_type, end],
+        ).one()['value']
+    return counts

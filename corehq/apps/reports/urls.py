@@ -45,4 +45,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^r/', include(actual_reports)),
     url(r'^paging/', include(paging_reports)),
     url(r'^dodoma/', include(dodoma_reports)),
+
+    url(r'^submissions_by_form/', 'submissions_by_form')
 )
