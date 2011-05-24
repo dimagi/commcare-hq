@@ -1,9 +1,12 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import json
+from couchdbkit.ext.django.schema import Document
 import dateutil.parser
-from corehq.apps.users.util import raw_username
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import raw_username, format_username
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.web import json_response, json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
@@ -31,6 +34,36 @@ def user_id_to_username(user_id):
         return user_id
     return raw_username(login['django_user']['username'])
 
+def xmlns_to_name(xmlns, domain, html=False):
+    try:
+        form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
+        langs = ['en'] + form['app']['langs']
+    except:
+        form = None
+
+    if form:
+        module_name = form_name = None
+        for lang in langs:
+            module_name = module_name if module_name is not None else form['module']['name'].get(lang)
+            form_name = form_name if form_name is not None else form['form']['name'].get(lang)
+        if module_name is None:
+            module_name = "None"
+        if form_name is None:
+            form_name = "None"
+        if html:
+            name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
+                reverse("corehq.apps.app_manager.views.view_app", args=[domain, form['app']['id']])
+                + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
+                form['app']['name'],
+                module_name,
+                form_name
+            )
+        else:
+            name = "%s > %s > %s" % (form['app']['name'], module_name, form_name)
+    else:
+        name = xmlns
+    return name
+
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse("submission_log_report", args=[domain]))
@@ -44,7 +77,7 @@ def export_data(req, domain):
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     except ValueError:
         return HttpResponseBadRequest()
-        
+
     format = req.GET.get("format", Format.XLS_2007)
     next = req.GET.get("next", "")
     if not next:
@@ -67,7 +100,7 @@ class SubmitHistory(ReportBase):
         self.domain = domain
         self.individual = individual
         self.show_unregistered = True #json.loads(show_unregistered)
-        
+
     @classmethod
     def view(cls, request, domain, template="reports/partials/couch_report_partial.html"):
 
@@ -82,32 +115,6 @@ class SubmitHistory(ReportBase):
             'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
         })
     def rows(self, skip, limit):
-        def xmlns_to_name(xmlns):
-            try:
-                form = get_db().view('reports/forms_by_xmlns', key=[self.domain, xmlns], group=True).one()['value']
-                langs = form['app']['langs']
-            except:
-                form = None
-
-            if form:
-                module_name = form_name = None
-                for lang in langs:
-                    module_name = module_name if module_name is not None else form['module']['name'].get(lang)
-                    form_name = form_name if form_name is not None else form['form']['name'].get(lang)
-                if module_name is None:
-                    module_name = "None"
-                if form_name is None:
-                    form_name = "None"
-                name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
-                    reverse("corehq.apps.app_manager.views.view_app", args=[self.domain, form['app']['id']])
-                    + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
-                    form['app']['name'],
-                    module_name,
-                    form_name
-                )
-            else:
-                name = xmlns
-            return name
         def format_time(time):
             "time is an ISO timestamp"
             return time.replace('T', ' ').replace('Z', '')
@@ -126,9 +133,9 @@ class SubmitHistory(ReportBase):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
                 username = user_id_to_username(self.individual)
-                
+
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns)
+                xmlns = xmlns_to_name(xmlns, html=True)
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
@@ -147,7 +154,7 @@ class SubmitHistory(ReportBase):
                 fake_name = row['value'].get('username')
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns)
+                xmlns = xmlns_to_name(xmlns, html=True)
                 username = user_id_to_username(user_id)
                 if username:
                     return [form_data_link(row['id']), username, time, xmlns]
@@ -174,7 +181,7 @@ class SubmitHistory(ReportBase):
                 ).one()['value']
         except TypeError:
             return 0
-        
+
 @login_and_domain_required
 def active_cases(request, domain):
 
@@ -228,7 +235,7 @@ def paging_active_cases(request, domain):
             group_level=0
         ).one()
         return r['value'] if r else 0
-        
+
     def view_to_table(row):
         keys = row['value']
 
@@ -380,7 +387,7 @@ def daily_submissions(request, domain, view_name, title):
     valid_rows = []
     for row in rows:
         # include submissions from unknown/empty users that have them
-        if row[0] or sum(row[1:]): 
+        if row[0] or sum(row[1:]):
             valid_rows.append(row)
     rows = valid_rows
     headers = ["Username"] + dates
@@ -468,11 +475,15 @@ def download_form(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
-    
+
 
 # Weekly submissions by xmlns
 
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
+    if isinstance(end, basestring):
+        end = parse_date(end)
+    if isinstance(start, basestring):
+        start = parse_date(start)
     if not end:
         end = datetime.utcnow()
     if not start:
@@ -482,18 +493,48 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     else:
         return start, end
 
+#Document.__repr__ = lambda self: repr(self.to_json())
+
+@login_and_domain_required
 def submissions_by_form(request, domain):
-    return json_response(
-        submissions_by_form_json(domain=domain, **json_request(request.GET))
-    )
+    users = CouchUser.commcare_users_by_domain(domain)
+    userIDs = [user.userID for user in users]
+    counts = submissions_by_form_json(domain=domain, userIDs=userIDs, **json_request(request.GET))
+    form_types = _relevant_form_types(domain=domain, userIDs=userIDs, **json_request(request.GET))
+    form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
 
-def submissions_by_form_json(domain, start=None, end=None):
-    start, end = mk_date_range(start, end)
-    form_types = _relevant_form_types(domain, start, end)
-    return form_types
+    form_names, form_types = zip(*sorted(zip(form_names, form_types)))
+
+    rows = []
+    totals_by_form = defaultdict(int)
+
+    for user in users:
+        row = []
+        for form_type in form_types:
+            userID = user.userID
+            try:
+                count = counts[userID][form_type]
+                row.append(count)
+                totals_by_form[form_type] += count
+            except:
+                row.append(0)
+        rows.append([user.raw_username] + row + ["* %s" % sum(row)])
+
+    totals_by_form = [totals_by_form[form_type] for form_type in form_types]
     
+    rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
+    report = {
+        "name": "Case Activity",
+        "headers": ['User'] + ['\n'.join(list(unicode(name))) for name in form_names] + ['All Forms'],
+        "rows": rows,
+    }
+    return render_to_response(request, 'reports/generic_report.html', {
+        "domain": domain,
+        "report": report,
+    })
 
-def _relevant_form_types(domain, start=None, end=None):
+
+def _relevant_form_types(domain, userIDs=None, start=None, end=None):
     start, end = mk_date_range(start, end, iso=True)
     submissions = XFormInstance.view('reports/all_submissions',
         startkey=[domain, start],
@@ -507,15 +548,35 @@ def _relevant_form_types(domain, start=None, end=None):
             xmlns = submission['xmlns']
         except KeyError:
             xmlns = None
-        form_types.add(xmlns)
+        if userIDs is not None:
+            try:
+                userID = submission['form']['meta']['userID']
+                if userID in userIDs:
+                    form_types.add(xmlns)
+            except:
+                pass
+        else:
+            form_types.add(xmlns)
+
     return sorted(form_types)
 
-def _submissions_by_form_json(domain, form_types, start=None, end=None):
-    counts = defaultdict(int)
+def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
     start, end = mk_date_range(start, end, iso=True)
-    for form_type in form_types:
-        counts[form_type] = get_db().view('reports/submissions_by_domain_xmlns',
-            startkey=[domain, form_type, start],
-            endkey=[domain, form_type, end],
-        ).one()['value']
+    submissions = XFormInstance.view('reports/all_submissions',
+        startkey=[domain, start],
+        endkey=[domain, end],
+        include_docs=True,
+        reduce=False
+    )
+    print userIDs
+    counts = defaultdict(lambda: defaultdict(int))
+    for sub in submissions:
+        try:
+            userID = sub['form']['meta']['userID']
+            if (userIDs is None) or (userID in userIDs):
+                print userID
+                counts[userID][sub['xmlns']] += 1
+        except:
+            # if a form don't even have a userID, don't even bother tryin'
+            pass
     return counts

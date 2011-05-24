@@ -97,6 +97,7 @@ def _household_verification_json(
 HVSub = namedtuple("HVSub", "userID  caseID  time  next_hvid  last_hvid")
 
 def get_household_verification_data(submissions, next_hvid_path, last_hvid_path):
+
     def follow_path(d, path):
         try:
             return reduce(dict.__getitem__, path, d)

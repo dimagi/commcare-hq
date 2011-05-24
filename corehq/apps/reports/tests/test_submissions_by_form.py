@@ -36,8 +36,7 @@ class SubmissionsByFormTest(TestCase):
         self.failUnlessEqual(
             _submissions_by_form_json(
                 DOMAIN,
-                _relevant_form_types(DOMAIN, end=datetime(2011, 05, 24)),
                 end=datetime(2011, 05, 24)
             ),
-            {"xmlns-A": 4, "xmlns-B": 3}
+            {"DANNY": {"xmlns-A": 4, "xmlns-B": 3}}
         )
