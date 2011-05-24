@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import logging.handlers
+import smtplib
 
 # this is a handler for the python logging framework that is capable
 # of sending email alerts from a gmail account (the built-in email

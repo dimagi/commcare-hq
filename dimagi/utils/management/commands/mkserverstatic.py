@@ -1,3 +1,9 @@
+"""
+Generate apache conf for static content
+NOTE that this should go before the conf for dynamic content
+
+"""
+
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
