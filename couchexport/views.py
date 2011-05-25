@@ -16,10 +16,11 @@ def export_data(request, **kwargs):
     except ValueError:
         pass # assume it was a string
     format = request.GET.get("format", Format.XLS_2007)
+    filename_base = request.GET.get("filename", export_tag)
     tmp = StringIO()
     if export(export_tag, tmp, format=format):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (export_tag, format)
+        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (filename_base, format)
         response.write(tmp.getvalue())
         tmp.close()
         return response
