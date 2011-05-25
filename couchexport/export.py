@@ -169,18 +169,17 @@ def _export_excel(tables):
                         "excel export. To export to excel you have to run the "
                         "command:  easy_install xlutils")
     book = xlwt.Workbook()
+    used_names = []
     for table_name, table in tables:
         # this is in case the first 20 characters are the same, but we	
         # should do something smarter.	
-        #sheet = book.add_sheet(table_name[-20:])
-        hack_table_name_prefix = table_name[-20:]
-        hack_table_name = hack_table_name_prefix[0:10] + hashlib.sha1(table_name).hexdigest()[0:10]
-        sheet = book.add_sheet(hack_table_name)
+        table_name_truncated = _next_unique(table_name, used_names, 20)
+        used_names.append(table_name_truncated)
+        sheet = book.add_sheet(table_name_truncated)
         for i,row in enumerate(table):
             for j,val in enumerate(row):
                 sheet.write(i,j,unicode(val))
     return book
-
 
 def _export_excel_2007(tables):
     try:
@@ -191,14 +190,14 @@ def _export_excel_2007(tables):
                         "command:  easy_install openpyxl")
     book = openpyxl.workbook.Workbook()
     book.remove_sheet(book.worksheets[0])
+    used_names = []
     for table_name, table in tables:
         # this is in case the first 20 characters are the same, but we    
         # should do something smarter.    
-        #sheet = book.add_sheet(table_name[-20:])
-        hack_table_name_prefix = table_name[-20:]
-        hack_table_name = hack_table_name_prefix[0:10] + hashlib.sha1(table_name).hexdigest()[0:10]
+        table_name_truncated = _next_unique(table_name, used_names, 31)
+        used_names.append(table_name_truncated)
         sheet = book.create_sheet()
-        sheet.title = hack_table_name
+        sheet.title = table_name_truncated
         for i,row in enumerate(table):
             # the docs claim this should work but the source claims it doesn't 
             #sheet.append(row) 
@@ -207,3 +206,17 @@ def _export_excel_2007(tables):
     return book
 
 
+def _next_unique(string, reserved_strings, max_len):
+    counter = 1
+    if len(string) > max_len:
+        # truncate from the beginning since the end has more specific information
+        string = string[-max_len:] 
+    orig_string = string
+    while string in reserved_strings:
+        string = "%s%s" % (orig_string, counter)
+        if len(string) > max_len:
+            counterlen = len(str(counter))
+            string = "%s%s" % (orig_string[-(max_len - counterlen):], counter)
+        counter = counter + 1
+    return string
+    
