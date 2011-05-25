@@ -359,6 +359,9 @@
                             <th></th>
                         {% endif %}
                         <th>Version</th>
+                        {% if user.is_superuser %}
+                        <th>Preview <br /> (Dimagi internal only)</th>
+                        {% endif %}
                         <th>Short URL</th>
                         <th>Jad File</th>
                         <th>Jar File</th>
@@ -382,6 +385,9 @@
                                 </td>
                             {% endif %}
                             <td>{{ saved_app.version }}</td>
+                            {% if user.is_superuser %}
+                                <td><a href="{% url emulator domain saved_app.id %}">Preview</a></td>
+                            {% endif %}
                             <td>
                                 {% if saved_app.short_url %}
                                     <a href="{{ saved_app.short_url }}">{{ saved_app.short_url }}</a>

@@ -1,0 +1,38 @@
+{% extends base_template %}
+{% block head %}
+    {{ block.super }}
+    <script>
+        $(function(){
+            $("#back").addClass('ui-corner-top');
+        });
+    </script>
+    <style>
+        #main_container {
+            width: 266px;
+            margin: auto;
+        }
+        applet {
+            margin: 20px;
+        }
+        #back {
+            padding: 10px;
+            background-color: #EEE;
+            border-bottom: 1px solid #DDD;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <div id="back">
+            <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Application</a>
+        </div>
+        <applet code="org.microemu.applet.Main"
+                width="226" height="471">
+            <param name="cache_archive" value="{{ build_path }}microemu-javase-applet.jar,{{ build_path }}microemulator.jar,{{ build_path }}microemu-jsr-75.jar,{{ build_path }}cldcapi11.jar,{{ build_path }}midpapi20.jar,{{ build_path }}microemu-nokiaui.jar" />
+            <param name="archive" value="./CommCare.jar" />
+            <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
+            <param name="Profile" value="jr://resource/profile.xml" />
+        </applet>
+    </div>
+{% endblock %}

@@ -103,7 +103,7 @@ class XForm(WrappedNode):
         if not r['success']:
             raise XFormValidationError(r["errstring"])
 
-    def render(self, validate=True):
+    def render(self, validate=False):
         if validate:
             self.validate()
             #print "Outgoing XForm %s OK" % self.data_node.tag_xmlns
@@ -378,35 +378,39 @@ class XForm(WrappedNode):
                     ]
                 ]
                 r = relevance(actions['open_case'])
+                if r != "true()":
+                    add_bind({
+                        "nodeset":"case",
+                        'relevance': r
+                    })
+                add_bind({
+                    "nodeset":"case/create",
+                    'relevance': r
+                })
                 add_bind({
                     "nodeset":"case/case_id",
                     "{jr}preload":"uid",
                     "{jr}preloadParams":"general",
-                    "relevant": r,
                 })
                 add_bind({
                     'nodeset':"case/create/user_id",
                     'type':"xsd:string",
                     '{jr}preload': "meta",
                     '{jr}preloadParams': "UserID",
-                    "relevant": r,
                 })
                 add_bind({
                     "nodeset":"case/create/case_name",
                     "calculate":actions['open_case'].name_path,
-                    "relevant": r,
                 })
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     add_bind({
                         "nodeset":"case/create/external_id",
                         "calculate":actions['open_case'].external_id,
-                        "relevant": r,
                     })
                 else:
                     add_bind({
                         "nodeset":"case/create/external_id",
                         "calculate":"case/create/case_id",
-                        "relevant": r,
                     })
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"

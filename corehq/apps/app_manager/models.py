@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
+from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 from dimagi.utils.web import get_url_base, parse_int
@@ -19,7 +20,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from StringIO import StringIO
 from urllib2 import urlopen
 from urlparse import urljoin
-from corehq.apps.app_manager.jadjar import JadDict, sign_jar
+from corehq.apps.builds.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
 import util
 
@@ -32,7 +33,7 @@ from couchdbkit.resource import ResourceNotFound
 from tempfile import NamedTemporaryFile
 import tempfile
 import os
-from utilities.profile import profile
+from utilities.profile import profile as profile_decorator
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library 
@@ -89,7 +90,7 @@ class JadJar(Document):
         return self.fetch_attachment('CommCare.jar')
     def jad_dict(self):
         return JadDict.from_jad(self.fetch_jad())
-
+    
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
         @login_and_domain_required
@@ -521,6 +522,8 @@ class ApplicationBase(VersionedDoc):
     """
 
     recipients = StringProperty(default="")
+    # commcare_build is of the form "{version}/{build_number}"
+    commcare_build = StringProperty(default="1.1.1/9010")
     success_message = DictProperty()
 
     @property
@@ -551,29 +554,67 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
-        return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
+        version, build_number = self.commcare_build.split('/')
+        return CommCareBuild.get_build(version, int(build_number)).get_jadjar('Nokia/S40-generic')
+        #return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
 
-    def create_jad(self):
+    def create_jadjar(self):
         try:
-            return self.fetch_attachment('CommCare.jad')
-        except ResourceNotFound:
-            jad = self.get_jadjar().jad_dict()
-            jar = self.create_zipped_jar()
-            jad.update({
-                'MIDlet-Jar-Size': len(jar),
+            return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
+        except:
+            jadjar = self.get_jadjar().pack(self.create_all_files(), {
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
-                                # e.g. 2011-Apr-11 20:45
-                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
+                # e.g. 2011-Apr-11 20:45
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
-            jad = sign_jar(jad, jar)
-            jad = jad.render()
+            jad = jadjar.jad
+            jar = jadjar.jar
             self.put_attachment(jad, 'CommCare.jad')
-            return jad
-    
+            self.put_attachment(jar, 'CommCare.jar')
+            return jad, jar
+
+#    def create_jad(self):
+#        try:
+#            return self.fetch_attachment('CommCare.jad')
+#        except ResourceNotFound:
+#            jad = self.get_jadjar().jad_dict()
+#            jar = self.create_zipped_jar()
+#            jad.update({
+#                'MIDlet-Jar-Size': len(jar),
+#                'Profile': self.profile_loc,
+#                'MIDlet-Jar-URL': self.jar_url,
+#                #'MIDlet-Name': self.name,
+#                                # e.g. 2011-Apr-11 20:45
+#                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
+#                'CommCare-Release': "true",
+#                'Build-Number': self.version,
+#            })
+#            jad = sign_jar(jad, jar)
+#            self.put_attachment(jad, 'CommCare.jad')
+#            return jad
+
+#    def create_zipped_jar(self):
+#        try:
+#            return self.fetch_attachment('CommCare.jar')
+#        except ResourceNotFound:
+#            jar = self.fetch_jar()
+#            files = self.create_all_files()
+#            buffer = StringIO(jar)
+#            zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
+#            for path in files:
+#                zipper.writestr(path, files[path].encode('utf-8'))
+#            zipper.close()
+#            buffer.flush()
+#            jar = buffer.getvalue()
+#            buffer.close()
+#            self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
+#            return jar
+    def validate_app(self):
+        return []
+
     @property
     def odk_profile_url(self):
         
@@ -620,24 +661,10 @@ class ApplicationBase(VersionedDoc):
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
-    def create_zipped_jar(self):
-        try:
-            return self.fetch_attachment('CommCare.jar')
-        except ResourceNotFound:
-            jar = self.fetch_jar()
-            files = self.create_all_files()
-            buffer = StringIO(jar)
-            zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
-            for path in files:
-                zipper.writestr(path, files[path].encode('utf-8'))
-            zipper.close()
-            buffer.flush()
-            jar = buffer.getvalue()
-            buffer.close()
-            self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
-            return jar
-    def validate_app(self):
-        return []
+    def fetch_emulator_commcare_jar(self):
+        jadjar = CommCareBuild.get_build("1.2.dev", 7106).get_jadjar("Generic/WebDemo")
+        jadjar = jadjar.pack(self.create_all_files())
+        return jadjar.jar
 
 
 #class Profile(DocumentSchema):
@@ -699,7 +726,8 @@ class Application(ApplicationBase):
             'app': self,
             'langs': ["default"] + self.langs
         })
-
+    
+    #@profile_decorator('create_all_files.prof')
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),

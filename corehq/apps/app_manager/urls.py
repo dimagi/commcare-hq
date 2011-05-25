@@ -1,5 +1,5 @@
-from django.conf.urls.defaults import patterns
-from django.template.defaulttags import url
+from django.conf.urls.defaults import patterns, url
+from django.views.generic.simple import direct_to_template
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'xform/(?P<form_unique_id>\w+)/$',                                    'xform_display'),
@@ -11,7 +11,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'import_factory_form/(?P<app_id>\w+)/(?P<module_id>\w+)/$',           'import_factory_form'),
 
     (r'view/(?P<app_id>\w+)/$',                                             'view_app'),
-    (r'view/$',                                                             'default'),
+    (r'^$',                                                                 'default'),
 
     (r'new_module/(?P<app_id>\w+)/$',                                       'new_module'),
     (r'new_app/$',                                                          'new_app'),
@@ -56,4 +56,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'save/(?P<app_id>\w+)/$',                                             'save_copy'),
     (r'revert/(?P<app_id>\w+)/$',                                           'revert_to_copy'),
     (r'delete_copy/(?P<app_id>\w+)/$',                                      'delete_copy'),
+
+    url(r'emulator/(?P<app_id>\w+)/$', 'emulator', name="emulator"),
+    (r'emulator/(?P<app_id>\w+)/CommCare\.jar$',                             'emulator_commcare_jar'),
 )   

@@ -810,26 +810,6 @@ def delete_copy(req, domain, app_id):
 BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
 
 @safe_download
-def download_jar(req, domain, app_id):
-    """
-    See ApplicationBase.create_zipped_jar
-
-    This is the only view that will actually be called
-    in the process of downloading a commplete CommCare.jar
-    build (i.e. over the air to a phone).
-
-    """
-    response = HttpResponse(mimetype="application/java-archive")
-    app = get_app(domain, app_id)
-    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
-    try:
-        response.write(app.create_zipped_jar())
-    except:
-        messages.error(req, BAD_BUILD_MESSAGE)
-        return back_to_main(**locals())
-    return response
-
-@safe_download
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
@@ -904,19 +884,39 @@ def download_xform(req, domain, app_id, module_id, form_id):
 @safe_download
 def download_jad(req, domain, app_id):
     """
-    See ApplicationBase.create_jad
+    See ApplicationBase.create_jadjar
 
     """
     app = get_app(domain, app_id)
+    jad, _ = app.create_jadjar()
     try:
-        response = HttpResponse(
-            app.create_jad()
-        )
+        response = HttpResponse(jad)
     except:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
     response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
+    return response
+
+@safe_download
+def download_jar(req, domain, app_id):
+    """
+    See ApplicationBase.create_jadjar
+
+    This is the only view that will actually be called
+    in the process of downloading a commplete CommCare.jar
+    build (i.e. over the air to a phone).
+
+    """
+    response = HttpResponse(mimetype="application/java-archive")
+    app = get_app(domain, app_id)
+    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
+    _, jar = app.create_jadjar()
+    try:
+        response.write(jar)
+    except:
+        messages.error(req, BAD_BUILD_MESSAGE)
+        return back_to_main(**locals())
     return response
 
 @safe_download
@@ -931,3 +931,19 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
+def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+    app = get_app(domain, app_id)
+    if app.copy_of:
+        app = get_app(domain, app.copy_of)
+    return render_to_response(req, template, {
+        'domain': domain,
+        'app': app,
+        'build_path': "/builds/1.2.dev/7106/Generic/WebDemo/",
+    })
+
+def emulator_commcare_jar(req, domain, app_id):
+    response = HttpResponse(
+        get_app(domain, app_id).fetch_emulator_commcare_jar()
+    )
+    response['Content-Type'] = "application/java-archive"
+    return response
