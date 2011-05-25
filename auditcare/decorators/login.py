@@ -1,5 +1,6 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
+import django
 from django.contrib.auth.forms import AuthenticationForm
 
 try:
@@ -169,7 +170,7 @@ def watch_login(func):
                 not response.has_header('location') and
                 response.status_code != 302
             )
-            if check_request(request, login_unsuccessful):
+            if log_request(request, login_unsuccessful):
                 return response
             else:
                 #failed, and lockout
@@ -196,7 +197,7 @@ def lockout_response(request):
         return HttpResponse("Account locked: too many login attempts.  "
                             "Contact an admin to unlock your account.")
 
-def check_request(request, login_unsuccessful):
+def log_request(request, login_unsuccessful):
     failures = 0
     attempt = get_user_attempt(request)
 
@@ -259,19 +260,9 @@ def check_request(request, login_unsuccessful):
             logging.info('AXES: New login failure by %s. Creating access record.' % ip)
     else:
         #it's a successful login.
-        ip = request.META.get('REMOTE_ADDR', '')
-        ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
-        attempt = AccessAudit()
-        attempt.doc_type=AccessAudit.__name__
-        attempt.access_type = models.ACCESS_LOGIN
-        attempt.user_agent=ua
-        attempt.user = request.user.username
-        attempt.session_key = request.session.session_key
-        attempt.ip_address=ip
-        attempt.get_data=[] #[query2str(request.GET.items())]
-        attempt.post_data=[]
-        attempt.http_accept=request.META.get('HTTP_ACCEPT', '<unknown>')
-        attempt.path_info=request.META.get('PATH_INFO', '<unknown>')
-        attempt.failures_since_start=failures
-        attempt.save()
+
+        #if we're django 1.3, this will have already been logged.
+        if django.get_version() < '1.3':
+            AccessAudit.audit_login(request, request.user)
+
     return True
