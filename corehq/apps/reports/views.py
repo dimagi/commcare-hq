@@ -571,13 +571,11 @@ def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
         include_docs=True,
         reduce=False
     )
-    print userIDs
     counts = defaultdict(lambda: defaultdict(int))
     for sub in submissions:
         try:
             userID = sub['form']['meta']['userID']
             if (userIDs is None) or (userID in userIDs):
-                print userID
                 counts[userID][sub['xmlns']] += 1
         except:
             # if a form don't even have a userID, don't even bother tryin'
