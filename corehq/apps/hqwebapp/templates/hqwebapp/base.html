@@ -60,7 +60,7 @@
                                             {% if tab.visible %}
                                             {# hack for domain admins only seeing domain tab #}
                                             {% ifequal tab.caption "My Domain" %}
-                                            {% if request.couch_user|is_admin:domain %}
+                                            {% if request.couch_user and request.couch_user|is_admin:domain %}
                                             {% if tab.is_active %}
                                                 <li class="app-{{ tab.name }} active">{{ tab.caption }}</li>
                                             {% else %}

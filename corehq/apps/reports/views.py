@@ -20,6 +20,7 @@ from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime
+from django.contrib.auth.decorators import permission_required
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -581,3 +582,4 @@ def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
             # if a form don't even have a userID, don't even bother tryin'
             pass
     return counts
+
