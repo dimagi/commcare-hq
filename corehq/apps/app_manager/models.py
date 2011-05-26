@@ -425,8 +425,9 @@ class VersionedDoc(Document):
     def id(self):
         return self._id
 
-    def save(self, response_json=None, **params):
-        self.version = self.version + 1 if self.version else 1
+    def save(self, response_json=None, increment_version=True, **params):
+        if increment_version:
+            self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
         if not self.short_url:
             self.short_url = bitly.shorten(
@@ -454,8 +455,7 @@ class VersionedDoc(Document):
             cls = self.__class__
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
-            copy.version -= 1
-            copy.save()
+            copy.save(increment_version=False)
         return copy
     def revert_to_copy(self, copy):
         """
@@ -524,6 +524,7 @@ class ApplicationBase(VersionedDoc):
     recipients = StringProperty(default="")
     # commcare_build is of the form "{version}/{build_number}"
     commcare_build = StringProperty(default="1.1.1/9010")
+    native_input = BooleanProperty(default=False)
     success_message = DictProperty()
     built_on = DateTimeProperty(required=False)
 
@@ -556,7 +557,11 @@ class ApplicationBase(VersionedDoc):
         )
     def get_jadjar(self):
         version, build_number = self.commcare_build.split('/')
-        return CommCareBuild.get_build(version, int(build_number)).get_jadjar('Nokia/S40-generic')
+        spec = {
+            (True,): 'Nokia/S40-native-input',
+            (False,): 'Nokia/S40-generic',
+        }[(self.native_input,)]
+        return CommCareBuild.get_build(version, int(build_number)).get_jadjar(spec)
         #return JadJar.view('app_manager/jadjar', descending=True, include_docs=True).all()[0]
 
     def create_jadjar(self):
@@ -578,7 +583,7 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jad, 'CommCare.jad')
             self.put_attachment(jar, 'CommCare.jar')
             self.built_on = built_on
-            self.save()
+            self.save(increment_version=False)
             return jad, jar
 
 #    def create_jad(self):
