@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 
 from django.contrib.auth.models import get_hexdigest, check_password
@@ -36,10 +37,9 @@ class ApiUser(Document):
 
     @classmethod
     def auth(cls, username, password):
-        user = cls.get_user(username)
-        if user:
-            return user.check_password(password)
-        else:
+        try:
+            return cls.get_user(username).check_password(password)
+        except ResourceNotFound:
             return False
 
 def require_api_user(fn):
