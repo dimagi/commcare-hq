@@ -227,7 +227,24 @@
         </table>
         <div id="scary-settings">
     {% endif %}
-
+        <h4>Build Settings</h4>
+        <table class="config">
+            <tr>
+                <th>Text Input</th>
+                <td>
+                    {% if edit %}
+                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'native_input' %}">
+                            <select name="native_input" class="autosave" data-value="{{ app.native_input|lower }}">
+                                <option value="false">Default (Roman)</option>
+                                <option value="true">Native (International)</option>
+                            </select>
+                        </form>
+                    {% else %}
+                        {% if app.native_input %}Native (International){% else %}Default (Roman){% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
 {#        <h4>Success Message <span class="help-link" data-help-key="app_manager/success_message"></span></h4>#}
 {#        <div class="help-text" data-help-key="app_manager/success_message"></div>#}
 {#        <div class="config">#}

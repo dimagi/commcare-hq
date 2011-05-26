@@ -699,6 +699,9 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "use_commcare_sense" == attr:
         use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
         app.use_commcare_sense = use_commcare_sense
+    elif "native_input" == attr:
+        native_input = json.loads(req.POST['native_input'])
+        app.native_input = native_input
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
