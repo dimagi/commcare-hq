@@ -124,7 +124,6 @@ class JadJar(object):
             jad = JadDict.from_jad(self.jad)
             jad.update({
                 'MIDlet-Jar-Size': len(jar),
-                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
             })
             jad.update(jad_properties)
             jad = sign_jar(jad, jar)

@@ -525,6 +525,7 @@ class ApplicationBase(VersionedDoc):
     # commcare_build is of the form "{version}/{build_number}"
     commcare_build = StringProperty(default="1.1.1/9010")
     success_message = DictProperty()
+    built_on = DateTimeProperty(required=False)
 
     @property
     def post_url(self):
@@ -562,11 +563,13 @@ class ApplicationBase(VersionedDoc):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except:
+            built_on = datetime.utcnow()
             jadjar = self.get_jadjar().pack(self.create_all_files(), {
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
                 # e.g. 2011-Apr-11 20:45
+                'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
@@ -574,6 +577,8 @@ class ApplicationBase(VersionedDoc):
             jar = jadjar.jar
             self.put_attachment(jad, 'CommCare.jad')
             self.put_attachment(jar, 'CommCare.jar')
+            self.built_on = built_on
+            self.save()
             return jad, jar
 
 #    def create_jad(self):
