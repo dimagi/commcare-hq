@@ -26,6 +26,14 @@ class ApiUser(Document):
 
     @classmethod
     def create(cls, username, password):
+        """
+        To create a new ApiUser on the server:
+        ./manage.py shell
+
+        >>> from corehq.apps.api.models import *
+        >>> ApiUser.create('buildserver', 'RANDOM').save()
+        
+        """
         self = cls()
         self['_id'] = "ApiUser-%s" % username
         self.set_password(password)
