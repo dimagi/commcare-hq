@@ -123,11 +123,11 @@ class JadJar(object):
         if self.jad:
             jad = JadDict.from_jad(self.jad)
             jad.update({
-                'MIDlet-Jar-Size': len(self.jar),
+                'MIDlet-Jar-Size': len(jar),
                 'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
             })
             jad.update(jad_properties)
-            jad = sign_jar(jad, self.jar)
+            jad = sign_jar(jad, jar)
         else:
             jad = None
             
