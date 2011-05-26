@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 # environment variables: remote_host, artifacts, username, password, build_number, version
+# requires an ApiUser (corehq.apps.api.models.ApiUser) on the remote_host with username/password given
+
 
 TARGET_URL="${remote_host}/builds/post/"
 
