@@ -9,10 +9,14 @@ class ReportSchedule(object):
     A basic report scedule, fully customizable, but requiring you to 
     understand exactly what to pass to the view at runtime.
     """
-    def __init__(self, view_func, view_args={}, title="unspecified", 
+    
+    def __init__(self, view_func, view_args=None, title="unspecified", 
                  processor=RequestProcessor(), auth=None):
         self._view_func = view_func
-        self._view_args = view_args
+        if view_args is not None:
+            self._view_args = view_args
+        else: 
+            self._view_args = {}
         self._processor = processor
         self._title = title
         self.auth = auth if auth else (lambda user: True)
