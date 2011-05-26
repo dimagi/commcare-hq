@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 from couchdbkit.ext.django.schema import Document
 import dateutil.parser
@@ -20,6 +20,7 @@ from couchexport.export import export, Format
 from StringIO import StringIO
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime
+from django.contrib.auth.decorators import permission_required
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -571,15 +572,38 @@ def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
         include_docs=True,
         reduce=False
     )
-    print userIDs
     counts = defaultdict(lambda: defaultdict(int))
     for sub in submissions:
         try:
             userID = sub['form']['meta']['userID']
             if (userIDs is None) or (userID in userIDs):
-                print userID
                 counts[userID][sub['xmlns']] += 1
         except:
             # if a form don't even have a userID, don't even bother tryin'
             pass
     return counts
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def emaillist(request, domain):
+    """
+    Test an email report 
+    """
+    # circular import
+    from corehq.apps.reports.schedule.config import ScheduledReportFactory
+    return render_to_response(request, "reports/email/report_list.html", 
+                              {"domain": domain,
+                               "reports": ScheduledReportFactory.get_reports()})
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def emailtest(request, domain, report_slug):
+    """
+    Test an email report 
+    """
+    # circular import
+    from corehq.apps.reports.schedule.config import ScheduledReportFactory
+    report = ScheduledReportFactory.get_report(report_slug)
+    report.get_response(request.user, domain)
+    return HttpResponse(report.get_response(request.user, domain))
+    

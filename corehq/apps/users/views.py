@@ -28,7 +28,7 @@ from dimagi.utils.web import render_to_response
 from dimagi.utils.couch.database import get_db
 from .util import doc_value_wrapper
 import calendar
-from corehq.apps.reports.schedule.config import SCHEDULABLE_REPORTS
+from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification,\
     DailyReportNotification, ReportNotification
 from django.contrib import messages
@@ -432,7 +432,7 @@ def add_scheduled_report(request, domain, couch_user_id):
     context = _users_context(request, domain)
     context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
                     "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  SCHEDULABLE_REPORTS.items() if value.auth(request.user)])})
+                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports().items() if value.auth(request.user)])})
     return render_to_response(request, "users/add_scheduled_report.html", context)
 
 @login_and_domain_required

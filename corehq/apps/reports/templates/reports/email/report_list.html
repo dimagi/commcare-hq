@@ -1,0 +1,10 @@
+{% extends base_template %}
+
+{% block content %}
+<h3>To view a report formatted for email, click one of the links below</h3>
+<ul>
+{% for slug, report in reports.items %}
+    <li><a href="{% url emailable_report_test domain slug %}">{{ report.title }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}
