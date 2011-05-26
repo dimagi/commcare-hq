@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 from couchdbkit.ext.django.schema import Document
 import dateutil.parser
