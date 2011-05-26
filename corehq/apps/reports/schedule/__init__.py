@@ -30,6 +30,12 @@ class ReportSchedule(object):
         parser = ReportParser(response.content)
         return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
 
+class DomainedReportSchedule(ReportSchedule):
+    
+    def get_response(self, user, domain):
+        self._view_args["domain"] = domain
+        return super(DomainedReportSchedule, self).get_response(user, domain)
+        
 class BasicReportSchedule(object):
     """
     These are compatibile with the daily_submission views
