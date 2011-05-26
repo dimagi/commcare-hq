@@ -590,10 +590,10 @@ def emaillist(request, domain):
     Test an email report 
     """
     # circular import
-    from corehq.apps.reports.schedule import config
+    from corehq.apps.reports.schedule.config import ScheduledReportFactory
     return render_to_response(request, "reports/email/report_list.html", 
                               {"domain": domain,
-                               "reports": config.SCHEDULABLE_REPORTS})
+                               "reports": ScheduledReportFactory.get_reports()})
 
 @login_and_domain_required
 @permission_required("is_superuser")
@@ -602,8 +602,8 @@ def emailtest(request, domain, report_slug):
     Test an email report 
     """
     # circular import
-    from corehq.apps.reports.schedule import config
-    report = config.SCHEDULABLE_REPORTS[report_slug]
+    from corehq.apps.reports.schedule.config import ScheduledReportFactory
+    report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
     

@@ -7,6 +7,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule import config
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.reports.schedule.config import ScheduledReportFactory
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    
@@ -26,7 +27,7 @@ def weekly_reports():
     _run_reports(reps)
     
 def send_report(scheduled_report, user):
-    report = config.SCHEDULABLE_REPORTS[scheduled_report.report_slug]
+    report = ScheduledReportFactory.get_report(scheduled_report.report_slug)
     body = report.get_response(user.default_django_user, scheduled_report.domain)
     email = user.get_email()
     if email:
