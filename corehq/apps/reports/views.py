@@ -583,3 +583,27 @@ def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
             pass
     return counts
 
+@login_and_domain_required
+@permission_required("is_superuser")
+def emaillist(request, domain):
+    """
+    Test an email report 
+    """
+    # circular import
+    from corehq.apps.reports.schedule import config
+    return render_to_response(request, "reports/email/report_list.html", 
+                              {"domain": domain,
+                               "reports": config.SCHEDULABLE_REPORTS})
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def emailtest(request, domain, report_slug):
+    """
+    Test an email report 
+    """
+    # circular import
+    from corehq.apps.reports.schedule import config
+    report = config.SCHEDULABLE_REPORTS[report_slug]
+    report.get_response(request.user, domain)
+    return HttpResponse(report.get_response(request.user, domain))
+    
