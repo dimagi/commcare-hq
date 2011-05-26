@@ -133,6 +133,8 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.sms',
     'corehq.apps.reports',
+    'corehq.apps.builds',
+    'corehq.apps.api',
     'xep_hq_server',
 )
 
@@ -306,6 +308,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'cleanup',
         'users',
         'phone',
+        'builds',
+        'api',
         'receiverwrapper',
         'groups',
         'domain',

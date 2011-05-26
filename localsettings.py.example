@@ -29,7 +29,6 @@ BITLY_APIKEY = '*****'
 
 
 JAR_SIGN = dict(
-    jad_tool = "/PATH/TO/app_manager/JadTool.jar",
     key_store = "/PATH/TO/KEY_STORE",
     key_alias = "KEY",
     store_pass = "*****",

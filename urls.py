@@ -45,6 +45,7 @@ urlpatterns = patterns('',
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^langcodes/', include('langcodes.urls')),
+    (r'^builds/', include('corehq.apps.builds.urls')),
 )
 
 
