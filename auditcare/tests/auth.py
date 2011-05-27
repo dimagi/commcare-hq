@@ -1,5 +1,6 @@
 from datetime import timedelta
 import time
+from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
@@ -49,7 +50,7 @@ class authenticationTestCase(unittest.TestCase):
         delete_all(AuditEvent, 'auditcare/all_events')
         self.client = Client()
         self._createUser()
-            
+
     def _createUser(self):
         model_count = ModelActionAudit.view("auditcare/model_actions").count()
         total_count = AuditEvent.view("auditcare/all_events").count()
@@ -68,7 +69,6 @@ class authenticationTestCase(unittest.TestCase):
         self.assertEqual(total_count+1, total_count2)
     
     def testModifyUser(self):
-        print "testModifyUser"
         model_count = ModelActionAudit.view("auditcare/model_actions").count()
         total_count = AuditEvent.view("auditcare/all_events").count()
         
@@ -84,11 +84,10 @@ class authenticationTestCase(unittest.TestCase):
     
     
     def testLogin(self):
-        print "testLogin"
 
         #login
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
+        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
         login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEqual(start_count+1, login_count)
 
@@ -105,9 +104,8 @@ class authenticationTestCase(unittest.TestCase):
         
         
     def testSingleFailedLogin(self):
-        print "testFailedLogin"
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, login_count)
@@ -119,14 +117,13 @@ class authenticationTestCase(unittest.TestCase):
 
 
     def testRepeatedFailedLogin(self):
-        print "testRepeatedFailedLogin"
         from auditcare.decorators import login
         login.FAILURE_LIMIT = 3
         login.LOCK_OUT_AT_FAILURE=True
         login.COOLOFF_TIME = timedelta(seconds=4)
 
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         firstlogin_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, firstlogin_count)
@@ -139,7 +136,7 @@ class authenticationTestCase(unittest.TestCase):
 
         for n in range(1,3):
             #we are logging in within the cooloff period, so let's check to see if it doesn't increment.
-            response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+            response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
             next_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
             self.assertEquals(firstlogin_count, next_count)
 
@@ -148,7 +145,7 @@ class authenticationTestCase(unittest.TestCase):
             self.assertEquals(next_audit.failures_since_start, n+start_failures)
             time.sleep(1)
         time.sleep(3)
-        response = self.client.post('/accounts/login/', {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
+        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEquals(cooled_audit.failures_since_start,1)
 

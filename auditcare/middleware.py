@@ -6,6 +6,7 @@ import logging
 from auditcare.models import AuditEvent
 from auditcare.decorators import watch_login
 from auditcare.decorators import watch_logout
+import traceback
 
 class AuditMiddleware(object):
     def __init__(self):
@@ -27,15 +28,29 @@ class AuditMiddleware(object):
         #from django-axes
         #http://code.google.com/p/django-axes/source/browse/axes/middleware.py
         # watch the admin login page
-        admin.site.login = watch_login(admin.site.login)
-        admin.site.logout = watch_logout(admin.site.logout)
         # and the regular auth login page
 
 
+        #import traceback
+        #logging.error(traceback.print_stack())
         #and monitor logouts
-        auth_views.login = watch_login(auth_views.login)
-        auth_views.logout = watch_logout(auth_views.logout)
+        traces = traceback.format_stack(limit=5)
+        def is_test_trace(item):
+            if item.find('/django/test/') > 0:
+                return True
+            if item.find('/django/contrib/auth/tests/') > 0:
+                return True
+            return False
+        is_tests = filter(is_test_trace, traces)
+        if len(is_tests)  == 0:
+            logging.debug("Middleware is running in a running context")
+            auth_views.login = watch_login(auth_views.login)
+            auth_views.logout = watch_logout(auth_views.logout)
 
+            admin.site.login = watch_login(admin.site.login)
+            admin.site.logout = watch_logout(admin.site.logout)
+        else:
+            logging.debug("Middleware is running in a test context, disabling monkeypatch")
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """

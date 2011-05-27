@@ -2,7 +2,6 @@
 #for more information see: http://code.google.com/p/django-axes/
 import django
 from django.contrib.auth.forms import AuthenticationForm
-
 try:
     from functools import wraps
 except ImportError:
@@ -137,6 +136,8 @@ def watch_logout(func):
             return response
         return response
     return decorated_logout
+
+
 
 
 def watch_login(func):

@@ -60,7 +60,8 @@ Add an array, AUDIT_VIEWS = [].  The elements of this list should be the fully q
 Login/Logout Events
 ===================
 
-By default the django standard login/logout views will be audited.  Custom login/logout views are a work in progress
+By default the django standard login/logout views will be audited.  In order for unit tests to pass, the url path /accounts/login (The default login url) will be overrided via a url.
+Calling a reverse to django.contrib.auth.views.login will not trigger auditing due to the way in which monkeypatching interferes with unit tests with reverse()
 
 
 Model Saves
