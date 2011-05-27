@@ -1,4 +1,4 @@
-class QueryableSet(set):
+class QueryableList(list):
     def __getattr__(self, item):
         #  __getattr__ is only called when other attribute lookup methods fail.
         if item.find('__') != -1:
@@ -20,12 +20,12 @@ class QueryableSet(set):
         else:
             raise AttributeError
 
-class ExampleQueryableSet(QueryableSet):
+class ExampleQueryableList(QueryableList):
     '''
     QueryableSets have all the attributes of sets:
 
-    >>> q = ExampleQueryableSet()
-    >>> q.update(range(0,20))
+    >>> q = ExampleQueryableList()
+    >>> q += range(0,20)
     >>> len(q)
     20
 
