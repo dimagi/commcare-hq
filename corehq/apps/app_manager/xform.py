@@ -48,8 +48,16 @@ class WrappedNode(object):
                 'findall': lambda list: map(WrappedNode, list),
                 'findtext': lambda text: text
             }[name]
+            none = {
+                'find': lambda: WrappedNode(None),
+                'findall': list,
+                'findtext': lambda: None
+            }[name]
             def _fn(xpath, *args, **kwargs):
-                return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
+                if self.xml is not None:
+                    return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
+                else:
+                    return none()
             return _fn
         else:
             return getattr(self.xml, name)

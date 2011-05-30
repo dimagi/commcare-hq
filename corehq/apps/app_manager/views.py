@@ -224,7 +224,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     case_fields = sorted(case_fields)
 
     try:
-        xform_questions = json.dumps(form.get_questions(langs) if form else [])
+        xform_questions = json.dumps(form.get_questions(langs) if form and form.contents else [])
         # this is just to validate that the case and meta blocks can be created
         xform_errors = None
     except XMLSyntaxError as e:
@@ -255,11 +255,13 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         messages.error(req, "Unexpected System Error: %s" % e)
 
     try:
-        if form_id:
+        if form and form.contents:
             app.fetch_xform(module_id, form_id)
     except CaseError, e:
         messages.error(req, "Error in Case Management: %s" % e)
     except Exception, e:
+        if settings.DEBUG:
+            raise
         logging.exception(e)
         messages.error(req, "Unexpected Error: %s" % e)
 

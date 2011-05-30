@@ -351,15 +351,16 @@ def submission_log(request, domain):
 def daily_submissions(request, domain, view_name, title):
     start_date = request.GET.get('startdate')
     end_date = request.GET.get('enddate')
-    if end_date:
-        end_date = date(*map(int, end_date.split('-')))
-    else:
-        end_date = datetime.utcnow().date()
-
-    if start_date:
-        start_date = date(*map(int, start_date.split('-')))
-    else:
-        start_date = (end_date- timedelta(days=6))
+#    if end_date:
+#        end_date = date(*map(int, end_date.split('-')))
+#    else:
+#        end_date = datetime.utcnow().date()
+#
+#    if start_date:
+#        start_date = date(*map(int, start_date.split('-')))
+#    else:
+#        start_date = (end_date- timedelta(days=6))
+    start_date, end_date = mk_date_range(start_date, end_date, ago=6)
     results = get_db().view(
         view_name,
         group=True,
