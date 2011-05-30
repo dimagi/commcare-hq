@@ -186,7 +186,7 @@ class SubmitHistory(ReportBase):
 @login_and_domain_required
 def active_cases(request, domain):
 
-    rows = []
+    rows = get_active_cases_json(domain, **json_request(request.GET))
 
     headings = ["Username", "Active/Open Cases (%)", "Late Cases", "Average Days Late", "Visits Last Week"
         #"Open Referrals", "Active Referrals"
@@ -199,13 +199,10 @@ def active_cases(request, domain):
             "headers": headings,
             "rows": rows,
         },
-        "ajax_source": reverse('paging_active_cases', args=[domain]),
     })
 
-@login_and_domain_required
-def paging_active_cases(request, domain):
-
-    days = 31
+def get_active_cases_json(domain, days=31, **kwargs):
+    users = CouchUser.commcare_users_by_domain(domain)
     def get_active_cases(userid, days=days):
         since_date = datetime.utcnow() - timedelta(days=days)
         r = get_db().view('case/by_last_date',
@@ -237,21 +234,25 @@ def paging_active_cases(request, domain):
         ).one()
         return r['value'] if r else 0
 
-    def view_to_table(row):
-        keys = row['value']
+    def get_open_cases(userID):
+        open_cases = get_db().view('case/open_cases', key=[domain, userID], group=True).one()
+        open_cases = open_cases['value'] if open_cases else 0
+        return open_cases
 
-        open_cases = get_db().view('case/open_cases', keys=[[domain, key] for key in keys], group=True)
-        open_cases = sum(map(lambda x: x['value'], open_cases))
 
-        active_cases = sum(map(get_active_cases, keys))
+    def user_to_row(user):
+        userID = user.userID
 
-        days_late, cases_late = map(sum, zip(*map(get_late_cases, keys)))
+        open_cases = get_open_cases(userID)
+        active_cases = get_active_cases(userID)
 
-        visits = sum(map(get_forms_completed, keys))
+        days_late, cases_late = get_late_cases(userID)
+
+        visits = get_forms_completed(userID)
 
         assert(open_cases-active_cases == cases_late)
         return [
-            user_id_to_username(keys[0]),
+            user.raw_username,
             "%s/%s (%d%%)" % (active_cases, open_cases,  (active_cases*100/open_cases)) if open_cases else "--",
             "%s cases" % cases_late if cases_late else "--",
             "%.1f" % (days_late/cases_late) if cases_late > 1 else "%d" % (days_late/cases_late) if cases_late \
@@ -259,17 +260,8 @@ def paging_active_cases(request, domain):
             visits
         ]
 
-    paginator = CouchPaginator(
-        "users/collated_commcare_users",
-        view_to_table,
-        search=False,
-        view_args=dict(
-            startkey=[domain],
-            endkey=[domain, {}],
-            descending=False
-        )
-    )
-    return paginator.get_ajax_response(request)
+
+    return sorted([user_to_row(user) for user in users])
 
 
 @login_and_domain_required
