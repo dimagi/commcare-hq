@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 import re
 from couchdbkit.ext.django.schema import *
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 import commcare_translations
@@ -336,6 +337,14 @@ class Detail(DocumentSchema):
             column.rename_lang(old_lang, new_lang)
 
 
+class CaseList(IndexedSchema):
+    label = DictProperty()
+    show = BooleanProperty(default=False)
+
+    def rename_lang(self, old_lang, new_lang):
+        for dct in (self.label,):
+            _rename_key(dct, old_lang, new_lang)
+
 class Module(IndexedSchema):
     """
     A group of related forms, and configuration that applies to them all.
@@ -349,6 +358,8 @@ class Module(IndexedSchema):
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
 
 
     def rename_lang(self, old_lang, new_lang):
@@ -357,6 +368,8 @@ class Module(IndexedSchema):
             form.rename_lang(old_lang, new_lang)
         for detail in self.details:
             detail.rename_lang(old_lang, new_lang)
+        for case_list in (self.case_list, self.referral_list):
+            case_list.rename_lang(old_lang, new_lang)
 
     def get_forms(self):
         l = len(self.forms)
@@ -394,6 +407,10 @@ class Module(IndexedSchema):
         r = set(["none"])
         for form in self.get_forms():
             r.add(form.requires)
+        if self.case_list.show:
+            r.add('case')
+        if self.referral_list.show:
+            r.add('referral')
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
@@ -895,6 +912,8 @@ class Application(ApplicationBase):
         try:
             self.create_all_files()
         except:
+            if settings.DEBUG:
+                raise
             errors.append({'type': "form error"})
         
         return errors

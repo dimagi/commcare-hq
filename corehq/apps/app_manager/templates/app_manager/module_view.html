@@ -201,6 +201,23 @@
                     </form>
                 </td>
             </tr>
+            <tr class="form editable">
+                <th>
+                    Case List <span class="help-link" data-help-key="app_manager/case_list"></span>
+                    <div class="help-text" data-help-key="app_manager/case_list"></div>
+                </th>
+                <th>
+                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_list' %}">
+                        <select class="autosave code" type="text" name="show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
+                            <option value="false">Don't Show</option>
+                            <option value="true">Show</option>
+                        </select>
+                        <span>
+                            Label: <input type="text" class="autosave" name="label" value="{{ module.case_list.label|trans:langs }}"/>
+                        </span>
+                    </form>
+                </th>
+            </tr>
 
         {% else %}
             <tr>
@@ -226,6 +243,18 @@
                         Put forms in a separate menu
                     {% else %}
                         Put forms on first screen
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Case List
+                </th>
+                <td>
+                    {% if not module.case_list.show %}
+                        Don't Show
+                    {% else %}
+                        Show with label: {{ module.case_list.label|trans:langs }}
                     {% endif %}
                 </td>
             </tr>
@@ -322,8 +351,9 @@
                                     <option value="plain">plain</option>
                                     <option value="date">date</option>
                                     <option value="years-ago">years-ago</option>
+                                    <option value="phone">phone</option>
                                     <option value="enum">enum</option>
-                                    <option value="advanced">advanced</option>
+{#                                    <option value="advanced">advanced</option>#}
                                 </select>
                             </td>
                             <td class="enum-column">

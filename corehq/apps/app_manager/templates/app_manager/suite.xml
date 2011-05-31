@@ -39,7 +39,7 @@
      {% for d in detail.columns %}
         <field>
             <header><text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text></header>
-         {% ifequal d.format "plain" %}
+         {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
 {#            <template><text><xpath function="format_date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}, 'short')"/></text></template>#}
@@ -68,7 +68,9 @@
              <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '', string(int((today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})) div 365.25)))"/></text></template>
          {% else %}{% ifequal d.format "late-flag"%}
              <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '*', if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) &gt; {{ d.late_flag }}, '*', ''))"/></text></template>
-         {% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}
+         {% else %}{% ifequal d.format "phone" %}
+             <template form="phone"><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}" /></text></template>
+         {% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
 
         </field>
      {% endfor %}
@@ -107,6 +109,40 @@
      {% endif %}
     </entry>
   {% endfor %}
+  {% if module.case_list.show %}
+    <entry>
+        <command id="m{{ module.id }}-case-list">
+            <text><locale id="case_lists.m{{ module.id }}"/></text>
+        </command>
+        <entity>
+            <type>case</type>
+            <reference>case</reference>
+        </entity>
+        <details>
+           <short id="m{{ module.id }}_case_short"/>
+           <long id="m{{ module.id }}_case_long"/>
+        </details>
+    </entry>
+  {% endif %}
+  {% if module.referral_list.show %}
+    <entry>
+        <command id="m{{ module.id }}-referral-list">
+            <text><locale id="referral_lists.m{{ module.id }}"/></text>
+        </command>
+        <entity>
+            <type>case</type>
+            <reference>case</reference>
+        </entity>
+        <entity>
+            <type>referral</type>
+            <reference>referral</reference>
+        </entity>
+        <details>
+           <short id="m{{ module.id }}_ref_short"/>
+           <long id="m{{ module.id }}_ref_long"/>
+        </details>
+    </entry>
+  {% endif %}
  {% endfor %}
  {% for module in app.get_modules %}
   {% if module.name|trans:app.langs == "root" or module.put_in_root %}
@@ -118,6 +154,12 @@
      {% for form in module.get_forms %}
     	<command id="m{{ module.id }}-f{{ form.id }}"/>
      {% endfor %}
+     {% if module.case_list.show %}
+         <command id="m{{ module.id }}-case-list"/>
+     {% endif %}
+     {% if module.referral_list.show %}
+         <command id="m{{ module.id }}-referral-list"/>
+     {% endif %}
     </menu>
  {% endfor %}
 </suite>

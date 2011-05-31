@@ -476,6 +476,11 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         module[attr][lang] = name
         if attr == "name":
             resp['update'].update({'.variable-module_name': module.name[lang]})
+    elif "case_list" == attr:
+        module[attr].show = json.loads(req.POST['show'])
+        module[attr].label[lang] = req.POST['label']
+    else:
+        return HttpResponseBadRequest("Attribute %s not supported" % attr)
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 

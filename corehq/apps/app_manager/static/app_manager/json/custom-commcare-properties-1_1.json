@@ -92,10 +92,10 @@
 }, {
     "id": "users",
     "type": "features",
-    "name": "Use Users",
-    "description": "Whether to use user logins or not",
+    "name": "User Logins",
+    "description": "Whether to show the user login screen",
     "values": ["true", "false"],
-    "value_names": ["True", "False"],
+    "value_names": ["Show Login Screen", "Use Auto Login"],
     "default": "true",
     "group": "sense"
 }, {

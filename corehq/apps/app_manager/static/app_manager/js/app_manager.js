@@ -236,10 +236,23 @@ $(function(){
             return true;
         }
         else {
-            $.post($form.attr('action') || $form.attr('data-action'), $form.my_serialize(), function(data){
-                updateDOM(JSON.parse(data)['update']);
-
-                $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
+//            $.post($form.attr('action') || $form.attr('data-action'), $form.my_serialize(), function(data){
+//                updateDOM(JSON.parse(data)['update']);
+//
+//                $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
+//            });
+            $.ajax({
+                type: 'POST',
+                url: $form.attr('action') || $form.attr('data-action'),
+                data: $form.my_serialize(),
+                success: function(data){
+                    updateDOM(data['update']);
+                    $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
+                },
+                dataType: 'json',
+                error: function () {
+                    $form.children().last().text('Error occurred');
+                }
             });
             return false;
         }
