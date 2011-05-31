@@ -3,7 +3,8 @@
     {{ block.super }}
     <script>
         $(function(){
-            $("#back").addClass('ui-corner-top');
+            $("#emu-back").addClass('ui-corner-top');
+            $("#emu-info").addClass('ui-corner-bottom');
         });
     </script>
     <style>
@@ -14,17 +15,28 @@
         applet {
             margin: 20px;
         }
-        #back {
+        #emu-back {
             padding: 10px;
             background-color: #EEE;
             border-bottom: 1px solid #DDD;
             text-align: center;
         }
+        #emu-info {
+            padding: 10px;
+            background-color: #EEE;
+            border-top: 1px solid #DDD;
+            text-align: center;
+        }
+        .disclaimer {
+            padding: 4px;
+            font-size: .8em;
+            color: #555;
+        }
     </style>
 {% endblock %}
 {% block content %}
     <div id="main_container">
-        <div id="back">
+        <div id="emu-back">
             <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Application</a>
         </div>
         <applet code="org.microemu.applet.Main"
@@ -34,5 +46,11 @@
             <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
             <param name="Profile" value="jr://resource/profile.xml" />
         </applet>
+        <div id="emu-info">
+            <p>This might take a few minutes.</p>
+            <p class="disclaimer">
+                Behavior may differ from phone.
+            </p>
+        </div>
     </div>
 {% endblock %}
