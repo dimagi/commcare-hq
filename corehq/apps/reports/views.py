@@ -126,7 +126,7 @@ class SubmitHistory(ReportBase):
         if self.individual:
             rows = get_db().view('reports/submit_history',
                 endkey=[self.domain, self.individual],
-                startkey=[self.domain, self.individual, {}],
+                key=[self.domain, self.individual, {}],
                 descending=True,
                 reduce=False,
                 skip=skip,
@@ -341,9 +341,10 @@ def submission_log(request, domain):
         "show_unregistered": show_unregistered,
     })
 
+DATE_FORMAT = "%Y-%m-%d"
 @login_and_domain_required
 @datespan_in_request(from_param="startdate", to_param="enddate", 
-                     format_string="%Y-%m-%d", default_days=7)
+                     format_string=DATE_FORMAT, default_days=7)
 def daily_submissions(request, domain, view_name, title):
     if not request.datespan.is_valid():
         messages.error(request, "Sorry, that's not a valid date range because: %s" % \
@@ -362,7 +363,7 @@ def daily_submissions(request, domain, view_name, title):
     dates = [request.datespan.startdate]
     while dates[-1] < request.datespan.enddate:
         dates.append(dates[-1] + timedelta(days=1))
-    date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
+    date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
     rows = [[0]*(1+len(date_map)) for i in range(len(user_ids) + 1)]
     for result in results:
@@ -382,7 +383,7 @@ def daily_submissions(request, domain, view_name, title):
         if row[0] or sum(row[1:]):
             valid_rows.append(row)
     rows = valid_rows
-    headers = ["Username"] + dates
+    headers = ["Username"] + [d.strftime(DATE_FORMAT) for d in dates]
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_dates": True,
