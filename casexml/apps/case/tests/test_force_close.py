@@ -1,5 +1,5 @@
 from casexml.apps.case.util import *
-from casexml.apps.case.models.couch import *
+from casexml.apps.case.models import *
 from datetime import datetime
 
 def test_close_case_xml():
