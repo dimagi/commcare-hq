@@ -1,20 +1,13 @@
 from __future__ import absolute_import
-
-from datetime import datetime, date, time
-import os
 from couchdbkit.ext.django.schema import *
-from django.test.client import Client
-from casexml.apps.case import const
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml
-from corehq.apps.receiverwrapper.util import spoof_submission
-from dimagi.utils import parsing
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from datetime import datetime, date, time
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils import parsing
-from couchdbkit.schema.properties_proxy import SchemaListProperty
 import logging
+from receiver.util import spoof_submission
 
 """
 Couch models for commcare cases.  
@@ -324,14 +317,14 @@ class CommCareCase(CaseBase):
         self.closed_on = datetime.combine(close_action.visit_date, time())
 
 
-    def force_close(self):
+    def force_close(self, submit_url):
         if not self.closed:
             submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
-            spoof_submission(self.domain, submission, name="close.xml")
+            spoof_submission(submit_url, submission, name="close.xml")
 
-    def force_close_referral(self, referral):
+    def force_close_referral(self, submit_url, referral):
         if not referral.closed:
             submission = get_close_referral_xml(time=datetime.utcnow(), case_id=self._id, referral_id=referral.referral_id, referral_type=referral.type)
-            spoof_submission(self.domain, submission, name="close_referral.xml")
+            spoof_submission(submit_url, submission, name="close_referral.xml")
 
 import casexml.apps.case.signals
