@@ -164,7 +164,7 @@ def cases_json(request, domain):
 #            cases = _get_cases(_get_submissions(domain, [sub]))
 #            sub['cases'] = len([None for case in cases if not case.closed])
 
-        open_cases = CommCareCase.view('case/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
+        open_cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
         xform_ids = [case.xform_ids[0] for case in open_cases]
         case_count = defaultdict(int)
         for xform_id in xform_ids:

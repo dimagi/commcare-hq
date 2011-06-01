@@ -14,7 +14,7 @@ def open_cases_json(request, domain):
     delete_doc_types = json.loads(request.GET.get('delete_doc_types', 'true'))
     username = request.GET.get("username", None)
 
-    cases = CommCareCase.view('case/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
 
     user_id_to_type_to_cases = defaultdict(lambda:defaultdict(list))
     for case in cases:
@@ -39,5 +39,5 @@ def open_cases_json(request, domain):
     return HttpResponse(json.dumps(usercases))
 
 @login_and_domain_required
-def open_cases(request, domain, template="case/open_cases.html"):
+def open_cases(request, domain, template="hqcase/open_cases.html"):
     return render_to_response(request, template, {"domain": domain})
