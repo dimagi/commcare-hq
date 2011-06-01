@@ -1,7 +1,7 @@
 from django.test import TestCase
 import os
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 from casexml.apps.case.tests.util import check_xml_line_by_line
