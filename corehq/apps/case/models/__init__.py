@@ -1,1 +1,1 @@
-from corehq.apps.case.models.couch import CommCareCase, Referral, CommCareCaseAction
+from casexml.apps.case.models.couch import CommCareCase, Referral, CommCareCaseAction

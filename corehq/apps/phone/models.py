@@ -1,7 +1,7 @@
 from datetime import date
 from couchdbkit.ext.django.schema import *
 import logging
-from corehq.apps.case import const
+from casexml.apps.case import const
 from couchforms.safe_index import safe_index
 import hashlib
 from dimagi.utils.mixins import UnicodeMixIn

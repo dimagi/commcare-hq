@@ -3,7 +3,7 @@ from collections import defaultdict
 from copy import deepcopy
 import json
 from django.http import HttpResponse
-from corehq.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models.couch import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.views import user_id_to_username
 from dimagi.utils.web import render_to_response

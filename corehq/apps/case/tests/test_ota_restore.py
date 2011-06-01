@@ -1,6 +1,6 @@
 from django.test import TestCase
 import os
-from corehq.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models.couch import CommCareCase
 from couchforms.util import post_xform_to_couch
 
 class MultiCaseTest(TestCase):

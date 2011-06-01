@@ -1,9 +1,9 @@
 import os
 import uuid
 from couchforms.util import post_xform_to_couch
-from corehq.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models.couch import CommCareCase
 from couchforms.models import XFormInstance
-from corehq.apps.case.signals import process_cases
+from casexml.apps.case.signals import process_cases
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
