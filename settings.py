@@ -111,7 +111,7 @@ HQ_APPS = (
     'auditcare',
     'djangocouch',
     'djangocouchuser',
-    'corehq.apps.case',
+    'casexml.apps.case',
     'corehq.apps.cleanup',
     'corehq.apps.domain',
     'corehq.apps.hqadmin',
