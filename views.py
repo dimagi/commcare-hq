@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.users.util import couch_user_from_django_user,\
     commcare_account_from_django_user, raw_username
 from corehq.apps.users.models import CouchUser
-from corehq.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase
 
 
 def generate_restore_payload(user, restore_id):
