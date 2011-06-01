@@ -10,6 +10,7 @@ from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response, json_request, json_response
+from corehq.apps.receiverwrapper.util import get_submit_url
 
 require_can_cleanup = require_permission(Permissions.EDIT_DATA)
 
@@ -188,8 +189,8 @@ def close_cases(request, domain):
     def actually_close_cases(cases):
         for case in cases:
             for referral in case.referrals:
-                case.force_close_referral(referral)
-            case.force_close()
+                case.force_close_referral(get_submit_url(domain), referral)
+            case.force_close(get_submit_url(domain))
     xforms = _get_submissions(domain, keys)
     cases = _get_cases(xforms)
     actually_close_cases(cases)
