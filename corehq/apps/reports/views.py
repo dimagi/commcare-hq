@@ -352,7 +352,7 @@ def daily_submissions(request, domain, view_name, title):
 #        start_date = date(*map(int, start_date.split('-')))
 #    else:
 #        start_date = (end_date- timedelta(days=6))
-    start_date, end_date = mk_date_range(start_date, end_date, ago=6)
+    start_date, end_date = mk_date_range(start_date, end_date, ago=timedelta(days=6))
     results = get_db().view(
         view_name,
         group=True,
