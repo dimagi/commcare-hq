@@ -21,6 +21,8 @@ from StringIO import StringIO
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime
 from django.contrib.auth.decorators import permission_required
+from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.dates import DateSpan
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -340,29 +342,25 @@ def submission_log(request, domain):
     })
 
 @login_and_domain_required
+@datespan_in_request(from_param="startdate", to_param="enddate", 
+                     format_string="%Y-%m-%d", default_days=7)
 def daily_submissions(request, domain, view_name, title):
-    start_date = request.GET.get('startdate')
-    end_date = request.GET.get('enddate')
-#    if end_date:
-#        end_date = date(*map(int, end_date.split('-')))
-#    else:
-#        end_date = datetime.utcnow().date()
-#
-#    if start_date:
-#        start_date = date(*map(int, start_date.split('-')))
-#    else:
-#        start_date = (end_date- timedelta(days=6))
-    start_date, end_date = mk_date_range(start_date, end_date, ago=timedelta(days=6))
+    if not request.datespan.is_valid():
+        messages.error(request, "Sorry, that's not a valid date range because: %s" % \
+                       request.datespan.get_validation_reason())
+        request.datespan = DateSpan.since(7, format="%Y-%m-%d")
+    
     results = get_db().view(
         view_name,
         group=True,
-        startkey=[domain, start_date.isoformat()],
-        endkey=[domain, end_date.isoformat(), {}]
+        startkey=[domain, request.datespan.startdate.isoformat()],
+        endkey=[domain, request.datespan.enddate.isoformat(), {}]
     ).all()
+    
     all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
-    dates = [start_date]
-    while dates[-1] < end_date:
+    dates = [request.datespan.startdate]
+    while dates[-1] < request.datespan.enddate:
         dates.append(dates[-1] + timedelta(days=1))
     date_map = dict([(date.isoformat(), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
@@ -388,8 +386,7 @@ def daily_submissions(request, domain, view_name, title):
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_dates": True,
-        "start_date": start_date,
-        "end_date": end_date,
+        "datespan": request.datespan,
         "report": {
             "name": title,
             "headers": headers,
