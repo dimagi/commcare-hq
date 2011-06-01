@@ -1,75 +1,76 @@
 {% extends base_template %}
 {% block title %}Welcome to CommCareHQ!{% endblock title %}
 {% block head %}
-    <!--{{ block.super }}-->
-   	<link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/mainlogin.css"/>
-    <link rel="stylesheet" href="../static/hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
-	<link rel="stylesheet" href="../static/hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
-    <link rel="stylesheet" type="text/css" href="../static/hqwebapp/css/landingpage.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}hqwebapp/css/mainlogin.css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}hqwebapp/css/landingpage.css"/>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
     <script src="{{ STATIC_URL }}domain/js/login.js"></script>
+    <style>
+        #main_container { margin-top: 1em; }
+    </style>
+    <script type="text/javascript">
+        $(function() {
+            $('#main_container').removeClass('container');
+        });
+    
+    </script>
 {% endblock %}
-{% block content %}
-    <div class="span-24 last">
-       	<center>      
-       	
-		<h2>Supporting the health of communities around the world</h2>
-		<div class="span-18 append-3 prepend-3 last">
-		<hr>
-	</div>
-		<h4>75,000 patient visits    -    
-		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
-		14 projects worldwide    -    
-		<!--<img src="../static/hqwebapp/img/cell_phone.png" width=3%/>-->
-		500 registered CHWs</h4>
-		</center>
-	</div>
 
-	
-	<div class="span-18 append-3 prepend-3 last">
-		<hr>
-	</div>
-	
-	
-	
-	<div class="span-8">
-		<h3>What is CommCare?</h3>
-		<ul>
+{% block content %}
+<div id="main_container">
+    <div class="clear_hack">&nbsp;</div>
+    <p id="tagline">Community Health for the Future</p>
+    
+    <hr>
+    
+    <p id="subtagline">90,000 patient visits    -    14 projects worldwide    -    hundreds of registered CHWs</p>
+    
+	<hr>
+	<div class="three-columns">
+	<div class="col-1">
+		<p class="subheading" >What is CommCare?</p>
+		<ul class="summary">
 			<li>An open-source software application</li>
 			<li>A job aid for community health workers (CHWs)</li>
 			<li>A tool for supervision and evidence-based change</li>
 			<li>A way to capture data in an electronic repository that otherwise sits in thousands of paper notebooks</li>
 		</ul> 
 	</div>
-	<div class = "span-8">
-		<h3>Why CommCare?</h3>
-		<ul>
+	<div class = "col-2">
+		<p class="subheading" >Why CommCare?</p>
+        <ul class="summary">
 			<li>CHWs have demonstrated a potential to substantially improve health outcomes in areas of extreme poverty</li>
 			<li>CHWs tend to have little training and operate independently</li>
 			<li>CommCare provides phone-based tools that help support and manage large numbers of CHWs</li>
 		</ul> 
 	</div>
-	<div class = "span-8 last">
-	<h3>Highlights</h3>
-		<ul>
-		<li>Runs on mid-range cell phones</li>
+	<div class = "col-3">
+	    <p class="subheading" >Highlights</p>
+        <ul class="summary">
+		<li>Runs on a variety of cell phones and devices, from Nokias to Androids</li>
 		<li>Supports images and audio</li>
 		<li>Handles multiple languages<br>the pregnancy module is currently in English, Spanish, and Swahili</li>
+		<li>Is fully customizable, without paying a technical team</li>
 	</ul>
-	<button class="custom" onClick="parent.location='{% url domain_registration_request %}'" value='click here'>Try it now!</button>
+	<button class="try" onClick="parent.location='{% url domain_registration_request %}'" title='Sign up for a new account'>Try it now!</button>
 	</div>
-	<div class="span-18 append-3 prepend-3 last">
-		<hr>
 	</div>
-	<div class = "span-8">
-		<img src="http://dl.dropbox.com/u/2466341/hh_visit.jpg" width=100%/>
+	<hr>
+	<div class="three-columns">
+	    <div class="col-1">
+			 <img src="{{ STATIC_URL }}hqwebapp/img/home/hh_visit.jpg" title="Household visit in Tanzania"/>
+		</div>
+		<div class="col-2">
+			<img src="{{ STATIC_URL }}hqwebapp/img/home/commtab.jpg" title="CommCare Android, on a tablet and phone."/>
+		</div>
+		<div class="col-3">
+			<img src="{{ STATIC_URL }}hqwebapp/img/home/training.jpg" title="CommCare training"/>
+		</div>
 	</div>
-	<div class = "span-7 prepend-1">
-		<img src="http://dl.dropbox.com/u/2466341/mwajuma.jpg" width=100%/>
-	</div>
-	<div class = "span-7 prepend-1 last">
-		<img src="http://dl.dropbox.com/u/2466341/semeni.JPG" width=100%/>
-	</div>
-
-
+    <div class="clear_hack">&nbsp;</div>
+    
+</div>
 
 {% endblock content %}     
