@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 import json
 from django.views.decorators.http import require_POST
-from casexml.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.models import CommCareAccount, require_permission, Permissions
 from corehq.apps.users.util import format_username
