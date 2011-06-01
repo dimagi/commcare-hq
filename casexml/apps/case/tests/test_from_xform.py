@@ -1,9 +1,9 @@
 import uuid
 from django.test import TestCase
 from django.conf import settings
-from corehq.apps.case import const
-from corehq.apps.case.tests.test_const import *
-from corehq.apps.case.tests.util import bootstrap_case_from_xml
+from casexml.apps.case import const
+from casexml.apps.case.tests.test_const import *
+from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from dimagi.utils.post import post_data
 
 class CaseFromXFormTest(TestCase):

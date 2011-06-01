@@ -1,5 +1,5 @@
-from corehq.apps.case.util import *
-from corehq.apps.case.models.couch import *
+from casexml.apps.case.util import *
+from casexml.apps.case.models.couch import *
 from datetime import datetime
 
 def test_close_case_xml():

@@ -4,14 +4,14 @@ from datetime import datetime, date, time
 import os
 from couchdbkit.ext.django.schema import *
 from django.test.client import Client
-from corehq.apps.case import const
-from corehq.apps.case.util import get_close_case_xml, get_close_referral_xml
+from casexml.apps.case import const
+from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml
 from corehq.apps.receiverwrapper.util import spoof_submission
 from dimagi.utils import parsing
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from datetime import datetime, date, time
 from couchdbkit.ext.django.schema import *
-from corehq.apps.case import const
+from casexml.apps.case import const
 from dimagi.utils import parsing
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 import logging
@@ -334,4 +334,4 @@ class CommCareCase(CaseBase):
             submission = get_close_referral_xml(time=datetime.utcnow(), case_id=self._id, referral_id=referral.referral_id, referral_type=referral.type)
             spoof_submission(self.domain, submission, name="close_referral.xml")
 
-import corehq.apps.case.signals
+import casexml.apps.case.signals
