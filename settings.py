@@ -115,6 +115,7 @@ HQ_APPS = (
     'corehq.apps.cleanup',
     'corehq.apps.domain',
     'corehq.apps.hqadmin',
+    'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
@@ -300,23 +301,24 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
+        'api',
+        'app_manager',
+        'auditcare',
+        'builds',
+        'case',
+        'cleanup',
         'couchforms',
         'couchexport',
         'couchlog',
-        'app_manager',
-        'case',
-        'cleanup',
-        'users',
-        'phone',
-        'builds',
-        'api',
-        'receiverwrapper',
-        'groups',
         'domain',
-        'reports',
+        'groups',
+        'hqcase',
         'migration',
+        'phone',
+        'receiverwrapper',
+        'reports',
+        'users',
         'xep_hq_server',
-        'auditcare',
     ]
 ]
 
