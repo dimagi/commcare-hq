@@ -21,6 +21,12 @@
             border-bottom: 1px solid #DDD;
             text-align: center;
         }
+        #emu-warning {
+            padding: 10px;
+            background-color: #FDD;
+            border-bottom: 1px solid #DDD;
+            text-align: center;
+        }
         #emu-info {
             padding: 10px;
             background-color: #EEE;
@@ -38,6 +44,9 @@
     <div id="main_container">
         <div id="emu-back">
             <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Application</a>
+        </div>
+        <div id="emu-warning">
+            Will make <strong>real</strong> submissions: will modify cases, register users, etc.
         </div>
         <applet code="org.microemu.applet.Main"
                 width="226" height="471">
