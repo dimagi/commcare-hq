@@ -126,7 +126,7 @@ class SubmitHistory(ReportBase):
         if self.individual:
             rows = get_db().view('reports/submit_history',
                 endkey=[self.domain, self.individual],
-                key=[self.domain, self.individual, {}],
+                startkey=[self.domain, self.individual, {}],
                 descending=True,
                 reduce=False,
                 skip=skip,
