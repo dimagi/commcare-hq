@@ -2,6 +2,7 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
+import current_builds
 from dimagi.utils.web import render_to_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
@@ -381,6 +382,10 @@ def view_app(req, domain, app_id=''):
         'error':error,
         'app': app,
     })
+    if app:
+        context.update({
+            "commcare_tag_options": current_builds.MENU_OPTIONS
+        })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -709,13 +714,19 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "native_input" == attr:
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
+    elif "commcare_tag" == attr:
+        commcare_tag = req.POST['commcare_tag']
+        if commcare_tag in current_builds.TAG_MAP:
+            app.commcare_tag = commcare_tag
+        else:
+            return HttpResponseBadRequest()
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
     else:
-        raise Http404
+        return HttpResponseBadRequest()
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 

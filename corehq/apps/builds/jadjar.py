@@ -95,10 +95,12 @@ def sign_jar(jad, jar):
     return jad.render()
 
 class JadJar(object):
-    def __init__(self, jad, jar):
+    def __init__(self, jad, jar, version=None, build_number=None):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
         self._jad = jad
         self._jar = jar
+        self.version = version
+        self.build_number = build_number
 
     @property
     def jad(self):
@@ -130,4 +132,4 @@ class JadJar(object):
         else:
             jad = None
             
-        return JadJar(jad, jar)
+        return JadJar(jad, jar, self.version, self.build_number)

@@ -47,7 +47,9 @@ class CommCareBuild(Document):
             
         return JadJar(
             jad=jad,
-            jar=self.fetch_file(path, "CommCare.jar")
+            jar=self.fetch_file(path, "CommCare.jar"),
+            version=self.version,
+            build_number=self.build_number
         )
 
     @classmethod
