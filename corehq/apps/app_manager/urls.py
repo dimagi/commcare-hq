@@ -3,6 +3,8 @@ from django.views.generic.simple import direct_to_template
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'xform/(?P<form_unique_id>\w+)/$',                                    'xform_display'),
+ url(r'browse/(?P<app_id>\w+)/modules/(?P<module_id>\w+)/forms/(?P<form_id>\w+)/contents$',
+                                                                            'get_xform_contents', name='get_xform_contents'),
     (r'casexml/(?P<form_unique_id>\w+)/$',                                  'form_casexml'),
     (r'source/(?P<app_id>\w+)/$',                                           'app_source'),
     (r'import_app/$',                                                       'import_app'),

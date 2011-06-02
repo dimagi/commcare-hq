@@ -3,9 +3,15 @@
 {% block head %}
     {{block.super}}
     <link rel="stylesheet" href="{{ STATIC_URL }}couchforms/stylesheets/xforms.css" />
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+
     <script>
     $(function() {
         $("#xformtabs").tabs();
+        $("#formxml").addClass("brush: xml;");
+        SyntaxHighlighter.all({toolbar: false});
     });
     </script>
 {% endblock %}

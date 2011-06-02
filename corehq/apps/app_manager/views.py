@@ -3,7 +3,7 @@ from corehq.apps.app_manager.xform import XFormError, XFormValidationError, Case
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
 import current_builds
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, json_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
@@ -77,6 +77,9 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         "?%s" % urlencode(params) if params else ""
     ))
 
+@login_and_domain_required
+def get_xform_contents(req, domain, app_id, module_id, form_id):
+    return json_response(get_app(domain, app_id).get_module(module_id).get_form(form_id).contents)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -182,13 +185,13 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     if form_id:
         form = module.get_form(form_id)
     xform = ""
-    xform_contents = ""
+    #xform_contents = ""
     try:
         xform = form
     except:
         pass
-    if xform:
-        xform_contents = form.contents
+#    if xform:
+#        xform_contents = form.contents
 
 
     if app and 'use_commcare_sense' in app:
