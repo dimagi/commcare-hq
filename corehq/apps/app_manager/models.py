@@ -24,6 +24,7 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.builds.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
+import langcodes
 import util
 
 
@@ -748,16 +749,26 @@ class Application(ApplicationBase):
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
         # traverse languages in order of priority to find a non-empty commcare-translation
+        messages = {}
+        # include language code names
+        for lang in self.langs:
+            name = langcodes.get_name(lang)
+            if name:
+                messages[lang] = name
+                
         for l in [lang] + self.langs:
-            messages = commcare_translations.load_translations(l)
-            if messages: break
+            cc_trans = commcare_translations.load_translations(l)
+            if cc_trans:
+                messages.update(cc_trans)
+                break
         
         custom = render_to_string(template, {
             'app': self,
             'langs': [lang] + self.langs,
         })
-
         custom = commcare_translations.loads(custom)
+
+
         messages.update(custom)
         return commcare_translations.dumps(messages)
     
