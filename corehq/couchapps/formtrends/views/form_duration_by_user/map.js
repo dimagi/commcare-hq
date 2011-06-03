@@ -16,7 +16,7 @@ function(doc) {
     
     // for now incude all non-device-reports in this report
     if (doc.doc_type == "XFormInstance" &&
-        doc["@xmlns"] != "http://code.javarosa.org/devicereport")
+        doc.xmlns != "http://code.javarosa.org/devicereport")
     {
         var filled_on = get_form_filled_date(doc);
         var duration = get_form_filled_duration(doc);
