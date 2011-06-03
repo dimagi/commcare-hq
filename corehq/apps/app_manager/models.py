@@ -751,10 +751,10 @@ class Application(ApplicationBase):
         # traverse languages in order of priority to find a non-empty commcare-translation
         messages = {}
         # include language code names
-        for lang in self.langs:
-            name = langcodes.get_name(lang)
+        for lc in self.langs:
+            name = langcodes.get_name(lc)
             if name:
-                messages[lang] = name
+                messages[lc] = name
                 
         for l in [lang] + self.langs:
             cc_trans = commcare_translations.load_translations(l)
