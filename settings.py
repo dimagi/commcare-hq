@@ -135,6 +135,7 @@ HQ_APPS = (
     'corehq.apps.reports',
     'corehq.apps.builds',
     'corehq.apps.api',
+    'corehq.couchapps',
     'xep_hq_server',
 )
 
