@@ -6,6 +6,7 @@ actual_reports = patterns('corehq.apps.reports.views',
     url('submit_history', protect(SubmitHistory.view), name="submit_history_report"),
     url('submit_time_punchcard', 'submit_time_punchcard', name="submit_time_punchcard"),
     url('submit_trends', 'submit_trends', name="submit_trends"),
+    url('submit_distribution', 'submit_distribution', name="submit_distribution"),
 )
 
 paging_reports = patterns('corehq.apps.reports.views',

@@ -23,6 +23,7 @@ from dimagi.utils.parsing import json_format_datetime
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
+from corehq.apps.reports.calc import formdistribution
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -281,6 +282,15 @@ def submit_trends(request, domain):
     return render_to_response(request, "reports/partials/formtrends.html", 
                               {"domain": domain,
                                "user_id": individual})
+
+@login_and_domain_required
+def submit_distribution(request, domain):
+    individual = request.GET.get("individual", '')
+    return render_to_response(request, "reports/partials/generic_piechart.html", 
+                              {"chart_data": formdistribution.get_chart_data(domain, individual),
+                               "user_id": individual,
+                               "graph_width": 900,
+                               "graph_height": 500})
 
 @login_and_domain_required
 def user_summary(request, domain, template="reports/user_summary.html"):
