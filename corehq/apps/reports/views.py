@@ -271,16 +271,16 @@ def submit_time_punchcard(request, domain):
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    #user_data = punchcard.get_users(domain)
-#    if individual:
-#        selected_user = [user for user, _ in user_data if user["_id"] == user_id][0]
-#        name = "Punchcard Report for %s at %s" % (render_user_inline(selected_user))
     return render_to_response(request, "reports/punchcard.html", {
         "chart_url": url,
-        #"user_data": user_data,
-        #"clinic_id": clinic_id,
-        #"user_id": user_id
     })
+
+@login_and_domain_required
+def submit_trends(request, domain):
+    individual = request.GET.get("individual", '')
+    return render_to_response(request, "reports/entrytimes.html", 
+                              {"domain": domain,
+                               "user_id": individual})
 
 @login_and_domain_required
 def user_summary(request, domain, template="reports/user_summary.html"):

@@ -19,9 +19,8 @@ def case_plot_js(chw_id):
                              "total_case_data": total_case_data})
     
 @register.simple_tag
-def formentry_plot_js(clinic_id, user_id):
-    # there has to be a better way to do this
-    data = entrytimes.get_data(clinic_id, user_id)
+def formentry_plot_js(domain, user_id):
+    data = entrytimes.get_data(domain, user_id)
     totals_json, avgs_json = get_sparkline_json(data)
     return render_to_string("reports/partials/formentry_plot.js",
                               {"avgs_data": avgs_json,
