@@ -271,14 +271,14 @@ def submit_time_punchcard(request, domain):
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    return render_to_response(request, "reports/punchcard.html", {
+    return render_to_response(request, "reports/partials/punchcard.html", {
         "chart_url": url,
     })
 
 @login_and_domain_required
 def submit_trends(request, domain):
     individual = request.GET.get("individual", '')
-    return render_to_response(request, "reports/entrytimes.html", 
+    return render_to_response(request, "reports/partials/formtrends.html", 
                               {"domain": domain,
                                "user_id": individual})
 
