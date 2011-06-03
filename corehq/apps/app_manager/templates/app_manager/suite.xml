@@ -38,7 +38,11 @@
         </model>
      {% for d in detail.columns %}
         <field>
+         {% if d.format == "late-flag" %}
+            <header width="0%"><text/></header>
+         {% else %}
             <header><text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text></header>
+         {% endif %}
          {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
@@ -67,7 +71,7 @@
          {% else %}{% ifequal d.format "years-ago" %}
              <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '', string(int((today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})) div 365.25)))"/></text></template>
          {% else %}{% ifequal d.format "late-flag"%}
-             <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '*', if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) &gt; {{ d.late_flag }}, '*', ''))"/></text></template>
+             <template width="10%"><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '*', if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) &gt; {{ d.late_flag }}, '*', ''))"/></text></template>
          {% else %}{% ifequal d.format "phone" %}
              <template form="phone"><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}" /></text></template>
          {% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
