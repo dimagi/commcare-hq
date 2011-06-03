@@ -31,7 +31,7 @@ def mk_xml_sub(userID, caseID, time, last_hvid, next_hvid):
             <case_id>{caseID}</case_id>
         </case>
         <household_verification>{last_hvid}</household_verification>
-        <household_follow_id>{next_hvid}</household_follow_id>
+        <followup_id>{next_hvid}</followup_id>
     </data>""".format(**locals())
 
 get_data = lambda mk_sub: [
