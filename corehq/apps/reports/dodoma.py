@@ -14,7 +14,7 @@ from dimagi.utils.web import render_to_response
 DOMAIN = "dodoma"
 
 def call_as_view(fn, GET, **kwargs):
-    request_kwargs = dict([(str(key), json.loads(val)) for key, val in GET])
+    request_kwargs = dict([(str(key), json.loads(val)) for key, val in GET.items()])
     request_kwargs.update(kwargs)
     return fn(**request_kwargs)
 
