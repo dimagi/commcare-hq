@@ -20,7 +20,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from dimagi.utils.web import get_url_base
-from BeautifulSoup import BeautifulStoneSoup
+
 import json
 from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
@@ -79,7 +79,21 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
 
 @login_and_domain_required
 def get_xform_contents(req, domain, app_id, module_id, form_id):
-    return json_response(get_app(domain, app_id).get_module(module_id).get_form(form_id).contents)
+    download = json.loads(req.GET.get('download', 'false'))
+    app = get_app(domain, app_id)
+    lang = req.COOKIES.get('lang', app.langs[0])
+    form = app.get_module(module_id).get_form(form_id)
+    contents = form.contents
+    if download:
+        response = HttpResponse(contents)
+        response['Content-Type'] = "application/xml"
+        for lc in [lang] + app.langs:
+            if lc in form.name:
+                response["Content-Disposition"] = "attachment; filename=%s.xml" % form.name[lc]
+                break
+        return response
+    else:
+        return json_response(contents)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
