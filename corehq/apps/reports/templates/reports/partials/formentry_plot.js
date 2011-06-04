@@ -19,9 +19,10 @@
             var m_names = new Array("Jan", "Feb", "Mar", 
                                     "Apr", "May", "Jun", "Jul", "Aug", "Sep", 
                                     "Oct", "Nov", "Dec");
-            d = new Date();
+            var d = new Date();
             d.setTime(x);
-            return d.getDate() + " " + m_names[d.getMonth()] + " " + d.getFullYear() + " - total forms: " + dict["count"] + ", average time: " + y + " seconds";
+            var time = (dict["sum"]/dict["count"]) / 1000; 
+            return d.getDate() + " " + m_names[d.getMonth()] + " " + d.getFullYear() + " - total forms: " + dict["count"] + ", average time: " + Math.round(time) + " seconds";
             
         }
         function showTooltip(x, y, contents) {
