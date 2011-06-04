@@ -5,7 +5,7 @@ from dimagi.utils.dates import DateSpan
 def get_data(domain, user=None, datespan=None):
     
     if datespan is None:
-        datespan = DateSpan.since(days=300, format= "%Y-%m-%dT%H:%M:%S")
+        datespan = DateSpan.since(days=30, format= "%Y-%m-%dT%H:%M:%S")
     
     data = defaultdict(lambda: 0)
     startkey = ["u", domain, user, datespan.startdate_param] if user \
@@ -18,7 +18,7 @@ def get_data(domain, user=None, datespan=None):
                          group=True,
                          reduce=True)
     for row in view:
-        _dom, _user, date = row["key"]
+        date = row["key"][-1]
         if not date in data:
             data[date] = defaultdict(lambda: 0)
         thisrow = row["value"]
