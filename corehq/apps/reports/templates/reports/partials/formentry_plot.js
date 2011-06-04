@@ -2,16 +2,16 @@
         var avgs = {{ avgs_data|safe }};
         var tots = {{ totals_data|safe }};
         var extras = {{ chart_extras|safe }};
-        $.plot($("#formentry-plot"), [{data: avgs, label: "average time per form"}, 
-                                   {data: tots, label: "total forms filled", yaxis: 2}], 
+        $.plot($("#formentry-plot"), [{data: avgs, label: "average time per form", 
+                                       lines: { show: true }, points: { show: true }}, 
+                                   {data: tots, label: "total forms filled", yaxis: 2,
+                                        bars: { show: true }, points: { show: true }}], 
                   { xaxis: {mode: "time",
                             minTickSize: [1, "day"]}, 
                     yaxis: {min: 0, tickFormatter: function (v, axis) { return v + " sec" }},
                     y2axis: {min: 0, tickFormatter: function (v, axis) { return v +" forms" }},
                     legend: { position: "nw"}, 
                     grid: { hoverable: true }, 
-                    series: { lines: { show: true },
-                              points: { show: true }}
                    });
 
         function tooltipContents(x, y) {

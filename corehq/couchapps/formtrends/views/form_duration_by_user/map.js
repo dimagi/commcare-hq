@@ -21,7 +21,9 @@ function(doc) {
         var filled_on = get_form_filled_date(doc);
         var duration = get_form_filled_duration(doc);
         if (filled_on && duration) {
-            emit([doc.domain, doc.form.meta.userID, filled_on], duration);
+            var form_date = new Date(filled_on.getFullYear(), filled_on.getMonth(), filled_on.getDate());
+            emit(["d", doc.domain, form_date], duration);
+            emit(["u", doc.domain, doc.form.meta.userID, form_date], duration);
         }
     }
 }

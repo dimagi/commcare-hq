@@ -1,11 +1,17 @@
 from collections import defaultdict
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
 
-def get_data(domain, user=None):
+def get_data(domain, user=None, datespan=None):
+    
+    if datespan is None:
+        datespan = DateSpan.since(days=300, format= "%Y-%m-%dT%H:%M:%S")
     
     data = defaultdict(lambda: 0)
-    startkey = [domain, user] if user else [domain]
-    endkey = [domain, user, {}] if user else [domain, {}]
+    startkey = ["u", domain, user, datespan.startdate_param] if user \
+                else ["d", domain, datespan.startdate_param]
+    endkey = ["u", domain, user, datespan.enddate_param] if user \
+                else ["d", domain, datespan.enddate_param]
     view = get_db().view("formtrends/form_duration_by_user", 
                          startkey=startkey,
                          endkey=endkey,
