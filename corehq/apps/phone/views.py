@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django_digest.decorators import *
 from corehq.apps.phone import xml
 from corehq.apps.users import xml as user_xml
-from corehq.apps.phone.models import SyncLog, PhoneCase
+from corehq.apps.phone.models import SyncLog
 from django.views.decorators.http import require_POST
 from corehq.apps.phone.caselogic import get_open_cases_to_send
 from dimagi.utils.timeout import timeout, TimeoutException

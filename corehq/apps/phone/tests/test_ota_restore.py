@@ -43,64 +43,64 @@ class OtaRestoreTest(TestCase):
         <external_id>5412366523984</external_id>
     </create>
     <update>
-        <muscleweakness></muscleweakness>
-        <tb_lasttreatment></tb_lasttreatment>
-        <surname>SIEGEL</surname>
-        <staffnumber1></staffnumber1>
-        <deafness></deafness>
-        <contact_phone_alt></contact_phone_alt>
-        <sleeping></sleeping>
-        <txoutcome></txoutcome>
-        <abdominalpain></abdominalpain>
-        <staffnumber3></staffnumber3>
-        <staffnumber2></staffnumber2>
-        <arv_taking></arv_taking>
-        <arv_lasttreatment></arv_lasttreatment>
-        <depression></depression>
-        <ringing></ringing>
-        <tingling></tingling>
-        <tribal_area></tribal_area>
-        <short_name>SIEGEL, ROBERT</short_name>
-        <request_name>ME</request_name>
-        <patient_dot>123</patient_dot>
-        <assistance></assistance>
-        <diarrhea></diarrhea>
-        <Problems></Problems>
-        <rash></rash>
-        <other></other>
-        <given_name>ROBERT</given_name>
-        <swelling></swelling>
-        <tbtype></tbtype>
-        <request_reason></request_reason>
-        <imbalance></imbalance>
-        <phone_number>1</phone_number>
-        <seizures></seizures>
-        <allmeds_likert></allmeds_likert>
-        <txstart>2011-02-11</txstart>
-        <request_rank>staff_nurse</request_rank>
-        <confusion></confusion>
-        <injectionother></injectionother>
-        <contact_name_alt></contact_name_alt>
-        <vomiting></vomiting>
-        <tb_missedtreatments></tb_missedtreatments>
-        <jointpain></jointpain>
-        <injectiontype></injectiontype>
-        <address></address>
-        <contact_age_alt></contact_age_alt>
-        <nickname>BOB</nickname>
-        <legal_name>ROBERT SIEGEL</legal_name>
-        <musclepain></musclepain>
-        <addstaff2></addstaff2>
-        <request_timestamp>2011-02-19 16:46:28</request_timestamp>
-        <dob>2011-02-11</dob>
-        <gender>male</gender>
-        <addstaff1></addstaff1>
-        <psychosis></psychosis>
-        <patient_id>5412366523984</patient_id>
-        <place></place>
-        <jaundice></jaundice>
-        <arv_missedtreatments></arv_missedtreatments>
-        <vision></vision>
+       <Problems></Problems>
+       <abdominalpain></abdominalpain>
+       <address></address>
+       <addstaff1></addstaff1>
+       <addstaff2></addstaff2>
+       <allmeds_likert></allmeds_likert>
+       <arv_lasttreatment></arv_lasttreatment>
+       <arv_missedtreatments></arv_missedtreatments>
+       <arv_taking></arv_taking>
+       <assistance></assistance>
+       <confusion></confusion>
+       <contact_age_alt></contact_age_alt>
+       <contact_name_alt></contact_name_alt>
+       <contact_phone_alt></contact_phone_alt>
+       <deafness></deafness>
+       <depression></depression>
+       <diarrhea></diarrhea>
+       <dob>2011-02-11</dob>
+       <gender>male</gender>
+       <given_name>ROBERT</given_name>
+       <imbalance></imbalance>
+       <injectionother></injectionother>
+       <injectiontype></injectiontype>
+       <jaundice></jaundice>
+       <jointpain></jointpain>
+       <legal_name>ROBERT SIEGEL</legal_name>
+       <musclepain></musclepain>
+       <muscleweakness></muscleweakness>
+       <nickname>BOB</nickname>
+       <other></other>
+       <patient_dot>123</patient_dot>
+       <patient_id>5412366523984</patient_id>
+       <phone_number>1</phone_number>
+       <place></place>
+       <psychosis></psychosis>
+       <rash></rash>
+       <request_name>ME</request_name>
+       <request_rank>staff_nurse</request_rank>
+       <request_reason></request_reason>
+       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <ringing></ringing>
+       <seizures></seizures>
+       <short_name>SIEGEL, ROBERT</short_name>
+       <sleeping></sleeping>
+       <staffnumber1></staffnumber1>
+       <staffnumber2></staffnumber2>
+       <staffnumber3></staffnumber3>
+       <surname>SIEGEL</surname>
+       <swelling></swelling>
+       <tb_lasttreatment></tb_lasttreatment>
+       <tb_missedtreatments></tb_missedtreatments>
+       <tbtype></tbtype>
+       <tingling></tingling>
+       <tribal_area></tribal_area>
+       <txoutcome></txoutcome>
+       <txstart>2011-02-11</txstart>
+       <vision></vision>
+       <vomiting></vomiting>
     </update>
     <referral> 
         <referral_id>V2RLNE4VQYEMZRGYSOMLYU4PM</referral_id>

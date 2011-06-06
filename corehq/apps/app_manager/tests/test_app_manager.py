@@ -7,7 +7,8 @@ Replace these with more appropriate tests for your application.
 import os
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn, JadJar
+from corehq.apps.app_manager.models import Application, DetailColumn
+from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.domain.models import Domain
 
 class AppManagerTest(TestCase):
@@ -42,14 +43,15 @@ class AppManagerTest(TestCase):
             self.failUnlessEqual(len(module.forms), 3)
 
     def testCreateJadJar(self):
-        def make_sure_there_is_a_jadjar():
+        def make_sure_there_is_a_build():
             path = os.path.join(os.path.dirname(__file__), "jadjar")
-            jad_path = os.path.join(path, 'CommCare.jad')
-            jar_path = os.path.join(path, 'CommCare.jar')
-            JadJar.new(open(jad_path), open(jar_path))
-        make_sure_there_is_a_jadjar()
+            version = "1.2.dev"
+            build_number = "7106"
+            jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
+            CommCareBuild.create_from_zip(jad_path, version, build_number)
+        make_sure_there_is_a_build()
         # make sure this doesn't raise an error
-        self.app.create_jad()
+        self.create_jadjar()
 
     def testDeleteForm(self):
         self.app.delete_form(0,0)
