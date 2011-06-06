@@ -29,7 +29,7 @@ domain_specific = patterns('',
     (r'^', include(hqwebapp_domain_specific)),
     (r'^', include('django_user_registration.urls')),
     (r'^help/', include('corehq.apps.help.urls')),
-    (r'^case/', include('corehq.apps.case.urls')),
+    (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^cleanup/', include('corehq.apps.cleanup.urls')),
 )
 

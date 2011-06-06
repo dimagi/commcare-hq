@@ -34,3 +34,6 @@
 [submodule "submodules/langcodes"]
 	path = submodules/langcodes
 	url = git://github.com/dimagi/langcodes.git
+[submodule "submodules/casexml-src"]
+	path = submodules/casexml-src
+	url = git://github.com/dimagi/casexml.git
