@@ -13,6 +13,7 @@ def submit_build(environ):
 
     command =  (
         'curl -v '
+        '-H "Expect:" '
         '-F "artifacts=@{artifacts}" '
         '-F "username={username}" '
         '-F "password={password}" '
