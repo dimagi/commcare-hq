@@ -12,11 +12,7 @@ class UserForm(forms.Form):
     first_name = forms.CharField(max_length=50)
     last_name = forms.CharField(max_length=50)
     email = forms.EmailField(label=_("E-mail"), max_length=75)
-    role = forms.ChoiceField(choices=(
-        ('admin', 'Admin (can do anything)'),
-        ('edit-apps', 'App Editor'),
-        ('read-only', 'Read Only')
-    ))
+    role = forms.ChoiceField(choices=CouchUser.ROLE_LABELS)
     
     class Meta:
         app_label = 'users'

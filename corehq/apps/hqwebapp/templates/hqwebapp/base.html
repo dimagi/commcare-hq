@@ -90,6 +90,9 @@
                                 to <strong>{{ domain }}</strong>
                             {% endif %}
                             as <strong>{{ user.username }}</strong>
+                            {% if domain %}
+                                ({{ request.couch_user.role_label }})
+                            {% endif %}
                              | <a href='/accounts/logout'>Sign Out</a>
                             </p>
                         </div>
