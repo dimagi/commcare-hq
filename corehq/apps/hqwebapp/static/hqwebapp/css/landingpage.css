@@ -63,6 +63,12 @@ img {
 	margin: 1em -1em auto .8em;
 }
 
+.attention {
+    font-size: 120%;
+    font-family: "helvetica neue", helvetica, arial, sans-serif;
+    line-height: 2em;
+}
+
 /* HT: https://github.com/ubuwaits/css3-buttons/tree/gh-pages/css */
 
 button.try {
@@ -87,7 +93,7 @@ button.try {
   text-shadow: 0 -1px 1px #000f4d;
   width: 150px;
   float: right;
-  margin: 0 1.5em 1em 0; 
+  margin: 0 1.5em 1em 1.5em; 
 }
 
 button.try:hover {

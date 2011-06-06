@@ -14,7 +14,7 @@ from dimagi.utils.web import render_to_response
 DOMAIN = "dodoma"
 
 def call_as_view(fn, GET, **kwargs):
-    request_kwargs = dict([(str(key), json.loads(val)) for key, val in GET])
+    request_kwargs = dict([(str(key), json.loads(val)) for key, val in GET.items()])
     request_kwargs.update(kwargs)
     return fn(**request_kwargs)
 
@@ -43,7 +43,7 @@ def household_verification_json(request, domain):
 def _household_verification_json(
     domain="dodoma",
     last_hvid_path=["household_verification"],
-    next_hvid_path=["household_follow_id"],
+    next_hvid_path=["followup_id"],
     xmlns='http://openrosa.org/formdesigner/9DAACA82-A414-499A-9C40-BC43775CEE79',
     range=None
 ):

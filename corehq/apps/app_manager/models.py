@@ -11,6 +11,7 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namesp
 from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
+import current_builds
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
@@ -20,6 +21,8 @@ from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
+import langcodes
+import util
 
 
 import random
@@ -499,11 +502,23 @@ class ApplicationBase(VersionedDoc):
     """
 
     recipients = StringProperty(default="")
-    # commcare_build is of the form "{version}/{build_number}"
-    commcare_build = StringProperty(default="1.1.1/9010")
+    # is a tag like "1.1" that we use to look up the latest build of that type
+    commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
+    # built_with stores a record of CommCare build used; is of the form "{version}/{build_number}"
+    built_with = StringProperty()
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
     built_on = DateTimeProperty(required=False)
+
+    def get_commcare_build(self):
+        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
+        return CommCareBuild.get_build(version, build_number)
+
+    def commcare_tag_label(self):
+        """This is a helper to look up a human readable name for a build tag"""
+        for option in current_builds.MENU_OPTIONS:
+            if option['tag'] == self.commcare_tag:
+                return option['label']
 
     @property
     def post_url(self):
@@ -533,12 +548,11 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     def get_jadjar(self):
-        version, build_number = self.commcare_build.split('/')
         spec = {
             (True,): 'Nokia/S40-native-input',
             (False,): 'Nokia/S40-generic',
         }[(self.native_input,)]
-        return CommCareBuild.get_build(version, int(build_number)).get_jadjar(spec)
+        return self.get_commcare_build().get_jadjar(spec)
 
     def create_jadjar(self):
         try:
@@ -554,13 +568,14 @@ class ApplicationBase(VersionedDoc):
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
-            jad = jadjar.jad
-            jar = jadjar.jar
-            self.put_attachment(jad, 'CommCare.jad')
-            self.put_attachment(jar, 'CommCare.jar')
+            self.put_attachment(jadjar.jad, 'CommCare.jad')
+            self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
+            self.built_with = "%s/%s" % (jadjar.version, jadjar.build_number)
+            if 'commcare_build' in self:
+                del self['commcare_build']
             self.save(increment_version=False)
-            return jad, jar
+            return jadjar.jad, jadjar.jar
 
 #    def create_jad(self):
 #        try:
@@ -648,7 +663,8 @@ class ApplicationBase(VersionedDoc):
         return self.get_jadjar().fetch_jar()
 
     def fetch_emulator_commcare_jar(self):
-        jadjar = CommCareBuild.get_build("1.2.dev", 7106).get_jadjar("Generic/WebDemo")
+        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
+        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
@@ -694,16 +710,26 @@ class Application(ApplicationBase):
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
         # traverse languages in order of priority to find a non-empty commcare-translation
+        messages = {}
+        # include language code names
+        for lc in self.langs:
+            name = langcodes.get_name(lc)
+            if name:
+                messages[lc] = name
+                
         for l in [lang] + self.langs:
-            messages = commcare_translations.load_translations(l)
-            if messages: break
+            cc_trans = commcare_translations.load_translations(l)
+            if cc_trans:
+                messages.update(cc_trans)
+                break
         
         custom = render_to_string(template, {
             'app': self,
             'langs': [lang] + self.langs,
         })
-
         custom = commcare_translations.loads(custom)
+
+
         messages.update(custom)
         return commcare_translations.dumps(messages)
     

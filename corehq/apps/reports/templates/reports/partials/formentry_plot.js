@@ -1,31 +1,49 @@
     $(function () {
-        var avgs = {{ avgs_data|safe }};
-        var tots = {{ totals_data|safe }};
-        var extras = {{ chart_extras|safe }};
-        $.plot($("#formentry-plot"), [{data: avgs, label: "average time per form"}, 
-                                   {data: tots, label: "total forms filled", yaxis: 2}], 
-                  { xaxis: {mode: "time",
-                            minTickSize: [1, "day"]}, 
+        var datasets = {{ plot_data|safe }};
+        
+        // hard-code color indices to prevent them from shifting as
+        // countries are turned on/off
+        var i = 0;
+        $.each(datasets, function(key, val) {
+            val.totals.color = i;
+            val.averages.color = i;
+            ++i;
+        });
+        // insert checkboxes 
+	    var choiceContainer = $("#choices");
+	    $.each(datasets, function(key, val) {
+	        choiceContainer.append('<br/><input type="checkbox" name="' + key +
+	                               '" checked="checked" id="id' + key + '">' +
+	                               '<label for="id' + key + '">'
+	                                + key + '</label>');
+	    });
+	    choiceContainer.find("input").click(plotAccordingToChoices);
+	 
+        function plotAccordingToChoices() {
+	        var data = [];
+	 
+	        choiceContainer.find("input:checked").each(function () {
+	            var key = $(this).attr("name");
+	            if (key && datasets[key])
+	                data.push(datasets[key].totals);
+	                data.push(datasets[key].averages);
+	        });
+	        
+	        if (data.length > 0)
+	            $.plot($("#formentry-plot"), data, 
+                      { xaxis: {mode: "time",
+                                minTickSize: [1, "day"]}, 
                     yaxis: {min: 0, tickFormatter: function (v, axis) { return v + " sec" }},
                     y2axis: {min: 0, tickFormatter: function (v, axis) { return v +" forms" }},
-                    legend: { position: "nw"}, 
+                    legend: { show: true, container: "#trendlegend"}, 
                     grid: { hoverable: true }, 
-                    series: { lines: { show: true },
-                              points: { show: true }}
                    });
 
-        function tooltipContents(x, y) {
-            dict = extras[x];
-            var m_names = new Array("Jan", "Feb", "Mar", 
-                                    "Apr", "May", "Jun", "Jul", "Aug", "Sep", 
-                                    "Oct", "Nov", "Dec");
-            d = new Date();
-            d.setTime(x);
-            return d.getDate() + " " + m_names[d.getMonth()] + " " + d.getFullYear() + " - total forms: " + dict["count"] + ", average time: " + y + " seconds";
-            
+        }
+        function tooltipContents(item) {
+            return item.series.label;
         }
         function showTooltip(x, y, contents) {
-          
             $('<div id="tooltip">' + contents + '</div>').css( {
                 position: 'absolute',
                 display: 'none',
@@ -50,8 +68,7 @@
                     var x = item.datapoint[0].toFixed(2),
                         y = item.datapoint[1].toFixed(2);
                     showTooltip(item.pageX, item.pageY,
-                                // tooltipContents(x, y));
-                                tooltipContents(item.datapoint[0], y));
+                                tooltipContents(item));
                 }
             }
             else {
@@ -59,4 +76,5 @@
                 previousPoint = null;            
             }
         });
+        plotAccordingToChoices();
     });

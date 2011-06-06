@@ -3,9 +3,19 @@
 {% block head %}
     {{block.super}}
     <link rel="stylesheet" href="{{ STATIC_URL }}couchforms/stylesheets/xforms.css" />
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+    <style>
+    body .syntaxhighlighter .line {
+            white-space: pre-wrap !important; /* make code wrap */
+    }
+    </style>
     <script>
     $(function() {
         $("#xformtabs").tabs();
+        $("#formxml").addClass("brush: xml;");
+        SyntaxHighlighter.all({toolbar: false, "wrap-lines": true});
     });
     </script>
 {% endblock %}
@@ -20,6 +30,7 @@
 </div>
 <div title="Download" id="raw_xml">
     <a href="{% url download_form domain instance.get_id %}" target="_blank">show in new window</a>
+    <p>Double-click to select all.</p>
     {% render_form_xml instance %}
 </div>
 {% endblock %}

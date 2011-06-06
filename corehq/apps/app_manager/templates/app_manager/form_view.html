@@ -16,6 +16,10 @@
     <script src="{{ STATIC_URL }}app_manager/js/casexml.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier.js"></script>
 
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+
     <script>
         $(function(){
             (function doStyling() {
@@ -39,6 +43,16 @@
                     $("#editXFormTD").css({backgroundColor: "yellow"}).
                             find('form input[type="submit"]').button('disable');
                 }
+            }());
+            (function configXFormSourceAjax(){
+                $("#xform-source-opener").click(function (){
+                    $("#xform-source").text("Loading...");
+                    $.get($(this).attr('href'), function (data) {
+                        brush = new SyntaxHighlighter.brushes.Xml();
+                        brush.init({ toolbar: false });
+                        $("#xform-source").html(brush.getDiv(data));
+                    }, 'json');
+                });
             }());
             var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
@@ -147,10 +161,17 @@
                 </td>
                 <td>
                     or
-                    <a class="dialog_opener" href="#">View Source XML</a>
+                    <a id="xform-source-opener" class="dialog_opener"
+                       href="{% url get_xform_contents domain app.id module.id form.id %}">
+                        View Source XML
+                    </a>
                     <div class="xml-source dialog" title="XML Source">
-                        <pre>{{ form.contents }}</pre>
+                        Double-click to select all.
+                        <pre id="xform-source" class="brush: xml;"></pre>
                     </div>
+                </td>
+                <td>
+                    or <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
                 </td>
             </tr>
             <tr>

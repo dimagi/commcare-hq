@@ -2,7 +2,8 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
-from dimagi.utils.web import render_to_response
+import current_builds
+from dimagi.utils.web import render_to_response, json_response
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
@@ -19,7 +20,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from dimagi.utils.web import get_url_base
-from BeautifulSoup import BeautifulStoneSoup
+
 import json
 from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
@@ -76,6 +77,23 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         "?%s" % urlencode(params) if params else ""
     ))
 
+@login_and_domain_required
+def get_xform_contents(req, domain, app_id, module_id, form_id):
+    download = json.loads(req.GET.get('download', 'false'))
+    app = get_app(domain, app_id)
+    lang = req.COOKIES.get('lang', app.langs[0])
+    form = app.get_module(module_id).get_form(form_id)
+    contents = form.contents
+    if download:
+        response = HttpResponse(contents)
+        response['Content-Type'] = "application/xml"
+        for lc in [lang] + app.langs:
+            if lc in form.name:
+                response["Content-Disposition"] = "attachment; filename=%s.xml" % form.name[lc]
+                break
+        return response
+    else:
+        return json_response(contents)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -181,13 +199,13 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     if form_id:
         form = module.get_form(form_id)
     xform = ""
-    xform_contents = ""
+    #xform_contents = ""
     try:
         xform = form
     except:
         pass
-    if xform:
-        xform_contents = form.contents
+#    if xform:
+#        xform_contents = form.contents
 
 
     if app and 'use_commcare_sense' in app:
@@ -381,6 +399,10 @@ def view_app(req, domain, app_id=''):
         'error':error,
         'app': app,
     })
+    if app:
+        context.update({
+            "commcare_tag_options": current_builds.MENU_OPTIONS
+        })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -709,13 +731,19 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "native_input" == attr:
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
+    elif "commcare_tag" == attr:
+        commcare_tag = req.POST['commcare_tag']
+        if commcare_tag in current_builds.TAG_MAP:
+            app.commcare_tag = commcare_tag
+        else:
+            return HttpResponseBadRequest()
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
     else:
-        raise Http404
+        return HttpResponseBadRequest()
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 

@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db
 from djangocouchuser.models import CouchUserProfile
@@ -392,23 +392,63 @@ class CouchUser(Document, UnicodeMixIn):
         else:
             return permission in dm.permissions
 
+    def get_role(self, domain=None):
+        """
+        Expose a simplified role-based understanding of permissions
+        which maps to actual underlying permissions
+
+        """
+        if domain is None:
+            # default to current_domain for django templates
+            domain = self.current_domain
+        if self.is_domain_admin(domain):
+            role = 'admin'
+        elif self.can_edit_apps(domain):
+            role = "edit-apps"
+        else:
+            role = "read-only"
+
+        return role
+
+    def set_role(self, domain, role):
+        """
+        A simplified role-based way to set permissions
+
+        """
+        dm = self.get_domain_membership(domain)
+        dm.is_admin = False
+        if role == "admin":
+            dm.is_admin = True
+        elif role == "edit-apps":
+            self.reset_permissions(domain, [Permissions.EDIT_APPS])
+        elif role == "read-only":
+            self.reset_permissions(domain, [])
+        else:
+            raise KeyError()
+
+    ROLE_LABELS = (
+        ('admin', 'Admin'),
+        ('edit-apps', 'App Editor'),
+        ('read-only', 'Read Only')
+    )
+    def role_label(self, domain=None):
+        return dict(self.ROLE_LABELS)[self.get_role(domain)]
     # these functions help in templates
     def can_edit_apps(self, domain):
         return self.has_permission(domain, Permissions.EDIT_APPS)
     def can_edit_users(self, domain):
         return self.has_permission(domain, Permissions.EDIT_USERS)
 
-
+# this is a permissions decorator
 def require_permission(permission):
     def decorator(view_func):
         def _inner(request, domain, *args, **kwargs):
             if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.has_permission(domain, permission)):
                 return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
             else:
-                raise Http404()
+                return HttpResponseForbidden()
         return _inner
     return decorator
-
 
 
 """

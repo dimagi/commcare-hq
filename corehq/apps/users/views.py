@@ -18,7 +18,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
 from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount,\
-    Invitation, Permissions
+    Invitation, Permissions, require_permission
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
@@ -43,13 +43,7 @@ def require_permission_to_edit_user(view_func):
             raise Http404()
     return _inner
 
-def require_can_edit_users(view_func):
-    def _inner(request, domain, *args, **kwargs):
-        if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.can_edit_users(domain)):
-            return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
-        else:
-            raise Http404()
-    return _inner
+require_can_edit_users = require_permission('edit-users')
 
 def _users_context(request, domain):
     couch_user = request.couch_user
@@ -193,9 +187,9 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         if re.match(r'\d+', phone_number):
             couch_user.add_phone_number(phone_number)
             couch_user.save()
-            #context['status'] = 'phone number added'
+            #messages.success(request, 'Phone number added')
         else:
-            context['status'] = "please enter digits only"
+            messages.error(request, "Please enter digits only")
 
 
     # commcare-accounts tab
@@ -280,7 +274,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         domain = request.POST['domain']
         couch_user.add_domain_membership(domain)
         couch_user.save()
-        #context['status'] = 'domain added'
+        messages.success(request,'Domain added')
     my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
     context.update({"user": request.user,
@@ -374,17 +368,10 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.last_name = form.cleaned_data['last_name']
             couch_user.email = form.cleaned_data['email']
             if can_change_admin_status:
-                dm = couch_user.get_domain_membership(domain)
                 role = form.cleaned_data['role']
-                dm.is_admin = False
-                if role == "admin":
-                    dm.is_admin = True
-                elif role == "edit-apps":
-                    couch_user.reset_permissions(domain, [Permissions.EDIT_APPS])
-                else:
-                    couch_user.reset_permissions(domain, [])
+                couch_user.set_role(domain, role)
             couch_user.save()
-            context['status'] = 'changes saved'
+            messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
         form = UserForm()
         if not create_user:
@@ -393,12 +380,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['email'] = couch_user.email
 
             if can_change_admin_status:
-                if couch_user.is_domain_admin(domain):
-                    form.initial['role'] = 'admin'
-                elif couch_user.can_edit_apps(domain):
-                    form.initial['role'] = "edit-apps"
-                else:
-                    form.initial['role'] = "read-only"
+                form.initial['role'] = couch_user.get_role(domain)
             else:
                 del form.fields['role']
 
@@ -519,7 +501,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
         group = request.POST['group']
         group.add_user(couch_user)
         group.save()
-        #context['status'] = '%s joined group %s' % (couch_user._id, group.name)
+        #messages.success(request, '%s joined group %s' % (couch_user.username, group.name))
     my_groups = Group.view("groups/by_user", key=couch_user_id).all()
     all_groups = Group.view("groups/by_domain", key=domain).all()
     other_groups = []

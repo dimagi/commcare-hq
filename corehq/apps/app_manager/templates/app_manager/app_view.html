@@ -230,6 +230,22 @@
         <h4>Build Settings</h4>
         <table class="config">
             <tr>
+                <th>CommCare Version</th>
+                <td>
+                    {% if edit %}
+                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'commcare_tag' %}">
+                            <select name="commcare_tag" class="autosave" data-value="{{ app.commcare_tag }}">
+                                {% for option in commcare_tag_options %}
+                                    <option value="{{ option.tag }}">{{ option.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    {% else %}
+                        {{ app.commcare_tag_label }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
                 <th>Text Input</th>
                 <td>
                     {% if edit %}

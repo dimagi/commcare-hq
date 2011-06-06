@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.test.testcases import TestCase
 from corehq.apps.receiverwrapper.util import get_submit_url
-from corehq.apps.reports.views import _relevant_form_types, _submissions_by_form_json
+from corehq.apps.reports.views import _relevant_form_types, submissions_by_form_json
 from receiver.util import spoof_submission
 
 def mk_xml_sub(userID, time, xmlns):
@@ -35,7 +35,7 @@ class SubmissionsByFormTest(TestCase):
         )
     def test__submissions_by_form_json(self):
         self.failUnlessEqual(
-            _submissions_by_form_json(
+            submissions_by_form_json(
                 DOMAIN,
                 end=datetime(2011, 05, 24)
             ),

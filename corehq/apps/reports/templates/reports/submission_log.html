@@ -12,6 +12,8 @@
         <ul>
             <li><a href="{% url submit_history_report domain %}?individual={{ individual }}&show_unregistered={{ show_unregistered }}">Submit History</a></li>
             <li><a href="{% url submit_time_punchcard domain %}?individual={{ individual }}">Submit Times</a></li>
+            <li><a href="{% url submit_trends domain %}?individual={{ individual }}">Submit Trends</a></li>
+            <li><a href="{% url submit_distribution domain %}?individual={{ individual }}">Submit Distribution</a></li>
         </ul>
     </div>
 {% endblock %}
