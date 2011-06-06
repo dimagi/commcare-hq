@@ -327,4 +327,8 @@ class CommCareCase(CaseBase):
             submission = get_close_referral_xml(time=datetime.utcnow(), case_id=self._id, referral_id=referral.referral_id, referral_type=referral.type)
             spoof_submission(submit_url, submission, name="close_referral.xml")
 
+    def dynamic_case_properties(self):
+        """(key, value) tuples sorted by key"""
+        return sorted(self.dynamic_properties().items())
+
 import casexml.apps.case.signals
