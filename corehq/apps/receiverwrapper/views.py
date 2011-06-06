@@ -1,6 +1,6 @@
 import logging
 from django.http import HttpResponse
-from corehq.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from couchforms.views import post as couchforms_post
 import receiver.views as rec_views
 from django.views.decorators.http import require_POST

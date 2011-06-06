@@ -1,7 +1,8 @@
 from datetime import datetime
 from django.test.testcases import TestCase
-from corehq.apps.receiverwrapper.util import spoof_submission
+from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.reports.views import _relevant_form_types, submissions_by_form_json
+from receiver.util import spoof_submission
 
 def mk_xml_sub(userID, time, xmlns):
     return (time, """<data xmlns="{xmlns}">
@@ -24,7 +25,7 @@ class SubmissionsByFormTest(TestCase):
     def setUp(self):
         subs = get_data(mk_xml_sub)
         for time, xml in subs:
-            spoof_submission(DOMAIN, xml, hqsubmission=False, headers={
+            spoof_submission(get_submit_url(DOMAIN), xml, hqsubmission=False, headers={
                 "HTTP_X_SUBMIT_TIME": time
             })
     def test_relevant_form_types(self):

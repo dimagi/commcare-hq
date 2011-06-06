@@ -3,13 +3,14 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 import json
 from django.views.decorators.http import require_POST
-from corehq.apps.case.models.couch import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.models import CommCareAccount, require_permission, Permissions
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response, json_request, json_response
+from corehq.apps.receiverwrapper.util import get_submit_url
 
 require_can_cleanup = require_permission(Permissions.EDIT_DATA)
 
@@ -164,7 +165,7 @@ def cases_json(request, domain):
 #            cases = _get_cases(_get_submissions(domain, [sub]))
 #            sub['cases'] = len([None for case in cases if not case.closed])
 
-        open_cases = CommCareCase.view('case/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
+        open_cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
         xform_ids = [case.xform_ids[0] for case in open_cases]
         case_count = defaultdict(int)
         for xform_id in xform_ids:
@@ -188,8 +189,8 @@ def close_cases(request, domain):
     def actually_close_cases(cases):
         for case in cases:
             for referral in case.referrals:
-                case.force_close_referral(referral)
-            case.force_close()
+                case.force_close_referral(get_submit_url(domain), referral)
+            case.force_close(get_submit_url(domain))
     xforms = _get_submissions(domain, keys)
     cases = _get_cases(xforms)
     actually_close_cases(cases)

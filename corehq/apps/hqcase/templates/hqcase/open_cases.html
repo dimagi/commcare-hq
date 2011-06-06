@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <script src="{{ STATIC_URL }}hqwebapp/js/jsonreport.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+        <script>
+            $(function(){
+                $.get('{% url corehq.apps.hqcase.views.open_cases_json domain %}', function(data){
+                    var report = _.jsonreport(data);
+                    $("#case_report").html(report);
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="case_report" class="jsonreport">
+            Loading...
+        </div>
+    </body>
+</html>

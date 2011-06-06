@@ -6,9 +6,9 @@ from corehq.apps.builds.jadjar import JadJar
 
 class CommCareBuild(Document):
     """
-    python manage.py shell
-    >>> from corehq.apps.builds.models import CommCareBuild
-    >>> CommCareBuild.create_from_zip('/Users/droberts/Desktop/zip/7106.zip', 7106)
+    #python manage.py shell
+    #>>> from corehq.apps.builds.models import CommCareBuild
+    #>>> build = CommCareBuild.create_from_zip('/Users/droberts/Desktop/zip/7106.zip', '1.2.dev', 7106)
 
     """
 
@@ -53,7 +53,7 @@ class CommCareBuild(Document):
         )
 
     @classmethod
-    def create_from_zip(cls, f, build_number, version):
+    def create_from_zip(cls, f, version, build_number):
         """f should be a file-like object or a path to a zipfile"""
         self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()

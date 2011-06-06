@@ -238,7 +238,7 @@ def get_active_cases_json(domain, days=31, **kwargs):
         return r['value'] if r else 0
 
     def get_open_cases(userID):
-        open_cases = get_db().view('case/open_cases', key=[domain, userID], group=True).one()
+        open_cases = get_db().view('hqcase/open_cases', key=[domain, userID], group=True).one()
         open_cases = open_cases['value'] if open_cases else 0
         return open_cases
 

@@ -18,11 +18,8 @@ from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
 import hashlib
 from django.template.loader import render_to_string
-from zipfile import ZipFile, ZIP_DEFLATED
-from StringIO import StringIO
 from urllib2 import urlopen
 from urlparse import urljoin
-from corehq.apps.builds.jadjar import JadDict, sign_jar
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
 import util
@@ -31,9 +28,7 @@ import util
 import random
 from dimagi.utils.couch.database import get_db
 import json
-from lxml import etree as ET
 from couchdbkit.resource import ResourceNotFound
-from tempfile import NamedTemporaryFile
 import tempfile
 import os
 from utilities.profile import profile as profile_decorator
@@ -59,40 +54,6 @@ def _rename_key(dct, old, new):
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
-
-class JadJar(Document):
-    """
-    Has no properties except two attachments: CommCare.jad and CommCare.jar
-    Meant for saving the jad and jar exactly as they come from the build server.
-
-    """
-    @property
-    def hash(self):
-        return self._id
-    @classmethod
-    def new(cls, jad, jar):
-        try: jad = jad.read()
-        except: pass
-        try: jar = jar.read()
-        except: pass
-        hash = hashlib.sha1()
-        hash.update(jad)
-        hash.update(jar)
-        hash = hash.hexdigest()
-        try:
-            jadjar = cls.get(hash)
-        except:
-            jadjar = cls(_id=hash)
-            jadjar.save()
-            jadjar.put_attachment(jad, 'CommCare.jad', 'text/vnd.sun.j2me.app-descriptor')
-            jadjar.put_attachment(jar, 'CommCare.jar', 'application/java-archive')
-        return jadjar
-    def fetch_jad(self):
-        return self.fetch_attachment('CommCare.jad')
-    def fetch_jar(self):
-        return self.fetch_attachment('CommCare.jar')
-    def jad_dict(self):
-        return JadDict.from_jad(self.fetch_jad())
     
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):

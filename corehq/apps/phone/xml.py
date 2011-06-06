@@ -120,7 +120,7 @@ def get_case_xml(phone_case, create=True):
         update_base_data = base_data
     
     update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": val} \
-                                    for key, val in phone_case.dynamic_properties().items()])
+                                    for key, val in phone_case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
     referral_block = "".join([get_referral_xml(ref) for ref in phone_case.referrals])

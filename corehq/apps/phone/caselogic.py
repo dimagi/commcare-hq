@@ -2,7 +2,7 @@
 Logic about chws phones and cases go here.
 """
 from couchdbkit.consumer import Consumer
-from corehq.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase
 import logging
 
 def case_previously_synced(case_id, last_sync):
