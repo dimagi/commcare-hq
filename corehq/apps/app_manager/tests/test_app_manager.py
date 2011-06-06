@@ -46,12 +46,13 @@ class AppManagerTest(TestCase):
         def make_sure_there_is_a_build():
             path = os.path.join(os.path.dirname(__file__), "jadjar")
             version = "1.2.dev"
-            build_number = "7106"
+            build_number = 7106
             jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
             CommCareBuild.create_from_zip(jad_path, version, build_number)
         make_sure_there_is_a_build()
         # make sure this doesn't raise an error
-        self.create_jadjar()
+        self.app.commcare_tag = "1.2"
+        self.app.create_jadjar()
 
     def testDeleteForm(self):
         self.app.delete_form(0,0)
