@@ -12,7 +12,7 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from auditcare import models
-from auditcare.models import AccessAudit
+from auditcare.models import AccessAudit, couchmodels
 
 import logging
 
