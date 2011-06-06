@@ -1,13 +1,14 @@
 from collections import defaultdict
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
+from corehq.apps.reports.views import xmlns_to_name
 
 def get_data(domain, user=None, datespan=None):
     
     if datespan is None:
-        datespan = DateSpan.since(days=30, format= "%Y-%m-%dT%H:%M:%S")
+        datespan = DateSpan.since(days=30, format="%Y-%m-%dT%H:%M:%S")
     
-    data = defaultdict(lambda: 0)
+    all_data = defaultdict(lambda: defaultdict(lambda: 0))
     startkey = ["u", domain, user, datespan.startdate_param] if user \
                 else ["d", domain, datespan.startdate_param]
     endkey = ["u", domain, user, datespan.enddate_param] if user \
@@ -18,10 +19,13 @@ def get_data(domain, user=None, datespan=None):
                          group=True,
                          reduce=True)
     for row in view:
-        date = row["key"][-1]
+        date = row["key"][-2]
+        xmlns = row["key"][-1]
+        form_name = xmlns_to_name(xmlns, domain)
+        data = all_data[form_name]
         if not date in data:
             data[date] = defaultdict(lambda: 0)
         thisrow = row["value"]
         for key, val in thisrow.items():
             data[date][key] = data[date][key] + thisrow[key]
-    return data
+    return all_data

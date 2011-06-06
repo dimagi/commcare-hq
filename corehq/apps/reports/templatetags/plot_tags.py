@@ -1,10 +1,10 @@
 from django import template
 from django.template.loader import render_to_string
-from corehq.apps.reports.flot import get_cumulative_counts, get_sparkline_json,\
-    get_sparkline_extras
+from corehq.apps.reports.flot import get_cumulative_counts, get_sparkline_totals
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.calc import entrytimes
+import json
 
 register = template.Library()
 
@@ -21,9 +21,22 @@ def case_plot_js(chw_id):
 @register.simple_tag
 def formentry_plot_js(domain, user_id):
     data = entrytimes.get_data(domain, user_id)
-    totals_json, avgs_json = get_sparkline_json(data)
+    totals, avgs = get_sparkline_totals(data)
+    
+    def _tot_to_flot(k, v):
+        return {"label": "%s (total)" % k, "data": v, 
+                "bars": { "show": True }, "points": { "show": True }}
+    
+    def _avg_to_flot(k, v):
+        return {"label": "%s (average time)" % k, "data": v, "yaxis": 2,
+                "lines": { "show": True }, "points": { "show": True }}
+    
+    plots = dict((k, {"totals": _tot_to_flot(k,v)}) for k, v in totals.items())
+    for k, v in avgs.items():
+        plots[k]["averages"] = _avg_to_flot(k,v)
+    
     return render_to_string("reports/partials/formentry_plot.js",
-                              {"avgs_data": avgs_json,
-                               "totals_data": totals_json,
-                               "chart_extras": get_sparkline_extras(data)})
+                            {"plot_data": json.dumps(plots)}) 
+                               
+
 
