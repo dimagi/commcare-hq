@@ -66,6 +66,7 @@ img {
 .attention {
     font-size: 120%;
     font-family: "helvetica neue", helvetica, arial, sans-serif;
+    line-height: 2em;
 }
 
 /* HT: https://github.com/ubuwaits/css3-buttons/tree/gh-pages/css */

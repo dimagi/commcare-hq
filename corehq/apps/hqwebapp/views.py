@@ -39,9 +39,8 @@ def not_found(request, template_name='404.html'):
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
-        url = reverse('corehq.apps.hqwebapp.views.login')
         #when we want to go live, replace this
-        #url = reverse('corehq.apps.hqwebapp.views.landing_page')
+        url = reverse('corehq.apps.hqwebapp.views.landing_page')
     else:
         if domain:
             domains = Domain.objects.filter(name=domain)
