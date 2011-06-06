@@ -25,7 +25,7 @@ def formentry_plot_js(domain, user_id):
     
     def _tot_to_flot(k, v):
         return {"label": "%s (total)" % k, "data": v, 
-                "bars": { "show": True }, "points": { "show": True }}
+                "points": { "show": True }}
     
     def _avg_to_flot(k, v):
         return {"label": "%s (average time)" % k, "data": v, "yaxis": 2,

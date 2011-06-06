@@ -32,7 +32,7 @@
 	        if (data.length > 0)
 	            $.plot($("#formentry-plot"), data, 
                       { xaxis: {mode: "time",
-                            minTickSize: [1, "day"]}, 
+                                minTickSize: [1, "day"]}, 
                     yaxis: {min: 0, tickFormatter: function (v, axis) { return v + " sec" }},
                     y2axis: {min: 0, tickFormatter: function (v, axis) { return v +" forms" }},
                     legend: { show: true, container: "#trendlegend"}, 
