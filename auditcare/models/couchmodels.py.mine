@@ -274,15 +274,9 @@ class AccessAudit(AuditEvent):
         '''
         audit = cls.create_audit(cls, user)
         audit.ip_address = utils.get_ip(request)
-        ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
-        audit.http_accept=request.META.get('HTTP_ACCEPT', '<unknown>')
-        audit.path_info=request.META.get('PATH_INFO', '<unknown>')
-        audit.user_agent=ua
         audit.access_type = 'login'
         audit.description = "Login Success"
         audit.session_key = request.session.session_key
-        audit.get_data=[] #[query2str(request.GET.items())]
-        audit.post_data=[]
         audit.save()
 
     @classmethod
