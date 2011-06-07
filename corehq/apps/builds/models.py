@@ -61,7 +61,7 @@ class CommCareBuild(Document):
             z = ZipFile(f)
             for name in z.namelist():
                 path = name.split('/')
-                if path[0] == "dist":
+                if path[0] == "dist" and path[-1] != "":
                     path = '/'.join(path[1:])
                     self.put_file(z.read(name), path)
         except:
