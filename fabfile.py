@@ -53,6 +53,7 @@ def deploy():
         sudo('git submodule init', user=env.sudo_user)
         sudo('git submodule update', user=env.sudo_user)
         with enter_virtualenv():
+            sudo('pip install -r requirements.txt')
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)

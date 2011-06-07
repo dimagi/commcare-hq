@@ -12,3 +12,4 @@ django-staticfiles
 django-celery
 django-kombu
 openpyxl
+unidecode
