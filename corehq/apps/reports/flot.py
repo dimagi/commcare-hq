@@ -16,8 +16,6 @@ def get_sparkline_totals(data):
     all_avgs = {}
     all_tots = {}
     for key, val in data.items():
-        print key
-        print val
         a, t = get_sparkline_series(val)
         all_avgs[key] = a
         all_tots[key] = t
