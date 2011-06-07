@@ -278,6 +278,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
             app.fetch_xform(module_id, form_id)
     except CaseError, e:
         messages.error(req, "Error in Case Management: %s" % e)
+    except XFormValidationError, e:
+        messages.error(req, "%s" % e)
     except Exception, e:
         if settings.DEBUG:
             raise
