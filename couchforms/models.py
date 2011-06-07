@@ -168,3 +168,16 @@ class XFormDuplicate(XFormError):
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
 
+class XFormDeprecated(XFormError):
+    """
+    After an edit, the old versions go here.
+    """
+    
+    def save(self, *args, **kwargs):
+        # we put this here, in case the doc hasn't been modified from an original 
+        # XFormInstance we'll force the doc_type to change. 
+        self["doc_type"] = "XFormDeprecated" 
+        # we can't use super because XFormError also sets the doc type
+        XFormInstance.save(self, *args, **kwargs)
+        # should raise a signal saying that this thing got deprecated
+

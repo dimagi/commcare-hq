@@ -74,6 +74,15 @@ def post_xform_to_couch(instance, attachments={}):
                 logging.error("Unable to find conflicting matched uid in form: %s" % xml)
                 return ""
             conflict_id = _extract_id_from_raw_xml(instance)
+            # get old document
+            
+            # compare md5s
+            #if not same:
+            # Deprecate old form (including changing ID)
+            # Save new form (with updated ID)
+            #else:
+            # follow below   
+            
             new_doc_id = uid.new()
             log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
                                              " %s, duplicate instance %s" % (conflict_id, new_doc_id)))
