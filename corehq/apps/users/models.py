@@ -432,7 +432,13 @@ class CouchUser(Document, UnicodeMixIn):
         ('read-only', 'Read Only')
     )
     def role_label(self, domain=None):
+        if not domain:
+            try:
+                domain = self.current_domain
+            except KeyError:
+                return None
         return dict(self.ROLE_LABELS)[self.get_role(domain)]
+    
     # these functions help in templates
     def can_edit_apps(self, domain):
         return self.has_permission(domain, Permissions.EDIT_APPS)

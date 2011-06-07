@@ -1,4 +1,5 @@
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
@@ -89,7 +90,7 @@ def get_xform_contents(req, domain, app_id, module_id, form_id):
         response['Content-Type'] = "application/xml"
         for lc in [lang] + app.langs:
             if lc in form.name:
-                response["Content-Disposition"] = "attachment; filename=%s.xml" % form.name[lc]
+                response["Content-Disposition"] = "attachment; filename=%s.xml" % unidecode(form.name[lc])
                 break
         return response
     else:
