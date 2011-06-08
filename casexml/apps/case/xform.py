@@ -17,7 +17,7 @@ def get_or_update_cases(xformdoc):
     case_blocks = extract_case_blocks(xformdoc)
     cases_touched = {}
     for case_block in case_blocks:
-        case_doc = get_or_update_model(case_block)
+        case_doc = get_or_update_model(case_block, xformdoc)
         if case_doc:
             case_doc.xform_ids.append(xformdoc.get_id)
             cases_touched[case_doc.case_id] = case_doc
@@ -26,7 +26,7 @@ def get_or_update_cases(xformdoc):
     return cases_touched
 
 
-def get_or_update_model(case_block):
+def get_or_update_model(case_block, xformdoc):
     """
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.
@@ -37,7 +37,7 @@ def get_or_update_model(case_block):
     
     try: 
         case_doc = CommCareCase.get(case_id)
-        # some forms recycyle case ids as other ids (like xform ids)
+        # some forms recycle case ids as other ids (like xform ids)
         # disallow that hard.
         if case_doc.doc_type != "CommCareCase":
             raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
@@ -45,10 +45,10 @@ def get_or_update_model(case_block):
         case_doc = None
     
     if case_doc == None:
-        case_doc = CommCareCase.from_doc(case_block)
+        case_doc = CommCareCase.from_doc(case_block, xformdoc)
         return case_doc
     else:
-        case_doc.update_from_block(case_block)
+        case_doc.update_from_block(case_block, xformdoc)
         return case_doc
         
     

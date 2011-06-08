@@ -1,0 +1,23 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="Report Incident"
+	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/78A1B843-E564-4AD0-8FFD-BD5DC2F943C9">
+	<incident>gjh</incident>
+	<lost>no</lost>
+	<image>house.jpg</image>
+	<case>
+		<case_id>EOL9FIAKIQWOFXFOH0QAMWU64</case_id>
+		<date_modified>2011-06-07T17:25:54.422</date_modified>
+		<update>
+			<incidentimage tag="attachment">house.jpg</incidentimage>
+		</update>
+	</case>
+	<meta>
+		<deviceID>354957031935664</deviceID>
+		<timeStart>2011-06-07T17:25:19.427</timeStart>
+		<timeEnd>2011-06-07T17:25:54.422</timeEnd>
+		<username>bcdemo</username>
+		<userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</userID>
+		<uid>FOOBARUIDBUTNOTREALLY</uid>
+	</meta>
+</data>
