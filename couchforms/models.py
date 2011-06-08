@@ -122,11 +122,18 @@ class XFormInstance(Document):
     
     def get_xml(self):
         try:
-            # new way to get attachments
             return self.fetch_attachment("form.xml")
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             return self[const.TAG_XML]
+    
+    @property
+    def attachments(self):
+        """
+        Get the extra attachments for this form. This will not include
+        the form itself
+        """
+        return dict((item, val) for item, val in self._attachments.items() if item != "form.xml")
     
     def xml_md5(self):
         return hashlib.md5(self.get_xml()).hexdigest()
