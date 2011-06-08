@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
-from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml
+from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
+    couchable_property
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from datetime import datetime, date, time
 from couchdbkit.ext.django.schema import *
@@ -37,13 +38,15 @@ class CommCareCaseAction(Document):
     action_type = StringProperty()
     date = DateTimeProperty()
     visit_date = DateProperty()
+    xform_id = StringProperty()
     
     @classmethod
-    def from_action_block(cls, action, date, visit_date, action_block):
+    def from_action_block(cls, action, date, visit_date, xformdoc, action_block):
         if not action in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
-        action = CommCareCaseAction(action_type=action, date=date, visit_date=visit_date)
+        action = CommCareCaseAction(action_type=action, date=date, visit_date=visit_date, 
+                                    xform_id=xformdoc.get_id)
         
         # a close block can come without anything inside.  
         # if this is the case don't bother trying to post 
@@ -52,8 +55,7 @@ class CommCareCaseAction(Document):
             return action
             
         for item in action_block:
-            #if item not in const.CASE_TAGS:
-            action[item] = action_block[item]
+            action[item] = couchable_property(action_block[item])
         return action
     
     @classmethod
@@ -201,8 +203,24 @@ class CommCareCase(CaseBase):
             since = date.today()
         return self.start_date <= since if self.start_date else True
     
+    @property
+    def attachments(self):
+        """
+        Get any attachments associated with this.
+        
+        returns (creating_form_id, attachment_name) tuples 
+        """
+        attachments = []
+        for action in self.actions:
+            for prop in action.dynamic_properties():
+                val = action[prop]
+                # welcome to hard code city!
+                if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
+                    attachments.append((action.xform_id, val["#text"]))
+        return attachments
+    
     @classmethod
-    def from_doc(cls, case_block):
+    def from_doc(cls, case_block, xformdoc):
         """
         Create a case object from a case block.
         """
@@ -215,10 +233,10 @@ class CommCareCase(CaseBase):
         case.modified_on = parsing.string_to_datetime(modified_on_str) if modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        case.update_from_block(case_block, case.modified_on)
+        case.update_from_block(case_block, xformdoc, case.modified_on)
         return case
     
-    def apply_create_block(self, create_block, modified_on):
+    def apply_create_block(self, create_block, xformdoc, modified_on):
         # create case from required fields in the case/create block
         # create block
         def _safe_replace(me, attr, dict, key):
@@ -236,21 +254,22 @@ class CommCareCase(CaseBase):
         _safe_replace(self, "user_id", create_block, const.CASE_TAG_USER_ID)
         create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
                                                              modified_on, modified_on.date(),
+                                                             xformdoc,
                                                              create_block)
         self.actions.append(create_action)
     
-    def update_from_block(self, case_block, visit_date=None):
+    def update_from_block(self, case_block, xformdoc, visit_date=None):
         
         mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED])
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
         
-        # you can pass in a visit date, to override the udpate/close action dates
+        # you can pass in a visit date, to override the update/close action dates
         if not visit_date:
             visit_date = mod_date
         
         if const.CASE_ACTION_CREATE in case_block:
-            self.apply_create_block(case_block[const.CASE_ACTION_CREATE], visit_date)
+            self.apply_create_block(case_block[const.CASE_ACTION_CREATE], xformdoc, visit_date)
             if not self.opened_on or self.opened_on < visit_date:
                 self.opened_on = visit_date
         
@@ -260,6 +279,7 @@ class CommCareCase(CaseBase):
             update_block = case_block[const.CASE_ACTION_UPDATE]
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
                                                                  mod_date, visit_date.date(), 
+                                                                 xformdoc,
                                                                  update_block)
             self.apply_updates(update_action)
             self.actions.append(update_action)
@@ -268,6 +288,7 @@ class CommCareCase(CaseBase):
             close_block = case_block[const.CASE_ACTION_CLOSE]
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
                                                                 mod_date, visit_date.date(), 
+                                                                xformdoc,
                                                                 close_block)
             self.apply_close(close_action)
             self.actions.append(close_action)
@@ -309,7 +330,7 @@ class CommCareCase(CaseBase):
             self.opened_on = update_action[const.CASE_TAG_DATE_OPENED]
         for item in update_action.dynamic_properties():
             if item not in const.CASE_TAGS:
-                self[item] = update_action[item]
+                self[item] = couchable_property(update_action[item])
             
         
     def apply_close(self, close_action):

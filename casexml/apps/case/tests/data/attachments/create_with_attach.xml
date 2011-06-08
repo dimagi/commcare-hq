@@ -1,0 +1,28 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="Barcode Demo Item Registration"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+    xmlns="http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB">
+    <name>fgg</name>
+    <date>2011-06-07</date>
+    <case>
+        <case_id>EOL9FIAKIQWOFXFOH0QAMWU64</case_id>
+        <date_modified>2011-06-07T17:07:01.906</date_modified>
+        <create>
+            <case_type_id>cc_bc_demo</case_type_id>
+            <case_name>fgg</case_name>
+            <user_id>6dac4940-913e-11e0-9d4b-005056aa7fb5</user_id>
+            <external_id />
+        </create>
+        <update>
+            <incidentimage tag="attachment">fruity.jpg</incidentimage>
+        </update>
+    </case>
+    <meta>
+        <deviceID>354957031935664</deviceID>
+        <timeStart>2011-06-07T17:06:02.156</timeStart>
+        <timeEnd>2011-06-07T17:07:01.907</timeEnd>
+        <username>bcdemo</username>
+        <userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</userID>
+        <uid>6RGAZTETE3Z2QC0PE2DKM88MO</uid>
+    </meta>
+</data>
