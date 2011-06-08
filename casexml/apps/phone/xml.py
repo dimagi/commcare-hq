@@ -1,6 +1,4 @@
 import logging
-from corehq.apps.users.util import couch_user_from_django_user,\
-    commcare_account_from_django_user, raw_username
 
 
 # Response template according to 
@@ -130,3 +128,34 @@ def get_case_xml(phone_case, create=True):
                             "update_block": update_block,
                             "referral_block": referral_block
                             } 
+    
+REGISTRATION_TEMPLATE = \
+"""
+    <Registration xmlns="http://openrosa.org/user/registration">
+        <username>%(username)s</username>
+        <password>%(password)s</password>
+        <uuid>%(uuid)s</uuid>
+        <date>%(date)s</date>%(user_data)s
+    </Registration>"""
+
+USER_DATA_TEMPLATE = \
+"""
+        <user_data>
+            %(data)s
+        </user_data>"""
+
+def get_registration_xml(user):
+    # TODO: this doesn't feel like a final way to do this
+    # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
+    return REGISTRATION_TEMPLATE % {"username":  user.raw_username,
+                                    "password":  user.password,
+                                    "uuid":      user.userID,
+                                    "date":      user.date_joined.strftime("%Y-%m-%d"),
+                                    "user_data": get_user_data_xml(user.user_data)
+                                    }
+def get_user_data_xml(dict):
+    if not dict:  return ""
+    return USER_DATA_TEMPLATE % \
+        {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
+                                       {"key": key, "value": val } for key, val in dict.items())}    
+

@@ -1,6 +1,6 @@
 from django import template
 from django.template.loader import render_to_string
-from corehq.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog
 
 register = template.Library()
 

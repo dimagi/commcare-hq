@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
-from corehq.apps.phone import xml as xml
+from casexml.apps.phone import xml as xml
 from datetime import datetime
 from dimagi.utils.couch.database import get_db
 import logging

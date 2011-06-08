@@ -1,11 +1,41 @@
-from datetime import date
 from couchdbkit.ext.django.schema import *
-import logging
-from casexml.apps.case import const
-from couchforms.safe_index import safe_index
-import hashlib
 from dimagi.utils.mixins import UnicodeMixIn
 
+class User(object):
+    """
+    This is really used for anything other than to document
+    the interface required for OTA restore to work properly.
+    """
+    
+    def _not_implemented(self):
+        raise NotImplementedError("The User model can't be used out of the box")
+    
+    @property
+    def userID(self):
+        self._not_implemented()
+
+    @property
+    def raw_username(self):
+        self._not_implemented()
+        
+    @property
+    def password(self):
+        self._not_implemented()
+    
+    @property
+    def date_joined(self):
+        """
+        A datetime
+        """
+        self._not_implemented()
+    
+    @property
+    def user_data(self):
+        """
+        A dictionary
+        """
+        self._not_implemented()
+    
 class SyncLog(Document, UnicodeMixIn):
     """
     A log of a single sync operation.
@@ -52,4 +82,4 @@ class SyncLog(Document, UnicodeMixIn):
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.chw_id, self.date.date(), self.get_id)
 
-from corehq.apps.phone import signals
+from casexml.apps.phone import signals

@@ -32,7 +32,7 @@ class OtaRestoreTest(TestCase):
         [updated_case] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
         c = Client()
-        response = c.get(reverse("single_case_xml", args=["fakedomain", updated_case.get_id]))
+        response = c.get(reverse("single_case_xml", args=[updated_case.get_id]))
         expected_response = """<case>
     <case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id> 
     <date_modified>2011-02-19</date_modified>
