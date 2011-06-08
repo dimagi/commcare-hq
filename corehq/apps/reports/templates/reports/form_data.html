@@ -24,6 +24,9 @@
     <ul>
         <li><a href="#form_display">Form data display</a></li>
         <li><a href="#raw_xml">Raw XML</a></li>
+{% if instance.attachments %}
+        <li><a href="#attachments">Attachments</a></li>
+{% endif %}
     </ul>
 <div title="Form Data" id="form_display">
     {% render_form_data instance %}
@@ -32,5 +35,12 @@
     <a href="{% url download_form domain instance.get_id %}" target="_blank">show in new window</a>
     <p>Double-click to select all.</p>
     {% render_form_xml instance %}
+</div>
+<div title="Attachments" id="attachments">
+    <ul>
+    {% for key, val in instance.attachments.items %}
+        <li><a href="{% url download_attachment domain instance.get_id key %}">{{ key }}</a></li>
+    {% endfor %}
+    </ul>
 </div>
 {% endblock %}

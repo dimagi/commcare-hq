@@ -478,7 +478,12 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
-
+@login_and_domain_required
+def download_attachment(request, domain, instance_id, attachment):
+    instance = XFormInstance.get(instance_id)
+    assert(domain == instance.domain)
+    return couchforms_views.download_attachment(request, instance_id, attachment)
+    
 # Weekly submissions by xmlns
 
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
