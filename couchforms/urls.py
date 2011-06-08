@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    url(r'^download_excel/?$', 'couchforms.views.download_excel', name='xform_download_excel'),
     url(r'^post/?$', 'couchforms.views.post', name='xform_post'),
+    url(r'^download/(?P<instance_id>\w+)/(?P<attachment>[\w.-_]+)?$', 
+        'couchforms.views.download_attachment', name='xform_attachment'),
 )

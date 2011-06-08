@@ -50,3 +50,10 @@ def download_form(request, instance_id):
     # HttpResponse(mimetype='application/vnd.ms-excel')
     # response['Content-Disposition'] = 'attachment; filename=%s.xml' % instance_id
     return response
+
+def download_attachment(request, instance_id, attachment):
+    instance = XFormInstance.get(instance_id)
+    attach = instance._attachments[attachment]
+    response = HttpResponse(mimetype=attach["content_type"])
+    response.write(instance.fetch_attachment(attachment))
+    return response
