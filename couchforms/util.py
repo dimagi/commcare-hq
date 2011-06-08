@@ -1,5 +1,13 @@
+from datetime import datetime
+import hashlib
 from django.conf import settings
-from couchforms.models import XFormInstance, XFormDuplicate, XFormError
+import uuid
+try:
+    import simplejson
+except ImportError:
+    from django.utils import simplejson
+
+from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated
 from dimagi.utils.logging import log_exception
 import logging
 from couchdbkit.resource import RequestFailed
@@ -75,29 +83,43 @@ def post_xform_to_couch(instance, attachments={}):
                 return ""
             conflict_id = _extract_id_from_raw_xml(instance)
             # get old document
-            
+            existing_doc = XFormInstance.get(conflict_id)
+
             # compare md5s
+            existing_attachment = existing_doc.fetch_attachment('form.xml')
+            existing_md5 = existing_doc.xml_md5()
+            new_md5 = hashlib.md5(instance).hexdigest()
+
             #if not same:
             # Deprecate old form (including changing ID)
-            # Save new form (with updated ID)
-            #else:
-            # follow below   
-            
-            new_doc_id = uid.new()
-            log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
-                                             " %s, duplicate instance %s" % (conflict_id, new_doc_id)))
-            response, errors = post_from_settings(instance, {"uid": new_doc_id})
-            if not _has_errors(response, errors):
-                # create duplicate doc
-                # get and save the duplicate to ensure the doc types are set correctly
-                # so that it doesn't show up in our reports
-                dupe = XFormDuplicate.get(response)
-                dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id 
-                dupe.save()
-                return dupe
+            #to deprecate, copy new instance into a XFormDeprecated
+            if existing_md5 != new_md5:
+                doc_copy = XFormInstance.get_db().copy_doc(conflict_id)
+                xfd = XFormDeprecated.get(doc_copy['id'])
+                xfd.orig_id = conflict_id
+                xfd.doc_type=XFormDeprecated.__name__
+                xfd.save()
+
+                #after that delete the original document and resubmit.
+                XFormInstance.get_db().delete_doc(conflict_id)
+                post_xform_to_couch(instance, attachments=attachments)
             else:
-                # how badly do we care about this?
-                raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+                #follow standard dupe handling
+                new_doc_id = uid.new()
+                log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
+                                                 " %s, duplicate instance %s" % (conflict_id, new_doc_id)))
+                response, errors = post_from_settings(instance, {"uid": new_doc_id})
+                if not _has_errors(response, errors):
+                    # create duplicate doc
+                    # get and save the duplicate to ensure the doc types are set correctly
+                    # so that it doesn't show up in our reports
+                    dupe = XFormDuplicate.get(response)
+                    dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
+                    dupe.save()
+                    return dupe
+                else:
+                    # how badly do we care about this?
+                    raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
             
         else:
             raise
