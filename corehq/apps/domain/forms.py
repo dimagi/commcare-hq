@@ -94,7 +94,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     password_1  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     password_2  =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     
-    tos_confirmed = forms.BooleanField(required=False) # Must be set to False to have the clean_*() routine called        
+    tos_confirmed = forms.BooleanField(required=False, label='Agree to Terms of Service') # Must be set to False to have the clean_*() routine called
         
     def __init__(self, kind="new_user", *args, **kwargs):
         super(RegistrationRequestForm, self).__init__(*args, **kwargs)
