@@ -9,7 +9,7 @@ TAG_META = "meta"
 TAG_META_TIMESTART = "timeStart"
 TAG_META_TIMEEND = "timeEnd"
 TAG_META_USERNAME = "username"
-TAG_META_USER_ID = "user_id"
-TAG_META_UID = "uid" #TODO: remove?
+TAG_META_USER_ID = "userID"
+TAG_META_UID = "instanceID"
 
 TAG_FORM = 'form'

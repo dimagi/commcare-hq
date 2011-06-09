@@ -6,8 +6,9 @@ function(doc) {
         var meta = xform_doc.form.meta;
         if (meta) return meta.userID;
     }
+    
     if (doc.doc_type == "XFormInstance" && get_user_id(doc) != null) {
-        date = get_date(doc);
+        date = parse_date(doc.received_on);
         if (!date) {
             date = Date();
         }

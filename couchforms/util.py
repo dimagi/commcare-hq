@@ -76,7 +76,7 @@ def post_xform_to_couch(instance, attachments={}):
             # log it and flag it.
             def _extract_id_from_raw_xml(xml):
                 # TODO: this is brittle as hell. Fix.
-                _PATTERNS = (r"<uid>(\w+)</uid>", r"<uuid>(\w+)</uuid>")
+                _PATTERNS = (r"<instanceID>(\w+)</instanceID>", r"<uid>(\w+)</uid>", r"<uuid>(\w+)</uuid>")
                 for pattern in _PATTERNS:
                     if re.search(pattern, xml): return re.search(pattern, xml).groups()[0]
                 logging.error("Unable to find conflicting matched uid in form: %s" % xml)
