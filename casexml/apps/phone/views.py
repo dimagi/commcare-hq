@@ -4,12 +4,13 @@ from casexml.apps.phone import xml
 from dimagi.utils.timeout import TimeoutException
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.models import User
 
 
 
 @httpdigest
 def restore(request):
-    user = request.user
+    user = User.from_django_user(request.user)
     restore_id = request.GET.get('since')
     
     try:
