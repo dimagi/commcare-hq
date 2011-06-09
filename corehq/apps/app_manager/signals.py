@@ -3,7 +3,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import SuccessMessage
 from corehq.apps.users.models import CouchUser, CommCareAccount
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
-from corehq.apps.phone import xml
+from casexml.apps.phone import xml
 
 def get_success_message(sender, xform, **kwargs):
     userID = xform.form.get('meta', {}).get('userID')

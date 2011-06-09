@@ -530,7 +530,7 @@ class ApplicationBase(VersionedDoc):
     def ota_restore_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.phone.views.restore', args=[self.domain])
+            reverse('corehq.apps.ota.views.restore', args=[self.domain])
         )
     @property
     def profile_url(self):

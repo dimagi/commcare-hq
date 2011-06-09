@@ -25,6 +25,7 @@ from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from dimagi.utils.django.email import send_HTML_email
+from casexml.apps.phone.models import User as CaseXMLUser
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -191,6 +192,9 @@ class CouchUser(Document, UnicodeMixIn):
         else:
             return self.default_commcare_account
 
+    def is_commcare_user(self):
+        return self.account_type == "CommCareAccount"
+    
     @property
     def account_type(self):
         if self.web_account.login_id:
@@ -211,6 +215,25 @@ class CouchUser(Document, UnicodeMixIn):
     def userID(self):
         return self.default_account.login_id
         
+    @property
+    def password(self):
+        return self.default_account.login.password
+    
+    @property
+    def date_joined(self):
+        return self.default_account.login.date_joined
+    
+    @property
+    def user_data(self):
+        return self.default_account.user_data
+    
+    def to_casexml_user(self):
+        return CaseXMLUser(user_id=self.userID,
+                           username=self.raw_username,
+                           password=self.password,
+                           date_joined=self.date_joined,
+                           user_data=self.user_data)
+    
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
     
