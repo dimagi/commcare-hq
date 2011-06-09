@@ -99,15 +99,15 @@ def get_referral_xml(referral):
                              "update_block": update_block,
                              }
 
-def get_case_xml(phone_case, create=True):
-    if phone_case is None: 
+def get_case_xml(case, create=True):
+    if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
     
-    base_data = BASE_DATA % {"case_type_id": phone_case.type,
-                             "user_id": phone_case.user_id,
-                             "case_name": phone_case.name,
-                             "external_id": phone_case.external_id }
+    base_data = BASE_DATA % {"case_type_id": case.type,
+                             "user_id": case.user_id,
+                             "case_name": case.name,
+                             "external_id": case.external_id }
     # if creating, the base data goes there, otherwise it goes in the
     # update block
     if create:
@@ -118,12 +118,12 @@ def get_case_xml(phone_case, create=True):
         update_base_data = base_data
     
     update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": val} \
-                                    for key, val in phone_case.dynamic_case_properties()])
+                                    for key, val in case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
-    referral_block = "".join([get_referral_xml(ref) for ref in phone_case.referrals])
-    return CASE_TEMPLATE % {"case_id": phone_case.case_id,
-                            "date_modified": date_to_xml_string(phone_case.modified_on),
+    referral_block = "".join([get_referral_xml(ref) for ref in case.referrals])
+    return CASE_TEMPLATE % {"case_id": case.case_id,
+                            "date_modified": date_to_xml_string(case.modified_on),
                             "create_block": create_block,
                             "update_block": update_block,
                             "referral_block": referral_block
@@ -147,9 +147,9 @@ USER_DATA_TEMPLATE = \
 def get_registration_xml(user):
     # TODO: this doesn't feel like a final way to do this
     # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
-    return REGISTRATION_TEMPLATE % {"username":  user.raw_username,
+    return REGISTRATION_TEMPLATE % {"username":  user.username,
                                     "password":  user.password,
-                                    "uuid":      user.userID,
+                                    "uuid":      user.user_id,
                                     "date":      user.date_joined.strftime("%Y-%m-%d"),
                                     "user_data": get_user_data_xml(user.user_data)
                                     }

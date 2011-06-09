@@ -3,38 +3,58 @@ from dimagi.utils.mixins import UnicodeMixIn
 
 class User(object):
     """
-    This is really used for anything other than to document
-    the interface required for OTA restore to work properly.
+    This is a basic user model that's used for OTA restore to properly
+    find cases and generate the user XML.
     """
     
-    def _not_implemented(self):
-        raise NotImplementedError("The User model can't be used out of the box")
+    def __init__(self, user_id, username, password, date_joined, user_data={}):
+        self._user_id = user_id
+        self._username = username
+        self._password = password
+        self._date_joined = date_joined
+        self._user_data = user_data
     
     @property
-    def userID(self):
-        self._not_implemented()
+    def user_id(self):
+        return self._user_id
 
     @property
-    def raw_username(self):
-        self._not_implemented()
+    def username(self):
+        return self._username
         
     @property
     def password(self):
-        self._not_implemented()
+        return self._password
     
     @property
     def date_joined(self):
         """
         A datetime
         """
-        self._not_implemented()
+        return self._date_joined
     
     @property
     def user_data(self):
         """
         A dictionary
         """
-        self._not_implemented()
+        return self._user_data
+    
+    def get_open_cases(self, last_sync):
+        """
+        Get open cases associated with the user. This method
+        can be overridden to change case-syncing behavior
+        
+        returns: list of (CommCareCase, previously_synced) tuples
+        """
+        from casexml.apps.phone.caselogic import get_open_cases_to_send
+        return get_open_cases_to_send(self, last_sync)
+    
+    @classmethod
+    def from_django_user(cls, django_user):
+        return User(user_id=django_user.pk, username=django_user.username,
+                    password=django_user.password, date_joined=django_user.date_joined,
+                    user_data={})
     
 class SyncLog(Document, UnicodeMixIn):
     """
@@ -48,10 +68,10 @@ class SyncLog(Document, UnicodeMixIn):
     cases = StringListProperty()
     
     @classmethod
-    def last_for_chw(cls, chw_id):
-        return SyncLog.view("phone/sync_logs_by_chw", 
-                            startkey=[chw_id, {}],
-                            endkey=[chw_id, ""],
+    def last_for_user(cls, user_id):
+        return SyncLog.view("phone/sync_logs_by_user", 
+                            startkey=[user_id, {}],
+                            endkey=[user_id, ""],
                             descending=True,
                             limit=1,
                             reduce=False,

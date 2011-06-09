@@ -6,6 +6,11 @@ from django.test.client import Client
 from django.core.urlresolvers import reverse
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.signals import process_cases
+from datetime import datetime
+from casexml.apps.phone.models import User, SyncLog
+from casexml.apps.phone import xml
+from django.contrib.auth.models import User as DjangoUser
+from casexml.apps.phone.restore import generate_restore_payload
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
@@ -14,6 +19,93 @@ class OtaRestoreTest(TestCase):
         # clear cases
         for case in CommCareCase.view("case/by_xform_id", include_docs=True).all():
             case.delete()
+        for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
+            log.delete()
+        
+    def _dummy_user(self):
+        return User(user_id="foo", username="mclovin", 
+                    password="changeme", date_joined=datetime(2011, 6, 9), 
+                    user_data={"something": "arbitrary"})
+    
+    def _dummy_user_xml(self):
+        return """
+    <Registration xmlns="http://openrosa.org/user/registration">
+        <username>mclovin</username>
+        <password>changeme</password>
+        <uuid>foo</uuid>
+        <date>2011-06-09</date>
+        <user_data>
+            <data key="something">arbitrary</data>
+        </user_data>
+    </Registration>"""
+    
+    def _dummy_restore_xml(self, restore_id, case_xml=""):
+        return """<?xml version='1.0' encoding='UTF-8'?>
+<OpenRosaResponse xmlns="http://openrosa.org/http/response">
+    <message>Successfully restored account mclovin!</message>
+    <Sync xmlns="http://commcarehq.org/sync">
+        <restore_id>%(restore_id)s</restore_id> 
+    </Sync>
+    %(user_xml)s
+    %(case_xml)s
+</OpenRosaResponse>""" % {"restore_id": restore_id,
+                          "user_xml": self._dummy_user_xml(),
+                          "case_xml": case_xml}
+    
+    def testFromDjangoUser(self):
+        django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
+        django_user.save()
+        user = User.from_django_user(django_user)
+        self.assertEqual(django_user.pk, user.user_id)
+        self.assertEqual("foo", user.username)
+        self.assertEqual("secret", user.password)
+        self.assertEqual(datetime(2011, 6, 9), user.date_joined)
+        self.assertFalse(bool(user.user_data))
+        
+        
+    def testRegistrationXML(self):
+        check_xml_line_by_line(self, self._dummy_user_xml(), 
+                               xml.get_registration_xml(self._dummy_user()))
+        
+    def testUserRestore(self):
+        self.assertEqual(0, len(SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()))
+        restore_payload = generate_restore_payload(self._dummy_user())
+        # implicit length assertion
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id), restore_payload)
+        
+        
+    def testUserRestoreWithCase(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        user = self._dummy_user()
+        
+        # implicit length assertion
+        [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
+        self.assertEqual(1, len(user.get_open_cases(None)))
+        expected_case_block = """
+        <case>
+            <case_id>asdf</case_id> 
+            <date_modified>2010-06-29</date_modified>
+            <create>
+                <case_type_id>test_case_type</case_type_id> 
+                <user_id>foo</user_id> 
+                <case_name>test case name</case_name> 
+                <external_id>someexternal</external_id>
+            </create>
+            <update>
+            </update>
+        </case>"""
+        check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, create=True))
+        
+        restore_payload = generate_restore_payload(self._dummy_user())
+        # implicit length assertion
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id, expected_case_block), 
+                               restore_payload)
         
     def testWithReferrals(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_xform_id", include_docs=True).all()))

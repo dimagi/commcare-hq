@@ -17,7 +17,7 @@ def get_open_cases_to_send(user, last_sync):
     """ 
     to_return = []
     case_ids = []
-    cases = CommCareCase.view("case/by_user", key=[user.userID, False],
+    cases = CommCareCase.view("case/by_user", key=[user.user_id, False],
                               include_docs=True).all()
     for case in cases:
         # keep a running list of case ids sent down because the phone doesn't
