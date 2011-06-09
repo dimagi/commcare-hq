@@ -81,9 +81,12 @@ def post(request):
             errors = []
             for func, resp in feedback:
                 if resp and isinstance(resp, Exception):
-                    logging.error("Receiver app: problem sending post-save signal %s for xform %s" \
-                                  % (func, doc._id))
-                    logging.exception(resp)
+                    # hack: get stack traces and types and such through this process
+                    try:
+                        raise resp
+                    except Exception:
+                        logging.exception("Receiver app: problem sending post-save signal %s for xform %s: %s" \
+                                          % (func, doc._id, str(resp)))
                     errors.append(str(resp))
                 elif resp and isinstance(resp, ReceiverResult):
                     responses.append(resp)
