@@ -21,7 +21,7 @@ domain_specific = patterns('',
     (r'^migration/', include('corehq.apps.migration.urls')),
     (r'^users/', include('corehq.apps.users.urls')),
     (r'^groups/', include('corehq.apps.groups.urls')),
-    (r'^phone/', include('corehq.apps.phone.urls')),
+    (r'^phone/', include('corehq.apps.ota.urls')),
     (r'^sms/', include('corehq.apps.sms.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
     # include only those urls in hqwebapp which are domain-specific
