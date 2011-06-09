@@ -37,14 +37,15 @@ def check_xml_line_by_line(test_case, expected, actual, ignore_whitespace=True, 
     if ignore_whitespace:
         expected = expected.strip()
         actual = actual.strip()
-    expected_lines = expected.split("\n")
+    expected_lines = expected.split(delimiter)
     actual_lines = actual.split(delimiter)
+    if ignore_whitespace:
+        # remove empty lines, strip lines.
+        expected_lines = [l.strip() for l in expected_lines if l.strip()]
+        actual_lines = [l.strip() for l in actual_lines if l.strip()]
     test_case.assertEqual(len(expected_lines), len(actual_lines)) 
     for i in range(len(expected_lines)):
-        if ignore_whitespace:
-            test_case.assertEqual(expected_lines[i].strip(), actual_lines[i].strip())
-        else:
-            test_case.assertEqual(expected_lines[i], actual_lines[i])
+        test_case.assertEqual(expected_lines[i], actual_lines[i])
         
     
     

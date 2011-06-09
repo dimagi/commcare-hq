@@ -1,0 +1,102 @@
+<?xml version='1.0' ?>
+<mobilize version="2" uiVersion="1" xmlns:jrm="http://dev.commcarehq.org/jr/xforms/mobilize/mobilize_reg" xmlns="http://dev.commcarehq.org/mobilize/mobilize_reg">
+	<history />
+	<case>
+		<case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id>
+		<date_modified>2011-02-17T18:05:53.511</date_modified>
+		<create>
+			<case_type_id>cc_mobilize_client</case_type_id>
+			<user_id>ae179a62-38af-11e0-b6a3-005056aa7fb5</user_id>
+			<case_name>SIEGEL-ROBERT-5412366523984</case_name>
+			<external_id>5412366523984</external_id>
+		</create>
+		<update>
+			<patient_id>5412366523984</patient_id>
+			<patient_dot>123</patient_dot>
+			<legal_name>ROBERT SIEGEL</legal_name>
+			<short_name>SIEGEL, ROBERT</short_name>
+			<surname>SIEGEL</surname>
+			<given_name>ROBERT</given_name>
+			<nickname>BOB</nickname>
+			<dob>2011-02-11</dob>
+			<gender>male</gender>
+			<phone_number>1</phone_number>
+			<tribal_area />
+			<address />
+			<contact_name_alt />
+			<contact_age_alt />
+			<contact_phone_alt />
+			<txstart>2011-02-11</txstart>
+			<request_name />
+			<request_reason />
+			<request_rank />
+			<request_timestamp />
+			<staffnumber1 />
+			<addstaff1 />
+			<staffnumber2 />
+			<addstaff2 />
+			<staffnumber3 />
+			<tbtype />
+			<injectiontype />
+			<injectionother />
+			<assistance />
+			<place />
+			<tb_missedtreatments />
+			<tb_lasttreatment />
+			<arv_taking />
+			<arv_missedtreatments />
+			<arv_lasttreatment />
+			<allmeds_likert />
+			<Problems />
+			<vision />
+			<deafness />
+			<ringing />
+			<imbalance />
+			<musclepain />
+			<muscleweakness />
+			<jointpain />
+			<tingling />
+			<swelling />
+			<vomiting />
+			<diarrhea />
+			<abdominalpain />
+			<rash />
+			<jaundice />
+			<sleeping />
+			<confusion />
+			<depression />
+			<psychosis />
+			<seizures />
+			<other />
+			<txoutcome />
+		</update>
+	</case>
+	<patient>
+		<patient_id>5412366523984</patient_id>
+		<said_dob>541236</said_dob>
+		<said_number>6523984</said_number>
+		<patient_dot>123</patient_dot>
+		<legal_name>ROBERT SIEGEL</legal_name>
+		<short_name>SIEGEL, ROBERT</short_name>
+		<surname>SIEGEL</surname>
+		<given_name>ROBERT</given_name>
+		<nickname>BOB</nickname>
+		<dob>2011-02-11</dob>
+		<gender>male</gender>
+		<phone_number>1</phone_number>
+		<tribal_area />
+		<address />
+		<contact_name_alt />
+		<contact_age_alt />
+		<contact_phone_alt />
+		<txstart>2011-02-11</txstart>
+	</patient>
+	<Meta>
+		<DeviceID>7GYZOCKZ46LPJXBFNN91H0Y35</DeviceID>
+		<TimeStart>2011-02-17T18:02:55.409</TimeStart>
+		<TimeEnd>2011-02-17T18:05:53.541</TimeEnd>
+		<username>msa</username>
+		<chw_id>ae179a62-38af-11e0-b6a3-005056aa7fb5</chw_id>
+		<uid>33UP8MOWL8CQNERTDYAHRPVJG</uid>
+	</Meta>
+</mobilize>
