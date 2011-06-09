@@ -26,9 +26,10 @@ def send_default_response(sender, xform, **kwargs):
         return forms_submitted_today["value"] if forms_submitted_today else "at least 1"
         
     if xform.metadata and xform.metadata.user_id:
-        message = ("Thanks for submitting, %s.  We have received %s forms from "
+        to = ", %s" % xform.metadata.username if xform.metadata.username else ""
+        message = ("Thanks for submitting%s.  We have received %s forms from "
                    "you today (%s forms all time)") % \
-                   (xform.metadata.user_id,
+                   (to,
                     forms_submitted_today_count(xform.metadata.user_id), 
                     forms_submitted_count(xform.metadata.user_id))
         return ReceiverResult(xml.get_response(message), Certainty.MILD)
