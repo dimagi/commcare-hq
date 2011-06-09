@@ -8,9 +8,10 @@ from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.signals import process_cases
 from datetime import datetime
 from casexml.apps.phone.models import User, SyncLog
-from casexml.apps.phone import xml
+from casexml.apps.phone import xml, views
 from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.restore import generate_restore_payload
+from django.http import HttpRequest
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
@@ -124,7 +125,7 @@ class OtaRestoreTest(TestCase):
         [updated_case] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
         c = Client()
-        response = c.get(reverse("single_case_xml", args=[updated_case.get_id]))
+        response = views.xml_for_case(HttpRequest(), updated_case.get_id)
         expected_response = """<case>
     <case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id> 
     <date_modified>2011-02-19</date_modified>
