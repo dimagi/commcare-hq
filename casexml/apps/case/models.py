@@ -260,10 +260,12 @@ class CommCareCase(CaseBase):
     
     def update_from_block(self, case_block, xformdoc, visit_date=None):
         
-        mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED])
+        mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED]) \
+                    if   const.CASE_TAG_MODIFIED in case_block \
+                    else datetime.utcnow()
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
-        
+    
         # you can pass in a visit date, to override the update/close action dates
         if not visit_date:
             visit_date = mod_date
