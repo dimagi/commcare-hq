@@ -22,8 +22,8 @@ def submit_build(environ):
         '{target_url}'
     ).format(target_url=target_url, **environ)
 
-    p = subprocess.Popen(shlex.split(command), stdout=PIPE, stderr=PIPE, shell=False)
-    return command, p.stdout.read(), p.stderr.read()
+    p = subprocess.Popen(shlex.split(command), stdout=PIPE, stderr=None, shell=False)
+    return command, p.stdout.read(), "" #p.stderr.read()
 
 
 if __name__ == "__main__":
