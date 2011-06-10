@@ -102,7 +102,7 @@ def post_xform_to_couch(instance, attachments={}):
 
                 #after that delete the original document and resubmit.
                 XFormInstance.get_db().delete_doc(conflict_id)
-                post_xform_to_couch(instance, attachments=attachments)
+                return post_xform_to_couch(instance, attachments=attachments)
             else:
                 #follow standard dupe handling
                 new_doc_id = uid.new()
