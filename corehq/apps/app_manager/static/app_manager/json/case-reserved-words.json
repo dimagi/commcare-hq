@@ -2,6 +2,8 @@
     "case_name", "date_opened", "external_id", "status",
     "name",      "date-opened", "external-id",
 
+    "date",
+
     "doc_type",
     "domain",
     "opened_on",
