@@ -9,6 +9,7 @@ from django.http import Http404
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
 from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
@@ -673,7 +674,7 @@ class ApplicationBase(VersionedDoc):
 #    features = DictProperty()
 #    properties = DictProperty()
     
-class Application(ApplicationBase):
+class Application(ApplicationBase, TranslationMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
     forms themselves.
