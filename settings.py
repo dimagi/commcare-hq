@@ -129,6 +129,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.translations',
     'corehq.apps.phone',
     'corehq.apps.users',
     'corehq.apps.groups',
@@ -318,6 +319,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'phone',
         'receiverwrapper',
         'reports',
+        'translations',
         'users',
         'xep_hq_server',
     ]

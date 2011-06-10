@@ -46,6 +46,7 @@ urlpatterns = patterns('',
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
+    (r'^translations/', include('corehq.apps.translations.urls')),
 )
 
 
