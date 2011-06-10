@@ -14,7 +14,16 @@ def post_authenticated_data(data, url, username, password):
     auth = BasicAuth(username, password)
     r = Resource(url, filters=[auth, ])
     return (r.post(payload=data).body_string(), None)
-    
+
+def post_unauthenticated_data(data, url):
+    """
+    Post basic unauthenticated data, using restkit instead of the post_data method.
+    """
+    r = Resource(url, filters=[])
+    return (r.post(payload=data).body_string(), None)
+
+
+
 def post_authenticated_file(filename, url, username, password):
     """
     Post basic authenticated file, using restkit
