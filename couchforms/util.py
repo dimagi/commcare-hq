@@ -15,7 +15,7 @@ from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
 import re
-from dimagi.utils.post import post_authenticated_data, post_data
+from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
 
 def post_from_settings(instance, extras={}):
@@ -26,7 +26,7 @@ def post_from_settings(instance, extras={}):
                                        settings.COUCH_USERNAME, 
                                        settings.COUCH_PASSWORD)
     else:
-        return post_data(instance, url)
+        return post_unauthenticated_data(instance, url)
 
 def post_xform_to_couch(instance, attachments={}):
     """
