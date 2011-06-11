@@ -13,12 +13,6 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 
-"""
-Couch models.  For now, we prefix them starting with C in order to 
-differentiate them from their (to be removed) django counterparts.
-"""
-
-
 class Metadata(object):
     """
     Metadata of an xform, from a meta block structured like:
