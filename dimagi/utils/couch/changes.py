@@ -1,4 +1,5 @@
 from dimagi.utils.mixins import UnicodeMixIn
+from couchdbkit.resource import ResourceNotFound
 
 class Change(UnicodeMixIn):
     """
@@ -20,3 +21,19 @@ class Change(UnicodeMixIn):
     
     def __unicode__(self):
         return str(self.line)
+    
+    
+    def is_current(self, db):
+        """Is this change pointing at the current rev in the DB?"""
+        if self.rev:
+            try:
+                return db.get_rev(self.id) == self.rev
+            except ResourceNotFound:
+                # this doc has been deleted.  clearly an old rev
+                return False
+        # we don't know if we don't know the rev
+        # what's the appropriate failure mode? 
+        # I think treating things like they are current is appropraite 
+        # e.g. "you might want to act on this"
+        return True
+
