@@ -138,6 +138,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.couchapps',
+    'sofabed.forms',
     'xep_hq_server',
 )
 
@@ -313,6 +314,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchexport',
         'couchlog',
         'domain',
+        'forms',
         'groups',
         'hqcase',
         'migration',
