@@ -12,6 +12,7 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.parsing import string_to_datetime
 
 def home(request):
     forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
@@ -54,7 +55,7 @@ def post(request):
             received_on = request.META.get('HTTP_X_SUBMIT_TIME')
             date_header = request.META.get('HTTP_DATE')
             if received_on:
-                doc['received_on'] = received_on
+                doc.received_on = string_to_datetime(received_on)
             if date_header:
                 # comes in as:
                 # Mon, 11 Apr 2011 18:24:43 GMT
