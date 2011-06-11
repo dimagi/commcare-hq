@@ -13,54 +13,32 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 
-class Metadata(object):
+class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
         
         <Meta>
-            <TimeStart />
-            <TimeEnd />
+            <timeStart />
+            <timeEnd />
+            <instanceID />
+            <userID />
+            <deviceID />
+            <deprecatedID /> 
             <username />
-            <user_id />
-            <uid />
         </Meta>
     
-    Everything is optional.
-    """
-    """
-    time_start = DateTimeProperty()
-    time_end = DateTimeProperty()
-    username = StringProperty()
-    user_id = StringProperty()
-    uid = StringProperty()
-    """
-    time_start = None
-    time_end = None
-    username = None
-    user_id = None
-    uid = None
-
-    def __init__(self, meta_block):
-        if const.TAG_META_TIMESTART in meta_block:
-            self.time_start = string_to_datetime(meta_block[const.TAG_META_TIMESTART])
-        elif "time_start" in meta_block:
-            self.time_start = string_to_datetime(meta_block["time_start"])
-        if const.TAG_META_TIMEEND in meta_block:
-            self.time_end = string_to_datetime(meta_block[const.TAG_META_TIMEEND])
-        elif "time_end" in meta_block:
-            self.time_end = string_to_datetime(meta_block["time_end"])
-        if const.TAG_META_USERNAME in meta_block:
-            self.username = meta_block[const.TAG_META_USERNAME]
-        if const.TAG_META_USER_ID in meta_block:
-            self.user_id = meta_block[const.TAG_META_USER_ID]
-        if const.TAG_META_UID in meta_block:
-            self.uid = meta_block[const.TAG_META_UID]
+    See spec: https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaMetaDataSchema
     
-    def to_dict(self):
-        return dict([(key, getattr(self, key)) for key in \
-                     ("time_start", "time_end",
-                      "username", "user_id","uid")])
-
+    username is not part of the spec but included for convenience
+    """
+    timeStart = DateTimeProperty()
+    timeEnd = DateTimeProperty()
+    instanceID = StringProperty()
+    userID = StringProperty()
+    deviceID = StringProperty()
+    deprecatedID = StringProperty()
+    username = StringProperty()
+    
 class XFormInstance(Document):
     """An XForms instance."""
     xmlns = StringProperty()
@@ -89,9 +67,7 @@ class XFormInstance(Document):
     @property
     def metadata(self):
         if (const.TAG_META) in self._form:
-            meta_block = self._form[const.TAG_META]
-            meta = Metadata(meta_block)
-            return meta
+            return Metadata(self._form[const.TAG_META])
             
         return None
 
