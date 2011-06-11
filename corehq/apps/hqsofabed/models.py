@@ -2,6 +2,7 @@ from sofabed.forms.models import FormDataBase
 from django.db import models
 from corehq.apps.users.models import CouchUser
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.users.exceptions import NoAccountException
 
 class HQFormData(FormDataBase):
     """
@@ -19,7 +20,10 @@ class HQFormData(FormDataBase):
                 user = CouchUser.get(self.userID)
                 return user.raw_username
             except ResourceNotFound:
-                pass
+                pass # no user doc
+            except NoAccountException:
+                pass # no linked account
+        
         return ""
     
     def update(self, instance):

@@ -26,6 +26,7 @@ from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from dimagi.utils.django.email import send_HTML_email
 from casexml.apps.phone.models import User as CaseXMLUser
+from corehq.apps.users.exceptions import NoAccountException
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -204,7 +205,9 @@ class CouchUser(Document, UnicodeMixIn):
         
     @property
     def username(self):
-        return self.default_account.login.username
+        if self.default_account is not None:
+            return self.default_account.login.username
+        raise NoAccountException("No account found for %s" % self)
     @property
     def raw_username(self):
         if self.account_type == "CommCareAccount":
