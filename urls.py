@@ -30,6 +30,7 @@ domain_specific = patterns('',
     (r'^', include('django_user_registration.urls')),
     (r'^help/', include('corehq.apps.help.urls')),
     (r'^case/', include('corehq.apps.hqcase.urls')),
+    (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
     (r'^cleanup/', include('corehq.apps.cleanup.urls')),
 )
 

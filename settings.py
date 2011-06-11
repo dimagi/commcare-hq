@@ -51,6 +51,7 @@ SECRET_KEY = '2rgmwtyq$thj49+-6u7x9t39r7jflu&1ljj3x2c0n0fl$)04_0'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.eggs.Loader',
 #     'django.template.loaders.eggs.load_template_source',
 )
 
@@ -98,6 +99,7 @@ DEFAULT_APPS = (
     'staticfiles', #soon to be django.contrib.staticfiles in 1.3
     'south',
     'djcelery',    # pip install django-celery
+    'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
 )
