@@ -139,6 +139,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.couchapps',
     'sofabed.forms',
+    'corehq.apps.hqsofabed',
     'xep_hq_server',
 )
 
@@ -195,7 +196,6 @@ LOGGEDOUT_TEMPLATE="loggedout.html"
 LOGTRACKER_ALERT_EMAILS = []
 LOGTRACKER_LOG_THRESHOLD = 30
 LOGTRACKER_ALERT_THRESHOLD = 40
-COUCHLOG_THRESHOLD = logging.WARNING
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="user@domain.com"
@@ -240,6 +240,12 @@ HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after
 
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
+COUCHLOG_THRESHOLD = logging.WARNING
+
+
+# sofabed
+FORMDATA_MODEL = 'hqsofabed.HQFormData'  
 
 #auditcare parameters
 AUDIT_VIEWS = [
