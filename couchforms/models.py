@@ -42,6 +42,7 @@ class Metadata(DocumentSchema):
 class XFormInstance(Document):
     """An XForms instance."""
     xmlns = StringProperty()
+    received_on = DateTimeProperty()
     
     @property
     def get_form(self):
