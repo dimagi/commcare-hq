@@ -37,3 +37,6 @@
 [submodule "submodules/casexml-src"]
 	path = submodules/casexml-src
 	url = git://github.com/dimagi/casexml.git
+[submodule "submodules/sofabed-src"]
+	path = submodules/sofabed-src
+	url = git://github.com/dimagi/sofabed.git
