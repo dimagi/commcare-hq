@@ -116,7 +116,7 @@
             <tr>
                 <th>Edit XForm</th>
                 <td id="editXFormTD">
-                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
+                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="editor" value="{{ editor_url }}" />
@@ -129,8 +129,8 @@
                         due to a bug. <br />
                         We are hard at work finding a fix!
                     </div>
-                </td>
-                <td>
+{#                </td>#}
+{#                <td>#}
                     or 
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
@@ -149,7 +149,8 @@
                     View XForm
                 </th>
                 <td>
-                    <form method="POST" action="{{ XFORMPLAYER_URL }}">
+
+                    <form method="POST" action="{{ XFORMPLAYER_URL }}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="data" value="{}" />
@@ -158,8 +159,8 @@
 
                         <input type="submit" value="Play…" />
                     </form>
-                </td>
-                <td>
+{#                </td>#}
+{#                <td>#}
                     or
                     <a id="xform-source-opener" class="dialog_opener"
                        href="{% url get_xform_contents domain app.id module.id form.id %}">
@@ -169,8 +170,8 @@
                         Double-click to select all.
                         <pre id="xform-source" class="brush: xml;"></pre>
                     </div>
-                </td>
-                <td>
+{#                </td>#}
+{#                <td>#}
                     or <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
                 </td>
             </tr>
