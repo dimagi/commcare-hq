@@ -1,8 +1,10 @@
 from sofabed.forms.models import FormDataBase
 from django.db import models
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, Login
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.users.exceptions import NoAccountException
+from sofabed.forms.exceptions import InvalidFormUpdateException
+from corehq.apps.users.util import user_id_to_username
 
 class HQFormData(FormDataBase):
     """
@@ -16,14 +18,8 @@ class HQFormData(FormDataBase):
     
     def _get_username(self):
         if self.userID:
-            try:
-                user = CouchUser.get(self.userID)
-                return user.raw_username
-            except ResourceNotFound:
-                pass # no user doc
-            except NoAccountException:
-                pass # no linked account
-        
+            return user_id_to_username(self.userID)
+            
         return ""
     
     def update(self, instance):
@@ -31,7 +27,13 @@ class HQFormData(FormDataBase):
         Override update to bolt on the domain
         """
         super(HQFormData, self).update(instance)
-        self.domain = instance.domain or ""
+        
+        if not instance.domain:
+            # we don't allow these fields to be empty
+            raise InvalidFormUpdateException("No domain found in instance %s!" %\
+                                             (instance.get_id))
+        
+        self.domain = instance.domain 
         self.username = self._get_username()
             
     def matches_exact(self, instance):
