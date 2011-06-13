@@ -4,7 +4,8 @@ import json
 from couchdbkit.ext.django.schema import Document
 import dateutil.parser
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import raw_username, format_username
+from corehq.apps.users.util import raw_username, format_username,\
+    user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.web import json_response, json_request, render_to_response
@@ -28,15 +29,6 @@ from corehq.apps.reports.calc import formdistribution
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
 #    return render_to_response(request, template, {'domain': domain})
-
-def user_id_to_username(user_id):
-    if not user_id:
-        return user_id
-    try:
-        login = get_db().get(user_id)
-    except:
-        return user_id
-    return raw_username(login['django_user']['username'])
 
 def xmlns_to_name(xmlns, domain, html=False):
     try:

@@ -1,6 +1,7 @@
 from django.conf import settings
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.models import User
+from couchdbkit.resource import ResourceNotFound
 
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 
@@ -17,12 +18,21 @@ def raw_username(username):
     username = username.lower()
     try:
         u, d = username.split("@")
-    except:
+    except Exception:
         return username
     if d.endswith('.' + sitewide_domain):
         return u
     else:
         return username
+
+def user_id_to_username(user_id):
+    if not user_id:
+        return user_id
+    try:
+        login = get_db().get(user_id)
+    except ResourceNotFound:
+        return user_id
+    return raw_username(login['django_user']['username'])
 
 def django_user_from_couch_id(id):
     """
