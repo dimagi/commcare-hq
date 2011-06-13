@@ -160,6 +160,48 @@ class CouchUser(Document, UnicodeMixIn):
     _user = None
     _user_checked = False
 
+
+
+    """This is the future intended API"""
+
+    @property
+    def account_type(self):
+        if self.web_account.login_id:
+            return "WebAccount"
+        else:
+            return "CommCareAccount"
+
+    @property
+    def username(self):
+        if self.default_account is not None:
+            return self.default_account.login.username
+        raise NoAccountException("No account found for %s" % self)
+    @property
+    def raw_username(self):
+        if self.account_type == "CommCareAccount":
+            return self.username.split("@")[0]
+        else:
+            return self.username
+    @property
+    def userID(self):
+        return self.default_account.login_id
+
+    @property
+    def password(self):
+        return self.default_account.login.password
+
+    @property
+    def date_joined(self):
+        return self.default_account.login.date_joined
+
+    @property
+    def user_data(self):
+        return self.default_account.user_data
+
+    @property
+    def is_superuser(self):
+        return self.default_account.login.is_superuser
+    
     class Meta:
         app_label = 'users'
     
@@ -195,40 +237,6 @@ class CouchUser(Document, UnicodeMixIn):
 
     def is_commcare_user(self):
         return self.account_type == "CommCareAccount"
-    
-    @property
-    def account_type(self):
-        if self.web_account.login_id:
-            return "WebAccount"
-        else:
-            return "CommCareAccount"
-        
-    @property
-    def username(self):
-        if self.default_account is not None:
-            return self.default_account.login.username
-        raise NoAccountException("No account found for %s" % self)
-    @property
-    def raw_username(self):
-        if self.account_type == "CommCareAccount":
-            return self.username.split("@")[0]
-        else:
-            return self.username
-    @property
-    def userID(self):
-        return self.default_account.login_id
-        
-    @property
-    def password(self):
-        return self.default_account.login.password
-    
-    @property
-    def date_joined(self):
-        return self.default_account.login.date_joined
-    
-    @property
-    def user_data(self):
-        return self.default_account.user_data
     
     def to_casexml_user(self):
         return CaseXMLUser(user_id=self.userID,
@@ -297,6 +305,8 @@ class CouchUser(Document, UnicodeMixIn):
         return Domain.objects.filter(name__in=domain_names)
 
     def is_member_of(self, domain_qs):
+        if isinstance(domain_qs, basestring):
+            return domain_qs in self.domain_names or self.is_superuser
         membership_count = domain_qs.filter(name__in=self.domain_names).count()
         if membership_count > 0:
             return True
@@ -427,12 +437,16 @@ class CouchUser(Document, UnicodeMixIn):
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
-        if self.is_domain_admin(domain):
-            role = 'admin'
-        elif self.can_edit_apps(domain):
-            role = "edit-apps"
+
+        if self.is_member_of(domain):
+            if self.is_domain_admin(domain):
+                role = 'admin'
+            elif self.can_edit_apps(domain):
+                role = "edit-apps"
+            else:
+                role = "read-only"
         else:
-            role = "read-only"
+            role = None
 
         return role
 

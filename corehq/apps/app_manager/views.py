@@ -114,7 +114,7 @@ def form_casexml(req, domain, form_unique_id):
 @login_and_domain_required
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.export_json()))
+    return HttpResponse(app.export_json())
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
@@ -132,13 +132,24 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         app_id = app._id
         return back_to_main(**locals())
     else:
-        return render_to_response(req, template, {'domain': domain})
+        app_id = req.GET.get('app')
+        redirect_domain = req.GET.get('domain')
+        if redirect_domain:
+            return HttpResponseRedirect(
+                reverse('import_app', args=[redirect_domain])
+                + "?app={app_id}".format(app_id=app_id)
+            )
+        app = Application.get(app_id)
+        assert(app.doc_type in ('Application', 'RemoteApp'))
+        assert(req.couch_user.is_member_of(app.domain))
+        print domain
+        return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
 @require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
-    source = factory_app.export_json()
+    source = factory_app.export_json(json=False)
     name = req.POST.get('name')
     if name:
         source['name'] = name
@@ -155,7 +166,7 @@ def import_factory_module(req, domain, app_id):
     fapp = get_app('factory', fapp_id)
     fmodule = fapp.get_module(fmodule_id)
     app = get_app(domain, app_id)
-    source = fmodule.export_json()
+    source = fmodule.export_json(json=False)
     app.new_module_from_source(source)
     app.save()
     return back_to_main(**locals())
@@ -166,7 +177,7 @@ def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
     fapp = get_app('factory', fapp_id)
     fform = fapp.get_module(fmodule_id).get_form(fform_id)
-    source = fform.export_json()
+    source = fform.export_json(json=False)
     app = get_app(domain, app_id)
     app.new_form_from_source(module_id, source)
     app.save()

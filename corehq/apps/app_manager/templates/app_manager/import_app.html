@@ -1,13 +1,41 @@
-<form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
-    <table>
-        <tr>
-            <th>Name:</th>
-            <td><input type="text" name="name"/></td>
-        </tr>
-        <tr>
-            <th>Source:</th>
-            <td><textarea name="source"></textarea></td>
-        </tr>
-    </table>
-    <input type="submit" value="Import Application">
-</form>
+{% extends "app_manager/apps_base.html" %}
+{% block head %}
+    <script>
+        $(function () {
+            $(".historyBack").click(function () {
+                history.back();
+                return false;
+            });
+            $("#main").show();
+        });
+    </script>
+    {{ block.super }}
+    <style>
+        #main_container {
+            padding: 20px;
+            text-align: center;
+        }
+        #main_container p {
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+            <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+            <table class="hidden">
+                <tr>
+                    <th>Name:</th>
+                    <td><input type="text" name="name"/></td>
+                </tr>
+                <tr>
+                    <th>Source:</th>
+                    <td><textarea name="source">{{ app.export_json }}</textarea></td>
+                </tr>
+            </table>
+            <a href="#" class="historyBack">No, take me back.</a>
+            <input type="submit" value="Yes, import application">
+        </form>
+    </div>
+{% endblock %}

@@ -269,14 +269,17 @@
 {#                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>#}
 {#            </form>#}
 {#        </div>#}
-            {% if user.is_superuser %}
-                <h4>Advanced</h4>
-                <div class="config">
-                    <a href="{% url corehq.apps.app_manager.views.app_source domain app.id %}" class="dialog_opener" id="view_source">View Source</a>
-                    <div class="dialog" title="Application Source">
-                        <textarea id="app_source"></textarea>
-                    </div>
-                </div>
-            {% endif %}
+            <h4>Copying</h4>
+            <div class="config">
+{#                <a href="{% url corehq.apps.app_manager.views.app_source domain app.id %}" class="dialog_opener" id="view_source">View Source</a>#}
+{#                <div class="dialog" title="Application Source">#}
+{#                    <textarea id="app_source"></textarea>#}
+{#                </div>#}
+                <form method="get" action='{% url import_app domain %}'>
+                    <input type="hidden" name="app" value="{{ app.id }}"/>
+                    <input type="text" name="domain" />
+                    <input type="submit" value="Copy" />
+                </form>
+            </div>
         </div>
 {% endblock %}
