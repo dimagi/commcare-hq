@@ -149,7 +149,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
 @require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
-    source = factory_app.export_json(json=False)
+    source = factory_app.export_json(dump_json=False)
     name = req.POST.get('name')
     if name:
         source['name'] = name
@@ -166,7 +166,7 @@ def import_factory_module(req, domain, app_id):
     fapp = get_app('factory', fapp_id)
     fmodule = fapp.get_module(fmodule_id)
     app = get_app(domain, app_id)
-    source = fmodule.export_json(json=False)
+    source = fmodule.export_json(dump_json=False)
     app.new_module_from_source(source)
     app.save()
     return back_to_main(**locals())
@@ -177,7 +177,7 @@ def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
     fapp = get_app('factory', fapp_id)
     fform = fapp.get_module(fmodule_id).get_form(fform_id)
-    source = fform.export_json(json=False)
+    source = fform.export_json(dump_json=False)
     app = get_app(domain, app_id)
     app.new_form_from_source(module_id, source)
     app.save()

@@ -205,10 +205,10 @@ class Form(IndexedSchema):
     def get_questions(self, langs):
         return XForm(self.contents).get_questions(langs)
     
-    def export_json(self, json=True):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
-        return json.dumps(source) if json else source
+        return json.dumps(source) if dump_json else source
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         
@@ -361,11 +361,11 @@ class Module(IndexedSchema):
                 case_types.append(case_type)
         return case_types
 
-    def export_json(self, json=True):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         for form in source['forms']:
             del form['unique_id']
-        return json.dumps(source) if json else source
+        return json.dumps(source) if dump_json else source
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -476,14 +476,14 @@ class VersionedDoc(Document):
         """
         pass
 
-    def export_json(self, json=True):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         
         for field in self._meta_fields:
             if field in source:
                 del source[field]
         self.scrub_source(source)
-        return json.dumps(source) if json else source
+        return json.dumps(source) if dump_json else source
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
