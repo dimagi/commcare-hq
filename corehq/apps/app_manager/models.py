@@ -685,10 +685,32 @@ class Application(ApplicationBase):
     #use_commcare_sense = BooleanProperty(default=False)
     profile = DictProperty() #SchemaProperty(Profile)
 
+    force_http = BooleanProperty(default=False)
+
+    @property
+    def url_base(self):
+        if self.force_http:
+            return settings.INSECURE_URL_BASE
+        else:
+            return get_url_base()
+
+    @property
+    def post_url(self):
+        return "%s%s" % (
+            self.url_base,
+            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+        )
+    @property
+    def ota_restore_url(self):
+        return "%s%s" % (
+            self.url_base,
+            reverse('corehq.apps.ota.views.restore', args=[self.domain])
+        )
+
     @property
     def suite_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
         )
     @property
