@@ -329,7 +329,7 @@ def submission_log(request, domain):
         username = user_id_to_username(user_id)
         if username:
             users.append({'id': user_id, 'username': username})
-
+    users.sort(key=lambda user: user['username'])
     return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,

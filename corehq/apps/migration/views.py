@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from corehq.apps.migration.add_user_id import add_user_id
 from corehq.apps.migration.models import MigrationUser
 from corehq.apps.receiverwrapper.util import get_submit_url
+from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.database import get_db
 from receiver.util import spoof_submission
 
@@ -54,7 +55,8 @@ def update_migration_users(xml, user_map):
     """Updates the database of users and returns whether it made an addition or not
     (It doesn't make an addition if the username/domain was already taken)"""
     def get_username(reg):
-        return re.search(r'<username>(.*)</username>', reg).group(1).replace(' ', '_').lower()
+        username = re.search(r'<username>(.*)</username>', reg).group(1)
+        return normalize_username(username)
 
     def get_user_id(reg):
         return re.search(r'<uuid>(.*)</uuid>', reg).group(1)

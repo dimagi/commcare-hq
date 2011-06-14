@@ -168,7 +168,8 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     context = _users_context(request, domain)
-    users = _get_user_commcare_account_tuples(domain)
+    users = list(_get_user_commcare_account_tuples(domain))
+    users.sort(key=lambda x: x[0].username)
 #    for user, account in users:
 #        user.current_domain = domain
     context.update({

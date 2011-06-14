@@ -1,10 +1,12 @@
 import sys, os
 import re
 import json
+from corehq.apps.users.util import normalize_username
 
 def get_username(xml):
     try:
-        return re.search(r'<[Mm]eta>.*<username>(.*)</username>.*</[Mm]eta>', xml).group(1).replace(' ', '_').lower()
+        username = re.search(r'<[Mm]eta>.*<username>(.*)</username>.*</[Mm]eta>', xml).group(1)
+        return normalize_username(username)
     except:
         return None
 

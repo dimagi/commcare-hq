@@ -174,8 +174,20 @@ class CouchUser(Document, UnicodeMixIn):
     @property
     def username(self):
         if self.default_account is not None:
-            return self.default_account.login.username
+            username = self._doc.get('username')
+            if not username:
+                username = self.default_account.login.username
+                self._doc['username'] = username
+                self.save()
+            return username
+
         raise NoAccountException("No account found for %s" % self)
+
+    @username.setter
+    def username(self, value):
+        pass
+
+
     @property
     def raw_username(self):
         if self.account_type == "CommCareAccount":

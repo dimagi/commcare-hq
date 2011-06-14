@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import logging
+from django.core.exceptions import ValidationError
 import corehq.apps.users.xml as xml
 from datetime import datetime
 from django.db.models.signals import post_save
@@ -13,7 +14,7 @@ from corehq.apps.users.models import HqUserProfile, CouchUser, COUCH_USER_AUTOCR
     create_hq_user_from_commcare_registration_info
 from dimagi.utils.django.database import get_unique_value
 from corehq.apps.users.util import format_username, django_user_from_couch_id,\
-    couch_user_from_django_user
+    couch_user_from_django_user, normalize_username
 from dimagi.utils.logging import log_exception
 from couchdbkit.resource import ResourceNotFound
 
@@ -118,7 +119,11 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         # we need to check for username conflicts, other issues
         # and make sure we send the appropriate conflict response to the
         # phone.
-        username = format_username(username, domain)
+        try:
+            username = normalize_username(username, domain)
+        except ValidationError:
+            raise Exception("Username (%s) is invalid: valid characters include [a-z], "
+                            "[0-9], period, underscore, and single quote" % username)
         try: 
             User.objects.get(username=username)
             prefix, suffix = username.split("@") 
