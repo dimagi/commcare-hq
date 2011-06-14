@@ -569,7 +569,8 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     
     # create django user for the commcare account
     login = create_user(username, password, uuid=uuid)
-    
+    login['domains'] = [domain]
+    login.save()
     # create new couch user
     couch_user = CouchUser()
     
@@ -578,6 +579,7 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
         date = datetime.now()
     couch_user.add_commcare_account(login, domain, device_id, user_data)
     couch_user.add_device_id(device_id=device_id)
+    couch_user['domains'] = [domain]
     couch_user.save()
     return couch_user
     
