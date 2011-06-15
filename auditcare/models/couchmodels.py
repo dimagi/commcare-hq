@@ -30,7 +30,7 @@ except:
 from auditcare.signals import user_login_failed
 
 def make_uuid():
-    return uuid.uuid1().hex
+    return uuid.uuid4().hex
 def getdate():
     return datetime.utcnow()
 
