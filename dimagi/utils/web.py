@@ -164,8 +164,8 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
         return _fn
     return _parse_int
 
-def json_response(obj):
-    return HttpResponse(json.dumps(obj))
+def json_response(obj, **kwargs):
+    return HttpResponse(json.dumps(obj, **kwargs))
 
 def json_request(params):
     return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
