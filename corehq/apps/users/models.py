@@ -582,8 +582,9 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     couch_user.save()
 
     # hack the domain into the login too for replication purposes
-    login_doc = Document.get(uuid)
+    login_doc = Document.get(uuid, db=get_db())
     login_doc['domains'] = [domain]
+    login_doc.set_db(get_db())
     login_doc.save()
     
     return couch_user
