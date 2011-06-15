@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import json
 from couchdbkit.ext.django.schema import Document
 import dateutil.parser
+from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username, format_username,\
     user_id_to_username
@@ -257,6 +258,62 @@ def get_active_cases_json(domain, days=31, **kwargs):
 
 
     return sorted([user_to_row(user) for user in users])
+
+@login_and_domain_required
+def case_activity(request, domain):
+    params = json_request(request.GET)
+    display = params.get('display') or ['diff', 'percent']
+    userIDs = params.get('userIDs') or [user.userID for user in CouchUser.commcare_users_by_domain(domain)]
+    userIDs.sort(key=lambda userID: user_id_to_username(userID))
+    landmarks = [timedelta(days=l) for l in params.get('landmarks') or [7,30,90]]
+    landmarks.append(None)
+    now = datetime.utcnow()
+    report = CaseActivity(domain, userIDs, landmarks, now)
+    data = report.get_data()
+    headers = ["User"] + ["Last %s Days" % l.days if l else "Ever" for l in landmarks]
+    rows = []
+
+    extra = {}
+
+    for userID in data:
+        extra[userID] = []
+        for i in range(len(landmarks)):
+            next = data[userID][i+1] if i+1 < len(landmarks) else None
+            last = data[userID][i-1] if i else 0
+            current = data[userID][i]
+            extra[userID].append({
+                "total": current,
+                "diff": current - last,
+                "next": next,
+                "last": last,
+                "percent": 1.0*current/next if next else None
+            })
+
+    for userID in extra:
+        row = [user_id_to_username(userID)]
+        for entry in extra[userID]:
+            if entry['total'] == entry['diff'] or 'diff' not in display:
+                fmt = "{total}"
+            else:
+                fmt = "+ {diff} = {total}"
+                
+            if entry['percent'] and 'percent' in display:
+                fmt += " ({percent:.0%} of {next})"
+            formatted = fmt.format(**entry)
+            try:
+                formatted = int(formatted)
+            except ValueError:
+                pass
+            row.append(formatted)
+        rows.append(row)
+    return render_to_response(request, "reports/generic_report.html", {
+        "domain": domain,
+        "report": {
+            "name": "Case Activity",
+            "headers": headers,
+            "rows": rows,
+        },
+    })
 
 
 @login_and_domain_required

@@ -37,6 +37,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ),
 
     url('active_cases', 'active_cases', name="active_case_report"),
+    url('case_activity', 'case_activity', name="case_activity_report"),
 
 
     url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),
