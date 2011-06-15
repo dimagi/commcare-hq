@@ -409,7 +409,7 @@ class VersionedDoc(Document):
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
-        if not self.short_url:
+        if self.copy_of and not self.short_url:
             self.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
             )
