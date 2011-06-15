@@ -1,4 +1,5 @@
 import copy
+import settings
 from couchdbkit.ext.django.schema import Document
 from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
 from couchdbkit.schema.properties_proxy import SchemaListProperty
@@ -23,7 +24,8 @@ from dimagi.utils.couch.database import get_db
 try:
     from django.contrib.auth.signals import user_logged_in, user_logged_out
 except:
-    logging.error("Error, django.contrib.auth signals not available in this version of django yet.")
+    if getattr(settings, 'AUDITCARE_LOG_ERRORS', True):
+        logging.error("Error, django.contrib.auth signals not available in this version of django yet.")
     user_logged_in = None
     user_logged_out = None
 
