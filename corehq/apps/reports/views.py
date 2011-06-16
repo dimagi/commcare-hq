@@ -262,7 +262,7 @@ def get_active_cases_json(domain, days=31, **kwargs):
 @login_and_domain_required
 def case_activity(request, domain):
     params = json_request(request.GET)
-    display = params.get('display') or ['diff', 'percent']
+    display = params.get('display', ['percent'])
     userIDs = params.get('userIDs') or [user.userID for user in CouchUser.commcare_users_by_domain(domain)]
     userIDs.sort(key=lambda userID: user_id_to_username(userID))
     landmarks = [timedelta(days=l) for l in params.get('landmarks') or [7,30,90]]
