@@ -52,9 +52,9 @@ class User(object):
     
     @classmethod
     def from_django_user(cls, django_user):
-        return User(user_id=django_user.pk, username=django_user.username,
-                    password=django_user.password, date_joined=django_user.date_joined,
-                    user_data={})
+        return cls(user_id=str(django_user.pk), username=django_user.username,
+                   password=django_user.password, date_joined=django_user.date_joined,
+                   user_data={})
     
 class SyncLog(Document, UnicodeMixIn):
     """
