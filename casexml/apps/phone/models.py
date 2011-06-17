@@ -8,37 +8,11 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined, user_data={}):
-        self._user_id = user_id
-        self._username = username
-        self._password = password
-        self._date_joined = date_joined
-        self._user_data = user_data
-    
-    @property
-    def user_id(self):
-        return self._user_id
-
-    @property
-    def username(self):
-        return self._username
-        
-    @property
-    def password(self):
-        return self._password
-    
-    @property
-    def date_joined(self):
-        """
-        A datetime
-        """
-        return self._date_joined
-    
-    @property
-    def user_data(self):
-        """
-        A dictionary
-        """
-        return self._user_data
+        self.user_id = user_id
+        self.username = username
+        self.password = password
+        self.date_joined = date_joined
+        self.user_data = user_data
     
     def get_open_cases(self, last_sync):
         """
