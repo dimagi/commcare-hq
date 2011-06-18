@@ -1,6 +1,7 @@
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
 import current_builds
@@ -13,7 +14,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -200,8 +201,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     factory_apps = [app['value'] for app in get_db().view('app_manager/factory_apps')]
 
     applications = []
-    for app in get_db().view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
-        app = app['value']
+    for app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
         applications.append(app)
     app = module = form = None
     if app_id:
@@ -230,11 +230,11 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         app.save()
 
     if app:
-        saved_apps = [x['value'] for x in get_db().view('app_manager/saved_app',
+        saved_apps = ApplicationBase.view('app_manager/saved_app',
             startkey=[domain, app_id, {}],
             endkey=[domain, app_id],
             descending=True
-        ).all()]
+        ).all()
     else:
         saved_apps = []
     if app and not app.langs:
@@ -414,8 +414,12 @@ def view_app(req, domain, app_id=''):
         'app': app,
     })
     if app:
+        options = CommCareBuildConfig.fetch().menu
+        is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
+        print is_standard_build
         context.update({
-            "commcare_tag_options": current_builds.MENU_OPTIONS
+            "commcare_build_options": options,
+            "is_standard_build": bool(is_standard_build)
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
@@ -745,12 +749,9 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "native_input" == attr:
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
-    elif "commcare_tag" == attr:
-        commcare_tag = req.POST['commcare_tag']
-        if commcare_tag in current_builds.TAG_MAP:
-            app.commcare_tag = commcare_tag
-        else:
-            return HttpResponseBadRequest()
+    elif "build_spec" == attr:
+        build_spec = req.POST['build_spec']
+        app.build_spec = BuildSpec.from_string(build_spec)
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):

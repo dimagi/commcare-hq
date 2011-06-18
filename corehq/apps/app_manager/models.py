@@ -6,9 +6,10 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
-from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
@@ -503,22 +504,44 @@ class ApplicationBase(VersionedDoc):
 
     recipients = StringProperty(default="")
     # is a tag like "1.1" that we use to look up the latest build of that type
-    commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
-    # built_with stores a record of CommCare build used; is of the form "{version}/{build_number}"
-    built_with = StringProperty()
+    # deprecated
+    # commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
+    
+    # this is the supported way of specifying which commcare build to use
+    build_spec = SchemaProperty(BuildSpec)
+    # built_with stores a record of CommCare build used in a saved app
+    built_with = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
     built_on = DateTimeProperty(required=False)
 
-    def get_commcare_build(self):
-        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
-        return CommCareBuild.get_build(version, build_number)
+    @classmethod
+    def wrap(cls, data):
+        # scrape for old conventions and get rid of them
+        if data.has_key("commcare_tag"):
+            version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
+            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
+            del data['commcare_tag']
+        if data.has_key("built_with") and isinstance(data['built_with'], basestring):
+            data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
+        if data.has_key("commcare_build"):
+            del data['commcare_build']
+        return super(ApplicationBase, cls).wrap(data)
 
-    def commcare_tag_label(self):
+    def get_build(self):
+#        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
+#        return CommCareBuild.get_build(version, build_number)
+        return self.build_spec.get_build()
+
+    def get_build_label(self):
         """This is a helper to look up a human readable name for a build tag"""
-        for option in current_builds.MENU_OPTIONS:
-            if option['tag'] == self.commcare_tag:
-                return option['label']
+#        for option in current_builds.MENU_OPTIONS:
+#            if option['tag'] == self.commcare_tag:
+#                return option['label']
+        for item in CommCareBuildConfig.fetch().menu:
+            if item['build'].to_string() == self.build_spec.to_string():
+                return item['label']
+        return self.build_spec.get_label()
 
     @property
     def post_url(self):
@@ -552,12 +575,13 @@ class ApplicationBase(VersionedDoc):
             (True,): 'Nokia/S40-native-input',
             (False,): 'Nokia/S40-generic',
         }[(self.native_input,)]
-        return self.get_commcare_build().get_jadjar(spec)
+        return self.get_build().get_jadjar(spec)
 
+#    @profile_decorator('create_jadjar.prof')
     def create_jadjar(self):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
-        except:
+        except ResourceError:
             built_on = datetime.utcnow()
             jadjar = self.get_jadjar().pack(self.create_all_files(), {
                 'Profile': self.profile_loc,
@@ -571,48 +595,10 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jadjar.jad, 'CommCare.jad')
             self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
-            self.built_with = "%s/%s" % (jadjar.version, jadjar.build_number)
-            if 'commcare_build' in self:
-                del self['commcare_build']
+            self.built_with = BuildSpec(version=jadjar.version, build_number=jadjar.build_number)
             self.save(increment_version=False)
             return jadjar.jad, jadjar.jar
 
-#    def create_jad(self):
-#        try:
-#            return self.fetch_attachment('CommCare.jad')
-#        except ResourceNotFound:
-#            jad = self.get_jadjar().jad_dict()
-#            jar = self.create_zipped_jar()
-#            jad.update({
-#                'MIDlet-Jar-Size': len(jar),
-#                'Profile': self.profile_loc,
-#                'MIDlet-Jar-URL': self.jar_url,
-#                #'MIDlet-Name': self.name,
-#                                # e.g. 2011-Apr-11 20:45
-#                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
-#                'CommCare-Release': "true",
-#                'Build-Number': self.version,
-#            })
-#            jad = sign_jar(jad, jar)
-#            self.put_attachment(jad, 'CommCare.jad')
-#            return jad
-
-#    def create_zipped_jar(self):
-#        try:
-#            return self.fetch_attachment('CommCare.jar')
-#        except ResourceNotFound:
-#            jar = self.fetch_jar()
-#            files = self.create_all_files()
-#            buffer = StringIO(jar)
-#            zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
-#            for path in files:
-#                zipper.writestr(path, files[path].encode('utf-8'))
-#            zipper.close()
-#            buffer.flush()
-#            jar = buffer.getvalue()
-#            buffer.close()
-#            self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
-#            return jar
     def validate_app(self):
         return []
 
@@ -663,12 +649,16 @@ class ApplicationBase(VersionedDoc):
         return self.get_jadjar().fetch_jar()
 
     def fetch_emulator_commcare_jar(self):
-        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
-        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
+#        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
+#        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
+        jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar("Generic/WebDemo")
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-
+    def save_copy(self):
+        copy = super(ApplicationBase, self).save_copy()
+        copy.create_jadjar()
+        return copy
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()

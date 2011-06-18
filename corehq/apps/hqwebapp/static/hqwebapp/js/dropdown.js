@@ -15,12 +15,12 @@
                     isOpen = val;
                     if (isOpen) {
                         $dropdown.addClass('dropdown-open');
-                        $button.addClass('shadow');
+                        $button.addClass('shadow').removeClass('ui-corner-bottom');
                         $list.css({top: $button.outerHeight(true)-1}).show();
                         $shield.show();
                     } else {
                         $dropdown.removeClass('dropdown-open');
-                        $button.removeClass('shadow');
+                        $button.removeClass('shadow').addClass('ui-corner-bottom');
                         $list.hide();
                         $shield.hide();
                     }
@@ -36,6 +36,9 @@
         open(false);
 
         $list.hide();
+        $list.click(function () {
+            open(false);
+        });
         $button.click(function () {
             open(!open());
             return false;
@@ -54,7 +57,7 @@
                 white-space: nowrap;\
             }\
             .dropdown > *:first-child {\
-                display: table;\
+                display: block;\
                 border: 1px solid #CCC;\
                 background-color: white;\
                 padding: .5em 1em;\

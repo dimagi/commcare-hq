@@ -24,13 +24,18 @@
             down = 'ui-icon-carat-1-s',
             up = 'ui-icon-carat-1-n';
         $appsMenu.addClass('ui-corner-top');
-        $appsMenuBorder.addClass('ui-corner-top');
+
         function setHidden(val) {
             hidden = val;
             $.cookie('appsMenuHidden', JSON.stringify(hidden), {path: '/'});
             $toggleIcon.addClass(hidden ? down : up)
                     .removeClass(hidden ? up : down);
             $toggleLink.text(hidden ? "Change Apps" : "Hide");
+            if (hidden) {
+                $appsMenuBorder.addClass('ui-corner-top');
+            } else {
+                $appsMenuBorder.removeClass('ui-corner-top');
+            }
         }
         setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
         $toggleDiv.addClass('ui-corner-bottom');
@@ -40,6 +45,7 @@
             return false;
         });
         $("#new_app_menu").dropdown();
+        $(".download-dropdown").each(function () { $(this).dropdown(); });
         if(hidden) {
             $appsMenu.hide();
         } else if (bootstrap) {
@@ -91,7 +97,7 @@
             height: .5em;
         }
         #title-bar {
-            position: relative;            
+            position: relative;
         }
         input.sms-autocomplete {
             width: 90%;
@@ -107,6 +113,7 @@
         #app-info {
             float: left;
         }
+
     </style>
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}
@@ -359,10 +366,16 @@
                             <th></th>
                         {% endif %}
                         <th>Version</th>
+                        <th>Build Date</th>
+                        <th>CommCare Version</th>
                         <th>Preview (Beta)</th>
-                        <th>Short URL</th>
-                        <th>Jad File</th>
-                        <th>Jar File</th>
+                    
+                        <th>Download</th>
+{#                        <th>Short URL</th>#}
+{#                        <th>Jad File</th>#}
+{#                        <th>Jar File</th>#}
+{#                        <th>Send to Phones</th>#}
+{#                        <th>Install on CommCare ODK</th>#}
                         {% if edit %}
                             <th></th>
                         {% endif %}
@@ -383,33 +396,40 @@
                                 </td>
                             {% endif %}
                             <td>{{ saved_app.version }}</td>
+                            <td>{{ saved_app.built_on.date }}</td>
+                            <td>{% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}</td>
                             <td><a href="{% url emulator domain saved_app.id %}">Preview</a></td>
                             <td>
-                                {% if saved_app.short_url %}
-                                    <a href="{{ saved_app.short_url }}">{{ saved_app.short_url }}</a>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">CommCare.jad</a>
-                            </td>
-                            <td>
-                                <a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">CommCare.jar</a>
-                            </td>
-                            <td>
-                                <a class="dialog_opener" href="">Send to Phones</a>
-                                <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
-                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                        <label>Send to: </label>
-                                        <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                        <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
-                                        <input type="submit" value="Send"/>
-                                    </form>
+                                <div class="download-dropdown">
+                                    <div>
+                                        <a href="#">Download</a>
+                                    </div>
+                                    <ul>
+                                        <li>
+                                            <a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">CommCare.jad</a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">CommCare.jar</a>
+                                        </li>
+                                        <li>
+                                            <a class="dialog_opener" href="">Send to Phones</a>
+                                            <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
+                                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                                    <label>Send to: </label>
+                                                    <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                                    <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                                    <input type="submit" value="Send"/>
+                                                </form>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
+                                        </li>
+
+
+                                    </ul>
                                 </div>
                             </td>
-                            <td>
-                                <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
-                            </td>
-                            
                             {% if edit %}
                                 <td>
                                     {% if saved_app.version != app.version %}

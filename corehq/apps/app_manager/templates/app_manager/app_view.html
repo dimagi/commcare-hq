@@ -233,15 +233,24 @@
                 <th>CommCare Version</th>
                 <td>
                     {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'commcare_tag' %}">
-                            <select name="commcare_tag" class="autosave" data-value="{{ app.commcare_tag }}">
-                                {% for option in commcare_tag_options %}
-                                    <option value="{{ option.tag }}">{{ option.label }}</option>
+                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'build_spec' %}">
+                            <select name="build_spec" class="autosave" data-value="{{ app.build_spec.to_string }}">
+                                {% for option in commcare_build_options %}
+                                    <option value='{{ option.build.to_string }}'>
+                                        {{ option.label }}
+                                    </option>
                                 {% endfor %}
+                                {% if not is_standard_build %}
+                                    <optgroup label="Custom">
+                                        <option value='{{ app.build_spec.to_string }}'>
+                                            {{ app.build_spec.get_label }}
+                                        </option>
+                                    </optgroup>
+                                {% endif %}
                             </select>
                         </form>
                     {% else %}
-                        {{ app.commcare_tag_label }}
+                        {{ app.get_build_label }}
                     {% endif %}
                 </td>
             </tr>
