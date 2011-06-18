@@ -529,7 +529,7 @@ class ApplicationBase(VersionedDoc):
         if data.has_key("built_with") and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
-        if not data.has_key("build_spec"):
+        if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
             data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
             
         return super(ApplicationBase, cls).wrap(data)

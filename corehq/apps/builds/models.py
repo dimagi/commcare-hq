@@ -113,8 +113,11 @@ class BuildSpec(DocumentSchema):
         else:
             return CommCareBuild.get_build(self.version, self.build_number)
 
+    def is_null(self):
+        return not (self.version and (self.build_number or self.latest))
+
     def get_label(self):
-        if self.version and (self.build_number or self.latest):
+        if not self.is_null():
             fmt = "{self.version} "
             fmt += "(latest)" if self.latest else "({self.build_number})"
             return fmt.format(self=self)
