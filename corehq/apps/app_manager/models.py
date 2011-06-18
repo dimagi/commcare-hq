@@ -518,14 +518,20 @@ class ApplicationBase(VersionedDoc):
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
+        if data.has_key("commcare_build"):
+            version, build_number = data['commcare_build'].split('/')
+            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
+            del data['commcare_build']
         if data.has_key("commcare_tag"):
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
         if data.has_key("built_with") and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
-        if data.has_key("commcare_build"):
-            del data['commcare_build']
+
+        if not data.has_key("build_spec"):
+            data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
+            
         return super(ApplicationBase, cls).wrap(data)
 
     def get_build(self):
