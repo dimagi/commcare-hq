@@ -18,7 +18,7 @@ class HQFormData(FormDataBase):
     
     def _get_username(self):
         if self.userID:
-            return user_id_to_username(self.userID)
+            return user_id_to_username(self.userID) or ""
             
         return ""
     
