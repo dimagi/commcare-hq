@@ -9,6 +9,7 @@ from casexml.apps.case import const
 from dimagi.utils import parsing
 import logging
 from receiver.util import spoof_submission
+from couchforms.models import XFormInstance
 
 """
 Couch models for commcare cases.  
@@ -203,6 +204,9 @@ class CommCareCase(CaseBase):
                     attachments.append((action.xform_id, val["#text"]))
         return attachments
     
+    def get_attachment(self, attachment_tuple):
+        return XFormInstance.get_db().fetch_attchment(attachment_tuple[0], attachment_tuple[1])
+        
     @classmethod
     def from_doc(cls, case_block, xformdoc):
         """
