@@ -7,6 +7,18 @@ table.edit_single_user {
     text-align: left;
 }
 
+table.user_data {
+	margin: 1em;
+}
+
+table.user_data th {
+    text-align: right;
+}
+
+table.user_data td {
+    text-align: left;
+}
+
 div#error_msg {
     text-align: right;
     color: red;
