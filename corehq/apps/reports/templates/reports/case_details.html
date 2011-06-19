@@ -1,0 +1,33 @@
+{% extends base_template %}
+
+{% load case_tags %}
+
+{% block head %}
+    {{ block.super }}
+    {% include "imports/datatables.html" %}
+    <style>
+        .inner_container {
+            text-align: left;
+            width: 95%;
+            margin: auto;   
+        }
+        table.case_details, table.case_history, table.case_properties {
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+    </style>
+    <script>
+    $(document).ready(function() {
+            
+    });
+         
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id="main_container">
+    <div class="inner_container">
+        {% render_case case_id %} 
+    </div>
+    </div>
+{% endblock %}
