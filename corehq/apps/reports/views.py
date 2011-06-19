@@ -28,6 +28,8 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.calc import formdistribution
 from casexml.apps.case.models import CommCareCase
 from django.template.defaultfilters import yesno
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.const import CASE_TAG_ID
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -376,7 +378,7 @@ def paging_case_list(request, domain, individual):
         startkey = [domain]
         endkey = [domain, {}]
     paginator = CouchPaginator(
-        "case/by_last_date",
+        "hqcase/all_cases",
         view_to_table,
         search=False,
         view_args=dict(
@@ -594,7 +596,9 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
-    return render_to_response(request, "reports/form_data.html", dict(domain=domain,instance=instance))
+    return render_to_response(request, "reports/form_data.html", 
+                              dict(domain=domain,instance=instance,
+                                   caseblocks=extract_case_blocks(instance)))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):

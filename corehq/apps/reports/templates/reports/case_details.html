@@ -6,10 +6,18 @@
     {{ block.super }}
     {% include "imports/datatables.html" %}
     <style>
+        h2 {
+            padding-top: 1em;
+        }
+        .no_data {
+            text-align: center;
+            color: #ccc;
+        }
         .inner_container {
-            text-align: left;
+            text-align: left;   
             width: 95%;
-            margin: auto;   
+            margin: auto;
+            padding: 1em 0 1em 0;
         }
         table.case_details, table.case_history, table.case_properties {
             border: 1px solid #ccc;
