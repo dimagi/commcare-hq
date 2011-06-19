@@ -323,10 +323,7 @@ def case_activity(request, domain):
         },
     })
 
-@login_and_domain_required
-def case_list(request, domain):
-    headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
-    individual = request.GET.get('individual', '')
+def _user_list(domain):
     user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
     user_ids = [result['key'][1] for result in user_ids]
     users = []
@@ -335,6 +332,12 @@ def case_list(request, domain):
         if username:
             users.append({'id': user_id, 'username': username})
     users.sort(key=lambda user: user['username'])
+    return users
+
+@login_and_domain_required
+def case_list(request, domain):
+    headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
+    individual = request.GET.get('individual', '')
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_users": True,
@@ -343,7 +346,7 @@ def case_list(request, domain):
             "headers": headers,
             "rows": [],
         },
-        "users": users,
+        "users": _user_list(domain),
         "ajax_source": reverse('paging_case_list', args=[domain, individual]),
         "individual": individual,
     })
@@ -458,17 +461,7 @@ def paging_user_summary(request, domain):
 def submission_log(request, domain):
     individual = request.GET.get('individual', '')
     show_unregistered = request.GET.get('show_unregistered', 'false')
-    if individual:
-        pass
-
-    user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
-    user_ids = [result['key'][1] for result in user_ids]
-    users = []
-    for user_id in user_ids:
-        username = user_id_to_username(user_id)
-        if username:
-            users.append({'id': user_id, 'username': username})
-    users.sort(key=lambda user: user['username'])
+    
     return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,
@@ -477,7 +470,7 @@ def submission_log(request, domain):
             "header": [],
             "rows": [],
         },
-        "users": users,
+        "users": _user_list(domain),
         "individual": individual,
         "show_unregistered": show_unregistered,
     })
