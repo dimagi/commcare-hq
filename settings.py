@@ -243,6 +243,7 @@ HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
 COUCHLOG_THRESHOLD = logging.WARNING
 
 
