@@ -1,19 +1,22 @@
 from datetime import date, datetime, timedelta, time
 from dimagi.utils.logging import log_exception
+from dimagi.utils.parsing import string_to_datetime
 
-def force_to_date(date_or_datetime):
-    """Forces a date or datetime to a date."""
-    if not date_or_datetime:                   return date_or_datetime
-    if isinstance(date_or_datetime, datetime): return date_or_datetime.date()
-    if isinstance(date_or_datetime, date):     return date_or_datetime
-    else:                                      raise ValueError("object must be date or datetime!")
+def force_to_date(val):
+    """Forces a date, string, or datetime to a date."""
+    if not val:                      return val
+    if isinstance(val, datetime):    return val.date()
+    if isinstance(val, date):        return val
+    if isinstance(val, basestring):  return string_to_datetime(date)
+    else:                            raise ValueError("object must be date or datetime!")
     
-def force_to_datetime(date_or_datetime):
-    """Forces a date or datetime to a datetime."""
-    if not date_or_datetime:                    return date_or_datetime
-    if isinstance(date_or_datetime, datetime):  return date_or_datetime
-    elif isinstance(date_or_datetime, date):    return datetime.combine(date, time())
-    else:                                       raise ValueError("object must be date or datetime!")    
+def force_to_datetime(val):
+    """Forces a date, string, or datetime to a datetime."""
+    if not val:                        return val
+    elif isinstance(val, datetime):    return val
+    elif isinstance(val, date):        return datetime.combine(date, time())
+    elif isinstance(val, basestring):  return string_to_datetime(date)
+    else:                              raise ValueError("object must be date or datetime!")    
         
 def safe_date_add(startdate, days, force_to_date_flag=True):
     if not startdate:  return None
