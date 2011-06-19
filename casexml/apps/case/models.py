@@ -167,15 +167,7 @@ class CommCareCase(CaseBase):
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
-    followup_type = StringProperty()
     
-    # date the case actually starts, before this won't be sent to phone.
-    # this is for missed appointments, which don't start until the appointment
-    # is actually missed
-    start_date = DateProperty()      
-    activation_date = DateProperty() # date the phone triggers it active
-    due_date = DateProperty()        # date the phone thinks it's due
-
     class Meta:
         app_label = 'case'
         
@@ -194,14 +186,6 @@ class CommCareCase(CaseBase):
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%(case_id)s::%(date_modified)s" % (self.case_id, self.date_modified)
-    
-    def is_started(self, since=None):
-        """
-        Whether the case has started (since a date, or today).
-        """
-        if since is None:
-            since = date.today()
-        return self.start_date <= since if self.start_date else True
     
     @property
     def attachments(self):

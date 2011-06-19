@@ -2,7 +2,6 @@
 # how cases/referrals are tagged in the xform/couch
 CASE_TAG = "case"
 REFERRAL_TAG = "referral"
-FOLLOWUP_TYPE_TAG = "followup_type"
 OUTCOME_TAG = "outcome"
 PATIENT_ID_TAG = "patient_id" 
 FOLLOWUP_DATE_TAG = "followup_date"
