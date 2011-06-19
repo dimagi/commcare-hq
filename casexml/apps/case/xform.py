@@ -78,4 +78,5 @@ def extract_case_blocks(doc):
         # case.  Fall back to base case
         return []
     
-    return block_list
+    # filter out anything without a case id property
+    return [block for block in block_list if const.CASE_TAG_ID in block]
