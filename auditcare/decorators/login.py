@@ -72,7 +72,7 @@ def get_user_attempt(request):
 
     attempts = sorted(attempts, key=lambda x: x.event_date, reverse=True)
     if not attempts:
-        logging.warning("No attempts for given access, creating new attempt")
+        logging.info("No attempts for given access, creating new attempt")
         return None
 
     #walk the attempts
@@ -91,9 +91,9 @@ def get_user_attempt(request):
 
 
     if COOLOFF_TIME and attempt and datetime.utcnow() - attempt.event_date < COOLOFF_TIME:
-        logging.warning("Last login failure is still within the cooloff time, incrementing last access attempt.")
+        logging.info("Last login failure is still within the cooloff time, incrementing last access attempt.")
     else:
-        logging.warning("Last login failure is outside the cooloff time, creating new access attempt.")
+        logging.info("Last login failure is outside the cooloff time, creating new access attempt.")
         return None
     return attempt
 
@@ -104,8 +104,8 @@ def watch_logout(func):
             logging.info('AXES: Calling decorated logout function: %s' % func.__name__)
             if args: logging.info('args: %s' % args)
             if kwargs: logging.info('kwargs: %s' % kwargs)
-        logging.warning("Function: %s" %(func.__name__))
-        logging.warning("Logged logout for user %s" % (request.user.username))
+        logging.info("Function: %s" %(func.__name__))
+        logging.info("Logged logout for user %s" % (request.user.username))
         user = request.user
         #it's a successful login.
         ip = request.META.get('REMOTE_ADDR', '')

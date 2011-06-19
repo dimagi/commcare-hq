@@ -68,8 +68,8 @@ def audited_login(request, *args, **kwargs):
 def audited_logout (request, *args, **kwargs):
     # share some useful information
     func = auth_views.logout
-    logging.warning("Function: %s" %(func.__name__))
-    logging.warning("Logged logout for user %s" % (request.user.username))
+    logging.info("Function: %s" %(func.__name__))
+    logging.info("Logged logout for user %s" % (request.user.username))
     user = request.user
     #it's a successful login.
     ip = request.META.get('REMOTE_ADDR', '')
