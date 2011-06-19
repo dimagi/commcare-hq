@@ -27,6 +27,7 @@ from django.core.urlresolvers import reverse
 from dimagi.utils.django.email import send_HTML_email
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.users.exceptions import NoAccountException
+from dimagi.utils.dates import force_to_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -208,7 +209,10 @@ class CouchUser(Document, UnicodeMixIn):
 
     @property
     def user_data(self):
-        return self.default_account.user_data
+        try:
+            return self.default_account.user_data
+        except KeyError:
+            return {}
 
     @property
     def is_superuser(self):
@@ -574,10 +578,15 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     couch_user = CouchUser()
     
     # populate the couch user
-    if not date:
-        date = datetime.now()
+    
     couch_user.add_commcare_account(login, domain, device_id, user_data)
     couch_user.add_device_id(device_id=device_id)
+    
+    if date:
+        couch_user.created_on = force_to_datetime(date)
+    else:
+        couch_user.created_on = datetime.utcnow()
+    
     couch_user['domains'] = [domain]
     couch_user.save()
 
