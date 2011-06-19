@@ -16,7 +16,6 @@
     <tr><td>domain</td><td>{{ case.domain }}</td></tr>
     <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
     <tr><td>user_id</td><td>{{ case.user_id }}</td></tr>
-    <tr><td>referrals</td><td>{{ case.referrals }}</td></tr>
     <tr><td>forms</td><td>{{ case.xform_ids|join:"<br>"|safe }}</td></tr>
     <tr>
         <td>Attachments</td><td>
@@ -29,7 +28,6 @@
     
 </tbody>
 </table>
-
 <h2>Dynamic Properties</h2>
 <table class="case_properties">
 <thead>
@@ -41,7 +39,34 @@
 <tbody>
     {% for prop, val in case.dynamic_case_properties %}
     <tr><td>{{ prop }}</td><td>{{ val }}</td></tr>
+    {% empty %}
+    <tr><td colspan="2" class="no_data">No data</td></tr>
     {% endfor %}
+</tbody>
+</table>
+
+<h2>Referrals</h2>
+<table class="case_history">
+<thead>
+    <tr>
+        <th>Date Opened</th>
+        <th>Type</th>
+        <th>Date Modified</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+{% for referral in case.referrals %}
+    <tr>
+        <td>{{ referral.opened_on }}</td>
+        <td>{{ referral.type }}</td>
+        <td>{{ referral.modified_on }}</td>
+        <td>{{ referral.closed|yesno:"closed,open" }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="4" class="no_data">No referrals</td></tr>
+{% endfor %}
+
 </tbody>
 </table>
 
