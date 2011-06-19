@@ -1,38 +1,52 @@
-<table>
+<h2>Case Details</h2>
+<table class="case_details">
 <thead>
     <tr>
         <th>Property</th>
-        <th colspan="2">Value</th>
+        <th>Value</th>
     </tr>
 </thead>
 <tbody>
-    <tr><td>name</td><td colspan="2">{{ case.name }}</td></tr>
-    <tr><td>opened_on</td><td colspan="2">{{ case.opened_on }}</td></tr>
-    <tr><td>modified_on</td><td colspan="2">{{ case.modified_on }}</td></tr>
-    <tr><td>type</td><td colspan="2">{{ case.type }}</td></tr>
-    <tr><td>closed?</td><td colspan="2">{{ case.closed|yesno }}</td></tr>
-    <tr><td>closed_on</td><td colspan="2">{{ case.closed_on }}</td></tr>
-    <tr><td>domain</td><td colspan="2">{{ case.domain }}</td></tr>
-    <tr><td>external_id</td><td colspan="2">{{ case.external_id }}</td></tr>
-    <tr><td>user_id</td><td colspan="2">{{ case.user_id }}</td></tr>
-    <tr><td>referrals</td><td colspan="2">{{ case.referrals }}</td></tr>
-    <tr><td>forms</td><td colspan="2">{{ case.xform_ids|join:"<br>"|safe }}</td></tr>
+    <tr><td>name</td><td>{{ case.name }}</td></tr>
+    <tr><td>opened_on</td><td>{{ case.opened_on }}</td></tr>
+    <tr><td>modified_on</td><td>{{ case.modified_on }}</td></tr>
+    <tr><td>type</td><td>{{ case.type }}</td></tr>
+    <tr><td>closed?</td><td>{{ case.closed|yesno }}</td></tr>
+    <tr><td>closed_on</td><td>{{ case.closed_on }}</td></tr>
+    <tr><td>domain</td><td>{{ case.domain }}</td></tr>
+    <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
+    <tr><td>user_id</td><td>{{ case.user_id }}</td></tr>
+    <tr><td>referrals</td><td>{{ case.referrals }}</td></tr>
+    <tr><td>forms</td><td>{{ case.xform_ids|join:"<br>"|safe }}</td></tr>
     <tr>
-        <td>Attachments</td><td colspan="2">
+        <td>Attachments</td><td>
             {% for form_id, filename in case.attachments %}
             {% if not forloop.first %}<br>{% endif %}
             <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
             {% endfor %}
         </td>
     </tr>
-    <tr><th colspan="3">Dynamic Properties</th></tr>
+    
+</tbody>
+</table>
+
+<h2>Dynamic Properties</h2>
+<table class="case_properties">
+<thead>
+    <tr>
+        <th>Property</th>
+        <th>Value</th>
+    </tr>
+</thead>
+<tbody>
     {% for prop, val in case.dynamic_case_properties %}
-    <tr><td>{{ prop }}</td><td colspan="2">{{ val }}</td></tr>
+    <tr><td>{{ prop }}</td><td>{{ val }}</td></tr>
     {% endfor %}
 </tbody>
 </table>
+
 <h2>Case History</h2>
-<table>
+<table class="case_history">
 <thead>
     <tr>
         <th>Date</th>
