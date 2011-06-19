@@ -7,15 +7,15 @@ def force_to_date(val):
     if not val:                      return val
     if isinstance(val, datetime):    return val.date()
     if isinstance(val, date):        return val
-    if isinstance(val, basestring):  return string_to_datetime(date)
+    if isinstance(val, basestring):  return string_to_datetime(val).date()
     else:                            raise ValueError("object must be date or datetime!")
     
 def force_to_datetime(val):
     """Forces a date, string, or datetime to a datetime."""
     if not val:                        return val
     elif isinstance(val, datetime):    return val
-    elif isinstance(val, date):        return datetime.combine(date, time())
-    elif isinstance(val, basestring):  return string_to_datetime(date)
+    elif isinstance(val, date):        return datetime.combine(val, time())
+    elif isinstance(val, basestring):  return string_to_datetime(val)
     else:                              raise ValueError("object must be date or datetime!")    
         
 def safe_date_add(startdate, days, force_to_date_flag=True):
