@@ -23,10 +23,19 @@
             border: 1px solid #ccc;
             width: 100%;
         }
+        .xform_ref {
+            color: #0067B1;
+            cursor: pointer;
+        }
     </style>
     <script>
     $(document).ready(function() {
-            
+        // this adds a clickable link to our form elements
+        var url_base = "{% url render_form_data domain 'placeholder' %}";
+        $(".xform_ref").click(function() {
+            var url = url_base.replace("placeholder", $(this).data("formid"));
+            window.location = url; 
+        });
     });
          
     </script>
