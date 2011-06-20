@@ -16,7 +16,10 @@
     <tr><td>domain</td><td>{{ case.domain }}</td></tr>
     <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
     <tr><td>user_id</td><td>{{ case.user_id }}</td></tr>
-    <tr><td>forms</td><td>{{ case.xform_ids|join:"<br>"|safe }}</td></tr>
+    <tr><td>forms</td><td>{% for form_id in case.xform_ids %}
+    <p class="xform_ref" data-formid="{{ form_id }}">{{ form_id }}</p>
+    {% if not forloop.first %}<br>{% endif %}
+    {% endfor %}</td></tr>
     <tr>
         <td>Attachments</td><td>
             {% for form_id, filename in case.attachments %}
