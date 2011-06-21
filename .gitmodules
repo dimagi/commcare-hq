@@ -40,3 +40,6 @@
 [submodule "submodules/sofabed-src"]
 	path = submodules/sofabed-src
 	url = git://github.com/dimagi/sofabed.git
+[submodule "submodules/touchforms-src"]
+	path = submodules/touchforms-src
+	url = git://github.com/dimagi/touchforms.git

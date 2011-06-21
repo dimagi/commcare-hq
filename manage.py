@@ -26,6 +26,7 @@ sys.path.append(os.path.join(filedir,'submodules','auditcare-src'))
 sys.path.append(os.path.join(filedir,'submodules','commcare-translations'))
 sys.path.append(os.path.join(filedir,'submodules','langcodes'))
 sys.path.append(os.path.join(filedir,'submodules','sofabed-src'))
+sys.path.append(os.path.join(filedir,'submodules','touchforms-src'))
 
 
 try:
