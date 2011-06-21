@@ -151,6 +151,7 @@ var CaseXML = (function(){
                 });
             } else if (id==="open_referral") {
                 action.name_path = lookup(this, 'name_path');
+                action.followup_date = lookup(this, 'followup_date');
             } else if (id==="update_referral") {
                 action.followup_date = lookup(this, 'followup_date');
             }

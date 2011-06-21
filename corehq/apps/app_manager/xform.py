@@ -485,7 +485,7 @@ class XForm(WrappedNode):
                     add_bind({
                         "nodeset":"case/referral/followup_date",
                         "type":"date",
-                        "calculate": "date(today() + 2)"
+                        "calculate": actions['open_referral'].get_followup_date()
                     })
                     add_bind({
                         "nodeset":"case/referral/open/referral_types",
@@ -515,9 +515,7 @@ class XForm(WrappedNode):
                         add_bind({
                             "nodeset": "case/referral/followup_date",
                             "type":"xsd:date",
-                            "calculate": "if(date(%(followup_date)s) >= date(today() + 2), %(followup_date)s, date(today() + 2))" % {
-                                'followup_date': actions['update_referral'].followup_date,
-                            },
+                            "calculate": actions['update_referral'].get_followup_date()
                         })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]

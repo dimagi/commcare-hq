@@ -122,20 +122,31 @@ class FormAction(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update  = DictProperty()
-class OpenReferralAction(FormAction):
-    name_path   = StringProperty()
+
+class UpdateReferralAction(FormAction):
+    followup_date   = StringProperty()
+    def get_followup_date(self):
+        if self.followup_date:
+            return "if(date({followup_date}) >= date(today()), {followup_date}, date(today() + 2))".format(
+                followup_date = self.followup_date,
+            )
+        return self.followup_date or "date(today() + 2)"
+
+class OpenReferralAction(UpdateReferralAction):
+    name_path       = StringProperty()
+    
 class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
-class UpdateReferralAction(FormAction):
-    followup_date   = StringProperty()
+
+    
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
     update_case     = SchemaProperty(UpdateCaseAction)
     close_case      = SchemaProperty(FormAction)
     open_referral   = SchemaProperty(OpenReferralAction)
-    update_referral = SchemaProperty(FormAction)
-    close_referral  = SchemaProperty(UpdateReferralAction)
+    update_referral = SchemaProperty(UpdateReferralAction)
+    close_referral  = SchemaProperty(FormAction)
 
 class Form(IndexedSchema):
     """
