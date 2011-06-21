@@ -8,6 +8,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.signals import REGISTRATION_XMLNS, create_user_from_commcare_registration
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import create_hq_user_from_commcare_registration_info
+from dimagi.utils.dates import force_to_datetime
 
 
 class CreateTestCase(TestCase):
@@ -18,12 +19,12 @@ class CreateTestCase(TestCase):
             user.delete()
         self.xform = XFormInstance()
         self.xform.form = {}
-        self.xform.form['username'] = self.username = 'test_registration'
+        self.xform.form['username'] = self.username = 'test_reg'
         self.xform.form['password'] = self.password = '1982'
         self.xform.form['uuid'] = self.uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
         self.xform.form['date'] = self.date_string = '2010-03-23'
         self.xform.form['registering_phone_id'] = self.registering_device_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
-        self.xform.domain = self.domain = 'mockdomain'
+        self.xform.domain = self.domain = 'mock'
         self.xform.xmlns = REGISTRATION_XMLNS
         
     def testCreateBasicWebUser(self):
@@ -93,7 +94,7 @@ class CreateTestCase(TestCase):
         since 
         """
         sender = "post"
-        xml = create_user_from_commcare_registration(sender, self.xform).response
+        create_user_from_commcare_registration(sender, self.xform).response
         # czue: removed lxml reference
         #uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
         couch_user = CouchUser.view('users/commcare_users_by_login_id', include_docs=True).one()
@@ -111,7 +112,7 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.commcare_accounts[0].domain, self.domain)
         self.assertEqual(couch_user.commcare_accounts[0].login_id, self.uuid)
         date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
-#        self.assertEqual(couch_user.commcare_accounts[0].date_registered, date)
+        self.assertEqual(couch_user.created_on, force_to_datetime(date))
         self.assertEqual(couch_user.device_ids[0], self.registering_device_id)
         
     def testCreateDuplicateUsersFromRegistration(self):

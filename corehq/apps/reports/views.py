@@ -26,6 +26,10 @@ from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.calc import formdistribution
+from casexml.apps.case.models import CommCareCase
+from django.template.defaultfilters import yesno
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.const import CASE_TAG_ID
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
@@ -289,8 +293,14 @@ def case_activity(request, domain):
                 "percent": 1.0*current/next if next else None
             })
 
+    def user_id_link(user_id):
+        template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+        return template % {"link": reverse("case_list_report", args=[domain]),
+                           "user_id": user_id,
+                           "username": user_id_to_username(userID)} 
     for userID in extra:
-        row = [user_id_to_username(userID)]
+        
+        row = [user_id_link(userID)]
         for entry in extra[userID]:
             if entry['total'] == entry['diff'] or 'diff' not in display:
                 fmt = "{total}"
@@ -313,6 +323,83 @@ def case_activity(request, domain):
             "headers": headers,
             "rows": rows,
         },
+    })
+
+def _user_list(domain):
+    user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
+    user_ids = [result['key'][1] for result in user_ids]
+    users = []
+    for user_id in user_ids:
+        username = user_id_to_username(user_id)
+        if username:
+            users.append({'id': user_id, 'username': username})
+    users.sort(key=lambda user: user['username'])
+    return users
+
+@login_and_domain_required
+def case_list(request, domain):
+    headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
+    individual = request.GET.get('individual', '')
+    return render_to_response(request, "reports/generic_report.html", {
+        "domain": domain,
+        "show_users": True,
+        "report": {
+            "name": "Case List",
+            "headers": headers,
+            "rows": [],
+        },
+        "users": _user_list(domain),
+        "ajax_source": reverse('paging_case_list', args=[domain, individual]),
+        "individual": individual,
+    })
+    
+@login_and_domain_required
+def paging_case_list(request, domain, individual):
+    def view_to_table(row):
+        def date_to_json(date):
+            return date.strftime('%Y-%m-%d %H:%M:%S') if date else "",
+        
+        def case_data_link(case_id, case_name):
+            return "<a class='ajax_dialog' href='%s'>%s</a>" % \
+                    (reverse('case_details', args=[domain, case_id]),
+                     case_name)
+        
+        case = CommCareCase.wrap(row["doc"])
+        return [case_data_link(row['id'], case.name), 
+                user_id_to_username(case.user_id), 
+                date_to_json(case.opened_on), 
+                date_to_json(case.modified_on),
+                yesno(case.closed, "closed,open") ]
+    
+    if individual:
+        startkey = [domain, individual]
+        endkey = [domain, individual, {}]
+    else: 
+        startkey = [domain]
+        endkey = [domain, {}]
+    paginator = CouchPaginator(
+        "hqcase/all_cases",
+        view_to_table,
+        search=False,
+        view_args=dict(
+            reduce=False,
+            include_docs=True,
+            # this is horrible, but the paginator currently automatically
+            # adds descending=True so we have to swap these.
+            startkey=endkey,
+            endkey=startkey,
+        )
+    )
+    return paginator.get_ajax_response(request)
+
+@login_and_domain_required
+def case_details(request, domain, case_id):
+    return render_to_response(request, "reports/case_details.html", {
+        "domain": domain,
+        "case_id": case_id,
+        "report": {
+            "name": "Case Details"
+        }
     })
 
 
@@ -376,17 +463,7 @@ def paging_user_summary(request, domain):
 def submission_log(request, domain):
     individual = request.GET.get('individual', '')
     show_unregistered = request.GET.get('show_unregistered', 'false')
-    if individual:
-        pass
-
-    user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
-    user_ids = [result['key'][1] for result in user_ids]
-    users = []
-    for user_id in user_ids:
-        username = user_id_to_username(user_id)
-        if username:
-            users.append({'id': user_id, 'username': username})
-    users.sort(key=lambda user: user['username'])
+    
     return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,
@@ -395,7 +472,7 @@ def submission_log(request, domain):
             "header": [],
             "rows": [],
         },
-        "users": users,
+        "users": _user_list(domain),
         "individual": individual,
         "show_unregistered": show_unregistered,
     })
@@ -519,7 +596,9 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
-    return render_to_response(request, "reports/form_data.html", dict(domain=domain,instance=instance))
+    return render_to_response(request, "reports/form_data.html", 
+                              dict(domain=domain,instance=instance,
+                                   caseblocks=extract_case_blocks(instance)))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):

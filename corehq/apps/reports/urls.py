@@ -11,6 +11,7 @@ actual_reports = patterns('corehq.apps.reports.views',
 
 paging_reports = patterns('corehq.apps.reports.views',
     url('submit_history/(?P<individual>.*)/(?P<show_unregistered>.*)/', protect(SubmitHistory.ajax_view), name='paging_submit_history'),
+    url('submit_history/(?P<individual>.*)/$', "paging_case_list", name='paging_case_list'),
 )
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
@@ -38,6 +39,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url('active_cases', 'active_cases', name="active_case_report"),
     url('case_activity', 'case_activity', name="case_activity_report"),
+    url('case_list/$', 'case_list', name="case_list_report"),
+    url('case_data/(?P<case_id>\w+)/$', 'case_details', name="case_details"),
 
 
     url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),

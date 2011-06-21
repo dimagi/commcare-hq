@@ -143,7 +143,6 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         app = Application.get(app_id)
         assert(app.doc_type in ('Application', 'RemoteApp'))
         assert(req.couch_user.is_member_of(app.domain))
-        print domain
         return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
@@ -416,7 +415,6 @@ def view_app(req, domain, app_id=''):
     if app:
         options = CommCareBuildConfig.fetch().menu
         is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
-        print is_standard_build
         context.update({
             "commcare_build_options": options,
             "is_standard_build": bool(is_standard_build)

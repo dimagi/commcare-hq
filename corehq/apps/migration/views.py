@@ -66,7 +66,6 @@ def update_migration_users(xml, user_map):
     if submit:
         user_id = get_user_id(xml)
         user_map[username] = user_id
-    print "Username: %s" % username
     return submit
 
 def post(request, domain):

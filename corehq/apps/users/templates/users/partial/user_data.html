@@ -1,0 +1,11 @@
+<div>
+    <table class="user_data">
+{% for key, val in couch_user.user_data.items %}
+          <tr>
+              <th>{{ key }}:</th>
+              <td>{{ val }}</td>
+          </tr>
+{% endfor %}
+    </table>
+</div>
+
