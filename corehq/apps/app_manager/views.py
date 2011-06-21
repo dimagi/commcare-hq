@@ -331,7 +331,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
-        'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
+        'XFORMPLAYER_URL': reverse('xform_play_remote'),
 
         'build_errors': build_errors,
 
