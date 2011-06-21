@@ -113,6 +113,7 @@ HQ_APPS = (
     'auditcare',
     'djangocouch',
     'djangocouchuser',
+    'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
     'corehq.apps.cleanup',
@@ -143,6 +144,7 @@ HQ_APPS = (
     'sofabed.forms',
     'corehq.apps.hqsofabed',
     'xep_hq_server',
+    'touchforms.formplayer',
 )
 
 # you can locally add apps if you want here
@@ -237,12 +239,18 @@ CARROT_BACKEND = "django"
 SKIP_SOUTH_TESTS = True
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
-XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
+
+# well this is extremely confusing
+# TODO: use local after setup and tested
+#XFORMPLAYER_URL = '/webforms/play_remote/' # hq's setting
+XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/' # hq's setting
+XFORMS_PLAYER_URL = "http://localhost:4444/" # touchform's setting
 
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
 COUCHLOG_THRESHOLD = logging.WARNING
 
 
@@ -330,6 +338,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'receiverwrapper',
         'reports',
         'users',
+        'touchforms.formplayer',
         'xep_hq_server',
     ]
 ]

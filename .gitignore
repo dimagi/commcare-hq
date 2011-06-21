@@ -2,9 +2,11 @@
 *~
 local.ini*
 localsettings.py
+.settings/*
 .project
 .pydevproject
 .idea
+xforms/*
 data/*
 submissions/*
 export/*
