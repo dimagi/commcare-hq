@@ -1,11 +1,39 @@
 from couchexport.schema import get_docs, get_schema
-import hashlib
 import csv
+import tempfile
+import zipfile
+from StringIO import StringIO
 
 class Format(object):
+    """
+    Supported formats go here.
+    """
+    CSV = "csv"
     XLS = "xls"
     XLS_2007 = "xlsx"
     
+    
+    FORMAT_DICT = {CSV: {"mimetype": "application/zip",
+                         "extension": "zip"},
+                   XLS: {"mimetype": "application/vnd.ms-excel",
+                         "extension": "xls"},
+                   XLS_2007: {"mimetype": "application/vnd.ms-excel",
+                              "extension": "xlsx"}}
+    
+    VALID_FORMATS = FORMAT_DICT.keys()
+    
+    def __init__(self, slug, mimetype, extension):
+        self.slug = slug
+        self.mimetype = mimetype
+        self.extension = extension
+    
+    @classmethod
+    def from_format(cls, format):
+        format = format.lower()
+        if format not in cls.VALID_FORMATS:
+            raise ValueError("Unsupported export format: %s!" % format)
+        return cls(format, **cls.FORMAT_DICT[format])
+        
 
 def export(schema_index, file, format=Format.XLS_2007):
     """
@@ -17,7 +45,9 @@ def export(schema_index, file, format=Format.XLS_2007):
         return False
     schema = get_schema(docs)
     tables = format_tables(create_intermediate_tables(docs,schema))
-    if format == Format.XLS:
+    if format == Format.CSV:
+        _export_csv(tables, file)
+    elif format == Format.XLS:
         _export_excel(tables).save(file)
     elif format == Format.XLS_2007:
         _export_excel_2007(tables).save(file)
@@ -154,13 +184,27 @@ def format_tables(tables, id_label='id', separator='.'):
         answ.append((separator.join(table_name), new_table))
     return answ
 
-def export_csv(tables):
-    "this function isn't ready to use because of how it deals with files"
+def _export_csv(tables, file):
+    #temp = tempfile.TemporaryFile()
+    temp = file
+    archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
+    
+    # write forms
+    used_names = []
     for table_name, table in tables:
-        writer = csv.writer(open("csv_test/" + table_name+'.csv', 'w'), dialect=csv.excel)
+        table_name_truncated = _next_unique(table_name, used_names)
+        used_names.append(table_name_truncated)
+        table_file = StringIO()
+        writer = csv.writer(table_file, dialect=csv.excel)
         for row in table:
-            writer.writerow([x if '"' not in x else "" for x in row])
+            writer.writerow(row)
+        archive.writestr("%s.csv" % table_name_truncated, table_file.getvalue())
+        
+    archive.close()
+    temp.seek(0)
+    return temp
 
+    
 def _export_excel(tables):
     try:
         import xlwt
@@ -206,7 +250,7 @@ def _export_excel_2007(tables):
     return book
 
 
-def _next_unique(string, reserved_strings, max_len):
+def _next_unique(string, reserved_strings, max_len=500):
     counter = 1
     if len(string) > max_len:
         # truncate from the beginning since the end has more specific information
