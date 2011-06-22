@@ -241,11 +241,7 @@ AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
 
-# well this is extremely confusing
-# TODO: use local after setup and tested
-#XFORMPLAYER_URL = '/webforms/play_remote/' # hq's setting
-XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/' # hq's setting
-XFORMS_PLAYER_URL = "http://localhost:4444/" # touchform's setting
+XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
