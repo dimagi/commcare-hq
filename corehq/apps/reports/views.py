@@ -326,7 +326,7 @@ def case_activity(request, domain):
     })
 
 def _user_list(domain):
-    user_ids = get_db().view('reports/all_users', startkey=[domain], endkey=[domain, {}], group=True)
+    user_ids = get_db().view('submituserlist/all_users', startkey=[domain], endkey=[domain, {}], group=True)
     user_ids = [result['key'][1] for result in user_ids]
     users = []
     for user_id in user_ids:
@@ -494,7 +494,7 @@ def daily_submissions(request, domain, view_name, title):
         endkey=[domain, request.datespan.enddate.isoformat(), {}]
     ).all()
     
-    all_users_results = get_db().view("reports/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
+    all_users_results = get_db().view("submituserlist/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
     dates = [request.datespan.startdate]
     while dates[-1] < request.datespan.enddate:
