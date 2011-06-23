@@ -26,7 +26,9 @@ def form_list(request):
     """
     # based off: https://github.com/dimagi/data-hq/blob/moz/datahq/apps/receiver/views.py
     # TODO: serve our forms here
-    #forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    # forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    
+    # NOTE: THIS VIEW/METHOD DOES NOTHING CURRENTLY!!
     xml = "<forms>\n"
     forms = []
     for form in forms:
