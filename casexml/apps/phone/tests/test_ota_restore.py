@@ -57,7 +57,7 @@ class OtaRestoreTest(TestCase):
         django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
         django_user.save()
         user = User.from_django_user(django_user)
-        self.assertEqual(django_user.pk, user.user_id)
+        self.assertEqual(str(django_user.pk), user.user_id)
         self.assertEqual("foo", user.username)
         self.assertEqual("secret", user.password)
         self.assertEqual(datetime(2011, 6, 9), user.date_joined)
