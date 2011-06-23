@@ -429,37 +429,6 @@ def submit_distribution(request, domain):
                                "graph_height": 500})
 
 @login_and_domain_required
-def user_summary(request, domain, template="reports/user_summary.html"):
-    report_name = "User Summary Report (number of forms filled in by person)"
-
-    return render_to_response(request, template, {
-        "domain": domain,
-        "show_dates": False,
-        "report": {
-            "name": report_name
-        },
-        "ajax_source": reverse('paging_user_summary', args=[domain]),
-    })
-
-@login_and_domain_required
-def paging_user_summary(request, domain):
-
-    def view_to_table(row):
-        row['last_submission_date'] = dateutil.parser.parse(row['last_submission_date'])
-        return row
-    paginator = CouchPaginator(
-        "reports/user_summary",
-        view_to_table,
-        search=False,
-        view_args=dict(
-            group=True,
-            startkey=[domain],
-            endkey=[domain, {}],
-        )
-    )
-    return paginator.get_ajax_response(request)
-
-@login_and_domain_required
 def submission_log(request, domain):
     individual = request.GET.get('individual', '')
     show_unregistered = request.GET.get('show_unregistered', 'false')
