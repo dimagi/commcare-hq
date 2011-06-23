@@ -1,3 +1,1 @@
-function(key, values) {
-    return sum(values);
-}
+_sum
