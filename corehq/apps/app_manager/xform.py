@@ -244,7 +244,7 @@ class XForm(WrappedNode):
 
         def build_questions(group, path_context="", exclude=False):
             for prompt in group.findall('*'):
-                if prompt.tag_xmlns == namespaces['f'][1:-1]:
+                if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
                     excluded_paths.add(path)
                     if prompt.tag_name == "group":
