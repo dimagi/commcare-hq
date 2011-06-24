@@ -748,7 +748,7 @@ class Application(ApplicationBase):
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
         # traverse languages in order of priority to find a non-empty commcare-translation
-        messages = {}
+        messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
         # include language code names
         for lc in self.langs:
             name = langcodes.get_name(lc)
