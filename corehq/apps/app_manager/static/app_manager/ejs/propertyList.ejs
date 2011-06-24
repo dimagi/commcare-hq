@@ -20,7 +20,7 @@
                     var value = nodeset.split('/');
                     value = value[value.length-1];
                 %]
-                [% if (edit) { %]
+                [% if (casexml.edit) { %]
                     <input class="code" type="text" name="action-update-key" value="[%= propertyName || value %]" />
                 [% } else { %]
                     <code>[%= propertyName %]</code>
@@ -39,7 +39,7 @@
             </td>
         </tr>
     [% } %]
-    [% if (edit) { %]
+    [% if (casexml.edit) { %]
         <tr class="action-update">
             <td></td>
             <td>
