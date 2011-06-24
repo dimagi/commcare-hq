@@ -123,6 +123,11 @@ class FormAction(DocumentSchema):
 class UpdateCaseAction(FormAction):
     update  = DictProperty()
 
+class PreloadAction(DocumentSchema):
+    preload = DictProperty()
+    def is_active(self):
+        return True
+
 class UpdateReferralAction(FormAction):
     followup_date   = StringProperty()
     def get_followup_date(self):
@@ -147,6 +152,9 @@ class FormActions(DocumentSchema):
     open_referral   = SchemaProperty(OpenReferralAction)
     update_referral = SchemaProperty(UpdateReferralAction)
     close_referral  = SchemaProperty(FormAction)
+
+    case_preload    = SchemaProperty(PreloadAction)
+    referral_preload= SchemaProperty(PreloadAction)
 
 class Form(IndexedSchema):
     """
@@ -206,7 +214,8 @@ class Form(IndexedSchema):
         actions = {}
         for action_type in (
             'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral'
+            'open_referral', 'update_referral', 'close_referral',
+            'case_preload', 'referral_preload'
         ):
             a = getattr(self.actions, action_type)
             if a.is_active():

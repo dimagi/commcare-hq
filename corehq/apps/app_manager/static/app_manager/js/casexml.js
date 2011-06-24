@@ -1,7 +1,9 @@
 /*globals $, EJS, COMMCAREHQ */
 
 var CaseXML = (function(){
-    var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral"];
+    var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral",
+        "case_preload", "referral_preload"
+    ];
     var CaseXML = function (params) {
         var i;
         this.home = params.home;
@@ -15,6 +17,7 @@ var CaseXML = (function(){
         this.condition_ejs = new EJS({url:"/static/app_manager/ejs/condition.ejs", type: "["});
         this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
         this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
+        this.propertyList_ejs = new EJS({url: "/static/app_manager/ejs/propertyList.ejs", type: "["});
         this.action_templates = {};
         this.reserved_words = params.reserved_words;
         for(i=0; i<action_names.length; i++) {
@@ -140,13 +143,22 @@ var CaseXML = (function(){
             if(id === "open_case"){
                 action.name_path = lookup(this, 'name_path');
                 action.external_id = lookup(this, 'external_id');
-            } else if(id==="update_case") {
+            } else if(id === "update_case") {
                 action.update = {};
                 $('.action-update', this).each(function(){
                     var key = lookup(this, "action-update-key");
                     var val = lookup(this, "action-update-value");
                     if(key || val) {
                         action.update[key] = val;
+                    }
+                });
+            } else if(id === "case_preload" || id === "referral_preload") {
+                action.preload = {};
+                $('.action-update', this).each(function(){
+                    var propertyName = lookup(this, "action-update-key");
+                    var nodeset = lookup(this, "action-update-value");
+                    if(propertyName || nodeset) {
+                        action.preload[nodeset] = propertyName;
                     }
                 });
             } else if (id==="open_referral") {
@@ -178,7 +190,7 @@ var CaseXML = (function(){
         this.actions = actions;
     };
 
-    CaseXML.prototype.renderAction = function(action_type, label){
+    CaseXML.prototype.renderAction = function (action_type, label){
         var html =  this.action_ejs.render({
             casexml: this,
             id: action_type.replace("_", "-"),
@@ -188,7 +200,7 @@ var CaseXML = (function(){
         });
         return html;
     };
-    CaseXML.prototype.hasActions = function(){
+    CaseXML.prototype.hasActions = function (){
         var a;
         for(a in this.actions) {
             if(this.actions.hasOwnProperty(a)) {
@@ -197,6 +209,10 @@ var CaseXML = (function(){
                 }
             }
         }
+    };
+
+    CaseXML.prototype.renderPropertyList = function (map, keyType) {
+        return this.propertyList_ejs.render({map: map, keyType: keyType, casexml: this});
     };
 
     return CaseXML;

@@ -526,6 +526,19 @@ class XForm(WrappedNode):
                         "{jr}preload":"timestamp",
                         "{jr}preloadParams":"end"
                     })
+                    
+            for nodeset, property in actions['case_preload'].preload.items():
+                add_bind({
+                    "nodeset": nodeset,
+                    "{jr}preload":"case",
+                    "{jr}preloadParams": property
+                })
+            for nodeset, property in actions['referral_preload'].preload.items():
+                add_bind({
+                    "nodeset": nodeset,
+                    "{jr}preload":"referral",
+                    "{jr}preloadParams": property
+                })
             casexml_text = casexml.render()
         def transformation():
             for trans in additional_transformations:
