@@ -14,7 +14,12 @@ class HackedUserChangeForm(UserChangeForm):
         help_text = _("Required. 128 characters or fewer. Letters, digits and @/./+/-/_ only."),
         error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-    
+    def _get_validation_exclusions(self):
+        # this is super, super dirty. Don't tell anyone.
+        exclusions = super(HackedUserChangeForm, self)._get_validation_exclusions()
+        exclusions.append("username")
+        return exclusions
+
 class HackedUserAdmin(UserAdmin):
     """
     Support > 30 character length usernames in the admin
