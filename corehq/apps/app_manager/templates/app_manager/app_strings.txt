@@ -28,14 +28,12 @@ forms.m{{ module.id }}f{{ form.id }}={{ form.name|clean_trans:langs }}{% if form
 
         {% endfor %}
     {% endfor %}
-{% comment %}
     {% for module in app.get_modules %}
-m{{ module.id }}.case_short.title={{ module.case_name|clean_trans:langs }}
-m{{ module.id }}.case_long.title={{ module.case_name|clean_trans:langs }}
-m{{ module.id }}.ref_short.title={{ module.ref_name|clean_trans:langs }}
-m{{ module.id }}.ref_long.title={{ module.ref_name|clean_trans:langs }}
+m{{ module.id }}.case_short.title={{ module.case_label|clean_trans:langs }}
+m{{ module.id }}.case_long.title={{ module.case_label|clean_trans:langs }}
+m{{ module.id }}.ref_short.title={{ module.referral_label|clean_trans:langs }}
+m{{ module.id }}.ref_long.title={{ module.referral_label|clean_trans:langs }}
     {% endfor %}
-{% endcomment %}
 {% comment %}
     {% for key, trans in app.translations.items %}
 {{ key }}={{ trans|clean_trans:langs }}

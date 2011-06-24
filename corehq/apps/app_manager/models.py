@@ -336,15 +336,14 @@ class Module(IndexedSchema):
 
     """
     name = DictProperty()
-#    case_name = DictProperty()
-#    ref_name = DictProperty()
+    case_label = DictProperty()
+    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
-
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -703,6 +702,19 @@ class Application(ApplicationBase):
 
     force_http = BooleanProperty(default=False)
 
+    @classmethod
+    def wrap(cls, data):
+        for module in data['modules']:
+            for attr in ('case_label', 'referral_label'):
+                if not module.has_key(attr):
+                    module[attr] = {}
+            for lang in data['langs']:
+                if not module['case_label'].get(lang):
+                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
+                if not module['referral_label'].get(lang):
+                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
+        return super(Application, cls).wrap(data)
+
     @property
     def url_base(self):
         if self.force_http:
@@ -811,8 +823,6 @@ class Application(ApplicationBase):
                 name={lang if lang else "en": name if name else "Untitled Module"},
                 forms=[],
                 case_type='',
-#                case_name={'en': "Case"},
-#                ref_name={'en': "Referral"},
                 details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
             )
         )

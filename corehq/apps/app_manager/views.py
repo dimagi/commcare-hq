@@ -509,7 +509,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         module[attr] = req.POST.get(attr, None)
     elif "put_in_root" == attr:
         module[attr] = json.loads(req.POST.get(attr))
-    elif "name" == attr:
+    elif ("name", "case_label", "referral_label").__contains__(attr):
         name = req.POST.get(attr, None)
         module[attr][lang] = name
         if attr == "name":

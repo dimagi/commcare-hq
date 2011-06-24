@@ -218,7 +218,26 @@
                     </form>
                 </th>
             </tr>
-
+            <tr class="form editable">
+                <th>
+                    Label for Cases
+                </th>
+                <td>
+                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_label' %}">
+                        <input class="autosave" type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
+                    </form>
+                </td>
+            </tr>
+            <tr class="form editable">
+                <th>
+                    Label for Referrals
+                </th>
+                <td>
+                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'referral_label' %}">
+                        <input class="autosave" type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
+                    </form>
+                </td>
+            </tr>
         {% else %}
             <tr>
                 <th>Module Name</th>
@@ -256,6 +275,18 @@
                     {% else %}
                         Show with label: {{ module.case_list.label|trans:langs }}
                     {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Label for Cases</th>
+                <td>
+                    {{ module.case_label|trans:langs }}
+                </td>
+            </tr>
+            <tr>
+                <th>Label for Referrals</th>
+                <td>
+                    {{ module.referral_label|trans:langs }}
                 </td>
             </tr>
         {% endif %}
