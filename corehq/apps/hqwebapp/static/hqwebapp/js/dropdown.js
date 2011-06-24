@@ -27,12 +27,13 @@
                 }
             },
             initShield = function () {
-                $shield.css({width: $window.width(), height: $window.height()});
+                $shield.css({top: $window.scrollTop(), width: $window.width(), height: $window.height()});
             },
             downIcon = 'ui-icon-triangle-1-s';
         $('<div class="ui-icon" />').addClass(downIcon).prependTo($button);
         initShield();
         $(window).resize(initShield);
+        $(window).scroll(initShield);
         open(false);
 
         $list.hide();
