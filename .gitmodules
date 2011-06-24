@@ -43,3 +43,9 @@
 [submodule "submodules/touchforms-src"]
 	path = submodules/touchforms-src
 	url = git://github.com/dimagi/touchforms.git
+[submodule "submodules/django-digest-src"]
+	path = submodules/django-digest-src
+	url = git://github.com/dimagi/django-digest.git
+[submodule "submodules/python-digest"]
+	path = submodules/python-digest
+	url = git://github.com/dimagi/python-digest.git

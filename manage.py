@@ -27,7 +27,8 @@ sys.path.append(os.path.join(filedir,'submodules','commcare-translations'))
 sys.path.append(os.path.join(filedir,'submodules','langcodes'))
 sys.path.append(os.path.join(filedir,'submodules','sofabed-src'))
 sys.path.append(os.path.join(filedir,'submodules','touchforms-src'))
-
+sys.path.append(os.path.join(filedir,'submodules','django-digest-src'))
+sys.path.append(os.path.join(filedir,'submodules','python-digest'))
 
 try:
     import settings # Assumed to be in the same directory.
