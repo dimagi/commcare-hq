@@ -1,10 +1,11 @@
 /*globals $, EJS, COMMCAREHQ */
 
-var CaseXML = (function(){
+var CaseXML = (function(undefined){
+    "use strict";
     var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral",
         "case_preload", "referral_preload"
-    ];
-    var CaseXML = function (params) {
+    ],
+    CaseXML = function (params) {
         var i;
         this.home = params.home;
         this.actions = params.actions;
@@ -20,7 +21,7 @@ var CaseXML = (function(){
         this.propertyList_ejs = new EJS({url: "/static/app_manager/ejs/propertyList.ejs", type: "["});
         this.action_templates = {};
         this.reserved_words = params.reserved_words;
-        for(i=0; i<action_names.length; i++) {
+        for(i=0; i<action_names.length; i += 1) {
             this.action_templates[action_names[i]] = new EJS({url: "/static/app_manager/ejs/actions/" + action_names[i] + ".ejs", type: "["});
         }
         $("#casexml-template").remove();
@@ -28,8 +29,8 @@ var CaseXML = (function(){
     CaseXML.prototype = {
         truncateLabel: function (label, suffix) {
             suffix = suffix || "";
-            var MAXLEN = 40;
-            var maxlen = MAXLEN - suffix.length;
+            var MAXLEN = 40,
+                maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
         escapeQuotes: function (string){
@@ -66,15 +67,14 @@ var CaseXML = (function(){
     };
     CaseXML.prototype.getQuestions = function(filter, excludeHidden){
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
-        var i;
+        var i, options = [], q;
         excludeHidden = excludeHidden || false;
         filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
         }
-        var options = [];
-        for(i=0; i < this.questions.length; i++) {
-            var q = this.questions[i];
+        for(i=0; i < this.questions.length; i += 1) {
+            q = this.questions[i];
             if(filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
                 options.push(q);
             }
@@ -86,19 +86,19 @@ var CaseXML = (function(){
         return this.options_ejs.render({casexml: this, options: options, value: value, name: name, allowNull: allowNull});
     };
     CaseXML.prototype.renderQuestions = function(filter) {
-        var options = this.getQuestions(filter);
-        var html = "";
+        var options = this.getQuestions(filter),
+            html = "";
         options.forEach(function(o){
             html += "<option value='" + o.value + "' title='" + this.escapeQuotes(o.label) + "'>" + this.truncateLabel(o.label) + "</option>";
         });
         return html;
     };
     CaseXML.prototype.getAnswers = function(condition){
-        var i, q, o;
-        var value = condition.question;
-        var found = false;
-        var options = [];
-        for(i=0; i < this.questions.length; i++) {
+        var i, q, o,
+            value = condition.question,
+            found = false,
+            options = [];
+        for(i=0; i < this.questions.length; i += 1) {
             q = this.questions[i];
             if(q.value === value) {
                 found = true;
@@ -106,7 +106,7 @@ var CaseXML = (function(){
             }
         }
         if(found){
-            for(i=0; i < q.options.length; i++) {
+            for(i=0; i < q.options.length; i += 1) {
                 o = q.options[i];
                 options.push(o);
             }
@@ -129,10 +129,9 @@ var CaseXML = (function(){
         }
         $(".casexml .action").each(function(){
 
-            var $checkbox = $(this).find('input[type="checkbox"].action-checkbox');
-            var id = $checkbox.attr('id').replace('-','_');
-
-            var action = {"condition": {"type": "never"}};
+            var $checkbox = $(this).find('input[type="checkbox"].action-checkbox'),
+                id = $checkbox.attr('id').replace('-','_'),
+                action = {"condition": {"type": "never"}};
 
             if(!$checkbox.is(":checked")) {
                 actions[id] = action;
@@ -146,8 +145,8 @@ var CaseXML = (function(){
             } else if(id === "update_case") {
                 action.update = {};
                 $('.action-update', this).each(function(){
-                    var key = lookup(this, "action-update-key");
-                    var val = lookup(this, "action-update-value");
+                    var key = lookup(this, "action-update-key"),
+                        val = lookup(this, "action-update-value");
                     if(key || val) {
                         action.update[key] = val;
                     }
@@ -155,8 +154,8 @@ var CaseXML = (function(){
             } else if(id === "case_preload" || id === "referral_preload") {
                 action.preload = {};
                 $('.action-update', this).each(function(){
-                    var propertyName = lookup(this, "action-update-key");
-                    var nodeset = lookup(this, "action-update-value");
+                    var propertyName = lookup(this, "action-update-key"),
+                        nodeset = lookup(this, "action-update-value");
                     if(propertyName || nodeset) {
                         action.preload[nodeset] = propertyName;
                     }
@@ -211,8 +210,14 @@ var CaseXML = (function(){
         }
     };
 
-    CaseXML.prototype.renderPropertyList = function (map, keyType) {
-        return this.propertyList_ejs.render({map: map, keyType: keyType, casexml: this});
+    CaseXML.prototype.renderPropertyList = function (map, keyType, showSuggestion) {
+        showSuggestion = showSuggestion === undefined ? true : showSuggestion;
+        return this.propertyList_ejs.render({
+            map: map,
+            keyType: keyType,
+            showSuggestion: showSuggestion,
+            casexml: this
+        });
     };
 
     return CaseXML;

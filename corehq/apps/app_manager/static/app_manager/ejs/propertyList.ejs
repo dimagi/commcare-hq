@@ -33,7 +33,7 @@
                     <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
                 [% } else if (casexml.reserved_words.indexOf(propertyName) !== -1) { %]
                     <span class="invalid">Can't name a case property "[%= propertyName %]"</span>
-                [% } else if (propertyName !== value) { %]
+                [% } else if (propertyName !== value && showSuggestion) { %]
                     <span class="">[%= value %]?</span>
                 [% } %]
             </td>
