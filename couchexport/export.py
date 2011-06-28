@@ -3,6 +3,9 @@ import csv
 import tempfile
 import zipfile
 from StringIO import StringIO
+from couchapp.client import Database
+from django.conf import settings
+from couchexport.models import ExportSchema
 
 class Format(object):
     """
@@ -35,15 +38,21 @@ class Format(object):
         return cls(format, **cls.FORMAT_DICT[format])
         
 
-def export(schema_index, file, format=Format.XLS_2007):
+def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
+    db = Database(settings.COUCH_DATABASE)
+    current_seq = db.info()["update_seq"]
     docs = get_docs(schema_index)
     if not docs:
         return False
     schema = get_schema(docs)
+    [schema_dict] = schema
+    this_export = ExportSchema(seq=current_seq, schema=schema_dict)
+    this_export.save()
+    print this_export.get_id
     tables = format_tables(create_intermediate_tables(docs,schema))
     if format == Format.CSV:
         _export_csv(tables, file)
