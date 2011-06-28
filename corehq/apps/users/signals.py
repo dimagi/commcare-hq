@@ -30,9 +30,21 @@ def create_profile_from_django_user(sender, instance, created, **kwargs):
     """
     The user post save signal, to auto-create our Profile
     """
+    def _update_couch_username(user):
+        profile = user.get_profile()
+        couch_user = profile.get_couch_user()
+        if couch_user:
+            default_account = couch_user.default_account
+            if default_account and default_account.login_id == profile._id \
+               and couch_user._doc.get("username") != user.username:
+                # this is super hacky but the only way to set the property
+                couch_user._doc["username"] = instance.username
+                couch_user.save()
+    
     if not created:
         try:
             instance.get_profile().save()
+            _update_couch_username(instance)
             return
         except HqUserProfile.DoesNotExist:
             logging.warn("There should have been a profile for "
@@ -53,7 +65,9 @@ def create_profile_from_django_user(sender, instance, created, **kwargs):
         # magically calls our other save signal
         profile.save()
         
-        
+    # finally update the CouchUser doc, if necessary
+    _update_couch_username(instance)
+    
 post_save.connect(create_profile_from_django_user, User)        
 post_save.connect(couch_user_post_save, HqUserProfile)
 
