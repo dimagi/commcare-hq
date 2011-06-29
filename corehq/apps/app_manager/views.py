@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
@@ -939,7 +940,10 @@ def download_jad(req, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    jad, _ = app.create_jadjar()
+    try:
+        jad, _ = app.create_jadjar()
+    except ResourceConflict:
+        return download_jad(req, domain, app_id)
     try:
         response = HttpResponse(jad)
     except:

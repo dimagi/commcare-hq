@@ -466,17 +466,13 @@ class VersionedDoc(Document):
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
-        if self.copy_of and not self.short_url:
-            self.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
-            )
-            super(VersionedDoc, self).save()
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['.variable-version'] = self.version
     def save_copy(self):
-        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        cls = self.__class__
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
         if copies:
             copy = copies[0]
         else:
@@ -489,7 +485,6 @@ class VersionedDoc(Document):
                 del copy['recipients']
             if '_attachments' in copy:
                 del copy['_attachments']
-            cls = self.__class__
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
@@ -720,6 +715,12 @@ class ApplicationBase(VersionedDoc):
     def save_copy(self):
         copy = super(ApplicationBase, self).save_copy()
         copy.create_jadjar()
+
+        copy.short_url = bitly.shorten(
+            get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+        )
+        copy.save(increment_version=False)
+
         return copy
 #class Profile(DocumentSchema):
 #    features = DictProperty()
