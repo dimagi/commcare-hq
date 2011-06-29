@@ -603,7 +603,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
 
     if   "requires" == attr:
         requires = req.POST['requires']
-        form.requires = requires
+        form.set_requires(requires)
     elif "name" == attr:
         name = req.POST['name']
         form.name[lang] = name
