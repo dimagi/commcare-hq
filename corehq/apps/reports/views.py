@@ -441,7 +441,7 @@ def download_cases(request, domain):
     export_users(users, workbook)
     response = HttpResponse(workbook.to_zip())
     response['Content-Type'] = "application/zip"
-    response['Content-Disposition'] = "attachment; filename=Cases.zip"
+    response['Content-Disposition'] = "attachment; filename={domain}_data.zip".format(domain=domain)
     return response
 
 @login_and_domain_required
