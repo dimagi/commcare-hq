@@ -210,18 +210,26 @@ class Form(IndexedSchema):
             except:
                 contents = ""
         return contents
-    def active_actions(self):
+    
+    def _get_active_actions(self, types):
         actions = {}
-        for action_type in (
-            'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral',
-            'case_preload', 'referral_preload'
-        ):
+        for action_type in types:
             a = getattr(self.actions, action_type)
             if a.is_active():
                 actions[action_type] = a
         return actions
-
+    
+    def active_actions(self):
+        return self._get_active_actions((
+            'open_case', 'update_case', 'close_case',
+            'open_referral', 'update_referral', 'close_referral',
+            'case_preload', 'referral_preload'
+        ))
+            
+    def active_non_preloader_actions(self):
+        return self._get_active_actions((
+            'open_case', 'update_case', 'close_case',
+            'open_referral', 'update_referral', 'close_referral'))
 
     def get_questions(self, langs):
         return XForm(self.contents).get_questions(langs)
@@ -250,7 +258,18 @@ class Form(IndexedSchema):
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
         return errors
-
+    
+    def requires_case(self):
+        # all referrals also require cases 
+        return self.requires in ("case", "referral")
+    
+    def requires_case_type(self):
+        return self.requires_case() or \
+               bool(self.active_non_preloader_actions())
+    
+    def requires_referral(self):
+        return self.requires == "referral"
+    
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -923,13 +942,14 @@ class Application(ApplicationBase):
                         'message': unicode(e),
                     })
                 xmlns_count[form.xmlns] += 1
-                if form.requires in ('case', 'referral'):
+                if form.requires_case():
                     needs_case_detail = True
                     needs_case_type = True
-                if form.active_actions():
+                if form.requires_case_type():
                     needs_case_type = True
-                if form.requires == "referral":
+                if form.requires_referral():
                     needs_referral_detail = True
+                
             if needs_case_type and not module.case_type:
                 errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
             if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
