@@ -344,12 +344,13 @@ def completion_times(request, domain):
             totalcount = totalcount + datadict["count"]
             globalmin = min(globalmin, datadict["min"])
             globalmax = max(globalmax, datadict["max"])
-        rows.insert(0, ["-- Total --", 
-                        to_minutes(float(totalsum)/float(totalcount)),
-                        to_minutes(globalmin),
-                        to_minutes(globalmax),
-                        totalcount])
-    
+        if totalcount != 0:
+            rows.insert(0, ["-- Total --", 
+                            to_minutes(float(totalsum)/float(totalcount)),
+                            to_minutes(globalmin),
+                            to_minutes(globalmax),
+                            totalcount])
+        
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_forms": True,
