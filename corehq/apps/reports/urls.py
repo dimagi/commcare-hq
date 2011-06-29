@@ -58,5 +58,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # useful for debugging email reports
     url(r'^emaillist/', 'emaillist', name="emailable_report_list"),
     url(r'^emailtest/(?P<report_slug>[\w_]+)/', 'emailtest', name="emailable_report_test"),
-    
+
+
+    # export data
+    url(r'^download/cases', 'download_cases', name='download_cases')
 )

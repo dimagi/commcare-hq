@@ -199,6 +199,8 @@ class CouchUser(Document, UnicodeMixIn):
     def userID(self):
         return self.default_account.login_id
 
+    user_id = userID
+    
     @property
     def password(self):
         return self.default_account.login.password

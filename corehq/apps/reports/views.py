@@ -4,11 +4,13 @@ import json
 from couchdbkit.ext.django.schema import Document
 import dateutil.parser
 from corehq.apps.reports.case_activity import CaseActivity
+from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username, format_username,\
     user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
+from dimagi.utils.export import CsvWorkBook
 from dimagi.utils.web import json_response, json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
@@ -27,6 +29,7 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.calc import formdistribution
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.export import export_cases_and_referrals
 from django.template.defaultfilters import yesno
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.const import CASE_TAG_ID
@@ -402,6 +405,18 @@ def case_details(request, domain, case_id):
         }
     })
 
+@login_and_domain_required
+def download_cases(request, domain):
+    cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    users = CouchUser.commcare_users_by_domain(domain)
+
+    workbook = CsvWorkBook()
+    export_cases_and_referrals(cases, workbook)
+    export_users(users, workbook)
+    response = HttpResponse(workbook.to_zip())
+    response['Content-Type'] = "application/zip"
+    response['Content-Disposition'] = "attachment; filename=Cases.zip"
+    return response
 
 @login_and_domain_required
 def submit_time_punchcard(request, domain):
