@@ -29,4 +29,16 @@ class CaseBugTest(TestCase):
             pass
 
         
+    def testStringFormatProblems(self):
+        """
+        If two forms share an ID it's a conflict
+        """
+        self.assertEqual(0, len(CommCareCase.view("case/by_xform_id").all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "string_formatting.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        # before the bug was fixed this call failed
+        process_cases(sender="testharness", xform=form)
+        
     

@@ -1,0 +1,35 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="Seguimiento"
+	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/6D07EE1A-E344-4815-B3A3-61E91E616FFC">
+	<fecha_seg>2011-06-24</fecha_seg>
+	<mantiene_comp>Yes</mantiene_comp>
+	<continua_comp>Yes</continua_comp>
+	<abandono_comp>No</abandono_comp>
+	<motivos_abandono />
+	<cual_us>us</cual_us>
+	<permitio_personal>Yes</permitio_personal>
+	<quiso_saber>Yes</quiso_saber>
+	<valora_atencion>pos</valora_atencion>
+	<comentarios />
+	<proximo_seg>2011-06-27</proximo_seg>
+	<case>
+		<case_id>BS5CGXKSLIM3JWC0H0K81GX1C</case_id>
+		<date_modified>2011-06-24T15:43:07.260-06</date_modified>
+		<referral>
+			<referral_id>REY9TRV7DSZCV1KS3T0IBO5W4</referral_id>
+			<followup_date>2011-06-27</followup_date>
+			<update>
+				<referral_type>2</referral_type>
+			</update>
+		</referral>
+	</case>
+	<meta>
+		<deviceID>M1I7MH08F3AKBKZ6FQUHAU9JB</deviceID>
+		<timeStart>2011-06-24T15:42:29.089-06</timeStart>
+		<timeEnd>2011-06-24T15:43:07.261-06</timeEnd>
+		<username>admin</username>
+		<userID>M1I7MH08F3AKBKZ6FQUHAU9JB</userID>
+		<uid>X5XE21TL7G3VOOH1SYSYDJ8V2</uid>
+	</meta>
+</data>

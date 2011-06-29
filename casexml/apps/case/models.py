@@ -301,9 +301,9 @@ class CommCareCase(CaseBase):
                 if not found:
                     logging.error(("Tried to update referral type %s for referral %s in case %s "
                                    "but it didn't exist! Nothing will be done about this.") % \
-                                   update_block[const.REFERRAL_TAG_TYPE], 
-                                   referral_block[const.REFERRAL_TAG_ID],
-                                   self.case_id)
+                                   (update_block[const.REFERRAL_TAG_TYPE], 
+                                    referral_block[const.REFERRAL_TAG_ID],
+                                    self.case_id))
         
                         
         
