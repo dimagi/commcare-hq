@@ -1,13 +1,10 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 import json
-from couchdbkit.ext.django.schema import Document
-import dateutil.parser
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import raw_username, format_username,\
-    user_id_to_username
+from corehq.apps.users.util import user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import CsvWorkBook
@@ -27,46 +24,19 @@ from dimagi.utils.parsing import json_format_datetime
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
-from corehq.apps.reports.calc import formdistribution
+from corehq.apps.reports.calc import formdistribution, entrytimes
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.export import export_cases_and_referrals
 from django.template.defaultfilters import yesno
 from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.const import CASE_TAG_ID
+from corehq.apps.reports.display import xmlns_to_name
+import sys
 
 #def report_list(request, domain):
 #    template = "reports/report_list.html"
 #    return render_to_response(request, template, {'domain': domain})
 
-def xmlns_to_name(xmlns, domain, html=False):
-    try:
-        form = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns], group=True).one()['value']
-        langs = ['en'] + form['app']['langs']
-    except:
-        form = None
-
-    if form:
-        module_name = form_name = None
-        for lang in langs:
-            module_name = module_name if module_name is not None else form['module']['name'].get(lang)
-            form_name = form_name if form_name is not None else form['form']['name'].get(lang)
-        if module_name is None:
-            module_name = "None"
-        if form_name is None:
-            form_name = "None"
-        if html:
-            name = "<a href='%s'>%s &gt; %s &gt; %s</a>" % (
-                reverse("corehq.apps.app_manager.views.view_app", args=[domain, form['app']['id']])
-                + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
-                form['app']['name'],
-                module_name,
-                form_name
-            )
-        else:
-            name = "%s > %s > %s" % (form['app']['name'], module_name, form_name)
-    else:
-        name = xmlns
-    return name
+DATE_FORMAT = "%Y-%m-%d"
 
 @login_and_domain_required
 def default(request, domain):
@@ -339,6 +309,62 @@ def _user_list(domain):
     users.sort(key=lambda user: user['username'])
     return users
 
+def _form_list(domain):
+    view = get_db().view("formtrends/form_duration_by_user", 
+                         startkey=["xdu", domain, ""],
+                         endkey=["xdu", domain, {}],
+                         group=True,
+                         group_level=3,
+                         reduce=True)
+    return [{"display": xmlns_to_name(r["key"][2], domain), "xmlns": r["key"][2]} for r in view]
+    
+@login_and_domain_required
+@datespan_in_request(from_param="startdate", to_param="enddate", 
+                     format_string=DATE_FORMAT, default_days=7)
+def completion_times(request, domain):
+    headers = ["User", "Average duration", "Shortest", "Longest", "# Forms"]
+    form = request.GET.get('form', '')
+    rows = []
+    if form:
+        data = entrytimes.get_user_data(domain, form, request.datespan)
+        totalsum = totalcount = 0
+        def to_minutes(val_in_ms):
+            return timedelta(milliseconds=float(val_in_ms))
+        
+        globalmin = sys.maxint
+        globalmax = 0
+        for user_id, datadict in data.items():
+            rows.append([user_id_to_username(user_id),
+                         to_minutes(float(datadict["sum"]) / float(datadict["count"])),
+                         to_minutes(datadict["min"]),
+                         to_minutes(datadict["max"]),
+                         datadict["count"]
+                         ])
+            totalsum = totalsum + datadict["sum"]
+            totalcount = totalcount + datadict["count"]
+            globalmin = min(globalmin, datadict["min"])
+            globalmax = max(globalmax, datadict["max"])
+        rows.insert(0, ["-- Total --", 
+                        to_minutes(float(totalsum)/float(totalcount)),
+                        to_minutes(globalmin),
+                        to_minutes(globalmax),
+                        totalcount])
+    
+    return render_to_response(request, "reports/generic_report.html", {
+        "domain": domain,
+        "show_forms": True,
+        "selected_form": form,
+        "forms": _form_list(domain),
+        "show_dates": True,
+        "datespan": request.datespan,
+        "report": {
+            "name": "Completion Times",
+            "headers": headers,
+            "rows": rows,
+        },
+    })
+    
+
 @login_and_domain_required
 def case_list(request, domain):
     headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
@@ -461,7 +487,7 @@ def submission_log(request, domain):
         "show_unregistered": show_unregistered,
     })
 
-DATE_FORMAT = "%Y-%m-%d"
+
 @login_and_domain_required
 @datespan_in_request(from_param="startdate", to_param="enddate", 
                      format_string=DATE_FORMAT, default_days=7)

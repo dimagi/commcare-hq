@@ -54,6 +54,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^dodoma/', include(dodoma_reports)),
 
     url(r'^submissions_by_form/', 'submissions_by_form', name="submissions_by_form_report"),
+    url(r'^completion_times/', 'completion_times', name="completion_times_report"),
     
     # useful for debugging email reports
     url(r'^emaillist/', 'emaillist', name="emailable_report_list"),

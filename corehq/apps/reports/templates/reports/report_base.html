@@ -22,7 +22,7 @@
             end.setDate(end.getDate() + days);
             $("#startdate").datepicker('setDate', start);
             $("#enddate").datepicker('setDate', end);
-            $("#dateForm").submit();
+            $("#paramSelectorForm").submit();
         }
 		$(function() {
 		    $('.date-picker').datepicker( {
@@ -86,7 +86,6 @@
             start_datatables();
         }); 
     </script>
-
     {% if show_users %}
         <script>
             $(function(){
@@ -113,7 +112,16 @@
             });
         </script>
     {% endif %}
-
+    {% if show_forms %}
+    <script>
+        $(function(){
+            $("#form_select").change(function(){
+                $(this).closest("form").submit();
+            });
+        });
+    </script>
+    {% endif %}    
+    
     <style>
         .datatable {
             width: 100%;
@@ -123,6 +131,9 @@
         }
         #report_header {
             padding: 10px;
+        }
+        #paramSelectorForm p {
+            padding: 5px 0 5px 0;
         }
     </style>
     {% block report_javascripts %}{% endblock %}
@@ -139,25 +150,37 @@
             <div id="report-title">
                 <h1>{{ report.name|default:"Unknown Report" }}</h1>
             </div>
+            {% if show_dates or show_users or show_forms %}
+            <form method="get" id="paramSelectorForm">
             {% if show_dates %}
-                <form method="get" id="dateForm">
-                    <p>Start Date: <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate_param }}">
-                       End Date: <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate_param }}">
-                       <input type="submit" value="Go!" />
-                    </p>
-                    <p>
-                        <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>
-                    </p>
-                </form>
+                <p>Start Date: <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate_param }}">
+                   End Date: <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate_param }}">
+                   {# oddly enough, this is the only form that needs or has a submit button #}
+                   <input type="submit" value="Go!" />
+                </p>
+                <p>
+                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>
+                </p>
             {% endif %}
             {% if show_users %}
-                <form action="" method="GET">
-                    <select id="individual_select" name="individual">
-                        <option  value=''>All Individuals</option>
-                        {% for user in users %}
-                            <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
-                        {% endfor %}
-                    </select>
+                <select id="individual_select" name="individual">
+                    <option  value=''>All Individuals</option>
+                    {% for user in users %}
+                        <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            {% if show_forms %}
+                <p>
+                <label for="form">Choose Form: </label>
+                <select id="form_select" name="form">
+                    <option  value=''>All Forms</option>
+                    {% for form in forms %}
+                        <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
+                    {% endfor %}
+                </select>
+                </p>
+            {% endif %}
                 </form>
             {% endif %}
         </div>
