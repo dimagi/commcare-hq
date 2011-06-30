@@ -2,6 +2,7 @@ from collections import defaultdict
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.display import xmlns_to_name
+import sys
 
 def get_data(domain, user=None, datespan=None):
     """
@@ -56,9 +57,9 @@ def get_user_data(domain, xmlns, datespan=None):
     if datespan is None:
         datespan = DateSpan.since(days=30, format="%Y-%m-%dT%H:%M:%S")
     
-    all_data = defaultdict(lambda: defaultdict(lambda: 0))
+    all_data = {}
     startkey = ["xdu", domain, xmlns, datespan.startdate_param] 
-    endkey = ["xdu", domain, xmlns, datespan.enddate_param] 
+    endkey = ["xdu", domain, xmlns, datespan.enddate_param]
     view = get_db().view("formtrends/form_duration_by_user", 
                          startkey=startkey,
                          endkey=endkey,
@@ -66,8 +67,13 @@ def get_user_data(domain, xmlns, datespan=None):
                          reduce=True)
     for row in view:
         user = row["key"][4]
+        if not user in all_data:
+            all_data[user] = {"count": 0, "min": sys.maxint, "max": 0, "sum": 0}
         xmlns = row["key"][2]
         thisrow = row["value"]
-        for key, val in thisrow.items():
-            all_data[user][key] = all_data[user][key] + val
+        all_data[user]["count"] = all_data[user]["count"] + thisrow["count"]
+        all_data[user]["sum"] = all_data[user]["sum"] + thisrow["sum"]
+        all_data[user]["min"] = min(all_data[user]["min"], thisrow["min"])
+        all_data[user]["max"] = max(all_data[user]["max"], thisrow["max"])
+    
     return all_data
