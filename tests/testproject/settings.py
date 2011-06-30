@@ -99,9 +99,9 @@ HQ_APPS = (
     'corehq.apps.receiver',
     'corehq.apps.hqwebapp',
     'corehq.apps.program',
-    'corehq.apps.phone',
     'corehq.apps.logtracker',
     'corehq.apps.xforms',
+    'casexml.apps.phone',
     'releasemanager',
     'requestlogger',
 )

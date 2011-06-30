@@ -5,8 +5,8 @@ import json
 from django.http import HttpResponse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reports.views import user_id_to_username
 from dimagi.utils.web import render_to_response
+from corehq.apps.users.util import user_id_to_username
 
 @login_and_domain_required
 def open_cases_json(request, domain):

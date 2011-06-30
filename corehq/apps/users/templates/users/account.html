@@ -41,6 +41,9 @@
         <ul>
             <li><a href="#basic-info">Basic</a></li>
             <li><a href="#phone-numbers">Phone Numbers</a></li>
+            {% if couch_user.user_data %}
+            <li><a href="#user-data">Custom Registration Data</a></li>
+            {% endif %}
             {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
             <li><a href="#scheduled-reports">My Scheduled Reports</a></li>
             <li><a href="#domains">My Domains</a></li>
@@ -65,6 +68,11 @@
         <div id="phone-numbers">
             {% include "users/partial/phone_numbers.html" %}
         </div>
+        {% if couch_user.user_data %}
+        <div id="user-data">
+            {% include "users/partial/user_data.html" %}
+        </div>
+        {% endif %}
         {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
         <div id="scheduled-reports">
             {% include "users/partial/scheduled_reports.html" %}

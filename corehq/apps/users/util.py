@@ -1,13 +1,28 @@
+import re
 from django.conf import settings
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.models import User
+from couchdbkit.resource import ResourceNotFound
 
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 def format_username(username, domain):
-    return "%s@%s" % (username.lower(), cc_user_domain(domain))
+    return "%s@%s" % (username, cc_user_domain(domain))
+
+def normalize_username(username, domain=None):
+    from django.core.validators import validate_email
+
+    username = re.sub(r'\s+', '.', username).lower()
+    if domain:
+        username = format_username(username, domain)
+        validate_email(username)
+    else:
+        # if no domain, make sure that the username is a valid "local part" of an email address
+        validate_email("%s@dimagi.com" % username)
+
+    return username
 
 def raw_username(username):
     """
@@ -17,12 +32,21 @@ def raw_username(username):
     username = username.lower()
     try:
         u, d = username.split("@")
-    except:
+    except Exception:
         return username
     if d.endswith('.' + sitewide_domain):
         return u
     else:
         return username
+
+def user_id_to_username(user_id):
+    if not user_id:
+        return user_id
+    try:
+        login = get_db().get(user_id)
+    except ResourceNotFound:
+        return None
+    return raw_username(login['django_user']['username'])
 
 def django_user_from_couch_id(id):
     """

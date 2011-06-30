@@ -1,12 +1,10 @@
-from collections import defaultdict
 from dimagi.utils.couch.database import get_db
+from corehq.apps.reports.display import xmlns_to_name
 
 def get_chart_data(domain, user=None):
     """
     Get data, suitable for a pie chart
     """
-    # todo: this doesn't below in views
-    from corehq.apps.reports.views import xmlns_to_name
     
     data = []
     startkey = ["u", domain, user] if user else ["d", domain]

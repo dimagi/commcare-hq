@@ -6,9 +6,10 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
-from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -122,20 +123,39 @@ class FormAction(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update  = DictProperty()
-class OpenReferralAction(FormAction):
-    name_path   = StringProperty()
+
+class PreloadAction(FormAction):
+    preload = DictProperty()
+    def is_active(self):
+        return bool(self.preload)
+
+class UpdateReferralAction(FormAction):
+    followup_date   = StringProperty()
+    def get_followup_date(self):
+        if self.followup_date:
+            return "if(date({followup_date}) >= date(today()), {followup_date}, date(today() + 2))".format(
+                followup_date = self.followup_date,
+            )
+        return self.followup_date or "date(today() + 2)"
+
+class OpenReferralAction(UpdateReferralAction):
+    name_path       = StringProperty()
+    
 class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
-class UpdateReferralAction(FormAction):
-    followup_date   = StringProperty()
+
+    
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
     update_case     = SchemaProperty(UpdateCaseAction)
     close_case      = SchemaProperty(FormAction)
     open_referral   = SchemaProperty(OpenReferralAction)
-    update_referral = SchemaProperty(FormAction)
-    close_referral  = SchemaProperty(UpdateReferralAction)
+    update_referral = SchemaProperty(UpdateReferralAction)
+    close_referral  = SchemaProperty(FormAction)
+
+    case_preload    = SchemaProperty(PreloadAction)
+    referral_preload= SchemaProperty(PreloadAction)
 
 class Form(IndexedSchema):
     """
@@ -191,25 +211,34 @@ class Form(IndexedSchema):
             except:
                 contents = ""
         return contents
-    def active_actions(self):
+    
+    def _get_active_actions(self, types):
         actions = {}
-        for action_type in (
-            'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral'
-        ):
+        for action_type in types:
             a = getattr(self.actions, action_type)
             if a.is_active():
                 actions[action_type] = a
         return actions
-
+    
+    def active_actions(self):
+        return self._get_active_actions((
+            'open_case', 'update_case', 'close_case',
+            'open_referral', 'update_referral', 'close_referral',
+            'case_preload', 'referral_preload'
+        ))
+            
+    def active_non_preloader_actions(self):
+        return self._get_active_actions((
+            'open_case', 'update_case', 'close_case',
+            'open_referral', 'update_referral', 'close_referral'))
 
     def get_questions(self, langs):
         return XForm(self.contents).get_questions(langs)
     
-    def export_json(self):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
-        return source
+        return json.dumps(source) if dump_json else source
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         
@@ -231,6 +260,35 @@ class Form(IndexedSchema):
                 errors.append({'type': 'update_case word illegal', 'word': key})
         return errors
 
+    def set_requires(self, requires):
+        if requires == "none":
+            self.actions.update_referral = DocumentSchema()
+            self.actions.close_case = DocumentSchema()
+            self.actions.close_referral = DocumentSchema()
+            self.actions.case_preload = DocumentSchema()
+            self.actions.referral_preload = DocumentSchema()
+        elif requires == "case":
+            self.actions.open_case = DocumentSchema()
+            self.actions.close_referral= DocumentSchema()
+            self.actions.update_referral = DocumentSchema()
+            self.actions.referral_preload = DocumentSchema()
+        elif requires == "referral":
+            self.actions.open_case = DocumentSchema()
+            self.actions.open_referral = DocumentSchema()
+
+        self.requires = requires
+
+    def requires_case(self):
+        # all referrals also require cases 
+        return self.requires in ("case", "referral")
+    
+    def requires_case_type(self):
+        return self.requires_case() or \
+               bool(self.active_non_preloader_actions())
+    
+    def requires_referral(self):
+        return self.requires == "referral"
+    
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -316,15 +374,14 @@ class Module(IndexedSchema):
 
     """
     name = DictProperty()
-#    case_name = DictProperty()
-#    ref_name = DictProperty()
+    case_label = DictProperty()
+    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     details = SchemaListProperty(Detail)
     case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
-
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -362,11 +419,11 @@ class Module(IndexedSchema):
                 case_types.append(case_type)
         return case_types
 
-    def export_json(self):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         for form in source['forms']:
             del form['unique_id']
-        return source
+        return json.dumps(source) if dump_json else source
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -410,17 +467,13 @@ class VersionedDoc(Document):
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save()
-        if not self.short_url:
-            self.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[self.domain, self._id])
-            )
-            super(VersionedDoc, self).save()
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['.variable-version'] = self.version
     def save_copy(self):
-        copies = VersionedDoc.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        cls = self.__class__
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
         if copies:
             copy = copies[0]
         else:
@@ -433,7 +486,6 @@ class VersionedDoc(Document):
                 del copy['recipients']
             if '_attachments' in copy:
                 del copy['_attachments']
-            cls = self.__class__
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
@@ -477,14 +529,14 @@ class VersionedDoc(Document):
         """
         pass
 
-    def export_json(self):
+    def export_json(self, dump_json=True):
         source = self.to_json()
         
         for field in self._meta_fields:
             if field in source:
                 del source[field]
         self.scrub_source(source)
-        return source
+        return json.dumps(source) if dump_json else source
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -504,22 +556,50 @@ class ApplicationBase(VersionedDoc):
 
     recipients = StringProperty(default="")
     # is a tag like "1.1" that we use to look up the latest build of that type
-    commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
-    # built_with stores a record of CommCare build used; is of the form "{version}/{build_number}"
-    built_with = StringProperty()
+    # deprecated
+    # commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
+    
+    # this is the supported way of specifying which commcare build to use
+    build_spec = SchemaProperty(BuildSpec)
+    # built_with stores a record of CommCare build used in a saved app
+    built_with = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
     built_on = DateTimeProperty(required=False)
 
-    def get_commcare_build(self):
-        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
-        return CommCareBuild.get_build(version, build_number)
+    @classmethod
+    def wrap(cls, data):
+        # scrape for old conventions and get rid of them
+        if data.has_key("commcare_build"):
+            version, build_number = data['commcare_build'].split('/')
+            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
+            del data['commcare_build']
+        if data.has_key("commcare_tag"):
+            version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
+            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
+            del data['commcare_tag']
+        if data.has_key("built_with") and isinstance(data['built_with'], basestring):
+            data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
-    def commcare_tag_label(self):
+        if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
+            data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
+            
+        return super(ApplicationBase, cls).wrap(data)
+
+    def get_build(self):
+#        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
+#        return CommCareBuild.get_build(version, build_number)
+        return self.build_spec.get_build()
+
+    def get_build_label(self):
         """This is a helper to look up a human readable name for a build tag"""
-        for option in current_builds.MENU_OPTIONS:
-            if option['tag'] == self.commcare_tag:
-                return option['label']
+#        for option in current_builds.MENU_OPTIONS:
+#            if option['tag'] == self.commcare_tag:
+#                return option['label']
+        for item in CommCareBuildConfig.fetch().menu:
+            if item['build'].to_string() == self.build_spec.to_string():
+                return item['label']
+        return self.build_spec.get_label()
 
     @property
     def post_url(self):
@@ -531,7 +611,7 @@ class ApplicationBase(VersionedDoc):
     def ota_restore_url(self):
         return "%s%s" % (
             get_url_base(),
-            reverse('corehq.apps.phone.views.restore', args=[self.domain])
+            reverse('corehq.apps.ota.views.restore', args=[self.domain])
         )
     @property
     def profile_url(self):
@@ -553,12 +633,13 @@ class ApplicationBase(VersionedDoc):
             (True,): 'Nokia/S40-native-input',
             (False,): 'Nokia/S40-generic',
         }[(self.native_input,)]
-        return self.get_commcare_build().get_jadjar(spec)
+        return self.get_build().get_jadjar(spec)
 
+#    @profile_decorator('create_jadjar.prof')
     def create_jadjar(self):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
-        except:
+        except ResourceError:
             built_on = datetime.utcnow()
             jadjar = self.get_jadjar().pack(self.create_all_files(), {
                 'Profile': self.profile_loc,
@@ -572,48 +653,10 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jadjar.jad, 'CommCare.jad')
             self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
-            self.built_with = "%s/%s" % (jadjar.version, jadjar.build_number)
-            if 'commcare_build' in self:
-                del self['commcare_build']
+            self.built_with = BuildSpec(version=jadjar.version, build_number=jadjar.build_number)
             self.save(increment_version=False)
             return jadjar.jad, jadjar.jar
 
-#    def create_jad(self):
-#        try:
-#            return self.fetch_attachment('CommCare.jad')
-#        except ResourceNotFound:
-#            jad = self.get_jadjar().jad_dict()
-#            jar = self.create_zipped_jar()
-#            jad.update({
-#                'MIDlet-Jar-Size': len(jar),
-#                'Profile': self.profile_loc,
-#                'MIDlet-Jar-URL': self.jar_url,
-#                #'MIDlet-Name': self.name,
-#                                # e.g. 2011-Apr-11 20:45
-#                'Released-on': datetime.utcnow().strftime("%Y-%b-%d %H:%M"),
-#                'CommCare-Release': "true",
-#                'Build-Number': self.version,
-#            })
-#            jad = sign_jar(jad, jar)
-#            self.put_attachment(jad, 'CommCare.jad')
-#            return jad
-
-#    def create_zipped_jar(self):
-#        try:
-#            return self.fetch_attachment('CommCare.jar')
-#        except ResourceNotFound:
-#            jar = self.fetch_jar()
-#            files = self.create_all_files()
-#            buffer = StringIO(jar)
-#            zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
-#            for path in files:
-#                zipper.writestr(path, files[path].encode('utf-8'))
-#            zipper.close()
-#            buffer.flush()
-#            jar = buffer.getvalue()
-#            buffer.close()
-#            self.put_attachment(jar, 'CommCare.jar', content_type="application/java-archive")
-#            return jar
     def validate_app(self):
         return []
 
@@ -664,12 +707,22 @@ class ApplicationBase(VersionedDoc):
         return self.get_jadjar().fetch_jar()
 
     def fetch_emulator_commcare_jar(self):
-        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
-        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
+#        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
+#        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
+        jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar("Generic/WebDemo")
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
+    def save_copy(self):
+        copy = super(ApplicationBase, self).save_copy()
+        copy.create_jadjar()
 
+        copy.short_url = bitly.shorten(
+            get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+        )
+        copy.save(increment_version=False)
+
+        return copy
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -686,10 +739,45 @@ class Application(ApplicationBase, TranslationMixin):
     #use_commcare_sense = BooleanProperty(default=False)
     profile = DictProperty() #SchemaProperty(Profile)
 
+    force_http = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, data):
+        for module in data['modules']:
+            for attr in ('case_label', 'referral_label'):
+                if not module.has_key(attr):
+                    module[attr] = {}
+            for lang in data['langs']:
+                if not module['case_label'].get(lang):
+                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
+                if not module['referral_label'].get(lang):
+                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
+        return super(Application, cls).wrap(data)
+
+    @property
+    def url_base(self):
+        if self.force_http:
+            return settings.INSECURE_URL_BASE
+        else:
+            return get_url_base()
+
+    @property
+    def post_url(self):
+        return "%s%s" % (
+            self.url_base,
+            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+        )
+    @property
+    def ota_restore_url(self):
+        return "%s%s" % (
+            self.url_base,
+            reverse('corehq.apps.ota.views.restore', args=[self.domain])
+        )
+
     @property
     def suite_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
         )
     @property
@@ -711,7 +799,7 @@ class Application(ApplicationBase, TranslationMixin):
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
         # traverse languages in order of priority to find a non-empty commcare-translation
-        messages = {}
+        messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
         # include language code names
         for lc in self.langs:
             name = langcodes.get_name(lc)
@@ -774,8 +862,6 @@ class Application(ApplicationBase, TranslationMixin):
                 name={lang if lang else "en": name if name else "Untitled Module"},
                 forms=[],
                 case_type='',
-#                case_name={'en': "Case"},
-#                ref_name={'en': "Referral"},
                 details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
             )
         )
@@ -876,13 +962,14 @@ class Application(ApplicationBase, TranslationMixin):
                         'message': unicode(e),
                     })
                 xmlns_count[form.xmlns] += 1
-                if form.requires in ('case', 'referral'):
+                if form.requires_case():
                     needs_case_detail = True
                     needs_case_type = True
-                if form.active_actions():
+                if form.requires_case_type():
                     needs_case_type = True
-                if form.requires == "referral":
+                if form.requires_referral():
                     needs_referral_detail = True
+                
             if needs_case_type and not module.case_type:
                 errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
             if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):

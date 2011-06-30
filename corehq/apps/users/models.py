@@ -25,6 +25,9 @@ from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from dimagi.utils.django.email import send_HTML_email
+from casexml.apps.phone.models import User as CaseXMLUser
+from corehq.apps.users.exceptions import NoAccountException
+from dimagi.utils.dates import force_to_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -158,6 +161,65 @@ class CouchUser(Document, UnicodeMixIn):
     _user = None
     _user_checked = False
 
+
+
+    """This is the future intended API"""
+
+    @property
+    def account_type(self):
+        if self.web_account.login_id:
+            return "WebAccount"
+        else:
+            return "CommCareAccount"
+
+    @property
+    def username(self):
+        if self.default_account is not None:
+            username = self._doc.get('username')
+            if not username:
+                username = self.default_account.login.username
+                self._doc['username'] = username
+                self.save()
+            return username
+
+        raise NoAccountException("No account found for %s" % self)
+
+    @username.setter
+    def username(self, value):
+        pass
+
+
+    @property
+    def raw_username(self):
+        if self.account_type == "CommCareAccount":
+            return self.username.split("@")[0]
+        else:
+            return self.username
+    @property
+    def userID(self):
+        return self.default_account.login_id
+
+    user_id = userID
+    
+    @property
+    def password(self):
+        return self.default_account.login.password
+
+    @property
+    def date_joined(self):
+        return self.default_account.login.date_joined
+
+    @property
+    def user_data(self):
+        try:
+            return self.default_account.user_data
+        except KeyError:
+            return {}
+
+    @property
+    def is_superuser(self):
+        return self.default_account.login.is_superuser
+    
     class Meta:
         app_label = 'users'
     
@@ -191,26 +253,16 @@ class CouchUser(Document, UnicodeMixIn):
         else:
             return self.default_commcare_account
 
-    @property
-    def account_type(self):
-        if self.web_account.login_id:
-            return "WebAccount"
-        else:
-            return "CommCareAccount"
-        
-    @property
-    def username(self):
-        return self.default_account.login.username
-    @property
-    def raw_username(self):
-        if self.account_type == "CommCareAccount":
-            return self.username.split("@")[0]
-        else:
-            return self.username
-    @property
-    def userID(self):
-        return self.default_account.login_id
-        
+    def is_commcare_user(self):
+        return self.account_type == "CommCareAccount"
+    
+    def to_casexml_user(self):
+        return CaseXMLUser(user_id=self.userID,
+                           username=self.raw_username,
+                           password=self.password,
+                           date_joined=self.date_joined,
+                           user_data=self.user_data)
+    
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
     
@@ -271,6 +323,8 @@ class CouchUser(Document, UnicodeMixIn):
         return Domain.objects.filter(name__in=domain_names)
 
     def is_member_of(self, domain_qs):
+        if isinstance(domain_qs, basestring):
+            return domain_qs in self.domain_names or self.is_superuser
         membership_count = domain_qs.filter(name__in=self.domain_names).count()
         if membership_count > 0:
             return True
@@ -401,12 +455,16 @@ class CouchUser(Document, UnicodeMixIn):
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
-        if self.is_domain_admin(domain):
-            role = 'admin'
-        elif self.can_edit_apps(domain):
-            role = "edit-apps"
+
+        if self.is_member_of(domain):
+            if self.is_domain_admin(domain):
+                role = 'admin'
+            elif self.can_edit_apps(domain):
+                role = "edit-apps"
+            else:
+                role = "read-only"
         else:
-            role = "read-only"
+            role = None
 
         return role
 
@@ -517,16 +575,29 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     
     # create django user for the commcare account
     login = create_user(username, password, uuid=uuid)
-    
+
     # create new couch user
     couch_user = CouchUser()
     
     # populate the couch user
-    if not date:
-        date = datetime.now()
+    
     couch_user.add_commcare_account(login, domain, device_id, user_data)
     couch_user.add_device_id(device_id=device_id)
+    
+    if date:
+        couch_user.created_on = force_to_datetime(date)
+    else:
+        couch_user.created_on = datetime.utcnow()
+    
+    couch_user['domains'] = [domain]
     couch_user.save()
+
+    # hack the domain into the login too for replication purposes
+    login_doc = Document.get(uuid, db=get_db())
+    login_doc['domains'] = [domain]
+    login_doc.set_db(get_db())
+    login_doc.save()
+    
     return couch_user
     
 

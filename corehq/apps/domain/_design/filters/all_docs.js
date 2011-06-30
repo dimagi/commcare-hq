@@ -1,7 +1,7 @@
 function (doc, req) {
     var i, domain = req.query.domain;
     if (doc.domain === undefined && doc.domains === undefined) {
-        return true;
+        return false;
     } else if (doc.domain === domain) {
         return true;
     } else if (doc.domains && doc.domains.length) {

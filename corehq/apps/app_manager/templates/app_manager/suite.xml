@@ -27,7 +27,7 @@
    {% if detail.columns %}
     <!-- Define the short detail model for household cases -->
     <detail id="m{{ module.id }}_{{ detail.type }}">
-        <title><text><locale id="cchq.{% if detail.type == "case_short" or detail.type == "case_long" %}case{% else %}referral{% endif %}"/></text></title>
+        <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
         <filter><case case-type="{{ module.case_type }}"/></filter>
         <model>
             <data>

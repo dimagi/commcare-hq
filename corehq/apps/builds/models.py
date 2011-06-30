@@ -2,6 +2,7 @@ from datetime import datetime
 from zipfile import ZipFile
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 
 class CommCareBuild(Document):
@@ -72,16 +73,98 @@ class CommCareBuild(Document):
         return self
 
     @classmethod
-    def get_build(cls, version, build_number):
-        build_number = int(build_number)
+    def get_build(cls, version, build_number=None, latest=False):
+        """
+        Call as either
+            CommCareBuild.get_build(version, build_number)
+        or
+            CommCareBuild.get_build(version, latest=True)
+        """
+
+        if latest:
+            startkey = [version]
+        else:
+            build_number = int(build_number)
+            startkey = [version, build_number]
+
         self = cls.view('builds/all',
-            startkey=[version, build_number],
-            endkey=[version, build_number, {}],
+            startkey=startkey,
+            endkey=startkey + [{}],
             limit=1,
             include_docs=True,
         ).one()
+
         if not self:
-            raise KeyError()
+            raise KeyError("Can't find build {label}.".format(label=BuildSpec(
+                version=version,
+                build_number=build_number,
+                latest=latest
+            )))
         return self
 
+class BuildSpec(DocumentSchema):
+    version = StringProperty()
+    build_number = IntegerProperty(required=False)
+    latest = BooleanProperty()
 
+    def get_build(self):
+        if self.latest:
+            return CommCareBuild.get_build(self.version, latest=True)
+        else:
+            return CommCareBuild.get_build(self.version, self.build_number)
+
+    def is_null(self):
+        return not (self.version and (self.build_number or self.latest))
+
+    def get_label(self):
+        if not self.is_null():
+            fmt = "{self.version} "
+            fmt += "(latest)" if self.latest else "({self.build_number})"
+            return fmt.format(self=self)
+        else:
+            return None
+
+    def __str__(self):
+        fmt = "{self.version}/"
+        fmt += "latest" if self.latest else "{self.build_number}"
+        return fmt.format(self=self)
+    def to_string(self):
+        return str(self)
+    @classmethod
+    def from_string(cls, string):
+        version, build_number = string.split('/')
+        if build_number == "latest":
+            return cls(version=version, latest=True)
+        else:
+            build_number = int(build_number)
+            return cls(version=version, build_number=build_number)
+
+class BuildMenuItem(DocumentSchema):
+    build = SchemaProperty(BuildSpec)
+    label = StringProperty(required=False)
+
+    def get_build(self):
+        return self.build.get_build()
+
+    def get_label(self):
+        return self.label or self.build.get_label()
+    
+class CommCareBuildConfig(Document):
+    ID = "config--commcare-builds"
+    preview = SchemaProperty(BuildSpec)
+    default = SchemaProperty(BuildSpec)
+    menu    = SchemaListProperty(BuildMenuItem)
+
+    @classmethod
+    def bootstrap(cls):
+        config = cls.wrap(commcare_build_config)
+        config._id = config.ID
+        config.save()
+        return config
+
+    @classmethod
+    def fetch(cls):
+        try:
+            return cls.get(cls.ID.default)
+        except Exception:
+            return cls.bootstrap()

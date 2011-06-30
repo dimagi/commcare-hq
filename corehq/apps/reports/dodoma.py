@@ -5,11 +5,11 @@ import json
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reports.views import user_id_to_username
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.web import render_to_response
+from corehq.apps.users.util import user_id_to_username
 
 DOMAIN = "dodoma"
 

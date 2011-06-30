@@ -10,6 +10,9 @@
             font-weight: bold;
             color: #444;
         }
+        input[type="radio"]{
+            margin: 3px 5px 5px 0px;
+        }
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>
@@ -19,7 +22,7 @@
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
     <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-
+    
     <script>
         $(function(){
             (function doStyling() {
@@ -116,7 +119,7 @@
             <tr>
                 <th>Edit XForm</th>
                 <td id="editXFormTD">
-                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
+                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="editor" value="{{ editor_url }}" />
@@ -129,8 +132,8 @@
                         due to a bug. <br />
                         We are hard at work finding a fix!
                     </div>
-                </td>
-                <td>
+{#                </td>#}
+{#                <td>#}
                     or 
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
@@ -145,22 +148,24 @@
         {% endif %}
         {% if form.contents %}
             <tr>
-                <th>
-                    View XForm
-                </th>
+                <tr>
+                <th>Demo this form</th>
                 <td>
-                    <form method="POST" action="{{ XFORMPLAYER_URL }}">
+                    <form method="POST" action="{{ XFORMPLAYER_URL }}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="data" value="{}" />
                         <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
-
-
-                        <input type="submit" value="Play…" />
+                        <input type="radio" name="input_mode" value="type" checked="checked" /> Web Entry &nbsp;&nbsp;
+                        <input type="radio" name="input_mode" value="touch" /> Touchscreen Entry &nbsp;&nbsp;
+                        <input type="submit" value="Try it!" />
                     </form>
                 </td>
+                </tr>
+                <th>
+                    View XForm
+                </th>
                 <td>
-                    or
                     <a id="xform-source-opener" class="dialog_opener"
                        href="{% url get_xform_contents domain app.id module.id form.id %}">
                         View Source XML
@@ -169,8 +174,6 @@
                         Double-click to select all.
                         <pre id="xform-source" class="brush: xml;"></pre>
                     </div>
-                </td>
-                <td>
                     or <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
                 </td>
             </tr>

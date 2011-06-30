@@ -28,7 +28,7 @@
         <tr>
             {% for thing in row %}
                 <td class="{% if not thing %}null-entry{% endif %}">
-                    {{ thing }}
+                    {{ thing|safe }}
                 </td>
             {% endfor %}
         </tr>

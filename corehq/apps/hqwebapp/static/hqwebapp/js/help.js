@@ -1,8 +1,26 @@
-InlineHelp = (function($){
+var InlineHelp = (function($){
+    var $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}),
+        $window = $(window),
+        initShield = function () {
+            $shield.css({top: $window.scrollTop(),width: $window.width(), height: $window.height()});
+        },
+        $currentlyOpen;
+    $(function () {
+        $shield.appendTo("body");
+        initShield();
+        $window.resize(initShield);
+        $window.scroll(initShield);
+        $shield.hide();
+    });
+    $shield.click(function () {
+        $shield.hide();
+        $currentlyOpen.fadeOut();
+    });
     function InlineHelp(link, text, key) {
         this.$link = $(link);
-        this.$text = $(text);
+        this.$text = $(text).css({zIndex: 1001}).addClass('ui-corner-all');
         this.url = this.$text.text() === "" ? InlineHelp.get_url(key) : null;
+
     }
     InlineHelp.get_url = (function(key) {
         var parts = key.split('/');
@@ -30,7 +48,8 @@ InlineHelp = (function($){
         self.$text.hide();
         self.$link.click(function(e){
             e.preventDefault();
-            self.$text.toggle();
+            $shield.show();
+            $currentlyOpen = self.$text.show();
         });
 
     });

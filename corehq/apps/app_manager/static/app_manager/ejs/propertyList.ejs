@@ -1,0 +1,52 @@
+<table>
+    <tr>
+        <th></th>
+        <th>Question</th>
+        <th>Case Property</th>
+    </tr>
+
+    [% for(var key in map) { %]
+        [%
+            var nodeset = keyType === "nodeset" ? key : map[key];
+            var propertyName = keyType === "nodeset" ? map[key] : key;
+        %]
+        <tr class="action-update">
+            <td></td>
+            <td>
+                [%= casexml.renderOptions(casexml.getQuestions("all"), nodeset, 'action-update-value') %]
+            </td>
+            <td>
+                [%
+                    var value = nodeset.split('/');
+                    value = value[value.length-1];
+                %]
+                [% if (casexml.edit) { %]
+                    <input class="code" type="text" name="action-update-key" value="[%= propertyName || value %]" />
+                [% } else { %]
+                    <code>[%= propertyName %]</code>
+                [% } %]
+            </td>
+            <td>
+                [% if (propertyName === "") { %]
+                    <span class="invalid">Can't be blank</span>
+                [% } else if (!/^[a-zA-Z][\w_-]*$/.test(propertyName)) { %]
+                    <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
+                [% } else if (casexml.reserved_words.indexOf(propertyName) !== -1) { %]
+                    <span class="invalid">Can't name a case property "[%= propertyName %]"</span>
+                [% } else if (propertyName !== value && showSuggestion) { %]
+                    <span class="">[%= value %]?</span>
+                [% } %]
+            </td>
+        </tr>
+    [% } %]
+    [% if (casexml.edit) { %]
+        <tr class="action-update">
+            <td></td>
+            <td>
+                [%= casexml.renderOptions(casexml.getQuestions("all"), "", 'action-update-value') %]
+            </td>
+            <td><input class="code" type="text" name="action-update-key" /></td>
+        </tr>
+    [% } %]
+
+</table>

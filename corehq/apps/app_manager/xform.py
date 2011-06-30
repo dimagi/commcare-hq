@@ -244,7 +244,7 @@ class XForm(WrappedNode):
 
         def build_questions(group, path_context="", exclude=False):
             for prompt in group.findall('*'):
-                if prompt.tag_xmlns == namespaces['f'][1:-1]:
+                if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
                     excluded_paths.add(path)
                     if prompt.tag_name == "group":
@@ -485,7 +485,7 @@ class XForm(WrappedNode):
                     add_bind({
                         "nodeset":"case/referral/followup_date",
                         "type":"date",
-                        "calculate": "date(today() + 2)"
+                        "calculate": actions['open_referral'].get_followup_date()
                     })
                     add_bind({
                         "nodeset":"case/referral/open/referral_types",
@@ -515,9 +515,7 @@ class XForm(WrappedNode):
                         add_bind({
                             "nodeset": "case/referral/followup_date",
                             "type":"xsd:date",
-                            "calculate": "if(date(%(followup_date)s) >= date(today() + 2), %(followup_date)s, date(today() + 2))" % {
-                                'followup_date': actions['update_referral'].followup_date,
-                            },
+                            "calculate": actions['update_referral'].get_followup_date()
                         })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]
@@ -527,6 +525,21 @@ class XForm(WrappedNode):
                         "relevant": r,
                         "{jr}preload":"timestamp",
                         "{jr}preloadParams":"end"
+                    })
+
+            if 'case_preload' in actions:
+                for nodeset, property in actions['case_preload'].preload.items():
+                    add_bind({
+                        "nodeset": nodeset,
+                        "{jr}preload":"case",
+                        "{jr}preloadParams": property
+                    })
+            if 'referral_preload' in actions:
+                for nodeset, property in actions['referral_preload'].preload.items():
+                    add_bind({
+                        "nodeset": nodeset,
+                        "{jr}preload":"referral",
+                        "{jr}preloadParams": property
                     })
             casexml_text = casexml.render()
         def transformation():

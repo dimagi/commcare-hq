@@ -27,6 +27,9 @@
 {% if instance.attachments %}
         <li><a href="#attachments">Attachments</a></li>
 {% endif %}
+{% if caseblocks %}
+        <li><a href="#cases">Cases</a></li>
+{% endif %}
     </ul>
 <div title="Form Data" id="form_display">
     {% render_form_data instance %}
@@ -40,6 +43,13 @@
     <ul>
     {% for key, val in instance.attachments.items %}
         <li><a href="{% url download_attachment domain instance.get_id key %}">{{ key }}</a></li>
+    {% endfor %}
+    </ul>
+</div>
+<div title="Cases" id="cases">
+    <ul>
+    {% for case in caseblocks %}
+        <li><a href="{% url case_details domain case.case_id %}">{{ case.name|default:case.case_id }}</a></li>
     {% endfor %}
     </ul>
 </div>

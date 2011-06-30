@@ -1,6 +1,8 @@
+from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.models import DomainMembership, require_permission
 import current_builds
@@ -13,7 +15,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -114,7 +116,7 @@ def form_casexml(req, domain, form_unique_id):
 @login_and_domain_required
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.export_json()))
+    return HttpResponse(app.export_json())
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
@@ -132,13 +134,23 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         app_id = app._id
         return back_to_main(**locals())
     else:
-        return render_to_response(req, template, {'domain': domain})
+        app_id = req.GET.get('app')
+        redirect_domain = req.GET.get('domain')
+        if redirect_domain:
+            return HttpResponseRedirect(
+                reverse('import_app', args=[redirect_domain])
+                + "?app={app_id}".format(app_id=app_id)
+            )
+        app = Application.get(app_id)
+        assert(app.doc_type in ('Application', 'RemoteApp'))
+        assert(req.couch_user.is_member_of(app.domain))
+        return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
 @require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
-    source = factory_app.export_json()
+    source = factory_app.export_json(dump_json=False)
     name = req.POST.get('name')
     if name:
         source['name'] = name
@@ -155,7 +167,7 @@ def import_factory_module(req, domain, app_id):
     fapp = get_app('factory', fapp_id)
     fmodule = fapp.get_module(fmodule_id)
     app = get_app(domain, app_id)
-    source = fmodule.export_json()
+    source = fmodule.export_json(dump_json=False)
     app.new_module_from_source(source)
     app.save()
     return back_to_main(**locals())
@@ -166,7 +178,7 @@ def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
     fapp = get_app('factory', fapp_id)
     fform = fapp.get_module(fmodule_id).get_form(fform_id)
-    source = fform.export_json()
+    source = fform.export_json(dump_json=False)
     app = get_app(domain, app_id)
     app.new_form_from_source(module_id, source)
     app.save()
@@ -189,8 +201,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
     factory_apps = [app['value'] for app in get_db().view('app_manager/factory_apps')]
 
     applications = []
-    for app in get_db().view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]).all():
-        app = app['value']
+    for app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
         applications.append(app)
     app = module = form = None
     if app_id:
@@ -219,11 +230,11 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         app.save()
 
     if app:
-        saved_apps = [x['value'] for x in get_db().view('app_manager/saved_app',
+        saved_apps = ApplicationBase.view('app_manager/saved_app',
             startkey=[domain, app_id, {}],
             endkey=[domain, app_id],
             descending=True
-        ).all()]
+        ).all()
     else:
         saved_apps = []
     if app and not app.langs:
@@ -321,7 +332,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
-        'XFORMPLAYER_URL': settings.XFORMPLAYER_URL,
+        'XFORMPLAYER_URL': reverse('xform_play_remote'),
 
         'build_errors': build_errors,
 
@@ -403,8 +414,11 @@ def view_app(req, domain, app_id=''):
         'app': app,
     })
     if app:
+        options = CommCareBuildConfig.fetch().menu
+        is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         context.update({
-            "commcare_tag_options": current_builds.MENU_OPTIONS
+            "commcare_build_options": options,
+            "is_standard_build": bool(is_standard_build)
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
@@ -496,7 +510,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         module[attr] = req.POST.get(attr, None)
     elif "put_in_root" == attr:
         module[attr] = json.loads(req.POST.get(attr))
-    elif "name" == attr:
+    elif ("name", "case_label", "referral_label").__contains__(attr):
         name = req.POST.get(attr, None)
         module[attr][lang] = name
         if attr == "name":
@@ -590,7 +604,7 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
 
     if   "requires" == attr:
         requires = req.POST['requires']
-        form.requires = requires
+        form.set_requires(requires)
     elif "name" == attr:
         name = req.POST['name']
         form.name[lang] = name
@@ -734,12 +748,9 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "native_input" == attr:
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
-    elif "commcare_tag" == attr:
-        commcare_tag = req.POST['commcare_tag']
-        if commcare_tag in current_builds.TAG_MAP:
-            app.commcare_tag = commcare_tag
-        else:
-            return HttpResponseBadRequest()
+    elif "build_spec" == attr:
+        build_spec = req.POST['build_spec']
+        app.build_spec = BuildSpec.from_string(build_spec)
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
@@ -929,7 +940,10 @@ def download_jad(req, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    jad, _ = app.create_jadjar()
+    try:
+        jad, _ = app.create_jadjar()
+    except ResourceConflict:
+        return download_jad(req, domain, app_id)
     try:
         response = HttpResponse(jad)
     except:

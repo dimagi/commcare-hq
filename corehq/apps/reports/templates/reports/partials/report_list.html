@@ -3,9 +3,11 @@
     <option value="{% url submissions_by_form_report domain %}">Submissions By Form</option>
     <option value="{% url daily_submissions_report domain %}">Daily Form Submissions</option>
     <option value="{% url daily_completions_report domain %}">Daily Form Completions</option>
+    <option value="{% url completion_times_report domain %}">Form Completion Trends</option>
 </optgroup>
 <optgroup label="Cases">
-    <option value="{% url active_case_report domain %}">Case Activity</option>
+    <option value="{% url case_activity_report domain %}">Case Activity</option>
+    <option value="{% url case_list_report domain %}">Case List</option>
 </optgroup>
 <optgroup label="Raw Data">
     <option value="{% url excel_export_data_report domain %}">Export data to excel</option>

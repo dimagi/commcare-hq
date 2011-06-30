@@ -25,6 +25,9 @@ var LangcodeValidator = (function () {
             });
         }
     }
+    function confirmChange(oldCode, newCode) {
+        return confirm("Are you sure you want to rename language '" + oldCode +"' to '" + newCode + "'?");
+    }
     LangcodeValidator.validate = function (langcode, callback) {
         var validateURL = "/langcodes/validate.json";
         $.get(validateURL, {"term": langcode}, function(data){
@@ -62,7 +65,7 @@ var LangcodeValidator = (function () {
                     sug = this.validation.suggestions[langcode][j];
                     $a = (function(langcode, sug) {
                         return $("<a href='#'>" + sug.code + " (" + sug.name + ")</a>").click(function(){
-                            if (confirm("Are you sure you want to rename unknown language '" + langcode +"' to '" + sug.code + "'?")) {
+                            if (confirmChange(langcode, sug.code)) {
                                 that.renameLanguage(langcode, sug.code);
                             }
                             return false;
@@ -74,7 +77,7 @@ var LangcodeValidator = (function () {
                 (function(langcode) {
                     return $("<input type='text' class='langcodes short' />").blur(function(){
                         var code = $(this).val();
-                        if (code && confirm("Are you sure you want to rename unknown language '" + langcode +"' to '" + code + "'?")) {
+                        if (code && confirmChange(langcode, code)) {
                             that.renameLanguage(langcode, code);
                         }
                     }).langcodes();
@@ -87,7 +90,7 @@ var LangcodeValidator = (function () {
                 $td = $("<td></td>").html(this.validation.isValid[langcode] ? langcode : "<strike>" + langcode + "</strike>").appendTo($row);
                 $td = $("<td></td>").text(this.validation.name[langcode] || "?").appendTo($row);
                 if(this.edit) {
-                    $td = $("<td></td>").appendTo($row).html(this.validation.isValid[langcode] ? "" : $links);
+                    $td = $("<td></td>").appendTo($row).html($links);
                 }
                 $table.append($row);
             }

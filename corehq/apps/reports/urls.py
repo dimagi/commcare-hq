@@ -11,6 +11,7 @@ actual_reports = patterns('corehq.apps.reports.views',
 
 paging_reports = patterns('corehq.apps.reports.views',
     url('submit_history/(?P<individual>.*)/(?P<show_unregistered>.*)/', protect(SubmitHistory.ajax_view), name='paging_submit_history'),
+    url('submit_history/(?P<individual>.*)/$', "paging_case_list", name='paging_case_list'),
 )
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
@@ -21,7 +22,6 @@ dodoma_reports = patterns('corehq.apps.reports.dodoma',
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="default_report"),
 
-    url(r'^user_summary/$', 'user_summary', name='user_summary_report'),
     url(r'^submission_log/', 'submission_log', name="submission_log_report"),
     url(
         r'^daily_submissions/$',
@@ -37,6 +37,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ),
 
     url('active_cases', 'active_cases', name="active_case_report"),
+    url('case_activity', 'case_activity', name="case_activity_report"),
+    url('case_list/$', 'case_list', name="case_list_report"),
+    url('case_data/(?P<case_id>\w+)/$', 'case_details', name="case_details"),
 
 
     url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),
@@ -51,9 +54,13 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^dodoma/', include(dodoma_reports)),
 
     url(r'^submissions_by_form/', 'submissions_by_form', name="submissions_by_form_report"),
+    url(r'^completion_times/', 'completion_times', name="completion_times_report"),
     
     # useful for debugging email reports
     url(r'^emaillist/', 'emaillist', name="emailable_report_list"),
     url(r'^emailtest/(?P<report_slug>[\w_]+)/', 'emailtest', name="emailable_report_test"),
-    
+
+
+    # export data
+    url(r'^download/cases', 'download_cases', name='download_cases')
 )
