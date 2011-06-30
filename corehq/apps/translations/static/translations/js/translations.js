@@ -22,17 +22,18 @@ var mk_translation_ui = function (spec) {
                 this.value = value;
                 this.$icon = $("<div></div>");
                 this.progressState = ps.normal;
-                if (translation_ui.edit) {
-                    this.$input = $("<input type='text' />").val(this.value);
-                } else {
-                    this.$input = $("<span></span>").text(this.value);
-                }
             };
             Translation.init = function (key, value) {
                 return new Translation(key, value);
             };
             Translation.prototype = {
-                initInput: function () {
+                initInput: function ($td) {
+                    if (translation_ui.edit) {
+                        this.$input = $("<input type='text' />").val(this.value);
+                    } else {
+                        this.$input = $("<span></span>").text(this.value);
+                    }
+                    this.$input.appendTo($td);
                     if (translation_ui.edit) {
                         var that = this;
                         this.$input.change(function () {
@@ -145,8 +146,7 @@ var mk_translation_ui = function (spec) {
                 translation.$icon.appendTo($td);
 
                 $td = $("<td></td>").appendTo($tr);
-                translation.$input.appendTo($td);
-                translation.initInput();
+                translation.initInput($td);
             }
             translation_ui.$home.html($table);
         } else {
