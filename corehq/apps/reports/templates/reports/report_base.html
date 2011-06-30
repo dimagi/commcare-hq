@@ -174,7 +174,11 @@
                 <p>
                 <label for="form">Choose Form: </label>
                 <select id="form_select" name="form">
+                    {% if all_forms_selectable %}
                     <option  value=''>All Forms</option>
+                    {% else %}
+                    <option  value='' style="color:#777;">Select a Form</option>
+                    {% endif %}
                     {% for form in forms %}
                         <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
                     {% endfor %}
