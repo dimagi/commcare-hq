@@ -145,6 +145,7 @@ HQ_APPS = (
     'corehq.apps.hqsofabed',
     'xep_hq_server',
     'touchforms.formplayer',
+    'phonelog',
 )
 
 # you can locally add apps if you want here
