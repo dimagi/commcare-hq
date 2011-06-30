@@ -4,9 +4,10 @@ from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.users.models import DomainMembership, require_permission
+from corehq.apps.translations.models import TranslationMixin
+from corehq.apps.users.models import DomainMembership, require_permission, Permissions
 import current_builds
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response, json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
 
@@ -43,6 +44,8 @@ except ImportError:
 from django.contrib import messages
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+
+require_edit_apps = require_permission(Permissions.EDIT_APPS)
 
 class TemplateFunctions(object):
     @classmethod
@@ -339,6 +342,8 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'util': TemplateFunctions,
     }
     context.update(get_sms_autocomplete_context(req, domain))
+    if app and not module:
+        context.update({"translations_json": json.dumps(app.translations.get(lang, {}))}),
     if form:
         context.update({'case_reserved_words_json': json.dumps(load_case_reserved_words())})
     return context
@@ -706,6 +711,18 @@ def edit_app_lang(req, domain, app_id):
             app.save()
 
     return back_to_main(**locals())
+
+@require_edit_apps
+@require_POST
+def edit_app_translation(request, domain, app_id):
+    params  = json_request(request.POST)
+    lang    = params.get('lang')
+    key     = params.get('key')
+    value   = params.get('value')
+    app = get_app(domain, app_id, wrap_cls=TranslationMixin)
+    app.set_translation(lang, key, value)
+    app.save()
+    return json_response({"key": key, "value": value})
 
 @require_POST
 @require_permission('edit-apps')

@@ -38,6 +38,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'edit_app_lang/(?P<app_id>\w+)/$',                                    'edit_app_lang'),
     (r'delete_app_lang/(?P<app_id>\w+)/$',                                  'delete_app_lang'),
     (r'edit_app_attr/(?P<app_id>\w+)/(?P<attr>\w+)/$',                      'edit_app_attr'),
+ url(r'edit_app_translation/(?P<app_id>\w+)/$',               'edit_app_translation', name='edit_app_translation'),
 
     (r'rearrange/(?P<app_id>\w+)/(?P<key>\w+)/$',                           'rearrange'),
 

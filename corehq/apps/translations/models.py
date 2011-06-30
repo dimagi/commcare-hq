@@ -10,7 +10,13 @@ class TranslationMixin(Document):
         self.translations[lang] = Translation.get_translations(lang, one=True)
 
     def set_translation(self, lang, key, value):
-        self.translations[lang][key] = value
+        if lang not in self.translations:
+            self.translations[lang] = {}
+        if value is not None:
+            self.translations[lang][key] = value
+        else:
+            del self.translations[lang][key]
+
 
     
 class TranslationDoc(TranslationMixin):

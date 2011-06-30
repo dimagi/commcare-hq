@@ -798,26 +798,27 @@ class Application(ApplicationBase, TranslationMixin):
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
 
-        # traverse languages in order of priority to find a non-empty commcare-translation
         messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
         # include language code names
         for lc in self.langs:
             name = langcodes.get_name(lc)
             if name:
                 messages[lc] = name
-                
+
+        # traverse languages in order of priority to find a non-empty commcare-translation
         for l in [lang] + self.langs:
             cc_trans = commcare_translations.load_translations(l)
             if cc_trans:
                 messages.update(cc_trans)
                 break
-        
+
+        messages.update(self.translations.get(lang, {}))
+
         custom = render_to_string(template, {
             'app': self,
             'langs': [lang] + self.langs,
         })
         custom = commcare_translations.loads(custom)
-
 
         messages.update(custom)
         return commcare_translations.dumps(messages)
@@ -1072,7 +1073,7 @@ class BuildErrors(Document):
     
     errors = ListProperty()
 
-def get_app(domain, app_id):
+def get_app(domain, app_id, wrap_cls=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
@@ -1089,7 +1090,7 @@ def get_app(domain, app_id):
 
     if app['domain'] != domain:
         raise DomainError("%s not in domain %s" % (app['_id'], domain))
-    cls = {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
+    cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app
 

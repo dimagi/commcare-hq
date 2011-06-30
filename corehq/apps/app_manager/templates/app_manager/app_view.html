@@ -4,6 +4,19 @@
     {{ block.super }}
     {% if app.doc_type == "Application" %}
         <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js"></script>
+        <script src="{{ STATIC_URL }}translations/js/translations.js"></script>
+        <script>
+            $(function () {
+                var $translation_ui = $("#translations_ui");
+                mk_translation_ui({
+                    translations: {{ translations_json|safe }},
+                    url: "{% url edit_app_translation domain app.id %}",
+                    lang: "{{ lang }}",
+                    edit: {{ edit|yesno:"true,false" }},
+                    $home: $translation_ui
+                });
+            });
+        </script>
         <script>
             $(function () {
                 var saveURL = "{% url corehq.apps.app_manager.views.edit_commcare_profile domain app.id %}",
@@ -39,37 +52,53 @@
                 });
             });
             $(function () {
-                var $scarySettings = $("#scary-settings").addClass('ui-corner-bottom'),
-                    $toggleLink = $("#scary-settings-toggle").addClass('ui-corner-top'),
-                    hidden = true;
-                if (hidden) {
-                    $scarySettings.hide();
-                }
-                function setIcon() {
-                    var up = 'ui-icon-carat-1-n',
-                        down = 'ui-icon-carat-1-s';
-                    $toggleLink.find('.ui-icon').addClass(hidden ? down : up).removeClass(hidden ? up : down);
-                }
-                setIcon();
-                $toggleLink.click(function () {
-                    $scarySettings.slideToggle();
-                    hidden = !hidden;
-                    setIcon();
-                    return false;
+                $('.scary-settings').each(function () {
+                    var $scarySettings = $(this).addClass('ui-corner-bottom'),
+                        $toggleBar = $(this).prev(".scary-settings-toggle").addClass('ui-corner-top'),
+                        $toggleLink = $toggleBar.find('a'),
+                        hidden = true;
+                    function setHidden(h) {
+                        var closedIcon = 'ui-icon-triangle-1-e',
+                            openedIcon = 'ui-icon-triangle-1-s',
+                            openedClass = 'scary-settings-toggle-open';
+                        if (hidden != h) {
+                            $scarySettings.slideToggle();
+                        } else if (hidden) {
+                            $scarySettings.hide();
+                        }
+                        hidden = h;
+                        if (hidden) {
+                            $toggleBar.find('.ui-icon').addClass(closedIcon).removeClass(openedIcon);
+                            $toggleBar.removeClass(openedClass, 1000);
+                        } else {
+                            $toggleBar.find('.ui-icon').addClass(openedIcon).removeClass(closedIcon);
+                            $toggleBar.addClass(openedClass);
+                        }
+                    }
+                    setHidden(hidden);
+                    $toggleLink.click(function () {
+                        setHidden(!hidden);
+                        return false;
+                    });
                 });
             });
         </script>
         <style>
-            #scary-settings {
+            .scary-settings {
                 background-color: #FEFEFE;
                 border: 1px solid #CCC;
                 border-top: none;
                 padding: 1em;
             }
-            #scary-settings-toggle {
-                background-color: #EEE;
-                border: 1px solid #CCC;
+            .scary-settings-toggle {
+                margin-top: 1em;
+                border: 1px solid transparent;
                 padding: .5em;
+            }
+            .scary-settings-toggle-open {
+                border: 1px solid #CCC;
+                background-color: #EEE;
+
             }
         </style>
     {% endif %}
@@ -180,8 +209,20 @@
             </tbody>
             <!--tbody id="language-properties"></tbody-->
         </table>
-        <div id="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Advanced Settings</a></div>
-        <div id="scary-settings">
+        <div class="scary-settings-toggle">
+            <a href="#"><span class="ui-icon"></span>User Interface Translations (Beta)</a>
+        </div>
+        <div class="scary-settings">
+            <p>You may now choose your own custom translations for user interface string codes</p>
+            <p>(see lists for
+                <a target="_blank" href="https://bitbucket.org/javarosa/javarosa/src/db8ed7907bbb/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
+                and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/627d8840d31e/application/resources/messages_cc_default.txt">CommCare</a>)
+            </p>
+            <br/>
+            <div id="translations_ui"></div>
+        </div>
+        <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Advanced Settings</a></div>
+        <div class="scary-settings">
             <h4>Logging</h4>
             <table class="config">
                 <tbody id="log-properties"></tbody>
