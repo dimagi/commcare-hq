@@ -45,7 +45,7 @@ var mk_translation_ui = function (spec) {
                         fail_icon = 'ui-icon ui-icon-notice',
                         working_icon = 'ui-icon ui-icon-arrowrefresh-1-w',
                         just_added_icon = 'ui-icon ui-icon-document',
-                        all_icons = [ok_icon, fail_icon, working_icon].join(' '),
+                        all_icons = [ok_icon, fail_icon, working_icon, just_added_icon].join(' '),
                         $icon = this.$icon,
                         $input = this.$input;
 
