@@ -1,7 +1,6 @@
 django
 couchdbkit
 pytz
-python_digest
 psycopg2
 south
 gunicorn
@@ -13,3 +12,4 @@ django-celery
 django-kombu
 openpyxl
 unidecode
+djtables

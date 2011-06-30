@@ -51,6 +51,7 @@ SECRET_KEY = '2rgmwtyq$thj49+-6u7x9t39r7jflu&1ljj3x2c0n0fl$)04_0'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.eggs.Loader',
 #     'django.template.loaders.eggs.load_template_source',
 )
 
@@ -98,6 +99,7 @@ DEFAULT_APPS = (
     'staticfiles', #soon to be django.contrib.staticfiles in 1.3
     'south',
     'djcelery',    # pip install django-celery
+    'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
 )
@@ -111,7 +113,9 @@ HQ_APPS = (
     'auditcare',
     'djangocouch',
     'djangocouchuser',
+    'hqscripts',
     'casexml.apps.case',
+    'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.domain',
     'corehq.apps.hqadmin',
@@ -130,15 +134,18 @@ HQ_APPS = (
     'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.translations',
-    'corehq.apps.phone',
     'corehq.apps.users',
+    'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
     'corehq.apps.reports',
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.couchapps',
+    'sofabed.forms',
+    'corehq.apps.hqsofabed',
     'xep_hq_server',
+    'touchforms.formplayer',
 )
 
 # you can locally add apps if you want here
@@ -194,7 +201,6 @@ LOGGEDOUT_TEMPLATE="loggedout.html"
 LOGTRACKER_ALERT_EMAILS = []
 LOGTRACKER_LOG_THRESHOLD = 30
 LOGTRACKER_ALERT_THRESHOLD = 40
-COUCHLOG_THRESHOLD = logging.WARNING
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="user@domain.com"
@@ -234,11 +240,19 @@ CARROT_BACKEND = "django"
 SKIP_SOUTH_TESTS = True
 AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
-XFORMPLAYER_URL = 'http://xforms.dimagi.com/play_remote/'
 HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
+
+XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
+COUCHLOG_THRESHOLD = logging.WARNING
+
+
+# sofabed
+FORMDATA_MODEL = 'hqsofabed.HQFormData'  
 
 #auditcare parameters
 AUDIT_VIEWS = [
@@ -313,6 +327,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchexport',
         'couchlog',
         'domain',
+        'forms',
         'groups',
         'hqcase',
         'migration',
@@ -321,6 +336,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'reports',
         'translations',
         'users',
+        'touchforms.formplayer',
         'xep_hq_server',
     ]
 ]

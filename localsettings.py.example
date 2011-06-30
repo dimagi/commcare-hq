@@ -40,3 +40,6 @@ JAR_SIGN = dict(
 # in the future we will possible allow multiple
 EDITOR_URL = 'http://localhost:8011/xep/initiate/'
 XFORMPLAYER_URL = 'http://localhost:8888/play_remote/'
+
+# A back door for phones that can't do SSL to access HQ through http
+INSECURE_URL_BASE = "http://submit.mysite.com"
