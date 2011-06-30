@@ -719,7 +719,7 @@ def edit_app_translation(request, domain, app_id):
     lang    = params.get('lang')
     key     = params.get('key')
     value   = params.get('value')
-    app = get_app(domain, app_id, wrap_cls=TranslationMixin)
+    app = get_app(domain, app_id)
     app.set_translation(lang, key, value)
     app.save()
     return json_response({"key": key, "value": value})
