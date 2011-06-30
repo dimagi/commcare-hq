@@ -1,6 +1,5 @@
 from couchexport.schema import get_docs, get_schema
 import csv
-import tempfile
 import zipfile
 from StringIO import StringIO
 from couchapp.client import Database
@@ -44,15 +43,19 @@ def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
     Returns true if it finds data, otherwise nothing
     """
     db = Database(settings.COUCH_DATABASE)
+    
+    # used cached export config to determine doc list
+    #previous_export = ExportSchema.last(schema_index)
     current_seq = db.info()["update_seq"]
-    docs = get_docs(schema_index)
+    docs = get_docs(schema_index, previous_export)
     if not docs:
         return False
-    schema = get_schema(docs)
+    
+    schema = get_schema(docs, previous_export)
     [schema_dict] = schema
-    this_export = ExportSchema(seq=current_seq, schema=schema_dict)
+    this_export = ExportSchema(seq=current_seq, schema=schema_dict, 
+                               index=schema_index)
     this_export.save()
-    print this_export.get_id
     tables = format_tables(create_intermediate_tables(docs,schema))
     if format == Format.CSV:
         _export_csv(tables, file)

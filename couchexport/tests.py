@@ -6,7 +6,8 @@ from couchexport.models import ExportSchema
 class ExportSchemaTest(TestCase):
     
     def testSaveAndLoad(self):
-        schema = ExportSchema(seq=5)
+        index = ["foo", 2]
+        schema = ExportSchema(seq=5, index=index)
         inner = {"dict": {"bar": 1, "baz": [2,3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
@@ -16,4 +17,4 @@ class ExportSchemaTest(TestCase):
         schema.save()
         back = ExportSchema.get(schema.get_id)
         self.assertEqual(inner, back.schema)
-        
+        self.assertEqual(index, back.index)

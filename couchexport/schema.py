@@ -1,13 +1,30 @@
 from couchdbkit.client import Database
 from django.conf import settings
+from couchdbkit.consumer import Consumer
 
 
-def get_docs(schema_index):
+def get_docs(schema_index, previous_export=None):
     db = Database(settings.COUCH_DATABASE)
-    return [result['doc'] for result in db.view("couchexport/schema_index", key=schema_index, include_docs=True).all()]
+    
+    if previous_export is not None:
+        consumer = Consumer(db)
+        view_results = consumer.fetch(since=previous_export.seq)
+        include_ids = set([res["id"] for res in view_results["results"]])
+        possible_ids = set([result['id'] for result in db.view("couchexport/schema_index", key=schema_index).all()])
+        ids_to_use = include_ids.intersection(possible_ids)
+        return db.all_docs(keys=list(ids_to_use)).all()
+    else: 
+        return [result['doc'] for result in db.view("couchexport/schema_index", key=schema_index, include_docs=True).all()]
 
-def get_schema(docs):
-    return make_schema(docs)
+def get_schema(docs, previous_export=None):
+    if previous_export is None:
+        return make_schema(docs)
+    else:
+        schema = previous_export.schema
+        for doc in docs:
+            extend_schema(schema, doc)
+        return [schema]
+
 
 class SchemaInferenceError(Exception):
     pass
