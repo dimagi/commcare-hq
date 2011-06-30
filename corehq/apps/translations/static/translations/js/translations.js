@@ -12,7 +12,8 @@ var mk_translation_ui = function (spec) {
             normal: 'normal',
             ok: 'ok',
             fail: 'fail',
-            working: 'working'
+            working: 'working',
+            just_added: 'just_added'
         },
         key,
         Translation = (function () {
@@ -43,6 +44,7 @@ var mk_translation_ui = function (spec) {
                     var ok_icon = 'ui-icon ui-icon-check',
                         fail_icon = 'ui-icon ui-icon-notice',
                         working_icon = 'ui-icon ui-icon-arrowrefresh-1-w',
+                        just_added_icon = 'ui-icon ui-icon-document',
                         all_icons = [ok_icon, fail_icon, working_icon].join(' '),
                         $icon = this.$icon,
                         $input = this.$input;
@@ -60,6 +62,9 @@ var mk_translation_ui = function (spec) {
                     } else if (progressState === ps.working) {
                         $input.attr('disabled', 'disabled');
                         $icon.addClass(working_icon);
+                    } else if (progressState === ps.just_added) {
+                        $input.removeAttr('disabled');
+                        $icon.addClass(just_added_icon);
                     }
                     this.progressState = progressState;
                 },
@@ -155,6 +160,7 @@ var mk_translation_ui = function (spec) {
                         translation_ui.translations[key] = Translation.init(key, "");
                         translation_ui.render();
                         translation_ui.translations[key].$input.focus();
+                        translation_ui.translations[key].setProgressState(ps.just_added);
                     } else if (key) {
                         alert("The key '" + key + "' is already used");
                     }
