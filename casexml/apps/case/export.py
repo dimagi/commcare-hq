@@ -17,7 +17,7 @@ def export_cases_and_referrals(cases, workbook):
         "type",
         "opened_on",
         "modified_on",
-        "followup_on"
+        "followup_on",
         "closed",
     )
     case_dynamic_keys = set()
