@@ -342,7 +342,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'util': TemplateFunctions,
     }
     context.update(get_sms_autocomplete_context(req, domain))
-    if app and not module:
+    if app and not module and hasattr(app, 'translations'):
         context.update({"translations_json": json.dumps(app.translations.get(lang, {}))}),
     if form:
         context.update({'case_reserved_words_json': json.dumps(load_case_reserved_words())})
