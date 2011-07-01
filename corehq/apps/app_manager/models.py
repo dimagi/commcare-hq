@@ -797,32 +797,35 @@ class Application(ApplicationBase, TranslationMixin):
         return xform.render()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
+        if lang != "default":
+            messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
+            # include language code names
+            for lc in self.langs:
+                name = langcodes.get_name(lc) or lc
+                if name:
+                    messages[lc] = name
 
-        messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
-        # include language code names
-        for lc in self.langs:
-            name = langcodes.get_name(lc)
-            if name:
-                messages[lc] = name
+            cc_trans = commcare_translations.load_translations(lang)
+            messages.update(cc_trans)
 
-        # traverse languages in order of priority to find a non-empty commcare-translation
-        for l in [lang] + self.langs:
-            cc_trans = commcare_translations.load_translations(l)
-            if cc_trans:
-                messages.update(cc_trans)
-                break
+            messages.update(self.translations.get(lang, {}))
 
-        messages.update(self.translations.get(lang, {}))
+            custom = render_to_string(template, {
+                'app': self,
+                'langs': [lang] + self.langs,
+            })
+            custom = commcare_translations.loads(custom)
 
-        custom = render_to_string(template, {
-            'app': self,
-            'langs': [lang] + self.langs,
-        })
-        custom = commcare_translations.loads(custom)
-
-        messages.update(custom)
+            messages.update(custom)
+        else:
+            messages = {}
+            for lc in reversed(self.langs):
+                if lc == "default": continue
+                messages.update(
+                    commcare_translations.loads(self.create_app_strings(lc).encode('utf-8'))
+                )
         return commcare_translations.dumps(messages)
-    
+
     def create_suite(self, template='app_manager/suite.xml'):
         return render_to_string(template, {
             'app': self,
