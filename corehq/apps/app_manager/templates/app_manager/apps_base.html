@@ -130,55 +130,6 @@
         {% endif %}
         <div id="apps-menu">
             <ul>
-{#                <li>#}
-{#                    <a class="dialog_opener" id="new_app" href="#">Create Application</a>#}
-{#                    <div class="dialog" title="Create a New Application">#}
-{#                        <h4>Start from scratch</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                {{ new_app_form.as_table }}#}
-{#                            </table>#}
-{#                            <input type="submit" value="Create Application"/>#}
-{#                        </form>#}
-{#                        <hr/>#}
-{#                        <h4>From Factory Application</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                <tr>#}
-{#                                    <th>Name:</th>#}
-{#                                    <td><input type="text" name="name"/></td>#}
-{#                                </tr>#}
-{#                                <tr>#}
-{#                                    <th>Application:</th>#}
-{#                                    <td>#}
-{#                                        <select name="app_id">#}
-{#                                            <option value="" disabled="true">Select an application</option>#}
-{#                                            {% for fapp in factory_apps %}#}
-{#                                                <option value="{{ fapp.id }}">{{ fapp.name }}</option>#}
-{#                                            {% endfor %}#}
-{#                                        </select>#}
-{#                                    </td>#}
-{#                                </tr>#}
-{#                            </table>#}
-{#                            <input type="submit" value="Import Application">#}
-{#                        </form>#}
-{#                        <hr/>#}
-{#                        <h4>Import from source (advanced)</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                <tr>#}
-{#                                    <th>Name:</th>#}
-{#                                    <td><input type="text" name="name"/></td>#}
-{#                                </tr>#}
-{#                                <tr>#}
-{#                                    <th>Source:</th>#}
-{#                                    <td><textarea name="source" id="jkasf"></textarea></td>#}
-{#                                </tr>#}
-{#                            </table>#}
-{#                            <input type="submit" value="Import Application">#}
-{#                        </form>#}
-{#                    </div>#}
-{#                </li>#}
                 {% if request.couch_user|can_edit_apps:domain %}
                 <li>
                     <div id="new_app_menu">
@@ -371,11 +322,6 @@
                         <th>Preview (Beta)</th>
                     
                         <th>Download</th>
-{#                        <th>Short URL</th>#}
-{#                        <th>Jad File</th>#}
-{#                        <th>Jar File</th>#}
-{#                        <th>Send to Phones</th>#}
-{#                        <th>Install on CommCare ODK</th>#}
                         {% if edit %}
                             <th></th>
                         {% endif %}
