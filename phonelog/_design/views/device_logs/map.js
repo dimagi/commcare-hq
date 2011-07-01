@@ -19,7 +19,7 @@ function(doc) {
       entry.version = doc.form.app_version;
 
       //in a given transmission, logs should be sent in reverse-chron order
-      emit([doc.domain, doc.form.device_id, recvd, -i], entry);
+      emit([doc.form.device_id, recvd, -i], entry);
     }
   }
 }

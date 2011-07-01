@@ -4,7 +4,7 @@ function(doc) {
 
     for (var i in doc.form.log_subreport.log) {
       var entry = doc.form.log_subreport.log[i];
-      emit([doc.domain, doc.form.device_id, entry], recvd);
+      emit([doc.form.device_id, entry], recvd);
     }
   }
 }
