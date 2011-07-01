@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',         
-    url(r'^$', 'bhoma.apps.phonelog.views.devices'),
-    url(r'^(?P<device>\w+)/$', 'bhoma.apps.phonelog.views.device_log'),                      
+    url(r'^$', 'phonelog.views.devices'),
+    url(r'^(?P<device>\w+)/$', 'phonelog.views.device_log'),                      
 )
 

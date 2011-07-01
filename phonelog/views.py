@@ -8,14 +8,14 @@ import re
 
 GAP_THRESHOLD = 3 #minutes
 
-def device_list(db):
-    device_times = db.view('phonelog/device_log_first_last', group=True)
-    device_users = db.view('phonelog/device_log_users', group=True)
+def device_list(db, domain):
+    device_times = db.view('phonelog/device_log_first_last', group=True, startkey=[domain], endkey=[domain, {}])
+    device_users = db.view('phonelog/device_log_users', group=True, startkey=[domain], endkey=[domain, {}])
 
     dev_users = {}
     for row in device_users:
-        dev_id = row['key'][0]
-        user = row['key'][1]
+        dev_id = row['key'][1]
+        user = row['key'][2]
         if dev_id not in dev_users:
             dev_users[dev_id] = set()
         dev_users[dev_id].add(user)
@@ -23,7 +23,7 @@ def device_list(db):
     devices = []
     for row in device_times:
         dev = {
-            'id': row['key'],
+            'id': row['key'][1],
             'first': datetime.utcfromtimestamp(row['value'][0]),
             'last': datetime.utcfromtimestamp(row['value'][1]),
         }
@@ -34,8 +34,8 @@ def device_list(db):
         devices.append(dev)
     return devices
 
-def overview_list(db):
-    devices = device_list(db)
+def overview_list(db, domain):
+    devices = device_list(db, domain)
     entries = []
     for dev in devices:
         users = dev['users'] if dev['users'] else set([None])
@@ -59,8 +59,8 @@ def overview_list(db):
 
     return entries
 
-def devices(request):
-    entries = overview_list(get_db())
+def devices(request, domain):
+    entries = overview_list(get_db(), domain)
     return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries})
 
 def device_log(request, device):
