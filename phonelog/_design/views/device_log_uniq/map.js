@@ -1,15 +1,10 @@
 function(doc) {
-  if (doc['@xmlns'] == 'http://code.javarosa.org/devicereport') {
-    var recvd = Date.parse(doc['#received_on']);
-    if (!recvd) {
-      //ignore log entries from before we began tracking time received
-      return;
-    }
-    recvd /= 1000.;
+  if (doc.xmlns == 'http://code.javarosa.org/devicereport') {
+    var recvd = doc.received_on.substring(0, 19);
 
-    for (var i in doc.log_subreport.log) {
-      var entry = doc.log_subreport.log[i];
-      emit([doc['device_id'], entry], recvd);
+    for (var i in doc.form.log_subreport.log) {
+      var entry = doc.form.log_subreport.log[i];
+      emit([doc.domain, doc.form.device_id, entry], recvd);
     }
   }
 }
