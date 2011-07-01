@@ -309,7 +309,12 @@ class XForm(WrappedNode):
 #                    xpath = ".//{x}" + bind.attrib['nodeset'].replace("/", "/{x}")
 #                    if tree.find(fmt(xpath)) is None:
 #                        raise Exception("Invalid XPath Expression %s" % xpath)
-                bind_parent.append(bind)
+                conflicting = bind_parent.find('{f}bind[@nodeset="%s"]' % bind.attrib['nodeset'])
+                if conflicting.exists():
+                    for a in bind.attrib:
+                        conflicting.attrib[a] = bind.attrib[a]
+                else:
+                    bind_parent.append(bind)
 
         if not case_parent.exists():
             raise XFormError("Couldn't get the case XML from one of your forms. "
