@@ -495,7 +495,7 @@ class CouchUser(Document, UnicodeMixIn):
                 domain = self.current_domain
             except KeyError:
                 return None
-        return dict(self.ROLE_LABELS)[self.get_role(domain)]
+        return dict(self.ROLE_LABELS).get(self.get_role(domain), "Unknown Role")
     
     # these functions help in templates
     def can_edit_apps(self, domain):
