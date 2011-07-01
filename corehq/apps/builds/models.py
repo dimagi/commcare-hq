@@ -88,8 +88,9 @@ class CommCareBuild(Document):
             startkey = [version, build_number]
 
         self = cls.view('builds/all',
-            startkey=startkey,
-            endkey=startkey + [{}],
+            startkey=startkey + [{}],
+            endkey=startkey,
+            descending=True,
             limit=1,
             include_docs=True,
         ).one()
