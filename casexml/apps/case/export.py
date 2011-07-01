@@ -13,9 +13,11 @@ def export_cases_and_referrals(cases, workbook):
     )
     referral_keys = (
         "case_id",
-        "opened_on",
+        'referral_id',
         "type",
+        "opened_on",
         "modified_on",
+        "followup_on"
         "closed",
     )
     case_dynamic_keys = set()
