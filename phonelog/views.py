@@ -24,8 +24,8 @@ def device_list(db, domain):
     for row in device_times:
         dev = {
             'id': row['key'][1],
-            'first': datetime.utcfromtimestamp(row['value'][0]),
-            'last': datetime.utcfromtimestamp(row['value'][1]),
+            'first': parse_isodate(row['value'][0]),
+            'last': parse_isodate(row['value'][1]),
         }
         try:
             dev['users'] = dev_users[dev['id']]
@@ -111,8 +111,8 @@ def device_log(request, device):
             recv_raw = row['key'][1]
             cur_row = {
                 'rowtype': 'log',
-                'recvd': datetime.utcfromtimestamp(recv_raw),
-                'date': datetime.strptime(row['value']['@date'][:19], '%Y-%m-%dT%H:%M:%S'),
+                'recvd': parse_isodate(recv_raw),
+                'date': parse_isodate(row['value']['@date']),
                 'type': row['value']['type'],
                 'msg': row['value']['msg'],
                 'version': get_short_version(row['value']['version']),
@@ -134,7 +134,7 @@ def device_log(request, device):
             'rowtype': 'duphdr',
             'total': total,
             'uniq': uniq,
-            'recv': datetime.utcfromtimestamp(dups['recv']),
+            'recv': parse_isodate(dups['recv']),
             'i': dups['i'],
         }
 
@@ -207,3 +207,6 @@ def device_log(request, device):
         'earlier_skip': earlier_skip,
         'later_skip': later_skip,
     })
+
+def parse_isodate(datestr):
+    return datetime.strptime(datestr[:19], '%Y-%m-%dT%H:%M:%S'),
