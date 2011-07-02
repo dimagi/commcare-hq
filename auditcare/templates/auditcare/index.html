@@ -11,20 +11,9 @@
         <h2>Website Usage</h2>
         </div>
         <div class="span-24 last">
-            <table>
-            <thead>
-            <tr><td>User</td><td>Event</td><td>Date</td></tr>
-            </thead>
-                {% for i in auditEvents %}
-                	{% ifequal i.class "AccessAudit" %}
-                    <tr>
-                        <td>{{ i.user }}</td>
-                        <td>{{ i.access_type }}</td>
-                        <td>{{ i.date }}</td>
-                    </tr>
-                    {% endifequal %}
-                {% endfor %}
-            </table>
+			{% block toolbar %}
+		    {% endblock %}
+			{{ audit_table.as_html }}
         </div>
     </div>
 {% endblock %}
