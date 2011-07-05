@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
@@ -7,12 +8,16 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
 from corehq.apps.domain.decorators import login_and_domain_required
+from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.web import json_response
 
-@permission_required("is_superuser")
+require_superuser = permission_required("is_superuser")
+
+@require_superuser
 def default(request):
     return HttpResponseRedirect(reverse("domain_list"))
 
-@permission_required("is_superuser")
+@require_superuser
 def domain_list(request):
     # one wonders if this will eventually have to paginate
     domains = Domain.objects.all().order_by("name")
@@ -31,4 +36,22 @@ def domain_list(request):
                               {"domains": domains,
                                "domain": request.user.selected_domain.name},
                               context_instance=RequestContext(request))
-    
+
+
+@require_superuser
+def active_users(request):
+    keys = []
+    number_threshold = 15
+    date_threshold_days_ago = 90
+    date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
+    for line in get_db().view("reports/submit_history", group_level=2):
+        if line['value'] >= number_threshold:
+            keys.append(line["key"])
+
+    final_count = defaultdict(int)
+
+    for domain, user_id in keys:
+        if get_db().view("reports/submit_history", reduce=False, startkey=[domain, user_id, date_threshold], limit=1):
+            final_count[domain] += 1
+
+    return json_response({"break_down": final_count, "total": sum(final_count.values())})
