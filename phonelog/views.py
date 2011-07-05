@@ -210,4 +210,4 @@ def device_log(request, device, domain):
     })
 
 def parse_isodate(datestr):
-    return datetime.strptime(datestr[:19], '%Y-%m-%dT%H:%M:%S'),
+    return datetime.strptime(datestr[:19], '%Y-%m-%dT%H:%M:%S')
