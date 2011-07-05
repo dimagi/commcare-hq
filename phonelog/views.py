@@ -61,9 +61,9 @@ def overview_list(db, domain):
 
 def devices(request, domain):
     entries = overview_list(get_db(), domain)
-    return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries})
+    return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries, 'domain': domain})
 
-def device_log(request, device):
+def device_log(request, device, domain):
     db = get_db()
 
     try:
@@ -206,6 +206,7 @@ def device_log(request, device):
         'more_prev': more_prev,
         'earlier_skip': earlier_skip,
         'later_skip': later_skip,
+        'domain': domain,
     })
 
 def parse_isodate(datestr):

@@ -45,7 +45,7 @@ function showdups(i) {
 <span style="float: right; color: #888;">&raquo; later |</span>
 {% endif %}
 
-<div style="text-align: center;"><a href="{% url phonelog.views.devices %}">back to device list</a></div>
+<div style="text-align: center;"><a href="{% url phonelog.views.devices domain=domain %}">back to device list</a></div>
 
 <div style="clear: both;"><br>
 
@@ -104,7 +104,7 @@ function showdups(i) {
 <span style="float: right; color: #888;">&raquo; later |</span>
 {% endif %}
 
-<div style="text-align: center;"><a href="{% url phonelog.views.devices %}">back to device list</a></div>
+<div style="text-align: center;"><a href="{% url phonelog.views.devices domain=domain %}">back to device list</a></div>
 
 <div style="clear: both;"><br>
 
