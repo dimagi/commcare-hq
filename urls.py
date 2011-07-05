@@ -32,6 +32,7 @@ domain_specific = patterns('',
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
     (r'^cleanup/', include('corehq.apps.cleanup.urls')),
+    (r'^phonelog/', include('phonelog.urls')),
 )
 
 urlpatterns = patterns('',
