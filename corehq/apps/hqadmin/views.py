@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -50,8 +51,17 @@ def active_users(request):
 
     final_count = defaultdict(int)
 
+    def is_valid_user_id(user_id):
+        if not user_id: return False
+        try:
+            get_db().get(user_id)
+            return True
+        except Exception:
+            return False
+
     for domain, user_id in keys:
         if get_db().view("reports/submit_history", reduce=False, startkey=[domain, user_id, date_threshold], limit=1):
-            final_count[domain] += 1
+            if True or is_valid_user_id(user_id):
+                final_count[domain] += 1
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
