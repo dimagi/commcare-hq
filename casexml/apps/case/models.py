@@ -205,7 +205,7 @@ class CommCareCase(CaseBase):
         return attachments
     
     def get_attachment(self, attachment_tuple):
-        return XFormInstance.get_db().fetch_attchment(attachment_tuple[0], attachment_tuple[1])
+        return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
         
     @classmethod
     def from_doc(cls, case_block, xformdoc):
