@@ -721,8 +721,9 @@ def edit_app_translation(request, domain, app_id):
     value   = params.get('value')
     app = get_app(domain, app_id)
     app.set_translation(lang, key, value)
-    app.save()
-    return json_response({"key": key, "value": value})
+    response = {"key": key, "value": value}
+    app.save(response)
+    return json_response(response)
 
 @require_POST
 @require_permission('edit-apps')

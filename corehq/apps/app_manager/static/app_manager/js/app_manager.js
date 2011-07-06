@@ -10,11 +10,7 @@ $(function(){
         }
     }
 
-    function updateDOM(update) {
-        for(var key in update) {
-            $(key).text(update[key]);
-        }
-    }
+
 
     function makeBuildErrorLinksSwitchTabs() {
         $("#build-errors a").click(function(){
@@ -97,7 +93,7 @@ $(function(){
                         if($form.find('input[name="ajax"]').first().val() == "true") {
                             resetIndexes($sortable);
                             $.post($form.attr('action'), $form.serialize(), function(data){
-                                updateDOM(JSON.parse(data)['update']);
+                                COMMCAREHQ.updateDOM(JSON.parse(data).update);
                                 // re-enable sortable
                                 $sortable.sortable('option', 'disabled', false);
                                 $sortable.find('.drag_handle .ui-icon').show(1000);
@@ -246,7 +242,7 @@ $(function(){
                 url: $form.attr('action') || $form.attr('data-action'),
                 data: $form.my_serialize(),
                 success: function(data){
-                    updateDOM(data['update']);
+                    COMMCAREHQ.updateDOM(data.update);
                     $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
                 },
                 dataType: 'json',
