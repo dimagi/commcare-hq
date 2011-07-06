@@ -5,6 +5,7 @@ from dimagi.utils.couch.database import get_db
 import logging
 import itertools
 import re
+from corehq.apps.domain.decorators import login_and_domain_required
 
 GAP_THRESHOLD = 3 #minutes
 
@@ -59,10 +60,12 @@ def overview_list(db, domain):
 
     return entries
 
+@login_and_domain_required
 def devices(request, domain):
     entries = overview_list(get_db(), domain)
     return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries, 'domain': domain})
 
+@login_and_domain_required
 def device_log(request, device, domain):
     db = get_db()
 
