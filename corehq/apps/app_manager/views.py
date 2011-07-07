@@ -144,9 +144,14 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                 reverse('import_app', args=[redirect_domain])
                 + "?app={app_id}".format(app_id=app_id)
             )
-        app = Application.get(app_id)
-        assert(app.doc_type in ('Application', 'RemoteApp'))
-        assert(req.couch_user.is_member_of(app.domain))
+        
+        if app_id:
+            app = Application.get(app_id)
+            assert(app.doc_type in ('Application', 'RemoteApp'))
+            assert(req.couch_user.is_member_of(app.domain))
+        else: 
+            app = None
+        
         return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
