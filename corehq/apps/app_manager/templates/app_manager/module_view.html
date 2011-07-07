@@ -1,118 +1,136 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
+    <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config.js"></script>
     <script>
-        function configureDetailColumnAdd() {
-            $('.detail-column-add').closest('.form').submit(function(){
-                var $row = $(this);
-                var data = $row.my_serialize();
-                $('*', $row).attr('disabled', true);
-                $('.detail-column-add', $row).button('disable');
-                $.postGo($row.attr('data-action'), $.unparam(data)/*, function(data){
-                    var $new_row = $(data);
-                    var $sortable = $row.closest('.sortable');
-                    $row.before($new_row, 1000);
-                    $('*', $row).removeAttr('disabled');
-                    resetIndexes($sortable);                    
-                }*/);
+        $(function () {
+            var $home = $("#detail-screen-config");
+            DetailScreenConfig.init($home, {
+                state: {
+                    case_short: {{ module.details.0|JSON }},
+                    case_long: {{ module.details.1|JSON }},
+                    ref_short: {{ module.details.2|JSON }},
+                    ref_long: {{ module.details.3|JSON }}
+                },
+                properties: {
+                    'case': ["external-id", "date-opened", "name", "status"].concat({{ case_properties|JSON }}),
+                    referral: ["id", "type", "date-due", "date-created"]
+                },
+                lang: {{ lang|JSON }}
             });
-            $('.detail-column-add').click(function(e){
-                e.preventDefault();
-                if($(this).button("option", "disabled")) {
-                    return;
-                }
-                var $form = $(this).closest('.form');
-                $form.submit();
-            })
-            .button('disable')
-            .each(function(){
-                var $button = $(this);
-                $(this).closest('tr').find('input[name="field"]').blur(function(){
-                    if($(this).val()) {
-                        $button.button('enable');
-                    } else {
-                        $button.button('disable');
-                    }
-                });
-            });
-        }
-        function configureDetailColumnDelete(){
-            $('form.delete-detail-column').live('submit', function(){
-                var $form = $(this);
-                var $dialog = $form.closest('.dialog');
-                var uuid = $dialog.attr('data-uuid');
-                var $row = $('.delete_link[data-uuid="' + uuid + '"]').closest('tr');
-                $dialog.dialog('close');
-                $("*", $row).attr('disabled', true);                
-                $.post($form.attr('action'), $form.serialize(), function(){
-                    var $sortable = $row.closest('.sortable');
-                    $row.fadeOut(1000).remove();
-                    resetIndexes($sortable);
-                });
-                return false;
-            });
-        }
-        $(function(){
-            fields = {
-                "referral": [
-                    "id",
-                    "type",
-                    "date-due",
-                    "date-created"
-                ],
-                "case": ["external-id", "date-opened", "name", "status"].concat({{ case_fields|safe }})
-            };
-            if(fields['case'] != "") {
-                $('#case-properties-warning').hide();
-            }
-            $('.detail-headers [name="model"]').change(function(){
-                model = $(this).attr('value');
-                $field = $(this).closest('tr').find('[name="field"]');
-                if(fields[model] != "") {
-                    $field.autocomplete({
-                        source: fields[model],
-                        minLength: 0,
-                        delay: 0
-                    });
-                }
-                else {
-                    $field.autocomplete('destroy');
-                }
-            }).trigger('change');
-            $('.detail-headers [name="field"]').focus(function(){
-                $(this).autocomplete('search');
-            });
-
-            $('select[value]').each(function(){
-                $(this).val($(this).attr('value'));
-            });
-
-            $('.format-column').live('change', function(){
-                var format = $(this).find('[name="format"]').val(),
-                    $enum = $(this).parent().find('.enum-column'),
-                    $late_flag = $(this).parent().find('.late-flag-column'),
-                    $advanced = $(this).parent().find('.advanced-column');
-                if(format === "enum") {
-                    $enum.show();
-                } else {
-                    $enum.hide();
-                }
-                if(format === "late-flag") {
-                    $late_flag.show();
-                } else {
-                    $late_flag.hide();
-                }
-                if(format === "advanced") {
-                    $advanced.show();
-                } else {
-                    $advanced.hide();
-                }
-            }).trigger('change');
-
-            configureDetailColumnAdd();
-            configureDetailColumnDelete();
         });
+//        function configureDetailColumnAdd() {
+//            $('.detail-column-add').closest('.form').submit(function(){
+//                var $row = $(this);
+//                var data = $row.my_serialize();
+//                $('*', $row).attr('disabled', true);
+//                $('.detail-column-add', $row).button('disable');
+//                $.postGo($row.attr('data-action'), $.unparam(data)/*, function(data){
+//                    var $new_row = $(data);
+//                    var $sortable = $row.closest('.sortable');
+//                    $row.before($new_row, 1000);
+//                    $('*', $row).removeAttr('disabled');
+//                    resetIndexes($sortable);
+//                }*/);
+//            });
+//            $('.detail-column-add').click(function(e){
+//                e.preventDefault();
+//                if($(this).button("option", "disabled")) {
+//                    return;
+//                }
+//                var $form = $(this).closest('.form');
+//                $form.submit();
+//            })
+//            .button('disable')
+//            .each(function(){
+//                var $button = $(this);
+//                $(this).closest('tr').find('input[name="field"]').blur(function(){
+//                    if($(this).val()) {
+//                        $button.button('enable');
+//                    } else {
+//                        $button.button('disable');
+//                    }
+//                });
+//            });
+//        }
+//        function configureDetailColumnDelete(){
+//            $('form.delete-detail-column').live('submit', function(){
+//                var $form = $(this);
+//                var $dialog = $form.closest('.dialog');
+//                var uuid = $dialog.attr('data-uuid');
+//                var $row = $('.delete_link[data-uuid="' + uuid + '"]').closest('tr');
+//                $dialog.dialog('close');
+//                $("*", $row).attr('disabled', true);
+//                $.post($form.attr('action'), $form.serialize(), function(){
+//                    var $sortable = $row.closest('.sortable');
+//                    $row.fadeOut(1000).remove();
+//                    resetIndexes($sortable);
+//                });
+//                return false;
+//            });
+//        }
+//        $(function(){
+//            fields = {
+//                "referral": [
+//                    "id",
+//                    "type",
+//                    "date-due",
+//                    "date-created"
+//                ],
+//                "case": ["external-id", "date-opened", "name", "status"].concat({{ case_fields|safe }})
+//            };
+//            if(fields['case'] != "") {
+//                $('#case-properties-warning').hide();
+//            }
+//            $('.detail-headers [name="model"]').change(function(){
+//                model = $(this).attr('value');
+//                $field = $(this).closest('tr').find('[name="field"]');
+//                if(fields[model] != "") {
+//                    $field.autocomplete({
+//                        source: fields[model],
+//                        minLength: 0,
+//                        delay: 0
+//                    });
+//                }
+//                else {
+//                    $field.autocomplete('destroy');
+//                }
+//            }).trigger('change');
+//            $('.detail-headers [name="field"]').focus(function(){
+//                $(this).autocomplete('search');
+//            });
+//
+//            $('select[value]').each(function(){
+//                $(this).val($(this).attr('value'));
+//            });
+//
+//            $('.format-column').live('change', function(){
+//                var format = $(this).find('[name="format"]').val(),
+//                    $enum = $(this).parent().find('.enum-column'),
+//                    $late_flag = $(this).parent().find('.late-flag-column'),
+//                    $advanced = $(this).parent().find('.advanced-column');
+//                if(format === "enum") {
+//                    $enum.show();
+//                } else {
+//                    $enum.hide();
+//                }
+//                if(format === "late-flag") {
+//                    $late_flag.show();
+//                } else {
+//                    $late_flag.hide();
+//                }
+//                if(format === "advanced") {
+//                    $advanced.show();
+//                } else {
+//                    $advanced.hide();
+//                }
+//            }).trigger('change');
+//
+//            configureDetailColumnAdd();
+//            configureDetailColumnDelete();
+//        });
     </script>
     <style type="text/css">
         .detail-headers tr {
@@ -292,6 +310,7 @@
         {% endif %}
     </table>
 
+
     {% comment %}
     <div class="message" id="case-properties-warning">
         I can't find any properties for this module's case. To generate
@@ -299,6 +318,9 @@
     </div>
     {% endcomment %}
 
+
+    <div id="detail-screen-config"></div>
+    {% comment %}
     {% for detail in module.details %}
         {% if detail.type in module.detail_types %}
             <h4>
@@ -400,4 +422,5 @@
             </table>
         {% endif %}
     {% endfor %}
+    {% endcomment %}
 {% endblock %}

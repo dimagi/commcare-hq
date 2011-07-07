@@ -250,11 +250,11 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
     langs = [lang] + (app.langs if app else [])
 
-    case_fields = set()
+    case_properties = set()
     if module:
         for _form in module.forms:
-            case_fields.update(_form.actions.update_case.update.keys())
-    case_fields = sorted(case_fields)
+            case_properties.update(_form.actions.update_case.update.keys())
+    case_properties = sorted(case_properties)
 
     try:
         xform_questions = json.dumps(form.get_questions(langs) if form and form.contents else [])
@@ -323,7 +323,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         "xform_questions": xform_questions,
         #"xform_errors": xform_errors,
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
-        'case_fields': json.dumps(case_fields),
+        'case_properties': case_properties,
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),

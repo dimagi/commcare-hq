@@ -1,8 +1,18 @@
 from datetime import datetime, timedelta
+import json
 from django import template
+from django.utils.safestring import mark_safe
 
 
 register = template.Library()
+
+@register.filter
+def JSON(obj):
+    try:
+        obj = obj.to_json()
+    except AttributeError:
+        pass
+    return mark_safe(json.dumps(obj))
 
 @register.filter
 def dict_lookup(dict, key):
