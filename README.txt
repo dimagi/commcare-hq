@@ -23,7 +23,37 @@ libs/
 scripts/
 	Any helper scripts you'll want to write to deal with data and or other things.  This stuff should probably run outside the scope of the python environment
 	
-	 
+== Installing CommCare HQ ==
+
+# In command line
+
+git clone git@github.com:dimagi/commcare-hq.git
+cd commcare-hq
+git submodule init
+git submodule update
+pip install -r requirements.txt    # see note below
+./manage.py syncdb    # (say no to setting up admin account)
+./manage.py migrate
+./manage.py createsuperuser
+./manage.py runserver
+
+# In browser
+
+go to: localhost:8000/admin
+login as the superuser you set up
+click on Sites, then add Site
+add a site with domain name = "localhost:8000"
+logout
+
+to test go to localhost:8000 or localhost:8000/login
+
+# note about requirements.txt
+
+If an import isn't working it may well be because we aren't specifying all versions in the requirements.txt and you have
+an old version. If you figure out this problem and figure out what version we *should* be using, feel free to add it to
+requirements.txt as ">=ver.si.on" like so:
+    couchdbkit>=0.5.2
+(Use == for exact version instead of lower bound.)
 
 == Setting up the Dimagi Form Designer ==
 
