@@ -47,8 +47,7 @@ def sign_jar(jad, jar):
     key_alias   = settings.JAR_SIGN['key_alias']
     store_pass  = settings.JAR_SIGN['store_pass']
     key_pass    = settings.JAR_SIGN['key_pass']
-    jad_tool    = os.path.join(os.path.dirname(__file__),'JadTool.jar')
-
+    jad_tool    = os.path.join(os.path.abspath(os.path.dirname(__file__)),'JadTool.jar')
     # remove traces of former jar signings, if any
     jad.update({
         "MIDlet-Certificate-1-1" : None,
@@ -59,24 +58,19 @@ def sign_jar(jad, jar):
     })
     line_ending = jad.line_ending
     # save jad and jar to actual files
-    with NamedTemporaryFile('w', suffix='.jad') as jad_file:
-        with NamedTemporaryFile('w', suffix='.jar') as jar_file:
+    with NamedTemporaryFile('w', suffix='.jad', delete=False) as jad_file:
+        with NamedTemporaryFile('wb', suffix='.jar', delete=False) as jar_file:
 
             jad_file.write(jad.render())
             jar_file.write(jar)
 
             jad_file.flush()
             jar_file.flush()
-#            with open(jar_file.name) as f:
-#                new_jar = f.read()
-#                assert(jar == new_jar)
-#                print len(new_jar)
-
-
-            step_one = "java -jar %s -addjarsig -jarfile %s -alias %s -keystore %s -storepass %s -keypass %s -inputjad %s -outputjad %s" % \
+            
+            step_one = 'java -jar "%s" -addjarsig -jarfile "%s" -alias %s -keystore "%s" -storepass %s -keypass %s -inputjad "%s" -outputjad "%s"' % \
                             (jad_tool, jar_file.name, key_alias, key_store, store_pass, key_pass, jad_file.name, jad_file.name)
 
-            step_two = "java -jar %s -addcert -alias %s -keystore %s -storepass %s -inputjad %s -outputjad %s" % \
+            step_two = 'java -jar "%s" -addcert -alias %s -keystore "%s" -storepass %s -inputjad "%s" -outputjad "%s"' % \
                             (jad_tool, key_alias, key_store, store_pass, jad_file.name, jad_file.name)
 
             for step in (step_one, step_two):
@@ -87,6 +81,10 @@ def sign_jar(jad, jar):
             with open(jad_file.name) as f:
                 txt = f.read()
                 jad = JadDict.from_jad(txt)
+            
+            jad_file.delete()
+            jar_file.delete()
+    
     jad.update({
         "MIDlet-Permissions" : "javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.ssl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.comm,javax.microedition.io.Connector.http,javax.microedition.io.Connector.https"
     })
