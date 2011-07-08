@@ -66,7 +66,7 @@ def devices(request, domain):
     return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries, 'domain': domain})
 
 @login_and_domain_required
-def device_log(request, device, domain):
+def device_log(request, domain, device):
     db = get_db()
 
     try:
