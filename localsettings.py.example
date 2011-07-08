@@ -27,6 +27,10 @@ COUCH_DATABASE_NAME = 'commcarehq'
 BITLY_LOGIN = 'dimagi'
 BITLY_APIKEY = '*****'
 
+EMAIL_LOGIN="user@gmail.com"
+EMAIL_PASSWORD="******"
+EMAIL_SMTP_HOST="smtp.gmail.com"
+EMAIL_SMTP_PORT=587
 
 JAR_SIGN = dict(
     key_store = "/PATH/TO/KEY_STORE",

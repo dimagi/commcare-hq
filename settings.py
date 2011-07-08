@@ -146,6 +146,7 @@ HQ_APPS = (
     'corehq.apps.hqsofabed',
     'xep_hq_server',
     'touchforms.formplayer',
+    'phonelog',
 )
 
 # you can locally add apps if you want here
@@ -338,6 +339,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'users',
         'touchforms.formplayer',
         'xep_hq_server',
+        'phonelog',
     ]
 ]
 
