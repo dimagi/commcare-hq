@@ -405,12 +405,17 @@
                                         <a href="#">Download</a>
                                     </div>
                                     <ul>
+                                        {% for char in "dr" %}
                                         <li>
-                                            <a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">CommCare.jad</a>
+                                            <a class="dialog_opener" href="">CommCare.ja{{ char }}</a>
+                                            <div class="dialog jar_download_dialog" title="Important!">
+                                                <style type="text/css">p { padding-top: .5em; }</style>
+                                                <p>When installing the application by copying it to the phone you need to download and copy <strong>both</strong> the jar and the jad file for this build!</p>
+                                                <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>    
+                                                <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                                            </div>
                                         </li>
-                                        <li>
-                                            <a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">CommCare.jar</a>
-                                        </li>
+                                        {% endfor %}
                                         <li>
                                             <a class="dialog_opener" href="">Send to Phones</a>
                                             <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
