@@ -1096,10 +1096,10 @@ def get_app(domain, app_id, wrap_cls=None):
         raise Http404
 
     try:    Domain.objects.get(name=domain)
-    except: raise DomainError("domain %s does not exist" % domain)
+    except: raise Http404
 
     if app['domain'] != domain:
-        raise DomainError("%s not in domain %s" % (app['_id'], domain))
+        raise Http404
     cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app
