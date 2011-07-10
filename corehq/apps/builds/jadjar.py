@@ -82,8 +82,11 @@ def sign_jar(jad, jar):
                 txt = f.read()
                 jad = JadDict.from_jad(txt)
             
-            jad_file.delete()
-            jar_file.delete()
+            try:
+                os.unlink(jad_file.name)
+                os.unlink(jar_file.name)
+            except Exception:
+                pass
     
     jad.update({
         "MIDlet-Permissions" : "javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.ssl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.comm,javax.microedition.io.Connector.http,javax.microedition.io.Connector.https"
