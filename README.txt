@@ -64,7 +64,7 @@ requirements.txt as ">=ver.si.on" like so:
     - download standalone_xep_edit_server from github: https://github.com/dimagi/standalone-xep-edit-server
     - Configure
         - couch db settings
-        - XEP settings (look at localsettings.py.example in that project for tiops)
+        - XEP settings (look at localsettings.py.example in that project for tips)
      - run syncdb and runserver where you are serving it 
 3. Configure xep_hq_server 
     - in localsettings point EDITOR_URL to your XEP server above (the right addresss is 
