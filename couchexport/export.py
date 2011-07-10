@@ -36,27 +36,23 @@ class Format(object):
             raise ValueError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
         
-
-def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
-    """
-    Exports data from couch documents matching a given tag to a file. 
-    Returns true if it finds data, otherwise nothing
-    """
+def get_full_export_tables(schema_index, previous_export):
     db = Database(settings.COUCH_DATABASE)
     
     # used cached export config to determine doc list
-    #previous_export = ExportSchema.last(schema_index)
+    # previous_export = ExportSchema.last(schema_index)
     current_seq = db.info()["update_seq"]
     docs = get_docs(schema_index, previous_export)
     if not docs:
-        return False
-    
+        return None
     schema = get_schema(docs, previous_export)
     [schema_dict] = schema
     this_export = ExportSchema(seq=current_seq, schema=schema_dict, 
                                index=schema_index)
     this_export.save()
-    tables = format_tables(create_intermediate_tables(docs,schema))
+    return format_tables(create_intermediate_tables(docs,schema))
+
+def export_from_tables(tables, file, format):
     if format == Format.CSV:
         _export_csv(tables, file)
     elif format == Format.XLS:
@@ -65,6 +61,16 @@ def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
         _export_excel_2007(tables).save(file)
     else:
         raise Exception("Unsupported export format: %s!" % format)
+    
+def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
+    """
+    Exports data from couch documents matching a given tag to a file. 
+    Returns true if it finds data, otherwise nothing
+    """
+    tables = get_full_export_tables(schema_index, previous_export)
+    if not tables:
+        return None
+    export_from_tables(tables, file, format)
     return True
 
 class Constant(object):

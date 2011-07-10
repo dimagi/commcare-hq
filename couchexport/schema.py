@@ -1,6 +1,7 @@
 from couchdbkit.client import Database
 from django.conf import settings
 from couchdbkit.consumer import Consumer
+from couchexport.models import ExportSchema
 
 
 def get_docs(schema_index, previous_export=None):
@@ -15,6 +16,20 @@ def get_docs(schema_index, previous_export=None):
         return db.all_docs(keys=list(ids_to_use)).all()
     else: 
         return [result['doc'] for result in db.view("couchexport/schema_index", key=schema_index, include_docs=True).all()]
+
+def build_latest_schema(schema_index):
+    """
+    Build a schema, directly from the index.
+    """
+    db = Database(settings.COUCH_DATABASE)
+    current_seq = db.info()["update_seq"]
+    previous_export = ExportSchema.last(schema_index)
+    docs = get_docs(schema_index, previous_export)
+    [schema] = get_schema(docs, previous_export)
+    updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
+                                      index=schema_index)
+    updated_checkpoint.save()
+    return updated_checkpoint
 
 def get_schema(docs, previous_export=None):
     if previous_export is None:
