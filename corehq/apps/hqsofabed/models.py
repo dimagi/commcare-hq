@@ -28,7 +28,7 @@ class HQFormData(FormDataBase):
         """
         super(HQFormData, self).update(instance)
         
-        if not instance.domain:
+        if not hasattr(instance, "domain") or not instance.domain:
             # we don't allow these fields to be empty
             raise InvalidFormUpdateException("No domain found in instance %s!" %\
                                              (instance.get_id))
