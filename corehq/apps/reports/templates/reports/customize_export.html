@@ -1,0 +1,44 @@
+{% extends "reports/report_base.html" %}
+{% load xforms_extras %}
+
+{% block head %}
+    {{ block.super }}
+    <style>
+        th {
+            text-align: left;
+        }
+        table.column_list {
+            border: 1px solid #ccc;
+            margin: auto;
+            width: 100%;
+        }
+        input[type="text"] {
+            width: 25em;
+        }
+    </style>
+{% endblock %}
+
+{% block reportcontent %}
+    <div class="padded">
+    <form method="post" {# action="{% url custom_export domain %}" #}>
+        <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
+        <input type="hidden" name="table" value="{{ table_config.index }}" />
+        <label for="name">Export Name: </label><input type="text" name="name" value="{{ saved_export.name }}" />
+    <table class="column_list">
+        <tr>
+            <th>Include this Field?</th>
+            <th>Field</th>
+            <th>Display</th>
+        </tr>
+{% for columndef in table_config.column_configuration %}
+        <tr>
+            <td><input type="checkbox" name="{{ columndef.index }}_val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
+            <td>{{ columndef.index }}</td>
+            <td><input name="{{ columndef.index }}_display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
+        </tr>
+{% endfor %}
+    </table>
+    <input type="submit" value="Save" />
+    </form>
+    </div>
+{% endblock %}

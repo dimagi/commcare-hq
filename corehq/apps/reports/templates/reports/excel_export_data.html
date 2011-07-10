@@ -13,13 +13,41 @@
         table.export_data {
             border: 1px solid #ccc;
             margin: auto;
+            padding-top: 2em;
+            width: 100%;
         }
     </style>
 {% endblock %}
 
 {% block reportcontent %}
+{% if saved_exports %}
     <div class="padded">
+        <h2>Saved Export Configurations</h2>
+        <table class="export_data">
+            <tr>
+                <th>Name</th>
+                <th>Form</th>
+                <th></th>
+            </tr>        
+        {% for export in saved_exports %}
+            <tr>
+                <td>{{ export.name }}</td>
+                <td>{{ export.index }}</td>
+                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}'>
+                        Download
+                    </a> | 
+                    <a href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
+                        Edit
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
+    {% endif %}
     {% if forms %}
+    <div class="padded">
+        <h2>Export full forms</h2>
         <table class="export_data">
             <tr>
                 <th>Application</th>
@@ -59,12 +87,16 @@
                     <td>
                         <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag={% if form.xmlns != None %}"{{ form.xmlns }}"{% endif %}'>
                             Download
+                        </a><br>
+                        {% if form.xmlns != None %}
+                        <a href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'>
+                            Create Custom Export
                         </a>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
         </table>
-    {% endif %}
-
     </div>
+{% endif %}
 {% endblock %}
