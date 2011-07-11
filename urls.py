@@ -38,6 +38,7 @@ domain_specific = patterns('',
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
+    (r'^auditcare/', include('auditcare.urls')),
     (r'^a/(?P<domain>%s)/' % domain_re, include(domain_specific)),
     (r'^couch/', include('djangocouch.urls')),
     (r'^xep/', include('xep_hq_server.urls')),
