@@ -22,7 +22,7 @@
 {% block reportcontent %}
 {% if saved_exports %}
     <div class="padded">
-        <h2>Saved Export Configurations</h2>
+        <h2>Saved Custom Exports</h2>
         <table class="export_data">
             <tr>
                 <th>Name</th>
@@ -31,8 +31,8 @@
             </tr>        
         {% for export in saved_exports %}
             <tr>
-                <td>{{ export.name }}</td>
-                <td>{{ export.index }}</td>
+                <td>{{ export.name|default:"[blank]" }}</td>
+                <td>{{ export.formname }}</td>
                 <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}'>
                         Download
                     </a> | 

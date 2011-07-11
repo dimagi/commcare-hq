@@ -727,7 +727,8 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
     exports = SavedExportSchema.view("couchexport/saved_exports", 
                                      startkey=startkey, endkey=endkey,
                                      include_docs=True)
-    
+    for export in exports:
+        export.formname = xmlns_to_name(export.index[1], domain)
     return render_to_response(request, template, {
         "domain": domain,
         "forms": forms,
