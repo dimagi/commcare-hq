@@ -1,0 +1,10 @@
+<div class="dialog" title="Delete Export?">
+    <form name="drop_report" action="{% url delete_custom_export domain export.get_id %}" method="POST">
+        <table>
+            <tr><td>
+            Are you sure you want to delete this export?
+            </td></tr>
+        </table>
+        <input type="submit" value="Delete" />
+    </form>
+</div>

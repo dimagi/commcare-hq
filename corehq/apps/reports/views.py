@@ -35,6 +35,7 @@ from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable
 from couchexport.shortcuts import export_data_shared
+from django.views.decorators.http import require_POST
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -88,6 +89,7 @@ def custom_export(req, domain):
                                        name=req.POST["name"],
                                        tables=[export_table])
         export_def.save()
+        messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect(reverse("edit_custom_export", 
                                             args=[domain,export_def.get_id]))
         
@@ -133,6 +135,17 @@ def edit_custom_export(req, domain, export_id):
                               {"saved_export": saved_export,
                                "table_config": table_config,
                                "domain": domain})
+
+@login_and_domain_required
+@require_POST
+def delete_custom_export(req, domain, export_id):
+    """
+    Delete a custom export
+    """
+    saved_export = SavedExportSchema.get(export_id)
+    saved_export.delete()
+    messages.success(req, "Custom export was deleted.")
+    return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
 
 @login_and_domain_required
 def export_custom_data(req, domain, export_id):
