@@ -277,8 +277,9 @@
             </div>
             <div id="release">
                 {% if saved_apps.0.version != app.version %}
-                    <form action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
+                    <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
                         <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+                        <input type="hidden" name="comment" value="" />
                         <input type="submit" value="Make New Build" />
                     </form>
                 {% endif %}
@@ -371,14 +372,12 @@
                         <th>Preview (Beta)</th>
                     
                         <th>Download</th>
-{#                        <th>Short URL</th>#}
-{#                        <th>Jad File</th>#}
-{#                        <th>Jar File</th>#}
-{#                        <th>Send to Phones</th>#}
-{#                        <th>Install on CommCare ODK</th>#}
+
                         {% if edit %}
                             <th></th>
                         {% endif %}
+                        <th>Comment</th>
+                    
                     </tr>
                     {% for saved_app in saved_apps %}
                         <tr>
@@ -445,6 +444,7 @@
                                     {% endif %}
                                 </td>
                             {% endif %}
+                            <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% endif %}</td>
                         </tr>
                     {% endfor %}
                 </table>

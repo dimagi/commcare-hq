@@ -830,6 +830,7 @@ def save_copy(req, domain, app_id):
 
     """
     next = req.POST.get('next')
+    comment = req.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
     def replace_params(next, **kwargs):
@@ -845,7 +846,7 @@ def save_copy(req, domain, app_id):
         next = urlparse.urlunparse(url)
         return next
     if not errors:
-        app.save_copy()
+        app.save_copy(comment=comment)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()
@@ -863,6 +864,7 @@ def revert_to_copy(req, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
     app = app.revert_to_copy(copy)
+    messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
 @require_POST

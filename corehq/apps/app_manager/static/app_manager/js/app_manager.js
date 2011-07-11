@@ -280,4 +280,13 @@ $(function(){
     }).trigger('change');
     
     makeBuildErrorLinksSwitchTabs();
+
+    $("#make-new-build").submit(function () {
+        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
+        if (comment || comment === "") {
+            $(this).find("input[name='comment']").val(comment);
+        } else {
+            return false;
+        }
+    });
 });

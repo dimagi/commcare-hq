@@ -562,11 +562,14 @@ class ApplicationBase(VersionedDoc):
     
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    # built_with stores a record of CommCare build used in a saved app
-    built_with = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
+
+    # The following properties should only appear on saved builds
+    # built_with stores a record of CommCare build used in a saved app
+    built_with = SchemaProperty(BuildSpec)
     built_on = DateTimeProperty(required=False)
+    build_comment = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -714,8 +717,9 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self):
+    def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
+
         copy.create_jadjar()
 
         try:
@@ -726,10 +730,11 @@ class ApplicationBase(VersionedDoc):
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
-        
+        copy.build_comment = comment
         copy.save(increment_version=False)
 
         return copy
+    
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()

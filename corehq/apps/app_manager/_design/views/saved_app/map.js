@@ -10,7 +10,8 @@ function(doc){
             copy_of: doc.copy_of,
             domain: doc.domain,
             built_on: doc.built_on,
-            built_with: doc.built_with
+            built_with: doc.built_with,
+            build_comment: doc.build_comment
         });
     }
 }
