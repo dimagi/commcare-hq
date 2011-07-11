@@ -25,7 +25,9 @@ def export_response(file, format, filename):
     Get an http response for an export
     """
     from couchexport.export import Format
-
+    if not filename:
+        filename = "NAMELESS EXPORT"
+    
     format = Format.from_format(format)
     response = HttpResponse(mimetype=format.mimetype)
     response['Content-Disposition'] = 'attachment; filename=%s.%s' % \
