@@ -60,8 +60,8 @@
     });
     $(function () {
         COMMCAREHQ.app_manager.init({
-            lastAppVersion: {{ saved_apps.0.version }},
-            appVersion: {{ app.version }}
+            lastAppVersion: {% if saved_apps.0.version %}{{ saved_apps.0.version }}{% else %}-1{% endif %},
+            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %}
         });
     });
     </script>
