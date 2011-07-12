@@ -1,4 +1,15 @@
-$(function(){
+COMMCAREHQ.app_manager = {};
+COMMCAREHQ.app_manager.init = function(args) {
+    var lastAppVersion = args.lastAppVersion,
+        appVersion = args.appVersion;
+
+    function updateDOM (update) {
+        if (update.hasOwnProperty('.variable-version')) {
+            appVersion = update['.variable-version'];
+        }
+        COMMCAREHQ.updateDOM(update)
+    }
+    COMMCAREHQ.app_manager.updateDOM = updateDOM;
     function getVar(name) {
         var r = $('input[name="' + name + '"]').first().val();
         return JSON.parse(r);
@@ -14,6 +25,17 @@ $(function(){
             $('#form-tabs').tabs("select", 0);
         });
     }
+
+    //
+    function resetMakeNewBuild() {
+        var $button = $("#make-new-build");
+        if (lastAppVersion < appVersion) {
+            $button.show();
+        } else {
+            $button.hide();
+        }
+    }
+    resetMakeNewBuild();
     COMMCAREHQ.resetIndexes = resetIndexes;
 //    (function makeLangsFloat() {
 //        var $langsDiv = $("#langs"),
@@ -26,12 +48,13 @@ $(function(){
 //        });
 //    }());
 
+
     $("#form-tabs").tabs({
         cookie: {},
         select: function(event, ui){
             if(ui.index == 1 && getVar('edit_mode')) {
-                // reload when Release Manager tab is clicked
-                location.href = location.href;
+                // make sure the Make New Build button is set correctly
+                resetMakeNewBuild();
             }
         }
     }).removeClass('ui-corner-all').removeClass('ui-widget-content').show();
@@ -91,7 +114,7 @@ $(function(){
                         if($form.find('input[name="ajax"]').first().val() == "true") {
                             resetIndexes($sortable);
                             $.post($form.attr('action'), $form.serialize(), function(data){
-                                COMMCAREHQ.updateDOM(JSON.parse(data).update);
+                                COMMCAREHQ.app_manager.updateDOM(JSON.parse(data).update);
                                 // re-enable sortable
                                 $sortable.sortable('option', 'disabled', false);
                                 $sortable.find('.drag_handle .ui-icon').show(1000);
@@ -136,7 +159,7 @@ $(function(){
     $(".dialog").dialog({autoOpen: false, modal: true});
     $(".dialog_opener").click(function(e){
         e.preventDefault();
-       $(this._dialog).dialog('open');
+        $(this._dialog).dialog('open');
     });
 
     // Module Config Edit
@@ -161,7 +184,7 @@ $(function(){
     $('html').click(function(e){
         makeUneditable($('tr.editable'));
     });
-    
+
     // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){
         var val = $(this).next('div.immutable').text();
@@ -190,29 +213,29 @@ $(function(){
     $(".autosave").closest('form').append($("<span />"));
     $(".autosave").closest('.form').append("<td />");
     $(".autosave").closest_form().each(function(){
-      $(this).submit(function(){
-        var $form = $(this);
-        $form.children().last().text('saving...');
-        if($form.find('[name="ajax"]').val() == "false") {
-            return true;
-        }
-        else {
-            $.ajax({
-                type: 'POST',
-                url: $form.attr('action') || $form.attr('data-action'),
-                data: $form.my_serialize(),
-                success: function(data){
-                    COMMCAREHQ.updateDOM(data.update);
-                    $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
-                },
-                dataType: 'json',
-                error: function () {
-                    $form.children().last().text('Error occurred');
-                }
-            });
-            return false;
-        }
-      });
+        $(this).submit(function(){
+            var $form = $(this);
+            $form.children().last().text('saving...');
+            if($form.find('[name="ajax"]').val() == "false") {
+                return true;
+            }
+            else {
+                $.ajax({
+                    type: 'POST',
+                    url: $form.attr('action') || $form.attr('data-action'),
+                    data: $form.my_serialize(),
+                    success: function(data){
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
+                    },
+                    dataType: 'json',
+                    error: function () {
+                        $form.children().last().text('Error occurred');
+                    }
+                });
+                return false;
+            }
+        });
     });
     $(".autosave").live('change', function(){
         $(this).closest_form().submit();
@@ -237,7 +260,7 @@ $(function(){
         // make sure that column_id changes when index changes (after drag-drop)
         $(this).closest('tr').find('[name="index"]').val($(this).text());
     }).trigger('change');
-    
+
     makeBuildErrorLinksSwitchTabs();
 
     $("#make-new-build").submit(function () {
@@ -262,4 +285,4 @@ $(function(){
         });
         return false;
     });
-});
+};

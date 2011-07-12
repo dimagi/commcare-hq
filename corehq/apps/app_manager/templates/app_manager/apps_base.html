@@ -7,7 +7,7 @@
     {% include "imports/jqmodal.html" %}
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-31326cc7.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-156c07f7.js"></script>
     <script type="text/javascript">
     $().ready(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
@@ -57,6 +57,12 @@
                 $toggleLink.trigger('click');
             }, 400);
         }
+    });
+    $(function () {
+        COMMCAREHQ.app_manager.init({
+            lastAppVersion: {{ saved_apps.0.version }},
+            appVersion: {{ app.version }}
+        });
     });
     </script>
     
@@ -113,7 +119,15 @@
         #app-info {
             float: left;
         }
-
+        .jar_download_dialog p {
+            padding-top: .5em;
+            margin-left: 1em;
+        }
+        .jar_download_dialog ol li {
+            list-style: decimal outside;
+            margin-left: 2em;
+            padding-bottom: 1em;
+        }
     </style>
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}
@@ -232,19 +246,17 @@
                         </li>
                         {% if edit %}
                             <li>
-                                <a class="dialog_opener" href="#">Delete this Application</a>
-                                <div class="dialog" title="Delete Application?">
-                                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
-                                        <table>
-                                            <tr>
-                                                <td>Are you sure you want to delete application
-                                                    "<span class="variable-app_name">{{ app.name }}</span>"
-                                                    and all its modules and forms?</td>
-                                            </tr>
-                                        </table>
-                                        <input type="submit" value="Delete" />
+
+                                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}"
+                                          data-title="Delete Application"
+                                          method="POST">
+                                        <span class="hidden dialog-message">
+                                            Are you sure you want to delete application
+                                            "<span class="variable-app_name">{{ app.name }}</span>"
+                                            and all its modules and forms?</td>
+                                        </span>
+                                        <a class="confirm-submit" href="#">Delete this Application</a>
                                     </form>
-                                </div>
                             </li>
                         {% endif %}
                     </ul>
@@ -276,13 +288,11 @@
                 {% endblock %}
             </div>
             <div id="release">
-                {% if saved_apps.0.version != app.version %}
-                    <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-                        <input type="hidden" name="comment" value="" />
-                        <input type="submit" value="Make New Build" />
-                    </form>
-                {% endif %}
+                <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+                    <input type="hidden" name="comment" value="" />
+                    <input type="submit" value="Make New Build" />
+                </form>
                 {% if build_errors %}
                     <div class="message">
                         Build Failed!
@@ -403,17 +413,31 @@
                                         <a href="#">Download</a>
                                     </div>
                                     <ul>
-                                        {% for char in "dr" %}
                                         <li>
-                                            <a class="dialog_opener" href="">CommCare.ja{{ char }}</a>
-                                            <div class="dialog jar_download_dialog" title="Important!">
-                                                <style type="text/css">p { padding-top: .5em; }</style>
-                                                <p>When installing the application by copying it to the phone you need to download and copy <strong>both</strong> the jar and the jad file for this build!</p>
-                                                <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>    
-                                                <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                                            <a class="dialog_opener" href="">CommCare Files</a>
+                                            <div class="dialog jar_download_dialog" title="Installing CommCare for J2ME">
+                                                <ol>
+                                                    <li>
+                                                        Download <strong>both</strong> of the following files:
+                                                        <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
+                                                        <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                                                    </li>
+                                                    <li>
+                                                        Make sure that they are named CommCare.jad and CommCare.jar,
+                                                        and not e.g. "CommCare (1).jad", which can happen if you've
+                                                        downloaded another version before.
+                                                    </li>
+                                                    <li>
+                                                        Copy these two files onto the phone's memory card.
+                                                    </li>
+                                                    <li>
+                                                        If remove "RMS" files on the phone's memory card, if necessary.
+                                                        These are files that end in ".rms".
+                                                    </li>
+                                                </ol>
+
                                             </div>
                                         </li>
-                                        {% endfor %}
                                         <li>
                                             <a class="dialog_opener" href="">Send to Phones</a>
                                             <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
