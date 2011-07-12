@@ -1,11 +1,24 @@
 {% extends base_template %}
-{% block page_imports %}
-    {% include "imports/datatables.html" %}
-    {% include "imports/flot.html" %}
-{% endblock %}
 {% block head %}
     {{ block.super }}
-
+    {% include "imports/datatables.html" %}
+    {% include "imports/flot.html" %}
+    <script>
+        jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
+            var x = a.match(/title="*(-?[0-9]+)/)[1];
+            var y = b.match(/title="*(-?[0-9]+)/)[1];
+            x = parseFloat( x );
+            y = parseFloat( y );
+            return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+        };
+        jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
+            var x = a.match(/title="*(-?[0-9]+)/)[1];
+            var y = b.match(/title="*(-?[0-9]+)/)[1];
+            x = parseFloat( x );
+            y = parseFloat( y );
+            return ((x < y) ?  1 : ((x > y) ? -1 : 0));
+        };
+    </script>
     <script>
         $(function(){
             $("#report_select").val(location.pathname);
@@ -66,10 +79,14 @@
                 elem = document;
             }
             $('.datatable', elem).each(function(){
-                params = {
+                var params = {
                     "bJQueryUI": true
-                };
-                sAjaxSource = $(this).attr('data-source');
+                },
+                    sAjaxSource = $(this).data('source'),
+                    aoColumns = [],
+                    $columns = $(this).find('tr').first().find('th'),
+                    i;
+
                 if(sAjaxSource) {
                     params = {
                         "bJQueryUI": true,
@@ -79,6 +96,15 @@
                         "bFilter": false
                     };
                 }
+                for (i = 0; i < $columns.length; i += 1) {
+                    var sortType = $($columns[i]).data('sort');
+                    if (sortType) {
+                        aoColumns.push({sType: sortType});
+                    } else {
+                        aoColumns.push(null);
+                    }
+                }
+                params.aoColumns = aoColumns;
                 $(this).dataTable(params);
             });
         }
@@ -136,7 +162,6 @@
             padding: 5px 0 5px 0;
         }
     </style>
-    {% block report_javascripts %}{% endblock %}
 {% endblock %}
 {% block content %}
     <div id="main_container">

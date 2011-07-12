@@ -20,7 +20,7 @@ from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
 import hashlib
 from django.template.loader import render_to_string
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
@@ -34,6 +34,7 @@ from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
 from utilities.profile import profile as profile_decorator
+import logging
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library 
@@ -561,11 +562,14 @@ class ApplicationBase(VersionedDoc):
     
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    # built_with stores a record of CommCare build used in a saved app
-    built_with = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
+
+    # The following properties should only appear on saved builds
+    # built_with stores a record of CommCare build used in a saved app
+    built_with = SchemaProperty(BuildSpec)
     built_on = DateTimeProperty(required=False)
+    build_comment = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -713,16 +717,24 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self):
+    def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
+
         copy.create_jadjar()
 
-        copy.short_url = bitly.shorten(
-            get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-        )
+        try:
+            copy.short_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+            )
+        except URLError:
+            # for offline only
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+            copy.short_url = None
+        copy.build_comment = comment
         copy.save(increment_version=False)
 
         return copy
+    
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()

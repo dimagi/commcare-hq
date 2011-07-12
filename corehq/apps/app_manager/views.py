@@ -144,9 +144,14 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                 reverse('import_app', args=[redirect_domain])
                 + "?app={app_id}".format(app_id=app_id)
             )
-        app = Application.get(app_id)
-        assert(app.doc_type in ('Application', 'RemoteApp'))
-        assert(req.couch_user.is_member_of(app.domain))
+        
+        if app_id:
+            app = Application.get(app_id)
+            assert(app.doc_type in ('Application', 'RemoteApp'))
+            assert(req.couch_user.is_member_of(app.domain))
+        else: 
+            app = None
+        
         return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
@@ -825,6 +830,7 @@ def save_copy(req, domain, app_id):
 
     """
     next = req.POST.get('next')
+    comment = req.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
     def replace_params(next, **kwargs):
@@ -840,7 +846,7 @@ def save_copy(req, domain, app_id):
         next = urlparse.urlunparse(url)
         return next
     if not errors:
-        app.save_copy()
+        app.save_copy(comment=comment)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()
@@ -858,6 +864,7 @@ def revert_to_copy(req, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
     app = app.revert_to_copy(copy)
+    messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
 @require_POST

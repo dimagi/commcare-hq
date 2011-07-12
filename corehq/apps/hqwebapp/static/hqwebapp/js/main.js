@@ -1,11 +1,11 @@
 $.prototype.iconify = function (icon) {
-    "use strict";
+    'use strict';
     var $icon = $("<div/>").addClass('ui-icon ' + icon).css('float', 'left');
     $(this).css('width', "16px").prepend($icon);
 };
 
 var COMMCAREHQ = (function () {
-    "use strict";
+    'use strict';
     return {
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).click(function (e) {
@@ -47,12 +47,50 @@ var COMMCAREHQ = (function () {
                     $(key).text(update[key]);
                 }
             }
+        },
+        confirm: function (options) {
+            var title = options.title,
+                message = options.message,
+                ok = options.ok,
+                $dialog = $('<div/>').dialog({
+                    title: title,
+                    modal: true,
+                    resizable: false,
+                    buttons: [{
+                        text: "Cancel",
+                        click: function () {
+                            $(this).dialog('close');
+                        }
+                    }, {
+                        text: "OK",
+                        click: function () {
+                            ok();
+                            $(this).dialog('close');
+                        }
+                    }]
+                });
+            if (typeof message === "function") {
+                $dialog.html(message());
+            } else {
+                $dialog.text(message);
+            }
         }
     };
 }());
 
+function setUpIeWarning() {
+    'use strict';
+    var $warning;
+    if ($.browser.msie) {
+        $warning= $('<div/>').addClass('ie-warning');
+        $('<span>This application does not work well on Microsoft Internet Explorer. ' +
+          'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
+        $('body').prepend($warning);
+    }
+}
+
 $(function () {
-    "use strict";
+    'use strict';
     $('.hidden').hide();
     $('.delete_link').iconify('ui-icon-closethick');
     $(".delete_link").addClass("dialog_opener");
@@ -74,13 +112,14 @@ $(function () {
     $(".sidebar ul").addClass('ui-corner-bottom');
 
     COMMCAREHQ.initBlock($("body"));
+    setUpIeWarning();
 });
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
 // thanks to http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function#1131658
 
 (function () {
-    "use strict";
+    'use strict';
     $.extend({
         getGo: function (url, params) {
             document.location = url + '?' + $.param(params);

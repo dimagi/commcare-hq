@@ -7,21 +7,16 @@
             <span class="drag_handle"></span>
         </td>
         <td class="delete-button-column">
-            {% with util.make_uuid as uuid %}
-            <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
-            <div class="dialog delete_dialog" title="Delete Header?" data-uuid="{{ uuid }}">
-                <form class="delete-detail-column" method="post"
-                    action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
-                    <input type="hidden" name="index" value="{# filled in by js #}" /> {# must be recomputed!! #}
-                    <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                    <input type="hidden" name="ajax" value="true" />
-                    <input type="submit" value="Delete" />
-                </form>
-            </div>
-            {% endwith %}
-
-            <input type="hidden" name="index" value="{# filled in by js #}">
-            <input type="hidden" name="detail_type" value="{{ detail.type }}">
+            <form class="delete-detail-column"
+                  method="post"
+                  data-title="Delete Column"
+                  data-message="Are you sure you want to delete this column?"
+                  action="{% url corehq.apps.app_manager.views.delete_module_detail domain app.id module.id %}">
+                <input type="hidden" name="index" value="{# filled in by js #}" /> {# must be recomputed!! #}
+                <input type="hidden" name="detail_type" value="{{ detail.type }}" />
+                <input type="hidden" name="ajax" value="true" />
+                <a class="delete_link confirm-submit" href="#"></a>
+            </form>
         </td>
     {% endif %}
     <td class="model-column">
@@ -56,26 +51,25 @@
             {{ column.format }}
         {% endif %}
     </td>
-    <td class="autosave enum-column">
+    <td class="enum-column">
         {% if edit %}
-            <!--input type="text" name="enum" value="{{ column.enum|format_enum:langs }}" /-->
-            <textarea name="enum">{{ column.enum|format_enum:langs }}</textarea>
+            <textarea class="autosave" name="enum">{{ column.enum|format_enum:langs }}</textarea>
         {% else %}
             {{ column.enum|format_enum:langs }}
         {% endif %}
     </td>
-    <td class="autosave late-flag-column">
+    <td class="late-flag-column">
         <span>Flag after</span>
         {% if edit %}
-            <input type="text" class="short" name="late_flag" value="{{ column.late_flag }}" />
+            <input type="text" class="autosave short" name="late_flag" value="{{ column.late_flag }}" />
         {% else %}
             {{ column.late_flag }}
         {% endif %}
         <span>days.</span>
     </td>
-    <td class="autosave advanced-column">
+    <td class="advanced-column">
         {% if edit %}
-            <input type="text" name="advanced" value="{{ column.advanced }}" />
+            <input class="autosave" type="text" name="advanced" value="{{ column.advanced }}" />
         {% else %}
             {{ column.advanced }}
         {% endif %}
