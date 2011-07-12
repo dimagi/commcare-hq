@@ -19,7 +19,9 @@
     <thead>
         <tr>
             {% for header in report.headers %}
-                <th>{{ header|linebreaksbr }}</th>
+                <th data-sort="{{ header.sort_type }}">
+                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                </th>
             {% endfor %}
         </tr>
     </thead>
@@ -27,8 +29,9 @@
     {% for row in report.rows %}
         <tr>
             {% for thing in row %}
-                <td class="{% if not thing %}null-entry{% endif %}">
-                    {{ thing|safe }}
+                <td class="{% if not thing or thing.html != None and not thing.html %}null-entry{% endif %}">
+                    {% if thing.html != None %}{{ thing.html|safe }}{% else %}{{ thing|safe }}{% endif %}
+                    <span title="{% if thing.sort_key != "" %}{{ thing.sort_key }}{% else %}{{ thing }}{% endif %}"></span>
                 </td>
             {% endfor %}
         </tr>

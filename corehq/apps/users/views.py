@@ -222,6 +222,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         # for commcare-accounts tab
         "other_commcare_accounts": other_commcare_accounts,
     })
+    # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
 

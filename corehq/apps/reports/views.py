@@ -247,7 +247,7 @@ def case_activity(request, domain):
     now = datetime.utcnow()
     report = CaseActivity(domain, userIDs, landmarks, now)
     data = report.get_data()
-    headers = ["User"] + ["Last %s Days" % l.days if l else "Ever" for l in landmarks]
+    headers = ["User"] + [{"html": "Last %s Days" % l.days if l else "Ever", "sort_type": "title-numeric"} for l in landmarks]
     rows = []
 
     extra = {}
@@ -272,9 +272,9 @@ def case_activity(request, domain):
                            "user_id": user_id,
                            "username": user_id_to_username(userID)} 
     for userID in extra:
-        
         row = [user_id_link(userID)]
         for entry in extra[userID]:
+            unformatted = entry['total']
             if entry['total'] == entry['diff'] or 'diff' not in display:
                 fmt = "{total}"
             else:
@@ -287,7 +287,7 @@ def case_activity(request, domain):
                 formatted = int(formatted)
             except ValueError:
                 pass
-            row.append(formatted)
+            row.append({"html": formatted, "sort_key": unformatted})
         rows.append(row)
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
