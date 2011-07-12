@@ -7,7 +7,7 @@
     {% include "imports/jqmodal.html" %}
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-31326cc7.js"></script>
     <script type="text/javascript">
     $().ready(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
@@ -383,15 +383,14 @@
                         <tr>
                             {% if edit %}
                                 <td>
-                                    <a class="delete_link" href=""></a>
-                                    <div class="dialog delete_dialog" title="Delete Build {{ saved_app.version }}">
-                                        <p>Are you sure you want to delete this build?</p>
-                                        <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}" method="post">
-                                            <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                                            <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-                                            <input type="submit" value="Delete" />
-                                        </form>
-                                    </div>
+                                    <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
+                                          data-title="Delete Build"
+                                          data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"
+                                          method="post">
+                                        <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+                                        <a class="delete_link confirm-submit" href="#"></a>
+                                    </form>
                                 </td>
                             {% endif %}
                             <td>{{ saved_app.version }}</td>

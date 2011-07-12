@@ -9,14 +9,12 @@ $(function(){
             $(indexes[i]).text(i).trigger('change');
         }
     }
-
-
-
     function makeBuildErrorLinksSwitchTabs() {
         $("#build-errors a").click(function(){
             $('#form-tabs').tabs("select", 0);
         });
     }
+    COMMCAREHQ.resetIndexes = resetIndexes;
 //    (function makeLangsFloat() {
 //        var $langsDiv = $("#langs"),
 //            top = parseInt($langsDiv.css("top").substring(0,$langsDiv.css("top").indexOf("px"))),
@@ -142,17 +140,7 @@ $(function(){
     });
 
     // Module Config Edit
-//    $('select[name="format"]').change(function(){
-//        var $enum = $(this).parent().next().find('input[name="enum"]');
-//        if($(this).attr('value') == "enum") {
-//            $enum.show();
-//        }
-//        else {
-//            $enum.hide();
-//        }
-//    });
-//    $('.editable .immutable').prev().hide();
-    //$('table .editable').last().find('.immutable').hide().prev().show();
+
     function makeUneditable(row) {
         $(row).removeClass('selected');
         $(row).find('.immutable').show().prev().hide().autocomplete('close');
@@ -173,29 +161,7 @@ $(function(){
     $('html').click(function(e){
         makeUneditable($('tr.editable'));
     });
-//    $('.form .form-action').click(function(e){
-//        e.preventDefault();
-//        var $row = $(this).closest('tr');
-//        var href = $(this).text();
-//        var $form = $('<form method="post" action="' + href + '" enctype="multipart/form-data"></form>');
-//        $row.find('[name]').each(function(){
-//            if($(this).attr('type') == 'file'){
-//                var $input = $(this);
-//                $input.hide();
-//                $form.append($input);
-//            }
-//            else {
-//                var $input = $('<input type="text" />');
-//                $input.attr('name', $(this).attr('name'));
-//                $input.attr('value', $(this).attr('value'));
-//                $input.hide();
-//                $form.append($input);
-//            }
-//        });
-//        $('body').append($form);
-//        $form.submit();
-//    });
-
+    
     // Auto set input and select values according to the following 'div.immutable'
     $('select').each(function(){
         var val = $(this).next('div.immutable').text();
@@ -224,7 +190,6 @@ $(function(){
     $(".autosave").closest('form').append($("<span />"));
     $(".autosave").closest('.form').append("<td />");
     $(".autosave").closest_form().each(function(){
-      //alert($(this).attr('action'));
       $(this).submit(function(){
         var $form = $(this);
         $form.children().last().text('saving...');
@@ -232,11 +197,6 @@ $(function(){
             return true;
         }
         else {
-//            $.post($form.attr('action') || $form.attr('data-action'), $form.my_serialize(), function(data){
-//                updateDOM(JSON.parse(data)['update']);
-//
-//                $form.children().last().text('saved').delay(1000).fadeOut('slow', function(){$(this).text('').show()});
-//            });
             $.ajax({
                 type: 'POST',
                 url: $form.attr('action') || $form.attr('data-action'),
@@ -258,21 +218,20 @@ $(function(){
         $(this).closest_form().submit();
     });
 
-
     $('.submit').click(function(e){
         e.preventDefault();
         var $form = $(this).closest('.form, form');
         var data = $form.my_serialize();
-        var action = $form.attr('action') || $form.attr('data-action');
+        var action = $form.attr('action') || $form.data('action');
         $.postGo(action, $.unparam(data));
     });
 
 
-    $('.index').change(function(){
-        // really annoying hack: the delete dialog is stored at bottom of page so is not found by the above
-        var uuid = $(this).closest('tr').find('.delete_link').attr('data-uuid');
-        $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="index"]').val($(this).text());
-    });
+//    $('.index').change(function(){
+//        // really annoying hack: the delete dialog is stored at bottom of page so is not found by the above
+//        var uuid = $(this).closest('tr').find('.delete_link').attr('data-uuid');
+//        $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="index"]').val($(this).text());
+//    });
 
     $('.index').change(function(){
         // make sure that column_id changes when index changes (after drag-drop)
@@ -288,5 +247,19 @@ $(function(){
         } else {
             return false;
         }
+    });
+
+    $('.confirm-submit').click(function () {
+        var $form = $(this).closest('form'),
+            message = $form.data('message') || function () {return $form.find('.dialog-message').html();},
+            title = $form.data('title');
+        COMMCAREHQ.confirm({
+            title: title,
+            message: message,
+            ok: function () {
+                $form.submit();
+            }
+        });
+        return false;
     });
 });

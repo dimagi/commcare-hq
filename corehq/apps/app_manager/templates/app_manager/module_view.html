@@ -38,23 +38,34 @@
             });
         }
         function configureDetailColumnDelete(){
-            $('form.delete-detail-column').live('submit', function(){
-                var $form = $(this);
-                var $dialog = $form.closest('.dialog');
-                var uuid = $dialog.attr('data-uuid');
-                var $row = $('.delete_link[data-uuid="' + uuid + '"]').closest('tr');
-                $dialog.dialog('close');
-                $("*", $row).attr('disabled', true);                
-                $.post($form.attr('action'), $form.serialize(), function(){
-                    var $sortable = $row.closest('.sortable');
-                    $row.fadeOut(1000).remove();
-                    resetIndexes($sortable);
+            $('form.delete-detail-column').submit(function(e){
+                var $form = $(this),
+                    $row = $form.closest('tr'),
+                    formData = $form.my_serialize();
+                $("*", $row).attr('disabled', true);
+                $.ajax({
+                    type: 'POST',
+                    url: $form.attr('action'),
+                    data: formData,
+                    dataType: 'json',
+                    success: function(data){
+                        var $sortable = $row.closest('.sortable');
+                        $row.fadeOut(1000, function () {
+                            $row.remove();
+                        });
+                        COMMCAREHQ.resetIndexes($sortable);
+                        COMMCAREHQ.updateDOM(data.update);
+                    },
+                    error: function () {
+                        alert("An error has occurred while trying to delete a column. Please reload.");
+                    }
                 });
+                e.stopPropagation();
                 return false;
             });
         }
         $(function(){
-            fields = {
+            var fields = {
                 "referral": [
                     "id",
                     "type",

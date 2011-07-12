@@ -47,6 +47,33 @@ var COMMCAREHQ = (function () {
                     $(key).text(update[key]);
                 }
             }
+        },
+        confirm: function (options) {
+            var title = options.title,
+                message = options.message,
+                ok = options.ok,
+                $dialog = $('<div/>').dialog({
+                    title: title,
+                    modal: true,
+                    resizable: false,
+                    buttons: [{
+                        text: "Cancel",
+                        click: function () {
+                            $(this).dialog('close');
+                        }
+                    }, {
+                        text: "OK",
+                        click: function () {
+                            ok();
+                            $(this).dialog('close');
+                        }
+                    }]
+                });
+            if (typeof message === "function") {
+                $dialog.html(message());
+            } else {
+                $dialog.text(message);
+            }
         }
     };
 }());
