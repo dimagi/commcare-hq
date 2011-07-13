@@ -1,4 +1,5 @@
 var LangcodeValidator = (function () {
+    'use strict';
     function LangcodeValidator(options) {
         var i,
             that = this,
@@ -16,72 +17,139 @@ var LangcodeValidator = (function () {
             return validationsComplete >= this.langcodes.length;
         };
 
-
-        for (i = 0; i < this.langcodes.length; i += 1) {
-            LangcodeValidator.validate(this.langcodes[i], function(langcode, match, suggestions){
-                that.updateValidation(langcode, match, suggestions);
-                validationsComplete += 1;
-                that.render();
-            });
+        function validateCallback(langcode, match, suggestions) {
+            that.updateValidation(langcode, match, suggestions);
+            validationsComplete += 1;
+            that.render();
         }
-    }
-    function confirmChange(oldCode, newCode) {
-        return confirm("Are you sure you want to rename language '" + oldCode +"' to '" + newCode + "'?");
+        for (i = 0; i < this.langcodes.length; i += 1) {
+            LangcodeValidator.validate(this.langcodes[i], validateCallback);
+        }
     }
     LangcodeValidator.validate = function (langcode, callback) {
         var validateURL = "/langcodes/validate.json";
-        $.get(validateURL, {"term": langcode}, function(data){
+        $.get(validateURL, {"term": langcode}, function (data) {
             data = JSON.parse(data);
             callback(langcode, data.match, data.suggestions);
         });
     };
     LangcodeValidator.prototype = {
-        renameLanguage: function(oldCode, newCode) {
-            var that = this;
-            this.langcodes[this.langcodes.indexOf(oldCode)] = newCode;
-            $.post(this.renameURL, {oldCode: oldCode, newCode: newCode}, function(){
-                LangcodeValidator.validate(newCode, function(langcode, match, suggestions){
-                    that.updateValidation(newCode, match, suggestions);
-                    that.render();
-                });
+        renameLanguage: function (oldCode, newCode) {
+            var that = this,
+                i = this.langcodes.indexOf(oldCode);
+            this.langcodes[i] = newCode;
+            $.ajax({
+                url: this.renameURL,
+                type: "POST",
+                data: {oldCode: oldCode, newCode: newCode},
+                dataType: "json",
+                beforeSend: function () {
+                    that.disable();
+                },
+                success: function () {
+                    LangcodeValidator.validate(newCode, function (langcode, match, suggestions) {
+                        that.updateValidation(newCode, match, suggestions);
+                        that.render();
+                        that.enable();
+                    });
+                },
+                error: function (response) {
+                    var data = JSON.parse(response.responseText);
+                    that.$home.html(
+                        $("<p/>").text("An error has occurred: " + data.message + ". Please reload")
+                    );
+                    that.enable();
+                }
             });
+        },
+        disable: function () {
+            var p = this.$home.position();
+            this.$shield = $('<div/>').text("Working...").css({
+                position: 'absolute',
+                top: p.top,
+                left: p.left,
+                zIndex: 1001,
+                backgroundColor: '#CCC',
+                opacity: 0.4,
+                border: '1px solid #888',
+                fontSize: '10em',
+                textAlign: 'center'
+            }).appendTo('body');
+            this.$shield.css({
+                width: Math.max(this.$shield.width(), this.$home.width()),
+                height: Math.max(this.$shield.height(), this.$home.height())
+            });
+        },
+        enable: function () {
+            this.$shield.fadeOut(function () { $(this).remove(); });
         },
         render: function () {
             if (!this.isReady()) {
                 return;
             }
-            var $table = $("<table></table>"),
+            var i, j, langcode, sughtml, sug,
+                $table = $("<table></table>"),
                 $row,
                 $td,
                 $a,
                 $links,
-                i, j, langcode, sughtml, sug,
                 that = this;
+
+            function getChangeSpecificLanguageLink(langcode, sug) {
+                return $("<a href='#'>" + sug.code + " (" + sug.name + ")</a>").click(function (e) {
+                    e.preventDefault();
+                    COMMCAREHQ.confirm({
+                        title: "Rename Language",
+                        message: "Are you sure you want to rename language '" + langcode + "' to '" + sug.code + "'?",
+                        ok: function () {
+                            that.renameLanguage(langcode, sug.code);
+                        }
+                    });
+                    return false;
+                });
+            }
+            function getChangeCustomLanguageLink(langcode) {
+                var $a = $('<a href="#"/>').text('Choose Language').click(function (e) {
+                    e.preventDefault();
+
+                    var $input = $("<input type='text' class='langcodes short' />").langcodes(),
+                        $requiredMessage = $("<div/>");
+
+                    COMMCAREHQ.confirm({
+                        title: "Change Language",
+                        message: function () {
+                            var $text = $('<span/>').text('Rename language "' + langcode + '" to '),
+                                $span = $('<span/>').append($requiredMessage, $text, $input);
+                            COMMCAREHQ.initBlock($span);
+                            $span.appendTo(this);
+                        },
+                        open: function () {
+                            $input.focus();
+                        },
+                        ok: function () {
+                            var code = $input.val();
+                            if (code) {
+                                that.renameLanguage(langcode, code);
+                            } else {
+                                $(this).dialog('open');
+                                $requiredMessage.text("You must enter in a language code");
+                            }
+                        }
+                    });
+                });
+                return $a;
+            }
             for (i = 0; i < this.langcodes.length; i += 1) {
                 langcode = this.langcodes[i];
                 sughtml = [];
                 $links = $("<span>Change to: </span>");
                 for (j = 0; j < (this.validation.suggestions[langcode] || []).length; j += 1) {
                     sug = this.validation.suggestions[langcode][j];
-                    $a = (function(langcode, sug) {
-                        return $("<a href='#'>" + sug.code + " (" + sug.name + ")</a>").click(function(){
-                            if (confirmChange(langcode, sug.code)) {
-                                that.renameLanguage(langcode, sug.code);
-                            }
-                            return false;
-                        });
-                    }(langcode, sug));
+                    $a = getChangeSpecificLanguageLink(langcode, sug);
                     $links.append($a);
                     $links.append(", ");
                 }
-                (function(langcode) {
-                    return $("<input type='text' class='langcodes short' />").blur(function(){
-                        var code = $(this).val();
-                        if (code && confirmChange(langcode, code)) {
-                            that.renameLanguage(langcode, code);
-                        }
-                    }).langcodes();
-                })(langcode).appendTo($links);
+                getChangeCustomLanguageLink(langcode).appendTo($links);
 
 //                if (j === 0) {
 //                    $links = "";
@@ -89,7 +157,7 @@ var LangcodeValidator = (function () {
                 $row = $("<tr></tr>");
                 $td = $("<td></td>").html(this.validation.isValid[langcode] ? langcode : "<strike>" + langcode + "</strike>").appendTo($row);
                 $td = $("<td></td>").text(this.validation.name[langcode] || "?").appendTo($row);
-                if(this.edit) {
+                if (this.edit) {
                     $td = $("<td></td>").appendTo($row).html($links);
                 }
                 $table.append($row);
@@ -97,7 +165,7 @@ var LangcodeValidator = (function () {
             this.$home.html("").append($table);
             COMMCAREHQ.initBlock(this.$home);
         },
-        updateValidation: function(langcode, match, suggestions){
+        updateValidation: function (langcode, match, suggestions) {
             if (match) {
                 this.validation.isValid[langcode] = true;
                 this.validation.name[langcode] = match.name;

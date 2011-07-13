@@ -650,9 +650,14 @@ def rename_language(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if app.domain != domain:
         raise Http404
-    form.rename_xform_language(old_code, new_code)
-    app.save()
-    return HttpResponse(json.dumps({"status": "ok"}))
+    try:
+        form.rename_xform_language(old_code, new_code)
+        app.save()
+        return HttpResponse(json.dumps({"status": "ok"}))
+    except XFormError as e:
+        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
+        response.status_code = 409
+        return response
 
 @require_POST
 @require_permission('edit-apps')
