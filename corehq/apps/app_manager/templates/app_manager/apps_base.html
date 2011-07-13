@@ -355,7 +355,11 @@
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
-                                        {{ error }}
+                                    {% if error.type == "remote error" %}
+                                        Remote Error: {{ error.message }}
+                                    {% else %}
+                                        {{ error.message }}
+                                    {% endif %}
                                     {% endif %}
                                     {% endif %}
                                     {% endif %}
