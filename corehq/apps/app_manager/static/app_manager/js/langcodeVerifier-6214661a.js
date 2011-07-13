@@ -72,7 +72,7 @@ var LangcodeValidator = (function () {
                 backgroundColor: '#CCC',
                 opacity: 0.4,
                 border: '1px solid #888',
-                fontSize: '10em',
+                fontSize: '4em',
                 textAlign: 'center'
             }).appendTo('body');
             this.$shield.css({
