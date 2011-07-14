@@ -1,0 +1,23 @@
+<?xml version='1.0' ?>
+<system version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/case">
+    <meta>
+        <deviceID />
+        <timeStart>{{ time }}</timeStart>
+        <timeEnd>{{ time }}</timeEnd>
+        <username>system</username>
+        <userID />
+        <uid>{{ uid }}</uid>
+    </meta>
+    <case>
+        <case_id>{{ case_id }}</case_id>
+        <user_id />
+        <date_modified>{{ time }}</date_modified>
+        <referral>
+            <referral_id>{{ referral_id }}</referral_id>
+            <update>
+                <referral_type>{{ referral_type }}</referral_type>
+                <date_closed>{{ time }}</date_closed>
+            </update>
+        </referral>
+    </case>
+</system>

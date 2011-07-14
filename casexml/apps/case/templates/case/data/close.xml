@@ -2,16 +2,16 @@
 <system version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/case">
     <meta>
         <deviceID />
-        <timeStart>%(time)s</timeStart>
-        <timeEnd>%(time)s</timeEnd>
+        <timeStart>{{ time }}</timeStart>
+        <timeEnd>{{ time }}</timeEnd>
         <username>system</username>
         <userID />
-        <uid>%(uid)s</uid>
+        <uid>{{ uid }}</uid>
     </meta>
     <case>
-        <case_id>%(case_id)s</case_id>
+        <case_id>{{ case_id }}</case_id>
         <user_id />
-        <date_modified>%(time)s</date_modified>
+        <date_modified>{{ time }}</date_modified>
         <close />
     </case>
 </system>

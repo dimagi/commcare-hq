@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import logging
-
+from xml.sax.saxutils import escape
 
 # Response template according to 
 # https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
@@ -11,7 +12,7 @@ RESPONSE_TEMPLATE = \
 </OpenRosaResponse>'''
 
 def get_response(message, extra_xml=""):
-    return RESPONSE_TEMPLATE % {"message": message,
+    return RESPONSE_TEMPLATE % {"message": escape(message),
                                 "extra_xml": extra_xml}
 
 
@@ -27,7 +28,7 @@ SYNC_TEMPLATE =\
     
 
 def get_sync_xml(restore_id):
-    return SYNC_TEMPLATE % {"restore_id": restore_id} 
+    return SYNC_TEMPLATE % {"restore_id": escape(restore_id)}
 
 CASE_TEMPLATE = \
 """
@@ -85,16 +86,16 @@ def date_to_xml_string(date):
 def get_referral_xml(referral):
     # TODO: support referrals not always opening, this will
     # break with sync
-    open_block = REFERRAL_OPEN_BLOCK % {"ref_type": referral.type}
+    open_block = REFERRAL_OPEN_BLOCK % {"ref_type": escape(referral.type)}
     
     if referral.closed:
-        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": date_to_xml_string(referral.closed_on)} 
-        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": referral.type,
+        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": escape(date_to_xml_string(referral.closed_on))}
+        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": escape(referral.type),
                                                 "close_data": close_data}
     else:
         update_block = "" # TODO
-    return REFERRAL_BLOCK % {"ref_id": referral.referral_id,
-                             "fu_date": date_to_xml_string(referral.followup_on),
+    return REFERRAL_BLOCK % {"ref_id": escape(referral.referral_id),
+                             "fu_date": escape(date_to_xml_string(referral.followup_on)),
                              "open_block": open_block,
                              "update_block": update_block,
                              }
@@ -104,10 +105,10 @@ def get_case_xml(case, create=True):
         logging.error("Can't generate case xml for empty case!")
         return ""
     
-    base_data = BASE_DATA % {"case_type_id": case.type,
-                             "user_id": case.user_id,
-                             "case_name": case.name,
-                             "external_id": case.external_id }
+    base_data = BASE_DATA % {"case_type_id": escape(case.type),
+                             "user_id": escape(case.user_id),
+                             "case_name": escape(case.name),
+                             "external_id": escape(case.external_id) }
     # if creating, the base data goes there, otherwise it goes in the
     # update block
     if create:
@@ -117,13 +118,13 @@ def get_case_xml(case, create=True):
         create_block = ""
         update_base_data = base_data
     
-    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": val} \
+    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(unicode(val))} \
                                     for key, val in case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
     referral_block = "".join([get_referral_xml(ref) for ref in case.referrals])
-    return CASE_TEMPLATE % {"case_id": case.case_id,
-                            "date_modified": date_to_xml_string(case.modified_on),
+    return CASE_TEMPLATE % {"case_id": escape(case.case_id),
+                            "date_modified": escape(date_to_xml_string(case.modified_on)),
                             "create_block": create_block,
                             "update_block": update_block,
                             "referral_block": referral_block
@@ -147,15 +148,15 @@ USER_DATA_TEMPLATE = \
 def get_registration_xml(user):
     # TODO: this doesn't feel like a final way to do this
     # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
-    return REGISTRATION_TEMPLATE % {"username":  user.username,
-                                    "password":  user.password,
-                                    "uuid":      user.user_id,
-                                    "date":      user.date_joined.strftime("%Y-%m-%d"),
+    return REGISTRATION_TEMPLATE % {"username":  escape(user.username),
+                                    "password":  escape(user.password),
+                                    "uuid":      escape(user.user_id),
+                                    "date":      escape(user.date_joined.strftime("%Y-%m-%d")),
                                     "user_data": get_user_data_xml(user.user_data)
                                     }
 def get_user_data_xml(dict):
     if not dict:  return ""
     return USER_DATA_TEMPLATE % \
         {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
-                                       {"key": key, "value": val } for key, val in dict.items())}    
+                                       {"key": key, "value": escape(unicode(val)) } for key, val in dict.items())}
 
