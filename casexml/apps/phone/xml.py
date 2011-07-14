@@ -1,6 +1,12 @@
 from __future__ import absolute_import
 import logging
-from xml.sax.saxutils import escape
+from xml.sax import saxutils
+
+def escape(o):
+    if o is None:
+        return ""
+    else:
+        return saxutils.escape(unicode(o))
 
 # Response template according to 
 # https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
@@ -118,7 +124,7 @@ def get_case_xml(case, create=True):
         create_block = ""
         update_base_data = base_data
     
-    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(unicode(val))} \
+    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(val)} \
                                     for key, val in case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
@@ -158,5 +164,5 @@ def get_user_data_xml(dict):
     if not dict:  return ""
     return USER_DATA_TEMPLATE % \
         {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
-                                       {"key": key, "value": escape(unicode(val)) } for key, val in dict.items())}
+                                       {"key": key, "value": escape(val) } for key, val in dict.items())}
 
