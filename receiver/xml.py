@@ -1,4 +1,5 @@
-
+from __future__ import absolute_import
+from xml.sax.saxutils import escape
 # Response template according to 
 # https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
 
@@ -9,5 +10,7 @@ RESPONSE_TEMPLATE = \
 </OpenRosaResponse>'''
 
 def get_response(message, extra_xml=""):
-    return RESPONSE_TEMPLATE % {"message": message,
-                                "extra_xml": extra_xml} 
+    return RESPONSE_TEMPLATE % {
+        "message": escape(message),
+        "extra_xml": extra_xml
+    }
