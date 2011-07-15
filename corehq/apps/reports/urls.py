@@ -14,8 +14,6 @@ dodoma_reports = patterns('corehq.apps.reports.dodoma',
 
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="default_report"),
-
-    url(r'^submission_log/', 'submission_log', name="submission_log_report"),
     url(
         r'^daily_submissions/$',
         'daily_submissions',
