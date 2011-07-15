@@ -40,8 +40,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^form_data/(?P<instance_id>\w+)/download/(?P<attachment>[\w.-_]+)?$', 
         'download_attachment', name='download_attachment'),
     # url(r'^partial/form_data/(?P<instance_id>.*)/$', 'form_data', name='render_form_data'),
-    url(r"^export/", 'export_data'),
-    url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
+
 
     url('submit_history/$', protect(SubmitHistory.view), name="submit_history_report"),
     url('submit_time_punchcard/$', 'submit_time_punchcard', name="submit_time_punchcard"),
@@ -53,12 +52,17 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^submissions_by_form/', 'submissions_by_form', name="submissions_by_form_report"),
     url(r'^completion_times/', 'completion_times', name="completion_times_report"),
-    
+    url(r'^completion_times/', 'completion_times', name="completion_times_report"),
+
     # useful for debugging email reports
     url(r'^emaillist/', 'emaillist', name="emailable_report_list"),
     url(r'^emailtest/(?P<report_slug>[\w_]+)/', 'emailtest', name="emailable_report_test"),
 
 
     # export data
+    url(r"^export/", 'export_data'),
+    url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
+
+    url(r'^case_export/', 'case_export', name='case_export'),
     url(r'^download/cases', 'download_cases', name='download_cases')
 )

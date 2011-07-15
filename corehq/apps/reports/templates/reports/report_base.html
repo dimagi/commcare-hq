@@ -3,6 +3,7 @@
     {{ block.super }}
     {% include "imports/datatables.html" %}
     {% include "imports/flot.html" %}
+    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
     <script>
         jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
             var x = a.match(/title="*(-?[0-9]+)/)[1];
@@ -25,6 +26,8 @@
             $("#report_select").change(function(){
                 location.href = $(this).val();
             });
+            $("#report_dropdown").dropdown();
+            $("#title-bar").addClass('ui-corner-top');
         });
     </script>
     <script type="text/javascript">
@@ -107,6 +110,7 @@
                 params.aoColumns = aoColumns;
                 $(this).dataTable(params);
             });
+            $('.datatable').parent().find('.fg-toolbar').removeClass('ui-corner-tr ui-corner-tl');
         }
         $(document).ready(function() {
             start_datatables();
@@ -149,9 +153,15 @@
     {% endif %}    
     
     <style>
+        h1 {
+            font-size: 2em;
+            text-align: center;
+        }
+
         .datatable {
             width: 100%;
         }
+
         #main_container {
             padding: 0;
         }
@@ -161,17 +171,40 @@
         #paramSelectorForm p {
             padding: 5px 0 5px 0;
         }
+        #title-bar {
+            background-color: #EEE;
+            border-bottom: 1px solid #CCC;
+        }
+        #title-bar > ul {
+            display: table-row;
+            position: absolute;
+        }
+        #title-bar > ul > li {
+            border-right: 1px solid #CCC;
+            padding: 0 .5em;
+            display: table-cell;
+        }
+        #title-bar > ul > li:last-child {
+            border-right: none;
+        }
     </style>
 {% endblock %}
 {% block content %}
     <div id="main_container">
         <div id="title-bar">
-            {% include "reports/partials/report_list.html" %}
+            <ul>
+                <li>
+                    <div id="report_dropdown">
+                        <span>Select Report</span>
+                        <div>
+                            {% include "reports/partials/report_list.html" %}
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <h1>{{ report.name|default:"Unknown Report" }}</h1>
         </div>
         <div id="report_header">
-            <div id="report-title">
-                <h1>{{ report.name|default:"Unknown Report" }}</h1>
-            </div>
             {% if show_dates or show_users or show_forms %}
             <form method="get" id="paramSelectorForm">
             {% if show_dates %}
@@ -185,8 +218,9 @@
                 </p>
             {% endif %}
             {% if show_users %}
+                <label for="individual_select">Select a CHW: </label>
                 <select id="individual_select" name="individual">
-                    <option  value=''>All Individuals</option>
+                    <option  value=''>All CHWs</option>
                     {% for user in users %}
                         <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
                     {% endfor %}

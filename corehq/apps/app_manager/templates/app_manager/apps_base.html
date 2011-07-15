@@ -196,9 +196,7 @@
                 {% if request.couch_user|can_edit_apps:domain %}
                 <li>
                     <div id="new_app_menu">
-                        <div>
-                            <a href="#">New Application</a>
-                        </div>
+                        <span>New Application</span>
                         <ul>
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
@@ -413,9 +411,7 @@
                             <td><a href="{% url emulator domain saved_app.id %}">Preview</a></td>
                             <td>
                                 <div class="download-dropdown">
-                                    <div>
-                                        <a href="#">Download</a>
-                                    </div>
+                                    <span>Download</span>
                                     <ul>
                                         <li>
                                             <a class="dialog_opener" href="">CommCare Files</a>
