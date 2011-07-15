@@ -1,9 +1,17 @@
 {% load plot_tags %}
-<script> 
-    {% formentry_plot_js domain user_id %}
-</script> 
-<div id="formentry-plot" style="width:950px;height:400px;"></div> 
-<p id="choices" style="float:left; width:50%">Show:</p>
-<div id="trendlegend" style="float:right; width:50%"></div>
-<div style="clear:both;"></div> 
- 
+{% block head %}
+    <script>
+        {% formentry_plot_js domain user_id %}
+    </script>
+    <style>
+        #formtrends-report {
+            padding: 20px;
+        }
+    </style>
+{% endblock %}
+<div id="formtrends-report">
+    <div id="formentry-plot" style="width:950px;height:400px;"></div>
+    <p id="choices" style="float:left; width:50%">Show:</p>
+    <div id="trendlegend" style="float:right; width:50%"></div>
+    <div style="clear:both;"></div>
+</div>

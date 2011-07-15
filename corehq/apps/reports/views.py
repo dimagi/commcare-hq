@@ -460,11 +460,11 @@ def submit_time_punchcard(request, domain, template="reports/basic_report.html",
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    return render_to_response(request, template, {
-        "domain": domain,
-        "report_partial": report_partial,
+    context = _report_context(domain, report_partial, "Submit Times")
+    context.update({
         "chart_url": url,
     })
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
 def submit_trends(request, domain, template="reports/basic_report.html",
