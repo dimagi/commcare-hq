@@ -166,10 +166,7 @@
 {% block content %}
     <div id="main_container">
         <div id="title-bar">
-            <h1>Reports</h1>
-            <select id="report_select">
-                {% include "reports/partials/report_list.html" %}
-            </select>
+            {% include "reports/partials/report_list.html" %}
         </div>
         <div id="report_header">
             <div id="report-title">

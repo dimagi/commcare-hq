@@ -2,13 +2,6 @@ from django.conf.urls.defaults import *
 from corehq.apps.domain.decorators import login_and_domain_required as protect
 from corehq.apps.reports.views import SubmitHistory
 
-actual_reports = patterns('corehq.apps.reports.views',
-    url('submit_history', protect(SubmitHistory.view), name="submit_history_report"),
-    url('submit_time_punchcard', 'submit_time_punchcard', name="submit_time_punchcard"),
-    url('submit_trends', 'submit_trends', name="submit_trends"),
-    url('submit_distribution', 'submit_distribution', name="submit_distribution"),
-)
-
 paging_reports = patterns('corehq.apps.reports.views',
     url('submit_history/(?P<individual>.*)/(?P<show_unregistered>.*)/', protect(SubmitHistory.ajax_view), name='paging_submit_history'),
     url('submit_history/(?P<individual>.*)/$', "paging_case_list", name='paging_case_list'),
@@ -49,7 +42,12 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # url(r'^partial/form_data/(?P<instance_id>.*)/$', 'form_data', name='render_form_data'),
     url(r"^export/", 'export_data'),
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
-    url(r'^r/', include(actual_reports)),
+
+    url('submit_history/$', protect(SubmitHistory.view), name="submit_history_report"),
+    url('submit_time_punchcard/$', 'submit_time_punchcard', name="submit_time_punchcard"),
+    url('submit_trends/$', 'submit_trends', name="submit_trends"),
+    url('submit_distribution/$', 'submit_distribution', name="submit_distribution"),
+
     url(r'^paging/', include(paging_reports)),
     url(r'^dodoma/', include(dodoma_reports)),
 

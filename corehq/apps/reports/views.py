@@ -76,7 +76,8 @@ class SubmitHistory(ReportBase):
         self.show_unregistered = True #json.loads(show_unregistered)
 
     @classmethod
-    def view(cls, request, domain, template="reports/partials/couch_report_partial.html"):
+    def view(cls, request, domain, template="reports/basic_report.html",
+                                   report_partial="reports/partials/couch_report_partial.html"):
 
         individual = request.GET.get('individual', '')
         show_unregistered = request.GET.get('show_unregistered', 'false')
@@ -84,9 +85,11 @@ class SubmitHistory(ReportBase):
 
         headings = ["View Form", "Username", "Submit Time", "Form"]
         return render_to_response(request, template, {
+            'domain': domain,
             'headings': headings,
             'rows': rows,
             'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
+            'report_partial': report_partial,
         })
     def rows(self, skip, limit):
         def format_time(time):
@@ -446,20 +449,27 @@ def download_cases(request, domain):
     return response
 
 @login_and_domain_required
-def submit_time_punchcard(request, domain):
+def submit_time_punchcard(request, domain, template="reports/basic_report.html",
+                                           report_partial="reports/partials/punchcard.html"):
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    return render_to_response(request, "reports/partials/punchcard.html", {
+    return render_to_response(request, template, {
+        "domain": domain,
+        "report_partial": report_partial,
         "chart_url": url,
     })
 
 @login_and_domain_required
-def submit_trends(request, domain):
+def submit_trends(request, domain, template="reports/basic_report.html",
+                                   report_partial="reports/partials/formtrends.html"):
     individual = request.GET.get("individual", '')
-    return render_to_response(request, "reports/partials/formtrends.html", 
-                              {"domain": domain,
-                               "user_id": individual})
+    return render_to_response(request, template, {
+        "domain": domain,
+        "report": {"name": "Submit Trends"},
+        "report_partial": report_partial,
+        "user_id": individual
+    })
 
 @login_and_domain_required
 def submit_distribution(request, domain):
