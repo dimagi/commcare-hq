@@ -34,11 +34,19 @@ import sys
 
 DATE_FORMAT = "%Y-%m-%d"
 
+datespan_default = datespan_in_request(
+    from_param="startdate",
+    to_param="enddate", 
+    format_string=DATE_FORMAT,
+    default_days=7
+)
+
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse("submissions_by_form_report", args=[domain]))
 
 @login_and_domain_required
+@datespan_default
 def export_data(req, domain):
     """
     Download all data for a couchdbkit model
@@ -321,8 +329,7 @@ def _form_list(domain):
     return [{"display": xmlns_to_name(r["key"][2], domain), "xmlns": r["key"][2]} for r in view]
     
 @login_and_domain_required
-@datespan_in_request(from_param="startdate", to_param="enddate", 
-                     format_string=DATE_FORMAT, default_days=7)
+@datespan_default
 def completion_times(request, domain):
     headers = ["User", "Average duration", "Shortest", "Longest", "# Forms"]
     form = request.GET.get('form', '')
@@ -493,7 +500,7 @@ def submit_distribution(request, domain, template="reports/basic_report.html",
     })
     return render_to_response(request, template, context)
 
-def _report_context(domain, report_partial=None, title=None, individual=None):
+def _report_context(domain, report_partial=None, title=None, individual=None, datespan=None):
     context = {
         "domain": domain,
         "report": {
@@ -507,6 +514,11 @@ def _report_context(domain, report_partial=None, title=None, individual=None):
             show_users=True,
             users= _user_list(domain),
             individual=individual,
+        )
+    if datespan:
+        context.update(
+            show_dates=True,
+            datespan=datespan
         )
     return context
 
@@ -530,8 +542,7 @@ def submission_log(request, domain):
 
 
 @login_and_domain_required
-@datespan_in_request(from_param="startdate", to_param="enddate", 
-                     format_string=DATE_FORMAT, default_days=7)
+@datespan_default
 def daily_submissions(request, domain, view_name, title):
     if not request.datespan.is_valid():
         messages.error(request, "Sorry, that's not a valid date range because: %s" % \
@@ -583,6 +594,7 @@ def daily_submissions(request, domain, view_name, title):
     })
 
 @login_and_domain_required
+@datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
     forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
     forms = [x['value'] for x in forms]
@@ -632,16 +644,13 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         else:
             unknown_forms.append(f)
 
-
-    return render_to_response(request, template, {
-        "domain": domain,
+    context = _report_context(domain, title="Export Data to Excel", datespan=request.datespan)
+    context.update({
         "forms": forms,
         "forms_by_app": apps,
         "unknown_forms": unknown_forms,
-        "report": {
-            "name": "Export Data to Excel"
-        }
     })
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
 def form_data(request, domain, instance_id):
@@ -682,11 +691,13 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 #Document.__repr__ = lambda self: repr(self.to_json())
 
 @login_and_domain_required
+@datespan_default
 def submissions_by_form(request, domain):
+    datespan = request.datespan
     users = CouchUser.commcare_users_by_domain(domain)
     userIDs = [user.userID for user in users]
-    counts = submissions_by_form_json(domain=domain, userIDs=userIDs, **json_request(request.GET))
-    form_types = _relevant_form_types(domain=domain, userIDs=userIDs, **json_request(request.GET))
+    counts = submissions_by_form_json(domain=domain, userIDs=userIDs, datespan=datespan)
+    form_types = _relevant_form_types(domain=domain, userIDs=userIDs, datespan=datespan)
     form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
     form_names = [name.replace("/", " / ") for name in form_names]
 
@@ -712,22 +723,22 @@ def submissions_by_form(request, domain):
     totals_by_form = [totals_by_form[form_type] for form_type in form_types]
     
     rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
-    report = {
-        "name": "Submissions by Form (in the last 7 days)",
-        "headers": ['User'] + list(form_names) + ['All Forms'],
-        "rows": rows,
-    }
-    return render_to_response(request, 'reports/generic_report.html', {
-        "domain": domain,
-        "report": report,
+    context = _report_context(domain, datespan=datespan)
+    context.update({
+        'report': {
+            "name": "Submissions by Form",
+            "headers": ['User'] + list(form_names) + ['All Forms'],
+            "rows": rows,
+        }
     })
 
+    return render_to_response(request, 'reports/generic_report.html', context)
 
-def _relevant_form_types(domain, userIDs=None, start=None, end=None):
-    start, end = mk_date_range(start, end, iso=True)
+
+def _relevant_form_types(domain, userIDs=None, datespan=None):
     submissions = XFormInstance.view('reports/all_submissions',
-        startkey=[domain, start],
-        endkey=[domain, end],
+        startkey=[domain, datespan.startdate_param],
+        endkey=[domain, datespan.enddate_param],
         include_docs=True,
         reduce=False
     )
@@ -749,11 +760,10 @@ def _relevant_form_types(domain, userIDs=None, start=None, end=None):
 
     return sorted(form_types)
 
-def submissions_by_form_json(domain, start=None, end=None, userIDs=None):
-    start, end = mk_date_range(start, end, iso=True)
+def submissions_by_form_json(domain, datespan, userIDs=None):
     submissions = XFormInstance.view('reports/all_submissions',
-        startkey=[domain, start],
-        endkey=[domain, end],
+        startkey=[domain, datespan.startdate_param],
+        endkey=[domain, datespan.enddate_param],
         include_docs=True,
         reduce=False
     )

@@ -187,6 +187,10 @@
         #title-bar > ul > li:last-child {
             border-right: none;
         }
+        input.date-picker {
+            width: 100px;
+            text-align: center;
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -208,14 +212,15 @@
             {% if show_dates or show_users or show_forms %}
             <form method="get" id="paramSelectorForm">
             {% if show_dates %}
-                <p>Start Date: <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate_param }}">
-                   End Date: <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate_param }}">
+                    <label for="startdate">From Date:</label>
+                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate_param }}">
+                   <label for="enddate">To Date:</label>
+                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate_param }}">
                    {# oddly enough, this is the only form that needs or has a submit button #}
                    <input type="submit" value="Go!" />
-                </p>
-                <p>
-                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>
-                </p>
+{#                <p>#}
+{#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
+{#                </p>#}
             {% endif %}
             {% if show_users %}
                 <label for="individual_select">Select a CHW: </label>
@@ -228,7 +233,7 @@
             {% endif %}
             {% if show_forms %}
                 <p>
-                <label for="form">Choose Form: </label>
+                <label for="form_select">Choose Form: </label>
                 <select id="form_select" name="form">
                     {% if all_forms_selectable %}
                     <option  value=''>All Forms</option>
