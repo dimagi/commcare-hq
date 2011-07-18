@@ -13,13 +13,44 @@
         table.export_data {
             border: 1px solid #ccc;
             margin: auto;
+            padding-top: 2em;
+            width: 100%;
         }
     </style>
+    <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
 {% endblock %}
 
 {% block reportcontent %}
+{% if saved_exports %}
     <div class="padded">
+        <h2>Saved Custom Exports</h2>
+        <table class="export_data">
+            <tr>
+                <th>Name</th>
+                <th>Form</th>
+                <th></th><th></th><th></th>
+            </tr>        
+        {% for export in saved_exports %}
+            <tr class="{% cycle "odd" "even" %}">
+                <td>{{ export.name|default:"[blank]" }}</td>
+                <td>{{ export.formname }}</td>
+                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}'>
+                        Download data
+                    </a></td>
+                <td><a href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
+                        Edit
+                    </a></td>
+                <td><a class="delete_link" href="#">Delete</a>
+                    {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+                 </td>
+             </tr>
+        {% endfor %}
+        </table>
+    </div>
+    {% endif %}
     {% if forms %}
+    <div class="padded">
+        <h2>Export full forms</h2>
         <table class="export_data">
             <tr>
                 <th>Application</th>
@@ -59,12 +90,16 @@
                     <td>
                         <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag={% if form.xmlns != None %}"{{ form.xmlns }}"{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}'>
                             Download
+                        </a><br>
+                        {% if form.xmlns != None %}
+                        <a href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'>
+                            Create Custom Export
                         </a>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
         </table>
-    {% endif %}
-
     </div>
+{% endif %}
 {% endblock %}

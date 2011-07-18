@@ -31,6 +31,11 @@ from django.template.defaultfilters import yesno
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.reports.display import xmlns_to_name
 import sys
+from couchexport.schema import build_latest_schema
+from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
+    ExportTable
+from couchexport.shortcuts import export_data_shared
+from django.views.decorators.http import require_POST
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -60,17 +65,113 @@ def export_data(req, domain):
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
-    tmp = StringIO()
-    if export([domain, export_tag], tmp, format=format):
-        response = HttpResponse(mimetype='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (export_tag, format)
-        response.write(tmp.getvalue())
-        tmp.close()
-        return response
+    
+    resp = export_data_shared([domain,export_tag], format, filename=export_tag)
+    if resp:
+        return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         return HttpResponseRedirect(next)
 
+@login_and_domain_required
+def custom_export(req, domain):
+    """
+    Customize an export
+    """
+    try:
+        export_tag = [domain, 
+                      json.loads(req.GET.get("export_tag", "null") or "null")]
+    except ValueError:
+        return HttpResponseBadRequest()
+    
+    if req.method == "POST":
+        table = req.POST["table"]
+        cols = [col[:-4] for col in req.POST if col.endswith("_val")]
+        export_cols = [ExportColumn(index=col, 
+                                    display=req.POST["%s_display" % col]) \
+                       for col in cols]
+        export_table = ExportTable(index=table, display=req.POST["name"],
+                                   columns=export_cols)
+        export_def = SavedExportSchema(index=export_tag, 
+                                       schema_id=req.POST["schema"],
+                                       name=req.POST["name"],
+                                       tables=[export_table])
+        export_def.save()
+        messages.success(req, "Custom export created! You can continue editing here.")
+        return HttpResponseRedirect(reverse("edit_custom_export", 
+                                            args=[domain,export_def.get_id]))
+        
+    saved_export = SavedExportSchema.default(build_latest_schema(export_tag))
+    return render_to_response(req, "reports/customize_export.html", 
+                              {"saved_export": saved_export,
+                               "table_config": saved_export.table_configuration[0],
+                               "domain": domain})
+
+@login_and_domain_required
+def edit_custom_export(req, domain, export_id):
+    """
+    Customize an export
+    """
+    saved_export = SavedExportSchema.get(export_id)
+    if req.method == "POST":
+        table = req.POST["table"]
+        cols = [col[:-4] for col in req.POST if col.endswith("_val")]
+        export_cols = [ExportColumn(index=col, 
+                                    display=req.POST["%s_display" % col]) \
+                       for col in cols]
+        schema = ExportSchema.get(req.POST["schema"])
+        saved_export.index=schema.index 
+        saved_export.schema_id=req.POST["schema"]
+        saved_export.name=req.POST["name"]
+        table_dict = dict([t.index, t] for t in saved_export.tables)
+        if table in table_dict:
+            table_dict[table].columns = export_cols
+        else:
+            saved_export.tables.append(ExportTable(index=table,
+                                                   display=saved_export.name,
+                                                   coluns=export_cols))
+        saved_export.save()
+    
+    # not yet used, but will be when we support child table export
+    table_index = req.GET.get("table_id", None) 
+    if table_index:
+        table_config = saved_export.get_table_configuration(table_index)
+    else:
+        table_config = saved_export.table_configuration[0]
+        
+    return render_to_response(req, "reports/customize_export.html", 
+                              {"saved_export": saved_export,
+                               "table_config": table_config,
+                               "domain": domain})
+
+@login_and_domain_required
+@require_POST
+def delete_custom_export(req, domain, export_id):
+    """
+    Delete a custom export
+    """
+    saved_export = SavedExportSchema.get(export_id)
+    saved_export.delete()
+    messages.success(req, "Custom export was deleted.")
+    return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+
+@login_and_domain_required
+def export_custom_data(req, domain, export_id):
+    """
+    Export data from a saved export schema
+    """
+    saved_export = SavedExportSchema.get(export_id)
+    format = req.GET.get("format", Format.XLS_2007)
+    next = req.GET.get("next", "")
+    if not next:
+        next = reverse('excel_export_data_report', args=[domain])
+    
+    resp = saved_export.download_data(format)
+    if resp:
+        return resp
+    else:
+        messages.error(req, "Sorry, there was no data found for the tag '%s'." % saved_export.name)
+        return HttpResponseRedirect(next)
 
 class SubmitHistory(ReportBase):
     def __init__(self, request, domain, individual, show_unregistered="false"):
@@ -644,11 +745,23 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         else:
             unknown_forms.append(f)
 
+
+    # add saved exports. because of the way in which the key is stored
+    # (serialized json) this is a little bit hacky, but works. 
+    startkey = json.dumps([domain, ""])[:-3]
+    endkey = "%s{" % startkey
+    exports = SavedExportSchema.view("couchexport/saved_exports", 
+                                     startkey=startkey, endkey=endkey,
+                                     include_docs=True)
+    for export in exports:
+        export.formname = xmlns_to_name(export.index[1], domain)
+
     context = _report_context(domain, title="Export Data to Excel", datespan=request.datespan)
     context.update({
         "forms": forms,
         "forms_by_app": apps,
         "unknown_forms": unknown_forms,
+        "saved_exports": exports,
     })
     return render_to_response(request, template, context)
 

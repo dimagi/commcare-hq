@@ -1,0 +1,81 @@
+{% extends base_template %}
+
+{% block head %}
+    {{ block.super }}
+    <style>
+        p {
+            padding: .5em 0 .5em 0;
+        }
+        th {
+            text-align: left;
+        }
+        .delete_div {
+            padding: 1em 0 .5em 0;
+        }
+        
+        table.column_list {
+            border: 1px solid #ccc;
+            margin: auto;
+            width: 100%;
+        }
+        input[type="text"] {
+            width: 25em;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function(){
+            // style button
+            $(".button").button();
+            
+            // select all/none
+            $("#select_all").click(function() {
+                $(".field_include").attr('checked', true);
+            });
+            $("#select_none").click(function() {
+                $(".field_include").attr('checked', false);
+            });
+        });
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
+{% endblock %}
+
+{% block content %}
+<div id="main_container">
+    <div class="padded">
+    <p><a href="{% url excel_export_data_report domain %}" class="backlink">Back to Export Home</a></p>
+    <form method="post" {# action="{% url custom_export domain %}" #}>
+        <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
+        <input type="hidden" name="table" value="{{ table_config.index }}" />
+        <p><label for="name">Export Name: </label><input type="text" name="name" value="{{ saved_export.name }}" /></p>
+    <p class="helptext">Choose the fields you want to export below. You can also rename fields, which will update the headers in the export file.</p>
+    <div class="padded">
+    <table class="column_list">
+        <tr>
+            <th>Include this Field?<br>
+            Select: <a href="#" id="select_all">all</a>, <a href="#" id="select_none">none</a></th>
+            <th>Field</th>
+            <th>Display</th>
+        </tr>
+{% for columndef in table_config.column_configuration %}
+        <tr>
+            <td><input type="checkbox" class="field_include" name="{{ columndef.index }}_val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
+            <td>{{ columndef.index }}</td>
+            <td><input name="{{ columndef.index }}_display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
+        </tr>
+{% endfor %}
+    </table>
+    </div>
+    <input type="submit" value="{% if saved_export.get_id %}Save{% else %}Create{% endif %}" />
+    <input type="button" onClick="location.href='{% url excel_export_data_report domain %}'" value='{% if saved_export.get_id %}Back{% else %}Cancel{% endif %}' class="button" />
+    </form>
+    {% if saved_export.get_id %}
+    {% with saved_export as export %}
+    <div class="delete_div">
+    <a class="delete_link" href="#">Delete this export</a>
+    {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+    </div>
+    {% endwith %}
+    {% endif %}
+    </div>
+</div>
+{% endblock %}
