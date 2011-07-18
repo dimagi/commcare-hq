@@ -1,5 +1,5 @@
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -36,6 +36,8 @@ from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
 import logging
 from corehq.apps.app_manager.decorators import safe_download
+from . import fixtures
+
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -121,14 +123,40 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
+EXAMPLE_DOMAIN = 'example'
+
+def _get_or_create_app(app_id):
+    if app_id == "example--hello-world":
+        try:
+            app = Application.get(app_id)
+        except ResourceNotFound:
+            app = Application.wrap(fixtures.hello_world_example)
+            app._id = app_id
+            app.domain = EXAMPLE_DOMAIN
+            app.save()
+            return _get_or_create_app(app_id)
+        return app
+    else:
+        return VersionedDoc.get(app_id)
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
-        source = req.POST.get('source')
         name = req.POST.get('name')
-        source = json.loads(source)
+        try:
+            source = req.POST.get('source')
+            source = json.loads(source)
+            assert(source is not None)
+        except Exception:
+            app_id = req.POST.get('app_id')
+            source = _get_or_create_app(app_id)
+            src_dom = source['domain']
+            source = source.export_json()
+            source = json.loads(source)
+            if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                return HttpResponseForbidden()
         try: del source['_attachments']
-        except: pass
+        except Exception: pass
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
