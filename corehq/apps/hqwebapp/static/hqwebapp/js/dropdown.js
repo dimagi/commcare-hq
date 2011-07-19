@@ -4,7 +4,7 @@
     jQuery.fn.dropdown = function () {
         var $dropdown = this.addClass('dropdown'),
             $button = $('> *:first-child', this).addClass('ui-corner ui-corner-top'),
-            $list = $('> ul', this).css({zIndex: 1001, left: 0}).addClass("shadow ui-corner ui-corner-bottom"),
+            $list = $button.next().css({zIndex: 1001, left: 0}).addClass("shadow ui-corner ui-corner-bottom"),
             $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}).appendTo('body'),
             $window = $(window),
             isOpen,
@@ -40,6 +40,14 @@
         $list.click(function () {
             open(false);
         });
+        $list.find('> li').click(function () {
+            var href = $('a', this).attr('href');
+            if (href && href !== "#") {
+                window.location.href = href;
+            } else {
+                $('form', this).submit();
+            }
+        });
         $button.click(function () {
             open(!open());
             return false;
@@ -52,41 +60,58 @@
     };
     
     document.write(
-        "<style>\
-            .dropdown {\
-                position: relative;\
-                white-space: nowrap;\
-            }\
-            .dropdown > *:first-child {\
-                display: block;\
-                border: 1px solid #CCC;\
-                background-color: white;\
-                padding: .5em 1em;\
-                font-weight: bold;\
-            }\
-            .dropdown.dropdown-open > *:first-child, .dropdown > *:first-child:hover, .dropdown li > *:hover {\
-                background-color: #DDF;\
-            }\
-            .dropdown ul {\
-                display: table;\
-                list-style: none;\
-                border-collapse: collapse;\
-                margin: 0;\
-                position: absolute;\
-                padding: 0;\
-                top: 0;\
-                left: 0;\
-            }\
-            .dropdown li {\
-                display: table-row;\
-            }\
-            .dropdown li > * {\
-                display: table-cell;\
-                border: 1px solid #CCC;\
-                background-color: white;\
-                padding: .5em 1em;\
-            }\
-        </style>"
+        "<style>" +
+        "   .dropdown {" +
+        "       position: relative;" +
+        "       white-space: nowrap;" +
+        "   }" +
+        "   .dropdown a:hover {" +
+        "       text-decoration: none;" +
+        "   }" +
+        "    .dropdown > *:first-child {" +
+        "       display: block;" +
+        "       cursor: pointer;" +
+        "       border: 1px solid #CCC;" +
+        "       background-color: white;" +
+        "       padding: .5em 1em;" +
+        "       font-weight: bold;" +
+        "       color: #0067B1;" +
+        "   }" +
+        "   .dropdown.dropdown-open > *:first-child," +
+        "   .dropdown > *:first-child:hover," +
+        "   .dropdown > ul > li > *:hover {" +
+        "       background-color: #0067B1;" +
+        "       color: #FFF;" +
+        "   }" +
+        "   .dropdown.dropdown-open > *:first-child a," +
+        "   .dropdown > *:first-child:hover a," +
+        "   .dropdown > ul > li > *:hover a {" +
+        "       color: #FFF;" +
+        "   }" +
+        "   .dropdown > * + * {" +
+        "       position: absolute;" +
+        "       padding: 0;" +
+        "       top: 0;" +
+        "       left: 0;" +
+        "       background-color: white;" +
+        "       border: 1px solid #CCC;" +
+        "   }" +
+        "   .dropdown > ul {" +
+        "       display: table;" +
+        "       list-style: none;" +
+        "       border-collapse: collapse;" +
+        "       margin: 0;" +
+        "   }" +
+        "   .dropdown > ul > li {" +
+        "       display: table-row;" +
+        "       cursor: pointer;" +
+        "   }" +
+        "   .dropdown > ul > li > * {" +
+        "       display: table-cell;" +
+        "       border: 1px solid #CCC;" +
+        "       padding: .5em 1em;" +
+        "   }" +
+        "</style>"
     );
     
 }(jQuery));

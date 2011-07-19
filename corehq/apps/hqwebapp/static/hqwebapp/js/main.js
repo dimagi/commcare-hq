@@ -50,12 +50,23 @@ var COMMCAREHQ = (function () {
         },
         confirm: function (options) {
             var title = options.title,
-                message = options.message,
-                ok = options.ok,
-                $dialog = $('<div/>').dialog({
+                message = options.message || "",
+                onOpen = options.open || function () {},
+                onOk = options.ok,
+                $dialog = $('<div/>');
+
+            if (typeof message === "function") {
+                message.apply($dialog);
+            } else if (message) {
+                $dialog.text(message);
+            }
+            $dialog.dialog({
                     title: title,
                     modal: true,
                     resizable: false,
+                    open: function () {
+                        onOpen.apply($dialog);
+                    },
                     buttons: [{
                         text: "Cancel",
                         click: function () {
@@ -64,16 +75,11 @@ var COMMCAREHQ = (function () {
                     }, {
                         text: "OK",
                         click: function () {
-                            ok();
                             $(this).dialog('close');
+                            onOk.apply($dialog);
                         }
                     }]
                 });
-            if (typeof message === "function") {
-                $dialog.html(message());
-            } else {
-                $dialog.text(message);
-            }
         }
     };
 }());

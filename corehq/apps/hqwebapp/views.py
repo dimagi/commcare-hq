@@ -50,7 +50,7 @@ def redirect_to_default(req, domain=None):
             return render_to_response(req, "hqwebapp/no_permission.html", {})
         elif 1 == domains.count():
             #url = reverse('corehq.apps.app_manager.views.default', args=[domains[0].name])
-            url = reverse('corehq.apps.reports.views.submission_log', args=[domains[0].name])
+            url = reverse('corehq.apps.reports.views.default', args=[domains[0].name])
         else:
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)

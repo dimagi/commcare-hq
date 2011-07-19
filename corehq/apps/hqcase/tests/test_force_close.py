@@ -1,8 +1,9 @@
 from casexml.apps.case.tests.util import check_xml_line_by_line, bootstrap_case_from_xml
-from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml, format_time
+from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime
 from django.test import TestCase
+from dimagi.utils.parsing import json_format_datetime
 
 CLOSE_CASE_XML = """<?xml version='1.0' ?>
 <system version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/case">
@@ -51,7 +52,7 @@ class ForceCloseCaseTest(TestCase):
     def test_close_case_xml(self):
         time = datetime.utcnow()
         case_xml = get_close_case_xml(time=time, case_id="uid_blah", uid="uid_blah_1")
-        check_xml_line_by_line(self, case_xml, CLOSE_CASE_XML.format(time=format_time(time)))
+        check_xml_line_by_line(self, case_xml, CLOSE_CASE_XML.format(time=json_format_datetime(time)))
     
     def test_close_referral_xml(self):
         time = datetime.utcnow()
@@ -62,7 +63,7 @@ class ForceCloseCaseTest(TestCase):
             referral_type="blah",
             uid="uid_blah_2"
         )
-        check_xml_line_by_line(self, referral_xml, CLOSE_REFERRAL_XML.format(time=format_time(time)))
+        check_xml_line_by_line(self, referral_xml, CLOSE_REFERRAL_XML.format(time=json_format_datetime(time)))
     
     def test_close(self):
         case_id = 'uid_blah_3'

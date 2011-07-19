@@ -144,8 +144,11 @@ class XForm(WrappedNode):
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
+        duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
         if not trans_node.exists():
             raise XFormError("There's no language called '%s'" % old_code)
+        if duplicate_node.exists():
+            raise XFormError("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
     def localize(self, id, lang=None, form=None):

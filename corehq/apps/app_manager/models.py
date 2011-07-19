@@ -662,7 +662,15 @@ class ApplicationBase(VersionedDoc):
             return jadjar.jad, jadjar.jar
 
     def validate_app(self):
-        return []
+        errors = []
+
+        try:
+            self.create_all_files()
+        except AppError as e:
+            errors.append({'type': 'error', 'message': unicode(e)})
+        except Exception as e:
+            errors.append({'type': 'error', 'message': 'unexpected error'})
+        return errors
 
     @property
     def odk_profile_url(self):
@@ -1000,10 +1008,10 @@ class Application(ApplicationBase, TranslationMixin):
         # Make sure that putting together all the files actually works
         try:
             self.create_all_files()
-        except:
+        except Exception as e:
             if settings.DEBUG:
                 raise
-            errors.append({'type': "form error"})
+            errors.append({'type': "form error", 'message': unicode(e)})
         
         return errors
 
@@ -1046,7 +1054,10 @@ class RemoteApp(ApplicationBase):
     #     return urlopen(self.suite_url).read()
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
-        return urlopen(self.profile_url).read()
+        try:
+            return urlopen(self.profile_url).read()
+        except Exception:
+            raise AppError('Unable to access profile url: "%s"' % self.profile_url)
         
     def fetch_file(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
@@ -1056,8 +1067,12 @@ class RemoteApp(ApplicationBase):
             location = location.lstrip(base)
         elif location.startswith('jr://resource/'):
             location = location.lstrip('jr://resource/')
-        return location, urlopen(urljoin(self.profile_url, location)).read().decode('utf-8')
-        
+        url = urljoin(self.profile_url, location)
+        try:
+            return location, urlopen(url).read().decode('utf-8')
+        except Exception:
+            raise AppError('Unable to access resource url: "%s"' % url)
+
     def create_all_files(self):
         files = {
             'profile.xml': self.create_profile(),
@@ -1071,7 +1086,7 @@ class RemoteApp(ApplicationBase):
         for resource in soup.findAll('resource'):
             try:
                 loc = resource.findChild('location', authority='remote').string
-            except:
+            except Exception:
                 loc = resource.findChild('location', authority='local').string
             locations.append(loc)
         for location in locations:

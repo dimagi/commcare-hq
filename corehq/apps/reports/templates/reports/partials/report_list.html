@@ -1,14 +1,86 @@
-<optgroup label="Submissions">
-    <option value="{% url submission_log_report domain %}">Submission Log</option>
-    <option value="{% url submissions_by_form_report domain %}">Submissions By Form</option>
-    <option value="{% url daily_submissions_report domain %}">Daily Form Submissions</option>
-    <option value="{% url daily_completions_report domain %}">Daily Form Completions</option>
-    <option value="{% url completion_times_report domain %}">Form Completion Trends</option>
-</optgroup>
-<optgroup label="Cases">
-    <option value="{% url case_activity_report domain %}">Case Activity</option>
-    <option value="{% url case_list_report domain %}">Case List</option>
-</optgroup>
-<optgroup label="Raw Data">
-    <option value="{% url excel_export_data_report domain %}">Export data to excel</option>
-</optgroup>
+
+{% block head %}
+
+    <style type="text/css">
+
+        #report-list {
+            display: table-row;
+        }
+        #report-list > li {
+            border-right: 1px solid #CCC;
+            display: table-cell;
+            padding: 15px;
+        }
+        #report-list > li:last-child {
+            border-right: none;
+        }
+        #report-list .report-link {
+            padding: 5px 10px;
+            margin:  2px 0;
+            border:  1px solid transparent;
+            cursor: pointer;
+        }
+        #report-list .report-link.report-link-other:hover {
+            border:  1px solid #CCC;
+            background-color:  #0067B1;
+            color: #FFF;
+        }
+        #report-list .report-link.report-link-other:hover a {
+            color: #FFF;
+        }
+        #report-list .report-link a:hover {
+            text-decoration: none;
+        }
+        #report-list .report-link-current {
+            border:  1px solid #CCC;
+            background-color:  #E2E4FF;
+        }
+    </style>
+    <script>
+        $(function () {
+            'use strict';
+            var $reportLinks = $("#report-list > li > ul > li").addClass("report-link ui-corner-all"),
+                clicked = false;
+            $reportLinks.click(function () {
+                window.location.href = $('a', this).attr('href');
+            });
+            $reportLinks.each(function () {
+                var url = $('a', this).attr('href').split('?')[0];
+                if (url == location.pathname) {
+                    $(this).addClass('report-link-current');
+                } else {
+                    $(this).addClass('report-link-other');
+                }
+            })
+        });
+    </script>
+{% endblock %}
+<ul id="report-list">
+    <li>
+        <h2>Worker Monitoring</h2>
+        <ul>
+            <li><a href="{% url case_activity_report domain %}">Case Activity</a></li>
+            <li><a href="{% url submissions_by_form_report domain %}">Submissions By Form</a></li>
+            <li><a href="{% url daily_submissions_report domain %}">Daily Form Submissions</a></li>
+            <li><a href="{% url daily_completions_report domain %}">Daily Form Completions</a></li>
+            <li><a href="{% url completion_times_report domain %}">Form Completion Trends</a></li>
+            <li><a href="{% url submit_time_punchcard domain %}?individual={{ individual }}">Submit Times</a></li>
+            <li><a href="{% url submit_trends domain %}?individual={{ individual }}">Submit Trends</a></li>
+            <li><a href="{% url submit_distribution domain %}?individual={{ individual }}">Submit Distribution</a></li>
+        </ul>
+    </li>
+    <li>
+        <h2>Data Inspection</h2>
+        <ul>
+            <li><a href="{% url submit_history_report domain %}?individual={{ individual }}&show_unregistered={{ show_unregistered }}">Submit History</a></li>
+            <li><a href="{% url case_list_report domain %}">Case List</a></li>
+        </ul>
+    </li>
+    <li>
+        <h2>Raw Data</h2>
+        <ul>
+            <li><a href="{% url excel_export_data_report domain %}">Export submissions to excel</a></li>
+            <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
+        </ul>
+    </li>
+</ul>
