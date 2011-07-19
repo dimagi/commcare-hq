@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}
+    File Download
+{% endblock title %}
+{% block extrahead %}
+    <script type="text/javascript">
+
+
+        var autoRefresh = '';
+        var pollDownloader =
+                                function() {
+                                    console.log($('#ready_{{ download_id }}'));
+                                    if ($('#ready_{{ download_id }}').length == 0)
+                                    {
+                                        $.get("{% url ajax_job_poll download_id %}", function(data) {
+                                            $("#downloader_container").html(data);
+                                        });
+                                    } else {
+                                        clearInterval(autoRefresh);
+                                    }
+                                };
+        $(document).ready(
+                function() {
+                    autoRefresh = setInterval(pollDownloader, 2000);
+
+                }
+        );
+    </script>
+{% endblock extrahead %}
+{% block content %}
+    <h2>File Downloader</h2>
+    <div id="downloader_container">
+    </div>
+
+{% endblock content %}

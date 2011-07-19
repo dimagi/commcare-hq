@@ -1,0 +1,8 @@
+    {% if is_ready %}
+        <div id="ready_{{ download_id }}">
+        <h3>File is ready!</h3>
+        <strong><a href="{% url retrieve_download download_id %}?get_file">Download Now</a></strong>
+        </div>
+    {% else %}
+        <img src="{{ STATIC_URL }}downloader/ajax-loader.gif"> Processing...
+    {% endif %}
