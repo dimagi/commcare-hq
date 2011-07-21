@@ -9,10 +9,10 @@ Prints out any missing files, or reports "passing"
 class FileChecker(object):
     COMMANDS = {
         "?": "help",
-        "r": "run_file_check",
+        "c": "run_file_check",
         "l": "list_extras",
         "q": "quit",
-        "c": "clean",
+        "x": "clean",
     }
     
     EXCLUDES = set(("commcare.jad", "commcare.jar", "checkfiles.py", "list.txt"))
