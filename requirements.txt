@@ -13,4 +13,3 @@ django-kombu
 openpyxl
 unidecode
 djtables
-couchapp
