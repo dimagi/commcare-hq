@@ -3,6 +3,9 @@
 {% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
+    <script src="{{ STATIC_URL }}hqwebapp/javascripts/underscore-1.1.7.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/lcs-merge.js"></script>
+    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config.js"></script>
     <script>
         $(function () {
@@ -15,10 +18,11 @@
                     ref_long: {{ module.details.3|JSON }}
                 },
                 properties: {
-                    'case': ["external-id", "date-opened", "name", "status"].concat({{ case_properties|JSON }}),
+                    'case': ["name", "date-opened", "status", "external-id"].concat({{ case_properties|JSON }}),
                     referral: ["id", "type", "date-due", "date-created"]
                 },
-                lang: {{ lang|JSON }}
+                lang: {{ lang|JSON }},
+                edit: {{ edit|JSON }}
             });
         });
 //        function configureDetailColumnAdd() {
@@ -133,49 +137,69 @@
 //        });
     </script>
     <style type="text/css">
-        .detail-headers tr {
+        .detail-screen-table {
+            /*border-collapse: separate;*/
+            /*border-spacing: 1px;*/
+        }
+        .detail-screen-table tr {
             /*height: 2.5em;*/
         }
-        .detail-headers input {
-            /*width: 100%;*/
+        .detail-screen-table input {
+            width: 100%;
         }
-        .detail-headers select {
-            font-size: .9em;
-            /*width: 100%;*/
+        .detail-screen-table select {
+            font-size: .8em;
         }
-        .detail-headers th, .detail-headers td {
+        .detail-screen-table th, .detail-screen-table td {
             padding: 5px;
             /*border: 1px solid black;*/
             vertical-align: middle;
         }
 
-        .detail-headers .drag-button-column, .detail-headers .delete-button-column{
+        .detail-screen-table .detail-screen-icon {
             width: 21px;
         }
-        .detail-headers .model-column {
+        .detail-screen-table .detail-screen-model {
             font-size: .9em;
-            width: 80px;
+            width: 70px;
             padding-left: 0;
             padding-right: 0;
         }
-        .detail-headers .field-column {
+        .detail-screen-table .detail-screen-field {
             width: 110px;
         }
-        .detail-headers .header-column {
+        .detail-screen-table .detail-screen-header {
             width: 100px;
         }
-        .detail-headers .format-column {
+        .detail-screen-table .detail-screen-format {
+            font-size: .9em;
+            padding: 0 10px;
             width: 87px;
         }
-        .detail-headers .enum-column {
+        .detail-screen-table .detail-screen-extra {
             width: 100px;
         }
-        .detail-headers .enum-column textarea{
+        .detail-screen-table .detail-screen-extra textarea,
+        .detail-screen-table .detail-screen-extra input {
             width: 90px;
         }
-        .detail-headers .late-flag-column {
+        .detail-screen-table .detail-screen-late-flag {
             width: 100px;
         }
+        .detail-screen-table .detail-screen-suggestion {
+            color: #888;
+            /*border: 2px solid transparent;*/
+        }
+        .detail-screen-table .detail-screen-suggestion:hover {
+            color: #444;
+            /*background-color: #EEE;*/
+            /*border: 2px solid #CCC;*/
+        }
+        .detail-screen-table .detail-screen-columns tr {
+            background-color: #EEE;
+            border: 1px solid #CCC;
+        }
+
     </style>
 {% endblock %}
 

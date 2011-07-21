@@ -1,202 +1,307 @@
+/*globals $, uiElement, eventize */
+
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column;
     Column = (function () {
         function Column(col, screen) {
+            /*
+                column properites: model, field, header, format
+                column extras: enum
+            */
+            var that = this;
+            this.original = col;
+
+            this.original.model = this.original.model || "case";
+            this.original.field = this.original.field || "";
+            this.original.header = this.original.header || {};
+            this.original.format = this.original.format || "plain";
+
             this.screen = screen;
-            this.model = col.model;
-            this.field = col.field;
             this.lang = screen.lang;
-            
-            this.setHeader(col.header ? col.header[this.lang] : "");
-            this.setSelected(col.selected);
-            this.setEnum((col['enum'] || {})[this.lang]);
-            this.setFormat(col.format);
-            console.log(col);
+
+            this.includeInShort = uiElement.checkbox().val(col.includeInShort || false);
+            this.includeInLong = uiElement.checkbox().val(col.includeInLong || false);
+
+            this.model = uiElement.select([
+                {label: "Case", value: "case"},
+                {label: "Referral", value: "referral"}
+            ]).val(col.model);
+            this.field = uiElement.input().val(col.field);
+            this.header = uiElement.input().val(col.header ? col.header[this.lang] || "" : "");
+            this.format = uiElement.select([
+                {"label": "Plain", "value": "plain"},
+                {"label": "Date", "value": "date"},
+                {"label": "Years Ago", "value": "years-ago"},
+                {"label": "Phone Number", "value": "phone"},
+                {"label": "Enum", "value": "enum"},
+                {"label": "Late Flag", "value": "late-flag"}
+            ]).val(col.format || null);
+
+            this.enum_extra = uiElement.input().val((col['enum'] || {})[this.lang] || "");
+
+            this.$extra = $('<span/>');
+            //this.setFormat(col.format);
+
+            this.format.on('change', function () {
+                that.$extra.find('> *').detach();
+                if (this.val() === "enum") {
+                    that.$extra.append(that.enum_extra.ui);
+                }
+            }).fire('change');
+
+            this.$add = $('<div class="ui-icon"/>').addClass(Column.ADD).click(function () {
+                that.screen.fire('add-column', that);
+            }).css({cursor: 'pointer'});
+            this.$delete = $('<div class="ui-icon"/>').addClass(Column.DELETE).click(function () {
+                that.screen.fire('delete-column', that);
+            }).css({cursor: 'pointer'});
         }
+        Column.GRIP = "ui-icon-grip-dotted-horizontal";
+        Column.ADD = "ui-icon-plusthick";
+        Column.DELETE = "ui-icon-closethick";
+
         Column.init = function (col, screen) {
             return new Column(col, screen);
         };
         Column.prototype = {
-            setHeader: function (header) {
-                this.header = header;
-                this.$header = (this.$header || $('<input type="text"/>')).val(header);
+            serialize: function () {
+                var column = this.original;
+                column.model = this.model.val();
+                column.field = this.field.val();
+                column.header[this.lang] = this.header.val();
+                column.format = this.format.val();
+                column['enum'] = this.enum_extra.val();
+                delete column.includeInShort;
+                delete column.includeInLong;
+                return column;
             },
-            setSelected: function (selected) {
-                var gripClass = "ui-icon-grip-dotted-horizontal";
-                if (this.selected !== selected) {
-                    this.selected = selected;
-                    this.$selected = (this.$selected || $('<input type="checkbox"/>')).prop("checked", selected);
-                    if (selected) {
-                        this.$grip = $('<div class="grip ui-icon"/>').addClass(gripClass);
+            setGrip: function (grip) {
+                if (this.grip !== grip) {
+                    this.grip = grip;
+                    if (grip) {
+                        this.$grip = $('<div class="grip ui-icon"/>').addClass(Column.GRIP).css({
+                            cursor: 'move'
+                        });
                     } else {
                         this.$grip = $('<span class="sort-disabled"></span>');
                     }
                 }
-            },
-            setFormat: function (format) {
-                if (!this.hasOwnProperty('$format')) {
-                    var i, option, options = [
-                        {"label": "Plain", "value": "plain"},
-                        {"label": "Date", "value": "date"},
-                        {"label": "Years Ago", "value": "years-ago"},
-                        {"label": "Phone Number", "value": "phone"},
-                        {"label": "Enum", "value": "enum"},
-                        {"label": "Late Flag", "value": "late-flag"},
-                    ];
-                    this.$format = $('<select/>');
-                    for (i = 0; i < options.length; i += 1) {
-                        option = options[i];
-                        $('<option/>').text(option.label).val(option.value).appendTo(this.$format);
-                    }
-                }
-                this.format = format;
-                this.$format.val(format);
-                if (format === "enum") {
-                    this.$extra = this.$enum;
-                } else {
-                    this.$extra = $("<span/>");
-                }
-            },
-            setEnum: function (_enum) {
-                this.$enum = (this.$enum || $('<input type="text"/>')).val(_enum);
-                this['enum'] = _enum;
-            },
-            handleSelectedChange: function (e) {
-                var selected = this.$selected.prop("checked");
-                console.log(selected);
-                if (this.selected !== selected) {
-                    if (this.selected) {
-                        this.screen.columns.splice(this.screen.columns.indexOf(this), 1);
-                        this.screen.unselectedColumns.push(this);
-                    } else {
-                        this.screen.unselectedColumns.splice(this.screen.unselectedColumns.indexOf(this), 1);
-                        this.screen.columns.push(this);
-                    }
-                    this.setSelected(selected);
-                    this.screen.render();
-                }
-            },
-            handleFormatChange: function (e) {
-                var format = this.$format.val();
-                this.setFormat(format);
-                this.screen.render();
-            },
-            initUI: function () {
-                var that = this;
-                this.initSelected();
-                this.$format.change(function (e) {
-                    that.handleFormatChange(e);
-                });
-                this.$enum.change(function (e) {
-                    that.setEnum(that.$enum.val());
-                });
-            },
-            initSelected: function () {
-                var that = this;
-                this.$selected.change(function (e) {
-                    that.handleSelectedChange(e);
-                });
             }
         };
         return Column;
     }());
     Screen = (function () {
         var sectionLabels = {
-            case_short: "Case List View",
-            case_long: "Case Full View",
-            ref_short: "Referral List View",
-            ref_long: "Referral Full View"
+            'case': "Case Details",
+            referral: "Referral Details"
         };
         function Screen($home, spec, options) {
-            var i, column, model, property,
-                selectedProperties = {"case": {}, referral: {}};
+            var i, column, model, property, header,
+                that = this, columns;
+            eventize(this);
             this.$home = $home;
+            this.edit = options.edit;
             this.columns = [];
-            this.unselectedColumns = [];
-            this.type = spec.type;
-            this.model = this.type === "ref_short" || this.type === "ref_long" ? "referral" : "case";
+            this.suggestedColumns = [];
+            this.model = spec.short.type === "ref_short" ? "referral" : "case";
             this.lang = options.lang;
             this.properties = options.properties;
 
-            for (i = 0; i < spec.columns.length; i += 1) {
-                column = spec.columns[i];
-                column.selected = true;
-                this.columns[i] = Column.init(column, this);
-                selectedProperties[column.model][column.field] = true;
+            function initColumnAsColumn(column) {
+                column.includeInShort.setEdit(that.edit);
+                column.includeInLong.setEdit(that.edit);
+                column.model.setEdit(false);
+                column.field.setEdit(false);
+                column.header.setEdit(that.edit);
+                column.format.setEdit(that.edit);
+                column.enum_extra.setEdit(that.edit);
+                column.setGrip(true);
+                return column;
             }
+
+            function initColumnAsSuggestion(column) {
+                column.includeInShort.setEdit(false);
+                column.includeInLong.setEdit(false);
+                column.model.setEdit(false);
+                column.field.setEdit(false);
+                column.header.setEdit(false);
+                column.format.setEdit(false);
+                column.enum_extra.setEdit(false);
+                column.setGrip(false);
+                return column;
+            }
+
+            columns = lcsMerge(spec.short.columns, spec.long.columns, _.isEqual).merge;
+
+            for (i = 0; i < columns.length; i += 1) {
+                column = columns[i].token;
+                column.includeInShort = columns[i].x;
+                column.includeInLong = columns[i].y;
+                this.columns[i] = Column.init(column, this);
+                initColumnAsColumn(this.columns[i]);
+            }
+
+            this.customColumn = Column.init({model: "case", format: "plain"}, this);
+
+            function toTitleCase(str) {
+                return str.replace('_', ' ').replace('-', ' ').replace(/\w\S*/g, function (txt) {
+                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                });
+            }
+
             for (model in this.properties) {
-                if (selectedProperties.hasOwnProperty(model) && !(this.model === 'case' && model === 'referral')) {
+                if (this.properties.hasOwnProperty(model) && !(this.model === 'case' && model === 'referral')) {
                     for (i = 0; i < this.properties[model].length; i += 1) {
                         property = this.properties[model][i];
-                        if (!selectedProperties[model].hasOwnProperty(property)) {
-                            this.unselectedColumns.push(Column.init({
-                                model: model,
-                                field: property,
-                                selected: false
-                            }, this));
-                        }
+                        header = {};
+                        header[this.lang] = toTitleCase(property);
+                        column = Column.init({
+                            model: model,
+                            field: property,
+                            header: header
+                        }, this);
+                        initColumnAsSuggestion(column);
+                        this.suggestedColumns.push(column);
                     }
                 }
             }
+
+            this.saveButton = {
+                ui: $('<span/>').text('Save').click(function () {
+                    console.log(JSON.stringify(that.serialize()));
+                })
+            };
+
             this.render();
+//            this.$home.find('*').change(function () {
+//                console.log(JSON.stringify(that.serialize()));
+//            });
+            this.on('add-column', function (column) {
+                column = column.serialize();
+                column = Column.init(column, this);
+                initColumnAsColumn(column);
+                this.columns.push(column);
+                this.addColumn(column, this.$columns, this.$columns.length, false).hide().fadeIn();
+            });
+            this.on('delete-column', function (column) {
+                var i = this.columns.indexOf(column);
+                this.$columns.find('tr:nth-child(' + (i + 1).toString() + ')').fadeOut(function () {
+                    $(this).remove();
+                });
+                this.columns.splice(i, 1);
+            });
         }
         Screen.init = function ($home, spec, lang) {
             return new Screen($home, spec, lang);
         };
         Screen.prototype = {
+            serialize: function () {
+                var i, column,
+                    shortColumns = [],
+                    longColumns = [];
+                for (i = 0; i < this.columns.length; i += 1) {
+                    column = this.columns[i];
+                    if (column.includeInShort.val()) {
+                        shortColumns.push(column.serialize());
+                    }
+                    if (column.includeInLong.val()) {
+                        longColumns.push(column.serialize());
+                    }
+                }
+                if (this.model == 'case') {
+                    return {
+                        'case_short': shortColumns,
+                        'case_long': longColumns
+                    };
+                } else {
+                    return {
+                        'ref_short': shortColumns,
+                        'ref_long': longColumns
+                    };
+                }
+            },
+            addColumn: function (column, $tbody, i, suggested) {
+                var $tr = $("<tr/>").data('index', i).appendTo($tbody);
+                if (suggested) {
+                    $tr.addClass('detail-screen-suggestion');
+                }
+                if (this.edit) {
+                    $("<td/>").addClass('detail-screen-icon').append(column.$grip).appendTo($tr);
+                    $("<td/>").addClass('detail-screen-icon').append(
+                        suggested ? column.$add : column.$delete
+                    ).appendTo($tr);
+                } else {
+                    $("<td/>").addClass('detail-screen-icon').appendTo($tr);
+                    $("<td/>").addClass('detail-screen-icon').appendTo($tr);
+                }
+                
+                $('<td/>').append(column.includeInShort.ui).appendTo($tr);
+                $('<td/>').append(column.includeInLong.ui).appendTo($tr);
+
+                if (this.model === 'referral') {
+                    $("<td/>").addClass('detail-screen-model').append(column.model.ui).appendTo($tr);
+                } else {
+                    $('<td/>').addClass('detail-screen-model').appendTo($tr);
+                }
+                $("<td/>").addClass('detail-screen-field').append(column.field.ui.addClass('code')).appendTo($tr);
+                $("<td/>").addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
+                $("<td/>").addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
+                $("<td/>").addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
+                return $tr;
+            },
             render: function () {
-                var $table, $columns, $unselectedColumns, $tr, i, showColumn,
+                var $table, $columns, $suggestedColumns, $tr, i,
                     that = this,
                     rows = [];
-                this.$home.html("");
-                $("<h1/>").text(sectionLabels[this.type]).appendTo(this.$home);
+                //this.$home.empty();
+                $("<h1/>").text(sectionLabels[this.model]).appendTo(this.$home);
+                $('<div/>').append(this.saveButton.ui).appendTo(this.$home);
                 
-                $table = $("<table/>").appendTo(this.$home);
-
+                $table = $("<table/>").addClass('detail-screen-table').appendTo(this.$home);
+                
                 $tr = $("<tr/>").appendTo($table);
 
-                $("<th/>").appendTo($tr);
-                $("<th/>").appendTo($tr);
+//                $("<th/>").appendTo($tr);
+                // add or delete
+                $("<th/>").addClass('detail-screen-icon').appendTo($tr);
+                // grip
+                $("<th/>").addClass('detail-screen-icon').appendTo($tr);
+                
+                $("<th/>").text("Short").appendTo($tr);
+                $("<th/>").text("Long").appendTo($tr);
                 if (this.model === "referral") {
-                    $("<th/>").text("Model").appendTo($tr);
+                    $("<th/>").text("Model").addClass('detail-screen-model').appendTo($tr);
+                } else {
+                    $('<th/>').addClass('detail-screen-model').appendTo($tr);
                 }
-                $("<th/>").text("Property").appendTo($tr);
-                $("<th/>").text("Header").appendTo($tr);
-                $("<th/>").text("Format").appendTo($tr);
-                $("<th/>").appendTo($tr); // Extra
+                $("<th/>").addClass('detail-screen-field').text("Property").appendTo($tr);
+                $("<th/>").addClass('detail-screen-header').text("Label").appendTo($tr);
+                $("<th/>").addClass('detail-screen-format').text("Format").appendTo($tr);
+                $("<th/>").addClass('detail-screen-extra').appendTo($tr);
 
-                $columns = $("<tbody/>").appendTo($table);
-                $unselectedColumns = $("<tbody/>").appendTo($table);
+                $columns = $("<tbody/>").addClass('detail-screen-columns').appendTo($table);
+                $suggestedColumns = $("<tbody/>").appendTo($table);
 
-                this.unselectedColumns.sortBy(function () {
+                this.suggestedColumns.sortBy(function () {
                     return [this.model, this.field];
                 });
 
-                showColumn = function (column, $tbody, i) {
-                    $tr = $("<tr/>").data('index', i).appendTo($tbody);
-
-                    $("<td/>").append(column.$grip).appendTo($tr);
-                    $("<td/>").append(column.$selected).appendTo($tr);
-                    if (that.model === 'referral') {
-                        $("<td/>").text(column.model).appendTo($tr);
-                    }
-                    $("<td/>").html("<code>" + column.field + "</code>").appendTo($tr);
-                    $("<td/>").append(column.$header).appendTo($tr);
-                    $("<td/>").append(column.$format).appendTo($tr);
-                    $("<td/>").append(column.$extra).appendTo($tr);
-                    rows.push($tr.elem);
-                };
                 for (i = 0; i < this.columns.length; i += 1) {
-                    showColumn(this.columns[i], $columns, i);
+                    this.addColumn(this.columns[i], $columns, i, false);
                 }
-                for (i = 0; i < this.unselectedColumns.length; i += 1) {
-                    showColumn(this.unselectedColumns[i], $unselectedColumns, i);
+                if (this.edit) {
+                    this.addColumn(this.customColumn, $suggestedColumns, -1, true);
+                    for (i = 0; i < this.suggestedColumns.length; i += 1) {
+                        this.addColumn(this.suggestedColumns[i], $suggestedColumns, i, true);
+                        this.suggestedColumns[i].includeInShort.ui.hide();
+                        this.suggestedColumns[i].includeInLong.ui.hide();
+                    }
                 }
                 this.$columns = $columns;
 
                 // init UI events
-                this.initUI(rows);
+                this.initUI($columns);
             },
             initUI: function (rows) {
                 var i, column,
@@ -206,45 +311,45 @@ var DetailScreenConfig = (function () {
                     items: ">*:not(:has(.sort-disabled))",
                     update: function (e, ui) {
                         var fromIndex = ui.item.data('index'),
-                            // rows is a closure variable
-                            toIndex = rows.indexOf(ui.item);
-
+                            toIndex = rows.find('tr').get().indexOf(ui.item[0]);
                         function reorder(list) {
                             var tmp = list.splice(fromIndex, 1)[0];
                             list.splice(toIndex, 0, tmp);
                         }
-                        reorder(rows);
                         reorder(that.columns);
+                        rows.find('tr').each(function (i) {
+                            $(this).data('index', i);
+                        });
+//                        for (var i = 0; i < that.columns.length; i += 1) {
+//                            console.log(that.columns[i].field.val());
+//                        }
                     }
                 });
-                for (i = 0; i < this.columns.length; i += 1) {
-                    column = this.columns[i];
-                    column.initUI();
-                }
-                for (i = 0; i < this.unselectedColumns.length; i += 1) {
-                    column = this.unselectedColumns[i];
-                    column.initUI();
-                }
             }
         };
         return Screen;
     }());
     DetailScreenConfig = (function () {
         var DetailScreenConfig = function ($home, spec) {
-            var detail_type;
+            var detail_type,
+                that = this;
             this.$home = $home;
             this.properties = spec.properties;
             this.state = {};
             this.lang = spec.lang;
-            for (detail_type in spec.state) {
-                if (spec.state.hasOwnProperty(detail_type)) {
-                    this.state[detail_type] = Screen.init($("<div/>"), spec.state[detail_type], {
-                        lang: this.lang,
-                        properties: this.properties
-                    });
-                    this.$home.append(this.state[detail_type].$home);
-                }
+            this.edit = spec.edit;
+
+            function addScreen(short, long) {
+                that.state[detail_type] = Screen.init($('<div/>'), {'short': short, 'long': long}, {
+                    lang: that.lang,
+                    edit: that.edit,
+                    properties: that.properties
+                });
+                that.$home.append(that.state[detail_type].$home);
             }
+
+            addScreen(spec.state.case_short, spec.state.case_long);
+            addScreen(spec.state.ref_short, spec.state.ref_long);
         };
 
         DetailScreenConfig.init = function ($home, spec) {
