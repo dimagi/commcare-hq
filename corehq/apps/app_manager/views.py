@@ -36,6 +36,7 @@ from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from . import fixtures
+from django.utils.datastructures import SortedDict
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -739,11 +740,17 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
                 if i not in audio_files: audio_files[i] = []
                 audio_files[i].append((m,f)) 
     
+    sorted_images = SortedDict()
+    sorted_audio = SortedDict()
+    for k in sorted(images):
+        sorted_images[k] = images[k]
+    for k in sorted(audio_files):
+        sorted_audio[k] = audio_files[k]
     return render_to_response(req, "app_manager/multimedia_home.html", 
                               {"domain": domain,
                                "app": app,
-                               "images": images,
-                               "audiofiles": audio_files})
+                               "images": sorted_images,
+                               "audiofiles": sorted_audio})
 
 @require_GET
 @login_and_domain_required
