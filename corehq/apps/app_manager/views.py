@@ -1,7 +1,8 @@
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
@@ -31,10 +32,8 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
-import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
-import logging
 from corehq.apps.app_manager.decorators import safe_download
 from . import fixtures
 
@@ -696,6 +695,55 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
+@require_permission('edit-apps')
+def multimedia_list_download(req, domain, app_id):
+    app = get_app(domain, app_id)
+    include_audio = req.GET.get("audio", True)
+    include_images = req.GET.get("images", True)
+    strip_jr = req.GET.get("strip_jr", True)
+    filelist = []
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            if include_images:
+                filelist.extend(parsed.image_references)
+            if include_audio:
+                filelist.extend(parsed.audio_references)
+    
+    if strip_jr:
+        filelist = [s.replace("jr://file/", "") for s in filelist if s]
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=list.txt' 
+    response.write("\n".join(sorted(set(filelist))))
+    return response
+        
+@require_permission('edit-apps')
+def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
+    """
+    Edit multimedia for forms
+    """
+    app = get_app(domain, app_id)
+    
+    parsed_forms = {}
+    images = {} 
+    audio_files = {}
+    # TODO: make this more fully featured
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            parsed_forms[f] = parsed
+            for i in parsed.image_references:
+                if i not in images: images[i] = []
+                images[i].append((m,f)) 
+            for i in parsed.audio_references:
+                if i not in audio_files: audio_files[i] = []
+                audio_files[i].append((m,f)) 
+    
+    return render_to_response(req, "app_manager/multimedia_home.html", 
+                              {"domain": domain,
+                               "app": app,
+                               "images": images,
+                               "audiofiles": audio_files})
 
 @require_GET
 @login_and_domain_required
