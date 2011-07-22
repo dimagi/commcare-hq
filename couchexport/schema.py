@@ -26,6 +26,8 @@ def build_latest_schema(schema_index):
     previous_export = ExportSchema.last(schema_index)
     docs = get_docs(schema_index, previous_export)
     [schema] = get_schema(docs, previous_export)
+    if not schema:
+        return None
     updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
                                       index=schema_index)
     updated_checkpoint.save()

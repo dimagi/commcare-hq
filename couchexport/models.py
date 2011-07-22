@@ -122,8 +122,8 @@ class SavedExportSchema(Document, UnicodeMixIn):
         return self._schema
     
     @classmethod
-    def default(cls, schema):
-        return cls(name="", index=schema.index, schema_id=schema.get_id,
+    def default(cls, schema, name=""):
+        return cls(name=name, index=schema.index, schema_id=schema.get_id,
                    tables=[ExportTable.default(schema.tables[0][0])])
         
     def get_table_configuration(self, index):
