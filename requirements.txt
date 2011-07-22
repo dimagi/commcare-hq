@@ -1,7 +1,7 @@
 django
 couchdbkit>=0.5.2
 pytz
-psycopg2==2.4.1
+psycopg2
 south
 gunicorn
 python-dateutil
