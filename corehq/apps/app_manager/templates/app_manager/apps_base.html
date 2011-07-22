@@ -205,6 +205,12 @@
                                 </form>
                             </li>
                             <li>
+                                <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+                                    <input type="hidden" name="app_id" value="example--hello-world"/>
+                                    <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
+                                </form>
+                            </li>
+                            <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>

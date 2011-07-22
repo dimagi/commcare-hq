@@ -3,7 +3,9 @@ import logging
 import urllib
 import urllib2
 from datetime import datetime
+
 from django.conf import settings
+
 from corehq.apps.sms.models import MessageLog, OUTGOING
 
 def send_sms(domain, id, phone_number, text):

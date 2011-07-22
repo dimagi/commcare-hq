@@ -1,7 +1,8 @@
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
@@ -31,11 +32,12 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
-import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
-import logging
 from corehq.apps.app_manager.decorators import safe_download
+from . import fixtures
+from django.utils.datastructures import SortedDict
+
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -121,14 +123,40 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
+EXAMPLE_DOMAIN = 'example'
+
+def _get_or_create_app(app_id):
+    if app_id == "example--hello-world":
+        try:
+            app = Application.get(app_id)
+        except ResourceNotFound:
+            app = Application.wrap(fixtures.hello_world_example)
+            app._id = app_id
+            app.domain = EXAMPLE_DOMAIN
+            app.save()
+            return _get_or_create_app(app_id)
+        return app
+    else:
+        return VersionedDoc.get(app_id)
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
-        source = req.POST.get('source')
         name = req.POST.get('name')
-        source = json.loads(source)
+        try:
+            source = req.POST.get('source')
+            source = json.loads(source)
+            assert(source is not None)
+        except Exception:
+            app_id = req.POST.get('app_id')
+            source = _get_or_create_app(app_id)
+            src_dom = source['domain']
+            source = source.export_json()
+            source = json.loads(source)
+            if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                return HttpResponseForbidden()
         try: del source['_attachments']
-        except: pass
+        except Exception: pass
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
@@ -668,6 +696,61 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
+@require_permission('edit-apps')
+def multimedia_list_download(req, domain, app_id):
+    app = get_app(domain, app_id)
+    include_audio = req.GET.get("audio", True)
+    include_images = req.GET.get("images", True)
+    strip_jr = req.GET.get("strip_jr", True)
+    filelist = []
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            if include_images:
+                filelist.extend(parsed.image_references)
+            if include_audio:
+                filelist.extend(parsed.audio_references)
+    
+    if strip_jr:
+        filelist = [s.replace("jr://file/", "") for s in filelist if s]
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=list.txt' 
+    response.write("\n".join(sorted(set(filelist))))
+    return response
+        
+@require_permission('edit-apps')
+def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
+    """
+    Edit multimedia for forms
+    """
+    app = get_app(domain, app_id)
+    
+    parsed_forms = {}
+    images = {} 
+    audio_files = {}
+    # TODO: make this more fully featured
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            parsed_forms[f] = parsed
+            for i in parsed.image_references:
+                if i not in images: images[i] = []
+                images[i].append((m,f)) 
+            for i in parsed.audio_references:
+                if i not in audio_files: audio_files[i] = []
+                audio_files[i].append((m,f)) 
+    
+    sorted_images = SortedDict()
+    sorted_audio = SortedDict()
+    for k in sorted(images):
+        sorted_images[k] = images[k]
+    for k in sorted(audio_files):
+        sorted_audio[k] = audio_files[k]
+    return render_to_response(req, "app_manager/multimedia_home.html", 
+                              {"domain": domain,
+                               "app": app,
+                               "images": sorted_images,
+                               "audiofiles": sorted_audio})
 
 @require_GET
 @login_and_domain_required

@@ -28,7 +28,13 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'rename_language/(?P<form_unique_id>\w+)/$',                          'rename_language'),
     (r'edit_form_actions/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<form_id>\w+)/$',
                                                                             'edit_form_actions'),
-
+    
+    # multimedia stuff
+    url(r'multimedia/(?P<app_id>\w+)/$',
+        'multimedia_home', name='multimedia_home'),
+    url(r'multimedia/(?P<app_id>\w+)/download/$',
+        'multimedia_list_download', name='multimedia_list_download'),
+    
     (r'edit_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',            'edit_module_detail'),
     (r'edit_module_attr/(?P<app_id>\w+)/(?P<module_id>\w+)/(?P<attr>\w+)/$','edit_module_attr'),
     (r'delete_module_detail/(?P<app_id>\w+)/(?P<module_id>\w+)/$',          'delete_module_detail'),

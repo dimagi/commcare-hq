@@ -38,15 +38,20 @@
             font-size: .8em;
             color: #555;
         }
+        .caution {
+            font-variant: small-caps;
+            font-weight: bold;
+            text-decoration: underline;
+        }
     </style>
 {% endblock %}
 {% block content %}
     <div id="main_container">
         <div id="emu-back">
-            <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Application</a>
+            <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Release Manager</a>
         </div>
         <div id="emu-warning">
-            Will make <strong>real</strong> submissions: will modify cases, register users, etc.
+            <span class="caution">Caution</span>: Will make <strong>real</strong> submissions: will modify cases, register users, etc.
         </div>
         <applet code="org.microemu.applet.Main"
                 width="226" height="471">
