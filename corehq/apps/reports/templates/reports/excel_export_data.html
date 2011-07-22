@@ -21,8 +21,8 @@
 {% endblock %}
 
 {% block reportcontent %}
-{% if saved_exports %}
     <div class="padded">
+    {% if saved_exports %}
         <h2>Saved Custom Exports</h2>
         <table class="export_data">
             <tr>
@@ -46,8 +46,12 @@
              </tr>
         {% endfor %}
         </table>
-    </div>
+    {% else %}
+    <h3>No Custom Exports yet! Click "Create Custom Export" on a form below to make one.</h3>
     {% endif %}
+    </div>
+    
+
     {% if forms %}
     <div class="padded">
         <h2>Export full forms</h2>
