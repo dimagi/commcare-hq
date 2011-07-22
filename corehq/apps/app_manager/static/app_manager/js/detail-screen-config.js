@@ -108,7 +108,11 @@ var DetailScreenConfig = (function () {
             }).fire('change');
 
             this.$add = $('<div class="ui-icon"/>').addClass(Column.ADD).click(function () {
-                that.duplicate();
+                if (that.field.val()) {
+                    that.duplicate();
+                } else {
+                    that.field.$edit_view.focus();
+                }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
             this.$copy = $('<div class="ui-icon"/>').addClass(Column.COPY).click(function () {
                 that.duplicate();
@@ -212,7 +216,7 @@ var DetailScreenConfig = (function () {
             }
             
             function toTitleCase(str) {
-                return str.replace('_', ' ').replace('-', ' ').replace(/\w\S*/g, function (txt) {
+                return str.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\w\S*/g, function (txt) {
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
             }
