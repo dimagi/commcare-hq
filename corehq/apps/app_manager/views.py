@@ -563,6 +563,32 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 
 @require_POST
 @require_permission('edit-apps')
+def edit_module_detail_screens(req, domain, app_id, module_id):
+    """
+    Called to over write entire detail screens at a time
+
+    """
+
+    params = json_request(req.POST)
+    screens = params.get('screens')
+
+    if not screens:
+        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    for detail_type in screens:
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
+
+@require_POST
+@require_permission('edit-apps')
 def edit_module_detail(req, domain, app_id, module_id):
     """
     Called to add a new module detail column or edit an existing one

@@ -1,0 +1,76 @@
+.detail-screen-table {
+}
+.detail-screen-table tr {
+}
+.detail-screen-table td {
+    word-wrap: break-word;
+}
+.detail-screen-table input[type="text"] {
+    width: 100%;
+}
+.detail-screen-table select {
+    font-size: .8em;
+}
+.detail-screen-table th, .detail-screen-table td {
+    padding: 5px;
+    vertical-align: middle;
+}
+
+.detail-screen-table th.detail-screen-checkbox {
+    font-size: .8em;
+}
+.detail-screen-table .detail-screen-checkbox {
+    width: 30px;
+}
+.detail-screen-table .detail-screen-icon {
+    width: 21px;
+}
+.detail-screen-table .detail-screen-model {
+    font-size: .9em;
+    width: 70px;
+    padding-left: 0;
+    padding-right: 0;
+}
+.detail-screen-table .detail-screen-field {
+    width: 110px;
+}
+.detail-screen-table .detail-screen-header {
+    width: 100px;
+}
+.detail-screen-table .detail-screen-format {
+    font-size: .9em;
+    padding: 0 10px;
+    width: 87px;
+}
+.detail-screen-table .detail-screen-extra {
+    width: 100px;
+}
+.detail-screen-table .detail-screen-extra textarea,
+.detail-screen-table .detail-screen-extra input {
+    width: 90px;
+}
+.detail-screen-table .detail-screen-late-flag {
+    width: 100px;
+}
+.detail-screen-table .detail-screen-suggestion {
+    color: #888;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.detail-screen-table .detail-screen-suggestion:hover {
+    color: inherit;
+    background-color: #EEE;
+    border: 1px solid #CCC;
+}
+.detail-screen-table .detail-screen-suggestion:hover td {
+    border-top: 1px solid #CCC;
+}
+.detail-screen-table .detail-screen-columns tr {
+    background-color: #EEE;
+    border-left: 1px solid #CCC;
+    border-right: 1px solid #CCC;
+}
+.detail-screen-table .detail-screen-columns td {
+    border-top: 1px solid #CCC;
+    border-bottom: 1px solid #CCC;
+}

@@ -22,52 +22,71 @@ var eventize, uiElement;
         };
     };
 
+
+    var Input = function ($elem, getElemValue, setElemValue) {
+        var that = this;
+        eventize(this);
+        this.ui = $('<span/>');
+        this.value = "";
+        this.edit = true;
+        this.getElemValue = function () {
+            return getElemValue($elem);
+        };
+        this.setElemValue = function (value) {
+            setElemValue($elem, value);
+        };
+
+        this.$edit_view = $elem.change(function () {
+            that.fire('change');
+        });
+        this.$noedit_view = $('<span class="ui-element-input"/>');
+
+        this.on('change', function () {
+            this.val(this.getElemValue());
+        });
+        this.setEdit(this.edit);
+    };
+    Input.prototype = {
+        val: function (value) {
+            if (value === undefined) {
+                return this.value;
+            } else {
+                this.value = value;
+                this.setElemValue(this.value);
+                this.$noedit_view.text(this.value);
+                return this;
+            }
+        },
+        setEdit: function (edit) {
+            this.edit = edit;
+            this.$edit_view.detach();
+            this.$noedit_view.detach();
+            if (this.edit) {
+                this.$edit_view.appendTo(this.ui);
+            } else {
+                this.$noedit_view.appendTo(this.ui);
+            }
+            return this;
+        }
+    };
+
     uiElement = {
         input: (function () {
-            var Input = function () {
-                var that = this;
-                eventize(this);
-                this.ui = $('<span/>');
-                this.value = "";
-                this.edit = true;
-
-                this.$edit_view = $('<input type="text"/>').change(function () {
-                    that.fire('change');
-                });
-                this.$noedit_view = $('<span class="ui-element-input"/>');
-
-                this.on('change', function () {
-                    this.val(this.ui.find('input').val());
-                });
-                this.setEdit(this.edit);
-            };
-            Input.prototype = {
-                val: function (value) {
-                    if (value === undefined) {
-                        return this.value;
-                    } else {
-                        this.value = value;
-                        this.$edit_view.val(this.value);
-                        this.$noedit_view.text(this.value);
-                        return this;
-                    }
-                },
-                setEdit: function (edit) {
-                    this.edit = edit;
-                    this.$edit_view.detach();
-                    this.$noedit_view.detach();
-                    if (this.edit) {
-                        this.$edit_view.appendTo(this.ui);
-                    } else {
-                        this.$noedit_view.appendTo(this.ui);
-                    }
-                    return this;
-                }
-            };
             return function () {
-                return new Input();
+                return new Input($('<input type="text"/>'), function ($elem) {
+                    return $elem.val();
+                }, function ($elem, value) {
+                    return $elem.val(value);
+                });
             };
         }()),
+        textarea: function () {
+            return new Input($('<textarea/>'), function ($elem) {
+                return $elem.val();
+            }, function ($elem, value) {
+                return $elem.val(value);
+            });
+        },
         select: (function () {
             var Select = function (options) {
                 var that = this,
@@ -141,7 +160,7 @@ var eventize, uiElement;
                 this.$edit_view = $('<input type="checkbox"/>').change(function () {
                     that.fire('change');
                 });
-                this.$noedit_view = $('<div class="ui-element-checkbox ui-icon"/>');
+                this.$noedit_view = $('<div class="ui-element-checkbox"/>');
 
                 this.on('change', function () {
                     this.val(this.ui.find('input').prop('checked'));
@@ -149,8 +168,8 @@ var eventize, uiElement;
                 this.val(this.value);
                 this.setEdit(this.edit);
             };
-            Checkbox.CHECKED = "ui-icon-check";
-            Checkbox.UNCHECKED = "ui-icon-close";
+            Checkbox.CHECKED = "ui-icon ui-icon-check";
+            Checkbox.UNCHECKED = "";
             Checkbox.prototype = {
                 val: function (value) {
                     if (value === undefined) {
