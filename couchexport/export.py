@@ -2,9 +2,9 @@ from couchexport.schema import get_docs, get_schema
 import csv
 import zipfile
 from StringIO import StringIO
-from couchapp.client import Database
 from django.conf import settings
 from couchexport.models import ExportSchema
+from couchdbkit.client import Database
 
 class Format(object):
     """
