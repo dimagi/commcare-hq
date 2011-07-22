@@ -21,9 +21,9 @@ var COMMCAREHQ = (function () {
                 }
             });
 
-            $(".button", $elem).button().wrap('<span />').addClass('shadow');
-            $("input[type='submit']", $elem).button().addClass('shadow');
-            $("input[type='text'], input[type='password'], textarea", $elem).addClass('shadow').addClass('ui-corner-all');
+            $(".button", $elem).button().wrap('<span />');
+            $("input[type='submit']", $elem).button();
+            $("input[type='text'], input[type='password'], textarea", $elem);//.addClass('shadow').addClass('ui-corner-all');
             $('.container', $elem).addClass('ui-widget ui-widget-content');
             $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
