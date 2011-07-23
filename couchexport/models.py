@@ -4,6 +4,35 @@ import json
 from StringIO import StringIO
 from dimagi.utils.mixins import UnicodeMixIn
 
+class Format(object):
+    """
+    Supported formats go here.
+    """
+    CSV = "csv"
+    XLS = "xls"
+    XLS_2007 = "xlsx"
+    
+    
+    FORMAT_DICT = {CSV: {"mimetype": "application/zip",
+                         "extension": "zip"},
+                   XLS: {"mimetype": "application/vnd.ms-excel",
+                         "extension": "xls"},
+                   XLS_2007: {"mimetype": "application/vnd.ms-excel",
+                              "extension": "xlsx"}}
+    
+    VALID_FORMATS = FORMAT_DICT.keys()
+    
+    def __init__(self, slug, mimetype, extension):
+        self.slug = slug
+        self.mimetype = mimetype
+        self.extension = extension
+    
+    @classmethod
+    def from_format(cls, format):
+        format = format.lower()
+        if format not in cls.VALID_FORMATS:
+            raise ValueError("Unsupported export format: %s!" % format)
+        return cls(format, **cls.FORMAT_DICT[format])
 
 class JsonProperty(Property):
     """
@@ -109,6 +138,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
     and display names.
     """
     name = StringProperty()
+    default_format = StringProperty()
     index = JsonProperty() # this is stored duplicately in the schema, but is convenient
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
@@ -156,14 +186,17 @@ class SavedExportSchema(Document, UnicodeMixIn):
         
         return trimmed_tables
     
-    def download_data(self, format, previous_export=None):
+    def download_data(self, format="", previous_export=None):
         """
         If there is data, return an HTTPResponse with the appropriate data. 
         If there is not data returns None.
         """
         from couchexport.export import export_from_tables
         from couchexport.shortcuts import export_response
-
+        
+        if not format:
+            format = self.default_format or Format.XLS_2007
+        
         tables = self.get_export_tables(previous_export)
         if not tables:
             return None

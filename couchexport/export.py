@@ -3,39 +3,10 @@ import csv
 import zipfile
 from StringIO import StringIO
 from django.conf import settings
-from couchexport.models import ExportSchema
+from couchexport.models import ExportSchema, Format
 from couchdbkit.client import Database
 import re
 
-class Format(object):
-    """
-    Supported formats go here.
-    """
-    CSV = "csv"
-    XLS = "xls"
-    XLS_2007 = "xlsx"
-    
-    
-    FORMAT_DICT = {CSV: {"mimetype": "application/zip",
-                         "extension": "zip"},
-                   XLS: {"mimetype": "application/vnd.ms-excel",
-                         "extension": "xls"},
-                   XLS_2007: {"mimetype": "application/vnd.ms-excel",
-                              "extension": "xlsx"}}
-    
-    VALID_FORMATS = FORMAT_DICT.keys()
-    
-    def __init__(self, slug, mimetype, extension):
-        self.slug = slug
-        self.mimetype = mimetype
-        self.extension = extension
-    
-    @classmethod
-    def from_format(cls, format):
-        format = format.lower()
-        if format not in cls.VALID_FORMATS:
-            raise ValueError("Unsupported export format: %s!" % format)
-        return cls(format, **cls.FORMAT_DICT[format])
         
 def get_full_export_tables(schema_index, previous_export):
     db = Database(settings.COUCH_DATABASE)
