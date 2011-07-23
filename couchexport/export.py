@@ -5,6 +5,7 @@ from StringIO import StringIO
 from django.conf import settings
 from couchexport.models import ExportSchema
 from couchdbkit.client import Database
+import re
 
 class Format(object):
     """
@@ -237,7 +238,7 @@ def _export_excel(tables):
         # should do something smarter.	
         table_name_truncated = _next_unique(table_name, used_names, 20)
         used_names.append(table_name_truncated)
-        sheet = book.add_sheet(table_name_truncated)
+        sheet = book.add_sheet(_clean_name(table_name_truncated))
         for i,row in enumerate(table):
             for j,val in enumerate(row):
                 sheet.write(i,j,unicode(val))
@@ -259,7 +260,7 @@ def _export_excel_2007(tables):
         table_name_truncated = _next_unique(table_name, used_names, 31)
         used_names.append(table_name_truncated)
         sheet = book.create_sheet()
-        sheet.title = table_name_truncated
+        sheet.title = _clean_name(table_name_truncated)
         for i,row in enumerate(table):
             # the docs claim this should work but the source claims it doesn't 
             #sheet.append(row) 
@@ -268,6 +269,9 @@ def _export_excel_2007(tables):
     return book
 
 
+def _clean_name(name):
+    return re.sub(r"[[\\?*/:\]]", "-", name)
+    
 def _next_unique(string, reserved_strings, max_len=500):
     counter = 1
     if len(string) > max_len:
