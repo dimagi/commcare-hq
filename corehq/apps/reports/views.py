@@ -17,7 +17,7 @@ from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 import couchforms.views as couchforms_views
-from couchexport.export import export, Format
+from couchexport.export import export
 from StringIO import StringIO
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime
@@ -33,7 +33,7 @@ from corehq.apps.reports.display import xmlns_to_name
 import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable
+    ExportTable, Format
 from couchexport.shortcuts import export_data_shared
 from django.views.decorators.http import require_POST
 
@@ -87,6 +87,7 @@ def custom_export(req, domain):
         export_def = SavedExportSchema(index=export_tag, 
                                        schema_id=req.POST["schema"],
                                        name=req.POST["name"],
+                                       default_format=req.POST["format"] or Format.XLS_2007,
                                        tables=[export_table])
         export_def.save()
         messages.success(req, "Custom export created! You can continue editing here.")
@@ -124,6 +125,7 @@ def edit_custom_export(req, domain, export_id):
         saved_export.index=schema.index 
         saved_export.schema_id=req.POST["schema"]
         saved_export.name=req.POST["name"]
+        saved_export.default_format=req.POST["format"] or Format.XLS_2007
         table_dict = dict([t.index, t] for t in saved_export.tables)
         if table in table_dict:
             table_dict[table].columns = export_cols
@@ -162,7 +164,7 @@ def export_custom_data(req, domain, export_id):
     Export data from a saved export schema
     """
     saved_export = SavedExportSchema.get(export_id)
-    format = req.GET.get("format", Format.XLS_2007)
+    format = req.GET.get("format", "")
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])

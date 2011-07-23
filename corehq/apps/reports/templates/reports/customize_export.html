@@ -47,6 +47,13 @@
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />
         <p><label for="name">Export Name: </label><input type="text" name="name" value="{{ saved_export.name }}" /></p>
+        <p><label for="name">Default file type: </label>
+           <select name="format" id="format" >
+               <option value="csv"{% if saved_export.default_format == "csv"%} selected="selected"{% endif %}>CSV (Zip file)</option>
+               <option value="xlsx"{% if saved_export.default_format == "xlsx"%} selected="selected"{% endif %}>Excel 2007</option>
+               <option value="xls"{% if saved_export.default_format == "xls" %} selected="selected"{% endif %}>Excel (older versions)</option>
+           </select>
+        </p>
     <p class="helptext">Choose the fields you want to export below. You can also rename fields, which will update the headers in the export file.</p>
     <div class="padded">
     <table class="column_list">
