@@ -283,11 +283,11 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
     langs = [lang] + (app.langs if app else [])
 
-    case_fields = set()
+    case_properties = set()
     if module:
         for _form in module.forms:
-            case_fields.update(_form.actions.update_case.update.keys())
-    case_fields = sorted(case_fields)
+            case_properties.update(_form.actions.update_case.update.keys())
+    case_properties = sorted(case_properties)
 
     try:
         xform_questions = json.dumps(form.get_questions(langs) if form and form.contents else [])
@@ -356,7 +356,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         "xform_questions": xform_questions,
         #"xform_errors": xform_errors,
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
-        'case_fields': json.dumps(case_fields),
+        'case_properties': case_properties,
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
@@ -560,6 +560,32 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         return HttpResponseBadRequest("Attribute %s not supported" % attr)
     app.save(resp)
     return HttpResponse(json.dumps(resp))
+
+@require_POST
+@require_permission('edit-apps')
+def edit_module_detail_screens(req, domain, app_id, module_id):
+    """
+    Called to over write entire detail screens at a time
+
+    """
+
+    params = json_request(req.POST)
+    screens = params.get('screens')
+
+    if not screens:
+        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    for detail_type in screens:
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
 
 @require_POST
 @require_permission('edit-apps')
