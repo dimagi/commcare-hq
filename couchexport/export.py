@@ -6,6 +6,7 @@ from django.conf import settings
 from couchexport.models import ExportSchema, Format
 from couchdbkit.client import Database
 import re
+from dimagi.utils.mixins import UnicodeMixIn
 
         
 def get_full_export_tables(schema_index, previous_export):
@@ -45,12 +46,12 @@ def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
     export_from_tables(tables, file, format)
     return True
 
-class Constant(object):
+class Constant(UnicodeMixIn):
     def __init__(self, message):
         self.message = message
     def __unicode__(self):
         return self.message
-
+    
 scalar_never_was = Constant("---")
 list_never_was = Constant("this list never existed")
 
@@ -182,11 +183,14 @@ def _export_csv(tables, file):
     # write forms
     used_names = []
     for table_name, table in tables:
-        table_name_truncated = _next_unique(table_name, used_names)
+        table_name_truncated = _clean_name(_next_unique(table_name, used_names))
         used_names.append(table_name_truncated)
         table_file = StringIO()
         writer = csv.writer(table_file, dialect=csv.excel)
         for row in table:
+            for i, val in enumerate(row):
+                if isinstance(val, unicode):
+                    row[i] = val.encode("utf8")
             writer.writerow(row)
         archive.writestr("%s.csv" % table_name_truncated, table_file.getvalue())
         
