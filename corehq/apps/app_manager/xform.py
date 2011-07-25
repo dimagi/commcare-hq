@@ -142,10 +142,23 @@ class XForm(WrappedNode):
     def case_node(self):
         return self.data_node.find('{x}case')
 
+    @property
+    def image_references(self):
+        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="image"]')
+        return [n.text for n in nodes]
+        
+    @property
+    def audio_references(self):
+        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="audio"]')
+        return [n.text for n in nodes]
+    
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
+        duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
         if not trans_node.exists():
             raise XFormError("There's no language called '%s'" % old_code)
+        if duplicate_node.exists():
+            raise XFormError("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
     def localize(self, id, lang=None, form=None):

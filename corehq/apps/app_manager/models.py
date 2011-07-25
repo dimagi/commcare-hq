@@ -20,7 +20,7 @@ from corehq.apps.domain.models import Domain
 from BeautifulSoup import BeautifulStoneSoup
 import hashlib
 from django.template.loader import render_to_string
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
@@ -34,6 +34,7 @@ from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
 from utilities.profile import profile as profile_decorator
+import logging
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library 
@@ -561,11 +562,14 @@ class ApplicationBase(VersionedDoc):
     
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    # built_with stores a record of CommCare build used in a saved app
-    built_with = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
     success_message = DictProperty()
+
+    # The following properties should only appear on saved builds
+    # built_with stores a record of CommCare build used in a saved app
+    built_with = SchemaProperty(BuildSpec)
     built_on = DateTimeProperty(required=False)
+    build_comment = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -658,7 +662,15 @@ class ApplicationBase(VersionedDoc):
             return jadjar.jad, jadjar.jar
 
     def validate_app(self):
-        return []
+        errors = []
+
+        try:
+            self.create_all_files()
+        except AppError as e:
+            errors.append({'type': 'error', 'message': unicode(e)})
+        except Exception as e:
+            errors.append({'type': 'error', 'message': 'unexpected error'})
+        return errors
 
     @property
     def odk_profile_url(self):
@@ -713,16 +725,24 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self):
+    def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
+
         copy.create_jadjar()
 
-        copy.short_url = bitly.shorten(
-            get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-        )
+        try:
+            copy.short_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+            )
+        except URLError:
+            # for offline only
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+            copy.short_url = None
+        copy.build_comment = comment
         copy.save(increment_version=False)
 
         return copy
+    
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -988,10 +1008,10 @@ class Application(ApplicationBase, TranslationMixin):
         # Make sure that putting together all the files actually works
         try:
             self.create_all_files()
-        except:
+        except Exception as e:
             if settings.DEBUG:
                 raise
-            errors.append({'type': "form error"})
+            errors.append({'type': "form error", 'message': unicode(e)})
         
         return errors
 
@@ -1034,7 +1054,10 @@ class RemoteApp(ApplicationBase):
     #     return urlopen(self.suite_url).read()
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
-        return urlopen(self.profile_url).read()
+        try:
+            return urlopen(self.profile_url).read()
+        except Exception:
+            raise AppError('Unable to access profile url: "%s"' % self.profile_url)
         
     def fetch_file(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
@@ -1044,8 +1067,12 @@ class RemoteApp(ApplicationBase):
             location = location.lstrip(base)
         elif location.startswith('jr://resource/'):
             location = location.lstrip('jr://resource/')
-        return location, urlopen(urljoin(self.profile_url, location)).read().decode('utf-8')
-        
+        url = urljoin(self.profile_url, location)
+        try:
+            return location, urlopen(url).read().decode('utf-8')
+        except Exception:
+            raise AppError('Unable to access resource url: "%s"' % url)
+
     def create_all_files(self):
         files = {
             'profile.xml': self.create_profile(),
@@ -1059,7 +1086,7 @@ class RemoteApp(ApplicationBase):
         for resource in soup.findAll('resource'):
             try:
                 loc = resource.findChild('location', authority='remote').string
-            except:
+            except Exception:
                 loc = resource.findChild('location', authority='local').string
             locations.append(loc)
         for location in locations:
@@ -1089,10 +1116,10 @@ def get_app(domain, app_id, wrap_cls=None):
         raise Http404
 
     try:    Domain.objects.get(name=domain)
-    except: raise DomainError("domain %s does not exist" % domain)
+    except: raise Http404
 
     if app['domain'] != domain:
-        raise DomainError("%s not in domain %s" % (app['_id'], domain))
+        raise Http404
     cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app

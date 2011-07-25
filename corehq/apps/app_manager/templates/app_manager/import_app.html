@@ -23,8 +23,13 @@
 {% block content %}
     <div id="main_container">
         <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+{% if app %}
             <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
             <table class="hidden">
+{% else %}
+            <p>Paste your application definition into the box below.</p>
+            <table>
+{% endif %}
                 <tr>
                     <th>Name:</th>
                     <td><input type="text" name="name"/></td>

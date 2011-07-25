@@ -1,0 +1,9 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+{% block reportcontent %}
+    {% include report_partial %}
+{% endblock %}

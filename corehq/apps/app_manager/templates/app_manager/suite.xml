@@ -47,7 +47,7 @@
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
 {#            <template><text><xpath function="format_date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}, 'short')"/></text></template>#}
-            <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '', format_date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }},'short'))"/></text></template>
+            <template><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '', format_date(date(if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = 0, 0, /data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }})),'short'))"/></text></template>
          {% else %}{% ifequal d.format "advanced" %}
             <template><text><xpath function="{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}

@@ -9,9 +9,9 @@ class UserForm(forms.Form):
     Form for Users
     """
     #username = forms.CharField(max_length=15)
-    first_name = forms.CharField(max_length=50)
-    last_name = forms.CharField(max_length=50)
-    email = forms.EmailField(label=_("E-mail"), max_length=75)
+    first_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=50, required=False)
+    email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
     role = forms.ChoiceField(choices=CouchUser.ROLE_LABELS)
     
     class Meta:

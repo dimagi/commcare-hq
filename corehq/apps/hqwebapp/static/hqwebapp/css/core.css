@@ -48,6 +48,12 @@ img::-moz-selection {background: transparent;}
 
 html {overflow-y: scroll;}
 
+.ie-warning {
+    text-align: center;
+    border-bottom: 1px solid #F00;
+    background-color: #FBB;
+    padding: 1em;
+}
 td, th, caption {
     padding: 4px 10px 4px 5px;
 }

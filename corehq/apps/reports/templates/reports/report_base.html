@@ -1,17 +1,33 @@
 {% extends base_template %}
-{% block page_imports %}
-    {% include "imports/datatables.html" %}
-    {% include "imports/flot.html" %}
-{% endblock %}
 {% block head %}
     {{ block.super }}
-
+    {% include "imports/datatables.html" %}
+    {% include "imports/flot.html" %}
+    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
+    <script>
+        jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
+            var x = a.match(/title="*(-?[0-9]+)/)[1];
+            var y = b.match(/title="*(-?[0-9]+)/)[1];
+            x = parseFloat( x );
+            y = parseFloat( y );
+            return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+        };
+        jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
+            var x = a.match(/title="*(-?[0-9]+)/)[1];
+            var y = b.match(/title="*(-?[0-9]+)/)[1];
+            x = parseFloat( x );
+            y = parseFloat( y );
+            return ((x < y) ?  1 : ((x > y) ? -1 : 0));
+        };
+    </script>
     <script>
         $(function(){
             $("#report_select").val(location.pathname);
             $("#report_select").change(function(){
                 location.href = $(this).val();
             });
+            $("#report_dropdown").dropdown();
+            $("#title-bar").addClass('ui-corner-top');
         });
     </script>
     <script type="text/javascript">
@@ -66,10 +82,14 @@
                 elem = document;
             }
             $('.datatable', elem).each(function(){
-                params = {
+                var params = {
                     "bJQueryUI": true
-                };
-                sAjaxSource = $(this).attr('data-source');
+                },
+                    sAjaxSource = $(this).data('source'),
+                    aoColumns = [],
+                    $columns = $(this).find('tr').first().find('th'),
+                    i;
+
                 if(sAjaxSource) {
                     params = {
                         "bJQueryUI": true,
@@ -79,8 +99,18 @@
                         "bFilter": false
                     };
                 }
+                for (i = 0; i < $columns.length; i += 1) {
+                    var sortType = $($columns[i]).data('sort');
+                    if (sortType) {
+                        aoColumns.push({sType: sortType});
+                    } else {
+                        aoColumns.push(null);
+                    }
+                }
+                params.aoColumns = aoColumns;
                 $(this).dataTable(params);
             });
+            $('.datatable').parent().find('.fg-toolbar').removeClass('ui-corner-tr ui-corner-tl');
         }
         $(document).ready(function() {
             start_datatables();
@@ -123,9 +153,15 @@
     {% endif %}    
     
     <style>
+        h1 {
+            font-size: 2em;
+            text-align: center;
+        }
+
         .datatable {
             width: 100%;
         }
+
         #main_container {
             padding: 0;
         }
@@ -135,21 +171,40 @@
         #paramSelectorForm p {
             padding: 5px 0 5px 0;
         }
+        #title-bar {
+            background-color: #EEE;
+            border-bottom: 1px solid #CCC;
+        }
+        #title-bar > ul {
+            display: table-row;
+            position: absolute;
+        }
+        #title-bar > ul > li {
+            border-right: 1px solid #CCC;
+            padding: 0 .5em;
+            display: table-cell;
+        }
+        #title-bar > ul > li:last-child {
+            border-right: none;
+        }
     </style>
-    {% block report_javascripts %}{% endblock %}
 {% endblock %}
 {% block content %}
     <div id="main_container">
         <div id="title-bar">
-            <h1>Reports</h1>
-            <select id="report_select">
-                {% include "reports/partials/report_list.html" %}
-            </select>
+            <ul>
+                <li>
+                    <div id="report_dropdown">
+                        <span>Select Report</span>
+                        <div>
+                            {% include "reports/partials/report_list.html" %}
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <h1>{{ report.name|default:"Unknown Report" }}</h1>
         </div>
         <div id="report_header">
-            <div id="report-title">
-                <h1>{{ report.name|default:"Unknown Report" }}</h1>
-            </div>
             {% if show_dates or show_users or show_forms %}
             <form method="get" id="paramSelectorForm">
             {% if show_dates %}
@@ -163,8 +218,9 @@
                 </p>
             {% endif %}
             {% if show_users %}
+                <label for="individual_select">Select a CHW: </label>
                 <select id="individual_select" name="individual">
-                    <option  value=''>All Individuals</option>
+                    <option  value=''>All CHWs</option>
                     {% for user in users %}
                         <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
                     {% endfor %}

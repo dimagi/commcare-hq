@@ -1,0 +1,13 @@
+{% block head %}
+    <style>
+        #case_export {
+            padding-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+<div id="case_export">
+    Download all cases, referrals, and CHW users:
+    <a class="button" href="{% url download_cases domain %}">Download</a>
+</div>

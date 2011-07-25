@@ -2,7 +2,8 @@
 #import re
 #from django.test.client import Client
 #from corehq.apps.app_manager.models import Application
-#from corehq.apps.app_manager.util import SuccessMessage, format_time
+#from corehq.apps.app_manager.success_message import SuccessMessage
+#from dimagi.utils.parsing import json_format_datetime
 #from corehq.apps.phone.xml import get_response
 #from corehq.apps.users.models import create_hq_user_from_commcare_registration_info
 #from lib.django_digest.tests import TestCase

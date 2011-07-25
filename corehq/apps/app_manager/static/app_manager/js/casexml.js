@@ -210,13 +210,14 @@ var CaseXML = (function(undefined){
         }
     };
 
-    CaseXML.prototype.renderPropertyList = function (map, keyType, showSuggestion) {
+    CaseXML.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
         showSuggestion = showSuggestion === undefined ? true : showSuggestion;
         return this.propertyList_ejs.render({
             map: map,
             keyType: keyType,
             showSuggestion: showSuggestion,
-            casexml: this
+            casexml: this,
+            reservedWords: reservedWords
         });
     };
 

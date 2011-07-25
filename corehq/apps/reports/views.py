@@ -32,15 +32,11 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.reports.display import xmlns_to_name
 import sys
 
-#def report_list(request, domain):
-#    template = "reports/report_list.html"
-#    return render_to_response(request, template, {'domain': domain})
-
 DATE_FORMAT = "%Y-%m-%d"
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse("submission_log_report", args=[domain]))
+    return HttpResponseRedirect(reverse("submissions_by_form_report", args=[domain]))
 
 @login_and_domain_required
 def export_data(req, domain):
@@ -76,18 +72,24 @@ class SubmitHistory(ReportBase):
         self.show_unregistered = True #json.loads(show_unregistered)
 
     @classmethod
-    def view(cls, request, domain, template="reports/partials/couch_report_partial.html"):
+    def view(cls, request, domain, template="reports/basic_report.html",
+                                   report_partial="reports/partials/couch_report_partial.html"):
 
         individual = request.GET.get('individual', '')
         show_unregistered = request.GET.get('show_unregistered', 'false')
         rows = []
 
         headings = ["View Form", "Username", "Submit Time", "Form"]
-        return render_to_response(request, template, {
+        context = _report_context(domain, report_partial,
+            title="Submit History",
+            individual=individual
+        )
+        context.update({
             'headings': headings,
             'rows': rows,
             'ajax_source': reverse('paging_submit_history', args=[domain, individual, show_unregistered]),
         })
+        return render_to_response(request, template, context)
     def rows(self, skip, limit):
         def format_time(time):
             "time is an ISO timestamp"
@@ -247,7 +249,7 @@ def case_activity(request, domain):
     now = datetime.utcnow()
     report = CaseActivity(domain, userIDs, landmarks, now)
     data = report.get_data()
-    headers = ["User"] + ["Last %s Days" % l.days if l else "Ever" for l in landmarks]
+    headers = ["User"] + [{"html": "Last %s Days" % l.days if l else "Ever", "sort_type": "title-numeric"} for l in landmarks]
     rows = []
 
     extra = {}
@@ -272,9 +274,9 @@ def case_activity(request, domain):
                            "user_id": user_id,
                            "username": user_id_to_username(userID)} 
     for userID in extra:
-        
         row = [user_id_link(userID)]
         for entry in extra[userID]:
+            unformatted = entry['total']
             if entry['total'] == entry['diff'] or 'diff' not in display:
                 fmt = "{total}"
             else:
@@ -287,7 +289,7 @@ def case_activity(request, domain):
                 formatted = int(formatted)
             except ValueError:
                 pass
-            row.append(formatted)
+            row.append({"html": formatted, "sort_key": unformatted})
         rows.append(row)
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
@@ -370,18 +372,17 @@ def completion_times(request, domain):
 def case_list(request, domain):
     headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
     individual = request.GET.get('individual', '')
-    return render_to_response(request, "reports/generic_report.html", {
-        "domain": domain,
-        "show_users": True,
-        "report": {
-            "name": "Case List",
-            "headers": headers,
-            "rows": [],
-        },
-        "users": _user_list(domain),
+    context = _report_context(domain,
+        title="Case List",
+        individual=individual
+    )
+    context.update({
         "ajax_source": reverse('paging_case_list', args=[domain, individual]),
-        "individual": individual,
     })
+    context['report'].update({
+        "headers": headers,
+    })
+    return render_to_response(request, "reports/generic_report.html", context)
     
 @login_and_domain_required
 def paging_case_list(request, domain, individual):
@@ -433,6 +434,14 @@ def case_details(request, domain, case_id):
     })
 
 @login_and_domain_required
+def case_export(request, domain, template='reports/basic_report.html',
+                                    report_partial='reports/partials/case_export.html'):
+    context = _report_context(domain, report_partial,
+        title="Export cases, referrals, and users"
+    )
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
 def download_cases(request, domain):
     cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     users = CouchUser.commcare_users_by_domain(domain)
@@ -446,29 +455,60 @@ def download_cases(request, domain):
     return response
 
 @login_and_domain_required
-def submit_time_punchcard(request, domain):
+def submit_time_punchcard(request, domain, template="reports/basic_report.html",
+                                           report_partial="reports/partials/punchcard.html"):
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    return render_to_response(request, "reports/partials/punchcard.html", {
+    context = _report_context(domain, report_partial, "Submit Times")
+    context.update({
         "chart_url": url,
+    })
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+def submit_trends(request, domain, template="reports/basic_report.html",
+                                   report_partial="reports/partials/formtrends.html"):
+    individual = request.GET.get("individual", '')
+    return render_to_response(request, template, {
+        "domain": domain,
+        "report": {"name": "Submit Trends"},
+        "report_partial": report_partial,
+        "user_id": individual
     })
 
 @login_and_domain_required
-def submit_trends(request, domain):
+def submit_distribution(request, domain, template="reports/basic_report.html",
+                                         report_partial="reports/partials/generic_piechart.html"):
     individual = request.GET.get("individual", '')
-    return render_to_response(request, "reports/partials/formtrends.html", 
-                              {"domain": domain,
-                               "user_id": individual})
+    context = _report_context(domain, report_partial,
+        title="Submit Distribution",
+        individual=individual
+    )
+    context.update({
+        "chart_data": formdistribution.get_chart_data(domain, individual),
+        "user_id": individual,
+        "graph_width": 900,
+        "graph_height": 500
+    })
+    return render_to_response(request, template, context)
 
-@login_and_domain_required
-def submit_distribution(request, domain):
-    individual = request.GET.get("individual", '')
-    return render_to_response(request, "reports/partials/generic_piechart.html", 
-                              {"chart_data": formdistribution.get_chart_data(domain, individual),
-                               "user_id": individual,
-                               "graph_width": 900,
-                               "graph_height": 500})
+def _report_context(domain, report_partial=None, title=None, individual=None):
+    context = {
+        "domain": domain,
+        "report": {
+            "name": title
+        }
+    }
+    if report_partial:
+        context.update(report_partial=report_partial)
+    if individual is not None:
+        context.update(
+            show_users=True,
+            users= _user_list(domain),
+            individual=individual,
+        )
+    return context
 
 @login_and_domain_required
 def submission_log(request, domain):
@@ -478,13 +518,13 @@ def submission_log(request, domain):
     return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,
+        "individual": individual,
+        "users": _user_list(domain),
         "report": {
             "name": "Submission Log",
             "header": [],
             "rows": [],
         },
-        "users": _user_list(domain),
-        "individual": individual,
         "show_unregistered": show_unregistered,
     })
 

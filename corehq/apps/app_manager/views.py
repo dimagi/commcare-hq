@@ -1,7 +1,8 @@
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
@@ -31,11 +32,12 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
-import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
-import logging
 from corehq.apps.app_manager.decorators import safe_download
+from . import fixtures
+from django.utils.datastructures import SortedDict
+
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
@@ -121,14 +123,40 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
+EXAMPLE_DOMAIN = 'example'
+
+def _get_or_create_app(app_id):
+    if app_id == "example--hello-world":
+        try:
+            app = Application.get(app_id)
+        except ResourceNotFound:
+            app = Application.wrap(fixtures.hello_world_example)
+            app._id = app_id
+            app.domain = EXAMPLE_DOMAIN
+            app.save()
+            return _get_or_create_app(app_id)
+        return app
+    else:
+        return VersionedDoc.get(app_id)
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
-        source = req.POST.get('source')
         name = req.POST.get('name')
-        source = json.loads(source)
+        try:
+            source = req.POST.get('source')
+            source = json.loads(source)
+            assert(source is not None)
+        except Exception:
+            app_id = req.POST.get('app_id')
+            source = _get_or_create_app(app_id)
+            src_dom = source['domain']
+            source = source.export_json()
+            source = json.loads(source)
+            if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                return HttpResponseForbidden()
         try: del source['_attachments']
-        except: pass
+        except Exception: pass
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
@@ -144,9 +172,14 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                 reverse('import_app', args=[redirect_domain])
                 + "?app={app_id}".format(app_id=app_id)
             )
-        app = Application.get(app_id)
-        assert(app.doc_type in ('Application', 'RemoteApp'))
-        assert(req.couch_user.is_member_of(app.domain))
+        
+        if app_id:
+            app = Application.get(app_id)
+            assert(app.doc_type in ('Application', 'RemoteApp'))
+            assert(req.couch_user.is_member_of(app.domain))
+        else: 
+            app = None
+        
         return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
@@ -250,11 +283,11 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
     langs = [lang] + (app.langs if app else [])
 
-    case_fields = set()
+    case_properties = set()
     if module:
         for _form in module.forms:
-            case_fields.update(_form.actions.update_case.update.keys())
-    case_fields = sorted(case_fields)
+            case_properties.update(_form.actions.update_case.update.keys())
+    case_properties = sorted(case_properties)
 
     try:
         xform_questions = json.dumps(form.get_questions(langs) if form and form.contents else [])
@@ -323,7 +356,7 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         "xform_questions": xform_questions,
         #"xform_errors": xform_errors,
         'form_actions': json.dumps(form.actions.to_json()) if form else None,
-        'case_fields': json.dumps(case_fields),
+        'case_properties': case_properties,
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
@@ -530,6 +563,32 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 
 @require_POST
 @require_permission('edit-apps')
+def edit_module_detail_screens(req, domain, app_id, module_id):
+    """
+    Called to over write entire detail screens at a time
+
+    """
+
+    params = json_request(req.POST)
+    screens = params.get('screens')
+
+    if not screens:
+        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    for detail_type in screens:
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
+
+@require_POST
+@require_permission('edit-apps')
 def edit_module_detail(req, domain, app_id, module_id):
     """
     Called to add a new module detail column or edit an existing one
@@ -645,9 +704,14 @@ def rename_language(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
     if app.domain != domain:
         raise Http404
-    form.rename_xform_language(old_code, new_code)
-    app.save()
-    return HttpResponse(json.dumps({"status": "ok"}))
+    try:
+        form.rename_xform_language(old_code, new_code)
+        app.save()
+        return HttpResponse(json.dumps({"status": "ok"}))
+    except XFormError as e:
+        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
+        response.status_code = 409
+        return response
 
 @require_POST
 @require_permission('edit-apps')
@@ -658,6 +722,61 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
+@require_permission('edit-apps')
+def multimedia_list_download(req, domain, app_id):
+    app = get_app(domain, app_id)
+    include_audio = req.GET.get("audio", True)
+    include_images = req.GET.get("images", True)
+    strip_jr = req.GET.get("strip_jr", True)
+    filelist = []
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            if include_images:
+                filelist.extend(parsed.image_references)
+            if include_audio:
+                filelist.extend(parsed.audio_references)
+    
+    if strip_jr:
+        filelist = [s.replace("jr://file/", "") for s in filelist if s]
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=list.txt' 
+    response.write("\n".join(sorted(set(filelist))))
+    return response
+        
+@require_permission('edit-apps')
+def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
+    """
+    Edit multimedia for forms
+    """
+    app = get_app(domain, app_id)
+    
+    parsed_forms = {}
+    images = {} 
+    audio_files = {}
+    # TODO: make this more fully featured
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            parsed_forms[f] = parsed
+            for i in parsed.image_references:
+                if i not in images: images[i] = []
+                images[i].append((m,f)) 
+            for i in parsed.audio_references:
+                if i not in audio_files: audio_files[i] = []
+                audio_files[i].append((m,f)) 
+    
+    sorted_images = SortedDict()
+    sorted_audio = SortedDict()
+    for k in sorted(images):
+        sorted_images[k] = images[k]
+    for k in sorted(audio_files):
+        sorted_audio[k] = audio_files[k]
+    return render_to_response(req, "app_manager/multimedia_home.html", 
+                              {"domain": domain,
+                               "app": app,
+                               "images": sorted_images,
+                               "audiofiles": sorted_audio})
 
 @require_GET
 @login_and_domain_required
@@ -721,8 +840,9 @@ def edit_app_translation(request, domain, app_id):
     value   = params.get('value')
     app = get_app(domain, app_id)
     app.set_translation(lang, key, value)
-    app.save()
-    return json_response({"key": key, "value": value})
+    response = {"key": key, "value": value}
+    app.save(response)
+    return json_response(response)
 
 @require_POST
 @require_permission('edit-apps')
@@ -824,6 +944,7 @@ def save_copy(req, domain, app_id):
 
     """
     next = req.POST.get('next')
+    comment = req.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
     def replace_params(next, **kwargs):
@@ -839,7 +960,7 @@ def save_copy(req, domain, app_id):
         next = urlparse.urlunparse(url)
         return next
     if not errors:
-        app.save_copy()
+        app.save_copy(comment=comment)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()
@@ -857,6 +978,7 @@ def revert_to_copy(req, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
     app = app.revert_to_copy(copy)
+    messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
 @require_POST

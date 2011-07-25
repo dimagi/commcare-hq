@@ -100,6 +100,7 @@ var mk_translation_ui = function (spec) {
                                 delete translation_ui.translations[this.key];
                                 translation_ui.render();
                             }
+                            COMMCAREHQ.updateDOM(data.update);
                         },
                         error: function () {
                             this.setProgressState('fail');

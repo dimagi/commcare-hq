@@ -159,16 +159,15 @@
                             <td class="index">{{ forloop.counter0 }}</td>
                             <td>
                                 <span class="drag_handle"></span>
-                                {% with util.make_uuid as uuid %}
-                                    <a class="delete_link" href="#" data-uuid="{{ uuid }}"></a>
-                                    <div class="dialog delete_dialog" title="Remove Language" data-uuid="{{ uuid }}">
-                                        <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}" method="POST">
-                                            <p>Removing this language will not permanently delete any translations you have made for it.</p>
-                                            <input type="hidden" name="index" value="{# filled in by js #}" />
-                                            <input type="submit" value="Remove" />
-                                        </form>
-                                    </div>
-                                {% endwith %}
+                            </td>
+                            <td>
+                                <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
+                                      data-title="Delete Build"
+                                      data-message="Are you sure you want to delete this language? (You can always add it back later.)"
+                                      method="POST">
+                                    <input type="hidden" name="index" value="{# filled in by js #}" />
+                                    <a class="delete_link confirm-submit" href="#"></a>
+                                </form>
                             </td>
                             <td>
                                 <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
@@ -180,6 +179,8 @@
                         </tr>
                     {% endfor %}
                     <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
+                        <td>
+                        </td>
                         <td>
                         </td>
                         <td>
@@ -209,6 +210,14 @@
             </tbody>
             <!--tbody id="language-properties"></tbody-->
         </table>
+        <div class="scary-settings-toggle">
+            <a href="#"><span class="ui-icon"></span>Multimedia (beta)</a>
+        </div>
+        <div class="scary-settings">
+            <h4>View and download lists of multimedia references found in your application's forms and use our multimedia toolkit</h4>
+            <p><a target="_blank" href="{% url multimedia_home domain app.get_id %}">Multimedia Home</a> (opens in a new window)</p>
+        </div>
+        
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>User Interface Translations (Beta)</a>
         </div>
