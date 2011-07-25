@@ -1,5 +1,6 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     <style>
@@ -60,7 +61,7 @@
             var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
-                langcodes: {{ xform_languages|safe }},
+                langcodes: {{ xform_languages|JSON }},
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
@@ -68,8 +69,8 @@
             if (!form_empty) {
                 var casexml = new CaseXML({
                     home: "casexml_home",
-                    actions: {{ form_actions|safe }},
-                    questions: {{ xform_questions|safe }},
+                    actions: {{ form.actions|JSON }},
+                    questions: {{ xform_questions|JSON }},
                     edit: edit,
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
                     requires: "{{ form.requires }}",

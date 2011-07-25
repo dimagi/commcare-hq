@@ -212,7 +212,12 @@ class Form(IndexedSchema):
             except:
                 contents = ""
         return contents
-    
+
+    def render_xform(self):
+        xform = XForm(self.contents)
+        xform.add_case_and_meta(self)
+        return xform.render()
+
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
@@ -812,9 +817,7 @@ class Application(ApplicationBase, TranslationMixin):
     #@profile('fetch_xform.prof')
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        xform = XForm(form.contents)
-        xform.add_case_and_meta(form)
-        return xform.render()
+        return form.render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         if lang != "default":

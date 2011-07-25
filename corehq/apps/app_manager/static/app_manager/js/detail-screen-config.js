@@ -107,26 +107,21 @@ var DetailScreenConfig = (function () {
                 }
             }).fire('change');
 
-            this.$add = $('<div class="ui-icon"/>').addClass(Column.ADD).click(function () {
+            this.$add = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                 if (that.field.val()) {
                     that.duplicate();
                 } else {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-            this.$copy = $('<div class="ui-icon"/>').addClass(Column.COPY).click(function () {
+            this.$copy = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.COPY).click(function () {
                 that.duplicate();
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
-            this.$delete = $('<div class="ui-icon"/>').addClass(Column.DELETE).click(function () {
+            this.$delete = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
         }
-        Column.GRIP = 'ui-icon-arrowthick-2-n-s';
-//        Column.GRIP = 'ui-icon-arrow-4';
-        Column.ADD = 'ui-icon-plusthick';
-        Column.COPY = 'ui-icon-copy';
-        Column.DELETE = 'ui-icon-closethick';
 
         Column.init = function (col, screen) {
             return new Column(col, screen);
@@ -156,7 +151,7 @@ var DetailScreenConfig = (function () {
                 if (this.grip !== grip) {
                     this.grip = grip;
                     if (grip) {
-                        this.$grip = $('<div class="grip ui-icon"/>').addClass(Column.GRIP).css({
+                        this.$grip = $('<div class="grip ui-icon"/>').addClass(COMMCAREHQ.icons.GRIP).css({
                             cursor: 'move'
                         });
                     } else {

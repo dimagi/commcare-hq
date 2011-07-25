@@ -43,7 +43,7 @@
                         </li>
                     {% endif %}
                         <li class="sort-disabled">
-                            <a href="#">User Registration</a>
+                            <a href="{% url view_user_registration domain app.id %}">User Registration</a>
                         </li>
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}

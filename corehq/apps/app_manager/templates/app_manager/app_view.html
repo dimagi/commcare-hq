@@ -161,6 +161,14 @@
                                 <span class="drag_handle"></span>
                             </td>
                             <td>
+                                <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
+                                    <input type="hidden" name="ajax" value="false" />
+                                    <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
+                                    <input type="hidden" name="index" value="{# filled in by js #}" />
+                                </form>
+                            </td>
+
+                            <td>
                                 <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
                                       data-title="Delete Build"
                                       data-message="Are you sure you want to delete this language? (You can always add it back later.)"
@@ -169,18 +177,9 @@
                                     <a class="delete_link confirm-submit" href="#"></a>
                                 </form>
                             </td>
-                            <td>
-                                <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
-                                    <input type="hidden" name="ajax" value="false" />
-                                    <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
-                                    <input type="hidden" name="index" value="{# filled in by js #}" />
-                                </form>
-                            </td>
                         </tr>
                     {% endfor %}
                     <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
-                        <td>
-                        </td>
                         <td>
                         </td>
                         <td>

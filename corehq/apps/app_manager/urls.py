@@ -14,6 +14,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'import_factory_form/(?P<app_id>\w+)/(?P<module_id>\w+)/$',           'import_factory_form'),
 
     (r'view/(?P<app_id>\w+)/$',                                             'view_app'),
+ url(r'view/(?P<app_id>\w+)/user_registration/$',                           'view_user_registration',
+                                                                       name='view_user_registration'),
     (r'^$',                                                                 'default'),
 
     (r'new_module/(?P<app_id>\w+)/$',                                       'new_module'),
