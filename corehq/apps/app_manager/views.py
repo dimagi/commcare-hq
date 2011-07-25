@@ -1,3 +1,5 @@
+import logging
+
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
@@ -41,7 +43,6 @@ from django.utils.datastructures import SortedDict
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
-    import logging
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
