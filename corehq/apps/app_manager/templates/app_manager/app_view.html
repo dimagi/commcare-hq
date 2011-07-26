@@ -1,5 +1,6 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     {% if app.doc_type == "Application" %}
@@ -9,7 +10,7 @@
             $(function () {
                 var $translation_ui = $("#translations_ui");
                 mk_translation_ui({
-                    translations: {{ translations_json|safe }},
+                    translations: {{ translations|JSON }},
                     url: "{% url edit_app_translation domain app.id %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
@@ -19,7 +20,7 @@
         </script>
         <script>
             $(function () {
-                var saveURL = "{% url corehq.apps.app_manager.views.edit_commcare_profile domain app.id %}",
+                var saveURL = "{% url edit_commcare_profile domain app.id %}",
                     defaultHome = $('#commcare-settings'),
                     senseHome = $('#commcare-sense-properties'),
                     logHome = $('#log-properties'),
@@ -231,6 +232,20 @@
         </div>
         <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Advanced Settings</a></div>
         <div class="scary-settings">
+            <h4>Custom User Registration</h4>
+            <table class="config">
+                <tr>
+                    <th>Use a Custom User Registration</th>
+                    <td>
+                        <form action="{% url edit_app_attr domain app.id 'show_user_registration' %}" method="POST">
+                            <select class="autosave" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
+                                <option value="false">* Don't Use</option>
+                                <option value="true">Use</option>
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+            </table>
             <h4>Logging</h4>
             <table class="config">
                 <tbody id="log-properties"></tbody>

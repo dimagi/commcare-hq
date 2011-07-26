@@ -158,7 +158,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
-class Form(IndexedSchema):
+class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
     Translates to a second-level menu on the phone
@@ -190,15 +190,18 @@ class Form(IndexedSchema):
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
-            self._parent._parent.save()
+            self.get_app().save()
         return self.unique_id
-        
+
+    def get_app(self):
+        return self._app
+    
     def refresh(self):
         pass
         soup = BeautifulStoneSoup(self.contents)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
-        except:
+        except Exception:
             self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
     def get_case_type(self):
         return self._parent.case_type
@@ -294,7 +297,11 @@ class Form(IndexedSchema):
     
     def requires_referral(self):
         return self.requires == "referral"
-    
+
+class Form(FormBase, IndexedSchema):
+    def get_app(self):
+        return self._parent._parent
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -758,10 +765,11 @@ class Application(ApplicationBase, TranslationMixin):
     forms themselves.
 
     """
+    user_registration = SchemaProperty(FormBase)
+    show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
-    #use_commcare_sense = BooleanProperty(default=False)
     profile = DictProperty() #SchemaProperty(Profile)
 
     force_http = BooleanProperty(default=False)
@@ -877,6 +885,27 @@ class Application(ApplicationBase, TranslationMixin):
     @parse_int([1])
     def get_module(self, i):
         return self.modules[i].with_id(i%len(self.modules), self)
+
+    def get_user_registration(self):
+        form = self.user_registration
+        form._app = self
+        return form
+
+    def get_forms(self):
+        yield self.get_user_registration()
+        for module in self.get_modules():
+            for form in module.get_forms():
+                yield form
+                
+    def get_form(self, unique_form_id):
+        def matches(form):
+            return form.get_unique_id() == unique_form_id
+        print 'target: ', unique_form_id
+        for form in self.get_forms():
+            print form.get_unique_id()
+            if matches(form):
+                return form
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):

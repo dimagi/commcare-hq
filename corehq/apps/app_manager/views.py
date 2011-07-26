@@ -80,12 +80,9 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         "?%s" % urlencode(params) if params else ""
     ))
 
-@login_and_domain_required
-def get_xform_contents(req, domain, app_id, module_id, form_id):
-    download = json.loads(req.GET.get('download', 'false'))
-    app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    form = app.get_module(module_id).get_form(form_id)
+def _get_xform_contents(request, app, form):
+    download = json.loads(request.GET.get('download', 'false'))
+    lang = request.COOKIES.get('lang', app.langs[0])
     contents = form.contents
     if download:
         response = HttpResponse(contents)
@@ -97,6 +94,18 @@ def get_xform_contents(req, domain, app_id, module_id, form_id):
         return response
     else:
         return json_response(contents)
+
+@login_and_domain_required
+def get_xform_contents(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    return _get_xform_contents(req, app, form)
+    
+@login_and_domain_required
+def get_user_registration_contents(req, domain, app_id):
+    app = get_app(domain, app_id)
+    form = app.get_user_registration()
+    return _get_xform_contents(req, app, form)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -227,9 +236,9 @@ def default(req, domain):
     """
     return view_app(req, domain, app_id='')
 
-def get_form_view_context(request, form, langs):
+def get_form_view_context(request, form, langs, is_user_registration):
     try:
-        xform_questions = form.get_questions(langs) if form.contents else []
+        xform_questions = form.get_questions(langs) if form.contents and not is_user_registration else []
         # this is just to validate that the case and meta blocks can be created
         xform_errors = None
     except XMLSyntaxError as e:
@@ -274,15 +283,15 @@ def get_form_view_context(request, form, langs):
         languages = []
 
     return {
+        'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
+        'is_user_registration': is_user_registration,
     }
 
-
-@login_and_domain_required
-def view_app(req, domain, app_id=''):
+def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -298,9 +307,6 @@ def view_app(req, domain, app_id=''):
        req.COOKIES.get('lang', '')
     )
 
-    module_id = req.GET.get('m', '')
-    form_id = req.GET.get('f', '')
-
     if form_id and not module_id:
         return bail()
 
@@ -311,6 +317,8 @@ def view_app(req, domain, app_id=''):
     try:
         if app_id:
             app = get_app(domain, app_id)
+        if is_user_registration:
+            form = app.get_user_registration()
         if module_id:
             module = app.get_module(module_id)
         if form_id:
@@ -320,6 +328,7 @@ def view_app(req, domain, app_id=''):
 
     if not app and applications:
         app_id = applications[0]['id']
+        del edit
         return back_to_main(edit=False, **locals())
     if app and app.copy_of:
         # don't fail hard.
@@ -395,11 +404,11 @@ def view_app(req, domain, app_id=''):
     }
     context.update(get_sms_autocomplete_context(req, domain))
     if app and not module and hasattr(app, 'translations'):
-        context.update({"translations_json": json.dumps(app.translations.get(lang, {}))}),
+        context.update({"translations": app.translations.get(lang, {})})
 
     if form:
         template="app_manager/form_view.html"
-        context.update(get_form_view_context(req, form, langs))
+        context.update(get_form_view_context(req, form, langs, is_user_registration))
     elif module:
         template="app_manager/module_view.html"
     else:
@@ -422,12 +431,26 @@ def view_app(req, domain, app_id=''):
             "commcare_build_options": options,
             "is_standard_build": bool(is_standard_build)
         })
+
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-def view_user_registration():
-    pass
+@login_and_domain_required
+def view_user_registration(request, domain, app_id):
+    return view_generic(request, domain, app_id, is_user_registration=True)
+
+@login_and_domain_required
+def view_form(req, domain, app_id, module_id, form_id):
+    return view_generic(req, domain, app_id, module_id, form_id)
+
+@login_and_domain_required
+def view_module(req, domain, app_id, module_id):
+    return view_generic(req, domain, app_id, module_id)
+
+@login_and_domain_required
+def view_app(req, domain, app_id=''):
+    return view_generic(req, domain, app_id)
 
 @require_POST
 @require_permission('edit-apps')
@@ -621,13 +644,13 @@ def delete_module_detail(req, domain, app_id, module_id):
 
 @require_POST
 @require_permission('edit-apps')
-def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
+def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
     """
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     ajax = json.loads(req.POST.get('ajax', 'true'))
 
@@ -855,6 +878,8 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "build_spec" == attr:
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
+    elif "show_user_registration" == attr:
+        app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):

@@ -220,7 +220,7 @@
             {% if applications and request.couch_user|can_edit_apps:domain %}
                 <div id="edit">
                     {% if edit  %}
-                        <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
+                        <a class="button" href="{% urlencode request.path request.GET with "edit" as "false" %}">
                             Done Editing
                         </a>
                     {% else %}
@@ -260,20 +260,20 @@
                                         {% else %}
                                             Blank form
                                         {% endif %}
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
+                                        <a href="{% url view_module domain app.id error.module.id %}">
                                             {{ error.module.name|trans:langs }}</a>
                                         uses referrals but doesn't have
                                         detail screens configured for referrals.
                                     {% else %}
                                     {% if error.type == "no case detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
+                                        <a href="{% url view_module domain app.id error.module.id %}">
                                             {{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have
                                         detail screens configured for cases.
@@ -283,12 +283,12 @@
                                     {% else %}
                                     {% if error.type == "no forms" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                                         has no forms.
                                     {% else %}
                                     {% if error.type == "no case type" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have a
                                         case type defined.
                                     {% else %}
@@ -300,13 +300,13 @@
                                     {% else %}
                                     {% if error.type == "update_case uses reserved word" %}
                                         Case Update uses reserved word "{{ error.word }}"
-                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
                                     {% if error.type == "update_case word illegal" %}
                                         Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
@@ -394,7 +394,7 @@
                                                         If you have any issues with the installation, please refer to our
                                                         <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+is+Broken!">CommCare is Broken!</a>
                                                         guide to fixing CommCare issues, and see our
-                                                        <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+is+Broken!">General Documentation</a>
+                                                        <a href="https://confluence.dimagi.com/display/commcarepublic/Mobile+Phone+Documentation">General Documentation</a>
                                                         for more information.
                                                     </li>
                                                 </ol>
