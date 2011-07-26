@@ -57,6 +57,10 @@ def _rename_key(dct, old, new):
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
+
+def load_default_user_registration():
+    with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
+        return json.load(f)
     
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
