@@ -524,29 +524,37 @@ var DetailScreenConfig = (function () {
     }());
     DetailScreenConfig = (function () {
         var DetailScreenConfig = function ($home, spec) {
-            var detail_type,
-                that = this;
+            var that = this;
             this.$home = $home;
             this.properties = spec.properties;
-            this.state = {};
+            this.screens = [];
             this.lang = spec.lang;
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
             function addScreen(short, long) {
-                that.state[detail_type] = Screen.init($('<div/>'), {'short': short, 'long': long}, {
+                var screen = Screen.init($('<div/>'), {'short': short, 'long': long}, {
                     lang: that.lang,
                     edit: that.edit,
                     properties: that.properties,
                     saveUrl: that.saveUrl
                 });
-                that.$home.append(that.state[detail_type].$home);
+                that.screens.push(screen);
+                that.$home.append(screen.$home);
             }
 
             addScreen(spec.state.case_short, spec.state.case_long);
             addScreen(spec.state.ref_short, spec.state.ref_long);
-        };
 
+            $(window).bind('beforeunload', function () {
+                var i;
+                for (i = 0; i < that.screens.length; i += 1) {
+                    if (that.screens[i].saveButton.state !== 'saved') {
+                        return "You have unsaved detail screen configurations.";
+                    }
+                }
+            });
+        };
         DetailScreenConfig.init = function ($home, spec) {
             return new DetailScreenConfig($home, spec);
         };
