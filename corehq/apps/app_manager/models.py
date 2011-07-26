@@ -60,7 +60,7 @@ def load_case_reserved_words():
 
 def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
-        return json.load(f)
+        return f.read()
     
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -181,10 +181,10 @@ class FormBase(DocumentSchema):
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
         # unpack the dict into variables app_id, module_id, form_id
-        app_id, module_id, form_id = [d[key] for key in ('app_id', 'module_id', 'form_id')]
+        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
 
         app = Application.get(app_id)
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_form(unique_id)
         if and_app:
             return form, app
         else:
@@ -194,7 +194,7 @@ class FormBase(DocumentSchema):
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
-            self.get_app().save()
+            self.get_app().save(increment_version=False)
         return self.unique_id
 
     def get_app(self):
@@ -216,7 +216,7 @@ class FormBase(DocumentSchema):
         else:
             try:
                 contents = self.fetch_attachment('xform.xml')
-            except:
+            except Exception:
                 contents = ""
         return contents
 
@@ -873,12 +873,13 @@ class Application(ApplicationBase, TranslationMixin):
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
-
+        if self.show_user_registration:
+            files["user_registration.xml"] = self.get_user_registration().render_xform()
         for lang in ['default'] + self.langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
-                files["m%s/f%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
+                files["modules-%s/forms-%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
         return files
 
     def get_modules(self):
@@ -892,6 +893,12 @@ class Application(ApplicationBase, TranslationMixin):
 
     def get_user_registration(self):
         form = self.user_registration
+        if not form.contents:
+            form.contents = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
+                get_url_base(),
+                reverse('view_user_registration', args=[self.domain, self.id])
+            ))
+            self.save(increment_version=False)
         form._app = self
         return form
 

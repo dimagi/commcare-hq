@@ -65,7 +65,7 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
     the local namespace.
 
     """
-    params = {'m': module_id, 'f': form_id}
+    params = {}
     if edit:
         params['edit'] = 'true'
     if error:
@@ -74,7 +74,16 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
     args = [domain]
     if app_id:
         args.append(app_id)
-    view_name = 'default' if len(args) == 1 else 'view_app'
+        if module_id:
+            args.append(module_id)
+            if form_id:
+                args.append(form_id)
+    view_name = {
+        1: 'default',
+        2: 'view_app',
+        3: 'view_module',
+        4: 'view_form',
+    }[len(args)]
     return HttpResponseRedirect("%s%s" % (
         reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""
@@ -450,6 +459,11 @@ def view_module(req, domain, app_id, module_id):
 
 @login_and_domain_required
 def view_app(req, domain, app_id=''):
+    # redirect old m=&f= urls
+    module_id = req.GET.get('m', None)
+    form_id = req.GET.get('f', None)
+    if module_id or form_id:
+        return back_to_main(**locals())
     return view_generic(req, domain, app_id)
 
 @require_POST
@@ -1062,6 +1076,13 @@ def download_xform(req, domain, app_id, module_id, form_id):
     """
     return HttpResponse(
         get_app(domain, app_id).fetch_xform(module_id, form_id)
+    )
+
+@safe_download
+def download_user_registration(req, domain, app_id):
+    """See Application.fetch_xform"""
+    return HttpResponse(
+        get_app(domain, app_id).get_user_registration().render_xform()
     )
 
 @safe_download
