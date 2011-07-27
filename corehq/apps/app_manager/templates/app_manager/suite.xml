@@ -45,7 +45,7 @@
         </model>
      {% for d in detail.columns %}
         <field>
-         {% if d.format == "late-flag" %}
+         {% if d.format == "late-flag" or d.format == "invisible" %}
             <header width="0%"><text/></header>
          {% else %}
             <header><text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text></header>
@@ -81,7 +81,9 @@
              <template width="10%"><text><xpath function="if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }} = '', '*', if(today() - date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}) &gt; {{ d.late_flag }}, '*', ''))"/></text></template>
          {% else %}{% ifequal d.format "phone" %}
              <template form="phone"><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}" /></text></template>
-         {% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
+         {% else %}{% if d.format == "invisible" and detail.type == "case_short" or d.format == "invisible" and detail.type == "ref_short" %}
+             <template width="0"><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}" /></text></template>
+         {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
 
         </field>
      {% endfor %}
