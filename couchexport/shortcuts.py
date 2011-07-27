@@ -3,7 +3,7 @@ from StringIO import StringIO
 
 
 def export_data_shared(export_tag, format=None,
-                       filename=None):
+                       filename=None, previous_export_id=None):
     """
     Shared method for export. If there is data, return an HTTPResponse
     with the appropriate data. If there is not data returns None.
@@ -14,13 +14,15 @@ def export_data_shared(export_tag, format=None,
         filename = export_tag
     
     tmp = StringIO()
-    if export(export_tag, tmp, format=format):
-        return export_response(tmp, format, filename)
+    checkpoint = export(export_tag, tmp, format=format, 
+                        previous_export_id=previous_export_id)
+    if checkpoint:
+        return export_response(tmp, format, filename, checkpoint)
         
     else: 
         return None
     
-def export_response(file, format, filename):
+def export_response(file, format, filename, checkpoint=None):
     """
     Get an http response for an export
     """
@@ -32,6 +34,8 @@ def export_response(file, format, filename):
     response = HttpResponse(mimetype=format.mimetype)
     response['Content-Disposition'] = 'attachment; filename=%s.%s' % \
                                     (filename, format.extension)
+    if checkpoint:
+        response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
     response.write(file.getvalue())
     file.close()
     return response

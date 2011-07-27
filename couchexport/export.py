@@ -3,13 +3,17 @@ import csv
 import zipfile
 from StringIO import StringIO
 from django.conf import settings
-from couchexport.models import ExportSchema, Format
+from couchexport.models import ExportSchema, Format, SavedExportSchema
 from couchdbkit.client import Database
 import re
 from dimagi.utils.mixins import UnicodeMixIn
 
         
 def get_full_export_tables(schema_index, previous_export):
+    """
+    Returns a tuple, the first element being the tabular data ready for 
+    processing, and the second the saved checkpoint associated with the tables.
+    """
     db = Database(settings.COUCH_DATABASE)
     
     # used cached export config to determine doc list
@@ -17,13 +21,13 @@ def get_full_export_tables(schema_index, previous_export):
     current_seq = db.info()["update_seq"]
     docs = get_docs(schema_index, previous_export)
     if not docs:
-        return None
+        return (None, None)
     schema = get_schema(docs, previous_export)
     [schema_dict] = schema
     this_export = ExportSchema(seq=current_seq, schema=schema_dict, 
                                index=schema_index)
     this_export.save()
-    return format_tables(create_intermediate_tables(docs,schema))
+    return (format_tables(create_intermediate_tables(docs,schema)), this_export)
 
 def export_from_tables(tables, file, format):
     if format == Format.CSV:
@@ -35,16 +39,19 @@ def export_from_tables(tables, file, format):
     else:
         raise Exception("Unsupported export format: %s!" % format)
     
-def export(schema_index, file, format=Format.XLS_2007, previous_export=None):
+def export(schema_index, file, format=Format.XLS_2007, 
+           previous_export_id=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-    tables = get_full_export_tables(schema_index, previous_export)
+    previous_export = ExportSchema.get(previous_export_id) \
+                      if previous_export_id else None
+    tables, checkpoint = get_full_export_tables(schema_index, previous_export)
     if not tables:
         return None
     export_from_tables(tables, file, format)
-    return True
+    return checkpoint
 
 class Constant(UnicodeMixIn):
     def __init__(self, message):

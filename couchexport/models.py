@@ -171,9 +171,9 @@ class SavedExportSchema(Document, UnicodeMixIn):
         return [self.get_table_configuration(index) for index, cols in self.schema.tables]
 
     def get_export_tables(self, previous_export=None):
-        from couchexport.export import get_full_export_tables, export_from_tables
+        from couchexport.export import get_full_export_tables
         
-        full_tables = get_full_export_tables(self.index, previous_export)
+        full_tables, checkpoint = get_full_export_tables(self.index, previous_export)
         if not full_tables: 
             return None
         
