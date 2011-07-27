@@ -54,11 +54,13 @@ def export_data(req, domain):
         return HttpResponseBadRequest()
 
     format = req.GET.get("format", Format.XLS_2007)
+    previous_export = req.GET.get("previous_export", None)
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
     
-    resp = export_data_shared([domain,export_tag], format, filename=export_tag)
+    resp = export_data_shared([domain,export_tag], format, filename=export_tag,
+                              previous_export_id=previous_export)
     if resp:
         return resp
     else:

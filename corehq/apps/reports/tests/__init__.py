@@ -1,4 +1,5 @@
 try:
+    from corehq.apps.reports.tests.test_export_api import *
     from corehq.apps.reports.tests.test_household_verification import *
     from corehq.apps.reports.tests.test_submissions_by_form import *
 except ImportError, e:
