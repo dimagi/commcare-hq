@@ -1,7 +1,6 @@
 from django.test.client import Client
 from django.test.testcases import TestCase
 import json
-from corehq.apps.receiverwrapper.util import spoof_submission
 from corehq.apps.reports.dodoma import get_household_verification_data, _household_verification_json
 
 def mk_json_sub(userID, caseID, time, last_hvid, next_hvid):

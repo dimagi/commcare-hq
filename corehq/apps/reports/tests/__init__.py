@@ -7,3 +7,4 @@ except ImportError, e:
     # otherwise debugging is a pain
     import logging
     logging.exception(e)
+    raise
