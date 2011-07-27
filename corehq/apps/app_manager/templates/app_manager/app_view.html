@@ -83,6 +83,15 @@
                     });
                 });
             });
+            $(function () {
+                $('#show-user-registration-select').change(function () {
+                    if (JSON.parse($(this).val())) {
+                        $('#user-registration-nav-link').slideDown();
+                    } else {
+                        $('#user-registration-nav-link').slideUp();
+                    }
+                });
+            });
         </script>
         <style>
             .scary-settings {
@@ -239,7 +248,7 @@
                     <td>
                         {% if edit %}
                             <form action="{% url edit_app_attr domain app.id 'show_user_registration' %}" method="POST">
-                                <select class="autosave" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
+                                <select class="autosave" id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
                                     <option value="false">* Don't Use</option>
                                     <option value="true">Use</option>
                                 </select>
