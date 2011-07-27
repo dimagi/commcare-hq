@@ -14,6 +14,7 @@
             /*top: 0px;*/
         /*}*/
     </style>
+    {% if app.doc_type == "Application" %}
     <script>
         $(function () {
             var show_user_registration = {{ app.show_user_registration|JSON }};
@@ -22,6 +23,7 @@
             }
         });
     </script>
+    {% endif %}
 {% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
