@@ -382,7 +382,7 @@ var DetailScreenConfig = (function () {
                         that.saveButton.setState('saving');
                     },
                     success: function (data) {
-                        COMMCAREHQ.updateDOM(data.update);
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
                         that.saveButton.setState('saved');
                     },
                     error: function (data) {
