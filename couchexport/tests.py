@@ -1,6 +1,4 @@
 from django.test import TestCase
-from django.conf import settings
-import logging
 from couchexport.models import ExportSchema
 
 class ExportSchemaTest(TestCase):
