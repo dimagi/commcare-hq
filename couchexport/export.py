@@ -9,17 +9,21 @@ import re
 from dimagi.utils.mixins import UnicodeMixIn
 
         
-def get_full_export_tables(schema_index, previous_export):
+def get_full_export_tables(schema_index, previous_export, filter=None):
     """
     Returns a tuple, the first element being the tabular data ready for 
     processing, and the second the saved checkpoint associated with the tables.
+    
+    The "filter" argument allows you to pass in a function to filter documents
+    from the results. The filter function should take in a document and return
+    true if the document should be included, otherwise false.
     """
     db = Database(settings.COUCH_DATABASE)
     
     # used cached export config to determine doc list
     # previous_export = ExportSchema.last(schema_index)
     current_seq = db.info()["update_seq"]
-    docs = get_docs(schema_index, previous_export)
+    docs = get_docs(schema_index, previous_export, filter)
     if not docs:
         return (None, None)
     schema = get_schema(docs, previous_export)
@@ -40,14 +44,14 @@ def export_from_tables(tables, file, format):
         raise Exception("Unsupported export format: %s!" % format)
     
 def export(schema_index, file, format=Format.XLS_2007, 
-           previous_export_id=None):
+           previous_export_id=None, filter=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
     previous_export = ExportSchema.get(previous_export_id) \
                       if previous_export_id else None
-    tables, checkpoint = get_full_export_tables(schema_index, previous_export)
+    tables, checkpoint = get_full_export_tables(schema_index, previous_export, filter)
     if not tables:
         return None
     export_from_tables(tables, file, format)

@@ -2,8 +2,8 @@ from django.http import HttpResponse
 from StringIO import StringIO
 
 
-def export_data_shared(export_tag, format=None,
-                       filename=None, previous_export_id=None):
+def export_data_shared(export_tag, format=None, filename=None,
+                       previous_export_id=None, filter=None):
     """
     Shared method for export. If there is data, return an HTTPResponse
     with the appropriate data. If there is not data returns None.
@@ -15,7 +15,8 @@ def export_data_shared(export_tag, format=None,
     
     tmp = StringIO()
     checkpoint = export(export_tag, tmp, format=format, 
-                        previous_export_id=previous_export_id)
+                        previous_export_id=previous_export_id,
+                        filter=filter)
     if checkpoint:
         return export_response(tmp, format, filename, checkpoint)
         
