@@ -300,8 +300,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         'is_user_registration': is_user_registration,
     }
 
-def get_apps_base_context(request, app):
-    domain = app.domain
+def get_apps_base_context(request, domain, app):
 
     applications = []
     for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
@@ -359,7 +358,7 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
     except IndexError:
         return bail()
 
-    base_context = get_apps_base_context(req, app)
+    base_context = get_apps_base_context(req, domain, app)
     applications = base_context['applications']
     if not app and applications:
         app_id = applications[0]['id']
@@ -501,7 +500,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
 
     edit = True
 
-    context = get_apps_base_context(req, app)
+    context = get_apps_base_context(req, domain, app)
     context.update(locals())
     return render_to_response(req, 'app_manager/form_designer.html', context)
 

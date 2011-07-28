@@ -12,16 +12,14 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
 
 
-        <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-1.6.1.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-ui-1.8.14.custom.min.js"></script>
+{#        <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-1.6.1.js"></script>#}
+{#        <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-ui-1.8.14.custom.min.js"></script>#}
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.jstree.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.fancybox-1.3.4.pack.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/ui.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/util.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/model.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/controller.js"></script>
-          <!--<script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/xml2json.js"></script>-->
-        <!--<script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/json2xml.js"></script>-->
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/XMLWriter-1.0.0.js"></script>
 
     <style>
@@ -66,7 +64,10 @@
                     }
                 });
             });
-            formdesigner.launch($("#formdesigner"));
+            formdesigner.launch({
+                rootElement: $("#formdesigner"),
+                staticPrefix: '/static/formdesigner/'
+            });
         });
     </script>
 {% endblock %}
@@ -91,4 +92,5 @@
 {#    </div>#}
 {#    <span id="save-xform">Save</span>#}
     <div id="formdesigner"></div>
+    <div style="clear: both"></div>
 {% endblock %}
