@@ -1,4 +1,4 @@
-django
+django==1.2.5
 couchdbkit>=0.5.2
 pytz
 psycopg2

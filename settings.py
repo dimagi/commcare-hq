@@ -39,6 +39,17 @@ STATIC_ROOT = ''
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 
+filepath = os.path.abspath(os.path.dirname(__file__))
+
+STATICFILES_FINDERS = (
+    "staticfiles.finders.FileSystemFinder",
+    "staticfiles.finders.AppDirectoriesFinder"
+)
+
+STATICFILES_DIRS = (
+    ('formdesigner', os.path.join(filepath,'submodules', 'formdesigner')),
+)
+
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -86,7 +97,6 @@ TEMPLATE_DIRS = [
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 ]
-
 
 DEFAULT_APPS = (
     'corehq.apps.userhack', # this has to be above auth
