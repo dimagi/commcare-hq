@@ -5,6 +5,7 @@
 {% load i18n %}
 {% block head %}
     {% include "imports/jqmodal.html" %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css"/>
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-6214661a.js"></script>
@@ -65,75 +66,11 @@
         });
     });
     </script>
-    
-    <style type="text/css">
-        #main_container {
-            padding: 0;
-        }
-        #apps-menu {
-            padding: 1em 1em .5em 1em;
-            background-color: #EEE;
-            display: none;
-        }
-
-        #apps-menu > ul, #app-info > ul {
-            display: table-row;
-        }
-        #apps-menu > ul > li, #app-info > ul > li {
-            border-right: 1px solid #CCC;
-            padding: 0 .5em;
-            display: table-cell;
-        }
-        #apps-menu > ul > li:last-child, #app-info > ul > li:last-child {
-            border-right: none;
-        }
-        #apps-menu-toggle {
-            background-color: #EEE;
-            border: 1px solid #CCC;
-            border-top: none;
-            padding: .5em;
-            position: absolute;
-            right: 300px;
-            top: -1px;
-            width: 8em;
-        }
-        #apps-menu-border {
-            background-color: #EEE;
-            border-bottom: 1px solid #CCC;
-            height: .5em;
-        }
-        #title-bar {
-            position: relative;
-        }
-        input.sms-autocomplete {
-            width: 90%;
-        }
-        .dialog textarea {
-            width: 90%;
-            height: 100px;
-            padding: 10px;
-        }
-        #build-errors a {
-            color: #0067B1 !important;
-        }
-        #app-info {
-            float: left;
-        }
-        .jar_download_dialog p {
-            padding-top: .5em;
-            margin-left: 1em;
-        }
-        .jar_download_dialog ol li {
-            list-style: decimal outside;
-            margin-left: 2em;
-            padding-bottom: 1em;
-        }
-    </style>
-    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    {% include "sms/partials/sms_autocomplete.html" %}
+   
 {% endblock %}
 {% block content %}
-
+    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
+    {% include "sms/partials/sms_autocomplete.html" %}
     <div id="main_container">
         {% if error %}
         <div id="error">

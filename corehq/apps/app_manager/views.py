@@ -300,6 +300,33 @@ def get_form_view_context(request, form, langs, is_user_registration):
         'is_user_registration': is_user_registration,
     }
 
+def get_apps_base_context(request, app):
+    domain = app.domain
+
+    applications = []
+    for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
+        applications.append(_app)
+
+
+    if hasattr(app, 'langs'):
+        lang = request.COOKIES.get('lang', app.langs[0])
+        langs = [lang] + app.langs
+    else:
+        lang = request.COOKIES.get('lang', 'en')
+        langs = [lang]
+
+    if app:
+        saved_apps = ApplicationBase.view('app_manager/saved_app',
+            startkey=[domain, app.id, {}],
+            endkey=[domain, app.id],
+            descending=True
+        ).all()
+    else:
+        saved_apps = []
+    context = locals()
+    context.update(get_sms_autocomplete_context(request, domain))
+    return context
+
 def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.
@@ -319,9 +346,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
     if form_id and not module_id:
         return bail()
 
-    applications = []
-    for app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
-        applications.append(app)
     app = module = form = None
     try:
         if app_id:
@@ -335,6 +359,8 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
     except IndexError:
         return bail()
 
+    base_context = get_apps_base_context(req, app)
+    applications = base_context['applications']
     if not app and applications:
         app_id = applications[0]['id']
         del edit
@@ -353,14 +379,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
         del app['use_commcare_sense']
         app.save()
 
-    if app:
-        saved_apps = ApplicationBase.view('app_manager/saved_app',
-            startkey=[domain, app_id, {}],
-            endkey=[domain, app_id],
-            descending=True
-        ).all()
-    else:
-        saved_apps = []
     if app and not app.langs:
         # lots of things fail if the app doesn't have any languages.
         # the best we can do is add 'en' if there's nothing else.
@@ -400,10 +418,7 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
         'edit': edit,
-        'langs': langs,
-        'lang': lang,
 
-        'saved_apps': saved_apps,
 #        'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
@@ -411,7 +426,7 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
 
         'build_errors': build_errors,
     }
-    context.update(get_sms_autocomplete_context(req, domain))
+    context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
@@ -465,6 +480,32 @@ def view_app(req, domain, app_id=''):
     if module_id or form_id:
         return back_to_main(**locals())
     return view_generic(req, domain, app_id)
+
+@login_and_domain_required
+def form_contents(req, domain, app_id, module_id, form_id):
+    return form_designer(req, domain, app_id, module_id, form_id)
+
+@login_and_domain_required
+def user_registration_contents(req, domain, app_id):
+    return form_designer(req, domain, app_id, is_user_registration=True)
+
+@login_and_domain_required
+def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_registration=False):
+    app = get_app(domain, app_id)
+
+    if is_user_registration:
+        form = app.user_registration
+    else:
+        module = app.get_module(module_id)
+        form = module.get_form(form_id)
+
+    edit = True
+
+    context = get_apps_base_context(req, app)
+    context.update(locals())
+    return render_to_response(req, 'app_manager/form_designer.html', context)
+
+
 
 @require_POST
 @require_permission('edit-apps')
@@ -678,16 +719,26 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.name[lang] = name
         resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
-        xform = req.FILES.get('xform')
-        if xform:
-            xform = xform.read()
+        error = None
+        try:
+            xform = req.FILES.get('xform').read()
             try:
-                form.contents = unicode(xform, encoding="utf-8")
-                form.refresh()
-            except:
-                messages.error(req, "Error uploading form: Please make sure your form is encoded in UTF-8")
+                xform = unicode(xform, encoding="utf-8")
+            except Exception:
+                error = "Error uploading form: Please make sure your form is encoded in UTF-8"
+        except Exception:
+            xform = req.POST.get('xform')
+
+        if xform:
+            form.contents = xform
+            form.refresh()
         else:
-            messages.error(req, "You didn't select a form to upload")
+            error = "You didn't select a form to upload"
+        if error:
+            if ajax:
+                return HttpResponseBadRequest(error)
+            else:
+                messages.error(req, error)
     elif "show_count" == attr:
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False

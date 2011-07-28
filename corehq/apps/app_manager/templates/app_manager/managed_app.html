@@ -4,16 +4,6 @@
 {% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
-    <style>
-        h3 {
-            font-size: 2em;
-            text-align: center;
-        }
-        /*#langs {*/
-            /*position: relative;*/
-            /*top: 0px;*/
-        /*}*/
-    </style>
     {% if app.doc_type == "Application" %}
     <script>
         $(function () {
