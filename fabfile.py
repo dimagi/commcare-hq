@@ -2,7 +2,6 @@ from fabric.api import *
 from fabric.contrib import console
 from fabric import utils
 
-env.root = '/opt/www.commcarehq.org_project'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 
 def _join(*args):
@@ -11,22 +10,29 @@ def _join(*args):
     """
     return '/'.join(args)
 
-
-def _setup_path():
-    env.virtualenv_root = _join(env.root, 'env/cchq_www')
-    env.code_root       = _join(env.root, 'src/commcare-hq')
-    env.project_root    = _join(env.root, 'src/commcare-hq')
-
 def production():
     """ use production environment on remote host"""
+    env.root = root = '/opt/www.commcarehq.org_project'
+    env.virtualenv_root = _join(root, 'env/cchq_www')
+    env.code_root       = _join(root, 'src/commcare-hq')
     env.code_branch = 'master'
     env.sudo_user = 'cchqwww'
     env.hosts = ['10.84.168.241']
     env.environment = 'production'
     env.user = prompt("Username: ", default=env.user)
-    _setup_path()
 
-    
+def staging():
+    """ use staging environment on remote host"""
+    env.root = root = '/home/dimagivm/'
+    env.virtualenv_root = _join(root, 'cchq')
+    env.code_root       = _join(root, 'commcare-hq')
+    env.code_branch = 'master'
+    env.sudo_user = 'root'
+    env.hosts = ['192.168.7.223']
+    env.environment = 'staging'
+    env.user = prompt("Username: ", default='dimagivm')
+
+
 def enter_virtualenv():
     """
     modify path to use virtualenv's python
@@ -60,7 +66,8 @@ def deploy():
             sudo('python manage.py reindex_views', user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
-    service_restart()
+    if env.environment == 'production':
+        service_restart()
 
 
 
