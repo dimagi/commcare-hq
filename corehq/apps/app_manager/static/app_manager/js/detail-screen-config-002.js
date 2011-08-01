@@ -88,7 +88,8 @@ var DetailScreenConfig = (function () {
                 {value: "years-ago", label: DetailScreenConfig.message.YEARS_AGO_FORMAT},
                 {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
                 {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
-                {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT}
+                {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
+                {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT}
             ]).val(this.original.format || null);
 
             this.enum_extra = uiElement.textarea().val(formatEnum(this.original['enum'], this.lang) || "");
@@ -105,12 +106,6 @@ var DetailScreenConfig = (function () {
                 'enum_extra',
                 'late_flag_extra'
             ];
-            // please delete this
-            this.enum_extra.on('change', function () {
-                console.log(
-                    unformatEnum(this.val(), that.lang, that.original['enum'])
-                );
-            });
 
             function fireChange() {
                 that.fire('change');
@@ -387,7 +382,7 @@ var DetailScreenConfig = (function () {
                         that.saveButton.setState('saving');
                     },
                     success: function (data) {
-                        COMMCAREHQ.updateDOM(data.update);
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
                         that.saveButton.setState('saved');
                     },
                     error: function (data) {
@@ -600,6 +595,7 @@ var DetailScreenConfig = (function () {
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
+        INVISIBLE_FORMAT: 'Search Only',
 
         SAVE: 'Save',
         SAVING: 'Saving...',

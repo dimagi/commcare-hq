@@ -20,7 +20,7 @@ import couchforms.views as couchforms_views
 from couchexport.export import export
 from StringIO import StringIO
 from django.contrib import messages
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
@@ -53,16 +53,21 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    format = req.GET.get("format", Format.XLS_2007)
-    next = req.GET.get("next", "")
-    if not next:
-        next = reverse('excel_export_data_report', args=[domain])
-    
-    resp = export_data_shared([domain,export_tag], format, filename=export_tag)
+    kwargs = {"format": req.GET.get("format", Format.XLS_2007),
+              "previous_export_id": req.GET.get("previous_export", None),
+              "filename": export_tag}
+    include_errors = string_to_boolean(req.GET.get("include_errors", False))
+    if not include_errors:
+        kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
+        
+    resp = export_data_shared([domain,export_tag], **kwargs)
     if resp:
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
+        next = req.GET.get("next", "")
+        if not next:
+            next = reverse('excel_export_data_report', args=[domain])
         return HttpResponseRedirect(next)
 
 @login_and_domain_required
