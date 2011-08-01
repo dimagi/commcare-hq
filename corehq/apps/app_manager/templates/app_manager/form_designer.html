@@ -1,5 +1,6 @@
 {% extends 'app_manager/apps_base.html'%}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 
 
 {% block head %}
@@ -9,6 +10,7 @@
 {#        <link href="{{ STATIC_URL }}formdesigner/css/screen.css" rel="stylesheet" type="text/css" media="screen, projection">#}
 {#        <link href="{{ STATIC_URL }}formdesigner/css/print.css" rel="stylesheet" type="text/css" media="print">#}
         <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css" rel="stylesheet" type="text/css"/>
+        <link href="{{ STATIC_URL }}formdesigner/css/chosen.css" rel="stylesheet" type="text/css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
 
 
@@ -16,6 +18,7 @@
 {#        <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-ui-1.8.14.custom.min.js"></script>#}
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.jstree.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.fancybox-1.3.4.pack.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/chosen.jquery.min.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/ui.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/util.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/model.js"></script>
@@ -48,25 +51,29 @@
 
             $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
 
-            $("#save-xform").button().click(function () {
-                $.ajax({
-                    url: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
-                    data: {
-                        xform: $("#xform-contents").val(),
-                        ajax: true
-                    },
-                    type: "POST",
-                    success: function () {
-                        alert("Success!");
-                    },
-                    error: function () {
-                        alert("Error");
-                    }
-                });
-            });
+{#            $("#save-xform").button().click(function () {#}
+{#                $.ajax({#}
+{#                    url: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',#}
+{#                    data: {#}
+{#                        xform: $("#xform-contents").val(),#}
+{#                        ajax: true#}
+{#                    },#}
+{#                    type: "POST",#}
+{#                    success: function () {#}
+{#                        alert("Success!");#}
+{#                    },#}
+{#                    error: function () {#}
+{#                        alert("Error");#}
+{#                    }#}
+{#                });#}
+{#            });#}
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
-                staticPrefix: '/static/formdesigner/'
+                staticPrefix: '/static/formdesigner/',
+                iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
+                saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
+                form: {{ form.contents|JSON }},
+                langs: {{ apps.langs|JSON }}
             });
         });
     </script>
