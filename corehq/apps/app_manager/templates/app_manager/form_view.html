@@ -127,7 +127,13 @@
             <tr>
                 <th>Edit XForm</th>
                 <td id="editXFormTD">
-                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
+                    {% if user.is_superuser %}
+                            <a href="./contents/">
+                                {% if form.contents %}Edit{% else %}Create{% endif %} in Form Designer (New!)
+                            </a>
+                            or
+                    {% endif %}
+                    <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="editor" value="{{ editor_url }}" />
