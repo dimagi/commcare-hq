@@ -1,7 +1,8 @@
 from datetime import datetime
 from django.test.testcases import TestCase
 from corehq.apps.receiverwrapper.util import get_submit_url
-from corehq.apps.reports.views import _relevant_form_types, submissions_by_form_json
+from corehq.apps.reports.views import _relevant_form_types, submissions_by_form_json, DATE_FORMAT
+from dimagi.utils.dates import DateSpan
 from receiver.util import spoof_submission
 
 def mk_xml_sub(userID, time, xmlns):
@@ -29,15 +30,25 @@ class SubmissionsByFormTest(TestCase):
                 "HTTP_X_SUBMIT_TIME": time
             })
     def test_relevant_form_types(self):
+        datespan = DateSpan(
+            startdate=datetime(2011, 05, 01),
+            enddate=datetime(2011, 05, 28),
+            format=DATE_FORMAT
+        )
+        print datespan.startdate_param, datespan.enddate_param
         self.failUnlessEqual(
-            _relevant_form_types(DOMAIN, end=datetime(2011, 05, 24)),
+            _relevant_form_types(DOMAIN, datespan=datespan),
             ["xmlns-A", "xmlns-B"]
         )
     def test__submissions_by_form_json(self):
         self.failUnlessEqual(
             submissions_by_form_json(
                 DOMAIN,
-                end=datetime(2011, 05, 24)
+                datespan=DateSpan(
+                    startdate=datetime(2011, 05, 01),
+                    enddate=datetime(2011, 05, 24),
+                    format=DATE_FORMAT
+                )
             ),
             {"DANNY": {"xmlns-A": 4, "xmlns-B": 3}}
         )

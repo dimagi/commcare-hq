@@ -871,6 +871,7 @@ def _relevant_form_types(domain, userIDs=None, datespan=None):
         include_docs=True,
         reduce=False
     )
+    
     form_types = set()
     for submission in submissions:
         try:
@@ -882,7 +883,7 @@ def _relevant_form_types(domain, userIDs=None, datespan=None):
                 userID = submission['form']['meta']['userID']
                 if userID in userIDs:
                     form_types.add(xmlns)
-            except:
+            except Exception:
                 pass
         else:
             form_types.add(xmlns)
