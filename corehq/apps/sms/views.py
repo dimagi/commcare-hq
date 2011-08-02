@@ -160,4 +160,7 @@ def send_to_recipients(request, domain):
             messages.error(request, "Couldn't send to the following number(s): +%s" % (', +'.join(failed_numbers)))
         if unknown_usernames:
             messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
-    return HttpResponseRedirect(reverse(messaging, args=[domain]))
+    return HttpResponseRedirect(
+        request.META.get('HTTP_REFERER') or
+        reverse(messaging, args=[domain])
+    )

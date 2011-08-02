@@ -1,8 +1,13 @@
 import re
+
 from django.conf import settings
-from dimagi.utils.couch.database import get_db
 from django.contrib.auth.models import User
+
 from couchdbkit.resource import ResourceNotFound
+
+from dimagi.utils.couch.database import get_db
+
+
 
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 

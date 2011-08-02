@@ -33,9 +33,13 @@ def domain_list(request):
         dom.commcare_users = commcare_counts[dom.name]
         dom.forms = form_counts[dom.name]
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
+    try:
+        domain = request.user.selected_domain.name
+    except AttributeError:
+        domain = None
     return render_to_response("hqadmin/domain_list.html", 
                               {"domains": domains,
-                               "domain": request.user.selected_domain.name},
+                               "domain": domain},
                               context_instance=RequestContext(request))
 
 

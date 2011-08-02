@@ -23,9 +23,14 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
-        {% for feature, value in app.profile.features.items %}{% if value != None %}
+        {% for feature, value in app.profile.features.items %}{% if value != None and feature != 'users'%}
             <{{ feature }} active="{{ value }}" />
         {% endif %}{% endfor %}
+        <users active="{{ app.profile.features.users|default:'true' }}">
+            {% if app.show_user_registration %}
+            <registration>{{ app.user_registration.wrapped_xform.data_node.tag_xmlns }}</registration>
+            {% endif %}
+        </users>
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">

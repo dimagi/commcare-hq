@@ -1,5 +1,6 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     <style>
@@ -60,58 +61,65 @@
             var edit = {% if edit %}true{% else %}false{% endif %};
             var langcodeValidator = new LangcodeValidator({
                 home: 'langcode_validator',
-                langcodes: {{ xform_languages|safe }},
+                langcodes: {{ xform_languages|JSON }},
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
             var form_empty = {% if form.contents %}false{% else %}true{% endif %};
+        {% if not is_user_registration %}
             if (!form_empty) {
                 var casexml = new CaseXML({
                     home: "casexml_home",
-                    actions: {{ form_actions|safe }},
-                    questions: {{ xform_questions|safe }},
+                    actions: {{ form.actions|JSON }},
+                    questions: {{ xform_questions|JSON }},
                     edit: edit,
-                    save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id form.id %}",
+                    save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
                     requires: "{{ form.requires }}",
-                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'requires' %}",
-                    reserved_words: {{ case_reserved_words_json|safe }}
+                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",
+                    reserved_words: {{ case_reserved_words_json|JSON }}
                 });
                 casexml.init();
             }
+        {% endif %}
         });
     </script>
     {% include "app_manager/partials/casexml.html" %}
 {% endblock %}
 {% block form-view %}
-    <h3 class="variable-form_name">{{ form.name|trans:langs }}</h3>
+    {% if is_user_registration %}
+        <h3>User Registration</h3>
+    {% else %}
+        <h3 class="variable-form_name">{{ form.name|trans:langs }}</h3>
+    {% endif %}
     {% if xform_errors %}
         <div class="warning padded">
             <p>Your XForm is not valid XML:</p>
             <p>{{ xform_errors }}</p>
         </div>
     {% endif %}
-    <h4>Form Settings</h4>
-    <table class="config">
-        {% if edit %}
-            <tr>
-                <th>Form Name</th>
-                <td>
-                    <!-- autosave hijacks the form so that it sends automatically in the background-->
-                    <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'name' %}">
-                        <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                    </form>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <th>Form Name</th>
-                <td>
-                    {{ form.name|trans:langs }}
-                </td>
-            </tr>
-        {% endif %}
-    </table>
-
+    {% if nav_form %}
+        <h4>Form Settings</h4>
+        <table class="config">
+            {% if edit %}
+                <tr>
+                    <th>Form Name</th>
+                    <td>
+                        <!-- autosave hijacks the form so that it sends automatically in the background-->
+                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+                            <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <th>Form Name</th>
+                    <td>
+                        {{ form.name|trans:langs }}
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endif %}
 
         <h4>XForm</h4>
     <table class="config">
@@ -119,7 +127,13 @@
             <tr>
                 <th>Edit XForm</th>
                 <td id="editXFormTD">
-                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
+                    {% if user.is_superuser %}
+                            <a href="./contents/">
+                                {% if form.contents %}Edit{% else %}Create{% endif %} in Form Designer (New!)
+                            </a>
+                            or
+                    {% endif %}
+                    <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                         {% csrf_token %}
                         <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="editor" value="{{ editor_url }}" />
@@ -137,7 +151,7 @@
                     or 
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id module.id form.id  'xform' %}" method="POST" enctype="multipart/form-data">
+                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
                             <input id="xform_file_input" type="file" name="xform" />
                             <input type="hidden" name="ajax" value="false" />
                             <input id="xform_file_submit"type="submit" value="Upload" />
@@ -148,7 +162,6 @@
         {% endif %}
         {% if form.contents %}
             <tr>
-                <tr>
                 <th>Demo this form</th>
                 <td>
                     <form method="POST" action="{{ XFORMPLAYER_URL }}" style="display: inline">
@@ -161,24 +174,34 @@
                         <input type="submit" value="Try it!" />
                     </form>
                 </td>
-                </tr>
+            </tr>
+            <tr>
                 <th>
                     View XForm
                 </th>
                 <td>
                     <a id="xform-source-opener" class="dialog_opener"
+                    {% if is_user_registration %}
+                       href="{% url get_user_registration_contents domain app.id %}">
+                    {% else %}
                        href="{% url get_xform_contents domain app.id module.id form.id %}">
+                    {% endif %}
                         View Source XML
                     </a>
                     <div class="xml-source dialog" title="XML Source">
                         Double-click to select all.
                         <pre id="xform-source" class="brush: xml;"></pre>
                     </div>
-                    or <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
+                    or
+                    {% if is_user_registration %}
+                       <a href="{% url get_user_registration_contents domain app.id %}?download=true">Download XForm</a>
+                    {% else %}
+                       <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
+                    {% endif %}
+
                 </td>
-            </tr>
             <tr>
-                <th>Languages in this XForm</td>
+                <th>Languages in this XForm</th>
                 <td>
                     <div id="langcode_validator"></div>
                 </td>

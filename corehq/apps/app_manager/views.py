@@ -1,7 +1,10 @@
+import logging
+
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError
+from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
@@ -31,27 +34,21 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
-import random
 from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
-import logging
 from corehq.apps.app_manager.decorators import safe_download
+from . import fixtures
+from django.utils.datastructures import SortedDict
+
 try:
     from lxml.etree import XMLSyntaxError
 except ImportError:
-    import logging
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
 _str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
 require_edit_apps = require_permission(Permissions.EDIT_APPS)
-
-class TemplateFunctions(object):
-    @classmethod
-    def make_uuid(cls):
-        return random_hex()
-
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
@@ -68,7 +65,7 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
     the local namespace.
 
     """
-    params = {'m': module_id, 'f': form_id}
+    params = {}
     if edit:
         params['edit'] = 'true'
     if error:
@@ -77,18 +74,24 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
     args = [domain]
     if app_id:
         args.append(app_id)
-    view_name = 'default' if len(args) == 1 else 'view_app'
+        if module_id:
+            args.append(module_id)
+            if form_id:
+                args.append(form_id)
+    view_name = {
+        1: 'default',
+        2: 'view_app',
+        3: 'view_module',
+        4: 'view_form',
+    }[len(args)]
     return HttpResponseRedirect("%s%s" % (
         reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""
     ))
 
-@login_and_domain_required
-def get_xform_contents(req, domain, app_id, module_id, form_id):
-    download = json.loads(req.GET.get('download', 'false'))
-    app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    form = app.get_module(module_id).get_form(form_id)
+def _get_xform_contents(request, app, form):
+    download = json.loads(request.GET.get('download', 'false'))
+    lang = request.COOKIES.get('lang', app.langs[0])
     contents = form.contents
     if download:
         response = HttpResponse(contents)
@@ -100,6 +103,18 @@ def get_xform_contents(req, domain, app_id, module_id, form_id):
         return response
     else:
         return json_response(contents)
+
+@login_and_domain_required
+def get_xform_contents(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    return _get_xform_contents(req, app, form)
+    
+@login_and_domain_required
+def get_user_registration_contents(req, domain, app_id):
+    app = get_app(domain, app_id)
+    form = app.get_user_registration()
+    return _get_xform_contents(req, app, form)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -121,14 +136,40 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
+EXAMPLE_DOMAIN = 'example'
+
+def _get_or_create_app(app_id):
+    if app_id == "example--hello-world":
+        try:
+            app = Application.get(app_id)
+        except ResourceNotFound:
+            app = Application.wrap(fixtures.hello_world_example)
+            app._id = app_id
+            app.domain = EXAMPLE_DOMAIN
+            app.save()
+            return _get_or_create_app(app_id)
+        return app
+    else:
+        return VersionedDoc.get(app_id)
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
-        source = req.POST.get('source')
         name = req.POST.get('name')
-        source = json.loads(source)
+        try:
+            source = req.POST.get('source')
+            source = json.loads(source)
+            assert(source is not None)
+        except Exception:
+            app_id = req.POST.get('app_id')
+            source = _get_or_create_app(app_id)
+            src_dom = source['domain']
+            source = source.export_json()
+            source = json.loads(source)
+            if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                return HttpResponseForbidden()
         try: del source['_attachments']
-        except: pass
+        except Exception: pass
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
@@ -192,44 +233,144 @@ def import_factory_form(req, domain, app_id, module_id):
     app.save()
     return back_to_main(**locals())
 
-
-#@profile("apps_context.prof")
-def _apps_context(req, domain, app_id='', module_id='', form_id=''):
+def default(req, domain):
     """
-    Does most of the processing for creating the template context for the App Manager.
-    It's currently only used by view_app, and the distribution of labor is not really
-    that clear; for that reason, this may soon be revisited and merged with view_app
+    Handles a url that does not include an app_id.
+    Currently the logic is taken care of by view_app,
+    but this view exists so that there's something to
+    reverse() to. (I guess I should use url(..., name="default")
+    in url.py instead?)
+
 
     """
+    return view_app(req, domain, app_id='')
+
+def get_form_view_context(request, form, langs, is_user_registration):
+    try:
+        xform_questions = form.get_questions(langs) if form.contents and not is_user_registration else []
+        # this is just to validate that the case and meta blocks can be created
+        xform_errors = None
+    except XMLSyntaxError as e:
+        xform_questions = []
+        messages.error(request, "%s" % e)
+    except AppError, e:
+        xform_questions = []
+        messages.error(request, "Error in application: %s" % e)
+    except XFormValidationError, e:
+        xform_questions = []
+        message = unicode(e)
+        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+        for msg in message.split("\n")[2:]:
+            messages.error(request, "%s" % msg)
+    except XFormError, e:
+        xform_questions = []
+        messages.error(request, "Error in form: %s" % e)
+    # any other kind of error should fail hard, but for now there are too many for that to be practical
+    except Exception, e:
+        if settings.DEBUG:
+            raise
+        logging.exception(e)
+        xform_questions = []
+        messages.error(request, "Unexpected System Error: %s" % e)
+
+    try:
+        if form.contents:
+            form.render_xform()
+    except CaseError, e:
+        messages.error(request, "Error in Case Management: %s" % e)
+    except XFormValidationError, e:
+        messages.error(request, "%s" % e)
+    except Exception, e:
+        if settings.DEBUG:
+            raise
+        logging.exception(e)
+        messages.error(request, "Unexpected Error: %s" % e)
+
+    try:
+        languages = form.wrapped_xform().get_languages()
+    except Exception:
+        languages = []
+
+    return {
+        'nav_form': form if not is_user_registration else '',
+        'xform_languages': languages,
+        "xform_questions": xform_questions,
+        'form_actions': form.actions.to_json(),
+        'case_reserved_words_json': load_case_reserved_words(),
+        'is_user_registration': is_user_registration,
+    }
+
+def get_apps_base_context(request, domain, app):
+
+    applications = []
+    for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
+        applications.append(_app)
+
+
+    if hasattr(app, 'langs'):
+        lang = request.COOKIES.get('lang', app.langs[0])
+        langs = [lang] + app.langs
+    else:
+        lang = request.COOKIES.get('lang', 'en')
+        langs = [lang]
+
+    if app:
+        saved_apps = ApplicationBase.view('app_manager/saved_app',
+            startkey=[domain, app.id, {}],
+            endkey=[domain, app.id],
+            descending=True
+        ).all()
+    else:
+        saved_apps = []
+    context = locals()
+    context.update(get_sms_autocomplete_context(request, domain))
+    return context
+
+def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
+    """
+    This is the main view for the app. All other views redirect to here.
+
+    """
+    def bail():
+        module_id=''
+        form_id=''
+        messages.error(req, 'Oops! We could not complete your request. Please try again')
+        return back_to_main(req, domain, app_id)
+
     edit = (req.GET.get('edit', '') == 'true') and req.couch_user.can_edit_apps(domain)
     lang = req.GET.get('lang',
        req.COOKIES.get('lang', '')
     )
 
-    factory_apps = [app['value'] for app in get_db().view('app_manager/factory_apps')]
+    if form_id and not module_id:
+        return bail()
 
-    applications = []
-    for app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
-        applications.append(app)
     app = module = form = None
-    if app_id:
-        app = get_app(domain, app_id)
-    if module_id:
-        module = app.get_module(module_id)
-    if form_id:
-        form = module.get_form(form_id)
-    xform = ""
-    #xform_contents = ""
     try:
-        xform = form
-    except:
-        pass
-#    if xform:
-#        xform_contents = form.contents
+        if app_id:
+            app = get_app(domain, app_id)
+        if is_user_registration:
+            form = app.get_user_registration()
+        if module_id:
+            module = app.get_module(module_id)
+        if form_id:
+            form = module.get_form(form_id)
+    except IndexError:
+        return bail()
+
+    base_context = get_apps_base_context(req, domain, app)
+    applications = base_context['applications']
+    if not app and applications:
+        app_id = applications[0]['id']
+        del edit
+        return back_to_main(edit=False, **locals())
+    if app and app.copy_of:
+        # don't fail hard.
+        return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
 
 
+    # grandfather in people who set commcare sense earlier
     if app and 'use_commcare_sense' in app:
-        # grandfather in people who set commcare sense earlier
         if app['use_commcare_sense']:
             if 'features' not in app.profile:
                 app.profile['features'] = {}
@@ -237,14 +378,6 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         del app['use_commcare_sense']
         app.save()
 
-    if app:
-        saved_apps = ApplicationBase.view('app_manager/saved_app',
-            startkey=[domain, app_id, {}],
-            endkey=[domain, app_id],
-            descending=True
-        ).all()
-    else:
-        saved_apps = []
     if app and not app.langs:
         # lots of things fail if the app doesn't have any languages.
         # the best we can do is add 'en' if there's nothing else.
@@ -255,55 +388,12 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
 
     langs = [lang] + (app.langs if app else [])
 
-    case_fields = set()
+    case_properties = set()
     if module:
         for _form in module.forms:
-            case_fields.update(_form.actions.update_case.update.keys())
-    case_fields = sorted(case_fields)
+            case_properties.update(_form.actions.update_case.update.keys())
+    case_properties = sorted(case_properties)
 
-    try:
-        xform_questions = json.dumps(form.get_questions(langs) if form and form.contents else [])
-        # this is just to validate that the case and meta blocks can be created
-        xform_errors = None
-    except XMLSyntaxError as e:
-        xform_questions = []
-#        xform_errors = e.msg
-        messages.error(req, "%s" % e)
-    except AppError, e:
-        #logging.exception(e)
-        xform_questions = []
-        messages.error(req, "Error in application: %s" % e)
-    except XFormValidationError, e:
-        #logging.exception(e)
-        xform_questions = []
-        message = unicode(e)
-        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-        for msg in message.split("\n")[2:]:
-            messages.error(req, "%s" % msg)
-    except XFormError, e:
-        #logging.exception(e)
-        xform_questions = []
-        messages.error(req, "Error in form: %s" % e)
-    # any other kind of error should fail hard, but for now there are too many for that to be practical
-    except Exception, e:
-        if settings.DEBUG:
-            raise
-        logging.exception(e)
-        xform_questions = []
-        messages.error(req, "Unexpected System Error: %s" % e)
-
-    try:
-        if form and form.contents:
-            app.fetch_xform(module_id, form_id)
-    except CaseError, e:
-        messages.error(req, "Error in Case Management: %s" % e)
-    except XFormValidationError, e:
-        messages.error(req, "%s" % e)
-    except Exception, e:
-        if settings.DEBUG:
-            raise
-        logging.exception(e)
-        messages.error(req, "Unexpected Error: %s" % e)
 
     build_errors_id = req.GET.get('build_errors', "")
     build_errors = []
@@ -322,98 +412,32 @@ def _apps_context(req, domain, app_id='', module_id='', form_id=''):
         'module': module,
         'form': form,
 
-        'xform': xform,
-        #'xform_contents': xform_contents,
-        #'form_err': err if form and has_err else None,
-        "xform_questions": xform_questions,
-        #"xform_errors": xform_errors,
-        'form_actions': json.dumps(form.actions.to_json()) if form else None,
-        'case_fields': json.dumps(case_fields),
+        'case_properties': case_properties,
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
         'edit': edit,
-        'langs': langs,
-        'lang': lang,
 
-        'saved_apps': saved_apps,
-        'factory_apps': factory_apps,
+#        'factory_apps': factory_apps,
         'editor_url': settings.EDITOR_URL,
         'URL_BASE': get_url_base(),
         'XFORMPLAYER_URL': reverse('xform_play_remote'),
 
         'build_errors': build_errors,
-
-        'util': TemplateFunctions,
     }
-    context.update(get_sms_autocomplete_context(req, domain))
+    context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
-        context.update({"translations_json": json.dumps(app.translations.get(lang, {}))}),
+        context.update({"translations": app.translations.get(lang, {})})
+
     if form:
-        context.update({'case_reserved_words_json': json.dumps(load_case_reserved_words())})
-    return context
-
-def default(req, domain):
-    """
-    Handles a url that does not include an app_id.
-    Currently the logic is taken care of by view_app,
-    but this view exists so that there's something to
-    reverse() to. (I guess I should use url(..., name="default")
-    in url.py instead?)
-
-
-    """
-    return view_app(req, domain, app_id='')
-
-@login_and_domain_required
-def view_app(req, domain, app_id=''):
-    """
-    This is the main view for the app. All other views redirect to here.
-
-    """
-    def bail():
-        module_id=''
-        form_id=''
-        messages.error(req, 'Oops! We could not complete your request. Please try again')
-        return back_to_main(req, domain, app_id)
-
-    module_id = req.GET.get('m', '')
-    form_id = req.GET.get('f', '')
-
-    if form_id and not module_id:
-        return bail()
-
-
-    try:
-        context = _apps_context(req, domain, app_id, module_id, form_id)
-    except IndexError:
-        return bail()
-
-    if form_id:
         template="app_manager/form_view.html"
-        try:
-            languages = json.dumps(context['form'].wrapped_xform().get_languages())
-        except:
-            languages = []
-        context.update({
-            'xform_languages': languages
-        })
-    elif module_id:
+        context.update(get_form_view_context(req, form, langs, is_user_registration))
+    elif module:
         template="app_manager/module_view.html"
     else:
         template="app_manager/app_view.html"
     error = req.GET.get('error', '')
 
-
-
-    app = context['app']
-    if not app and context['applications']:
-        app_id = context['applications'][0]['id']
-        return back_to_main(edit=False, **locals())
-    if app and app.copy_of:
-        # don't fail hard.
-        #raise Http404
-        return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
     force_edit = False
     if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
         edit = True
@@ -430,9 +454,57 @@ def view_app(req, domain, app_id=''):
             "commcare_build_options": options,
             "is_standard_build": bool(is_standard_build)
         })
+
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+@login_and_domain_required
+def view_user_registration(request, domain, app_id):
+    return view_generic(request, domain, app_id, is_user_registration=True)
+
+@login_and_domain_required
+def view_form(req, domain, app_id, module_id, form_id):
+    return view_generic(req, domain, app_id, module_id, form_id)
+
+@login_and_domain_required
+def view_module(req, domain, app_id, module_id):
+    return view_generic(req, domain, app_id, module_id)
+
+@login_and_domain_required
+def view_app(req, domain, app_id=''):
+    # redirect old m=&f= urls
+    module_id = req.GET.get('m', None)
+    form_id = req.GET.get('f', None)
+    if module_id or form_id:
+        return back_to_main(**locals())
+    return view_generic(req, domain, app_id)
+
+@login_and_domain_required
+def form_contents(req, domain, app_id, module_id, form_id):
+    return form_designer(req, domain, app_id, module_id, form_id)
+
+@login_and_domain_required
+def user_registration_contents(req, domain, app_id):
+    return form_designer(req, domain, app_id, is_user_registration=True)
+
+@login_and_domain_required
+def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_registration=False):
+    app = get_app(domain, app_id)
+
+    if is_user_registration:
+        form = app.user_registration
+    else:
+        module = app.get_module(module_id)
+        form = module.get_form(form_id)
+
+    edit = True
+
+    context = get_apps_base_context(req, domain, app)
+    context.update(locals())
+    return render_to_response(req, 'app_manager/form_designer.html', context)
+
+
 
 @require_POST
 @require_permission('edit-apps')
@@ -535,6 +607,32 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 
 @require_POST
 @require_permission('edit-apps')
+def edit_module_detail_screens(req, domain, app_id, module_id):
+    """
+    Called to over write entire detail screens at a time
+
+    """
+
+    params = json_request(req.POST)
+    screens = params.get('screens')
+
+    if not screens:
+        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    for detail_type in screens:
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
+
+@require_POST
+@require_permission('edit-apps')
 def edit_module_detail(req, domain, app_id, module_id):
     """
     Called to add a new module detail column or edit an existing one
@@ -600,13 +698,13 @@ def delete_module_detail(req, domain, app_id, module_id):
 
 @require_POST
 @require_permission('edit-apps')
-def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
+def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
     """
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     ajax = json.loads(req.POST.get('ajax', 'true'))
 
@@ -620,16 +718,26 @@ def edit_form_attr(req, domain, app_id, module_id, form_id, attr):
         form.name[lang] = name
         resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
-        xform = req.FILES.get('xform')
-        if xform:
-            xform = xform.read()
+        error = None
+        try:
+            xform = req.FILES.get('xform').read()
             try:
-                form.contents = unicode(xform, encoding="utf-8")
-                form.refresh()
-            except:
-                messages.error(req, "Error uploading form: Please make sure your form is encoded in UTF-8")
+                xform = unicode(xform, encoding="utf-8")
+            except Exception:
+                error = "Error uploading form: Please make sure your form is encoded in UTF-8"
+        except Exception:
+            xform = req.POST.get('xform')
+
+        if xform:
+            form.contents = xform
+            form.refresh()
         else:
-            messages.error(req, "You didn't select a form to upload")
+            error = "You didn't select a form to upload"
+        if error:
+            if ajax:
+                return HttpResponseBadRequest(error)
+            else:
+                messages.error(req, error)
     elif "show_count" == attr:
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False
@@ -668,6 +776,61 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
+@require_permission('edit-apps')
+def multimedia_list_download(req, domain, app_id):
+    app = get_app(domain, app_id)
+    include_audio = req.GET.get("audio", True)
+    include_images = req.GET.get("images", True)
+    strip_jr = req.GET.get("strip_jr", True)
+    filelist = []
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            if include_images:
+                filelist.extend(parsed.image_references)
+            if include_audio:
+                filelist.extend(parsed.audio_references)
+    
+    if strip_jr:
+        filelist = [s.replace("jr://file/", "") for s in filelist if s]
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=list.txt' 
+    response.write("\n".join(sorted(set(filelist))))
+    return response
+        
+@require_permission('edit-apps')
+def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
+    """
+    Edit multimedia for forms
+    """
+    app = get_app(domain, app_id)
+    
+    parsed_forms = {}
+    images = {} 
+    audio_files = {}
+    # TODO: make this more fully featured
+    for m in app.get_modules():
+        for f in m.get_forms():
+            parsed = XForm(f.contents)
+            parsed_forms[f] = parsed
+            for i in parsed.image_references:
+                if i not in images: images[i] = []
+                images[i].append((m,f)) 
+            for i in parsed.audio_references:
+                if i not in audio_files: audio_files[i] = []
+                audio_files[i].append((m,f)) 
+    
+    sorted_images = SortedDict()
+    sorted_audio = SortedDict()
+    for k in sorted(images):
+        sorted_images[k] = images[k]
+    for k in sorted(audio_files):
+        sorted_audio[k] = audio_files[k]
+    return render_to_response(req, "app_manager/multimedia_home.html", 
+                              {"domain": domain,
+                               "app": app,
+                               "images": sorted_images,
+                               "audiofiles": sorted_audio})
 
 @require_GET
 @login_and_domain_required
@@ -779,6 +942,8 @@ def edit_app_attr(req, domain, app_id, attr):
     elif "build_spec" == attr:
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
+    elif "show_user_registration" == attr:
+        app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     # For RemoteApp
     elif "profile_url" == attr:
         if app.doc_type not in ("RemoteApp",):
@@ -961,6 +1126,13 @@ def download_xform(req, domain, app_id, module_id, form_id):
     """
     return HttpResponse(
         get_app(domain, app_id).fetch_xform(module_id, form_id)
+    )
+
+@safe_download
+def download_user_registration(req, domain, app_id):
+    """See Application.fetch_xform"""
+    return HttpResponse(
+        get_app(domain, app_id).get_user_registration().render_xform()
     )
 
 @safe_download

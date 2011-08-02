@@ -1,18 +1,19 @@
 {% extends "app_manager/apps_base.html" %}
 {% load xforms_extras %}
 {% load url_extras %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
-    <style>
-        h3 {
-            font-size: 2em;
-            text-align: center;
-        }
-        /*#langs {*/
-            /*position: relative;*/
-            /*top: 0px;*/
-        /*}*/
-    </style>
+    {% if app.doc_type == "Application" %}
+    <script>
+        $(function () {
+            var show_user_registration = {{ app.show_user_registration|JSON }};
+            if (!show_user_registration) {
+                $('#user-registration-nav-link').hide();
+            }
+        });
+    </script>
+    {% endif %}
 {% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
@@ -30,10 +31,9 @@
         <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
         <h2 {% if not module and not form %}class="selected"{% endif %}>
-            <a href="{% urlencode request.path request.GET without "m" without "f" %}" class="variable-app_name">{{ app.name }}
+            <a href="{% url view_app domain app.id %}?edit={{ edit|JSON }}" class="variable-app_name">{{ app.name }}
             </a>
         </h2>
-
             {% if app.doc_type == "Application" %}
                 <ul {% if edit %}class="sortable"{% endif %}>
                     {% if edit %}
@@ -43,6 +43,9 @@
                             </form>
                         </li>
                     {% endif %}
+                        <li class="sort-disabled{% if is_user_registration %} selected{% endif %}" id="user-registration-nav-link">
+                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|JSON }}">User Registration</a>
+                        </li>
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}
                             <li class="module">
@@ -65,7 +68,7 @@
                                             <a class="delete_link confirm-submit" href="#"></a>
                                         </form>
                                     {% endif %}
-                                    <a href="{% urlencode request.path request.GET with "m" as module.id without "f" %}"
+                                    <a href="{% url view_module domain app.id module.id %}?edit={{ edit|JSON }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                         {{ module.name|trans:langs }}
                                     </a>
@@ -79,7 +82,7 @@
                                             </form>
                                         </li>
                                     {% endif %}
-                                    {% with form as selected_form %}
+                                    {% with nav_form as selected_form %}
                                         {% for form in module.get_forms %}
                                             <li {% ifequal form selected_form %} class="selected"{% endifequal %}>
                                                 <!--[F]-->
@@ -99,7 +102,7 @@
                                                         <a class="delete_link confirm-submit" href="#"></a>
                                                     </form>
                                                 {% endif %}
-                                                <a href="{% urlencode request.path request.GET with "m" as module.id with "f" as form.id %}"
+                                                <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|JSON }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                                     {{ form.name|trans:langs }}
                                                 </a>
@@ -111,40 +114,10 @@
                                     {% endif %}
                                     {% if edit %}
                                         <li class="sort-disabled">
-                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}"
+                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|JSON }}"
                                                   method="post">
                                                 <a class="new_link submit_on_click" id="new_form" href="#">Form</a>
                                             </form>
-                                            {#                        <a class="new_link dialog_opener" id="new_form" href="#">Form</a>#}
-                                            {#                        <div class="dialog" title="Create New Form">#}
-                                            {#                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}" method="post" enctype="multipart/form-data">#}
-                                            {#                                <table>#}
-                                            {#                                    {{ new_xform_form }}#}
-                                            {#                                </table>#}
-                                            {#                                <input type="submit" value="Create Form" />#}
-                                            {#                            </form>#}
-                                            {#                            <hr/>#}
-                                            {#                            <h4>From Factory Form</h4>#}
-                                            {#                            <form action="{% url corehq.apps.app_manager.views.import_factory_form domain app.id module.id %}" method="post">#}
-                                            {#                                <table>#}
-                                            {#                                    <td>#}
-                                            {#                                        <select name="app_module_form_id">#}
-                                            {#                                            <option value="" disabled="true">Select a form</option>#}
-                                            {#                                            {% for fapp in factory_apps %}#}
-                                            {#                                                <optgroup label="{{ fapp.name }}">#}
-                                            {#                                                    {% for fmodule in fapp.modules %}#}
-                                            {#                                                        {% for fform in fmodule.forms %}#}
-                                            {#                                                            <option value="{{ fapp.id }}/{{ fmodule.id }}/{{ fform.id }}">{{ fmodule.name|trans:langs }} &gt; {{ fform.name|trans:langs }}</option>#}
-                                            {#                                                        {% endfor %}#}
-                                            {#                                                    {% endfor %}#}
-                                            {#                                                </optgroup>#}
-                                            {#                                            {% endfor %}#}
-                                            {#                                        </select>#}
-                                            {#                                    </td>#}
-                                            {#                                </table>#}
-                                            {#                                <input type="submit" value="Import Form" />#}
-                                            {#                            </form>#}
-                                            {#                        </div>#}
                                         </li>
                                     {% endif %}
 
@@ -158,92 +131,14 @@
                                   method="post">
                                 <a href="#" class="new_link submit_on_click" id="new_module">Module</a>
                             </form>
-                            {#                    <a href="#" class="new_link" id="new_module">Module</a>#}
-                            {#                    <div id="new_module_dialog" title="Create New Module">#}
-                            {#                        <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}" method="post">#}
-                            {#                            <table>#}
-                            {#                                {{ new_module_form.as_table }}#}
-                            {#                            </table>#}
-                            {#                            <input type="submit" value="Create Module" />#}
-                            {#                        </form>#}
-                            {#                        <hr/>#}
-                            {#                        <h4>From Factory Module</h4>#}
-                            {#                        <form action="{% url corehq.apps.app_manager.views.import_factory_module domain app.id %}" method="post">#}
-                            {#                            <table>#}
-                            {# <th>Name:</th> #}
-                            {# <td><input type="text" name="name" /></td> #}
-                            {#                                <td>#}
-                            {#                                    <select name="app_module_id">#}
-                            {#                                        <option value="" disabled="true">Select a module</option>#}
-                            {#                                        {% for fapp in factory_apps %}#}
-                            {#                                            <optgroup label="{{ fapp.name }}">#}
-                            {#                                                {% for fmodule in fapp.modules %}#}
-                            {#                                                    <option value="{{ fapp.id }}/{{ fmodule.id }}">{{ fmodule.name|trans:langs }}</option>#}
-                            {#                                                {% endfor %}#}
-                            {#                                            </optgroup>#}
-                            {#                                        {% endfor %}#}
-                            {#                                    </select>#}
-                            {#                                </td>#}
-                            {#                            </table>#}
-                            {#                            <input type="submit" value="Import Module" />#}
-                            {#                        </form>#}
-                            {#                    </div>#}
                         </li>
                     {% endif %}
                 </ul>
             {% endif %}
-        {# {% with app.menu_root as menu_root %} #}
-        {# {% if menu_root %} #}
-        {#     <hr/> #}
-        {#     <ul class="sortable"> #}
-        {#         menu-root #}
-        {#     </ul> #}
-        {# {% endif %} #}
-        {# {% endwith %} #}
-        
         </div>
         <div class="next-to-sidebar">
             {% block form-view %}
-                {% if app.modules %}
-                    {% if form %}
-                        <h3>{% if module %}{{ module.name|trans:langs }} &gt; {% endif %}{{ form.name|trans:langs }}</h3>
-                        {% if xform%}
-                            <table class="config">
-                                <tr>
-                                    <th>XML Namespace</th>
-                                    <td><code>{{ xform.xmlns }}</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Requires</th>
-                                    <td>{{ form.requires }}</td>
-                                </tr>
-                            </table>
-                        {% else %}
-                            <p>This xform doesn't seem to exist. Would you like to create one with this name?</p>
-                            <a class="button" href="{% urlencode request.path request.GET with 'form_name' as form.name %}">
-                                Create Form
-                            </a>
 
-                        {% endif %}
-                    {% else %}{% if module %}
-                        <h3>{{ module.name|trans:langs }} Module Configurations</h3>
-                        <form action="">
-                        </form>
-                    {% else %}{% if app %}
-                        App settings will go here...
-                    {% else %}
-                        {% if edit %}
-                            <h2 class="message">Continue editing at the left or click "Done Editing" above.</h2>
-                        {% else %}
-                            <h2 class="message">Select a form at the left.</h2>
-                        {% endif %}
-
-                    {% endif %}
-                    {% endif %}
-                    {% endif %}
-                {% else %}
-                    <h2 class="message">Begin by adding a module at the left.</h2>
-                {% endif %}
             {% endblock %}
         </div>
     </div>

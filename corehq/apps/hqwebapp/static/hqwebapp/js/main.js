@@ -7,6 +7,12 @@ $.prototype.iconify = function (icon) {
 var COMMCAREHQ = (function () {
     'use strict';
     return {
+        icons: {
+            GRIP:   'ui-icon ui-icon-arrowthick-2-n-s',
+            ADD:    'ui-icon ui-icon-plusthick',
+            COPY:   'ui-icon ui-icon-copy',
+            DELETE: 'ui-icon ui-icon-closethick'
+        },
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).click(function (e) {
                 e.preventDefault();
@@ -21,9 +27,9 @@ var COMMCAREHQ = (function () {
                 }
             });
 
-            $(".button", $elem).button().wrap('<span />').addClass('shadow');
-            $("input[type='submit']", $elem).button().addClass('shadow');
-            $("input[type='text'], input[type='password'], textarea", $elem).addClass('shadow').addClass('ui-corner-all');
+            $(".button", $elem).button().wrap('<span />');
+            $("input[type='submit']", $elem).button();
+            $("input[type='text'], input[type='password'], textarea", $elem);//.addClass('shadow').addClass('ui-corner-all');
             $('.container', $elem).addClass('ui-widget ui-widget-content');
             $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
@@ -103,8 +109,7 @@ $(function () {
     $(".delete_dialog").addClass("dialog");
     $('.new_link').iconify('ui-icon-plusthick');
     $('.edit_link').iconify('ui-icon-pencil');
-    var dragIcon = 'ui-icon-grip-dotted-horizontal';
-    $('.drag_handle').iconify(dragIcon);
+    $('.drag_handle').iconify(COMMCAREHQ.icons.GRIP);
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 

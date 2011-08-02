@@ -17,10 +17,10 @@ from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 import couchforms.views as couchforms_views
-from couchexport.export import export, Format
+from couchexport.export import export
 from StringIO import StringIO
 from django.contrib import messages
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.dates import DateSpan
@@ -33,7 +33,7 @@ from corehq.apps.reports.display import xmlns_to_name
 import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable
+    ExportTable, Format
 from couchexport.shortcuts import export_data_shared
 from django.views.decorators.http import require_POST
 
@@ -61,16 +61,21 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    format = req.GET.get("format", Format.XLS_2007)
-    next = req.GET.get("next", "")
-    if not next:
-        next = reverse('excel_export_data_report', args=[domain])
-    
-    resp = export_data_shared([domain,export_tag], format, filename=export_tag)
+    kwargs = {"format": req.GET.get("format", Format.XLS_2007),
+              "previous_export_id": req.GET.get("previous_export", None),
+              "filename": export_tag}
+    include_errors = string_to_boolean(req.GET.get("include_errors", False))
+    if not include_errors:
+        kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
+        
+    resp = export_data_shared([domain,export_tag], **kwargs)
     if resp:
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
+        next = req.GET.get("next", "")
+        if not next:
+            next = reverse('excel_export_data_report', args=[domain])
         return HttpResponseRedirect(next)
 
 @login_and_domain_required
@@ -95,18 +100,28 @@ def custom_export(req, domain):
         export_def = SavedExportSchema(index=export_tag, 
                                        schema_id=req.POST["schema"],
                                        name=req.POST["name"],
+                                       default_format=req.POST["format"] or Format.XLS_2007,
                                        tables=[export_table])
         export_def.save()
         messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect(reverse("edit_custom_export", 
                                             args=[domain,export_def.get_id]))
         
-    saved_export = SavedExportSchema.default(build_latest_schema(export_tag))
-    return render_to_response(req, "reports/customize_export.html", 
-                              {"saved_export": saved_export,
-                               "table_config": saved_export.table_configuration[0],
-                               "domain": domain})
-
+    schema = build_latest_schema(export_tag)
+    if schema:
+        saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
+                                                 (xmlns_to_name(export_tag[1], domain),
+                                                  datetime.utcnow().strftime("%d-%m-%Y")))
+        return render_to_response(req, "reports/customize_export.html", 
+                                  {"saved_export": saved_export,
+                                   "table_config": saved_export.table_configuration[0],
+                                   "domain": domain})
+    else:
+        messages.info(req, "No data found for that form "
+                      "(%s). Submit some data before creating an export!" % \
+                      xmlns_to_name(export_tag[1], domain))
+        return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+        
 @login_and_domain_required
 def edit_custom_export(req, domain, export_id):
     """
@@ -123,6 +138,7 @@ def edit_custom_export(req, domain, export_id):
         saved_export.index=schema.index 
         saved_export.schema_id=req.POST["schema"]
         saved_export.name=req.POST["name"]
+        saved_export.default_format=req.POST["format"] or Format.XLS_2007
         table_dict = dict([t.index, t] for t in saved_export.tables)
         if table in table_dict:
             table_dict[table].columns = export_cols
@@ -161,7 +177,7 @@ def export_custom_data(req, domain, export_id):
     Export data from a saved export schema
     """
     saved_export = SavedExportSchema.get(export_id)
-    format = req.GET.get("format", Format.XLS_2007)
+    format = req.GET.get("format", "")
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])

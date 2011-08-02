@@ -1,6 +1,6 @@
 from datetime import timedelta
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import SuccessMessage
+from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.users.models import CouchUser, CommCareAccount
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
 from casexml.apps.phone import xml

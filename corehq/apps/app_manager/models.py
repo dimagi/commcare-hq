@@ -57,6 +57,10 @@ def _rename_key(dct, old, new):
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
+
+def load_default_user_registration():
+    with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
+        return f.read()
     
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -158,7 +162,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
-class Form(IndexedSchema):
+class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
     Translates to a second-level menu on the phone
@@ -177,10 +181,10 @@ class Form(IndexedSchema):
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
         # unpack the dict into variables app_id, module_id, form_id
-        app_id, module_id, form_id = [d[key] for key in ('app_id', 'module_id', 'form_id')]
+        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
 
         app = Application.get(app_id)
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_form(unique_id)
         if and_app:
             return form, app
         else:
@@ -190,15 +194,18 @@ class Form(IndexedSchema):
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
-            self._parent._parent.save()
+            self.get_app().save(increment_version=False)
         return self.unique_id
-        
+
+    def get_app(self):
+        return self._app
+    
     def refresh(self):
         pass
         soup = BeautifulStoneSoup(self.contents)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
-        except:
+        except Exception:
             self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
     def get_case_type(self):
         return self._parent.case_type
@@ -209,10 +216,15 @@ class Form(IndexedSchema):
         else:
             try:
                 contents = self.fetch_attachment('xform.xml')
-            except:
+            except Exception:
                 contents = ""
         return contents
-    
+
+    def render_xform(self):
+        xform = XForm(self.contents)
+        xform.add_case_and_meta(self)
+        return xform.render()
+
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
@@ -289,7 +301,11 @@ class Form(IndexedSchema):
     
     def requires_referral(self):
         return self.requires == "referral"
-    
+
+class Form(FormBase, IndexedSchema):
+    def get_app(self):
+        return self._parent._parent
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -753,10 +769,11 @@ class Application(ApplicationBase, TranslationMixin):
     forms themselves.
 
     """
+    user_registration = SchemaProperty(FormBase)
+    show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
-    #use_commcare_sense = BooleanProperty(default=False)
     profile = DictProperty() #SchemaProperty(Profile)
 
     force_http = BooleanProperty(default=False)
@@ -812,9 +829,7 @@ class Application(ApplicationBase, TranslationMixin):
     #@profile('fetch_xform.prof')
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        xform = XForm(form.contents)
-        xform.add_case_and_meta(form)
-        return xform.render()
+        return form.render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         if lang != "default":
@@ -858,12 +873,13 @@ class Application(ApplicationBase, TranslationMixin):
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
-
+        if self.show_user_registration:
+            files["user_registration.xml"] = self.get_user_registration().render_xform()
         for lang in ['default'] + self.langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
-                files["m%s/f%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
+                files["modules-%s/forms-%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
         return files
 
     def get_modules(self):
@@ -874,6 +890,33 @@ class Application(ApplicationBase, TranslationMixin):
     @parse_int([1])
     def get_module(self, i):
         return self.modules[i].with_id(i%len(self.modules), self)
+
+    def get_user_registration(self):
+        form = self.user_registration
+        if not form.contents:
+            form.contents = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
+                get_url_base(),
+                reverse('view_user_registration', args=[self.domain, self.id])
+            ))
+            self.save(increment_version=False)
+        form._app = self
+        return form
+
+    def get_forms(self):
+        yield self.get_user_registration()
+        for module in self.get_modules():
+            for form in module.get_forms():
+                yield form
+                
+    def get_form(self, unique_form_id):
+        def matches(form):
+            return form.get_unique_id() == unique_form_id
+        print 'target: ', unique_form_id
+        for form in self.get_forms():
+            print form.get_unique_id()
+            if matches(form):
+                return form
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):

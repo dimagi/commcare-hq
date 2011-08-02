@@ -5,6 +5,7 @@
 {% load i18n %}
 {% block head %}
     {% include "imports/jqmodal.html" %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css"/>
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-6214661a.js"></script>
@@ -65,75 +66,11 @@
         });
     });
     </script>
-    
-    <style type="text/css">
-        #main_container {
-            padding: 0;
-        }
-        #apps-menu {
-            padding: 1em 1em .5em 1em;
-            background-color: #EEE;
-            display: none;
-        }
-
-        #apps-menu > ul, #app-info > ul {
-            display: table-row;
-        }
-        #apps-menu > ul > li, #app-info > ul > li {
-            border-right: 1px solid #CCC;
-            padding: 0 .5em;
-            display: table-cell;
-        }
-        #apps-menu > ul > li:last-child, #app-info > ul > li:last-child {
-            border-right: none;
-        }
-        #apps-menu-toggle {
-            background-color: #EEE;
-            border: 1px solid #CCC;
-            border-top: none;
-            padding: .5em;
-            position: absolute;
-            right: 300px;
-            top: -1px;
-            width: 8em;
-        }
-        #apps-menu-border {
-            background-color: #EEE;
-            border-bottom: 1px solid #CCC;
-            height: .5em;
-        }
-        #title-bar {
-            position: relative;
-        }
-        input.sms-autocomplete {
-            width: 90%;
-        }
-        .dialog textarea {
-            width: 90%;
-            height: 100px;
-            padding: 10px;
-        }
-        #build-errors a {
-            color: #0067B1 !important;
-        }
-        #app-info {
-            float: left;
-        }
-        .jar_download_dialog p {
-            padding-top: .5em;
-            margin-left: 1em;
-        }
-        .jar_download_dialog ol li {
-            list-style: decimal outside;
-            margin-left: 2em;
-            padding-bottom: 1em;
-        }
-    </style>
-    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    {% include "sms/partials/sms_autocomplete.html" %}
+   
 {% endblock %}
 {% block content %}
-
+    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
+    {% include "sms/partials/sms_autocomplete.html" %}
     <div id="main_container">
         {% if error %}
         <div id="error">
@@ -144,55 +81,6 @@
         {% endif %}
         <div id="apps-menu">
             <ul>
-{#                <li>#}
-{#                    <a class="dialog_opener" id="new_app" href="#">Create Application</a>#}
-{#                    <div class="dialog" title="Create a New Application">#}
-{#                        <h4>Start from scratch</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                {{ new_app_form.as_table }}#}
-{#                            </table>#}
-{#                            <input type="submit" value="Create Application"/>#}
-{#                        </form>#}
-{#                        <hr/>#}
-{#                        <h4>From Factory Application</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.import_factory_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                <tr>#}
-{#                                    <th>Name:</th>#}
-{#                                    <td><input type="text" name="name"/></td>#}
-{#                                </tr>#}
-{#                                <tr>#}
-{#                                    <th>Application:</th>#}
-{#                                    <td>#}
-{#                                        <select name="app_id">#}
-{#                                            <option value="" disabled="true">Select an application</option>#}
-{#                                            {% for fapp in factory_apps %}#}
-{#                                                <option value="{{ fapp.id }}">{{ fapp.name }}</option>#}
-{#                                            {% endfor %}#}
-{#                                        </select>#}
-{#                                    </td>#}
-{#                                </tr>#}
-{#                            </table>#}
-{#                            <input type="submit" value="Import Application">#}
-{#                        </form>#}
-{#                        <hr/>#}
-{#                        <h4>Import from source (advanced)</h4>#}
-{#                        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">#}
-{#                            <table>#}
-{#                                <tr>#}
-{#                                    <th>Name:</th>#}
-{#                                    <td><input type="text" name="name"/></td>#}
-{#                                </tr>#}
-{#                                <tr>#}
-{#                                    <th>Source:</th>#}
-{#                                    <td><textarea name="source" id="jkasf"></textarea></td>#}
-{#                                </tr>#}
-{#                            </table>#}
-{#                            <input type="submit" value="Import Application">#}
-{#                        </form>#}
-{#                    </div>#}
-{#                </li>#}
                 {% if request.couch_user|can_edit_apps:domain %}
                 <li>
                     <div id="new_app_menu">
@@ -202,6 +90,12 @@
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="Application" />
                                     <a href="#" class="submit">{% trans 'Blank Application' %}</a>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+                                    <input type="hidden" name="app_id" value="example--hello-world"/>
+                                    <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
                                 </form>
                             </li>
                             <li>
@@ -263,7 +157,7 @@
             {% if applications and request.couch_user|can_edit_apps:domain %}
                 <div id="edit">
                     {% if edit  %}
-                        <a class="button" href="{% urlencode request.path request.GET without "edit" %}">
+                        <a class="button" href="{% urlencode request.path request.GET with "edit" as "false" %}">
                             Done Editing
                         </a>
                     {% else %}
@@ -303,20 +197,20 @@
                                         {% else %}
                                             Blank form
                                         {% endif %}
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
+                                        <a href="{% url view_module domain app.id error.module.id %}">
                                             {{ error.module.name|trans:langs }}</a>
                                         uses referrals but doesn't have
                                         detail screens configured for referrals.
                                     {% else %}
                                     {% if error.type == "no case detail" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">
+                                        <a href="{% url view_module domain app.id error.module.id %}">
                                             {{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have
                                         detail screens configured for cases.
@@ -326,12 +220,12 @@
                                     {% else %}
                                     {% if error.type == "no forms" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                                         has no forms.
                                     {% else %}
                                     {% if error.type == "no case type" %}
                                         Module
-                                        <a href="{% urlencode request.path request.GET with "m" as error.module.id without "f" %}">{{ error.module.name|trans:langs }}</a>
+                                        <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                                         uses cases but doesn't have a
                                         case type defined.
                                     {% else %}
@@ -343,13 +237,13 @@
                                     {% else %}
                                     {% if error.type == "update_case uses reserved word" %}
                                         Case Update uses reserved word "{{ error.word }}"
-                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
                                     {% if error.type == "update_case word illegal" %}
                                         Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                                        in form <a href="{% urlencode request.path request.GET with "m" as error.module.id with "f" as error.form.id %}">
+                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
                                             {{ error.form.name|trans:langs }}</a>
                                         in module "{{ error.module.name|trans:langs }}"
                                     {% else %}
@@ -384,7 +278,6 @@
                         <th>Preview (Beta)</th>
                     
                         <th>Download</th>
-
                         {% if edit %}
                             <th></th>
                         {% endif %}
@@ -423,16 +316,11 @@
                                                         <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
                                                     </li>
                                                     <li>
-                                                        Make sure that they are named CommCare.jad and CommCare.jar,
-                                                        and not e.g. "CommCare (1).jad", which can happen if you've
-                                                        downloaded another version before.
+                                                        For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
                                                     </li>
                                                     <li>
-                                                        Copy these two files onto the phone's memory card.
-                                                    </li>
-                                                    <li>
-                                                        If remove "RMS" files on the phone's memory card, if necessary.
-                                                        These are files that end in ".rms".
+                                                        If you have any issues with the installation, please refer to
+                                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
                                                     </li>
                                                 </ol>
 
@@ -452,8 +340,6 @@
                                         <li>
                                             <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
                                         </li>
-
-
                                     </ul>
                                 </div>
                             </td>
