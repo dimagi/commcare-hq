@@ -41,7 +41,7 @@
             $("#paramSelectorForm").submit();
         }
 		$(function() {
-		    $('.date-picker').datepicker( {
+		    $('.date-picker').datepicker({
 		        changeMonth: true,
 		        changeYear: true,
 		        showButtonPanel: true,
@@ -64,14 +64,6 @@
             $("#next_date").click(function(e){
                 e.preventDefault();
                 shiftDates(7);
-            });
-            $('.ajax_dialog').live('click', function(e){
-//                e.preventDefault();
-//                $.get($(this).attr('href'), function(data){
-//                    var $data = $(data);
-//                    $data.appendTo('body');
-//                    $data.dialog();
-//                });
             });
 		});
     </script>
