@@ -35,7 +35,6 @@ class SubmissionsByFormTest(TestCase):
             enddate=datetime(2011, 05, 28),
             format=DATE_FORMAT
         )
-        print datespan.startdate_param, datespan.enddate_param
         self.failUnlessEqual(
             _relevant_form_types(DOMAIN, datespan=datespan),
             ["xmlns-A", "xmlns-B"]
