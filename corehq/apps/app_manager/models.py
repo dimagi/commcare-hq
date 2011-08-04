@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from couchapp.errors import AppError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -51,6 +52,8 @@ def _dsstr(self):
 
 def _rename_key(dct, old, new):
     if old in dct:
+        if new in dct and dct[new]:
+            dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
 
@@ -976,6 +979,8 @@ class Application(ApplicationBase, TranslationMixin):
                 self.langs[i] = new_lang
         for module in self.modules:
             module.rename_lang(old_lang, new_lang)
+        _rename_key(self.translations, old_lang, new_lang)
+
         
     def rearrange_langs(self, i, j):
         langs = self.langs
