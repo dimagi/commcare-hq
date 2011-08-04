@@ -772,7 +772,8 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
     for export in exports:
         export.formname = xmlns_to_name(export.index[1], domain)
 
-    context = _report_context(domain, title="Export Data to Excel", datespan=request.datespan)
+    context = _report_context(domain, title="Export Data to Excel", #datespan=request.datespan
+    )
     context.update({
         "forms": forms,
         "forms_by_app": apps,
