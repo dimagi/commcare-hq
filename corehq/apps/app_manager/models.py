@@ -63,7 +63,11 @@ def load_case_reserved_words():
 def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
-    
+
+def load_custom_commcare_properties():
+    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'custom-commcare-properties-1_1.json')) as f:
+        return json.load(f)
+
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
         @login_and_domain_required
@@ -720,18 +724,6 @@ class ApplicationBase(VersionedDoc):
                 png_data = f.read()
                 self.put_attachment(png_data, "qrcode.png", content_type="image/png")
             return png_data
-
-    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
-        return render_to_string(template, {
-            'is_odk': is_odk,
-            'app': self,
-            'suite_url': self.suite_url,
-            'suite_loc': self.suite_loc,
-            'post_url': self.post_url,
-            'post_test_url': self.post_url,
-            'ota_restore_url': self.ota_restore_url,
-            'cc_user_domain': cc_user_domain(self.domain)
-        }).decode('utf-8')
         
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
@@ -862,6 +854,32 @@ class Application(ApplicationBase, TranslationMixin):
                     commcare_translations.loads(self.create_app_strings(lc).encode('utf-8'))
                 )
         return commcare_translations.dumps(messages)
+
+
+    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
+        app_profile = defaultdict(dict)
+        app_profile.update(self.profile)
+        # the following code is to let HQ override CommCare defaults
+        # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
+        # property.default is assumed to also be the CommCare default unless there's a property.commcare_default
+        all_properties = load_custom_commcare_properties()
+        for property in all_properties:
+            type = property.get('type', 'properties')
+            if property['id'] not in app_profile[type]:
+                if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
+                    app_profile[type][property['id']] = property['default']
+                    
+        return render_to_string(template, {
+            'is_odk': is_odk,
+            'app': self,
+            'app_profile': app_profile,
+            'suite_url': self.suite_url,
+            'suite_loc': self.suite_loc,
+            'post_url': self.post_url,
+            'post_test_url': self.post_url,
+            'ota_restore_url': self.ota_restore_url,
+            'cc_user_domain': cc_user_domain(self.domain)
+        }).decode('utf-8')
 
     def create_suite(self, template='app_manager/suite.xml'):
         return render_to_string(template, {
@@ -1076,13 +1094,8 @@ class RemoteApp(ApplicationBase):
     write all the files for an app by hand, and then give the url to app_manager
     and let it package everything together for you.
 
-    Originally I thought it would be easiest to start from the suite.xml file, but this
-    means the profile is auto-generated, which isn't so good. I should probably get rid of
-    suite_url altogether and just switch to using the profile_url (which right now is not used).
-
     """
     profile_url = StringProperty(default="http://")
-    #suite_url = StringProperty()
     name = StringProperty()
 
     # @property

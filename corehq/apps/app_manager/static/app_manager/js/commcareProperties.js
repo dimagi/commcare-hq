@@ -172,7 +172,7 @@ var CommcareProperty = {
             var $msg = $('<span />').text("saving...").appendTo($input.parent()),
                 data = {};
             data[that.type] = {};
-            data[that.type][that.id] = value;
+            data[that.type][that.id] = that.val();
             $.ajax({
                 url: saveURL,
                 type: "POST",

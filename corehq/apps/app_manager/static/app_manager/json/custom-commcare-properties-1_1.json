@@ -31,13 +31,14 @@
     "id": "log_prop_weekly",
     "requires_txt": "Requires logging to be Enabled",
     "requires": "{properties.logenabled}='Enabled'",
-    "default": "log_never",
+    "commcare_default": "log_never",
+    "default": "log_short",
     "values": ["log_never", "log_short", "log_full"],
     "value_names": ["Never", "Short", "Full"],
     "group": "log"
 }, {
     "name": "Daily Log Sending Frequency",
-    "description": "What kind of log transmission the phone should attempt on a weekly basis (submitted to PostURL)",
+    "description": "What kind of log transmission the phone should attempt on a daily basis (submitted to PostURL)",
     "id": "log_prop_daily",
     "requires_txt": "Logging to be Enabled",
     "default": "log_never",
@@ -51,7 +52,7 @@
     "id": "cc-send-procedure",
     "default": "cc-send-http",
     "values": ["cc-send-http", "cc-send-file", "cc-send-none"],
-    "value_names": ["Send Via HTTP", "Save to the File System", "Don't Save"]
+    "value_names": ["Send Via HTTP", "Save to the File System", "Never Send or Save Data (NOT RECOMMENDED)"]
 }, {
     "name": "Password Format",
     "description": "What format user's passwords take",
