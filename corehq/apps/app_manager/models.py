@@ -2,7 +2,6 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from couchapp.errors import AppError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
