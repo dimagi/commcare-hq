@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from StringIO import StringIO
+from unidecode import unidecode
 
 
 def export_data_shared(export_tag, format=None, filename=None,
@@ -34,7 +35,7 @@ def export_response(file, format, filename, checkpoint=None):
     format = Format.from_format(format)
     response = HttpResponse(mimetype=format.mimetype)
     response['Content-Disposition'] = 'attachment; filename=%s.%s' % \
-                                    (filename, format.extension)
+                                    (unidecode(filename), format.extension)
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
     response.write(file.getvalue())
