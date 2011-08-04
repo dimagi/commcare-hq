@@ -311,16 +311,15 @@ def get_apps_base_context(request, domain, app):
        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
 
-    if app and not app.langs:
-        # lots of things fail if the app doesn't have any languages.
-        # the best we can do is add 'en' if there's nothing else.
-        app.langs.append('en')
-        app.save()
-
-    if app and (not lang or lang not in app.langs):
-        lang = app.langs[0]
-
-    langs = [lang] + app.langs
+    if app and hasattr(app, 'langs'):
+        if not app.langs:
+            # lots of things fail if the app doesn't have any languages.
+            # the best we can do is add 'en' if there's nothing else.
+            app.langs.append('en')
+            app.save()
+        if not lang or lang not in app.langs:
+            lang = app.langs[0]
+        langs = [lang] + app.langs
 
     if app:
         saved_apps = ApplicationBase.view('app_manager/saved_app',
