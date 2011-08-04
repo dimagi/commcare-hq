@@ -307,12 +307,20 @@ def get_apps_base_context(request, domain, app):
         applications.append(_app)
 
 
-    if hasattr(app, 'langs'):
-        lang = request.COOKIES.get('lang', app.langs[0])
-        langs = [lang] + app.langs
-    else:
-        lang = request.COOKIES.get('lang', 'en')
-        langs = [lang]
+    lang = request.GET.get('lang',
+       request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
+    )
+
+    if app and not app.langs:
+        # lots of things fail if the app doesn't have any languages.
+        # the best we can do is add 'en' if there's nothing else.
+        app.langs.append('en')
+        app.save()
+
+    if app and (not lang or lang not in app.langs):
+        lang = app.langs[0]
+
+    langs = [lang] + app.langs
 
     if app:
         saved_apps = ApplicationBase.view('app_manager/saved_app',
@@ -338,9 +346,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
         return back_to_main(req, domain, app_id)
 
     edit = (req.GET.get('edit', '') == 'true') and req.couch_user.can_edit_apps(domain)
-    lang = req.GET.get('lang',
-       req.COOKIES.get('lang', '')
-    )
 
     if form_id and not module_id:
         return bail()
@@ -377,16 +382,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
             app.profile['features']['sense'] = 'true'
         del app['use_commcare_sense']
         app.save()
-
-    if app and not app.langs:
-        # lots of things fail if the app doesn't have any languages.
-        # the best we can do is add 'en' if there's nothing else.
-        app.langs.append('en')
-        app.save()
-    if app and (not lang or lang not in app.langs):
-        lang = app.langs[0]
-
-    langs = [lang] + (app.langs if app else [])
 
     case_properties = set()
     if module:
@@ -427,11 +422,11 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
     }
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
-        context.update({"translations": app.translations.get(lang, {})})
+        context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
         template="app_manager/form_view.html"
-        context.update(get_form_view_context(req, form, langs, is_user_registration))
+        context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
         template="app_manager/module_view.html"
     else:
