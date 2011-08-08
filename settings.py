@@ -157,6 +157,7 @@ HQ_APPS = (
     'xep_hq_server',
     'touchforms.formplayer',
     'phonelog',
+    'pathfinder',
 )
 
 # you can locally add apps if you want here
@@ -350,6 +351,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'touchforms.formplayer',
         'xep_hq_server',
         'phonelog',
+        'reports.pathfinder'
     ]
 ]
 
