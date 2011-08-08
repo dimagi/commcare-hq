@@ -208,7 +208,7 @@ def home_based_care(request, domain, ward, year, month, template="pathfinder-rep
     chws = retrieve_providers(domain, ward)
     chws._reported = lambda x: x['reported_this_month']
     for c in chws:
-        if len(filter(lambda x: ['provider'] == c['name'], context['p'].followup)):
+        if len(filter(lambda x: x['provider'] == c['full_name'], context['p'].followup)):
             c['reported_this_month'] = True
         else:
             c['reported_this_month'] = False
