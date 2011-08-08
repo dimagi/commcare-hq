@@ -17,7 +17,7 @@
 <h5 align="center">Month: {{ month }}</h5>
 <h5 align="center">Year: {{ year }}</h5>
 
-<div align="center"><a href="{% url reports.pathfinder.views.home_based_care domain=domain ward=ward year=year month=month %}">
+<div align="center"><a href="{% url pathfinder.views.home_based_care domain=domain ward=ward year=year month=month %}">
     View HBC summary for {{ ward }}, {{ month }} {{ year }}</a></div>
 
 
@@ -107,7 +107,7 @@
 		<td>{{ chw.region }}</td>
 		<td>{{ chw.district }}</td>
 		<td>{{ chw.ward }}</td>
-		<td><a href="{% url reports.pathfinder.views.provider_summary domain=domain name=chw.full_name year=year month=month %}">{{ chw.full_name }}</a></td>
+		<td><a href="{% url pathfinder.views.provider_summary domain=domain name=chw.full_name year=year month=month %}">{{ chw.full_name }}</a></td>
 {#		<td>{{ chw.full_name }}</td>#}
 		<td>{{ chw.chw_id }}</td>
         {% with chw.full_name as n %}
