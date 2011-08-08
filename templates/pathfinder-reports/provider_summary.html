@@ -7,11 +7,11 @@
 <h5 align="center">(filled at the end of every month by HBC provider)</h5>
 
 <div style="font-weight:bold;display:inline;">Region:</div>
-<div style="display:inline;white-space:pre-wrap;">{{ region }}    </div>
+<div style="display:inline;white-space:pre-wrap;">{{ p.region }}    </div>
 <div style="font-weight:bold;display:inline;">District:</div>
-<div style="display:inline;white-space:pre-wrap;">{{ district }}    </div>
+<div style="display:inline;white-space:pre-wrap;">{{ p.district }}    </div>
 <div style="font-weight:bold;display:inline;">Ward:</div>
-<div style="display:inline;">{{ ward }}</div>
+<div style="display:inline;">{{ p.ward }}</div>
 
 <p>
 <div style="display:inline;font-weight:bold;">Report for month:</div>
@@ -22,11 +22,34 @@
 
 <p>
 <div style="display:inline;font-weight:bold;">HBC Provider name:</div>
-<div style="display:inline;white-space:pre-wrap;">{{ prov_name }}    </div>
+<div style="display:inline;white-space:pre-wrap;">{{ p.full_name }}    </div>
 <div style="display:inline;font-weight:bold;">HBC Provider number:</div>
-
-<div style="display:inline;">{{ hcbpid }}</div>
+<div style="display:inline;">{{ p.chw_id }}</div>
+    <div style="display:inline;font-weight:bold;">Sex of provider:</div>
+    <div style="display:inline;">{{ p.sex }}</div>
 </p>
+<p>
+<div style="display:inline;font-weight:bold;">Trained according to guidelines:</div>
+<div style="display:inline;white-space:pre-wrap;">{{ p.training }}    </div>
+    <div style="display:inline;font-weight:bold;">Training organization:</div>
+    <div style="display:inline;white-space:pre-wrap;">{{ p.trainingorg }}    </div>
+    <div style="display:inline;font-weight:bold;">Days of training:</div>
+    <div style="display:inline;white-space:pre-wrap;">{{ p.trainingdays }}    </div>
+    </p>
+   <p>
+    <div style="display:inline;font-weight:bold;">Category:</div>
+       <div style="display:inline;white-space:pre-wrap;">{{ p.providertype }}    </div>
+    <div style="display:inline;font-weight:bold;">Health facility:</div>
+       <div style="display:inline;white-space:pre-wrap;">{{ p.supervisorfacility }}    </div>
+    <div style="display:inline;font-weight:bold;">Supervisor name:</div>
+       <div style="display:inline;white-space:pre-wrap;">{{ p.supervisorname }}    </div>
+    <div style="display:inline;font-weight:bold;">Supervisor ID:</div>
+       <div style="display:inline;white-space:pre-wrap;">{{ p.supervisorid }}    </div>
+    <div style="display:inline;font-weight:bold;">Supervisor ID:</div>
+           <div style="display:inline;white-space:pre-wrap;">{{ p.orgsupervisor }}    </div>
+
+      </p>
+
 
 <div id="government-report">
 <table>
@@ -37,7 +60,9 @@
 		<th>Sex</th>
 		<th>HBC Status</th>
 		<th>Number of visits during</th>
-		<th>HIV status</th>
+		<th>HIV status during registration</th>
+        <th>HIV status after test</th>
+
 		<th>Functional status</th>
 		<th>CTC Status</th>
 		<th>CTC Number</th>
@@ -47,22 +72,23 @@
 		<th>Referrals completed</th>
 	</tr>
 	</thead>
-	{% for chw in all_data %}
+	{% for chw in patients %}
 	<tr class="{% cycle 'odd' 'even' %}">
-		<td>{{ chw.patient_code }}</td>
+		<td>{{ chw.patient_id }}</td>
 		<td>{{ chw.age }}</td>
 		<td>{{ chw.sex }}</td>
-		<td>{{ chw.hbc_status }}</td>
-		<td>{{ chw.num_visits }}</td>
-		<td>{{ chw.hiv_status }}</td>
-		<td>{{ chw.functional_status }}</td>
-		<td>{{ chw.ctc_status }}</td>
-		<td>{{ chw.ctc_num }}</td>
-		<td>{{ chw.items_provided }}</td>
-		<td>{{ chw.services_provided }}</td>
-		<td>{{ chw.referrals_made }}</td>
+		<td>{{ chw.registration_and_followup_hiv }}</td>
+		<td>{{ chw.followup_this_month }}</td>
+		<td>{{ chw.hiv_status_during_registration }}</td>
+		<td>{{ chw.hiv_status_after_test }}</td>
+		<td>{{ chw.client_condition }}</td>
+		<td>{{ chw.ctc }}</td>
+		<td>{{ chw.number_given_at_ctc }}</td>
+		<td>{{ chw.medication_given }}</td>
+		<td>{{ chw.services }}</td>
+		<td>{{ chw.referrals }}</td>
 		<td>{{ chw.referrals_completed }}</td>
-	</tr>p
+	</tr>
 	{% endfor %}
 </table>
 {% endblock %}

@@ -11,6 +11,9 @@
 <h4 align="center">Ward: {{ ward }}</h4>
 <h5 align="center">Date: {{ date|date:"F Y"}}</h5>
 
+<div align="center"><a href="{% url reports.pathfinder.views.ward_summary domain=domain ward=ward year=date|date:"Y" month=date|date:"m"%}">
+    View ward summary for {{ ward }}, {{ date|date:"F Y" }}</a></div>
+
 <div>
 <table>
 	<tr>

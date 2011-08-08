@@ -3,6 +3,7 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.queryable_set import QueryableList
 import string
+from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import functools
@@ -20,6 +21,8 @@ class PathfinderPatientGroup(QueryableList):
         self._15to24 = lambda x: 15 <= x['age'] <= 24
         self._25to49 = lambda x: 25 <= x['age'] <= 49
         self._50plus = lambda x: 50 <= x['age']
+        self._child = lambda x: 18 < x['age']
+        self._adult = lambda x: 18 >= x['age']
 
         self._hiv_reg = lambda x: x['registration_cause'].count('hiv')
 
@@ -63,14 +66,25 @@ def retrieve_providers(domain, ward):
     chws = QueryableList()
     for result in results:
         p = dict()
-        (p['login_id'] , p['region'] , p['district'] , p['name'] , p['id'] , p['sex'] , p['training'] ,
-         p['trainingorg'] , p['trainingdays'] , p['user_type'] , p['supervisorname'] ,
-         p['supervisorfacility'] , p['supervisorid'] , p['orgsupervisor'] ) = result['value']
+#        (p['login_id'] , p['region'] , p['district'] , p['name'] , p['id'] , p['sex'] , p['training'] ,
+#         p['trainingorg'] , p['trainingdays'] , p['user_type'] , p['supervisorname'] ,
+#         p['supervisorfacility'] , p['supervisorid'] , p['orgsupervisor'] ) = result['value']
         p['reported_this_month'] = False
+
+        p.update(result['doc']['commcare_accounts'][0]['user_data'])
         #result['doc']
         chws += [p]
     return chws
 
+def get_provider_info(domain, provider):
+    results = get_db().view('pathfinder/pathfinder_gov_chw_by_name', keys=[[domain, provider]], include_docs=True).all()
+    if len(results) < 1:
+        raise Http404("Couldn't find that provider.")
+    return results[0]['doc']['commcare_accounts'][0]['user_data']
+
+def get_patients_by_provider(domain, provider):
+    return get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[domain, provider]], include_docs=True).all()
+ 
 def retrieve_patient_group(user_ids, domain, year, month):
     caseid_set = set()
     patients = {}
@@ -78,8 +92,9 @@ def retrieve_patient_group(user_ids, domain, year, month):
     month = int(month)
     for result in user_ids:
         rform = result['doc']['form'] #shortcut
-        pyear, pmonth = result['value'][1], result['value'][2]
-        if pyear > year or (pyear == year and pmonth + 1 > month): # Exclude patients newer than this report.
+        regdate = datetime.strptime(rform['patient']['date_of_registration'], '%Y-%m-%d')
+        pyear, pmonth = regdate.year, regdate.month
+        if pyear > year or (pyear == year and pmonth > month): # Exclude patients newer than this report.
             continue
         p = dict()
         age_tmp = map(int, rform['patient']['date_of_birth'].split('-'))
@@ -89,48 +104,101 @@ def retrieve_patient_group(user_ids, domain, year, month):
         caseid_set.add(p['case_id'] )
         p['ward'] = p['village']
         p['registered_this_month'] = True if (pyear == year and pmonth + 1 == month) else False # months are 0-indexed
-        p['followup_this_month'] = False
+        p['followup_this_month'] = 0
+        p['referrals_made'] = 0
         for i in ['provider',
                   'registration_and_followup_hiv',
-                  'type_of_client',
+#                  'type_of_client',
                   'referrals_hiv',
                   'ctc',
-                  'followup_this_month',
-                  'hiv_status_during_registration']:
+#                  'followup_this_month',
+                  'medication_given',
+                  'services',
+                  'referrals']:
             p[i] = ''
         patients[p['case_id'] ] = p
+    update_patients_with_followups(domain, patients, caseid_set,year,month)
+    update_patients_with_referrals(patients,caseid_set,year,month)
+    #map(lambda x: patients.__delitem__(x), filter(lambda y: not patients[y]['followup_this_month'], patients.keys()))
+    gp =  PathfinderPatientGroup()
+    gp += patients.values()
+    return gp
+
+def update_patients_with_followups(domain, patients, caseid_set, year, month):
     followup_keys = [[domain, x] for x in list(caseid_set)]
-    followups = get_db().view('pathfinder/pathfinder_gov_followup', keys = followup_keys).all()
+    followups = get_db().view('pathfinder/pathfinder_gov_followup_by_caseid', keys = followup_keys, include_docs=True).all()
     for f in followups:
         if not f['key'][1] in patients:
             continue
         p = patients[f['key'][1]]
         fyear, fmonth = f['value'][5], f['value'][6]
-        p['followup_this_month'] = False
-        if fyear > year or (fyear == year and fmonth + 1 > month):
+        p['followup_this_month'] = 0
+        if fyear != year or fmonth != month:
             continue
-        p['provider'] = f['value'][0]
-        if p['registration_and_followup_hiv'] == 'continuing' or p['registration_and_followup_hiv'] == '': # don't allow a value of 'dead' to change
-            p['registration_and_followup_hiv'] = f['value'][1]
-        p['type_of_client'] = f['value'][2]
-        p['referrals_hiv'] = f['value'][3]
-        p['ctc'] = f['value'][4]
-        p['followup_this_month'] = True if (fyear == year and fmonth + 1 == month) else False
-    #map(lambda x: patients.__delitem__(x), filter(lambda y: patients[y]['followup_this_month'] == False, patients.keys()))
+        f = f['doc']['form']
+        fp = f['patient']
+        p['provider'] = f['meta']['username']
+        if not p.has_key('registration_and_followup_hiv') or p['registration_and_followup_hiv'] == 'continuing' or p['registration_and_followup_hiv'] == '': # don't allow a value of 'dead' to change
+            p['registration_and_followup_hiv'] = fp['reg_followup_hiv']
+        p['followup_this_month'] += 1 if (fyear == year and fmonth == month) else 0
+        if "medication_given" in fp and fp['medication_given']:
+            p['medication_given'] += fp['medication_given'] + " "
+        if "services_given" in fp and fp['services_given']:
+            p['services'] += fp['services_given'] + " "
+        if "referrals_hiv" in fp and fp['referrals_hiv']:
+            p['referrals'] += fp['referrals_hiv'] + " "
+        p.update(fp)
 
-    gp =  PathfinderPatientGroup()
-    gp += patients.values()
-    return gp
-
-def ward_summary(domain, ward, year, month):
+def ward_summary(request, domain, ward, year, month, template="pathfinder-reports/ward_summary.html"):
     # First, get all the registrations for the given ward.
     user_ids = get_db().view('pathfinder/pathfinder_gov_reg', keys=[[domain, ward]], include_docs=True).all()
-    return retrieve_patient_group(user_ids, domain, year, month)
 
+    provs = retrieve_providers(domain, ward)
+    prov_p = {}
+    refs_p = {}
+    for p in provs:
+        x = retrieve_patient_group(get_patients_by_provider(domain, p['full_name']), domain, year, month)
+        prov_p[p['full_name']] = x
+        refs_p[p['full_name']] = sum([a['referrals_completed'] for a in x])
+    context = RequestContext(request)
+    context['ward'] = ward
+    context['year'] = year
+    context['month'] = month
+    context['provs'] = provs
+    context['prov_p'] = prov_p
+    context['refs_p'] = refs_p
+    context['domain'] = domain
+    return render_to_response(template, context)
 
-def provider_summary(domain, username, year,month):
-    user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[domain, username]]).all()
-    return retrieve_patient_group(user_ids, domain, year, month)
+def provider_summary(request, domain, name, year,month, template="pathfinder-reports/provider_summary.html"):
+#    user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[domain, username]]).all()
+#    return retrieve_patient_group(user_ids, domain, year, month)
+    context = RequestContext(request)
+    context['p'] = get_provider_info(domain, name)
+    pre = get_patients_by_provider(domain, name)
+    patients = {}
+    for p in pre:
+        pd = dict()
+        pd.update(p['doc']['form']['patient'])
+        pd['case_id'] = p['doc']['form']['case']['case_id']
+
+        patients[pd['case_id']] = pd
+    g = retrieve_patient_group(pre, domain, year,month)
+    context['year'] = year
+    context['month'] = month
+    context['patients'] = g
+    return render_to_response(template,context)
+
+def update_patients_with_referrals(patients, ids, year,month):
+    refs = get_db().view('pathfinder/pathfinder_gov_referral', keys=[[x] for x in list(ids)], include_docs=True).all()
+    for p in patients: patients[p]['referrals_completed'] = 0
+    for r in refs:
+        d = datetime.strptime(r['doc']['form']['meta']['timeEnd'], "%Y-%m-%dT%H:%M:%SZ")
+        if d.month == month and d.year == year and r['doc']['form']['client']['referral'] == 'yes':
+            patients[r['doc']['form']['case']['case_id']]['referrals_completed'] += 1
+
+def hbc_selector(request, domain, template="pathfinder-reports/select_hbc_summary.html"):
+    pass
 
 #@login_and_domain_required
 def home_based_care(request, domain, ward, year, month, template="pathfinder-reports/hbc.html"):
@@ -140,11 +208,12 @@ def home_based_care(request, domain, ward, year, month, template="pathfinder-rep
     chws = retrieve_providers(domain, ward)
     chws._reported = lambda x: x['reported_this_month']
     for c in chws:
-        if len(filter(lambda x: x['provider'] == c['name'], context['p'].followup)):
+        if len(filter(lambda x: ['provider'] == c['name'], context['p'].followup)):
             c['reported_this_month'] = True
         else:
             c['reported_this_month'] = False
     context['chws'] = chws
     context['ward'] = ward
+    context['domain'] = domain
     context['date'] = date(year=int(year),month=int(month), day=01)
     return render_to_response(template, context)
