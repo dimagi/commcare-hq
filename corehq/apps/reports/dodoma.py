@@ -74,8 +74,7 @@ def _household_verification_json(
     users = CouchUser.commcare_users_by_domain(domain)
 
     for user in users:
-        cc_account = user.default_commcare_account
-        userID = cc_account.login_id
+        userID = user.user_id
         username = user_id_to_username(userID)
         if userID in stats_by_userID:
             stats_by_userID[userID]['username'] = username

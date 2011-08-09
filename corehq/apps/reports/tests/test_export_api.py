@@ -43,7 +43,7 @@ class ExportTest(TestCase):
             XFormInstance.wrap(form).delete()
         dom = create_domain(DOMAIN)
         user = create_user("test", "foobar")
-        couch_user = CouchUser.from_web_user(user)
+        couch_user = CouchUser.from_django_user(user)
         couch_user.add_domain_membership(DOMAIN, is_admin=True)
         couch_user.save()
         

@@ -38,7 +38,7 @@ class CreateTestCase(TestCase):
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
         # verify that the default couch stuff was created
-        couch_user = CouchUser.from_web_user(new_user)
+        couch_user = CouchUser.from_django_user(new_user)
         couch_user.save()
         self.assertEqual(couch_user.web_account.login.username, username)
         self.assertEqual(couch_user.web_account.login.email, email)
@@ -54,7 +54,7 @@ class CreateTestCase(TestCase):
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
         # verify that the default couch stuff was created
-        couch_user = CouchUser.from_web_user(new_user)
+        couch_user = CouchUser.from_django_user(new_user)
         self.assertEqual(couch_user.web_account.login.username, username)
         self.assertEqual(couch_user.web_account.login.email, email)
         couch_user.add_domain_membership('domain1')
@@ -65,7 +65,7 @@ class CreateTestCase(TestCase):
         ccu0 = create_hq_user_from_commcare_registration_info(
             'domain3', 'username3', 'password3', uuid="sdf", device_id='ewr')
         ccu0.save()
-        couch_user.link_commcare_account("domain3", ccu0._id, ccu0.commcare_accounts[0].login_id)
+#        couch_user.link_commcare_account("domain3", ccu0._id, ccu0.commcare_accounts[0].login_id)
         self.assertEqual(couch_user.commcare_accounts[0].login.username, 'username3')
         self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')        
         self.assertEqual(couch_user.commcare_accounts[0].login_id, 'sdf')
@@ -74,7 +74,7 @@ class CreateTestCase(TestCase):
         ccu1 = create_hq_user_from_commcare_registration_info(
                 'domain4', 'username4', 'password4', uuid="oiu", device_id='wer', user_data={"extra_data": 'extra'})
         ccu1.save()
-        couch_user.link_commcare_account('domain4', ccu1._id, ccu1.commcare_accounts[0].login_id)
+#        couch_user.link_commcare_account('domain4', ccu1._id, ccu1.commcare_accounts[0].login_id)
         self.assertEqual(couch_user.commcare_accounts[1].login.username, 'username4')
         self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
         self.assertEqual(couch_user.commcare_accounts[1].login_id, 'oiu')

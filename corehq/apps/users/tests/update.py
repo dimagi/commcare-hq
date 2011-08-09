@@ -14,7 +14,7 @@ class UpdateTestCase(TestCase):
         password = "password"
         self.user = User.objects.create_user(username, email, password)
         self.user.save()
-        self.couch_user = CouchUser.from_web_user(self.user)
+        self.couch_user = CouchUser.from_django_user(self.user)
         self.couch_user.save()
         
     def testAddRemovePhoneNumbers(self):

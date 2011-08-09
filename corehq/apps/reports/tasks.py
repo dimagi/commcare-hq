@@ -28,8 +28,8 @@ def weekly_reports():
     
 def send_report(scheduled_report, user):
     report = ScheduledReportFactory.get_report(scheduled_report.report_slug)
-    body = report.get_response(user.default_django_user, scheduled_report.domain)
-    email = user.get_email()
+    body = report.get_response(user, scheduled_report.domain)
+    email = user.email
     if email:
         send_HTML_email("%s [%s]" % (report.title, scheduled_report.domain), email,
                     html2text(body), body)
@@ -42,8 +42,5 @@ def _run_reports(reps):
             user = CouchUser.get(user_id)
             try:
                 send_report(rep, user)
-            except:
+            except Exception:
                 pass
-            
-            
-

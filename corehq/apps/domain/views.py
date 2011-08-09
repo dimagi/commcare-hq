@@ -156,7 +156,7 @@ def _create_new_domain_request( request, kind, form, now ):
 
     ############# Couch Domain Membership
     if kind == "new_user":
-        couch_user = CouchUser.from_web_user(new_user)
+        couch_user = CouchUser.from_django_user(new_user)
     else:
         couch_user = couch_user_from_django_user(new_user)
     couch_user.add_domain_membership(d.name, is_admin=True)

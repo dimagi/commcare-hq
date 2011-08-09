@@ -243,25 +243,25 @@ def delete_phone_number(request, domain, couch_user_id):
     user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
-@require_POST
-@require_permission_to_edit_user
-def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
-    user = CouchUser.get(couch_user_id)
-    if 'commcare_couch_user_id' not in request.POST: 
-        return Http404("Poorly formed link request")
-    user.link_commcare_account(domain, 
-                               request.POST['commcare_couch_user_id'], 
-                               commcare_login_id)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
-
-@require_POST
-@require_permission_to_edit_user
-def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
-    user = CouchUser.get(couch_user_id)
-    if commcare_user_index:
-        user.unlink_commcare_account(domain, commcare_user_index)
-        user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+#@require_POST
+#@require_permission_to_edit_user
+#def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
+#    user = CouchUser.get(couch_user_id)
+#    if 'commcare_couch_user_id' not in request.POST:
+#        return Http404("Poorly formed link request")
+#    user.link_commcare_account(domain,
+#                               request.POST['commcare_couch_user_id'],
+#                               commcare_login_id)
+#    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+#
+#@require_POST
+#@require_permission_to_edit_user
+#def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
+#    user = CouchUser.get(couch_user_id)
+#    if commcare_user_index:
+#        user.unlink_commcare_account(domain, commcare_user_index)
+#        user.save()
+#    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 #@login_and_domain_required
 #def my_domains(request, domain):

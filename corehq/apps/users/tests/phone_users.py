@@ -13,7 +13,7 @@ class PhoneUsersTestCase(TestCase):
         self.user.set_password('password')
         self.user.save()
         self.domain = 'mockdomain'
-        self.couch_user = CouchUser.from_web_user(self.user)
+        self.couch_user = CouchUser.from_django_user(self.user)
         self.couch_user.add_domain_membership(self.domain)
         self.couch_user.save()
 
@@ -66,4 +66,4 @@ class PhoneUsersTestCase(TestCase):
         couch_user.add_commcare_account(user, self.domain, 'device_id', user_data={})
         couch_user.save()
         phone_user = CouchUser.phone_users_by_domain(self.domain).one()
-        self.assertEquals(phone_user.default_commcare_account.login.username, 'commcare_username_2')
+        self.assertEquals(phone_user.username, 'commcare_username_2')

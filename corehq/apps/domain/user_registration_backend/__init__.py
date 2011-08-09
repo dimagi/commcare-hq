@@ -153,7 +153,7 @@ def register_user(domain, first_name, last_name, email, password, is_domain_admi
     if send_email:
         _send_user_registration_email(new_user.email, domain, new_user.username, password)
     # Add membership info to Couch
-    couch_user = CouchUser.from_web_user(new_user)
+    couch_user = CouchUser.from_django_user(new_user)
     couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
     couch_user.save()
     return new_user

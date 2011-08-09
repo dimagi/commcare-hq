@@ -23,14 +23,14 @@
 {% block web_users_indicator %}
     {% if couch_user.get_id != request.couch_user.get_id and couch_user.web_account.login_id %}
         <ul>
-            <li class="selected">{{ couch_user.web_account.username_html|safe }}</li>
+            <li class="selected">{{ couch_user.username_html|safe }}</li>
         </ul>
     {% endif %}
 {% endblock %}
 {% block commcare_users_indicator %}
     {% if couch_user.get_id != request.couch_user.get_id and couch_user.commcare_accounts %}
         <ul>
-            <li class="selected">{{ couch_user.default_commcare_account.username_html|safe }}</li>
+            <li class="selected">{{ couch_user.username_html|safe }}</li>
         </ul>
     {% endif %}
 {% endblock %}
