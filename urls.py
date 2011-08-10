@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 import os
-from corehq.apps.domain.urls import domain_re
+from corehq.apps.domain.urls import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -39,7 +39,7 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
     (r'^auditcare/', include('auditcare.urls')),
-    (r'^a/(?P<domain>%s)/' % domain_re, include(domain_specific)),
+    (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     (r'^couch/', include('djangocouch.urls')),
     (r'^xep/', include('xep_hq_server.urls')),
     (r'^webforms/', include('touchforms.formplayer.urls')),
