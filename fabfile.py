@@ -26,7 +26,7 @@ def staging():
     env.root = root = '/home/dimagivm/'
     env.virtualenv_root = _join(root, 'cchq')
     env.code_root       = _join(root, 'commcare-hq')
-    env.code_branch = 'master'
+    env.code_branch = 'staging'
     env.sudo_user = 'root'
     env.hosts = ['192.168.7.223']
     env.environment = 'staging'
@@ -54,8 +54,8 @@ def deploy():
             utils.abort('Production deployment aborted.')
 
     with cd(env.code_root):
-        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
+        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git submodule init', user=env.sudo_user)
         sudo('git submodule update', user=env.sudo_user)
         with enter_virtualenv():
