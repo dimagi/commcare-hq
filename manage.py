@@ -30,6 +30,7 @@ sys.path.append(os.path.join(filedir,'submodules','touchforms-src'))
 sys.path.append(os.path.join(filedir,'submodules','django-digest-src'))
 sys.path.append(os.path.join(filedir,'submodules','python-digest'))
 sys.path.append(os.path.join(filedir,'submodules','phonelog'))
+sys.path.append(os.path.join(filedir,'submodules','pathfinder-reports'))
 
 try:
     import settings # Assumed to be in the same directory.

@@ -55,3 +55,6 @@
 [submodule "submodules/formdesigner"]
 	path = submodules/formdesigner
 	url = git://github.com/dimagi/FormDesignerAlpha.git
+[submodule "submodules/pathfinder-reports"]
+	path = submodules/pathfinder-reports
+	url = git://github.com/dimagi/pathfinder-reports.git
