@@ -16,6 +16,7 @@ from django_tables import tables
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from corehq.apps.domain.models import Domain, RegistrationRequest
+from corehq.apps.domain.urls import get_domained_url, normalize_domain_name
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser
@@ -413,3 +414,7 @@ def add_repeater(request, domain):
     return render_to_response(request, "domain/admin/add_form_repeater.html", 
                               {"domain": domain, 
                                "form": form})
+
+def legacy_domain_name(request, domain, path):
+    domain = normalize_domain_name(domain)
+    return HttpResponseRedirect(get_domained_url(domain, path))

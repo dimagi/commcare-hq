@@ -43,10 +43,20 @@ def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
 
-domain_re = "[\w\.]+"
+domain_re = r"[a-z\-]+"
+legacy_domain_re = r"[\w\.-]+"
+
+def normalize_domain_name(domain):
+    return domain.replace('_', '-').replace('.', '-').lower()
+
+def get_domained_url(domain, path):
+    return '/a/%s/%s' % (domain, path)
 
 urlpatterns =\
     patterns('corehq.apps.domain.views',
+        #(r'^a/(?P<domain>%s)/(?P<path>.*)$' % legacy_domain_re, 'legacy_domain_name'),
+
+
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),
@@ -71,8 +81,8 @@ urlpatterns =\
         url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm', auth_pages_path('password_reset_confirm.html') ),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
     )
-        
-   
+
+
 domain_specific = patterns('corehq.apps.domain.views',
     url(r'^$', 'manage_domain', name='manage_domain'),
     url(r'^forwarding/new/$', 'add_repeater', name='add_repeater'),
