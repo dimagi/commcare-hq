@@ -4,6 +4,27 @@ $.prototype.iconify = function (icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+var eventize = function (that) {
+    'use strict';
+    var events = {};
+    that.on = function (tag, callback) {
+        if (events[tag] === undefined) {
+            events[tag] = [];
+        }
+        events[tag].push(callback);
+        return that;
+    };
+    that.fire = function (tag, e) {
+        var i;
+        if (events[tag] !== undefined) {
+            for (i = 0; i < events[tag].length; i += 1) {
+                events[tag][i].apply(that, [e]);
+            }
+        }
+        return that;
+    };
+};
+
 var COMMCAREHQ = (function () {
     'use strict';
     return {
@@ -67,25 +88,97 @@ var COMMCAREHQ = (function () {
                 $dialog.text(message);
             }
             $dialog.dialog({
-                    title: title,
-                    modal: true,
-                    resizable: false,
-                    open: function () {
-                        onOpen.apply($dialog);
+                title: title,
+                modal: true,
+                resizable: false,
+                open: function () {
+                    onOpen.apply($dialog);
+                },
+                buttons: [{
+                    text: "Cancel",
+                    click: function () {
+                        $(this).dialog('close');
+                    }
+                }, {
+                    text: "OK",
+                    click: function () {
+                        $(this).dialog('close');
+                        onOk.apply($dialog);
+                    }
+                }]
+            });
+        },
+        SaveButton: {
+            init: function (options) {
+                var button = {
+                    $save: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVE).click(function () {
+                        button.fire('save');
+                    }).button(),
+                    $retry: $('<span/>').text(COMMCAREHQ.SaveButton.message.RETRY).click(function () {
+                        button.fire('save');
+                    }).button(),
+                    $saving: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVING).button().button('disable'),
+                    $saved: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVED).button().button('disable'),
+                    ui: $('<div/>').css({textAlign: 'right'}),
+                    setState: function (state) {
+                        this.state = state;
+                        this.$save.detach();
+                        this.$saving.detach();
+                        this.$saved.detach();
+                        this.$retry.detach();
+                        if (state === 'save') {
+                            this.ui.append(this.$save);
+                        } else if (state === 'saving') {
+                            this.ui.append(this.$saving);
+                        } else if (state === 'saved') {
+                            this.ui.append(this.$saved);
+                        } else if (state === 'retry') {
+                            this.ui.append(this.$retry);
+                        }
                     },
-                    buttons: [{
-                        text: "Cancel",
-                        click: function () {
-                            $(this).dialog('close');
-                        }
-                    }, {
-                        text: "OK",
-                        click: function () {
-                            $(this).dialog('close');
-                            onOk.apply($dialog);
-                        }
-                    }]
+                    ajax: function (options) {
+                        var beforeSend = options.beforeSend || function () {},
+                            success = options.success || function () {},
+                            error = options.error || function () {},
+                            that = this;
+                        options.beforeSend = function () {
+                            that.setState('saving');
+                            beforeSend.apply(this, arguments);
+                        };
+                        options.success = function (data) {
+                            that.setState('saved');
+                            success.apply(this, arguments);
+                        };
+                        options.error = function (data) {
+                            that.setState('retry');
+                            alert(COMMCAREHQ.SaveButton.message.ERROR_SAVING);
+                            error.apply(this, arguments);
+                        };
+                        $.ajax(options);
+                    }
+                };
+                eventize(button);
+                button.setState('saved');
+                button.on('change', function () {
+                    this.setState('save');
                 });
+                if (options.save) {
+                    button.on('save', options.save);
+                }
+                $(window).bind('beforeunload', function () {
+                    if (button.state !== 'saved') {
+                        return options.unsavedMessage || "";
+                    }
+                });
+                return button;
+            },
+            message: {
+                SAVE: 'Save',
+                SAVING: 'Saving...',
+                SAVED: 'Saved',
+                RETRY: 'Try Again',
+                ERROR_SAVING: 'There was an error saving'
+            }
         }
     };
 }());
@@ -94,9 +187,9 @@ function setUpIeWarning() {
     'use strict';
     var $warning;
     if ($.browser.msie) {
-        $warning= $('<div/>').addClass('ie-warning');
+        $warning = $('<div/>').addClass('ie-warning');
         $('<span>This application does not work well on Microsoft Internet Explorer. ' +
-          'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
+            'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
         $('body').prepend($warning);
     }
 }
