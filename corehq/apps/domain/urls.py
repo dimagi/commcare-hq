@@ -1,3 +1,4 @@
+import re
 import sys
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
@@ -43,20 +44,21 @@ def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
 
-domain_re = r"[a-z\-]+"
+new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
+grandfathered_domain_re = r"[a-z0-9\-\.]+"
 legacy_domain_re = r"[\w\.-]+"
 
 def normalize_domain_name(domain):
-    return domain.replace('_', '-').replace('.', '-').lower()
+    normalized = domain.replace('_', '-').lower()
+    if settings.DEBUG:
+        assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+    return normalized
 
 def get_domained_url(domain, path):
     return '/a/%s/%s' % (domain, path)
 
 urlpatterns =\
     patterns('corehq.apps.domain.views',
-        #(r'^a/(?P<domain>%s)/(?P<path>.*)$' % legacy_domain_re, 'legacy_domain_name'),
-
-
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),

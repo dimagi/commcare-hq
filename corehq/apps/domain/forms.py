@@ -17,7 +17,7 @@ from corehq.apps.domain.models import Domain
 # Need to remember to call:
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
-from corehq.apps.domain.urls import domain_re
+from corehq.apps.domain.urls import new_domain_re
 
 class _BaseForm(object):
     def clean(self):
@@ -113,10 +113,9 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
-        #data = re.sub(r"[-_ ]", '.', data)
-        if not re.match("^%s$" % domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and periods ("-") allowed in domain name')
-        if Domain.objects.filter(name__iexact=data).count() > 0:
+        if not re.match("^%s$" % new_domain_re, data):
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+        if Domain.objects.filter(name__iexact=data).count() > 0 or Domain.objects.filter(name__iexact=data.replace('-', '.')).count():
             raise forms.ValidationError('Domain name already taken; please try another')
         return data
  
