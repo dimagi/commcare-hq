@@ -55,6 +55,17 @@
     //    }());
 
 
+        (function () {
+            var $form = $('.save-button-form'),
+                $buttonHolder = $form.find('.save-button-holder');
+            COMMCAREHQ.SaveButton.initForm($form, {
+                unsavedMessage: "You have unchanged settings",
+                success: function (data) {
+                    COMMCAREHQ.app_manager.updateDOM(data.update);
+                }
+            }).ui.appendTo($buttonHolder);
+        }());
+
         $("#form-tabs").tabs({
             cookie: {},
             select: function (event, ui) {

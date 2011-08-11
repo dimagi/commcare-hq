@@ -915,36 +915,46 @@ def edit_app_attr(req, domain, app_id, attr):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
 
+    attributes = [
+        'all',
+        'recipients', 'name', 'success_message', 'use_commcare_sense',
+        'native_input', 'build_spec', 'show_user_registration'
+        # RemoteApp only
+        'profile_url'
+    ]
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+    
+    def should_edit(attribute):
+        return attribute == attr or ('all' == attr and req.POST.get(attribute))
     resp = {"update": {}}
     # For either type of app
-    if   "recipients" == attr:
+    if should_edit("recipients"):
         recipients = req.POST['recipients']
         app.recipients = recipients
-    elif "name" == attr:
+    if should_edit("name"):
         name = req.POST["name"]
         app.name = name
         resp['update'].update({'.variable-app_name': name})
-    elif "success_message" == attr:
+    if should_edit("success_message"):
         success_message = req.POST['success_message']
         app.success_message[lang] = success_message
-    elif "use_commcare_sense" == attr:
+    if should_edit("use_commcare_sense"):
         use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
         app.use_commcare_sense = use_commcare_sense
-    elif "native_input" == attr:
+    if should_edit("native_input"):
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
-    elif "build_spec" == attr:
+    if should_edit("build_spec"):
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
-    elif "show_user_registration" == attr:
+    if should_edit("show_user_registration"):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     # For RemoteApp
-    elif "profile_url" == attr:
+    if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
-    else:
-        return HttpResponseBadRequest()
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
