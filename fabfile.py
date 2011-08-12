@@ -59,9 +59,6 @@ def deploy():
         if not console.confirm('Are you sure you want to deploy production?', default=False):
             utils.abort('Production deployment aborted.')
 
-    if env.environment == "production" and not env.restart_server:
-        service_stop()
-
     with cd(env.code_root):
         sudo('git pull', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
