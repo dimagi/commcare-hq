@@ -82,8 +82,10 @@ def deploy():
 
 
 def service_restart():
-    """ restart cchq_www service on remote host.  This will call a stop, reload the initctl to
+    """
+    restart cchq_www service on remote host.  This will call a stop, reload the initctl to
     have any config file updates be reloaded into intictl, then start cchqwww again.
+
     """
     require('root', provided_by=('staging', 'production'))
     with settings(sudo_user="root"):
@@ -92,8 +94,9 @@ def service_restart():
         sudo('start cchq_www', user=env.sudo_user)
 
 def service_stop():
-    """ restart cchq_www service on remote host.  This will call a stop, reload the initctl to
-    have any config file updates be reloaded into intictl, then start cchqwww again.
+    """
+    stop cchq_www service on remote host.
+
     """
     require('root', provided_by=('staging', 'production'))
     with settings(sudo_user="root"):
