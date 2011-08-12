@@ -1,3 +1,4 @@
+from corehq.apps.domain.utils import normalize_domain_name
 from receiver.signals import form_received, successful_form_received
 from datetime import datetime
 import logging
@@ -46,7 +47,7 @@ def scrub_meta(sender, xform, **kwargs):
 def _get_domain(xform):
     matches = DOMAIN_RE.search(xform.path)
     if matches and len(matches.groups()) == 1:
-        return matches.groups()[0]
+        return normalize_domain_name(matches.groups()[0])
     
 def add_domain(sender, xform, **kwargs):
     domain = _get_domain(xform)
