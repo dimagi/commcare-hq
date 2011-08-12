@@ -1,12 +1,9 @@
-import re
 import sys
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
-from django.core.urlresolvers import reverse
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-import settings
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -42,20 +39,6 @@ def exception_safe_password_reset(request, *args, **kwargs):
 
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
-
-
-new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
-grandfathered_domain_re = r"[a-z0-9\-\.]+"
-legacy_domain_re = r"[\w\.-]+"
-
-def normalize_domain_name(domain):
-    normalized = domain.replace('_', '-').lower()
-    if settings.DEBUG:
-        assert(re.match('^%s$' % grandfathered_domain_re, normalized))
-    return normalized
-
-def get_domained_url(domain, path):
-    return '/a/%s/%s' % (domain, path)
 
 urlpatterns =\
     patterns('corehq.apps.domain.views',

@@ -16,7 +16,7 @@ from django_tables import tables
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from corehq.apps.domain.models import Domain, RegistrationRequest
-from corehq.apps.domain.urls import get_domained_url, normalize_domain_name
+from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
 from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser

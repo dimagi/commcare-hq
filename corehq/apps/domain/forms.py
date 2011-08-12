@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth.models import User
 
 import django_tables as tables
+from django.core.validators import validate_email
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import Domain
@@ -17,7 +18,8 @@ from corehq.apps.domain.models import Domain
 # Need to remember to call:
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
-from corehq.apps.domain.urls import new_domain_re
+from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.users.util import format_username
 
 class _BaseForm(object):
     def clean(self):
@@ -115,6 +117,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+        validate_email(format_username("a", data))
         if Domain.objects.filter(name__iexact=data).count() > 0 or Domain.objects.filter(name__iexact=data.replace('-', '.')).count():
             raise forms.ValidationError('Domain name already taken; please try another')
         return data

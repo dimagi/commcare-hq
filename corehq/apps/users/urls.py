@@ -1,6 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
-from corehq.apps.domain.urls import grandfathered_domain_re
+from corehq.apps.domain.utils import grandfathered_domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
     (r'^$', 'users'),

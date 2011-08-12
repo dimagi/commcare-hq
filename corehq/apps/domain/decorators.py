@@ -5,7 +5,7 @@ from django.utils.http import urlquote
 
 ########################################################################################################
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.urls import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.util import couch_user_from_django_user
 
 REDIRECT_FIELD_NAME = 'next'

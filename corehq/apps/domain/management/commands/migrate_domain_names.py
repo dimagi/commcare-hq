@@ -2,7 +2,7 @@ from couchdbkit.ext.django.schema import Document
 from django.core.management.base import LabelCommand, CommandError
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain, create_user
-from corehq.apps.domain.urls import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
 

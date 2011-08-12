@@ -6,6 +6,7 @@ from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from dimagi.utils.web import render_to_response
@@ -43,6 +44,7 @@ def redirect_to_default(req, domain=None):
         url = reverse('corehq.apps.hqwebapp.views.landing_page')
     else:
         if domain:
+            domain = normalize_domain_name(domain)
             domains = Domain.objects.filter(name=domain)
         else:
             domains = Domain.active_for_user(req.user)
