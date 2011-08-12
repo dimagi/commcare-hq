@@ -20,6 +20,13 @@ def production():
     env.hosts = ['10.84.168.241']
     env.environment = 'production'
     env.user = prompt("Username: ", default=env.user)
+    env.restart_server = True
+
+def migration():
+    """pull from staging branch into production to do a data migration"""
+    production()
+    env.code_branch = 'staging'
+    env.restart_server = False
 
 def staging():
     """ use staging environment on remote host"""
@@ -31,7 +38,6 @@ def staging():
     env.hosts = ['192.168.7.223']
     env.environment = 'staging'
     env.user = prompt("Username: ", default='dimagivm')
-
 
 def enter_virtualenv():
     """
@@ -53,6 +59,9 @@ def deploy():
         if not console.confirm('Are you sure you want to deploy production?', default=False):
             utils.abort('Production deployment aborted.')
 
+    if env.environment == "production" and not env.restart_server:
+        service_stop()
+
     with cd(env.code_root):
         sudo('git pull', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
@@ -66,7 +75,8 @@ def deploy():
             sudo('python manage.py reindex_views &', user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
-    if env.environment == 'production':
+        
+    if env.environment == "production" and env.restart_server:
         service_restart()
 
 
@@ -80,3 +90,11 @@ def service_restart():
         sudo('stop cchq_www', user=env.sudo_user)
         sudo('initctl reload-configuration', user=env.sudo_user)
         sudo('start cchq_www', user=env.sudo_user)
+
+def service_stop():
+    """ restart cchq_www service on remote host.  This will call a stop, reload the initctl to
+    have any config file updates be reloaded into intictl, then start cchqwww again.
+    """
+    require('root', provided_by=('staging', 'production'))
+    with settings(sudo_user="root"):
+        sudo('stop cchq_www', user=env.sudo_user)
