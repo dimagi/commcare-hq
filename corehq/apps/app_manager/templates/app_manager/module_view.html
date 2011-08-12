@@ -5,7 +5,6 @@
     {{ block.super }}
     <script src="{{ STATIC_URL }}hqwebapp/javascripts/underscore-1.1.7.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/lcs-merge.js"></script>
-    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js"></script>
     <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/detail-screen-config.css"/>
     <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config-003.js"></script>
     <script>
@@ -186,12 +185,12 @@
                             <div class="help-text" data-help-key="app_manager/case_list"></div>
                         </th>
                         <th>
-                            <select class="code" type="text" name="show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
+                            <select class="code" type="text" name="case_list-show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
                                 <option value="false">Don't Show</option>
                                 <option value="true">Show</option>
                             </select>
                             <span>
-                                Label: <input type="text" name="label" value="{{ module.case_list.label|trans:langs }}"/>
+                                Label: <input type="text" name="case_list-label" value="{{ module.case_list.label|trans:langs }}"/>
                             </span>
                         </th>
                     </tr>

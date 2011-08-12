@@ -155,71 +155,74 @@
             </div>
         </form>
         <h4>Supported Languages</h4>
-        <table class="config">
-            <tbody {% if edit %}class="sortable"{% endif %}>
-                <tr class="sort-action">
-                    <td>
-                        <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
-                            <input name="ajax" value="true" />
-                        </form>
-                    </td>
-                </tr>
-                {% if edit %}
-                    {% for lang in app.langs %}
-                        <tr>
-                            <td class="index">{{ forloop.counter0 }}</td>
-                            <td>
-                                <span class="drag_handle"></span>
-                            </td>
-                            <td>
-                                <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
-                                    <input type="hidden" name="ajax" value="false" />
-                                    <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
-                                    <input type="hidden" name="index" value="{# filled in by js #}" />
-                                </form>
-                            </td>
-
-                            <td>
-                                <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
-                                      data-title="Delete Build"
-                                      data-message="Are you sure you want to delete this language? (You can always add it back later.)"
-                                      method="POST">
-                                    <input type="hidden" name="index" value="{# filled in by js #}" />
-                                    <a class="delete_link confirm-submit" href="#"></a>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
+        <div class="config">
+            <p align="right"><span class="caution">Caution</span>: Changes you make here are automatically saved.</p>
+            <table>
+                <tbody {% if edit %}class="sortable"{% endif %}>
+                    <tr class="sort-action">
                         <td>
-                        </td>
-                        <td>
-                            <input class="code short langcodes" type="text" name="lang" />
-                        </td>
-                        <td>
-                            <a href="#" class="submit button">
-                                Add
-                            </a>
+                            <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
+                                <input name="ajax" value="true" />
+                            </form>
                         </td>
                     </tr>
-                {% else %}
-                    {% for lang in app.langs %}
-                        <tr>
+                    {% if edit %}
+                        {% for lang in app.langs %}
+                            <tr>
+                                <td class="index">{{ forloop.counter0 }}</td>
+                                <td>
+                                    <span class="drag_handle"></span>
+                                </td>
+                                <td>
+                                    <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
+                                        <input type="hidden" name="ajax" value="false" />
+                                        <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
+                                        <input type="hidden" name="index" value="{# filled in by js #}" />
+                                    </form>
+                                </td>
+
+                                <td>
+                                    <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
+                                          data-title="Delete Build"
+                                          data-message="Are you sure you want to delete this language? (You can always add it back later.)"
+                                          method="POST">
+                                        <input type="hidden" name="index" value="{# filled in by js #}" />
+                                        <a class="delete_link confirm-submit" href="#"></a>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
                             <td>
-                                 <code>{{ lang }}</code>
+                            </td>
+                            <td>
+                                <input class="code short langcodes" type="text" name="lang" />
+                            </td>
+                            <td>
+                                <a href="#" class="submit button">
+                                    Add
+                                </a>
                             </td>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td>
-                                <p class="warning">No supported languages</p>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                {% endif %}
-            </tbody>
-            <!--tbody id="language-properties"></tbody-->
-        </table>
+                    {% else %}
+                        {% for lang in app.langs %}
+                            <tr>
+                                <td>
+                                     <code>{{ lang }}</code>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td>
+                                    <p class="warning">No supported languages</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <!--tbody id="language-properties"></tbody-->
+            </table>
+        </div>
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>Multimedia (beta)</a>
         </div>
@@ -232,13 +235,13 @@
             <a href="#"><span class="ui-icon"></span>User Interface Translations (Beta)</a>
         </div>
         <div class="scary-settings">
-            <p>You may now choose your own custom translations for user interface string codes</p>
-            <p>(see lists for
-                <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
-                and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare</a>)
-            </p>
-            <br/>
-            <div id="translations_ui"></div>
+            <div id="translations_ui">
+                <p>See lists of keys for
+                    <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
+                    and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare</a>
+                </p>
+                <br/>
+            </div>
         </div>
         <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Advanced Settings</a></div>
         <div class="scary-settings">

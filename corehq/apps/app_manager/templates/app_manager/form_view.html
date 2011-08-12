@@ -99,26 +99,28 @@
     {% endif %}
     {% if nav_form %}
         <h4>Form Settings</h4>
-        <table class="config">
-            {% if edit %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        <!-- autosave hijacks the form so that it sends automatically in the background-->
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
-                            <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        {{ form.name|trans:langs }}
-                    </td>
-                </tr>
-            {% endif %}
-        </table>
+        <div class="config">
+            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+                <div class="save-button-holder"></div>
+                <table>
+                    {% if edit %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                {{ form.name|trans:langs }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </form>
+        </div>
     {% endif %}
 
         <h4>XForm</h4>
@@ -128,9 +130,7 @@
                 <th>Edit XForm</th>
                 <td id="editXFormTD">
                     {% if user.is_superuser %}
-                            <a href="./contents/">
-                                {% if form.contents %}Edit{% else %}Create{% endif %} in Form Designer (New!)
-                            </a>
+                            <a href="./contents/">{% if form.contents %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
                             or
                     {% endif %}
                     <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">

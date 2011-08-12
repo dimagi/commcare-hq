@@ -578,24 +578,45 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
+    attributes = {
+        "all": None,
+        "case_type": None, "put_in_root": None,
+        "name": None, "case_label": None, "referral_label": None,
+        "case_list": ('case_list-show', 'case_list-label'),
+    }
+
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+
+    def should_edit(attribute):
+        if attribute == attr:
+            return True
+        if 'all' == attr:
+            if attributes[attribute]:
+                for param in attributes[attribute]:
+                    if not req.POST.get(param):
+                        return False
+                return True
+            else:
+                return req.POST.get(attribute)
+
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}}
-    if   "case_type" == attr:
-        module[attr] = req.POST.get(attr, None)
-    elif "put_in_root" == attr:
-        module[attr] = json.loads(req.POST.get(attr))
-    elif ("name", "case_label", "referral_label").__contains__(attr):
-        name = req.POST.get(attr, None)
-        module[attr][lang] = name
-        if attr == "name":
-            resp['update'].update({'.variable-module_name': module.name[lang]})
-    elif "case_list" == attr:
-        module[attr].show = json.loads(req.POST['show'])
-        module[attr].label[lang] = req.POST['label']
-    else:
-        return HttpResponseBadRequest("Attribute %s not supported" % attr)
+    if should_edit("case_type"):
+        module["case_type"] = req.POST.get("case_type", None)
+    if should_edit("put_in_root"):
+        module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    for attribute in ("name", "case_label", "referral_label"):
+        if should_edit(attribute):
+            name = req.POST.get(attribute, None)
+            module[attribute][lang] = name
+            if should_edit("name"):
+                resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit("case_list"):
+        module["case_list"].show = json.loads(req.POST['case_list-show'])
+        module["case_list"].label[lang] = req.POST['case_list-label']
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
