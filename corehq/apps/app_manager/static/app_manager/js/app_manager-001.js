@@ -4,7 +4,8 @@
     COMMCAREHQ.app_manager = {};
     COMMCAREHQ.app_manager.init = function (args) {
         var lastAppVersion = args.lastAppVersion,
-            appVersion = args.appVersion;
+            appVersion = args.appVersion,
+            edit = args.edit;
 
         function updateDOM(update) {
             if (update.hasOwnProperty('.variable-version')) {
@@ -55,16 +56,18 @@
     //    }());
 
 
-        (function () {
-            var $form = $('.save-button-form'),
-                $buttonHolder = $form.find('.save-button-holder');
-            COMMCAREHQ.SaveButton.initForm($form, {
-                unsavedMessage: "You have unchanged settings",
-                success: function (data) {
-                    COMMCAREHQ.app_manager.updateDOM(data.update);
-                }
-            }).ui.appendTo($buttonHolder);
-        }());
+        if (edit) {
+            (function () {
+                var $form = $('.save-button-form'),
+                    $buttonHolder = $form.find('.save-button-holder');
+                COMMCAREHQ.SaveButton.initForm($form, {
+                    unsavedMessage: "You have unchanged settings",
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                    }
+                }).ui.appendTo($buttonHolder);
+            }());
+        }
 
         $("#form-tabs").tabs({
             cookie: {},

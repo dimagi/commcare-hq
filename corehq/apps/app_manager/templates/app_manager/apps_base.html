@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% load permissions %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block head %}
     {% include "imports/jqmodal.html" %}
@@ -62,7 +63,8 @@
     $(function () {
         COMMCAREHQ.app_manager.init({
             lastAppVersion: {% if saved_apps.0.version %}{{ saved_apps.0.version }}{% else %}-1{% endif %},
-            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %}
+            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
+            edit: {{ edit|JSON }}
         });
     });
     </script>
