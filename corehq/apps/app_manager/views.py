@@ -902,14 +902,15 @@ def edit_app_lang(req, domain, app_id):
 
 @require_edit_apps
 @require_POST
-def edit_app_translation(request, domain, app_id):
+def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
-    key     = params.get('key')
-    value   = params.get('value')
+    translations = params.get('translations')
+#    key     = params.get('key')
+#    value   = params.get('value')
     app = get_app(domain, app_id)
-    app.set_translation(lang, key, value)
-    response = {"key": key, "value": value}
+    app.set_translations(lang, translations)
+    response = {}
     app.save(response)
     return json_response(response)
 

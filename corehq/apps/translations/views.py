@@ -26,17 +26,21 @@ def get_translations(request):
     return json_response(Translation.get_translations(lang, key, one))
 
 @require_POST
-def set_translation(request):
-    params = json_request(request.POST)
-    doc_id  = params.get('doc_id')
-    lang    = params.get('lang')
-    key     = params.get('key')
-    value   = params.get('value')
+def set_translations(request):
+    params          = json_request(request.POST)
+    doc_id          = params.get('doc_id')
+    lang            = params.get('lang')
+    translations    = params.get('translations')
+
     trans = TranslationMixin.get(doc_id)
-    validate_trans_doc(trans)
-    trans.set_translation(lang, key, value)
-    trans.save()
-    return json_response({"key": key, "value": value})
+
+    trans.set_translations(lang, translations)
+    resp = {}
+    try:
+        trans.save(response_json=resp)
+    except Exception:
+        trans.save()
+    return json_response(resp)
 
 @require_GET
 def edit(request, template="translations/edit.html"):

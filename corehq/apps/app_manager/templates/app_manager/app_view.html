@@ -11,7 +11,7 @@
                 var $translation_ui = $("#translations_ui");
                 mk_translation_ui({
                     translations: {{ translations|JSON }},
-                    url: "{% url edit_app_translation domain app.id %}",
+                    url: "{% url edit_app_translations domain app.id %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
                     $home: $translation_ui
