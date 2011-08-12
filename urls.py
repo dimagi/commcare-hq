@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 import os
-from corehq.apps.domain.urls import legacy_domain_re
+from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
