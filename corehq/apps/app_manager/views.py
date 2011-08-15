@@ -1176,11 +1176,12 @@ def download_jad(req, domain, app_id):
         return download_jad(req, domain, app_id)
     try:
         response = HttpResponse(jad)
-    except:
+    except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
     response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
+    response["Content-Length"] = len(jad)
     return response
 
 @safe_download
@@ -1189,17 +1190,18 @@ def download_jar(req, domain, app_id):
     See ApplicationBase.create_jadjar
 
     This is the only view that will actually be called
-    in the process of downloading a commplete CommCare.jar
+    in the process of downloading a complete CommCare.jar
     build (i.e. over the air to a phone).
 
     """
     response = HttpResponse(mimetype="application/java-archive")
     app = get_app(domain, app_id)
-    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
     _, jar = app.create_jadjar()
+    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
+    response['Content-Length'] = len(jar)
     try:
         response.write(jar)
-    except:
+    except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
     return response
