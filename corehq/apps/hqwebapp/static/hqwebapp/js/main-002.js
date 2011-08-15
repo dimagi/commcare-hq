@@ -109,6 +109,12 @@ var COMMCAREHQ = (function () {
             });
         },
         SaveButton: {
+            /*
+                options: {
+                    save: "Function to call when the user clicks Save",
+                    unsavedMessage: "Message to display when there are unsaved changes and the user leaves the page"
+                }
+            */
             init: function (options) {
                 var button = {
                     $save: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVE).click(function () {
@@ -120,6 +126,13 @@ var COMMCAREHQ = (function () {
                     $saving: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVING).button().button('disable'),
                     $saved: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVED).button().button('disable'),
                     ui: $('<div/>').css({textAlign: 'right'}),
+                    setStateWhenReady: function (state) {
+                        if (this.state === 'saving') {
+                            this.nextState = state;
+                        } else {
+                            this.setState(state);
+                        }
+                    },
                     setState: function (state) {
                         this.state = state;
                         this.$save.detach();
@@ -143,13 +156,15 @@ var COMMCAREHQ = (function () {
                             that = this;
                         options.beforeSend = function () {
                             that.setState('saving');
+                            that.nextState = 'saved';
                             beforeSend.apply(this, arguments);
                         };
                         options.success = function (data) {
-                            that.setState('saved');
+                            that.setState(that.nextState);
                             success.apply(this, arguments);
                         };
                         options.error = function (data) {
+                            that.nextState = null;
                             that.setState('retry');
                             alert(COMMCAREHQ.SaveButton.message.ERROR_SAVING);
                             error.apply(this, arguments);
@@ -160,7 +175,7 @@ var COMMCAREHQ = (function () {
                 eventize(button);
                 button.setState('saved');
                 button.on('change', function () {
-                    this.setState('save');
+                    this.setStateWhenReady('save');
                 });
                 if (options.save) {
                     button.on('save', options.save);
@@ -169,6 +184,25 @@ var COMMCAREHQ = (function () {
                     if (button.state !== 'saved') {
                         return options.unsavedMessage || "";
                     }
+                });
+                return button;
+            },
+            initForm: function ($form, options) {
+                var url = $form.attr('action'),
+                    button = COMMCAREHQ.SaveButton.init({
+                        unsavedMessage: options.unsavedMessage,
+                        save: function () {
+                            this.ajax({
+                                url: url,
+                                type: 'POST',
+                                dataType: 'json',
+                                data: $form.serialize(),
+                                success: options.success
+                            });
+                        }
+                    });
+                $form.find('*').change(function () {
+                    button.fire('change');
                 });
                 return button;
             },

@@ -4,14 +4,14 @@
 {% block head %}
     {{ block.super }}
     {% if app.doc_type == "Application" %}
-        <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js"></script>
-        <script src="{{ STATIC_URL }}translations/js/translations.js"></script>
+        <script src="{{ STATIC_URL }}app_manager/js/commcareProperties-001.js"></script>
+        <script src="{{ STATIC_URL }}translations/js/translations-001.js"></script>
         <script>
             $(function () {
                 var $translation_ui = $("#translations_ui");
                 mk_translation_ui({
                     translations: {{ translations|JSON }},
-                    url: "{% url edit_app_translation domain app.id %}",
+                    url: "{% url edit_app_translations domain app.id %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
                     $home: $translation_ui
@@ -21,18 +21,18 @@
         <script>
             $(function () {
                 var saveURL = "{% url edit_commcare_profile domain app.id %}",
-                    defaultHome = $('#commcare-settings'),
+                    defaultHome = $('#other-commcare-settings'),
                     senseHome = $('#commcare-sense-properties'),
                     logHome = $('#log-properties'),
                     languageHome = $('#language-properties'),
-                    $block;
+                    $block,
+                    saveButtonHolder = $('#commcare-settings .save-button-holder');
                 $.get('{% url corehq.apps.app_manager.views.commcare_profile domain app.id %}', function (initialValues) {
                     initialValues = JSON.parse(initialValues);
                     $.get('{{ STATIC_URL }}app_manager/json/custom-commcare-properties-1_1.json', function (profile_spec) {
                         var settings = CommcareSettings.wrap(
                                 profile_spec,
                                 initialValues,
-    //                            $('#commcare-settings'),
                                 function (p) {
                                     if (p.group === 'sense') {
                                         return senseHome;
@@ -44,7 +44,8 @@
                                     return defaultHome;
                                 },
                                 saveURL,
-                                {% if edit %}true{% else %}false{% endif %}
+                                {% if edit %}true{% else %}false{% endif %},
+                                saveButtonHolder
                         );
                         $block = settings.render();
                         $block.find('[name="cur_locale"]').addClass('langcodes');
@@ -127,98 +128,151 @@
     <h3 class="variable-app_name">{{ app.name }}</h3>
     {% if app.doc_type == "Application" %}
         <h4>Application Settings</h4>
-        <table class="config">
-            <tr>
-                <th>Name</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'name' %}">
-                            <input type="text" name="name" class="autosave" value="{{ app.name }}" />
-                        </form>
-                    {% else %}
-                        {{ app.name }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>CommCare Users</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'recipients' %}">
-                            <input type="text" name="recipients" class="autosave sms-autocomplete" value="{{ app.recipients }}"/>
-                        </form>
-                    {% else %}
-                        {{ app.recipients }}
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
-        <h4>Supported Languages</h4>
-        <table class="config">
-            <tbody {% if edit %}class="sortable"{% endif %}>
-                <tr class="sort-action">
-                    <td>
-                        <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
-                            <input name="ajax" value="true" />
-                        </form>
-                    </td>
-                </tr>
-                {% if edit %}
-                    {% for lang in app.langs %}
-                        <tr>
-                            <td class="index">{{ forloop.counter0 }}</td>
-                            <td>
-                                <span class="drag_handle"></span>
-                            </td>
-                            <td>
-                                <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
-                                    <input type="hidden" name="ajax" value="false" />
-                                    <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
-                                    <input type="hidden" name="index" value="{# filled in by js #}" />
-                                </form>
-                            </td>
-
-                            <td>
-                                <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
-                                      data-title="Delete Build"
-                                      data-message="Are you sure you want to delete this language? (You can always add it back later.)"
-                                      method="POST">
-                                    <input type="hidden" name="index" value="{# filled in by js #}" />
-                                    <a class="delete_link confirm-submit" href="#"></a>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
+        <form class="save-button-form" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
+            <div class="config">
+                <div class="save-button-holder"></div>
+                <table>
+                    <tr>
+                        <th>Name</th>
                         <td>
-                        </td>
-                        <td>
-                            <input class="code short langcodes" type="text" name="lang" />
-                        </td>
-                        <td>
-                            <a href="#" class="submit button">
-                                Add
-                            </a>
+                            {% if edit %}
+                                <input type="text" name="name" value="{{ app.name }}" />
+                            {% else %}
+                                {{ app.name }}
+                            {% endif %}
                         </td>
                     </tr>
-                {% else %}
-                    {% for lang in app.langs %}
-                        <tr>
+                    <tr>
+                        <th>CommCare Users</th>
+                        <td>
+                            {% if edit %}
+                                <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                            {% else %}
+                                {{ app.recipients }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="show-user-registration-select">Use a Custom User Registration</label></th>
+                        <td>
+                            {% if edit %}
+                                    <select id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
+                                        <option value="false">* Don't Use</option>
+                                        <option value="true">Use</option>
+                                    </select>
+                            {% else %}
+                                {% if not app.show_user_registration %}Don't Use{% else %}Use{% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>CommCare Version</th>
+                        <td>
+                            {% if edit %}
+                                <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
+                                    {% for option in commcare_build_options %}
+                                        <option value='{{ option.build.to_string }}'>
+                                            {{ option.label }}
+                                        </option>
+                                    {% endfor %}
+                                    {% if not is_standard_build %}
+                                        <optgroup label="Custom">
+                                            <option value='{{ app.build_spec.to_string }}'>
+                                                {{ app.build_spec.get_label }}
+                                            </option>
+                                        </optgroup>
+                                    {% endif %}
+                                </select>
+                            {% else %}
+                                {{ app.get_build_label }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Text Input</th>
+                        <td>
+                            {% if edit %}
+                                <select name="native_input" data-value="{{ app.native_input|lower }}">
+                                    <option value="false">* Default (Roman)</option>
+                                    <option value="true">Native (International)</option>
+                                </select>
+                            {% else %}
+                                {% if app.native_input %}Native (International){% else %}Default (Roman){% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </form>
+        <h4>Supported Languages</h4>
+        <div class="config">
+            <p align="right"><span class="caution">Caution</span>: Changes you make here are saved immediately as you make them.</p>
+            <table>
+                <tbody {% if edit %}class="sortable"{% endif %}>
+                    <tr class="sort-action">
+                        <td>
+                            <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
+                                <input name="ajax" value="true" />
+                            </form>
+                        </td>
+                    </tr>
+                    {% if edit %}
+                        {% for lang in app.langs %}
+                            <tr>
+                                <td class="index">{{ forloop.counter0 }}</td>
+                                <td>
+                                    <span class="drag_handle"></span>
+                                </td>
+                                <td>
+                                    <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
+                                        <input type="hidden" name="ajax" value="false" />
+                                        <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
+                                        <input type="hidden" name="index" value="{# filled in by js #}" />
+                                    </form>
+                                </td>
+
+                                <td>
+                                    <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
+                                          data-title="Delete Build"
+                                          data-message="Are you sure you want to delete this language? (You can always add it back later.)"
+                                          method="POST">
+                                        <input type="hidden" name="index" value="{# filled in by js #}" />
+                                        <a class="delete_link confirm-submit" href="#"></a>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
                             <td>
-                                 <code>{{ lang }}</code>
+                            </td>
+                            <td>
+                                <input class="code short langcodes" type="text" name="lang" />
+                            </td>
+                            <td>
+                                <a href="#" class="submit button">
+                                    Add
+                                </a>
                             </td>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td>
-                                <p class="warning">No supported languages</p>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                {% endif %}
-            </tbody>
-            <!--tbody id="language-properties"></tbody-->
-        </table>
+                    {% else %}
+                        {% for lang in app.langs %}
+                            <tr>
+                                <td>
+                                     <code>{{ lang }}</code>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td>
+                                    <p class="warning">No supported languages</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <!--tbody id="language-properties"></tbody-->
+            </table>
+        </div>
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>Multimedia (beta)</a>
         </div>
@@ -231,34 +285,18 @@
             <a href="#"><span class="ui-icon"></span>User Interface Translations (Beta)</a>
         </div>
         <div class="scary-settings">
-            <p>You may now choose your own custom translations for user interface string codes</p>
-            <p>(see lists for
-                <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
-                and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare</a>)
-            </p>
-            <br/>
-            <div id="translations_ui"></div>
+            <div id="translations_ui">
+                <p>See lists of keys for
+                    <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
+                    and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare</a>
+                </p>
+                <br/>
+            </div>
         </div>
-        <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Advanced Settings</a></div>
-        <div class="scary-settings">
-            <h4>Custom User Registration</h4>
-            <table class="config">
-                <tr>
-                    <th>Use a Custom User Registration</th>
-                    <td>
-                        {% if edit %}
-                            <form action="{% url edit_app_attr domain app.id 'show_user_registration' %}" method="POST">
-                                <select class="autosave" id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
-                                    <option value="false">* Don't Use</option>
-                                    <option value="true">Use</option>
-                                </select>
-                            </form>
-                        {% else %}
-                            {% if not app.show_user_registration %}Don't Use{% else %}Use{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-            </table>
+
+        <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>CommCare Settings</a></div>
+        <div class="scary-settings" id="commcare-settings">
+            <div class="save-button-holder"></div>
             <h4>Logging</h4>
             <table class="config">
                 <tbody id="log-properties"></tbody>
@@ -269,9 +307,19 @@
             </table>
             <h4>CommCare Properties</h4>
             <table class="config">
-                <tbody id="commcare-settings"></tbody>
+                <tbody id="other-commcare-settings"></tbody>
             </table>
 
+
+    {#        <h4>Success Message <span class="help-link" data-help-key="app_manager/success_message"></span></h4>#}
+    {#        <div class="help-text" data-help-key="app_manager/success_message"></div>#}
+    {#        <div class="config">#}
+    {#            <p>Note: Currently the beginning of days and weeks is calculated in UTC.</p>#}
+    {#            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'success_message' %}">#}
+    {#                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>#}
+    {#            </form>#}
+    {#        </div>#}
+        </div>
     {% endif %}
     {% if app.doc_type == "RemoteApp" %}
         <h4>Remote Setup</h4>
@@ -302,70 +350,12 @@
             </tr>
 
         </table>
-        <div id="scary-settings">
     {% endif %}
-        <h4>Build Settings</h4>
-        <table class="config">
-            <tr>
-                <th>CommCare Version</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'build_spec' %}">
-                            <select name="build_spec" class="autosave" data-value="{{ app.build_spec.to_string }}">
-                                {% for option in commcare_build_options %}
-                                    <option value='{{ option.build.to_string }}'>
-                                        {{ option.label }}
-                                    </option>
-                                {% endfor %}
-                                {% if not is_standard_build %}
-                                    <optgroup label="Custom">
-                                        <option value='{{ app.build_spec.to_string }}'>
-                                            {{ app.build_spec.get_label }}
-                                        </option>
-                                    </optgroup>
-                                {% endif %}
-                            </select>
-                        </form>
-                    {% else %}
-                        {{ app.get_build_label }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Text Input</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'native_input' %}">
-                            <select name="native_input" class="autosave" data-value="{{ app.native_input|lower }}">
-                                <option value="false">Default (Roman)</option>
-                                <option value="true">Native (International)</option>
-                            </select>
-                        </form>
-                    {% else %}
-                        {% if app.native_input %}Native (International){% else %}Default (Roman){% endif %}
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
-{#        <h4>Success Message <span class="help-link" data-help-key="app_manager/success_message"></span></h4>#}
-{#        <div class="help-text" data-help-key="app_manager/success_message"></div>#}
-{#        <div class="config">#}
-{#            <p>Note: Currently the beginning of days and weeks is calculated in UTC.</p>#}
-{#            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'success_message' %}">#}
-{#                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>#}
-{#            </form>#}
-{#        </div>#}
-            <h4>Copying</h4>
-            <div class="config">
-{#                <a href="{% url corehq.apps.app_manager.views.app_source domain app.id %}" class="dialog_opener" id="view_source">View Source</a>#}
-{#                <div class="dialog" title="Application Source">#}
-{#                    <textarea id="app_source"></textarea>#}
-{#                </div>#}
-                <form method="get" action='{% url import_app domain %}'>
-                    <input type="hidden" name="app" value="{{ app.id }}"/>
-                    Copy this app to domain: <input type="text" name="domain" />
-                    <input type="submit" value="Copy" />
-                </form>
-            </div>
-        </div>
+    <div>
+        <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
+            <input type="hidden" name="app" value="{{ app.id }}"/>
+            Copy this app to domain: <input type="text" name="domain" />
+            <input type="submit" value="Copy" />
+        </form>
+    </div>
 {% endblock %}

@@ -17,6 +17,8 @@ class TranslationMixin(Document):
         else:
             del self.translations[lang][key]
 
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
     
 class TranslationDoc(TranslationMixin):

@@ -578,24 +578,45 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
+    attributes = {
+        "all": None,
+        "case_type": None, "put_in_root": None,
+        "name": None, "case_label": None, "referral_label": None,
+        "case_list": ('case_list-show', 'case_list-label'),
+    }
+
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+
+    def should_edit(attribute):
+        if attribute == attr:
+            return True
+        if 'all' == attr:
+            if attributes[attribute]:
+                for param in attributes[attribute]:
+                    if not req.POST.get(param):
+                        return False
+                return True
+            else:
+                return req.POST.get(attribute)
+
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}}
-    if   "case_type" == attr:
-        module[attr] = req.POST.get(attr, None)
-    elif "put_in_root" == attr:
-        module[attr] = json.loads(req.POST.get(attr))
-    elif ("name", "case_label", "referral_label").__contains__(attr):
-        name = req.POST.get(attr, None)
-        module[attr][lang] = name
-        if attr == "name":
-            resp['update'].update({'.variable-module_name': module.name[lang]})
-    elif "case_list" == attr:
-        module[attr].show = json.loads(req.POST['show'])
-        module[attr].label[lang] = req.POST['label']
-    else:
-        return HttpResponseBadRequest("Attribute %s not supported" % attr)
+    if should_edit("case_type"):
+        module["case_type"] = req.POST.get("case_type", None)
+    if should_edit("put_in_root"):
+        module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    for attribute in ("name", "case_label", "referral_label"):
+        if should_edit(attribute):
+            name = req.POST.get(attribute, None)
+            module[attribute][lang] = name
+            if should_edit("name"):
+                resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit("case_list"):
+        module["case_list"].show = json.loads(req.POST['case_list-show'])
+        module["case_list"].label[lang] = req.POST['case_list-label']
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
@@ -767,8 +788,9 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(req.POST['actions']))
-    app.save()
-    return back_to_main(**locals())
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_permission('edit-apps')
 def multimedia_list_download(req, domain, app_id):
@@ -849,8 +871,9 @@ def edit_commcare_profile(req, domain, app_id):
                 app.profile[type] = {}
             app.profile[type][name] = value
             changed[type][name] = value
-    app.save()
-    return HttpResponse(json.dumps({"status": "ok", "changed": changed}))
+    response_json = {"status": "ok", "changed": changed}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_POST
 @require_permission('edit-apps')
@@ -881,14 +904,15 @@ def edit_app_lang(req, domain, app_id):
 
 @require_edit_apps
 @require_POST
-def edit_app_translation(request, domain, app_id):
+def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
-    key     = params.get('key')
-    value   = params.get('value')
+    translations = params.get('translations')
+#    key     = params.get('key')
+#    value   = params.get('value')
     app = get_app(domain, app_id)
-    app.set_translation(lang, key, value)
-    response = {"key": key, "value": value}
+    app.set_translations(lang, translations)
+    response = {}
     app.save(response)
     return json_response(response)
 
@@ -915,36 +939,46 @@ def edit_app_attr(req, domain, app_id, attr):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
 
+    attributes = [
+        'all',
+        'recipients', 'name', 'success_message', 'use_commcare_sense',
+        'native_input', 'build_spec', 'show_user_registration'
+        # RemoteApp only
+        'profile_url'
+    ]
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+    
+    def should_edit(attribute):
+        return attribute == attr or ('all' == attr and req.POST.get(attribute))
     resp = {"update": {}}
     # For either type of app
-    if   "recipients" == attr:
+    if should_edit("recipients"):
         recipients = req.POST['recipients']
         app.recipients = recipients
-    elif "name" == attr:
+    if should_edit("name"):
         name = req.POST["name"]
         app.name = name
         resp['update'].update({'.variable-app_name': name})
-    elif "success_message" == attr:
+    if should_edit("success_message"):
         success_message = req.POST['success_message']
         app.success_message[lang] = success_message
-    elif "use_commcare_sense" == attr:
+    if should_edit("use_commcare_sense"):
         use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
         app.use_commcare_sense = use_commcare_sense
-    elif "native_input" == attr:
+    if should_edit("native_input"):
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
-    elif "build_spec" == attr:
+    if should_edit("build_spec"):
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
-    elif "show_user_registration" == attr:
+    if should_edit("show_user_registration"):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     # For RemoteApp
-    elif "profile_url" == attr:
+    if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
-    else:
-        return HttpResponseBadRequest()
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 

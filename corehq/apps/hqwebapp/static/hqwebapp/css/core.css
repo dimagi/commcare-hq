@@ -420,3 +420,9 @@ th {
 .dialog {
     display: none;
 }
+
+.caution {
+    font-variant: small-caps;
+    font-weight: bold;
+    text-decoration: underline;
+}

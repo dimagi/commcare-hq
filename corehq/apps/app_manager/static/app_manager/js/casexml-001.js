@@ -6,7 +6,8 @@ var CaseXML = (function(undefined){
         "case_preload", "referral_preload"
     ],
     CaseXML = function (params) {
-        var i;
+        var i, $form;
+
         this.home = params.home;
         this.actions = params.actions;
         this.questions = params.questions;
@@ -24,7 +25,21 @@ var CaseXML = (function(undefined){
         for(i=0; i<action_names.length; i += 1) {
             this.action_templates[action_names[i]] = new EJS({url: "/static/app_manager/ejs/actions/" + action_names[i] + ".ejs", type: "["});
         }
-        $("#casexml-template").remove();
+//        $("#casexml-template").remove();
+
+        $form = $('<form method="POST"/>').attr('action', this.save_url).append(
+            $('<textarea id="casexml_json" class="hidden" name="actions"/>')
+        );
+
+        this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
+            unsavedMessage: "You have unchanged case and referral settings",
+            success: function (data) {
+                COMMCAREHQ.app_manager.updateDOM(data.update);
+            }
+        });
+        this.saveButton.ui.appendTo(this.home);
+        $form.appendTo(this.home);
+        this.subhome = $('<div/>').appendTo($form);
     };
     CaseXML.prototype = {
         truncateLabel: function (label, suffix) {
@@ -44,21 +59,24 @@ var CaseXML = (function(undefined){
 
 
     CaseXML.prototype.render = function(){
-        var casexml = this;
 
-        this.template.update(this.home, this);
+        this.template.update(this.subhome.get(0), this);
         $("#requires_form [name='requires']").addClass('autosave');
-        COMMCAREHQ.initBlock("#" + this.home);
-        if(this.questions.length && this.edit) {
-            $(".casexml").delegate('*', 'change', function(){
-                // recompute casexml_json
-                casexml.refreshActions();
-                $("#casexml_json").text(JSON.stringify(casexml.actions));
-                casexml.render();
-            }).find('*').first();
-        }
+        COMMCAREHQ.initBlock(this.subhome);
     };
     CaseXML.prototype.init = function(){
+        var casexml = this;
+        if(this.questions.length && this.edit) {
+            this.home.delegate('input, select', 'change', function(){
+                // recompute casexml_json
+                casexml.refreshActions();
+                casexml.render();
+                casexml.refreshActions();
+                casexml.render();
+                $("#casexml_json").text(JSON.stringify(casexml.actions));
+                casexml.saveButton.fire('change');
+            }).find('*').first();
+        }
         this.render();
     };
 

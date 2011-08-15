@@ -17,7 +17,7 @@
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/casexml.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/casexml-001.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier-6214661a.js"></script>
 
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
@@ -44,8 +44,8 @@
                     $("#nonChromeWarning").hide();
                 } else {
                     $("#nonChromeWarning").show();
-                    $("#editXFormTD").css({backgroundColor: "yellow"}).
-                            find('form input[type="submit"]').button('disable');
+                    $("#editXFormWrapper").css({backgroundColor: "yellow"}).
+                            find('input[type="submit"]').button('disable');
                 }
             }());
             (function configXFormSourceAjax(){
@@ -69,7 +69,7 @@
         {% if not is_user_registration %}
             if (!form_empty) {
                 var casexml = new CaseXML({
-                    home: "casexml_home",
+                    home: $('#casexml_home'),
                     actions: {{ form.actions|JSON }},
                     questions: {{ xform_questions|JSON }},
                     edit: edit,
@@ -83,7 +83,6 @@
         {% endif %}
         });
     </script>
-    {% include "app_manager/partials/casexml.html" %}
 {% endblock %}
 {% block form-view %}
     {% if is_user_registration %}
@@ -99,26 +98,28 @@
     {% endif %}
     {% if nav_form %}
         <h4>Form Settings</h4>
-        <table class="config">
-            {% if edit %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        <!-- autosave hijacks the form so that it sends automatically in the background-->
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
-                            <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        {{ form.name|trans:langs }}
-                    </td>
-                </tr>
-            {% endif %}
-        </table>
+        <div class="config">
+            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+                <div class="save-button-holder"></div>
+                <table>
+                    {% if edit %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                {{ form.name|trans:langs }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </form>
+        </div>
     {% endif %}
 
         <h4>XForm</h4>
@@ -126,29 +127,24 @@
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
-                <td id="editXFormTD">
+                <td>
                     {% if user.is_superuser %}
-                            <a href="./contents/">
-                                {% if form.contents %}Edit{% else %}Create{% endif %} in Form Designer (New!)
-                            </a>
+                            <a href="./contents/">{% if form.contents %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
                             or
                     {% endif %}
-                    <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                        <input type="hidden" name="editor" value="{{ editor_url }}" />
+                    {% if not is_user_registration %}
+                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                            <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                        <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
-                    </form>
-                    <div id="nonChromeWarning" style="font-size: .9em; display: none">
-                        This feature is currently <br />
-                        only supported in Google Chrome <br />
-                        due to a bug. <br />
-                        We are hard at work finding a fix!
-                    </div>
-{#                </td>#}
-{#                <td>#}
-                    or 
+                            <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
+                            <span id="nonChromeWarning" style="font-size: .9em; display: none">
+                                Google Chrome only
+                            </span>
+                        </form>
+                      or
+                    {% endif %}
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
@@ -215,8 +211,10 @@
         {% endif %}
     </table>
 
-    {% if form.contents %}
-        <div id="casexml_home">
+    {% if form.contents and not is_user_registration %}
+        <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+        <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
+        <div class="casexml config" id="casexml_home">
         </div>
     {% endif %}
 

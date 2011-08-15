@@ -24,6 +24,7 @@ var CommcareProperty = {
     wrap: function (json, initialValue, $home, settings, saveURL, edit) {
         var that = typeof json === 'object' ? json : JSON.parse(json),
             value,
+            isEnabled,
             $input,
             $tr = $("<tr />"),
             needsToBeSaved = false,
@@ -66,10 +67,10 @@ var CommcareProperty = {
             },
             enabled = function (v) {
                 if (v === undefined) {
-                    return _enabled;
+                    return isEnabled;
                 } else {
-                    _enabled = v;
-                    if (_enabled) {
+                    isEnabled = v;
+                    if (isEnabled) {
                         if (edit) {
                             $input.removeAttr('disabled');
                         } else {
@@ -168,27 +169,27 @@ var CommcareProperty = {
                 }
             };
         eventize(that);
-        that.on('save', function(){
-            var $msg = $('<span />').text("saving...").appendTo($input.parent()),
-                data = {};
-            data[that.type] = {};
-            data[that.type][that.id] = that.val();
-            $.ajax({
-                url: saveURL,
-                type: "POST",
-                dataType: "json",
-                data: {profile: JSON.stringify(data)},
-                success: function (data) {
-                    needsToBeSaved = false;
-                    $msg.text('saved!').fadeOut('slow', function(){
-                        $msg.remove();
-                    });
-                },
-                error: function (jqHXR) {
-                    $msg.text('Error! Please reload page');
-                }
-            });
-        });
+//        that.on('save', function(){
+//            var $msg = $('<span />').text("saving...").appendTo($input.parent()),
+//                data = {};
+//            data[that.type] = {};
+//            data[that.type][that.id] = that.val();
+//            $.ajax({
+//                url: saveURL,
+//                type: "POST",
+//                dataType: "json",
+//                data: {profile: JSON.stringify(data)},
+//                success: function (data) {
+//                    needsToBeSaved = false;
+//                    $msg.text('saved!').fadeOut('slow', function(){
+//                        $msg.remove();
+//                    });
+//                },
+//                error: function (jqHXR) {
+//                    $msg.text('Error! Please reload page');
+//                }
+//            });
+//        });
         that.render = render;
         that.val = val;
         that.enabled = enabled;
@@ -197,7 +198,7 @@ var CommcareProperty = {
     }
 };
 var CommcareSettings = {
-    wrap: function (json, initialValues, $home, saveURL, edit) {
+    wrap: function (json, initialValues, $home, saveURL, edit, saveButtonHolder) {
         var that = typeof json === 'object' ? json : JSON.parse(json),
             getHome = function(p){
                 if (typeof $home === "function") {
@@ -205,7 +206,7 @@ var CommcareSettings = {
                 } else {
                     return $home;
                 }
-            }
+            },
             render = function () {
                 var i, p, $homes = $(), $pHome;
                 that.properties = {};
@@ -223,9 +224,9 @@ var CommcareSettings = {
                 
                 for (i = 0; i < that.length; i += 1) {
                     that[i].render();
-//                    that[i].on('change', function(){
-//                        console.log(JSON.stringify(that.serialize()));
-//                    });
+                    that[i].on('change', function(){
+                        that.saveButton.fire('change');
+                    });
                 }
                 return $.unique($homes);
             },
@@ -236,7 +237,26 @@ var CommcareSettings = {
                     s[p.type][p.id] = p.val();
                 }
                 return s;
+            },
+            save = function () {
+                that.saveButton.ajax({
+                    url: saveURL,
+                    type: "POST",
+                    data: {profile: JSON.stringify(serialize())},
+                    dataType: "json",
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                    }
+                });
             };
+        that.saveButton = COMMCAREHQ.SaveButton.init({
+            save: save,
+            unsavedMessage: "You have unsaved CommCare Settings."
+        });
+        if (edit) {
+            that.saveButton.ui.appendTo(saveButtonHolder);
+        }
+
         eventize(that);
         that.render = render;
         that.serialize = serialize;
