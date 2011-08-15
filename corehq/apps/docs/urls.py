@@ -4,5 +4,5 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    url(r'^docs/(?P<topic>\w+)$',  'corehq.apps.docs.views.index', name='index'),
+    url(r'^docs/(?P<topic>\w+)/$',  'corehq.apps.docs.views.index', name='index'),
 )
