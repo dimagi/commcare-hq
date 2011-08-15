@@ -788,8 +788,9 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(req.POST['actions']))
-    app.save()
-    return back_to_main(**locals())
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_permission('edit-apps')
 def multimedia_list_download(req, domain, app_id):
@@ -870,8 +871,9 @@ def edit_commcare_profile(req, domain, app_id):
                 app.profile[type] = {}
             app.profile[type][name] = value
             changed[type][name] = value
-    app.save()
-    return HttpResponse(json.dumps({"status": "ok", "changed": changed}))
+    response_json = {"status": "ok", "changed": changed}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_POST
 @require_permission('edit-apps')

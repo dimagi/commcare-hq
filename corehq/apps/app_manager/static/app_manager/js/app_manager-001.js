@@ -44,17 +44,6 @@
         }
         resetMakeNewBuild();
         COMMCAREHQ.resetIndexes = resetIndexes;
-    //    (function makeLangsFloat() {
-    //        var $langsDiv = $("#langs"),
-    //            top = parseInt($langsDiv.css("top").substring(0,$langsDiv.css("top").indexOf("px"))),
-    //            offset = $langsDiv.offset().top;
-    //        $(window).scroll(function () {
-    //            var newTop = top+$(document).scrollTop()-offset+49;
-    //            newTop = newTop > 0 ? newTop : 0;
-    //            $langsDiv.animate({top:newTop + "px"},{duration:100,queue:false});
-    //        });
-    //    }());
-
 
         if (edit) {
             (function () {

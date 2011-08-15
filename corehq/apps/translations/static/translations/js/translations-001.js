@@ -35,6 +35,11 @@ var mk_translation_ui = function (spec) {
                 $('<td/>').append(this.$delete).appendTo(this.ui);
                 $('<td/>').append(this.$add).appendTo(this.ui);
 
+                if (!translation_ui.edit) {
+                    this.$delete.hide();
+                    this.$add.hide();
+                }
+
                 this.value.on('change', function () {
                     if (that.solid) {
                         console.log('ok');
@@ -152,7 +157,9 @@ var mk_translation_ui = function (spec) {
         } else {
             translation_ui.$home.html($("<p>No translations</p>"));
         }
-        translation_ui.appendAdder();
+        if (translation_ui.edit) {
+            translation_ui.appendAdder();
+        }
     };
     translation_ui.render();
 };

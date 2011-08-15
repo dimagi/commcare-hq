@@ -109,6 +109,12 @@ var COMMCAREHQ = (function () {
             });
         },
         SaveButton: {
+            /*
+                options: {
+                    save: "Function to call when the user clicks Save",
+                    unsavedMessage: "Message to display when there are unsaved changes and the user leaves the page"
+                }
+            */
             init: function (options) {
                 var button = {
                     $save: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVE).click(function () {
