@@ -206,7 +206,9 @@
         </form>
         <h4>Supported Languages</h4>
         <div class="config">
-            <p align="right"><span class="caution">Caution</span>: Changes you make here are saved immediately as you make them.</p>
+            {% if edit %}
+                <p align="right"><span class="caution">Caution</span>: Changes you make here are saved immediately as you make them.</p>
+            {% endif %}
             <table>
                 <tbody {% if edit %}class="sortable"{% endif %}>
                     <tr class="sort-action">

@@ -15,7 +15,7 @@ var CaseXML = (function(undefined){
         this.save_url = params.save_url;
         this.requires = params.requires;
         this.save_requires_url = params.save_requires_url;
-        this.template = new EJS({url:"/static/app_manager/ejs/casexml.ejs", type: "["});
+        this.template = new EJS({url:"/static/app_manager/ejs/casexml-001.ejs", type: "["});
         this.condition_ejs = new EJS({url:"/static/app_manager/ejs/condition.ejs", type: "["});
         this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
         this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
@@ -37,7 +37,9 @@ var CaseXML = (function(undefined){
                 COMMCAREHQ.app_manager.updateDOM(data.update);
             }
         });
-        this.saveButton.ui.appendTo(this.home);
+        if (this.edit) {
+            this.saveButton.ui.appendTo(this.home);
+        }
         $form.appendTo(this.home);
         this.subhome = $('<div/>').appendTo($form);
     };
