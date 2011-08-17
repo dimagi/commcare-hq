@@ -1,19 +1,12 @@
 [% if(questions) { %]
     <ul>
         <li>
-            [% if(edit) { %]
-            <form id="requires_form" action="[%= save_requires_url %]" method="post">
-            [% } %]
                 Requires
                 [%= renderOptions([
                     {value: "none", label: "neither a case nor a referral"},
                     {value: "case", label: "just a case"},
                     {value: "referral", label: "a case and a referral"}
                 ], requires, 'requires', false) %]
-            [% if(edit) { %]
-                <input type="hidden" name="ajax" value="false" />
-            </form>
-            [% } %]
         </li>
     </ul>
     <ul>

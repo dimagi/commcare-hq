@@ -15,10 +15,10 @@ var CaseXML = (function(undefined){
         this.save_url = params.save_url;
         this.requires = params.requires;
         this.save_requires_url = params.save_requires_url;
-        this.template = new EJS({url:"/static/app_manager/ejs/casexml-001.ejs", type: "["});
+        this.template = new EJS({url:"/static/app_manager/ejs/casexml-002.ejs", type: "["});
         this.condition_ejs = new EJS({url:"/static/app_manager/ejs/condition.ejs", type: "["});
         this.action_ejs = new EJS({url: "/static/app_manager/ejs/action.ejs", type: "["});
-        this.options_ejs = new EJS({url: "/static/app_manager/ejs/options.ejs", type: "["});
+        this.options_ejs = new EJS({url: "/static/app_manager/ejs/options-001.ejs", type: "["});
         this.propertyList_ejs = new EJS({url: "/static/app_manager/ejs/propertyList.ejs", type: "["});
         this.action_templates = {};
         this.reserved_words = params.reserved_words;
@@ -61,9 +61,11 @@ var CaseXML = (function(undefined){
 
 
     CaseXML.prototype.render = function(){
-
+        var i;
+        for (i = 0; i < action_names.length; i += 1) {
+            this.actions[action_names[i]] = this.actions[action_names[i]] || {condition: {type: "never"}};
+        }
         this.template.update(this.subhome.get(0), this);
-        $("#requires_form [name='requires']").addClass('autosave');
         COMMCAREHQ.initBlock(this.subhome);
     };
     CaseXML.prototype.init = function(){
@@ -125,7 +127,7 @@ var CaseXML = (function(undefined){
                 break;
             }
         }
-        if(found){
+        if (found && q.options) {
             for(i=0; i < q.options.length; i += 1) {
                 o = q.options[i];
                 options.push(o);
@@ -143,9 +145,14 @@ var CaseXML = (function(undefined){
     };
 
     CaseXML.prototype.refreshActions = function(){
-        var actions = {};
+        var actions = {}, requires;
         function lookup(root, key){
             return $(root).find('[name="' + key + '"]').attr('value');
+        }
+        requires = $('[name="requires"]', this.subhome).val();
+        if (requires != this.requires) {
+            this.requires = requires;
+            this.render();
         }
         $(".casexml .action").each(function(){
 

@@ -267,7 +267,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         messages.error(request, "Error in form: %s" % e)
     # any other kind of error should fail hard, but for now there are too many for that to be practical
     except Exception, e:
-        if settings.DEBUG:
+        if settings.DEBUG and False:
             raise
         logging.exception(e)
         xform_questions = []
@@ -281,7 +281,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
     except XFormValidationError, e:
         messages.error(request, "%s" % e)
     except Exception, e:
-        if settings.DEBUG:
+        if settings.DEBUG and False:
             raise
         logging.exception(e)
         messages.error(request, "Unexpected Error: %s" % e)
@@ -788,6 +788,7 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(req.POST['actions']))
+    form.requires = req.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
     return json_response(response_json)

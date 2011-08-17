@@ -17,7 +17,7 @@
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/casexml-002.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/casexml-003.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier-6214661a.js"></script>
 
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
@@ -75,7 +75,7 @@
                     edit: edit,
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
                     requires: "{{ form.requires }}",
-                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",
+{#                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",#}
                     reserved_words: {{ case_reserved_words_json|JSON }}
                 });
                 casexml.init();
