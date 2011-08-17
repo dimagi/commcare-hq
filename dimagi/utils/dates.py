@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta, time
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
+from dateutil.rrule import *
 
 def force_to_date(val):
     """Forces a date, string, or datetime to a date."""
@@ -118,3 +119,23 @@ class DateSpan(object):
         enddate = date_or_nothing(enddate_str)
         return DateSpan(startdate, enddate, format)
         
+
+def is_business_day(day):
+    """
+    Simple method to whether something is a business day, assumes M-F working
+    days.
+    """
+    return day.weekday() < 5
+    
+def get_business_day_of_month(year, month, count):
+    """
+    For a given month get the Nth business day by count.
+    Count can also be negative, e.g. pass in -1 for "last"
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month, 1),
+              bysetpos=count)
+    res = r[0]
+    if (res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
