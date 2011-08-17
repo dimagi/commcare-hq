@@ -136,6 +136,30 @@ def get_business_day_of_month(year, month, count):
               dtstart=datetime(year,month, 1),
               bysetpos=count)
     res = r[0]
-    if (res.month != month or res.year != year):
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
+def get_business_day_of_month_after(year, month, day):
+    """
+    For a given month get the business day of the month 
+    that falls on or after the passed in day
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month, 1))
+    res = r.after(datetime(year, month, day), inc=True)
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
+def get_business_day_of_month_before(year, month, day):
+    """
+    For a given month get the business day of the month 
+    that falls on or before the passed in day
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month,1))
+    res = r.before(datetime(year, month, day), inc=True)
+    if (res == None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
