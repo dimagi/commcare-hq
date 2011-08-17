@@ -127,6 +127,21 @@ def is_business_day(day):
     """
     return day.weekday() < 5
     
+def get_day_of_month(year, month, count):
+    """
+    For a given month get the Nth day.
+    The only reason this function exists in favor of 
+    just creating the date object is to support negative numbers
+    e.g. pass in -1 for "last"
+    """
+    r = rrule(MONTHLY, dtstart=datetime(year,month, 1),
+              byweekday=(MO, TU, WE, TH, FR, SA, SU),
+              bysetpos=count)
+    res = r[0]
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
 def get_business_day_of_month(year, month, count):
     """
     For a given month get the Nth business day by count.
