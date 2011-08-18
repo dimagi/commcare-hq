@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, time
+from calendar import month_name
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
 from dateutil.rrule import *
@@ -79,12 +80,16 @@ class DateSpan(object):
     def __str__(self):
         if not self.is_valid():
             return "Invalid date span %s - %s" % (self.startdate_param, self.enddate_param)
-        
+
+        # if the dates comprise a month exactly, use that
+        if self.startdate.day == 1 and (self.enddate + timedelta(days=1)).day == 1:
+            return "%s %s" % (month_name[self.startdate.month], self.startdate.year)
+
         # if the end date is today or tomorrow, use "last N days syntax"  
         today = datetime.combine(datetime.today(), time())
         day_after_tomorrow = today + timedelta (days=2)
         if today <= self.enddate < day_after_tomorrow:
-            return "last %s days" % (self.enddate - self.startdate).days 
+            return "last %s days" % (self.enddate - self.startdate).days
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
