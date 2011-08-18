@@ -11,9 +11,11 @@
                 </option>
             [% }); %]
             [% if(value && !something_is_selected) { %]
-                <option value='[%= value %]' selected="true">
-                    Unidentified ([%= value %])
-                </option>
+                [% if (allowNull) { %]
+                    <option value='[%= value %]' selected="true">
+                        Unidentified Question([%= value %])
+                    </option>
+                [% } %]
             [% } %]
         </select>
 
