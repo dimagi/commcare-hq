@@ -3,7 +3,34 @@ from StringIO import StringIO
 from unidecode import unidecode
 from django.core.cache import cache
 
+def get_export_files(export_tag, format=None, previous_export_id=None, filter=None):
+    # the APIs of how these methods are broken down suck, but at least
+    # it's DRY
+    
+    from couchexport.export import export
+    
+    CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
+    def _build_cache_key(tag, prev_export_id, format):
+        return "couchexport_:%s:%s:%s" % (tag, prev_export_id, format)
+    
+    # check cache, only supported for filterless queries, currently
+    if filter is None:
+        cached_data = cache.get(_build_cache_key(export_tag, previous_export_id, format))
+        if cached_data:
+            (tmp, checkpoint) = cached_data
+            return (tmp, checkpoint)
+    
 
+    tmp = StringIO()
+    checkpoint = export(export_tag, tmp, format=format, 
+                        previous_export_id=previous_export_id,
+                        filter=filter)
+    if checkpoint:
+        cache.set(_build_cache_key(export_tag, previous_export_id, format), (tmp, checkpoint), CACHE_TIME)
+        return (tmp, checkpoint)
+    
+    return (None, None) # hacky empty case
+    
 def export_data_shared(export_tag, format=None, filename=None,
                        previous_export_id=None, filter=None):
     """
@@ -15,27 +42,12 @@ def export_data_shared(export_tag, format=None, filename=None,
     if not filename:
         filename = export_tag
     
-    CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
-    def _build_cache_key(tag, prev_export_id, format):
-        return "couchexport_:%s:%s:%s" % (tag, prev_export_id, format)
     
-    cache_hit = False
-    # check cache, only supported for filterless queries, currently
-    if filter is None:
-        cached_data = cache.get(_build_cache_key(export_tag, previous_export_id, format))
-        if cached_data:
-            (tmp, checkpoint) = cached_data
-            cache_hit = True
+    tmp, checkpoint = get_export_files(export_tag, format, 
+                                       previous_export_id, filter)
     
-    if not cache_hit:
-        tmp = StringIO()
-        checkpoint = export(export_tag, tmp, format=format, 
-                            previous_export_id=previous_export_id,
-                            filter=filter)
     if checkpoint:
-        cache.set(_build_cache_key(export_tag, previous_export_id, format), (tmp, checkpoint), CACHE_TIME)
         return export_response(tmp, format, filename, checkpoint)
-        
     else: 
         return None
     
