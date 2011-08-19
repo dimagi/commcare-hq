@@ -12,4 +12,4 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     time.sleep(howlong)
     temp_id = download_id = uuid.uuid4().hex
     cache.set(temp_id, "It works!", expiry)
-    cache.set(download_id, CachedDownload(temp_id))
+    cache.set(download_id, CachedDownload(temp_id), expiry)
