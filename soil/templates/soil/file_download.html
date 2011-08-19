@@ -1,11 +1,9 @@
-{% extends "base.html" %}
+{% extends "soil/base.html" %}
 {% block title %}
     File Download
 {% endblock title %}
 {% block extrahead %}
     <script type="text/javascript">
-
-
         var autoRefresh = '';
         var pollDownloader =
                                 function() {
@@ -31,5 +29,4 @@
     <h2>File Downloader</h2>
     <div id="downloader_container">
     </div>
-
 {% endblock content %}

@@ -9,6 +9,7 @@ import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils import simplejson
+from soil.tasks import demo_sleep
 
 def _parse_date(string):
     if isinstance(string, basestring):
@@ -18,7 +19,16 @@ def _parse_date(string):
 
 
 @login_required
-def ajax_job_poll(request, download_id, template="downloader/partials/dl_status.html"):
+def demo(request):
+    download_id = uuid.uuid4().hex
+    howlong = request.GET.get('secs', 5)
+    demo_sleep.delay(download_id, howlong)
+    return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
+    
+
+
+@login_required
+def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     download_data = cache.get(download_id, None)
     if download_data == None:
         is_ready = False
@@ -31,7 +41,7 @@ def ajax_job_poll(request, download_id, template="downloader/partials/dl_status.
 
 
 @login_required
-def retrieve_download(request, download_id, template="downloader/file_download.html"):
+def retrieve_download(request, download_id, template="soil/file_download.html"):
     """Retrieve a download that's waiting to be generated. If it is the get_file, then download it, else, let the ajax on the page poll.
     """
     context = RequestContext(request)
