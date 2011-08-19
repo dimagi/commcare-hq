@@ -19,7 +19,7 @@ def _parse_date(string):
 @login_required
 def demo(request):
     download_id = uuid.uuid4().hex
-    howlong = request.GET.get('secs', 5)
+    howlong = request.GET.get(int('secs'), 5)
     demo_sleep.delay(download_id, howlong)
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
     
