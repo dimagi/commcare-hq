@@ -8,7 +8,7 @@ class DownloadBase(object):
     
     def __init__(self, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding="chunked"):
+                 transfer_encoding=None):
         self.mimetype = mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
@@ -18,7 +18,8 @@ class DownloadBase(object):
     
     def toHttpResponse(self):
         response = HttpResponse(self.get_content(), mimetype=self.mimetype)
-        response['Transfer-Encoding'] = self.transfer_encoding
+        if self.transfer_encoding is not None:
+            response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
         return response
     
