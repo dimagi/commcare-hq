@@ -1,14 +1,12 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.contrib.auth.decorators import login_required
-from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, Http404
 from django.core.cache import cache
 import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from django.utils import simplejson
 from soil.tasks import demo_sleep
 
 def _parse_date(string):
@@ -23,7 +21,6 @@ def demo(request):
     download_id = uuid.uuid4().hex
     howlong = request.GET.get('secs', 5)
     demo_sleep.delay(download_id, howlong)
-    
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
     
 
