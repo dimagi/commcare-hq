@@ -1,0 +1,9 @@
+*.pyc
+.project
+.pydevproject
+*localsettings.py
+*~
+*.db
+build/*
+couchlog.egg-info/*
+dist/*
