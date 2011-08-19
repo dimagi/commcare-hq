@@ -128,10 +128,8 @@
             <tr>
                 <th>Edit XForm</th>
                 <td>
-                    {% if user.is_superuser %}
-                            <a href="./contents/">{% if form.contents %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
-                            or
-                    {% endif %}
+                    <a href="./contents/">{% if form.contents %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
+                        or
                     {% if not is_user_registration %}
                         <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                             {% csrf_token %}
