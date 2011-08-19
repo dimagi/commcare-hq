@@ -36,7 +36,7 @@ class CachedDownload(DownloadBase):
     
     def __init__(self, cacheindex, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding="chunked", extras={}):
+                 transfer_encoding=None, extras={}):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras)
         self.cacheindex = cacheindex
@@ -51,7 +51,7 @@ class FileDownload(DownloadBase):
     
     def __init__(self, filename, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding="chunked", extras={}):
+                 transfer_encoding=None, extras={}):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras)
         self.filename = filename
