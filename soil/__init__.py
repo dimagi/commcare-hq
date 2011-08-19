@@ -17,11 +17,13 @@ class DownloadBase(object):
         raise NotImplemented("Use CachedDownload or FileDownload!")
     
     def toHttpResponse(self):
-        response = HttpResponse(mimetype=self.mimetype)
-        response.write(self.get_content())
+        response = HttpResponse(self.get_content(), mimetype=self.mimetype)
         response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
         return response
+    
+    def __str__(self):
+        return "content-type: %s, disposition: %s" % (self.mimetype, self.content_disposition)
 
 class CachedDownload(DownloadBase):
     """
@@ -36,7 +38,7 @@ class CachedDownload(DownloadBase):
         self.cacheindex = cacheindex
         
     def get_content(self):
-        return cache.get(self.cacheindex)
+        return cache.get(self.cacheindex, None)
 
 class FileDownload(DownloadBase):
     """
