@@ -8,10 +8,11 @@ class DownloadBase(object):
     
     def __init__(self, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None):
+                 transfer_encoding=None, extras={}):
         self.mimetype = mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
+        self.extras = {}
         
     def get_content(self):
         raise NotImplemented("Use CachedDownload or FileDownload!")
@@ -21,6 +22,8 @@ class DownloadBase(object):
         if self.transfer_encoding is not None:
             response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
+        for k,v in self.extras.items():
+            response[k] = v
         return response
     
     def __str__(self):
@@ -33,9 +36,9 @@ class CachedDownload(DownloadBase):
     
     def __init__(self, cacheindex, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding="chunked"):
+                 transfer_encoding="chunked", extras={}):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
-                                             transfer_encoding)
+                                             transfer_encoding, extras)
         self.cacheindex = cacheindex
         
     def get_content(self):
@@ -48,9 +51,9 @@ class FileDownload(DownloadBase):
     
     def __init__(self, filename, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding="chunked"):
+                 transfer_encoding="chunked", extras={}):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
-                                             transfer_encoding)
+                                             transfer_encoding, extras)
         self.filename = filename
         
     def get_content(self):
