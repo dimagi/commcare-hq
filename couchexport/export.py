@@ -26,12 +26,21 @@ def get_full_export_tables(schema_index, previous_export, filter=None):
     docs = get_docs(schema_index, previous_export, filter)
     if not docs:
         return (None, None)
-    schema = get_schema(docs, previous_export)
+    
+    checkpoint = ExportSchema.last(schema_index)
+    if not previous_export and checkpoint:
+        temp_docs = get_docs(schema_index, previous_export, filter)
+        schema = get_schema(temp_docs, checkpoint)
+    else:
+        schema = get_schema(docs, previous_export)
+    
     [schema_dict] = schema
     this_export = ExportSchema(seq=current_seq, schema=schema_dict, 
                                index=schema_index)
     this_export.save()
     return (format_tables(create_intermediate_tables(docs,schema)), this_export)
+    
+    
 
 def export_from_tables(tables, file, format):
     if format == Format.CSV:
