@@ -13,10 +13,10 @@ def export_async(download_id, export_tag, format=None, filename=None,
                  previous_export_id=None, filter=None, 
                  expiry=10*60*60):
     
-    (file, checkpoint) = get_export_files(export_tag, format, previous_export_id, filter)
+    (tmp, checkpoint) = get_export_files(export_tag, format, previous_export_id, filter)
     if checkpoint:
         temp_id = uuid.uuid4().hex
-        cache.set(temp_id, file.read(), expiry)
+        cache.set(temp_id, tmp.getvalue(), expiry)
         format = Format.from_format(format)
         cache.set(download_id, CachedDownload(temp_id, mimetype=format.mimetype,
                                               content_disposition='attachment; filename=%s.%s' % \
