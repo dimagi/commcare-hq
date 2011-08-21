@@ -52,7 +52,7 @@ class FileDownload(DownloadBase):
     def __init__(self, filename, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
                  transfer_encoding=None, extras={}):
-        super(CachedDownload, self).__init__(mimetype, content_disposition, 
+        super(FileDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras)
         self.filename = filename
         
