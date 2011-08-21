@@ -3,8 +3,10 @@ from celery.decorators import task
 from couchexport.shortcuts import get_export_files
 from django.core.cache import cache
 import uuid
-from soil import CachedDownload
+from soil import CachedDownload, FileDownload
 from couchexport.models import Format
+import tempfile
+import os
 
 
 
@@ -16,12 +18,14 @@ def export_async(download_id, export_tag, format=None, filename=None,
     (tmp, checkpoint) = get_export_files(export_tag, format, previous_export_id, filter)
     if checkpoint:
         temp_id = uuid.uuid4().hex
-        cache.set(temp_id, tmp.getvalue(), expiry)
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as file:
+            file.write(tmp.getvalue())
         format = Format.from_format(format)
-        cache.set(download_id, CachedDownload(temp_id, mimetype=format.mimetype,
-                                              content_disposition='attachment; filename=%s.%s' % \
-                                              (unidecode(filename), format.extension),
-                                               extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}))
+        cache.set(download_id, FileDownload(path, mimetype=format.mimetype,
+                                            content_disposition='attachment; filename=%s.%s' % \
+                                            (unidecode(filename), format.extension),
+                                            extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}))
     else:
         temp_id = uuid.uuid4().hex
         cache.set(temp_id, "Sorry, there wasn't any data.", expiry)
