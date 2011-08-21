@@ -7,6 +7,7 @@ from soil import CachedDownload, FileDownload
 from couchexport.models import Format
 import tempfile
 import os
+import stat
 
 
 
@@ -21,6 +22,9 @@ def export_async(download_id, export_tag, format=None, filename=None,
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
             file.write(tmp.getvalue())
+        # make file globally read/writeable in case celery runs as root
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | \
+                 stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH) 
         format = Format.from_format(format)
         cache.set(download_id, FileDownload(path, mimetype=format.mimetype,
                                             content_disposition='attachment; filename=%s.%s' % \
