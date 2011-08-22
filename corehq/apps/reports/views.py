@@ -584,7 +584,11 @@ def case_export(request, domain, template='reports/basic_report.html',
 
 @login_and_domain_required
 def download_cases(request, domain):
-    cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    include_closed = json.loads(request.GET.get('include_closed', 'false'))
+    if include_closed:
+        cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    else:
+        cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     users = CouchUser.commcare_users_by_domain(domain)
 
     workbook = CsvWorkBook()
