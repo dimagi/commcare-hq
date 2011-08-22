@@ -76,7 +76,7 @@ SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
                     if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS") \
                     else "---"
 
-LIST_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
+LIST_NEVER_WAS = settings.COUCHEXPORT_LIST_NEVER_WAS \
                     if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS") \
                     else "this list never existed"
 
