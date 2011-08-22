@@ -1,13 +1,12 @@
 #from StringIO import StringIO
-#import re
+#from django.test import TestCase
 #from django.test.client import Client
 #from corehq.apps.app_manager.models import Application
 #from corehq.apps.app_manager.success_message import SuccessMessage
-#from dimagi.utils.parsing import json_format_datetime
-#from corehq.apps.phone.xml import get_response
 #from corehq.apps.users.models import create_hq_user_from_commcare_registration_info
-#from lib.django_digest.tests import TestCase
 #from datetime import datetime, timedelta
+#from dimagi.utils.parsing import json_format_datetime
+#from receiver.xml import get_response
 #
 #submission_template = """<?xml version='1.0' ?>
 #<data xmlns="%(xmlns)s">
@@ -21,7 +20,7 @@
 #"""
 #
 #class SuccessMessageTest(TestCase):
-#    message = "Thanks {first_name} ({name})! You have submitted {num_forms_today} forms today and {num_forms_this_week} forms since Monday."
+#    message = "Thanks $first_name ($name)! You have submitted $today forms today and $week forms since Monday."
 #    domain = "test"
 #    username = "danny"
 #    first_name = "Danny"
@@ -54,7 +53,7 @@
 #            }
 #            f = StringIO(submission.encode('utf-8'))
 #            f.name = "tempfile.xml"
-#            kwargs = dict(HTTP_X_SUBMIT_TIME=format_time(time)) if time else {}
+#            kwargs = dict(HTTP_X_SUBMIT_TIME=json_format_datetime(time)) if time else {}
 #            response = c.post("/a/{self.domain}/receiver/".format(self=self), {
 #                'xml_submission_file': f,
 #            }, **kwargs)
