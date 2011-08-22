@@ -56,6 +56,7 @@ html {overflow-y: scroll;}
 }
 td, th, caption {
     padding: 4px 10px 4px 5px;
+    vertical-align: top;
 }
 
 li {

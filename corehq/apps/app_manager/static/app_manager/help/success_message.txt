@@ -4,9 +4,9 @@
 </p>
 <p>
     In the template, you have access to the following variables gathered real-time from the server:
-    first_name, name, num_forms_this_week, num_forms_today. You can use these by surrounding them in curly braces ({}).
+    $first_name, $name, $week, $today.
 </p>
 <p><strong>Example:</strong></p>
 <p>
-    Thanks {first_name}! You have submitted {num_forms_today} forms today and {num_forms_this_week} forms since Monday.
+    Thanks $first_name! You have submitted $today forms today and $week forms since Monday.
 </p>

@@ -201,6 +201,20 @@
                             {% endif %}
                         </td>
                     </tr>
+                    <tr>
+                        <th>
+                            Success Message
+                            <span class="help-link" data-help-key="app_manager/success_message"></span>
+                            <div class="help-text" data-help-key="app_manager/success_message"></div>
+                        </th>
+                        <td>
+                            {% if edit %}
+                                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
+                            {% else %}
+                                <p>{{ app.success_message|trans:langs }}</p>
+                            {% endif %}
+                        </td>
+                    </tr>
                 </table>
             </div>
         </form>
@@ -276,7 +290,7 @@
             </table>
         </div>
         <div class="scary-settings-toggle">
-            <a href="#"><span class="ui-icon"></span>Multimedia (beta)</a>
+            <a href="#"><span class="ui-icon"></span>Multimedia (Beta)</a>
         </div>
         <div class="scary-settings">
             <h4>View and download lists of multimedia references found in your application's forms and use our multimedia toolkit</h4>
@@ -311,16 +325,6 @@
             <table class="config">
                 <tbody id="other-commcare-settings"></tbody>
             </table>
-
-
-    {#        <h4>Success Message <span class="help-link" data-help-key="app_manager/success_message"></span></h4>#}
-    {#        <div class="help-text" data-help-key="app_manager/success_message"></div>#}
-    {#        <div class="config">#}
-    {#            <p>Note: Currently the beginning of days and weeks is calculated in UTC.</p>#}
-    {#            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'success_message' %}">#}
-    {#                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>#}
-    {#            </form>#}
-    {#        </div>#}
         </div>
     {% endif %}
     {% if app.doc_type == "RemoteApp" %}
