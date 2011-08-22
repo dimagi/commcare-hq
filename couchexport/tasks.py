@@ -29,7 +29,8 @@ def export_async(download_id, export_tag, format=None, filename=None,
         cache.set(download_id, FileDownload(path, mimetype=format.mimetype,
                                             content_disposition='attachment; filename=%s.%s' % \
                                             (unidecode(filename), format.extension),
-                                            extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}))
+                                            extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}),
+                                            expiry)
     else:
         temp_id = uuid.uuid4().hex
         cache.set(temp_id, "Sorry, there wasn't any data.", expiry)
