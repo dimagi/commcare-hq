@@ -4,6 +4,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.users.models import CouchUser, CommCareAccount
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
 from casexml.apps.phone import xml
+from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
 
 def get_custom_response_message(sender, xform, **kwargs):
     """
@@ -16,7 +17,10 @@ def get_custom_response_message(sender, xform, **kwargs):
         commcare_account = CommCareAccount.get_by_userID(userID)
         if not commcare_account:
             return False
-        lang = "en"
+        
+        lang = xform.openrosa_headers.get(OPENROSA_ACCEPT_LANGUAGE, "en") \
+                if hasattr(xform, "openrosa_headers") else "en"
+        
         domain = commcare_account.domain
         app = Application.get_by_xmlns(domain, xmlns)
         message = app.success_message.get(lang) if app else None
