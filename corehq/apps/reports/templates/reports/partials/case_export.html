@@ -8,6 +8,12 @@
 {% endblock %}
 
 <div id="case_export">
-    Download all cases, referrals, and CHW users:
-    <a class="button" href="{% url download_cases domain %}">Download</a>
+    <form action="{% url download_cases domain %}" method="get">
+        Download
+        <select name="include_closed">
+            <option value="false">all open</option>
+            <option value="true">all</option>
+        </select> cases, all referrals, and all CHW users:
+        <input type="submit" value="Download"/>
+    </form>
 </div>
