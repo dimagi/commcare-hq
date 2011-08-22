@@ -4,7 +4,7 @@ pytz
 psycopg2
 south
 gunicorn
-python-dateutil
+python-dateutil<2.0
 BeautifulSoup
 lxml
 django-staticfiles
