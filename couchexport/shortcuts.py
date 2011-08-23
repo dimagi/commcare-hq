@@ -1,6 +1,9 @@
+from zipfile import ZipFile
+from couchdbkit.ext.django.schema import Document
 from django.http import HttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
+from couchforms.models import XFormInstance
 
 
 def export_data_shared(export_tag, format=None, filename=None,
@@ -42,3 +45,18 @@ def export_response(file, format, filename, checkpoint=None):
     file.close()
     return response
 
+def export_raw_data(export_tag, format=None, filename=None,
+                       previous_export_id=None, filter=None):
+    xform_instances = XFormInstance.view('couchexport/schema_index', key=export_tag, include_docs=True)
+    f = StringIO()
+    zipfile = ZipFile(f, 'w')
+    for xform_instance in xform_instances:
+        form_xml = xform_instance.fetch_attachment('form.xml').encode('utf-8')
+        zipfile.writestr("%s.xml" % xform_instance.get_id, form_xml)
+    zipfile.close()
+    f.flush()
+    response = HttpResponse(f.getvalue())
+    f.close()
+    response['Content-Type'] = "application/zip"
+    response['Content-Disposition'] = "attachment; filename=%s.zip" % filename
+    return response
