@@ -11,8 +11,6 @@ from receiver.xml import get_response
 submission_template = """<?xml version='1.0' ?>
 <data xmlns="%(xmlns)s">
 	<meta>
-		<timeStart></timeStart>
-		<timeEnd></timeEnd>
 		<username>%(username)s</username>
 		<userID>%(userID)s</userID>
 	</meta>
