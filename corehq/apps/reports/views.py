@@ -35,7 +35,7 @@ import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
-from couchexport.shortcuts import export_data_shared
+from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -84,8 +84,10 @@ def export_data(req, domain):
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
     if not include_errors:
         kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
-        
-    resp = export_data_shared([domain,export_tag], **kwargs)
+    if kwargs['format'] == 'raw':
+        resp = export_raw_data([domain, export_tag], **kwargs)
+    else:
+        resp = export_data_shared([domain,export_tag], **kwargs)
     if resp:
         return resp
     else:
