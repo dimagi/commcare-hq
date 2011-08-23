@@ -95,6 +95,16 @@ class DateSpan(object):
                              self.enddate.strftime(self.format))
         
     @classmethod
+    def month(cls, year, month, format=DEFAULT_DATE_FORMAT):
+        """
+        Generate a datespan covering a month.
+        """
+        start = datetime(year, month, 1)
+        nextmonth = start + timedelta(days=32)
+        end = datetime(nextmonth.year, nextmonth.month, 1) - timedelta(milliseconds=1)
+        return DateSpan(start, end, format)
+    
+    @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT):
         """
         Generate a DateSpan ending with a certain date, and going back 
