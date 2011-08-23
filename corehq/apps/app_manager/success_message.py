@@ -60,7 +60,6 @@ class SuccessMessage(object):
         then = datetime(monday.year, monday.month, monday.day) - self.tz
         return self.get_num_forms_since(then)
 
-
     @property
     def num_forms_today(self):
         now = datetime.utcnow() + self.tz
