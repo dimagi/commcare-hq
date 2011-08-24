@@ -73,7 +73,7 @@ def authorize_xform_edit(view):
         @login_and_domain_required
         def wrapper(req, domain):
             pass
-        _, app = Form.get_form(xform_id, and_app=True)
+        _, app = Form.get_form(*xform_id.split('__'), and_app=True)
         if wrapper(request, app.domain):
             # If login_and_domain_required intercepted wrapper
             # and returned an HttpResponse of its own
@@ -85,12 +85,12 @@ def authorize_xform_edit(view):
 
 def get_xform(form_unique_id):
     "For use with xep_hq_server's GET_XFORM hook."
-    domain, app_id, form_id = form_unique_id.split("$")
+    domain, app_id, form_id = form_unique_id.split("__")
     form = Form.get_form(domain, app_id, form_id)
     return form.source
 def put_xform(form_unique_id, source):
     "For use with xep_hq_server's PUT_XFORM hook."
-    domain, app_id, form_id = form_unique_id.split("$")
+    domain, app_id, form_id = form_unique_id.split("__")
     form, app = Form.get_form(domain, app_id, form_id, and_app=True)
     form.source = source
     form.refresh()
@@ -173,18 +173,15 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
-        print "__get__"
         if not hasattr(self, '_source'):
             try:
                 self._source = form.get_app().fetch_attachment('%s.xml' % form.unique_id)
             except Exception:
                 self._source = form.dynamic_properties().get('contents', '')
-        if hasattr(form, 'contents'):
-            print "calling __set__"
-            self.__set__(form, self._source)
         return self._source
 
     def __set__(self, form, value):
+        print '__set__'
         app = form.get_app()
         app.put_attachment(value, '%s.xml' % form.unique_id)
         self._source = value
@@ -193,7 +190,6 @@ class FormSource(object):
         if form.dynamic_properties().has_key('contents'):
             print "deleting form contents from doc for form %s" % form.unique_id
             del form.contents
-            app.save(increment_version=False)
 
     
 class FormBase(DocumentSchema):
@@ -230,7 +226,7 @@ class FormBase(DocumentSchema):
             self.get_app().save(increment_version=False)
         return self.unique_id
     def get_full_unique_id(self):
-        return "%s$%s$%s" % (self.get_app().domain, self.get_app().id, self.get_unique_id())
+        return "%s__%s__%s" % (self.get_app().domain, self.get_app().id, self.get_unique_id())
 
     def get_app(self):
         return self._app
@@ -531,7 +527,12 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
+            copy.copy_attachments(self)
         return copy
+
+    def copy_attachments(self, other):
+        for name in other._attachments:
+            self.put_attachment(name, other.fetch_attachment(name))
     def revert_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
@@ -553,6 +554,7 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
+        app.copy_attachments(copy)
         return app
 
     def delete_copy(self, copy):
@@ -586,7 +588,6 @@ class VersionedDoc(Document):
                 del source[field]
         source['domain'] = domain
         app = cls.wrap(source)
-#       TODO: for name in app._attachments:
         return app
         
 

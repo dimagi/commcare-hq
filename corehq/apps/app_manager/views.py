@@ -168,8 +168,8 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             source = json.loads(source)
             if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
                 return HttpResponseForbidden()
-        try: del source['_attachments']
-        except Exception: pass
+        try: attachments = source.popitem('_attachments')
+        except KeyError: pass
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
