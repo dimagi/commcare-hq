@@ -31,6 +31,7 @@ sys.path.append(os.path.join(filedir,'submodules','django-digest-src'))
 sys.path.append(os.path.join(filedir,'submodules','python-digest'))
 sys.path.append(os.path.join(filedir,'submodules','phonelog'))
 sys.path.append(os.path.join(filedir,'submodules','pathfinder-reports'))
+sys.path.append(os.path.join(filedir,'submodules','couchdbkit-debugpanel-src'))
 
 try:
     import settings # Assumed to be in the same directory.
