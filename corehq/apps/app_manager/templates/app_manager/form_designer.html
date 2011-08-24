@@ -52,7 +52,7 @@
 {#                $.ajax({#}
 {#                    url: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',#}
 {#                    data: {#}
-{#                        xform: $("#xform-contents").val(),#}
+{#                        xform: $("#xform-source").val(),#}
 {#                        ajax: true#}
 {#                    },#}
 {#                    type: "POST",#}
@@ -69,7 +69,7 @@
                 staticPrefix: '/static/formdesigner/',
                 iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
-                form: {{ form.contents|JSON }},
+                form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }}
             });
         });
@@ -92,7 +92,7 @@
     <h3>Vellum</h3>
 
 {#    <div>#}
-{#        <textarea id="xform-contents">{{ form.contents }}</textarea>#}
+{#        <textarea id="xform-source">{{ form.source }}</textarea>#}
 {#    </div>#}
 {#    <span id="save-xform">Save</span>#}
     <div id="formdesigner"></div>

@@ -85,12 +85,14 @@ def authorize_xform_edit(view):
 
 def get_xform(form_unique_id):
     "For use with xep_hq_server's GET_XFORM hook."
-    form = Form.get_form(form_unique_id)
-    return form.contents
-def put_xform(form_unique_id, contents):
+    domain, app_id, form_id = form_unique_id.split("$")
+    form = Form.get_form(domain, app_id, form_id)
+    return form.source
+def put_xform(form_unique_id, source):
     "For use with xep_hq_server's PUT_XFORM hook."
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    form.contents = contents
+    domain, app_id, form_id = form_unique_id.split("$")
+    form, app = Form.get_form(domain, app_id, form_id, and_app=True)
+    form.source = source
     form.refresh()
     app.save()
 
@@ -168,6 +170,32 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
+
+class FormSource(object):
+    def __get__(self, form, form_cls):
+        print "__get__"
+        if not hasattr(self, '_source'):
+            try:
+                self._source = form.get_app().fetch_attachment('%s.xml' % form.unique_id)
+            except Exception:
+                self._source = form.dynamic_properties().get('contents', '')
+        if hasattr(form, 'contents'):
+            print "calling __set__"
+            self.__set__(form, self._source)
+        return self._source
+
+    def __set__(self, form, value):
+        app = form.get_app()
+        app.put_attachment(value, '%s.xml' % form.unique_id)
+        self._source = value
+        # I had a problem where form was an old object
+        form = app.get_form(form.unique_id)
+        if form.dynamic_properties().has_key('contents'):
+            print "deleting form contents from doc for form %s" % form.unique_id
+            del form.contents
+            app.save(increment_version=False)
+
+    
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -181,53 +209,44 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
-    contents    = StringProperty()
-    
-    @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
+#    contents    = StringProperty()
+    source      = FormSource()
 
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
+    @classmethod
+    def get_form(cls, domain, app_id, form_unique_id, and_app=False):
+        # unpack the dict into variables app_id, module_id, form_id
+
+        app = get_app(domain, app_id)
+        form = app.get_form(form_unique_id)
         if and_app:
             return form, app
         else:
             return form
     def wrapped_xform(self):
-        return XForm(self.contents)
+        return XForm(self.source)
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = hex(random.getrandbits(160))[2:-1]
             self.get_app().save(increment_version=False)
         return self.unique_id
+    def get_full_unique_id(self):
+        return "%s$%s$%s" % (self.get_app().domain, self.get_app().id, self.get_unique_id())
 
     def get_app(self):
         return self._app
     
     def refresh(self):
         pass
-        soup = BeautifulStoneSoup(self.contents)
+        soup = BeautifulStoneSoup(self.source)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
         except Exception:
             self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
     def get_case_type(self):
         return self._parent.case_type
-    
-    def get_contents(self):
-        if self.contents:
-            contents = self.contents
-        else:
-            try:
-                contents = self.fetch_attachment('xform.xml')
-            except Exception:
-                contents = ""
-        return contents
 
     def render_xform(self):
-        xform = XForm(self.contents)
+        xform = XForm(self.source)
         xform.add_case_and_meta(self)
         return xform.render()
 
@@ -252,7 +271,7 @@ class FormBase(DocumentSchema):
             'open_referral', 'update_referral', 'close_referral'))
 
     def get_questions(self, langs):
-        return XForm(self.contents).get_questions(langs)
+        return XForm(self.source).get_questions(langs)
     
     def export_json(self, dump_json=True):
         source = self.to_json()
@@ -262,10 +281,10 @@ class FormBase(DocumentSchema):
         _rename_key(self.name, old_lang, new_lang)
         
     def rename_xform_language(self, old_code, new_code):
-        contents = XForm(self.contents)
-        contents.rename_language(old_code, new_code)
-        contents = contents.render()
-        self.contents = contents
+        source = XForm(self.source)
+        source.rename_language(old_code, new_code)
+        source = source.render()
+        self.source = source
 
     def check_actions(self):
         errors = []
@@ -432,7 +451,7 @@ class Module(IndexedSchema):
     def infer_case_type(self):
         case_types = []
         for form in self.forms:
-            xform = form.contents
+            xform = form.source
             soup = BeautifulStoneSoup(xform)
             try:
                 case_type = soup.find('case').find('case_type_id').string.strip()
@@ -566,7 +585,9 @@ class VersionedDoc(Document):
             if field in source:
                 del source[field]
         source['domain'] = domain
-        return cls.wrap(source)
+        app = cls.wrap(source)
+#       TODO: for name in app._attachments:
+        return app
         
 
 
@@ -913,13 +934,13 @@ class Application(ApplicationBase, TranslationMixin):
 
     def get_user_registration(self):
         form = self.user_registration
-        if not form.contents:
-            form.contents = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
+        form._app = self
+        if not form.source:
+            form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
                 get_url_base(),
                 reverse('view_user_registration', args=[self.domain, self.id])
             ))
             self.save(increment_version=False)
-        form._app = self
         return form
 
     def get_forms(self):
@@ -931,9 +952,7 @@ class Application(ApplicationBase, TranslationMixin):
     def get_form(self, unique_form_id):
         def matches(form):
             return form.get_unique_id() == unique_form_id
-        print 'target: ', unique_form_id
         for form in self.get_forms():
-            print form.get_unique_id()
             if matches(form):
                 return form
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
@@ -965,7 +984,7 @@ class Application(ApplicationBase, TranslationMixin):
         module = self.get_module(module_id)
         form = Form(
             name={lang if lang else "en": name if name else "Untitled Form"},
-            contents=attachment,
+            source=attachment,
         )
         module.forms.append(form)
         form = module.get_form(-1)
@@ -1042,7 +1061,7 @@ class Application(ApplicationBase, TranslationMixin):
                     )
                 errors.extend(errors_)
                 try:
-                    _parse_xml(form.contents)
+                    _parse_xml(form.source)
                 except Exception as e:
                     errors.append({
                         'type': "invalid xml",

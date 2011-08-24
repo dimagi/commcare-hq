@@ -89,12 +89,12 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         "?%s" % urlencode(params) if params else ""
     ))
 
-def _get_xform_contents(request, app, form):
+def _get_xform_source(request, app, form):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
-    contents = form.contents
+    source = form.source
     if download:
-        response = HttpResponse(contents)
+        response = HttpResponse(source)
         response['Content-Type'] = "application/xml"
         for lc in [lang] + app.langs:
             if lc in form.name:
@@ -102,19 +102,19 @@ def _get_xform_contents(request, app, form):
                 break
         return response
     else:
-        return json_response(contents)
+        return json_response(source)
 
 @login_and_domain_required
-def get_xform_contents(req, domain, app_id, module_id, form_id):
+def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    return _get_xform_contents(req, app, form)
+    return _get_xform_source(req, app, form)
     
 @login_and_domain_required
-def get_user_registration_contents(req, domain, app_id):
+def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
-    return _get_xform_contents(req, app, form)
+    return _get_xform_source(req, app, form)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -247,7 +247,7 @@ def default(req, domain):
 
 def get_form_view_context(request, form, langs, is_user_registration):
     try:
-        xform_questions = form.get_questions(langs) if form.contents and not is_user_registration else []
+        xform_questions = form.get_questions(langs) if form.source and not is_user_registration else []
         # this is just to validate that the case and meta blocks can be created
         xform_errors = None
     except XMLSyntaxError as e:
@@ -274,7 +274,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         messages.error(request, "Unexpected System Error: %s" % e)
 
     try:
-        if form.contents:
+        if form.source:
             form.render_xform()
     except CaseError, e:
         messages.error(request, "Error in Case Management: %s" % e)
@@ -448,7 +448,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
             "commcare_build_options": options,
             "is_standard_build": bool(is_standard_build)
         })
-
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -475,11 +474,11 @@ def view_app(req, domain, app_id=''):
     return view_generic(req, domain, app_id)
 
 @login_and_domain_required
-def form_contents(req, domain, app_id, module_id, form_id):
+def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
 
 @login_and_domain_required
-def user_registration_contents(req, domain, app_id):
+def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
 @login_and_domain_required
@@ -744,7 +743,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             xform = req.POST.get('xform')
 
         if xform:
-            form.contents = xform
+            form.source = xform
             form.refresh()
         else:
             error = "You didn't select a form to upload"
@@ -802,7 +801,7 @@ def multimedia_list_download(req, domain, app_id):
     filelist = []
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.contents)
+            parsed = XForm(f.source)
             if include_images:
                 filelist.extend(parsed.image_references)
             if include_audio:
@@ -828,7 +827,7 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     # TODO: make this more fully featured
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.contents)
+            parsed = XForm(f.source)
             parsed_forms[f] = parsed
             for i in parsed.image_references:
                 if i not in images: images[i] = []

@@ -65,7 +65,7 @@
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
-            var form_empty = {% if form.contents %}false{% else %}true{% endif %};
+            var form_empty = {% if form.source %}false{% else %}true{% endif %};
         {% if not is_user_registration %}
             if (!form_empty) {
                 var casexml = new CaseXML({
@@ -128,15 +128,15 @@
             <tr>
                 <th>Edit XForm</th>
                 <td>
-                    <a href="./contents/">{% if form.contents %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
+                    <a href="./source/">{% if form.source %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
                         or
                     {% if not is_user_registration %}
-                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
+                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_full_unique_id %}" style="display: inline">
                             {% csrf_token %}
                             <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                             <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                            <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
+                            <input type="submit" value="{% if form.source %}Edit{% else %}Create{% endif %}…" />
                             <span id="nonChromeWarning" style="font-size: .9em; display: none">
                                 Google Chrome only
                             </span>
@@ -154,7 +154,7 @@
                 </td>
             </tr>
         {% endif %}
-        {% if form.contents %}
+        {% if form.source %}
             <tr>
                 <th>Demo this form</th>
                 <td>
@@ -162,7 +162,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="data" value="{}" />
-                        <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
+                        <textarea class="hidden" name="xform">{{ form.source }}</textarea>
                         <input type="radio" name="input_mode" value="type" checked="checked" /> Web Entry &nbsp;&nbsp;
                         <input type="radio" name="input_mode" value="touch" /> Touchscreen Entry &nbsp;&nbsp;
                         <input type="submit" value="Try it!" />
@@ -176,9 +176,9 @@
                 <td>
                     <a id="xform-source-opener" class="dialog_opener"
                     {% if is_user_registration %}
-                       href="{% url get_user_registration_contents domain app.id %}">
+                       href="{% url get_user_registration_source domain app.id %}">
                     {% else %}
-                       href="{% url get_xform_contents domain app.id module.id form.id %}">
+                       href="{% url get_xform_source domain app.id module.id form.id %}">
                     {% endif %}
                         View Source XML
                     </a>
@@ -188,9 +188,9 @@
                     </div>
                     or
                     {% if is_user_registration %}
-                       <a href="{% url get_user_registration_contents domain app.id %}?download=true">Download XForm</a>
+                       <a href="{% url get_user_registration_source domain app.id %}?download=true">Download XForm</a>
                     {% else %}
-                       <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
+                       <a href="{% url get_xform_source domain app.id module.id form.id %}?download=true">Download XForm</a>
                     {% endif %}
 
                 </td>
@@ -209,7 +209,7 @@
         {% endif %}
     </table>
 
-    {% if form.contents and not is_user_registration %}
+    {% if form.source and not is_user_registration %}
         <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
         <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
         <div class="casexml config" id="casexml_home">
