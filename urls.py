@@ -5,7 +5,10 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
-
+try:
+    from localsettings import LOCAL_APP_URLS
+except:
+    LOCAL_APP_URLS = ()
 admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
@@ -52,7 +55,7 @@ urlpatterns = patterns('',
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^translations/', include('corehq.apps.translations.urls')),
-)
+) + patterns('', *LOCAL_APP_URLS)
 
 
 #django-staticfiles static/ url mapper

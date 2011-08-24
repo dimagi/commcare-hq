@@ -160,17 +160,9 @@ HQ_APPS = (
     'pathfinder',
 )
 
-# you can locally add apps if you want here
-LOCAL_APPS = (
-    #'django_extensions',
-)
-
 REFLEXIVE_URL_BASE = "localhost:8000"
 
-try:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + LOCAL_APPS
-except:
-    INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
@@ -288,6 +280,8 @@ AUDIT_VIEWS = [
 GOOGLE_ANALYTICS_ID = ''
 
 # import local settings if we find them
+LOCAL_APPS = ()
+LOCAL_MIDDLEWARE_CLASSES = ()
 try:
     #try to see if there's an environmental variable set for local_settings
     import sys, os
@@ -359,6 +353,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
 
 
 INSTALLED_APPS += LOCAL_APPS
+
+MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
 logging.basicConfig(filename=DJANGO_LOG_FILE)
 
