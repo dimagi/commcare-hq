@@ -60,4 +60,4 @@
 	url = git://github.com/dimagi/pathfinder-reports.git
 [submodule "submodules/couchdbkit-debugpanel-src"]
 	path = submodules/couchdbkit-debugpanel-src
-	url = git@github.com:dimagi/couchdbkit-debugpanel.git
+	url = git://github.com/dimagi/couchdbkit-debugpanel.git
