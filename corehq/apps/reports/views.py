@@ -584,6 +584,7 @@ def case_export(request, domain, template='reports/basic_report.html',
     )
     return render_to_response(request, template, context)
 
+@login_or_digest
 @login_and_domain_required
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
