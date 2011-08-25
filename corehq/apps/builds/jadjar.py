@@ -89,7 +89,16 @@ def sign_jar(jad, jar):
                 pass
     
     jad.update({
-        "MIDlet-Permissions" : "javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.ssl,javax.microedition.io.Connector.file.write,javax.microedition.io.Connector.comm,javax.microedition.io.Connector.http,javax.microedition.io.Connector.https"
+        "MIDlet-Permissions" :
+            "javax.microedition.io.Connector.file.read,"
+            "javax.microedition.io.Connector.ssl,"
+            "javax.microedition.io.Connector.file.write,"
+            "javax.microedition.io.Connector.comm,"
+            "javax.microedition.io.Connector.http,"
+            "javax.microedition.io.Connector.https,"
+            "javax.microedition.io.Connector.sms,"
+            "javax.wireless.messaging.sms.send,"
+            "javax.microedition.media.control.VideoControl.getSnapshot"
     })
     jad.line_ending = line_ending
 
