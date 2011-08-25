@@ -131,7 +131,7 @@
                     <a href="./source/">{% if form.source %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
                         or
                     {% if not is_user_registration %}
-                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_full_unique_id %}" style="display: inline">
+                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
                             {% csrf_token %}
                             <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                             <input type="hidden" name="editor" value="{{ editor_url }}" />

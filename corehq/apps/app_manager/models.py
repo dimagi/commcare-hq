@@ -85,13 +85,11 @@ def authorize_xform_edit(view):
 
 def get_xform(form_unique_id):
     "For use with xep_hq_server's GET_XFORM hook."
-    domain, app_id, form_id = form_unique_id.split("__")
-    form = Form.get_form(domain, app_id, form_id)
+    form = Form.get_form(form_unique_id)
     return form.source
 def put_xform(form_unique_id, source):
     "For use with xep_hq_server's PUT_XFORM hook."
-    domain, app_id, form_id = form_unique_id.split("__")
-    form, app = Form.get_form(domain, app_id, form_id, and_app=True)
+    form, app = Form.get_form(form_unique_id, and_app=True)
     form.source = source
     form.refresh()
     app.save()
@@ -178,6 +176,7 @@ class FormSource(object):
                 self._source = form.get_app().fetch_attachment('%s.xml' % form.unique_id)
             except Exception:
                 self._source = form.dynamic_properties().get('contents', '')
+        # this type of caching isn't threadsafe
         return self._source
 
     def __set__(self, form, value):
@@ -209,11 +208,13 @@ class FormBase(DocumentSchema):
     source      = FormSource()
 
     @classmethod
-    def get_form(cls, domain, app_id, form_unique_id, and_app=False):
+    def get_form(cls, form_unique_id, and_app=False):
+        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
         # unpack the dict into variables app_id, module_id, form_id
+        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
 
-        app = get_app(domain, app_id)
-        form = app.get_form(form_unique_id)
+        app = Application.get(app_id)
+        form = app.get_form(unique_id)
         if and_app:
             return form, app
         else:
@@ -225,9 +226,7 @@ class FormBase(DocumentSchema):
             self.unique_id = hex(random.getrandbits(160))[2:-1]
             self.get_app().save(increment_version=False)
         return self.unique_id
-    def get_full_unique_id(self):
-        return "%s__%s__%s" % (self.get_app().domain, self.get_app().id, self.get_unique_id())
-
+    
     def get_app(self):
         return self._app
     
@@ -574,12 +573,15 @@ class VersionedDoc(Document):
         pass
 
     def export_json(self, dump_json=True):
-        source = self.to_json()
-        
+        source = deepcopy(self.to_json())
         for field in self._meta_fields:
             if field in source:
                 del source[field]
         self.scrub_source(source)
+        _attachments = {}
+        for name in source['_attachments']:
+            _attachments[name] = self.fetch_attachment(name)
+        source['_attachments'] = _attachments
         return json.dumps(source) if dump_json else source
     @classmethod
     def from_source(cls, source, domain):
@@ -1038,6 +1040,7 @@ class Application(ApplicationBase, TranslationMixin):
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
     def scrub_source(self, source):
+        del source['user_registration']['unique_id']
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 del source['modules'][m]['forms'][f]['unique_id']

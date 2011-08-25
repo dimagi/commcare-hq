@@ -168,13 +168,16 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             source = json.loads(source)
             if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
                 return HttpResponseForbidden()
-        try: attachments = source.popitem('_attachments')
-        except KeyError: pass
+        try: attachments = source.pop('_attachments')
+        except KeyError: attachments = {}
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
         app = cls.from_source(source, domain)
         app.save()
+        for name, attachment in attachments.items():
+            app.put_attachment(attachment, name)
+
         app_id = app._id
         return back_to_main(**locals())
     else:
