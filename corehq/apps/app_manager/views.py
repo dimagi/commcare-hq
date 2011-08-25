@@ -1223,10 +1223,15 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
+
+    # Coupled URL -- Sorry!
+    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
+        **CommCareBuildConfig.fetch().preview.get_build()._doc
+    )
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': "/builds/1.2.dev/7106/Generic/WebDemo/",
+        'build_path': build_path
     })
 
 def emulator_commcare_jar(req, domain, app_id):
