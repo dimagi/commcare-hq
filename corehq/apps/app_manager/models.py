@@ -182,12 +182,12 @@ class FormSource(object):
     def __set__(self, form, value):
         print '__set__'
         app = form.get_app()
-        app.put_attachment(value, '%s.xml' % form.unique_id)
+        app.put_attachment(value, '%s.xml' % form.get_unique_id())
         self._source = value
         # I had a problem where form was an old object
-        form = app.get_form(form.unique_id)
+        form = app.get_form(form.get_unique_id())
         if form.dynamic_properties().has_key('contents'):
-            print "deleting form contents from doc for form %s" % form.unique_id
+            print "deleting form contents from doc for form %s" % form.get_unique_id()
             del form.contents
 
     
@@ -207,6 +207,10 @@ class FormBase(DocumentSchema):
 #    contents    = StringProperty()
     source      = FormSource()
 
+
+    @classmethod
+    def generate_id(cls):
+        return hex(random.getrandbits(160))[2:-1]
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
@@ -223,7 +227,7 @@ class FormBase(DocumentSchema):
         return XForm(self.source)
     def get_unique_id(self):
         if not self.unique_id:
-            self.unique_id = hex(random.getrandbits(160))[2:-1]
+            self.unique_id = FormBase.generate_id()
             self.get_app().save(increment_version=False)
         return self.unique_id
     
@@ -530,8 +534,9 @@ class VersionedDoc(Document):
         return copy
 
     def copy_attachments(self, other):
+        print other._attachments
         for name in other._attachments:
-            self.put_attachment(name, other.fetch_attachment(name))
+            self.put_attachment(other.fetch_attachment(name), name)
     def revert_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
@@ -577,11 +582,12 @@ class VersionedDoc(Document):
         for field in self._meta_fields:
             if field in source:
                 del source[field]
-        self.scrub_source(source)
         _attachments = {}
         for name in source['_attachments']:
             _attachments[name] = self.fetch_attachment(name)
         source['_attachments'] = _attachments
+        self.scrub_source(source)
+
         return json.dumps(source) if dump_json else source
     @classmethod
     def from_source(cls, source, domain):
@@ -1040,10 +1046,17 @@ class Application(ApplicationBase, TranslationMixin):
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
     def scrub_source(self, source):
-        del source['user_registration']['unique_id']
+        def change_unique_id(form):
+            unique_id = form['unique_id']
+            new_unique_id = FormBase.generate_id()
+            form['unique_id'] = new_unique_id
+            if source['_attachments'].has_key("%s.xml" % unique_id):
+                source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
+        
+        change_unique_id(source['user_registration'])
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
-                del source['modules'][m]['forms'][f]['unique_id']
+                change_unique_id(source['modules'][m]['forms'][f])
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
