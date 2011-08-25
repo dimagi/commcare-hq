@@ -559,6 +559,8 @@ class VersionedDoc(Document):
         app = cls.wrap(app)
         app.save()
         app.copy_attachments(copy)
+        app.delete_attachment('CommCare.jar')
+        app.delete_attachment('CommCare.jad')
         return app
 
     def delete_copy(self, copy):
