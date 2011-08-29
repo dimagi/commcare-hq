@@ -106,7 +106,11 @@ class ModelActionAudit(AuditEvent):
     object_uuid = StringProperty()
     revision_checksum = StringProperty()
     revision_id = StringProperty()
-    archived_data = DictProperty()
+    archived_data = DictProperty() # the instance data of the model at this rev.  So at any given moment, the CURRENT instance of this model will be equal to this.
+
+    removed = DictProperty() #data/properties removed in this revision
+    added = DictProperty() # data/properties added in this revision
+    changed = DictProperty() # data/properties changed in this revision
 
     @property
     def summary(self):
@@ -126,6 +130,9 @@ class ModelActionAudit(AuditEvent):
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
         return hashlib.sha1(json_string).hexdigest()
+
+    def compute_changes(self, save=False):
+        pass
 
     @classmethod
     def _save_model_audit(cls, audit, instance_id, instance_json, revision_id, model_class_name, is_django=False):
