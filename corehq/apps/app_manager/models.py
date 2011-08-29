@@ -555,7 +555,7 @@ class VersionedDoc(Document):
         return copy
 
     def copy_attachments(self, other):
-        for name in other._attachments:
+        for name in other._attachments or {}:
             self.put_attachment(other.fetch_attachment(name), name)
     def revert_to_copy(self, copy):
         """
