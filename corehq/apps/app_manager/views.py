@@ -249,50 +249,52 @@ def default(req, domain):
     return view_app(req, domain, app_id='')
 
 def get_form_view_context(request, form, langs, is_user_registration):
-    try:
-        xform_questions = form.get_questions(langs) if form.source and not is_user_registration else []
-        # this is just to validate that the case and meta blocks can be created
-        xform_errors = None
-    except XMLSyntaxError as e:
-        xform_questions = []
-        messages.error(request, "%s" % e)
-    except AppError, e:
-        xform_questions = []
-        messages.error(request, "Error in application: %s" % e)
-    except XFormValidationError, e:
-        xform_questions = []
-        message = unicode(e)
-        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-        for msg in message.split("\n")[2:]:
-            messages.error(request, "%s" % msg)
-    except XFormError, e:
-        xform_questions = []
-        messages.error(request, "Error in form: %s" % e)
-    # any other kind of error should fail hard, but for now there are too many for that to be practical
-    except Exception, e:
-        if settings.DEBUG and False:
-            raise
-        logging.exception(e)
-        xform_questions = []
-        messages.error(request, "Unexpected System Error: %s" % e)
+    xform = form.wrapped_xform()
+    xform_questions = []
+    if xform.exists():
+        try:
+            form.validate_form()
+            xform_errors = None
+        except XMLSyntaxError as e:
+            messages.error(request, "%s" % e)
+        except AppError, e:
+            messages.error(request, "Error in application: %s" % e)
+        except XFormValidationError, e:
+            message = unicode(e)
+            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+            for msg in message.split("\n")[2:]:
+                messages.error(request, "%s" % msg)
+        except XFormError, e:
+            messages.error(request, "Error in form: %s" % e)
+        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        except Exception, e:
+            if settings.DEBUG and False:
+                raise
+            logging.exception(e)
+            messages.error(request, "Unexpected System Error: %s" % e)
+        else:
+            xform_questions = xform.get_questions(langs) if not is_user_registration else []
+
+        try:
+            xform.add_case_and_meta(form)
+            if settings.DEBUG and False:
+                xform.validate()
+        except CaseError, e:
+            messages.error(request, "Error in Case Management: %s" % e)
+        except XFormValidationError, e:
+            messages.error(request, "%s" % e)
+        except Exception, e:
+            if settings.DEBUG and False:
+                raise
+            logging.exception(e)
+            messages.error(request, "Unexpected Error: %s" % e)
 
     try:
-        if form.source:
-            form.render_xform()
-    except CaseError, e:
-        messages.error(request, "Error in Case Management: %s" % e)
-    except XFormValidationError, e:
-        messages.error(request, "%s" % e)
-    except Exception, e:
-        if settings.DEBUG and False:
-            raise
-        logging.exception(e)
-        messages.error(request, "Unexpected Error: %s" % e)
-
-    try:
-        languages = form.wrapped_xform().get_languages()
+        languages = xform.get_languages()
     except Exception:
         languages = []
+
+
 
     return {
         'nav_form': form if not is_user_registration else '',
@@ -336,6 +338,7 @@ def get_apps_base_context(request, domain, app):
     context.update(get_sms_autocomplete_context(request, domain))
     return context
 
+@profile('view_generic')
 def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.
@@ -805,6 +808,7 @@ def multimedia_list_download(req, domain, app_id):
     for m in app.get_modules():
         for f in m.get_forms():
             parsed = XForm(f.source)
+            parsed.validate()
             if include_images:
                 filelist.extend(parsed.image_references)
             if include_audio:
@@ -831,6 +835,7 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     for m in app.get_modules():
         for f in m.get_forms():
             parsed = XForm(f.source)
+            parsed.validate()
             parsed_forms[f] = parsed
             for i in parsed.image_references:
                 if i not in images: images[i] = []

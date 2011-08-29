@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
@@ -33,7 +33,7 @@ import json
 from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
-from utilities.profile import profile as profile_decorator
+from utilities.profile import profile as profile_decorator, profile
 import logging
 
 MISSING_DEPENDECY = \
@@ -170,27 +170,33 @@ class FormActions(DocumentSchema):
 
 
 class FormSource(object):
+    def __init__(self):
+        self._source = {}
     def __get__(self, form, form_cls):
-        if not hasattr(self, '_source'):
+        unique_id = form.get_unique_id()
+        if not self._source.has_key(unique_id):
             try:
-                self._source = form.get_app().fetch_attachment('%s.xml' % form.unique_id)
+                self._source[unique_id] = form.get_app().fetch_attachment('%s.xml' % unique_id)
             except Exception:
-                self._source = form.dynamic_properties().get('contents', '')
+                self._source[unique_id] = form.dynamic_properties().get('contents', '')
         # this type of caching isn't threadsafe
-        return self._source
+        return self._source[unique_id]
 
     def __set__(self, form, value):
-        print '__set__'
-        app = form.get_app()
-        app.put_attachment(value, '%s.xml' % form.get_unique_id())
-        self._source = value
-        # I had a problem where form was an old object
-        form = app.get_form(form.get_unique_id())
-        if form.dynamic_properties().has_key('contents'):
-            print "deleting form contents from doc for form %s" % form.get_unique_id()
-            del form.contents
+        unique_id = form.get_unique_id()
+        try:
+            app = form.get_app()
+        except KeyError:
+            form.contents = value
+        else:
+            app.put_attachment(value, '%s.xml' % unique_id)
+            self._source[unique_id] = value
+            # I had a problem where form was an old object
+            form = app.get_form(unique_id)
+            if form.dynamic_properties().has_key('contents'):
+                del form.contents
+        form.validation_cache = None
 
-    
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -206,11 +212,12 @@ class FormBase(DocumentSchema):
     xmlns       = StringProperty()
 #    contents    = StringProperty()
     source      = FormSource()
-
+    validation_cache = StringProperty(required=False)
 
     @classmethod
     def generate_id(cls):
         return hex(random.getrandbits(160))[2:-1]
+
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
@@ -225,6 +232,18 @@ class FormBase(DocumentSchema):
             return form
     def wrapped_xform(self):
         return XForm(self.source)
+    def validate_form(self):
+        if self.validation_cache is None:
+            try:
+                XForm(self.source).validate()
+            except XFormValidationError as e:
+                self.validation_cache = unicode(e)
+            else:
+                self.validation_cache = ""
+            self.get_app().save(increment_version=False)
+        elif self.validation_cache:
+            raise XFormValidationError(self.validation_cache)
+        return self
     def get_unique_id(self):
         if not self.unique_id:
             self.unique_id = FormBase.generate_id()
@@ -434,12 +453,14 @@ class Module(IndexedSchema):
             case_list.rename_lang(old_lang, new_lang)
 
     def get_forms(self):
-        l = len(self.forms)
-        for i, form in enumerate(self.forms):
+        self__forms = self.forms
+        l = len(self__forms)
+        for i, form in enumerate(self__forms):
             yield form.with_id(i%l, self)
     @parse_int([1])
     def get_form(self, i):
-        return self.forms[i].with_id(i%len(self.forms), self)
+        self__forms = self.forms
+        return self__forms[i].with_id(i%len(self.forms), self)
 
     def get_detail(self, detail_type):
         for detail in self.details:
@@ -534,7 +555,6 @@ class VersionedDoc(Document):
         return copy
 
     def copy_attachments(self, other):
-        print other._attachments
         for name in other._attachments:
             self.put_attachment(other.fetch_attachment(name), name)
     def revert_to_copy(self, copy):
@@ -855,7 +875,7 @@ class Application(ApplicationBase, TranslationMixin):
     #@profile('fetch_xform.prof')
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        return form.render_xform()
+        return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         if lang != "default":
@@ -926,7 +946,7 @@ class Application(ApplicationBase, TranslationMixin):
             "suite.xml": self.create_suite(),
         }
         if self.show_user_registration:
-            files["user_registration.xml"] = self.get_user_registration().render_xform()
+            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
         for lang in ['default'] + self.langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
@@ -935,13 +955,15 @@ class Application(ApplicationBase, TranslationMixin):
         return files
 
     def get_modules(self):
-        l = len(self.modules)
-        for i,module in enumerate(self.modules):
+        self__modules = self.modules
+        l = len(self__modules)
+        for i,module in enumerate(self__modules):
             yield module.with_id(i%l, self)
 
     @parse_int([1])
     def get_module(self, i):
-        return self.modules[i].with_id(i%len(self.modules), self)
+        self__modules = self.modules
+        return self__modules[i].with_id(i%len(self__modules), self)
 
     def get_user_registration(self):
         form = self.user_registration
