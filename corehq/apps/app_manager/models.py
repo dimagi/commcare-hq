@@ -605,7 +605,7 @@ class VersionedDoc(Document):
             if field in source:
                 del source[field]
         _attachments = {}
-        for name in source['_attachments']:
+        for name in source.get('_attachments', {}):
             _attachments[name] = self.fetch_attachment(name)
         source['_attachments'] = _attachments
         self.scrub_source(source)
