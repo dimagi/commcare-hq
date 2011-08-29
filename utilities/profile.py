@@ -7,7 +7,7 @@ import settings
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
-except:
+except AttributeError:
     PROFILE_LOG_BASE = "/tmp"
 
 
