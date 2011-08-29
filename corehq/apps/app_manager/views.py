@@ -338,7 +338,6 @@ def get_apps_base_context(request, domain, app):
     context.update(get_sms_autocomplete_context(request, domain))
     return context
 
-@profile('view_generic')
 def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.

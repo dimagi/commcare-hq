@@ -713,7 +713,6 @@ class ApplicationBase(VersionedDoc):
         }[(self.native_input,)]
         return self.get_build().get_jadjar(spec)
 
-#    @profile_decorator('create_jadjar.prof')
     def create_jadjar(self):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
@@ -872,7 +871,6 @@ class Application(ApplicationBase, TranslationMixin):
 #            get_url_base(),
 #            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
 #        )
-    #@profile('fetch_xform.prof')
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform()
@@ -939,7 +937,6 @@ class Application(ApplicationBase, TranslationMixin):
             'langs': ["default"] + self.langs
         })
     
-    #@profile_decorator('create_all_files.prof')
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
