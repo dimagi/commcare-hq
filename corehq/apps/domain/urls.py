@@ -1,11 +1,9 @@
 import sys
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
-from django.core.urlresolvers import reverse
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-import settings
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -42,9 +40,6 @@ def exception_safe_password_reset(request, *args, **kwargs):
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
-
-domain_re = "[\w\.]+"
-
 urlpatterns =\
     patterns('corehq.apps.domain.views',
         (r'^user_registration/', include('corehq.apps.domain.user_registration_backend.urls')),
@@ -71,8 +66,8 @@ urlpatterns =\
         url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm', auth_pages_path('password_reset_confirm.html') ),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html') ) 
     )
-        
-   
+
+
 domain_specific = patterns('corehq.apps.domain.views',
     url(r'^$', 'manage_domain', name='manage_domain'),
     url(r'^forwarding/new/$', 'add_repeater', name='add_repeater'),

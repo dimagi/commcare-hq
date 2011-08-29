@@ -5,9 +5,8 @@
     {{ block.super }}
     <script src="{{ STATIC_URL }}hqwebapp/javascripts/underscore-1.1.7.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/lcs-merge.js"></script>
-    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js"></script>
     <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/detail-screen-config.css"/>
-    <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config-002.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config-003.js"></script>
     <script>
         $(function () {
             var $home = $("#detail-screen-config");
@@ -144,134 +143,128 @@
 {% block form-view %}
     <h3 class="variable-module_name">{{ module.name|trans:langs }}</h3>
     <h4>Module Settings</h4>
-    <table class="config" >
-        {% if edit %}
 
-            <tr class="form editable">
-                <th>
-                    Module Name
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'name' %}">
-                        <input class="autosave" type="text" name="name" value="{{ module.name|trans:langs }}" />
-                    </form>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Case Type <span class="help-link" data-help-key="app_manager/case_type"></span>
-                    <div class="help-text" data-help-key="app_manager/case_type"></div>
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_type'%}">
-                        <input class="autosave code" type="text" name="case_type" value="{{ module.case_type }}"/>
-                    </form>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Menu
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'put_in_root'%}">
-                        <select class="autosave code" type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
-                            <option value="false">Put forms in a separate menu</option>
-                            <option value="true">Put forms on first screen</option>
-                        </select>
-                    </form>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Case List <span class="help-link" data-help-key="app_manager/case_list"></span>
-                    <div class="help-text" data-help-key="app_manager/case_list"></div>
-                </th>
-                <th>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_list' %}">
-                        <select class="autosave code" type="text" name="show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
-                            <option value="false">Don't Show</option>
-                            <option value="true">Show</option>
-                        </select>
-                        <span>
-                            Label: <input type="text" class="autosave" name="label" value="{{ module.case_list.label|trans:langs }}"/>
-                        </span>
-                    </form>
-                </th>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Label for Cases
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'case_label' %}">
-                        <input class="autosave" type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
-                    </form>
-                </td>
-            </tr>
-            <tr class="form editable">
-                <th>
-                    Label for Referrals
-                </th>
-                <td>
-                    <form action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'referral_label' %}">
-                        <input class="autosave" type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
-                    </form>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <th>Module Name</th>
-                <td>
-                    {{ module.name|trans:langs }}
-                </td>
-            </tr>
-            <tr>
-                <th>
-                    Case Type
-                </th>
-                <td>
-                    <code>{{ module.case_type }}</code>
-                </td>
-            </tr>
-            <tr>
-                <th>
-                    Menu
-                </th>
-                <td>
-                    {% if not module.put_in_root %}
-                        Put forms in a separate menu
-                    {% else %}
-                        Put forms on first screen
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>
-                    Case List
-                </th>
-                <td>
-                    {% if not module.case_list.show %}
-                        Don't Show
-                    {% else %}
-                        Show with label: {{ module.case_list.label|trans:langs }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Label for Cases</th>
-                <td>
-                    {{ module.case_label|trans:langs }}
-                </td>
-            </tr>
-            <tr>
-                <th>Label for Referrals</th>
-                <td>
-                    {{ module.referral_label|trans:langs }}
-                </td>
-            </tr>
-        {% endif %}
-    </table>
 
+    <div class="config">
+        <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
+            <div class="save-button-holder"></div>
+            <table>
+                {% if edit %}
+
+                    <tr class="form editable">
+                        <th>
+                            Module Name
+                        </th>
+                        <td>
+                            <input type="text" name="name" value="{{ module.name|trans:langs }}" />
+                        </td>
+                    </tr>
+                    <tr class="form editable">
+                        <th>
+                            Case Type <span class="help-link" data-help-key="app_manager/case_type"></span>
+                            <div class="help-text" data-help-key="app_manager/case_type"></div>
+                        </th>
+                        <td>
+                            <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
+                        </td>
+                    </tr>
+                    <tr class="form editable">
+                        <th>
+                            Menu
+                        </th>
+                        <td>
+                            <select class="code" type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                                <option value="false">Put forms in a separate menu</option>
+                                <option value="true">Put forms on first screen</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr class="form editable">
+                        <th>
+                            Case List <span class="help-link" data-help-key="app_manager/case_list"></span>
+                            <div class="help-text" data-help-key="app_manager/case_list"></div>
+                        </th>
+                        <th>
+                            <select class="code" type="text" name="case_list-show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
+                                <option value="false">Don't Show</option>
+                                <option value="true">Show</option>
+                            </select>
+                            <span>
+                                Label: <input type="text" name="case_list-label" value="{{ module.case_list.label|trans:langs }}"/>
+                            </span>
+                        </th>
+                    </tr>
+                    <tr class="form editable">
+                        <th>
+                            Label for Cases
+                        </th>
+                        <td>
+                                <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
+                        </td>
+                    </tr>
+                    <tr class="form editable">
+                        <th>
+                            Label for Referrals
+                        </th>
+                        <td>
+                            <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <th>Module Name</th>
+                        <td>
+                            {{ module.name|trans:langs }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Case Type
+                        </th>
+                        <td>
+                            <code>{{ module.case_type }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Menu
+                        </th>
+                        <td>
+                            {% if not module.put_in_root %}
+                                Put forms in a separate menu
+                            {% else %}
+                                Put forms on first screen
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Case List
+                        </th>
+                        <td>
+                            {% if not module.case_list.show %}
+                                Don't Show
+                            {% else %}
+                                Show with label: {{ module.case_list.label|trans:langs }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Label for Cases</th>
+                        <td>
+                            {{ module.case_label|trans:langs }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Label for Referrals</th>
+                        <td>
+                            {{ module.referral_label|trans:langs }}
+                        </td>
+                    </tr>
+                {% endif %}
+            </table>
+        </form>
+    </div>
 
     {% comment %}
     <div class="message" id="case-properties-warning">

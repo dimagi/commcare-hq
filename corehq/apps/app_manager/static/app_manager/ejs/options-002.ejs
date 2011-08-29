@@ -11,16 +11,23 @@
                 </option>
             [% }); %]
             [% if(value && !something_is_selected) { %]
-                <option value='[%= value %]' selected="true">
-                    Unidentified Question ([%= value %])
-                </option>
+                [% if (allowNull) { %]
+                    <option value='[%= value %]' selected="true">
+                        Unidentified Question([%= value %])
+                    </option>
+                [% } %]
             [% } %]
         </select>
 
     [% } else { %]
-        <select name="[%= name %]" disabled="true">
-            <option value="">No Options Available</option>
-        </select>
+        [% if (!allowNull) { %]
+            <input type="text" class="short" name="[%= name %]" value="[%= value %]"/>
+        [% something_is_selected = true; %]
+        [% } else { %]
+            <select name="[%= name %]" disabled="true">
+                <option value="">No Options Available</option>
+            </select>
+        [% } %]
     [% } %]
         [% if(value && !something_is_selected) { %]
             <span class="help-link" data-help-key="app_manager/unidentified_question"></span>

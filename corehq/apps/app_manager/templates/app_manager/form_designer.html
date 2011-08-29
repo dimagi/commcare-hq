@@ -6,7 +6,7 @@
 {% block head %}
     {{ block.super }}
 
-    <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css" rel="stylesheet" type="text/css"/>
+    <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css?version=100" rel="stylesheet" type="text/css"/>
     <link href="{{ STATIC_URL }}formdesigner/css/chosen.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
 
@@ -16,10 +16,10 @@
     <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-ui-timepicker-addon.js"></script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/ui.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/util.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/model.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/controller.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/ui.js?version=100"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/util.js?version=100"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/model.js?version=100"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/controller.js?version=100"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/XMLWriter-1.0.0.js"></script>
 
     <style>
@@ -52,7 +52,7 @@
 {#                $.ajax({#}
 {#                    url: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',#}
 {#                    data: {#}
-{#                        xform: $("#xform-contents").val(),#}
+{#                        xform: $("#xform-source").val(),#}
 {#                        ajax: true#}
 {#                    },#}
 {#                    type: "POST",#}
@@ -69,7 +69,7 @@
                 staticPrefix: '/static/formdesigner/',
                 iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
-                form: {{ form.contents|JSON }},
+                form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }}
             });
         });
@@ -86,13 +86,13 @@
                 <li>{{ module.name|trans:langs }}</li>
                 <li><a href="../?edit=true">{{ form.name|trans:langs }}</a></li>
             {% endif %}
-            <li>Form Designer</li>
+            <li>Vellum</li>
         </ul>
     </div>
-    <h3>Form Designer</h3>
+    <h3>Vellum</h3>
 
 {#    <div>#}
-{#        <textarea id="xform-contents">{{ form.contents }}</textarea>#}
+{#        <textarea id="xform-source">{{ form.source }}</textarea>#}
 {#    </div>#}
 {#    <span id="save-xform">Save</span>#}
     <div id="formdesigner"></div>

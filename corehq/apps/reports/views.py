@@ -4,14 +4,15 @@ import json
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import user_id_to_username
+from corehq.apps.users.util import user_id_to_username, couch_user_from_django_user
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import CsvWorkBook
 from dimagi.utils.web import json_response, json_request, render_to_response
 from dimagi.utils.couch.database import get_db
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.core.urlresolvers import reverse
+from django_digest.decorators import httpdigest
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -34,7 +35,7 @@ import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
-from couchexport.shortcuts import export_data_shared
+from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -46,11 +47,27 @@ datespan_default = datespan_in_request(
     default_days=7
 )
 
+def login_or_digest(fn):
+    def safe_fn(request, domain, *args, **kwargs):
+        if not request.user.is_authenticated():
+            def _inner(request, domain, *args, **kwargs):
+                couch_user = couch_user_from_django_user(request.user)
+                if couch_user.is_member_of(domain):
+                    return fn(request, domain, *args, **kwargs)
+                else:
+                    return HttpResponseForbidden()
+            return httpdigest(_inner)(request, domain, *args, **kwargs)
+        else:
+            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+    return safe_fn
+
+
+
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse("submissions_by_form_report", args=[domain]))
 
-@login_and_domain_required
+@login_or_digest
 @datespan_default
 def export_data(req, domain):
     """
@@ -67,8 +84,10 @@ def export_data(req, domain):
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
     if not include_errors:
         kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
-        
-    resp = export_data_shared([domain,export_tag], **kwargs)
+    if kwargs['format'] == 'raw':
+        resp = export_raw_data([domain, export_tag], **kwargs)
+    else:
+        resp = export_data_shared([domain,export_tag], **kwargs)
     if resp:
         return resp
     else:
@@ -171,7 +190,7 @@ def delete_custom_export(req, domain, export_id):
     messages.success(req, "Custom export was deleted.")
     return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
 
-@login_and_domain_required
+@login_or_digest
 def export_custom_data(req, domain, export_id):
     """
     Export data from a saved export schema
@@ -565,9 +584,14 @@ def case_export(request, domain, template='reports/basic_report.html',
     )
     return render_to_response(request, template, context)
 
+@login_or_digest
 @login_and_domain_required
 def download_cases(request, domain):
-    cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    include_closed = json.loads(request.GET.get('include_closed', 'false'))
+    if include_closed:
+        cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    else:
+        cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     users = CouchUser.commcare_users_by_domain(domain)
 
     workbook = CsvWorkBook()

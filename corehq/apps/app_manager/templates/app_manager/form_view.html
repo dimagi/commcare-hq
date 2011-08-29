@@ -16,8 +16,8 @@
         }
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/casexml.js"></script>
+{#    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>#}
+    <script src="{{ STATIC_URL }}app_manager/js/casexml-004.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier-6214661a.js"></script>
 
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
@@ -44,8 +44,8 @@
                     $("#nonChromeWarning").hide();
                 } else {
                     $("#nonChromeWarning").show();
-                    $("#editXFormTD").css({backgroundColor: "yellow"}).
-                            find('form input[type="submit"]').button('disable');
+                    $("#editXFormWrapper").css({backgroundColor: "yellow"}).
+                            find('input[type="submit"]').button('disable');
                 }
             }());
             (function configXFormSourceAjax(){
@@ -65,17 +65,17 @@
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
             });
-            var form_empty = {% if form.contents %}false{% else %}true{% endif %};
+            var form_empty = {% if form.source %}false{% else %}true{% endif %};
         {% if not is_user_registration %}
             if (!form_empty) {
                 var casexml = new CaseXML({
-                    home: "casexml_home",
+                    home: $('#casexml_home'),
                     actions: {{ form.actions|JSON }},
                     questions: {{ xform_questions|JSON }},
                     edit: edit,
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
                     requires: "{{ form.requires }}",
-                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",
+{#                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",#}
                     reserved_words: {{ case_reserved_words_json|JSON }}
                 });
                 casexml.init();
@@ -83,7 +83,6 @@
         {% endif %}
         });
     </script>
-    {% include "app_manager/partials/casexml.html" %}
 {% endblock %}
 {% block form-view %}
     {% if is_user_registration %}
@@ -99,26 +98,28 @@
     {% endif %}
     {% if nav_form %}
         <h4>Form Settings</h4>
-        <table class="config">
-            {% if edit %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        <!-- autosave hijacks the form so that it sends automatically in the background-->
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
-                            <input class="autosave wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <th>Form Name</th>
-                    <td>
-                        {{ form.name|trans:langs }}
-                    </td>
-                </tr>
-            {% endif %}
-        </table>
+        <div class="config">
+            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+                <div class="save-button-holder"></div>
+                <table>
+                    {% if edit %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <th>Form Name</th>
+                            <td>
+                                {{ form.name|trans:langs }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </form>
+        </div>
     {% endif %}
 
         <h4>XForm</h4>
@@ -126,29 +127,22 @@
         {% if edit %}
             <tr>
                 <th>Edit XForm</th>
-                <td id="editXFormTD">
-                    {% if user.is_superuser %}
-                            <a href="./contents/">
-                                {% if form.contents %}Edit{% else %}Create{% endif %} in Form Designer (New!)
-                            </a>
-                            or
-                    {% endif %}
-                    <form method="POST" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                        <input type="hidden" name="editor" value="{{ editor_url }}" />
+                <td>
+                    <a href="./source/">{% if form.source %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
+                        or
+                    {% if not is_user_registration %}
+                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                            <input type="hidden" name="editor" value="{{ editor_url }}" />
 
-                        <input type="submit" value="{% if form.contents %}Edit{% else %}Create{% endif %}…" />
-                    </form>
-                    <div id="nonChromeWarning" style="font-size: .9em; display: none">
-                        This feature is currently <br />
-                        only supported in Google Chrome <br />
-                        due to a bug. <br />
-                        We are hard at work finding a fix!
-                    </div>
-{#                </td>#}
-{#                <td>#}
-                    or 
+                            <input type="submit" value="{% if form.source %}Edit{% else %}Create{% endif %}…" />
+                            <span id="nonChromeWarning" style="font-size: .9em; display: none">
+                                Google Chrome only
+                            </span>
+                        </form>
+                      or
+                    {% endif %}
                     <a class="dialog_opener" href="#">Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
@@ -160,7 +154,7 @@
                 </td>
             </tr>
         {% endif %}
-        {% if form.contents %}
+        {% if form.source %}
             <tr>
                 <th>Demo this form</th>
                 <td>
@@ -168,7 +162,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
                         <input type="hidden" name="data" value="{}" />
-                        <textarea class="hidden" name="xform">{{ form.contents }}</textarea>
+                        <textarea class="hidden" name="xform">{{ form.source }}</textarea>
                         <input type="radio" name="input_mode" value="type" checked="checked" /> Web Entry &nbsp;&nbsp;
                         <input type="radio" name="input_mode" value="touch" /> Touchscreen Entry &nbsp;&nbsp;
                         <input type="submit" value="Try it!" />
@@ -182,9 +176,9 @@
                 <td>
                     <a id="xform-source-opener" class="dialog_opener"
                     {% if is_user_registration %}
-                       href="{% url get_user_registration_contents domain app.id %}">
+                       href="{% url get_user_registration_source domain app.id %}">
                     {% else %}
-                       href="{% url get_xform_contents domain app.id module.id form.id %}">
+                       href="{% url get_xform_source domain app.id module.id form.id %}">
                     {% endif %}
                         View Source XML
                     </a>
@@ -194,9 +188,9 @@
                     </div>
                     or
                     {% if is_user_registration %}
-                       <a href="{% url get_user_registration_contents domain app.id %}?download=true">Download XForm</a>
+                       <a href="{% url get_user_registration_source domain app.id %}?download=true">Download XForm</a>
                     {% else %}
-                       <a href="{% url get_xform_contents domain app.id module.id form.id %}?download=true">Download XForm</a>
+                       <a href="{% url get_xform_source domain app.id module.id form.id %}?download=true">Download XForm</a>
                     {% endif %}
 
                 </td>
@@ -215,8 +209,10 @@
         {% endif %}
     </table>
 
-    {% if form.contents %}
-        <div id="casexml_home">
+    {% if form.source and not is_user_registration %}
+        <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+        <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
+        <div class="casexml config" id="casexml_home">
         </div>
     {% endif %}
 

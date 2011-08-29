@@ -9,6 +9,7 @@ class XFormParsingTest(TestCase):
             file_path = os.path.join(os.path.dirname(__file__), "data", filename)
             with open(file_path) as f:
                 self.xforms[filename] = XForm(f.read())
+            self.xforms[filename].validate()
 
     def test_properties(self):
         for _,xform in self.xforms.items():

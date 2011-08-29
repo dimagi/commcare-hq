@@ -103,18 +103,14 @@ class XForm(WrappedNode):
         if self.exists():
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
-            self.validate()
-            #print "Incoming XForm %s OK" % xmlns
 
     def validate(self):
         r = formtranslate.api.validate(ET.tostring(self.xml))
         if not r['success']:
             raise XFormValidationError(r["errstring"])
+        return self
 
-    def render(self, validate=False):
-        if validate:
-            self.validate()
-            #print "Outgoing XForm %s OK" % self.data_node.tag_xmlns
+    def render(self):
         return ET.tostring(self.xml)
     
     @property
@@ -345,7 +341,7 @@ class XForm(WrappedNode):
             orx = namespaces['orx'][1:-1]
             nsmap = {"orx": orx}
             meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-            for tag in ('deviceID','timeStart', 'timeEnd','username','userID','uid'):
+            for tag in ('deviceID','timeStart', 'timeEnd','username','userID','instanceID'):
                 meta.append(ET.Element(("{orx}%s"%tag).format(**namespaces), nsmap=nsmap))
             case_parent.append(meta)
             id = form.get_unique_id() + "meta"
@@ -355,7 +351,7 @@ class XForm(WrappedNode):
                 {"id": "%s3" % id, "nodeset": "meta/timeEnd", "type": "xsd:dateTime", "{jr}preload": "timestamp", "{jr}preloadParams": "end"},
                 {"id": "%s4" % id, "nodeset": "meta/username", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserName"},
                 {"id": "%s5" % id, "nodeset": "meta/userID", "type": "xsd:string", "{jr}preload": "meta", "{jr}preloadParams": "UserID"},
-                {"id": "%s6" % id, "nodeset": "meta/uid", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
+                {"id": "%s6" % id, "nodeset": "meta/instanceID", "type": "xsd:string", "{jr}preload": "uid", "{jr}preloadParams": "general"},
             ]
             for bind in binds:
                 bind = _make_elem('bind', bind)

@@ -5,6 +5,7 @@ from django.utils.http import urlquote
 
 ########################################################################################################
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.util import couch_user_from_django_user
 
 REDIRECT_FIELD_NAME = 'next'
@@ -53,8 +54,8 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
         def _inner(req, domain, *args, **kwargs):
 
             user = req.user
-            domain_name = domain
-            domains = Domain.objects.filter(name=domain)
+            domain_name = normalize_domain_name(domain)
+            domains = Domain.objects.filter(name=domain_name)
             if user.is_authenticated() and user.is_active:
                 couch_user = couch_user_from_django_user(user)
                 if couch_user.is_member_of(domains):

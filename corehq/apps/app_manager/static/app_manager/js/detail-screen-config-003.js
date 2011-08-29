@@ -12,9 +12,9 @@ var DetailScreenConfig = (function () {
         }
         return parts.join(',\n');
     }
-    function unformatEnum(text, lang, orig) {
+    function unformatEnum(text, lang, original) {
         var json, mapping, key,
-            orig = JSON.parse(JSON.stringify(orig));
+            orig = JSON.parse(JSON.stringify(original));
         text = text.replace('\n', ' ').replace(/^\s*/, '').replace(/\s*$/, '');
         if (text) {
             json = '{"' +
@@ -291,39 +291,14 @@ var DetailScreenConfig = (function () {
                 return [this.model.val() === 'referral' ? 1 : 2, this.field.val()];
             });
 
-            this.saveButton = {
-                $save: $('<span/>').text(DetailScreenConfig.message.SAVE).click(function () {
+            this.saveButton = COMMCAREHQ.SaveButton.init({
+                unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
+                save: function () {
                     that.save();
-                }).button(),
-                $retry: $('<span/>').text(DetailScreenConfig.message.RETRY).click(function () {
-                    that.save();
-                }).button(),
-                $saving: $('<span/>').text(DetailScreenConfig.message.SAVING).button().button('disable'),
-                $saved: $('<span/>').text(DetailScreenConfig.message.SAVED).button().button('disable'),
-                ui: $('<div/>').css({textAlign: 'right'}),
-                setState: function (state) {
-                    this.state = state;
-                    this.$save.detach();
-                    this.$saving.detach();
-                    this.$saved.detach();
-                    this.$retry.detach();
-                    if (state === 'save') {
-                        this.ui.append(this.$save);
-                    } else if (state === 'saving') {
-                        this.ui.append(this.$saving);
-                    } else if (state === 'saved') {
-                        this.ui.append(this.$saved);
-                    } else if (state === 'retry') {
-                        this.ui.append(this.$retry);
-                    }
                 }
-            };
-            this.saveButton.setState('saved');
+            });
 
             this.render();
-//            this.$home.find('*').change(function () {
-//                console.log(JSON.stringify(that.serialize()));
-//            });
             this.on('add-column', function (column) {
                 var i, ii, $tr;
                 i = this.columns.indexOf(column);
@@ -361,7 +336,7 @@ var DetailScreenConfig = (function () {
                 this.fire('change');
             });
             this.on('change', function () {
-                this.saveButton.setState('save');
+                this.saveButton.fire('change');
                 this.$columns.find('tr').each(function (i) {
                     $(this).data('index', i);
                 });
@@ -372,22 +347,13 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
-                var that = this;
-                $.ajax({
+                this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
                     data: {screens: JSON.stringify(this.serialize())},
                     dataType: 'json',
-                    beforeSend: function () {
-                        that.saveButton.setState('saving');
-                    },
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
-                        that.saveButton.setState('saved');
-                    },
-                    error: function (data) {
-                        that.saveButton.setState('retry');
-                        alert(DetailScreenConfig.message.ERROR_SAVING);
                     }
                 });
             },
@@ -560,15 +526,6 @@ var DetailScreenConfig = (function () {
 
             addScreen(spec.state.case_short, spec.state.case_long);
             addScreen(spec.state.ref_short, spec.state.ref_long);
-
-            $(window).bind('beforeunload', function () {
-                var i;
-                for (i = 0; i < that.screens.length; i += 1) {
-                    if (that.screens[i].saveButton.state !== 'saved') {
-                        return "You have unsaved detail screen configurations.";
-                    }
-                }
-            });
         };
         DetailScreenConfig.init = function ($home, spec) {
             return new DetailScreenConfig($home, spec);
@@ -597,16 +554,11 @@ var DetailScreenConfig = (function () {
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
         INVISIBLE_FORMAT: 'Search Only',
 
-        SAVE: 'Save',
-        SAVING: 'Saving...',
-        SAVED: 'Saved',
-        RETRY: 'Try Again',
-        ERROR_SAVING: 'There was an error saving',
-
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',
-        DELETE_COLUMN: 'Delete'
+        DELETE_COLUMN: 'Delete',
 
+        UNSAVED_MESSAGE: 'You have unsaved detail screen configurations.'
     };
     
     return DetailScreenConfig;

@@ -16,11 +16,11 @@
     </table>
     <p>Resource Files:</p>
     <ul>
-        {% for path,contents in files %}
+        {% for path,source in files %}
             <li>
                 <div class="toggle-next">{{ path }}</div>
                 <code>
-                    <pre>{{ contents|force_escape }}</pre>
+                    <pre>{{ source|force_escape }}</pre>
                 </code>
             </li>
         {% endfor %}

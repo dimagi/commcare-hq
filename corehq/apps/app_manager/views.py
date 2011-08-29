@@ -89,12 +89,12 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         "?%s" % urlencode(params) if params else ""
     ))
 
-def _get_xform_contents(request, app, form):
+def _get_xform_source(request, app, form):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
-    contents = form.contents
+    source = form.source
     if download:
-        response = HttpResponse(contents)
+        response = HttpResponse(source)
         response['Content-Type'] = "application/xml"
         for lc in [lang] + app.langs:
             if lc in form.name:
@@ -102,19 +102,19 @@ def _get_xform_contents(request, app, form):
                 break
         return response
     else:
-        return json_response(contents)
+        return json_response(source)
 
 @login_and_domain_required
-def get_xform_contents(req, domain, app_id, module_id, form_id):
+def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    return _get_xform_contents(req, app, form)
+    return _get_xform_source(req, app, form)
     
 @login_and_domain_required
-def get_user_registration_contents(req, domain, app_id):
+def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
-    return _get_xform_contents(req, app, form)
+    return _get_xform_source(req, app, form)
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -168,13 +168,16 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             source = json.loads(source)
             if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
                 return HttpResponseForbidden()
-        try: del source['_attachments']
-        except Exception: pass
+        try: attachments = source.pop('_attachments')
+        except KeyError: attachments = {}
         if name:
             source['name'] = name
         cls = _str_to_cls[source['doc_type']]
         app = cls.from_source(source, domain)
         app.save()
+        for name, attachment in attachments.items():
+            app.put_attachment(attachment, name)
+
         app_id = app._id
         return back_to_main(**locals())
     else:
@@ -246,50 +249,52 @@ def default(req, domain):
     return view_app(req, domain, app_id='')
 
 def get_form_view_context(request, form, langs, is_user_registration):
-    try:
-        xform_questions = form.get_questions(langs) if form.contents and not is_user_registration else []
-        # this is just to validate that the case and meta blocks can be created
-        xform_errors = None
-    except XMLSyntaxError as e:
-        xform_questions = []
-        messages.error(request, "%s" % e)
-    except AppError, e:
-        xform_questions = []
-        messages.error(request, "Error in application: %s" % e)
-    except XFormValidationError, e:
-        xform_questions = []
-        message = unicode(e)
-        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-        for msg in message.split("\n")[2:]:
-            messages.error(request, "%s" % msg)
-    except XFormError, e:
-        xform_questions = []
-        messages.error(request, "Error in form: %s" % e)
-    # any other kind of error should fail hard, but for now there are too many for that to be practical
-    except Exception, e:
-        if settings.DEBUG:
-            raise
-        logging.exception(e)
-        xform_questions = []
-        messages.error(request, "Unexpected System Error: %s" % e)
+    xform = form.wrapped_xform()
+    xform_questions = []
+    if xform.exists():
+        try:
+            form.validate_form()
+            xform_errors = None
+        except XMLSyntaxError as e:
+            messages.error(request, "%s" % e)
+        except AppError, e:
+            messages.error(request, "Error in application: %s" % e)
+        except XFormValidationError, e:
+            message = unicode(e)
+            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+            for msg in message.split("\n")[2:]:
+                messages.error(request, "%s" % msg)
+        except XFormError, e:
+            messages.error(request, "Error in form: %s" % e)
+        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        except Exception, e:
+            if settings.DEBUG and False:
+                raise
+            logging.exception(e)
+            messages.error(request, "Unexpected System Error: %s" % e)
+        else:
+            xform_questions = xform.get_questions(langs) if not is_user_registration else []
+
+        try:
+            xform.add_case_and_meta(form)
+            if settings.DEBUG and False:
+                xform.validate()
+        except CaseError, e:
+            messages.error(request, "Error in Case Management: %s" % e)
+        except XFormValidationError, e:
+            messages.error(request, "%s" % e)
+        except Exception, e:
+            if settings.DEBUG and False:
+                raise
+            logging.exception(e)
+            messages.error(request, "Unexpected Error: %s" % e)
 
     try:
-        if form.contents:
-            form.render_xform()
-    except CaseError, e:
-        messages.error(request, "Error in Case Management: %s" % e)
-    except XFormValidationError, e:
-        messages.error(request, "%s" % e)
-    except Exception, e:
-        if settings.DEBUG:
-            raise
-        logging.exception(e)
-        messages.error(request, "Unexpected Error: %s" % e)
-
-    try:
-        languages = form.wrapped_xform().get_languages()
+        languages = xform.get_languages()
     except Exception:
         languages = []
+
+
 
     return {
         'nav_form': form if not is_user_registration else '',
@@ -448,7 +453,6 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
             "commcare_build_options": options,
             "is_standard_build": bool(is_standard_build)
         })
-
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -475,11 +479,11 @@ def view_app(req, domain, app_id=''):
     return view_generic(req, domain, app_id)
 
 @login_and_domain_required
-def form_contents(req, domain, app_id, module_id, form_id):
+def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
 
 @login_and_domain_required
-def user_registration_contents(req, domain, app_id):
+def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
 @login_and_domain_required
@@ -578,24 +582,45 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
+    attributes = {
+        "all": None,
+        "case_type": None, "put_in_root": None,
+        "name": None, "case_label": None, "referral_label": None,
+        "case_list": ('case_list-show', 'case_list-label'),
+    }
+
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+
+    def should_edit(attribute):
+        if attribute == attr:
+            return True
+        if 'all' == attr:
+            if attributes[attribute]:
+                for param in attributes[attribute]:
+                    if not req.POST.get(param):
+                        return False
+                return True
+            else:
+                return req.POST.get(attribute)
+
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}}
-    if   "case_type" == attr:
-        module[attr] = req.POST.get(attr, None)
-    elif "put_in_root" == attr:
-        module[attr] = json.loads(req.POST.get(attr))
-    elif ("name", "case_label", "referral_label").__contains__(attr):
-        name = req.POST.get(attr, None)
-        module[attr][lang] = name
-        if attr == "name":
-            resp['update'].update({'.variable-module_name': module.name[lang]})
-    elif "case_list" == attr:
-        module[attr].show = json.loads(req.POST['show'])
-        module[attr].label[lang] = req.POST['label']
-    else:
-        return HttpResponseBadRequest("Attribute %s not supported" % attr)
+    if should_edit("case_type"):
+        module["case_type"] = req.POST.get("case_type", None)
+    if should_edit("put_in_root"):
+        module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    for attribute in ("name", "case_label", "referral_label"):
+        if should_edit(attribute):
+            name = req.POST.get(attribute, None)
+            module[attribute][lang] = name
+            if should_edit("name"):
+                resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit("case_list"):
+        module["case_list"].show = json.loads(req.POST['case_list-show'])
+        module["case_list"].label[lang] = req.POST['case_list-label']
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
@@ -723,7 +748,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             xform = req.POST.get('xform')
 
         if xform:
-            form.contents = xform
+            form.source = xform
             form.refresh()
         else:
             error = "You didn't select a form to upload"
@@ -767,8 +792,10 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(req.POST['actions']))
-    app.save()
-    return back_to_main(**locals())
+    form.requires = req.POST.get('requires', form.requires)
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_permission('edit-apps')
 def multimedia_list_download(req, domain, app_id):
@@ -779,7 +806,8 @@ def multimedia_list_download(req, domain, app_id):
     filelist = []
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.contents)
+            parsed = XForm(f.source)
+            parsed.validate()
             if include_images:
                 filelist.extend(parsed.image_references)
             if include_audio:
@@ -805,7 +833,8 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     # TODO: make this more fully featured
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.contents)
+            parsed = XForm(f.source)
+            parsed.validate()
             parsed_forms[f] = parsed
             for i in parsed.image_references:
                 if i not in images: images[i] = []
@@ -849,8 +878,9 @@ def edit_commcare_profile(req, domain, app_id):
                 app.profile[type] = {}
             app.profile[type][name] = value
             changed[type][name] = value
-    app.save()
-    return HttpResponse(json.dumps({"status": "ok", "changed": changed}))
+    response_json = {"status": "ok", "changed": changed}
+    app.save(response_json)
+    return json_response(response_json)
 
 @require_POST
 @require_permission('edit-apps')
@@ -881,14 +911,15 @@ def edit_app_lang(req, domain, app_id):
 
 @require_edit_apps
 @require_POST
-def edit_app_translation(request, domain, app_id):
+def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
-    key     = params.get('key')
-    value   = params.get('value')
+    translations = params.get('translations')
+#    key     = params.get('key')
+#    value   = params.get('value')
     app = get_app(domain, app_id)
-    app.set_translation(lang, key, value)
-    response = {"key": key, "value": value}
+    app.set_translations(lang, translations)
+    response = {}
     app.save(response)
     return json_response(response)
 
@@ -915,36 +946,46 @@ def edit_app_attr(req, domain, app_id, attr):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
 
+    attributes = [
+        'all',
+        'recipients', 'name', 'success_message', 'use_commcare_sense',
+        'native_input', 'build_spec', 'show_user_registration'
+        # RemoteApp only
+        'profile_url'
+    ]
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+    
+    def should_edit(attribute):
+        return attribute == attr or ('all' == attr and req.POST.get(attribute))
     resp = {"update": {}}
     # For either type of app
-    if   "recipients" == attr:
+    if should_edit("recipients"):
         recipients = req.POST['recipients']
         app.recipients = recipients
-    elif "name" == attr:
+    if should_edit("name"):
         name = req.POST["name"]
         app.name = name
         resp['update'].update({'.variable-app_name': name})
-    elif "success_message" == attr:
+    if should_edit("success_message"):
         success_message = req.POST['success_message']
         app.success_message[lang] = success_message
-    elif "use_commcare_sense" == attr:
+    if should_edit("use_commcare_sense"):
         use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
         app.use_commcare_sense = use_commcare_sense
-    elif "native_input" == attr:
+    if should_edit("native_input"):
         native_input = json.loads(req.POST['native_input'])
         app.native_input = native_input
-    elif "build_spec" == attr:
+    if should_edit("build_spec"):
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
-    elif "show_user_registration" == attr:
+    if should_edit("show_user_registration"):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     # For RemoteApp
-    elif "profile_url" == attr:
+    if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
-    else:
-        return HttpResponseBadRequest()
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
@@ -1142,11 +1183,12 @@ def download_jad(req, domain, app_id):
         return download_jad(req, domain, app_id)
     try:
         response = HttpResponse(jad)
-    except:
+    except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
     response["Content-Disposition"] = "filename=%s.jad" % "CommCare"
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
+    response["Content-Length"] = len(jad)
     return response
 
 @safe_download
@@ -1155,17 +1197,18 @@ def download_jar(req, domain, app_id):
     See ApplicationBase.create_jadjar
 
     This is the only view that will actually be called
-    in the process of downloading a commplete CommCare.jar
+    in the process of downloading a complete CommCare.jar
     build (i.e. over the air to a phone).
 
     """
     response = HttpResponse(mimetype="application/java-archive")
     app = get_app(domain, app_id)
-    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
     _, jar = app.create_jadjar()
+    response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
+    response['Content-Length'] = len(jar)
     try:
         response.write(jar)
-    except:
+    except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
     return response
@@ -1186,10 +1229,15 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
+
+    # Coupled URL -- Sorry!
+    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
+        **CommCareBuildConfig.fetch().preview.get_build()._doc
+    )
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': "/builds/1.2.dev/7106/Generic/WebDemo/",
+        'build_path': build_path
     })
 
 def emulator_commcare_jar(req, domain, app_id):

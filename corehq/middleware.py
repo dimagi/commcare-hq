@@ -1,8 +1,8 @@
 from django.conf import settings
 from datetime import datetime
 
-# this isn't OR specific
-#OPENROSA_ACCEPT_LANGUAGE = "Accept-Language" 
+# this isn't OR specific, but we like it to be included
+OPENROSA_ACCEPT_LANGUAGE = "HTTP_ACCEPT_LANGUAGE" 
 OPENROSA_VERSION_HEADER = "X-OpenRosa-Version"
 OPENROSA_DATE_HEADER = "Date"
 OPENROSA_HEADERS = [OPENROSA_VERSION_HEADER, OPENROSA_DATE_HEADER]

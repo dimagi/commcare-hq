@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
@@ -33,7 +33,7 @@ import json
 from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
-from utilities.profile import profile as profile_decorator
+from utilities.profile import profile as profile_decorator, profile
 import logging
 
 MISSING_DEPENDECY = \
@@ -73,7 +73,7 @@ def authorize_xform_edit(view):
         @login_and_domain_required
         def wrapper(req, domain):
             pass
-        _, app = Form.get_form(xform_id, and_app=True)
+        _, app = Form.get_form(*xform_id.split('__'), and_app=True)
         if wrapper(request, app.domain):
             # If login_and_domain_required intercepted wrapper
             # and returned an HttpResponse of its own
@@ -86,11 +86,11 @@ def authorize_xform_edit(view):
 def get_xform(form_unique_id):
     "For use with xep_hq_server's GET_XFORM hook."
     form = Form.get_form(form_unique_id)
-    return form.contents
-def put_xform(form_unique_id, contents):
+    return form.source
+def put_xform(form_unique_id, source):
     "For use with xep_hq_server's PUT_XFORM hook."
     form, app = Form.get_form(form_unique_id, and_app=True)
-    form.contents = contents
+    form.source = source
     form.refresh()
     app.save()
 
@@ -168,6 +168,35 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
+
+class FormSource(object):
+    def __init__(self):
+        self._source = {}
+    def __get__(self, form, form_cls):
+        unique_id = form.get_unique_id()
+        if not self._source.has_key(unique_id):
+            try:
+                self._source[unique_id] = form.get_app().fetch_attachment('%s.xml' % unique_id)
+            except Exception:
+                self._source[unique_id] = form.dynamic_properties().get('contents', '')
+        # this type of caching isn't threadsafe
+        return self._source[unique_id]
+
+    def __set__(self, form, value):
+        unique_id = form.get_unique_id()
+        try:
+            app = form.get_app()
+        except KeyError:
+            form.contents = value
+        else:
+            app.put_attachment(value, '%s.xml' % unique_id)
+            self._source[unique_id] = value
+            # I had a problem where form was an old object
+            form = app.get_form(unique_id)
+            if form.dynamic_properties().has_key('contents'):
+                del form.contents
+        form.validation_cache = None
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -181,8 +210,14 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
-    contents    = StringProperty()
-    
+#    contents    = StringProperty()
+    source      = FormSource()
+    validation_cache = StringProperty(required=False)
+
+    @classmethod
+    def generate_id(cls):
+        return hex(random.getrandbits(160))[2:-1]
+
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
@@ -196,38 +231,40 @@ class FormBase(DocumentSchema):
         else:
             return form
     def wrapped_xform(self):
-        return XForm(self.contents)
+        return XForm(self.source)
+    def validate_form(self):
+        if self.validation_cache is None:
+            try:
+                XForm(self.source).validate()
+            except XFormValidationError as e:
+                self.validation_cache = unicode(e)
+            else:
+                self.validation_cache = ""
+            self.get_app().save(increment_version=False)
+        elif self.validation_cache:
+            raise XFormValidationError(self.validation_cache)
+        return self
     def get_unique_id(self):
         if not self.unique_id:
-            self.unique_id = hex(random.getrandbits(160))[2:-1]
+            self.unique_id = FormBase.generate_id()
             self.get_app().save(increment_version=False)
         return self.unique_id
-
+    
     def get_app(self):
         return self._app
     
     def refresh(self):
         pass
-        soup = BeautifulStoneSoup(self.contents)
+        soup = BeautifulStoneSoup(self.source)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
         except Exception:
             self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
     def get_case_type(self):
         return self._parent.case_type
-    
-    def get_contents(self):
-        if self.contents:
-            contents = self.contents
-        else:
-            try:
-                contents = self.fetch_attachment('xform.xml')
-            except Exception:
-                contents = ""
-        return contents
 
     def render_xform(self):
-        xform = XForm(self.contents)
+        xform = XForm(self.source)
         xform.add_case_and_meta(self)
         return xform.render()
 
@@ -252,7 +289,7 @@ class FormBase(DocumentSchema):
             'open_referral', 'update_referral', 'close_referral'))
 
     def get_questions(self, langs):
-        return XForm(self.contents).get_questions(langs)
+        return XForm(self.source).get_questions(langs)
     
     def export_json(self, dump_json=True):
         source = self.to_json()
@@ -262,10 +299,10 @@ class FormBase(DocumentSchema):
         _rename_key(self.name, old_lang, new_lang)
         
     def rename_xform_language(self, old_code, new_code):
-        contents = XForm(self.contents)
-        contents.rename_language(old_code, new_code)
-        contents = contents.render()
-        self.contents = contents
+        source = XForm(self.source)
+        source.rename_language(old_code, new_code)
+        source = source.render()
+        self.source = source
 
     def check_actions(self):
         errors = []
@@ -416,12 +453,14 @@ class Module(IndexedSchema):
             case_list.rename_lang(old_lang, new_lang)
 
     def get_forms(self):
-        l = len(self.forms)
-        for i, form in enumerate(self.forms):
+        self__forms = self.forms
+        l = len(self__forms)
+        for i, form in enumerate(self__forms):
             yield form.with_id(i%l, self)
     @parse_int([1])
     def get_form(self, i):
-        return self.forms[i].with_id(i%len(self.forms), self)
+        self__forms = self.forms
+        return self__forms[i].with_id(i%len(self.forms), self)
 
     def get_detail(self, detail_type):
         for detail in self.details:
@@ -432,7 +471,7 @@ class Module(IndexedSchema):
     def infer_case_type(self):
         case_types = []
         for form in self.forms:
-            xform = form.contents
+            xform = form.source
             soup = BeautifulStoneSoup(xform)
             try:
                 case_type = soup.find('case').find('case_type_id').string.strip()
@@ -512,7 +551,12 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
+            copy.copy_attachments(self)
         return copy
+
+    def copy_attachments(self, other):
+        for name in other._attachments or {}:
+            self.put_attachment(other.fetch_attachment(name), name)
     def revert_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
@@ -534,6 +578,9 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
+        app.copy_attachments(copy)
+        app.delete_attachment('CommCare.jar')
+        app.delete_attachment('CommCare.jad')
         return app
 
     def delete_copy(self, copy):
@@ -553,12 +600,16 @@ class VersionedDoc(Document):
         pass
 
     def export_json(self, dump_json=True):
-        source = self.to_json()
-        
+        source = deepcopy(self.to_json())
         for field in self._meta_fields:
             if field in source:
                 del source[field]
+        _attachments = {}
+        for name in source.get('_attachments', {}):
+            _attachments[name] = self.fetch_attachment(name)
+        source['_attachments'] = _attachments
         self.scrub_source(source)
+
         return json.dumps(source) if dump_json else source
     @classmethod
     def from_source(cls, source, domain):
@@ -566,7 +617,8 @@ class VersionedDoc(Document):
             if field in source:
                 del source[field]
         source['domain'] = domain
-        return cls.wrap(source)
+        app = cls.wrap(source)
+        return app
         
 
 
@@ -661,7 +713,6 @@ class ApplicationBase(VersionedDoc):
         }[(self.native_input,)]
         return self.get_build().get_jadjar(spec)
 
-#    @profile_decorator('create_jadjar.prof')
     def create_jadjar(self):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
@@ -820,10 +871,9 @@ class Application(ApplicationBase, TranslationMixin):
 #            get_url_base(),
 #            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
 #        )
-    #@profile('fetch_xform.prof')
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        return form.render_xform()
+        return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         if lang != "default":
@@ -887,14 +937,13 @@ class Application(ApplicationBase, TranslationMixin):
             'langs': ["default"] + self.langs
         })
     
-    #@profile_decorator('create_all_files.prof')
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
         if self.show_user_registration:
-            files["user_registration.xml"] = self.get_user_registration().render_xform()
+            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
         for lang in ['default'] + self.langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
@@ -903,23 +952,25 @@ class Application(ApplicationBase, TranslationMixin):
         return files
 
     def get_modules(self):
-        l = len(self.modules)
-        for i,module in enumerate(self.modules):
+        self__modules = self.modules
+        l = len(self__modules)
+        for i,module in enumerate(self__modules):
             yield module.with_id(i%l, self)
 
     @parse_int([1])
     def get_module(self, i):
-        return self.modules[i].with_id(i%len(self.modules), self)
+        self__modules = self.modules
+        return self__modules[i].with_id(i%len(self__modules), self)
 
     def get_user_registration(self):
         form = self.user_registration
-        if not form.contents:
-            form.contents = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
+        form._app = self
+        if not form.source:
+            form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
                 get_url_base(),
                 reverse('view_user_registration', args=[self.domain, self.id])
             ))
             self.save(increment_version=False)
-        form._app = self
         return form
 
     def get_forms(self):
@@ -931,9 +982,7 @@ class Application(ApplicationBase, TranslationMixin):
     def get_form(self, unique_form_id):
         def matches(form):
             return form.get_unique_id() == unique_form_id
-        print 'target: ', unique_form_id
         for form in self.get_forms():
-            print form.get_unique_id()
             if matches(form):
                 return form
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
@@ -965,7 +1014,7 @@ class Application(ApplicationBase, TranslationMixin):
         module = self.get_module(module_id)
         form = Form(
             name={lang if lang else "en": name if name else "Untitled Form"},
-            contents=attachment,
+            source=attachment,
         )
         module.forms.append(form)
         form = module.get_form(-1)
@@ -1018,9 +1067,17 @@ class Application(ApplicationBase, TranslationMixin):
         forms.insert(i, forms.pop(j))
         self.modules[module_id]['forms'] = forms
     def scrub_source(self, source):
+        def change_unique_id(form):
+            unique_id = form['unique_id']
+            new_unique_id = FormBase.generate_id()
+            form['unique_id'] = new_unique_id
+            if source['_attachments'].has_key("%s.xml" % unique_id):
+                source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
+        
+        change_unique_id(source['user_registration'])
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
-                del source['modules'][m]['forms'][f]['unique_id']
+                change_unique_id(source['modules'][m]['forms'][f])
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
@@ -1042,7 +1099,7 @@ class Application(ApplicationBase, TranslationMixin):
                     )
                 errors.extend(errors_)
                 try:
-                    _parse_xml(form.contents)
+                    _parse_xml(form.source)
                 except Exception as e:
                     errors.append({
                         'type': "invalid xml",
@@ -1083,7 +1140,7 @@ class Application(ApplicationBase, TranslationMixin):
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
-        return cls.get(r['value']['app']['id']) if r else None
+        return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
         
 
 class NotImplementedYet(Exception):
