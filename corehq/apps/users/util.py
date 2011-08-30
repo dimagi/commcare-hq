@@ -98,3 +98,16 @@ def doc_value_wrapper(doc_cls, value_cls):
         doc_inst = doc_cls.wrap(doc)
         return doc_inst, value_inst
     return wrapper
+
+def user_data_from_registration_form(xform):
+    """
+    Helper function for create_from_xform
+    """
+    user_data = {}
+    if "user_data" in xform.form and "data" in xform.form["user_data"]:
+        items = xform.form["user_data"]["data"]
+        if not isinstance(items, list):
+            items = [items]
+        for item in items:
+            user_data[item["@key"]] = item["#text"]
+    return user_data

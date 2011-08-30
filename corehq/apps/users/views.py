@@ -18,7 +18,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
 from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount,\
-    Invitation, Permissions, require_permission
+    Invitation, Permissions, require_permission, CommCareUser
 from django.contrib.admin.views.decorators import staff_member_required
 from django_digest.decorators import httpdigest
 from corehq.apps.groups.models import Group
@@ -528,9 +528,8 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
-            #username = format_username(username, domain)
-            couch_user = create_hq_user_from_commcare_registration_info(domain, username, password, 
-                                                                        device_id='Generated from HQ')
+
+            couch_user = CommCareUser.create(domain, username, password, device_id='Generated from HQ')
             couch_user.save()
             return HttpResponseRedirect(reverse("commcare_users", args=[domain]))
     else:

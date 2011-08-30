@@ -1,13 +1,9 @@
 from datetime import datetime
-from django.conf import settings
 from django.test import TestCase
-from django.contrib.auth.models import User
-from couchdbkit import Server
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
-from corehq.apps.users.signals import REGISTRATION_XMLNS, create_user_from_commcare_registration
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.signals import create_hq_user_from_commcare_registration_info
+from corehq.apps.users.signals import REGISTRATION_XMLNS
+from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -34,14 +30,17 @@ class CreateTestCase(TestCase):
         username = "joe"
         email = "joe@domain.com"
         password = "password"
-        # create django user
-        new_user = User.objects.create_user(username, email, password)
-        new_user.save()
-        # verify that the default couch stuff was created
-        couch_user = CouchUser.from_django_user(new_user)
-        couch_user.save()
-        self.assertEqual(couch_user.web_account.login.username, username)
-        self.assertEqual(couch_user.web_account.login.email, email)
+        domain = "test"
+        couch_user = WebUser.create(domain, username, password, email)
+
+        self.assertEqual(couch_user.domains, [domain])
+        self.assertEqual(couch_user.email, email)
+        self.assertEqual(couch_user.username, username)
+
+        django_user = couch_user.get_django_user()
+        self.assertEqual(django_user.email, email)
+        self.assertEqual(django_user.username, username)
+
 
     def testCreateCompleteWebUser(self):
         """ 
@@ -51,41 +50,36 @@ class CreateTestCase(TestCase):
         email = "joe@domain.com"
         password = "password"
         # create django user
-        new_user = User.objects.create_user(username, email, password)
-        new_user.save()
-        # verify that the default couch stuff was created
-        couch_user = CouchUser.from_django_user(new_user)
-        self.assertEqual(couch_user.web_account.login.username, username)
-        self.assertEqual(couch_user.web_account.login.email, email)
+        couch_user = WebUser.create(None, username, password, email)
+        self.assertEqual(couch_user.username, username)
+        self.assertEqual(couch_user.email, email)
         couch_user.add_domain_membership('domain1')
-        self.assertEqual(couch_user.web_account.domain_memberships[0].domain, 'domain1')
+        self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
         couch_user.add_domain_membership('domain2')
-        self.assertEqual(couch_user.web_account.domain_memberships[1].domain, 'domain2')
+        self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
 
-        ccu0 = create_hq_user_from_commcare_registration_info(
-            'domain3', 'username3', 'password3', uuid="sdf", device_id='ewr')
-        ccu0.save()
-#        couch_user.link_commcare_account("domain3", ccu0._id, ccu0.commcare_accounts[0].login_id)
-        self.assertEqual(couch_user.commcare_accounts[0].login.username, 'username3')
-        self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')        
-        self.assertEqual(couch_user.commcare_accounts[0].login_id, 'sdf')
-        self.assertEqual(couch_user.commcare_accounts[0].registering_device_id, 'ewr')
-
-        ccu1 = create_hq_user_from_commcare_registration_info(
-                'domain4', 'username4', 'password4', uuid="oiu", device_id='wer', user_data={"extra_data": 'extra'})
-        ccu1.save()
-#        couch_user.link_commcare_account('domain4', ccu1._id, ccu1.commcare_accounts[0].login_id)
-        self.assertEqual(couch_user.commcare_accounts[1].login.username, 'username4')
-        self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
-        self.assertEqual(couch_user.commcare_accounts[1].login_id, 'oiu')
-        self.assertEqual(couch_user.commcare_accounts[1].registering_device_id, 'wer')
-        #TODO: fix
-        #self.assertEqual(couch_user.commcare_accounts[1].user_data['extra_data'], 'extra')
-        couch_user.add_device_id('IMEI')
-        self.assertEqual(couch_user.device_ids[0], 'IMEI')
-        couch_user.add_phone_number('1234567890')
-        self.assertEqual(couch_user.phone_numbers[0], '1234567890')
-        couch_user.save()
+#        ccu0 = CommCareUser.create(
+#            'domain3', 'username3', 'password3', uuid="sdf", device_id='ewr')
+#        ccu0.save()
+#        self.assertEqual(couch_user.commcare_accounts[0].login.username, 'username3')
+#        self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')
+#        self.assertEqual(couch_user.commcare_accounts[0].login_id, 'sdf')
+#        self.assertEqual(couch_user.commcare_accounts[0].registering_device_id, 'ewr')
+#
+#        ccu1 = create_hq_user_from_commcare_registration_info(
+#                'domain4', 'username4', 'password4', uuid="oiu", device_id='wer', user_data={"extra_data": 'extra'})
+#        ccu1.save()
+#        self.assertEqual(couch_user.commcare_accounts[1].login.username, 'username4')
+#        self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
+#        self.assertEqual(couch_user.commcare_accounts[1].login_id, 'oiu')
+#        self.assertEqual(couch_user.commcare_accounts[1].registering_device_id, 'wer')
+#        #TODO: fix
+#        #self.assertEqual(couch_user.commcare_accounts[1].user_data['extra_data'], 'extra')
+#        couch_user.add_device_id('IMEI')
+#        self.assertEqual(couch_user.device_ids[0], 'IMEI')
+#        couch_user.add_phone_number('1234567890')
+#        self.assertEqual(couch_user.phone_numbers[0], '1234567890')
+#        couch_user.save()
 
     def testCreateUserFromRegistration(self):
         """ 
@@ -93,11 +87,11 @@ class CreateTestCase(TestCase):
         this is more of an integration test than a unit test,
         since 
         """
-        sender = "post"
-        create_user_from_commcare_registration(sender, self.xform).response
+
+        CommCareUser.create_from_xform(self.xform)
         # czue: removed lxml reference
         #uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
-        couch_user = CouchUser.view('users/commcare_users_by_login_id', include_docs=True).one()
+        couch_user = CommCareUser.get_by_user_id(self.xform.form['uuid'])
         # django_user = couch_user.get_django_user()
         # self.assertEqual(django_user.username, random_uuid)
         # self.assertEqual(couch_user.web_account.login.username, random_uuid)
@@ -106,11 +100,11 @@ class CreateTestCase(TestCase):
         # this is no longer true; should it be?
         # self.assertEqual(couch_user.web_account.domain_memberships[0].domain, self.domain)
         # they also get an automatic commcare account
-        self.assertEqual(couch_user.commcare_accounts[0].login.username, format_username(self.username, self.domain))
+        self.assertEqual(couch_user.username, format_username(self.username, self.domain))
         #unpredictable, given arbitrary salt to hash
         #self.assertEqual(couch_user.commcare_accounts[0].login.password, 'sha1$29004$678636e813e7909f14b184a5063f80c94b991daf')
-        self.assertEqual(couch_user.commcare_accounts[0].domain, self.domain)
-        self.assertEqual(couch_user.commcare_accounts[0].login_id, self.uuid)
+        self.assertEqual(couch_user.domain, self.domain)
+        self.assertEqual(couch_user.user_id, self.uuid)
         date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
         self.assertEqual(couch_user.created_on, force_to_datetime(date))
         self.assertEqual(couch_user.device_ids[0], self.registering_device_id)

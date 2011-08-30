@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
 import re
-from corehq.apps.users.models import CouchUser, CommCareAccount
+from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from string import Template
@@ -45,7 +45,7 @@ class SuccessMessage(object):
 
     def get_num_forms_since(self, time):
         if not hasattr(self, 'domain'):
-            self.domain = CommCareAccount.get_by_userID(self.userID).domain
+            self.domain = CommCareUser.get_by_user_id(self.userID).domain
         r = get_db().view('reports/submit_history',
             startkey=[self.domain, self.userID, json_format_datetime(time)],
             endkey=[self.domain, self.userID, {}],

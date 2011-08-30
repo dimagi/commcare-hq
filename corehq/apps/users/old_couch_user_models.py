@@ -1,8 +1,17 @@
-from couchdbkit.ext.django.schema import Document, StringProperty, SchemaProperty, ListProperty, DateTimeProperty, DictProperty
-from couchdbkit.schema.properties_proxy import SchemaListProperty
+from __future__ import absolute_import
+
+from datetime import datetime
 from django.contrib.auth.models import User
-from corehq.apps.users.models import Permissions, DomainMembership
+from dimagi.utils.couch.database import get_db
+from couchdbkit.ext.django.schema import *
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.util import django_user_from_couch_id
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.apps.reports.models import ReportNotification
+from casexml.apps.phone.models import User as CaseXMLUser
+from corehq.apps.users.exceptions import NoAccountException
+
+from corehq.apps.users.models import Permissions, DomainMembership, _get_default, _add_to_list
 
 class Login(DocumentSchema):
     username = StringProperty()

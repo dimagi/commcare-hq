@@ -1,32 +1,35 @@
-
 """
 couch models go here
 """
 from __future__ import absolute_import
 
 from datetime import datetime
+import logging
+
 from django.contrib.auth.models import User
-from django.db import models
-from django.http import Http404, HttpResponseForbidden
-from corehq.apps.domain.decorators import login_and_domain_required
-from dimagi.utils.couch.database import get_db
-from djangocouchuser.models import CouchUserProfile
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseForbidden
+from django.template.loader import render_to_string
+
 from couchdbkit.ext.django.schema import *
-from djangocouch.utils import model_to_doc
+from couchdbkit.resource import ResourceNotFound
+
+from casexml.apps.phone.models import User as CaseXMLUser
+
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.users.util import django_user_from_couch_id, \
-    couch_user_from_django_user
-from dimagi.utils.mixins import UnicodeMixIn
-import logging
 from corehq.apps.reports.models import ReportNotification
-from django.contrib.sites.models import Site
-from django.template.loader import render_to_string
-from django.core.urlresolvers import reverse
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import send_HTML_email
-from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.users.exceptions import NoAccountException
+from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.django.database import get_unique_value
+
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -67,9 +70,9 @@ class DomainMembership(DocumentSchema):
     class Meta:
         app_label = 'users'
 
-from .old_couch_user import CouchUser as OldCouchUser
-
 class DjangoUserMixin(DocumentSchema):
+    django_id = IntegerProperty()
+
     username = StringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
@@ -81,6 +84,20 @@ class DjangoUserMixin(DocumentSchema):
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
 
+    ATTRS = (
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'is_staff',
+        'is_active',
+        'is_superuser',
+        'last_login',
+        'date_joined',
+    )
+
+
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     """
@@ -88,27 +105,20 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     """
 
-    domain = StringProperty() # for CommCareAccounts
-    domains = StringListProperty() # for WebAccount
+    base_doc = 'CouchUser'
 
-    django_user = DictProperty()
+    domains = StringListProperty()
 
-    registering_device_id = StringProperty()
     device_ids = ListProperty()
     phone_numbers = ListProperty()
 
-    user_data = DictProperty()
-
-    domain_membership = SchemaListProperty(DomainMembership)
-
     created_on = DateTimeProperty()
 
-    """
-    For now, 'status' is things like:
-        ('auto_created',     'Automatically created from form submission.'),
-        ('phone_registered', 'Registered from phone'),
-        ('site_edited',     'Manually added or edited from the HQ website.'),
-    """
+#    For now, 'status' is things like:
+#        ('auto_created',     'Automatically created from form submission.'),
+#        ('phone_registered', 'Registered from phone'),
+#        ('site_edited',     'Manually added or edited from the HQ website.'),
+    
     status = StringProperty()
 
     _user = None
@@ -159,10 +169,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
 
-    def save(self, **kwargs):
-        # Call the "real" save() method.
-        super(CouchUser, self).save(**kwargs)
-
     def delete(self):
         try:
             user = self.get_django_user()
@@ -172,7 +178,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
     def get_django_user(self):
-        return User.objects.get(pk=self.django_user['id'])
+        return User.objects.get(pk=self.django_id)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -196,8 +202,171 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
+    def sync_from_django_user(self, django_user):
+        if django_user:
+            self.django_id = django_user.id
+        else:
+            django_user = self.get_django_user()
+        for attr in DjangoUserMixin.ATTRS:
+            setattr(self, attr, getattr(django_user, attr))
+
+    def sync_to_django_user(self):
+        django_user = self.get_django_user()
+        for attr in DjangoUserMixin.ATTRS:
+            setattr(django_user, attr, getattr(self, attr))
+        django_user.DO_NOT_SAVE= True
+        return django_user
+
+    def sync_from_old_couch_user(self, old_couch_user):
+        login = old_couch_user.default_account.login
+        self.sync_from_django_user(login)
+
+        for attr in (
+            'device_ids',
+            'phone_numbers',
+            'created_on',
+            'status',
+        ):
+            setattr(self, attr, getattr(old_couch_user, attr))
+
+    @classmethod
+    def from_old_couch_user(cls, old_couch_user, copy_id=True):
+        login = old_couch_user.default_account.login
+        create_user(**dict([(attr, getattr(login, attr)) for attr in login.to_json()]))
+
+        if old_couch_user.account_type == "WebAccount":
+            couch_user = WebUser()
+        else:
+            couch_user = CommCareUser()
+
+        couch_user.sync_from_old_couch_user(old_couch_user)
+
+        if old_couch_user.email:
+            couch_user.email = old_couch_user.email
+
+        if copy_id:
+            couch_user._id = old_couch_user.default_account.login_id
+
+        return couch_user
+
+    @classmethod
+    def get_by_django_id(cls, id):
+        result = get_db().view('users/by_django_id', key=id, include_docs=True).one()
+        if result:
+            return {
+                'WebUser': WebUser,
+                'CommCareUser': CommCareUser,
+            }[result['doc']['doc_type']].wrap(result['doc'])
+        else:
+            return None
+
+    @classmethod
+    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+        django_user = create_user(username, password=password, email=email)
+        if uuid:
+            couch_user = cls(_id=uuid)
+        else:
+            couch_user = cls()
+
+        if date:
+            couch_user.created_on = force_to_datetime(date)
+        else:
+            couch_user.created_on = datetime.utcnow()
+        couch_user.sync_from_django_user(django_user)
+        return couch_user
+
+    def save(self, **params):
+        super(CouchUser, self).save(**params)
+        django_user = self.sync_to_django_user()
+        django_user.save()
+
+    @classmethod
+    def django_user_post_save_signal(cls, django_user, created, **kwargs):
+        if hasattr(django_user, 'DO_NOT_SAVE'):
+            del django_user.DO_NOT_SAVE
+        elif not created:
+            couch_user = cls.get_by_django_id(django_user.id)
+            if not couch_user:
+                raise cls.Inconsistent("Django User has no corresponding CouchUser")
+            couch_user.sync_from_old_couch_user(django_user)
+            # avoid triggering cyclical sync
+            super(CouchUser, couch_user).save()
 
 class CommCareUser(CouchUser):
+    
+    domain = StringProperty()
+    registering_device_id = StringProperty()
+    user_data = DictProperty()
+
+    def sync_from_old_couch_user(self, old_couch_user):
+        super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
+        self.domain                 = old_couch_user.default_account.domain
+        self.registering_device_id  = old_couch_user.default_account.registering_device_id
+        self.user_data              = old_couch_user.default_account.user_data
+
+    @classmethod
+    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+        """
+        used to be a function called `create_hq_user_from_commcare_registration_info`
+
+        """
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        
+        device_id = kwargs.get('device_id', '')
+        user_data = kwargs.get('user_data', {})
+
+        # populate the couch user
+        commcare_user.domain = domain
+        commcare_user.device_ids = [device_id]
+        commcare_user.registering_device_id = device_id
+        commcare_user.user_data = user_data
+
+        commcare_user.save()
+
+        return commcare_user
+
+    @classmethod
+    def create_from_xform(cls, xform):
+        def get_or_create_safe(username, password, uuid, date, registering_phone_id, domain, user_data, **kwargs):
+            # check for uuid conflicts, if one exists, respond with the already-created user
+            try:
+                conflicting_user = CommCareUser.get_by_user_id(uuid)
+                logging.error("Trying to create a new user %s from form %s!  You can't submit multiple registration xmls for the same uuid." % \
+                              (uuid, xform.get_id))
+                return conflicting_user
+            except ResourceNotFound:
+                # Desired outcome
+                pass
+            # we need to check for username conflicts, other issues
+            # and make sure we send the appropriate conflict response to the phone
+            try:
+                username = normalize_username(username, domain)
+            except ValidationError:
+                raise Exception("Username (%s) is invalid: valid characters include [a-z], "
+                                "[0-9], period, underscore, and single quote" % username)
+            try:
+                User.objects.get(username=username)
+            except User.DoesNotExist:
+                # Desired outcome
+                pass
+            else:
+                # Come up with a suitable username
+                prefix, suffix = username.split("@")
+                username = get_unique_value(User.objects, "username", prefix, sep="", suffix="@%s" % suffix)
+            return cls.create(domain, username, password,
+                uuid=uuid,
+                device_id=registering_phone_id,
+                date=date,
+                user_data=user_data
+            )
+
+        # will raise TypeError if xform.form doesn't have all the necessary params
+        return get_or_create_safe(
+            domain=xform.domain,
+            user_data=user_data_from_registration_form(xform),
+            **xform.form
+        )
+
     @classmethod
     def commcare_users_by_domain(cls, domain):
         return CouchUser.view("users/commcare_users_by_domain",
@@ -230,9 +399,29 @@ class CommCareUser(CouchUser):
                            password=self.password,
                            date_joined=self.date_joined,
                            user_data=self.user_data)
+    @classmethod
+    def get_by_user_id(cls, userID):
+        commcare_user = cls.get(userID)
+        if commcare_user.doc_type != cls.__name__:
+            raise CouchUser.AccountTypeError()
+        return commcare_user
 
 class WebUser(CouchUser):
-    base_doc = 'CouchUser'
+
+    domain_memberships = SchemaListProperty(DomainMembership)
+
+    def sync_from_old_couch_user(self, old_couch_user):
+        super(WebUser, self).sync_from_old_couch_user(old_couch_user)
+        self.domains            = old_couch_user.domain_names
+        self.domain_memberships = old_couch_user.web_account.domain_memberships
+
+    @classmethod
+    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+        web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if domain:
+            web_user.add_domain_membership(domain, **kwargs)
+        web_user.save()
+        return web_user
 
     @classmethod
     def from_django_user(cls, django_user):
@@ -429,48 +618,18 @@ class Invitation(Document):
 
     
     
-class HqUserProfile(CouchUserProfile):
-    """
-    The CoreHq Profile object, which saves the user data in couch along
-    with annotating whatever additional fields we need for Hq
-    (Right now, none additional are required)
-    """
-    
-    class Meta:
-        app_label = 'users'
-    
-    def __unicode__(self):
-        return "%s" % self.user
-
-    def get_couch_user(self):
-        return couch_user_from_django_user(self.user)
-        
-def create_hq_user_from_commcare_registration_info(domain, username, password,
-                                                   uuid='', device_id='',
-                                                   date='', user_data={},
-                                                   **kwargs):
-    
-    # create django user for the commcare account
-    login = create_user(username, password, uuid=uuid)
-
-    # hack the domain into the login too for replication purposes
-    couch_user = CommCareUser.get(uuid, db=get_db())
-    
-    # populate the couch user
-    
-    couch_user.add_commcare_account(domain, device_id, user_data)
-
-    if date:
-        couch_user.created_on = force_to_datetime(date)
-    else:
-        couch_user.created_on = datetime.utcnow()
-    
-    couch_user['domains'] = [domain]
-    couch_user.save()
-    
-    return couch_user
-    
-
-    
-# make sure our signals are loaded
-import corehq.apps.users.signals
+#class HqUserProfile(CouchUserProfile):
+#    """
+#    The CoreHq Profile object, which saves the user data in couch along
+#    with annotating whatever additional fields we need for Hq
+#    (Right now, none additional are required)
+#    """
+#
+#    class Meta:
+#        app_label = 'users'
+#
+#    def __unicode__(self):
+#        return "%s" % self.user
+#
+#    def get_couch_user(self):
+#        return couch_user_from_django_user(self.user)

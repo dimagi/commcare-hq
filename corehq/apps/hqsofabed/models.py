@@ -1,8 +1,5 @@
 from sofabed.forms.models import FormDataBase
 from django.db import models
-from corehq.apps.users.models import CouchUser, Login
-from couchdbkit.resource import ResourceNotFound
-from corehq.apps.users.exceptions import NoAccountException
 from sofabed.forms.exceptions import InvalidFormUpdateException
 from corehq.apps.users.util import user_id_to_username
 

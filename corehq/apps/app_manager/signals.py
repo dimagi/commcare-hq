@@ -1,7 +1,7 @@
 from datetime import timedelta
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.users.models import CouchUser, CommCareAccount
+from corehq.apps.users.models import CouchUser, CommCareUser
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
 from casexml.apps.phone import xml
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
@@ -14,9 +14,7 @@ def get_custom_response_message(sender, xform, **kwargs):
     if xform.metadata and xform.metadata.userID:
         userID = xform.metadata.userID
         xmlns = xform.form.get('@xmlns')
-        commcare_account = CommCareAccount.get_by_userID(userID)
-        if not commcare_account:
-            return False
+        commcare_account = CommCareUser.get_by_user_id(userID)
         
         lang = xform.openrosa_headers.get(OPENROSA_ACCEPT_LANGUAGE, "en") \
                 if hasattr(xform, "openrosa_headers") else "en"

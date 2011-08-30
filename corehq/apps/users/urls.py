@@ -38,3 +38,5 @@ urlpatterns = patterns('corehq.apps.users.views',
 
     url(r'^test_autocomplete/$', 'test_autocomplete'),
 )
+
+from .signals import *

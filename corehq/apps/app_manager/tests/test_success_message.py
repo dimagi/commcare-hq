@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.users.models import create_hq_user_from_commcare_registration_info
+from corehq.apps.users.models import create_hq_user_from_commcare_registration_info, CommCareUser
 from datetime import datetime, timedelta
 from dimagi.utils.parsing import json_format_datetime
 from receiver.xml import get_response
@@ -27,8 +27,8 @@ class SuccessMessageTest(TestCase):
     xmlns = "http://dimagi.com/does_not_matter"
     tz = timedelta(hours=0)
     def setUp(self):
-        couch_user = create_hq_user_from_commcare_registration_info(self.domain, self.username, self.password)
-        userID = couch_user.default_commcare_account.login_id
+        couch_user = CommCareUser.create(self.domain, self.username, self.password)
+        userID = couch_user.user_id
         couch_user.first_name = self.first_name
         couch_user.last_name = self.last_name
         couch_user.save()
