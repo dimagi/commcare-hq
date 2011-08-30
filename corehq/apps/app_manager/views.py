@@ -249,9 +249,17 @@ def default(req, domain):
     return view_app(req, domain, app_id='')
 
 def get_form_view_context(request, form, langs, is_user_registration):
-    xform = form.wrapped_xform()
     xform_questions = []
-    if xform.exists():
+    xform = None
+    try:
+        xform = form.wrapped_xform()
+    except XFormError, e:
+        messages.error(request, "Error in form: %s" % e)
+    except Exception, e:
+        logging.exception(e)
+        messages.error(request, "Unexpected error in form: %s" % e)
+
+    if xform and xform.exists():
         try:
             form.validate_form()
             xform_errors = None
@@ -293,8 +301,6 @@ def get_form_view_context(request, form, langs, is_user_registration):
         languages = xform.get_languages()
     except Exception:
         languages = []
-
-
 
     return {
         'nav_form': form if not is_user_registration else '',
