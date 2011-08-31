@@ -6,7 +6,7 @@ from django.utils.http import urlquote
 ########################################################################################################
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.util import couch_user_from_django_user
+from corehq.apps.users.models import CouchUser
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -48,8 +48,7 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 # the call to reverse until post-initialization, which means until during the first actual call
 # into _inner().
 
-def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,                                  
-                                  login_url = settings.LOGIN_URL) :
+def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_url=settings.LOGIN_URL):
     def _outer( view_func ): 
         def _inner(req, domain, *args, **kwargs):
 
@@ -57,7 +56,7 @@ def login_and_domain_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,
             domain_name = normalize_domain_name(domain)
             domains = Domain.objects.filter(name=domain_name)
             if user.is_authenticated() and user.is_active:
-                couch_user = couch_user_from_django_user(user)
+                couch_user = CouchUser.get_by_django_id(user.id)
                 if couch_user.is_member_of(domains):
                     return view_func(req, domain_name, *args, **kwargs)
                 elif user.is_superuser and domains.count():

@@ -1,11 +1,12 @@
-function(doc){ 
-    if (doc.doc_type == "CouchUser") {
-    	for (var i in doc.web_account.domain_memberships) {
-            emit(doc.web_account.domain_memberships[i].domain,  null);
-    	}
-        for (var i in doc.commcare_accounts) {
-            emit(doc.commcare_accounts[i].domain, null);
+function (doc) {
+    var i;
+    if (doc.base_doc === "CouchUser") {
+        if (doc.doc_type === "WebUser") {
+            for (i = 0; i < doc.domain_memberships.length; i += 1) {
+                emit([doc.domain_memberships[i].domain, doc.doc_type],  null);
+            }
+        } else if (doc.doc_type === "CommCareUser") {
+            emit([doc.domain, doc.doc_type], null);
         }
     }
 }
-

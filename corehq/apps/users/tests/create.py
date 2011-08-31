@@ -10,15 +10,15 @@ from dimagi.utils.dates import force_to_datetime
 class CreateTestCase(TestCase):
     
     def setUp(self):
-        all_users = CouchUser.view("users/all_users", include_docs=True)
+        all_users = CouchUser.all()
         for user in all_users:
             user.delete()
         self.xform = XFormInstance()
         self.xform.form = {}
-        self.xform.form['username'] = self.username = 'test_reg'
-        self.xform.form['password'] = self.password = '1982'
-        self.xform.form['uuid'] = self.uuid = 'BXPKZLP49P3DDTJH3W0BRM2HV'
-        self.xform.form['date'] = self.date_string = '2010-03-23'
+        self.xform.form['username'] = self.username     = 'test_reg'
+        self.xform.form['password'] = self.password     = '1982'
+        self.xform.form['uuid']     = self.uuid         = 'BXPKZLP49P3DDTJH3W0BRM2HV'
+        self.xform.form['date']     = self.date_string  = '2010-03-23'
         self.xform.form['registering_phone_id'] = self.registering_device_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
         self.xform.domain = self.domain = 'mock'
         self.xform.xmlns = REGISTRATION_XMLNS

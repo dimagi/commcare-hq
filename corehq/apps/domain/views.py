@@ -1,13 +1,9 @@
 import sys, datetime, uuid
-from django import forms
 from django.conf import settings
 #from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
-from django.core.mail import EmailMultiAlternatives, SMTPConnection
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse
 
@@ -17,12 +13,9 @@ from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_la
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm
-from django_user_registration.models import RegistrationProfile
 from corehq.apps.users.models import CouchUser
 
 from dimagi.utils.web import render_to_response
-from corehq.apps.users.util import couch_user_from_django_user
 from corehq.apps.users.views import require_can_edit_users
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
@@ -159,7 +152,7 @@ def _create_new_domain_request( request, kind, form, now ):
     if kind == "new_user":
         couch_user = CouchUser.from_django_user(new_user)
     else:
-        couch_user = couch_user_from_django_user(new_user)
+        couch_user = CouchUser.from_django_user(new_user)
     couch_user.add_domain_membership(d.name, is_admin=True)
     couch_user.save()
     # Django docs say "use is_authenticated() to see if you have a valid user"

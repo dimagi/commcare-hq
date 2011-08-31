@@ -1,6 +1,5 @@
-from django.http import HttpResponse
+from corehq.apps.users.models import CouchUser
 from django_digest.decorators import *
-from corehq.apps.users.util import couch_user_from_django_user
 from casexml.apps.phone.restore import generate_restore_payload
 
 
@@ -15,7 +14,7 @@ def restore(request, domain):
     user = request.user
     restore_id = request.GET.get('since')
     username = user.username
-    couch_user = couch_user_from_django_user(user)
+    couch_user = CouchUser.from_django_user(user)
     
     if not couch_user.is_commcare_user():
         response = HttpResponse("No linked chw found for %s" % username)

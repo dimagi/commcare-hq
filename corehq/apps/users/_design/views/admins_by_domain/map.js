@@ -1,8 +1,7 @@
-function(doc){ 
-    if (doc.doc_type == "CouchUser" && doc.web_account.login_id != null) {
-        var domain_memberships = doc.web_account.domain_memberships;
-		for (var i in domain_memberships)
-		{
+function (doc) {
+    if (doc.doc_type == "WebUser") {
+        var domain_memberships = doc.domain_memberships, i;
+		for (i = 0; i < domain_memberships.length; i += 1) {
 		    if (domain_memberships[i].is_admin) {
 	           emit(domain_memberships[i].domain,  null);
 	        }

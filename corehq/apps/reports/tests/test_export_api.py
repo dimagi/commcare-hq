@@ -5,7 +5,7 @@ import uuid
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.domain.shortcuts import create_domain, create_user
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from couchforms.models import XFormInstance
 from couchexport.schema import get_docs
 
@@ -42,8 +42,7 @@ class ExportTest(TestCase):
         for form in get_docs([DOMAIN, "http://www.commcarehq.org/export/test"]):
             XFormInstance.wrap(form).delete()
         dom = create_domain(DOMAIN)
-        user = create_user("test", "foobar")
-        couch_user = CouchUser.from_django_user(user)
+        couch_user = WebUser.create(None, "test", "foobar")
         couch_user.add_domain_membership(DOMAIN, is_admin=True)
         couch_user.save()
         

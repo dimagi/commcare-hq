@@ -1,6 +1,5 @@
 import hashlib
 from corehq.apps.domain.models import Domain
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 import tempfile
 

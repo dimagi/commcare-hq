@@ -3,7 +3,7 @@ import re
 from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
-from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -13,26 +13,20 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.user_registration_backend import register_user
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm,\
     AdminInvitesUserForm, UserRegistersSelfForm
-from corehq.apps.hqwebapp.views import password_change
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
-from corehq.apps.users.models import CouchUser, create_hq_user_from_commcare_registration_info, CommCareAccount, CommCareAccount,\
-    Invitation, Permissions, require_permission, CommCareUser
-from django.contrib.admin.views.decorators import staff_member_required
-from django_digest.decorators import httpdigest
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from corehq.apps.users.util import couch_user_from_django_user
 from dimagi.utils.web import render_to_response
-from dimagi.utils.couch.database import get_db
-from .util import doc_value_wrapper
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
-from corehq.apps.reports.models import WeeklyReportNotification,\
-    DailyReportNotification, ReportNotification
+from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
 from django.contrib import messages
 from corehq.apps.reports.tasks import send_report
+from django_digest.decorators import httpdigest
 
 
 def require_permission_to_edit_user(view_func):
@@ -47,8 +41,8 @@ require_can_edit_users = require_permission('edit-users')
 
 def _users_context(request, domain):
     couch_user = request.couch_user
-    web_users = CouchUser.view("users/web_users_by_domain", key=domain, include_docs=True, reduce=False)
-    
+    web_users = WebUser.by_domain(domain)
+
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
 
@@ -57,15 +51,6 @@ def _users_context(request, domain):
         'domain': domain,
         'couch_user': couch_user,
     }
-
-def _get_user_commcare_account_tuples(domain):
-    return get_db().view(
-        "users/commcare_accounts_by_domain",
-        key=domain,
-        include_docs=True,
-        # This wrapper returns tuples of (CouchUser, CommCareAccount)
-        wrapper=doc_value_wrapper(CouchUser, CommCareAccount)
-    )
 
 @login_and_domain_required
 def users(request, domain):
@@ -112,7 +97,7 @@ def accept_invitation(request, domain, invitation_id):
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your 
         # list of domains
-        couch_user = couch_user_from_django_user(request.user)
+        couch_user = CouchUser.from_django_user(request.user)
         couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
         couch_user.save()
         invitation.is_accepted = True
@@ -168,10 +153,8 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     context = _users_context(request, domain)
-    users = list(_get_user_commcare_account_tuples(domain))
+    users = CommCareUser.by_domain(domain)
     users.sort(key=lambda x: x[0].username)
-#    for user, account in users:
-#        user.current_domain = domain
     context.update({
         'commcare_users': users,
     })
@@ -196,7 +179,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # commcare-accounts tab
     my_commcare_login_ids = set([c.login_id for c in couch_user.commcare_accounts])
 
-    all_commcare_accounts = list(_get_user_commcare_account_tuples(domain))
+    all_commcare_accounts = CommCareUser.by_domain(domain)
 
     other_commcare_accounts = []
     for user, account in all_commcare_accounts:
@@ -308,14 +291,10 @@ def delete_domain_membership(request, domain, couch_user_id, domain_name):
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
 
-    exists = get_db().view('users/commcare_users_by_domain_login_id', key=[domain, login_id]).one()
-    if not exists:
+    commcare_user = CommCareUser.get_by_user_id(login_id, domain)
+    if not commcare_user:
         raise Http404
-    login = get_db().get(login_id)
-    if not login:
-        raise Http404
-    django_user_id = login['django_user']['id']
-    django_user = User.objects.get(pk=django_user_id)
+    django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
         if form.is_valid():
@@ -365,7 +344,7 @@ def _handle_user_form(request, domain, couch_user=None):
                 django_user = User()
                 django_user.username = form.cleaned_data['email']
                 django_user.save()
-                couch_user = couch_user_from_django_user(django_user)
+                couch_user = CouchUser.from_django_user(django_user)
             couch_user.first_name = form.cleaned_data['first_name']
             couch_user.last_name = form.cleaned_data['last_name']
             couch_user.email = form.cleaned_data['email']
@@ -391,7 +370,7 @@ def _handle_user_form(request, domain, couch_user=None):
 
 @httpdigest
 @login_and_domain_required
-def httpdigest(request, domain):
+def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 @login_and_domain_required

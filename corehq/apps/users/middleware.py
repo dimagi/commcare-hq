@@ -1,8 +1,8 @@
 from django.conf import settings
 import django.core.exceptions
-from corehq.apps.users.util import couch_user_from_django_user
 
 ############################################################################################################
+from corehq.apps.users.models import CouchUser
 
 class UsersMiddleware(object):
     def __init__(self):        
@@ -19,7 +19,7 @@ class UsersMiddleware(object):
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if request.user and hasattr(request.user, 'get_profile'):
-            request.couch_user = couch_user_from_django_user(request.user)
+            request.couch_user = CouchUser.from_django_user(request.user)
             if 'domain' in view_kwargs:
                 request.couch_user.current_domain = view_kwargs['domain']
         return None

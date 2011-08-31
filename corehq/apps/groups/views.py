@@ -1,10 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.views.decorators.http import require_POST
 from corehq.apps.groups.models import Group
-from django.contrib import messages
-from corehq.apps.users.models import CouchUser, require_permission
-from corehq.apps.users.views import require_can_edit_users
+from corehq.apps.users.decorators import require_permission
 
 require_can_edit_groups = require_permission('edit-users')
 

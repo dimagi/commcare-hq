@@ -1,25 +1,14 @@
-import datetime, sys, uuid
-from django import forms
+import datetime
 from django.conf import settings
-from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import redirect, render_to_response
 from django.template import RequestContext
-from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
-from corehq.apps.domain.models import Domain, RegistrationRequest
-from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
-from corehq.apps.domain.user_registration_backend.forms import UserEmailOnlyRegistrationRequestForm
-from django_user_registration import signals
 from django_user_registration.backends import get_backend
-from django_user_registration.backends.default import DefaultBackend
-from django_user_registration.models import RegistrationProfile
 
 ########################################################################################################
 from corehq.apps.users.models import CouchUser

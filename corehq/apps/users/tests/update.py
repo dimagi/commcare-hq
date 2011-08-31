@@ -1,20 +1,18 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 
 class UpdateTestCase(TestCase):
     
     def setUp(self):
-        all_users = CouchUser.view("users/all_users", include_docs=True)
+        all_users = CouchUser.all()
         for user in all_users:
             user.delete()
         User.objects.all().delete()
         username = "joe"
         email = "joe@domain.com"
         password = "password"
-        self.user = User.objects.create_user(username, email, password)
-        self.user.save()
-        self.couch_user = CouchUser.from_django_user(self.user)
+        self.couch_user = WebUser.create(None, username, email, password)
         self.couch_user.save()
         
     def testAddRemovePhoneNumbers(self):

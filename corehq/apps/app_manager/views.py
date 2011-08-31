@@ -8,7 +8,8 @@ from corehq.apps.app_manager.xform import XFormError, XFormValidationError, Case
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.models import DomainMembership, require_permission, Permissions
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import DomainMembership, Permissions
 import current_builds
 from dimagi.utils.web import render_to_response, json_response, json_request
 

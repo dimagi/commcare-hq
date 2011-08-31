@@ -1,8 +1,5 @@
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 from django.db import models
-from corehq.apps.users.util import couch_user_from_django_user
 
 ##############################################################################################################
 #
@@ -13,10 +10,10 @@ from corehq.apps.users.util import couch_user_from_django_user
 # See ContentType.get_for_model() code for details.
 
 class Domain(models.Model):
-    '''Domain is the highest level collection of people/stuff
+    """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the 
        domain-level, including user membership, permission to 
-       see data, reports, charts, etc.'''
+       see data, reports, charts, etc."""
 
     name  = models.CharField(max_length = 64, unique=True)
     is_active = models.BooleanField(default=False)
@@ -26,15 +23,18 @@ class Domain(models.Model):
     # Utility function - gets active domains in which user has an active membership 
     # Note that User.is_active is not checked here - we're only concerned about usable
     # domains in which the user can theoretically participate, not whether the user 
-    # is cleared to login. 
+    # is cleared to login.
+
     @staticmethod
     def active_for_user(user):
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
             return Domain.objects.none()
-        couch_user = couch_user_from_django_user(user)
+        from corehq.apps.users.models import CouchUser
+        couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            return couch_user.get_active_domains()
+            domain_names = couch_user.domain_names
+            return Domain.objects.filter(name__in=domain_names)
         else:
             return Domain.objects.none()
     

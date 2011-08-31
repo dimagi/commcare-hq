@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, date
 import json
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import user_id_to_username, couch_user_from_django_user
+from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.util import user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import CsvWorkBook
@@ -51,7 +51,7 @@ def login_or_digest(fn):
     def safe_fn(request, domain, *args, **kwargs):
         if not request.user.is_authenticated():
             def _inner(request, domain, *args, **kwargs):
-                couch_user = couch_user_from_django_user(request.user)
+                couch_user = CouchUser.from_django_user(request.user)
                 if couch_user.is_member_of(domain):
                     return fn(request, domain, *args, **kwargs)
                 else:
@@ -321,7 +321,7 @@ def active_cases(request, domain):
     })
 
 def get_active_cases_json(domain, days=31, **kwargs):
-    users = CouchUser.commcare_users_by_domain(domain)
+    users = CommCareUser.by_domain(domain)
     def get_active_cases(userid, days=days):
         since_date = datetime.utcnow() - timedelta(days=days)
         r = get_db().view('case/by_last_date',
@@ -386,7 +386,7 @@ def get_active_cases_json(domain, days=31, **kwargs):
 def case_activity(request, domain):
     params = json_request(request.GET)
     display = params.get('display', ['percent'])
-    userIDs = params.get('userIDs') or [user.userID for user in CouchUser.commcare_users_by_domain(domain)]
+    userIDs = params.get('userIDs') or [user.userID for user in CommCareUser.by_domain(domain)]
     userIDs.sort(key=lambda userID: user_id_to_username(userID))
     landmarks = [timedelta(days=l) for l in params.get('landmarks') or [7,30,90]]
     landmarks.append(None)
@@ -592,7 +592,7 @@ def download_cases(request, domain):
         cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     else:
         cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
-    users = CouchUser.commcare_users_by_domain(domain)
+    users = CommCareUser.by_domain(domain)
 
     workbook = CsvWorkBook()
     export_cases_and_referrals(cases, workbook)
@@ -848,7 +848,7 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 @datespan_default
 def submissions_by_form(request, domain):
     datespan = request.datespan
-    users = CouchUser.commcare_users_by_domain(domain)
+    users = CommCareUser.by_domain(domain)
     userIDs = [user.userID for user in users]
     counts = submissions_by_form_json(domain=domain, userIDs=userIDs, datespan=datespan)
     form_types = _relevant_form_types(domain=domain, userIDs=userIDs, datespan=datespan)

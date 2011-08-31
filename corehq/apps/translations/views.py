@@ -3,7 +3,7 @@ import json
 from django.http import Http404, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
 from corehq.apps.translations.models import Translation, TranslationMixin
-from corehq.apps.users.models import require_permission, Permissions
+from corehq.apps.users.models import Permissions
 from dimagi.utils.web import json_response, json_request, render_to_response
 
 def validate_trans_doc(trans, request, domain=None):

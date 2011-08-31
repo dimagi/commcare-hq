@@ -4,11 +4,8 @@ Hierachical data is stored as described in:
 http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 """
 from __future__ import absolute_import
-import datetime
 import re
 from couchdbkit.ext.django.schema import *
-from couchdbkit.schema.properties_proxy import SchemaListProperty
-from corehq.apps.domain.models import Domain
 
 class Group(Document):
     """

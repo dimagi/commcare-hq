@@ -5,7 +5,7 @@ import json
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.web import render_to_response
@@ -71,7 +71,7 @@ def _household_verification_json(
     for s in stats:
         stats_by_userID[s['userID']] = s
         s['username'] = "*%s" % s['userID']
-    users = CouchUser.commcare_users_by_domain(domain)
+    users = CommCareUser.by_domain(domain)
 
     for user in users:
         userID = user.user_id

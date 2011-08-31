@@ -31,7 +31,7 @@ class SuccessMessage(object):
     @property
     def couch_user(self):
         if not hasattr(self, '_couch_user'):
-            self._couch_user = CouchUser.view('users/by_login', key=self.userID, include_docs=True).one()
+            self._couch_user = CommCareUser.get_by_user_id(self.userID)
         return self._couch_user
 
     @property

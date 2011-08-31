@@ -1,12 +1,11 @@
-from _collections import defaultdict
+from collections import defaultdict
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 import json
 from django.views.decorators.http import require_POST
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.users.models import CommCareAccount, require_permission, Permissions
-from corehq.apps.users.util import format_username
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response, json_request, json_response
@@ -94,12 +93,8 @@ def submissions_json(request, domain):
 
 @require_can_cleanup
 def users_json(request, domain):
-    userIDs = [account.login_id for account in CommCareAccount.view(
-        "users/commcare_accounts_by_domain",
-        key=domain,
-    )]
-    logins = [get_db().get(userID) for userID in userIDs]
-    users = [{"username": l['django_user']['username'], "userID": l['_id']} for l in logins]
+    users = CommCareUser.by_domain(domain)
+    users = [{"username": user.username, "userID": user.user_id} for user in users]
     return json_response(users)
 
 @require_POST

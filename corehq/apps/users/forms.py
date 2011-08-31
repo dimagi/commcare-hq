@@ -1,7 +1,7 @@
 from django import forms
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.util import format_username
 
 class UserForm(forms.Form):
@@ -12,7 +12,7 @@ class UserForm(forms.Form):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    role = forms.ChoiceField(choices=CouchUser.ROLE_LABELS)
+    role = forms.ChoiceField(choices=WebUser.ROLE_LABELS)
     
     class Meta:
         app_label = 'users'

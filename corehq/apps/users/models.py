@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
-from django.http import HttpResponseForbidden
 from django.template.loader import render_to_string
 
 from couchdbkit.ext.django.schema import *
@@ -18,8 +17,6 @@ from couchdbkit.resource import ResourceNotFound
 
 from casexml.apps.phone.models import User as CaseXMLUser
 
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
@@ -196,12 +193,31 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     # Couch view wrappers
     @classmethod
+    def all(cls):
+        return CouchUser.view("users/by_django_id", include_docs=True)
+
+    @classmethod
+    def by_domain(cls, domain):
+        if cls.__name__ == "CouchUser":
+            key = [domain]
+        else:
+            key = [domain, cls.__name__]
+        return cls.view("users/by_domain",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+        )
+
+    @classmethod
     def phone_users_by_domain(cls, domain):
         return CouchUser.view("users/phone_users_by_domain",
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True,
         )
+
+    # for synching
     def sync_from_django_user(self, django_user):
         if django_user:
             self.django_id = django_user.id
@@ -259,6 +275,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             }[result['doc']['doc_type']].wrap(result['doc'])
         else:
             return None
+
+    @classmethod
+    def from_django_user(cls, django_user):
+        return cls.get_by_django_id(django_user.id)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -367,14 +387,6 @@ class CommCareUser(CouchUser):
             **xform.form
         )
 
-    @classmethod
-    def commcare_users_by_domain(cls, domain):
-        return CouchUser.view("users/commcare_users_by_domain",
-            reduce=False,
-            key=domain,
-            include_docs=True,
-        )
-
     def is_commcare_user(self):
         return True
     
@@ -400,10 +412,12 @@ class CommCareUser(CouchUser):
                            date_joined=self.date_joined,
                            user_data=self.user_data)
     @classmethod
-    def get_by_user_id(cls, userID):
+    def get_by_user_id(cls, userID, domain=None):
         commcare_user = cls.get(userID)
         if commcare_user.doc_type != cls.__name__:
             raise CouchUser.AccountTypeError()
+        if domain and commcare_user.domain != domain:
+            return None
         return commcare_user
 
 class WebUser(CouchUser):
@@ -422,17 +436,6 @@ class WebUser(CouchUser):
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
         return web_user
-
-    @classmethod
-    def from_django_user(cls, django_user):
-        login_id = django_user.get_profile()._id
-        assert(len(cls.view("users/couch_users_by_django_profile_id", include_docs=True, key=login_id)) == 0)
-        couch_user = cls()
-        couch_user._id = login_id
-        couch_user.first_name = django_user.first_name
-        couch_user.last_name = django_user.last_name
-        couch_user.email = django_user.email
-        return couch_user
 
     def is_commcare_user(self):
         return False
@@ -474,15 +477,11 @@ class WebUser(CouchUser):
 
     @property
     def domain_names(self):
-        domains = [dm.domain for dm in self.web_account.domain_memberships]
+        domains = [dm.domain for dm in self.domain_memberships]
         if set(domains) == set(self.domains):
             return domains
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
-
-    def get_active_domains(self):
-        domain_names = self.domain_names
-        return Domain.objects.filter(name__in=domain_names)
 
     def is_member_of(self, domain_qs):
         if isinstance(domain_qs, basestring):
@@ -575,20 +574,9 @@ class WebUser(CouchUser):
     def can_edit_users(self, domain):
         return self.has_permission(domain, Permissions.EDIT_USERS)
 
-# this is a permissions decorator
-def require_permission(permission):
-    def decorator(view_func):
-        def _inner(request, domain, *args, **kwargs):
-            if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.has_permission(domain, permission)):
-                return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
-            else:
-                return HttpResponseForbidden()
-        return _inner
-    return decorator
-
-"""
-Django  models go here
-"""
+#
+# Django  models go here
+#
 class Invitation(Document):
     """
     When we invite someone to a domain it gets stored here.
@@ -602,7 +590,7 @@ class Invitation(Document):
     
     _inviter = None
     def get_inviter(self):
-        if self._inviter == None:
+        if self._inviter is None:
             self._inviter = CouchUser.get(self.invited_by)
         return self._inviter
     
@@ -615,21 +603,3 @@ class Invitation(Document):
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name        
         send_HTML_email(subject, self.email, text_content, html_content)
-
-    
-    
-#class HqUserProfile(CouchUserProfile):
-#    """
-#    The CoreHq Profile object, which saves the user data in couch along
-#    with annotating whatever additional fields we need for Hq
-#    (Right now, none additional are required)
-#    """
-#
-#    class Meta:
-#        app_label = 'users'
-#
-#    def __unicode__(self):
-#        return "%s" % self.user
-#
-#    def get_couch_user(self):
-#        return couch_user_from_django_user(self.user)
