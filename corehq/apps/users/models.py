@@ -104,8 +104,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     base_doc = 'CouchUser'
 
-    domains = StringListProperty()
-
     device_ids = ListProperty()
     phone_numbers = ListProperty()
 
@@ -227,10 +225,13 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             setattr(self, attr, getattr(django_user, attr))
 
     def sync_to_django_user(self):
-        django_user = self.get_django_user()
+        try:
+            django_user = self.get_django_user()
+        except User.DoesNotExist:
+            django_user = User(id=self.django_id)
         for attr in DjangoUserMixin.ATTRS:
             setattr(django_user, attr, getattr(self, attr))
-        django_user.DO_NOT_SAVE= True
+        django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -248,7 +249,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     @classmethod
     def from_old_couch_user(cls, old_couch_user, copy_id=True):
         login = old_couch_user.default_account.login
-        create_user(**dict([(attr, getattr(login, attr)) for attr in login.to_json()]))
 
         if old_couch_user.account_type == "WebAccount":
             couch_user = WebUser()
@@ -302,8 +302,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def django_user_post_save_signal(cls, django_user, created, **kwargs):
-        if hasattr(django_user, 'DO_NOT_SAVE'):
-            del django_user.DO_NOT_SAVE
+        if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
+            del django_user.DO_NOT_SAVE_COUCH_USER
         elif not created:
             couch_user = cls.get_by_django_id(django_user.id)
             if not couch_user:
@@ -421,7 +421,7 @@ class CommCareUser(CouchUser):
         return commcare_user
 
 class WebUser(CouchUser):
-
+    domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
 
     def sync_from_old_couch_user(self, old_couch_user):

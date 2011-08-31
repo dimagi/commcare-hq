@@ -2,7 +2,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.test import TestCase
 import json
 from corehq.apps.users import old_couch_user_models
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
 
 COMMCARE_USER = json.loads("""{
@@ -19,7 +19,7 @@ COMMCARE_USER = json.loads("""{
    "commcare_accounts": [
        {
            "doc_type": "CommCareAccount",
-           "domain": "wva",
+           "domain": "test",
            "registering_device_id": "Generated from HQ",
            "user_data": {
            },
@@ -62,27 +62,27 @@ COMMCARE_USER_LOGIN_DOC = json.loads("""{
 }""")
 
 COMMCARE_USER_TARGET = json.loads("""{
-    "status": null,
-    "domain": "wva",
+    "base_doc": "CouchUser",
+    "doc_type": "CommCareUser",
+    "_id": "COMMCARE-USER-LOGIN-DOC-ID",
+    "django_id": 206,
+    "domain": "test",
+    "username": "danny@test.commcarehq.org",
+    "password": "sha1$salt$hash",
+    "first_name": "",
     "last_name": "",
+    "is_active": true,
+    "status": null,
+    "email": "",
     "user_data": {},
     "created_on": null,
     "is_staff": false,
-    "base_doc": "CouchUser",
     "phone_numbers": [],
     "date_joined": "2011-05-01T00:31:34Z",
-    "first_name": "",
-    "password": "sha1$salt$hash",
     "is_superuser": false,
     "last_login": "2011-05-01T00:31:34Z",
-    "email": "",
-    "username": "danny@test.commcarehq.org",
-    "is_active": true,
     "registering_device_id": "Generated from HQ",
-    "doc_type": "CommCareUser",
-    "device_ids": ["Generated from HQ"],
-    "domains": [],
-    "_id": "COMMCARE-USER-LOGIN-DOC-ID"
+    "device_ids": ["Generated from HQ"]
 }""")
 
 WEB_USER = json.loads("""{
@@ -98,7 +98,7 @@ WEB_USER = json.loads("""{
        "domain_memberships": [
            {
                "doc_type": "DomainMembership",
-               "domain": "wvzambia",
+               "domain": "test",
                "last_login": null,
                "is_admin": true,
                "permissions": [
@@ -144,7 +144,9 @@ WEB_USER_LOGIN_DOC = json.loads("""{
 WEB_USER_TARGET = json.loads("""{
     "base_doc": "CouchUser",
     "doc_type": "WebUser",
-    "domains": ["wvzambia"],
+    "_id": "WEB-USER-LOGIN-DOC-ID",
+    "django_id": 246,
+    "domains": ["test"],
     "username": "aroberts@dimagi.com",
     "first_name": "Alex",
     "last_name": "Roberts",
@@ -159,7 +161,7 @@ WEB_USER_TARGET = json.loads("""{
     "domain_memberships": [
         {
            "doc_type": "DomainMembership",
-           "domain": "wvzambia",
+           "domain": "test",
            "last_login": null,
            "is_admin": true,
            "permissions": [
@@ -167,7 +169,6 @@ WEB_USER_TARGET = json.loads("""{
            "date_joined": null
         }
     ],
-    "_id": "WEB-USER-LOGIN-DOC-ID",
     "status": null,
     "device_ids": [],
     "phone_numbers": []
@@ -185,26 +186,29 @@ class MigrateUsersTest(TestCase):
 
     def test_commcare_user_migration(self):
         old_couch_user = old_couch_user_models.CouchUser.get(COMMCARE_USER['_id'])
-        commcare_user = CommCareUser.from_old_couch_user(old_couch_user)
+        commcare_user = CouchUser.from_old_couch_user(old_couch_user)
         commcare_user.save(force_update=True)
+
+        django_user = commcare_user.get_django_user()
+        self.assertEqual(django_user.username, commcare_user.username)
+
         output = commcare_user.to_json()
         del output['_rev']
-        del output['django_id']
         self.assertEqual(
             json.dumps(output, sort_keys=True),
             json.dumps(COMMCARE_USER_TARGET, sort_keys=True)
         )
     def test_web_user_migration(self):
         old_couch_user = old_couch_user_models.CouchUser.get(WEB_USER['_id'])
-        web_user = WebUser.from_old_couch_user(old_couch_user)
+        web_user = CouchUser.from_old_couch_user(old_couch_user)
         web_user.save(force_update=True)
+
+        django_user = web_user.get_django_user()
+        self.assertEqual(django_user.username, web_user.username)
+
         output = web_user.to_json()
         del output['_rev']
-        del output['django_id']
         self.assertEqual(
             json.dumps(output, sort_keys=True),
             json.dumps(WEB_USER_TARGET, sort_keys=True)
         )
-
-    def test_create_commcare_user(self):
-        pass

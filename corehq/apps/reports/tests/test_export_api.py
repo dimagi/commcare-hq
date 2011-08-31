@@ -3,9 +3,9 @@ from django.test import TestCase
 from receiver.util import spoof_submission
 import uuid
 from corehq.apps.receiverwrapper.util import get_submit_url
-from corehq.apps.domain.shortcuts import create_domain, create_user
+from corehq.apps.domain.shortcuts import create_domain
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import WebUser
 from couchforms.models import XFormInstance
 from couchexport.schema import get_docs
 
