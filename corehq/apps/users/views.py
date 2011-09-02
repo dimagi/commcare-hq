@@ -418,7 +418,7 @@ GROUP VIEWS
 
 
 def _get_groups(domain):
-    groups = Group.view("groups/by_domain", key=domain)
+    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
     for group in groups:
         name = re.sub(r'[^\w-]', '-', group.name) if group.name else '-'
         if group.name != name:
@@ -440,7 +440,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 @require_can_edit_users
 def group_members(request, domain, group_name, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    group = Group.view("groups/by_name", key=[domain, group_name]).one()
+    group = Group.view("groups/by_name", key=[domain, group_name], include_docs=True).one()
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
@@ -468,8 +468,8 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
         group.add_user(couch_user)
         group.save()
         #messages.success(request, '%s joined group %s' % (couch_user.username, group.name))
-    my_groups = Group.view("groups/by_user", key=couch_user_id).all()
-    all_groups = Group.view("groups/by_domain", key=domain).all()
+    my_groups = Group.view("groups/by_user", key=couch_user_id, include_docs=True).all()
+    all_groups = Group.view("groups/by_domain", key=domain, include_docs=True).all()
     other_groups = []
     for group in all_groups:
         if group.name not in [g.name for g in my_groups]:

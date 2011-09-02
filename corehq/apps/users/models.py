@@ -267,10 +267,17 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def wrap_correctly(cls, source):
-        return {
-            'WebUser': WebUser,
-            'CommCareUser': CommCareUser,
-        }[source['doc_type']].wrap(source)
+        if source.get('doc_type') == 'CouchUser' and \
+                source.has_key('commcare_accounts') and \
+                source.has_key('web_accounts'):
+            from . import old_couch_user_models
+            user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
+            return cls.get_by_user_id(user_id)
+        else:
+            return {
+                'WebUser': WebUser,
+                'CommCareUser': CommCareUser,
+            }[source['doc_type']].wrap(source)
 
     @classmethod
     def get_by_django_id(cls, id):
@@ -605,7 +612,10 @@ class Invitation(Document):
     _inviter = None
     def get_inviter(self):
         if self._inviter is None:
-            self._inviter = CouchUser.get(self.invited_by)
+            self._inviter = CouchUser.get_by_user_id(self.invited_by)
+            if self._inviter.user_id != self.invited_by:
+                self.invited_by = self._inviter.user_id
+                self.save()
         return self._inviter
     
     def send_activation_email(self):

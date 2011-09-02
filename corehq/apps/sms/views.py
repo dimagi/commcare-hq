@@ -60,7 +60,7 @@ def messaging(request, domain, template="sms/default.html"):
 #        endkey=[domain, {}],
 #        include_docs=True
 #    )
-#    groups = Group.view("groups/by_domain", key=domain)
+#    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
     context['domain'] = domain
 #    context['phone_users'] = phone_users
 #    context['groups'] = groups
@@ -102,7 +102,7 @@ def get_sms_autocomplete_context(request, domain):
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
     )
-    groups = Group.view("groups/by_domain", key=domain)
+    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
 
     contacts = []
     contacts.extend(['%s (group)' % group.name for group in groups])
