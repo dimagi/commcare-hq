@@ -15,7 +15,7 @@ class Command(LabelCommand):
         for old_couch_user in old_couch_users:
             try:
                 couch_user = CouchUser.from_old_couch_user(old_couch_user)
-                couch_user.old_couch_user_id = old_couch_user.get_id()
+                couch_user.old_couch_user_id = old_couch_user.get_id
                 couch_user.save(force_update=True)
             except Exception as e:
                 print "There was an error migrating CouchUser with _id %s: %s" % (
