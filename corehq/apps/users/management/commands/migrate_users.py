@@ -24,7 +24,6 @@ class Command(LabelCommand):
                 )
             else:
                 print "Migrated %s (%s)" % (couch_user.username, couch_user.user_id)
-                #old_couch_user.delete()
 
         print "Creating old => new user _id map"
         couch_users = CouchUser.all()
@@ -32,7 +31,7 @@ class Command(LabelCommand):
         for couch_user in couch_users:
             try:
                 old_id = couch_user.old_couch_user_id
-            except AttributeError:
+            except KeyError:
                 pass
             else:
                 id_map[old_id] = couch_user.user_id
@@ -40,7 +39,7 @@ class Command(LabelCommand):
         print "Cleaning up references..."
 
         print "* Group"
-        for group in Group.view('groups/by_user', keys=id_map.keys(), include_doc=True):
+        for group in Group.view('groups/by_user', keys=id_map.keys(), include_docs=True):
             for i, user_id in group.users:
                 if user_id in id_map:
                     group.users[i] = id_map[user_id]
