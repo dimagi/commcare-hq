@@ -38,7 +38,7 @@
     <select name="user" id="user">
         <option value="" {% if not user_id %}selected="selected"{% endif %}>All users</option>
         {% for user,count in user_data %}
-        <option value="{{ user.get_id }}" {% if user.get_id == user_id %}selected="selected"{% endif %}>{% render_user_inline user %} ({{count}} forms)</option>
+        <option value="{{ user.user_id }}" {% if user.user_id == user_id %}selected="selected"{% endif %}>{% render_user_inline user %} ({{count}} forms)</option>
         {% endfor %}
     </select>
 {% endif %}

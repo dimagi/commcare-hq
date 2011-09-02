@@ -53,25 +53,23 @@
             });
         </script>
     </th>
-    <th>{# {% trans "Web Account" %} #}</th>
     <th>{% trans "CommCare Account" %}</th>
     <th>{% trans "Reset Password" %}</th>
     <th>{% trans "Date Registered" %}</th>
     <th>{% trans "Phone Numbers" %}</th>
 </tr>
-{% for user, account in commcare_users %}
-    {% ifchanged user.get_id %}
+{% for user in commcare_users %}
+    {% ifchanged user.user_id %}
         <tr class="{% cycle "odd" "even" %}">
     {% else %}
         <tr class="same_as_last">
     {% endifchanged %}
         <td></td>
-        <td>{% ifchanged %}{{ user.web_account.username_html|safe }}{% endifchanged %}</td>
-        <td><a href="{% url user_account domain user.get_id %}">{{ account.username_html|safe }}</a></td>
+        <td><a href="{% url user_account domain user.user_id %}">{{ user.html_username|safe }}</a></td>
         <td>
             <a href="#" class="dialog_opener">reset</a>
-            <div class="dialog reset_password" title="Reset Password" data-src="{% url change_password domain account.login_id %}">
-                <p>Reset Password for {{ account.username_html|safe }}</p>
+            <div class="dialog reset_password" title="Reset Password" data-src="{% url change_password domain user.user_id %}">
+                <p>Reset Password for {{ user.html_username|safe }}</p>
                 <div>
                     <form action="">
                         <table>
@@ -102,7 +100,7 @@
                 </div>
             </div>
         </td>
-        <td>{{ account.login.date_joined.date }}</td>
+        <td>{{ user.date_joined.date }}</td>
         <td>
         {% ifchanged %}
                 {% if user.phone_numbers %}

@@ -134,7 +134,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
-            data["invited_by"] = request.couch_user.get_id
+            data["invited_by"] = request.couch_user.user_id
             data["invited_on"] = datetime.utcnow()
             data["domain"] = domain
             invite = Invitation(**data)
@@ -154,7 +154,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 def commcare_users(request, domain, template="users/commcare_users.html"):
     context = _users_context(request, domain)
     users = CommCareUser.by_domain(domain)
-    users.sort(key=lambda x: x[0].username)
+    users = sorted(users, key=lambda x: x.username)
     context.update({
         'commcare_users': users,
     })
@@ -163,7 +163,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
     context = _users_context(request, domain)
-    couch_user = CouchUser.get(couch_user_id)
+    couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
@@ -175,24 +175,9 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         else:
             messages.error(request, "Please enter digits only")
 
-
-    # commcare-accounts tab
-    my_commcare_login_ids = set([c.login_id for c in couch_user.commcare_accounts])
-
-    all_commcare_accounts = CommCareUser.by_domain(domain)
-
-    other_commcare_accounts = []
-    for user, account in all_commcare_accounts:
-        # we don't bother showing the duplicate commcare users.
-        # these need to be resolved elsewhere.
-        if hasattr(account,'is_duplicate') and account.is_duplicate == True:
-            continue
-        if account.login_id not in my_commcare_login_ids:
-            other_commcare_accounts.append((user, account))
-
     # domain-accounts tab
-    if request.user.is_superuser:
-        my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
+    if request.user.is_superuser and not couch_user.is_commcare_user():
+        my_domains = couch_user.get_domains()
         context.update({"user": request.user,
                         "domains": my_domains
                         })
@@ -203,7 +188,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         'phone_numbers': couch_user.phone_numbers,
 
         # for commcare-accounts tab
-        "other_commcare_accounts": other_commcare_accounts,
+#        "other_commcare_accounts": other_commcare_accounts,
     })
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
@@ -218,7 +203,7 @@ def delete_phone_number(request, domain, couch_user_id):
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    user = CouchUser.get(couch_user_id)
+    user = WebUser.get_by_user_id(couch_user_id, domain)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
@@ -229,7 +214,7 @@ def delete_phone_number(request, domain, couch_user_id):
 #@require_POST
 #@require_permission_to_edit_user
 #def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
-#    user = CouchUser.get(couch_user_id)
+#    user = WebUser.get_by_user_id(couch_user_id, domain)
 #    if 'commcare_couch_user_id' not in request.POST:
 #        return Http404("Poorly formed link request")
 #    user.link_commcare_account(domain,
@@ -240,7 +225,7 @@ def delete_phone_number(request, domain, couch_user_id):
 #@require_POST
 #@require_permission_to_edit_user
 #def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
-#    user = CouchUser.get(couch_user_id)
+#    user = WebUser.get_by_user_id(couch_user_id, domain)
 #    if commcare_user_index:
 #        user.unlink_commcare_account(domain, commcare_user_index)
 #        user.save()
@@ -254,23 +239,23 @@ def delete_phone_number(request, domain, couch_user_id):
 @login_and_domain_required
 def domain_accounts(request, domain, couch_user_id, template="users/domain_accounts.html"):
     context = _users_context(request, domain)
-    couch_user = CouchUser.get(couch_user_id)
+    couch_user = WebUser.get_by_user_id(couch_user_id, domain)
     if request.method == "POST" and 'domain' in request.POST:
         domain = request.POST['domain']
         couch_user.add_domain_membership(domain)
         couch_user.save()
         messages.success(request,'Domain added')
-    my_domains = [dm.domain for dm in couch_user.web_account.domain_memberships]
+    my_domains = couch_user.get_domains()
     context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
     context.update({"user": request.user,
-                    "domains": [dm.domain for dm in couch_user.web_account.domain_memberships],
+                    "domains": couch_user.get_domains(),
                     })
     return render_to_response(request, template, context)
 
 @require_POST
 @require_superuser
 def add_domain_membership(request, domain, couch_user_id, domain_name):
-    user = CouchUser.get(couch_user_id)
+    user = WebUser.get_by_user_id(couch_user_id, domain)
     if domain_name:
         user.add_domain_membership(domain_name)
         user.save()
@@ -279,10 +264,10 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @require_POST
 @require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    user = CouchUser.get(couch_user_id)
-    for i in range(0,len(user.web_account.domain_memberships)):
-        if user.web_account.domain_memberships[i].domain == domain_name:
-            del user.web_account.domain_memberships[i]
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    for i, dm in enumerate(user.domain_memberships):
+        if dm.domain == domain_name:
+            del user.domain_memberships[i]
             break
     user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
@@ -336,7 +321,7 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = True
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_users(domain))\
-        and request.couch_user._id != couch_user._id and couch_user.web_account.domain_memberships
+        and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST)
         if form.is_valid():
@@ -359,11 +344,11 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
-
             if can_change_admin_status:
                 form.initial['role'] = couch_user.get_role(domain)
-            else:
-                del form.fields['role']
+
+    if not can_change_admin_status:
+        del form.fields['role']
 
     context.update({"form": form})
     return context
@@ -417,7 +402,7 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 @require_POST
 def test_scheduled_report(request, domain, couch_user_id, report_id):
     rep = ReportNotification.get(report_id)
-    user = CouchUser.get(couch_user_id)
+    user = WebUser.get_by_user_id(couch_user_id, domain)
     try:
         send_report(rep, user)
     except SMTPRecipientsRefused:
@@ -459,9 +444,9 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
     members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
-    member_ids = set([member._id for member in members])
-    all_users = CouchUser.view("users/by_domain", key=domain, include_docs=True, reduce=False).all()
-    nonmembers = [user for user in all_users if user._id not in member_ids]
+    member_ids = set([member.user_id for member in members])
+    all_users = CommCareUser.by_domain(domain)
+    nonmembers = [user for user in all_users if user.user_id not in member_ids]
 
     context.update({"domain": domain,
                     "group": group,
@@ -477,7 +462,7 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
 @require_can_edit_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = _users_context(request, domain)
-    couch_user = CouchUser.get(couch_user_id)
+    couch_user = WebUser.get_by_user_id(couch_user_id, domain)
     if request.method == "POST" and 'group' in request.POST:
         group = request.POST['group']
         group.add_user(couch_user)

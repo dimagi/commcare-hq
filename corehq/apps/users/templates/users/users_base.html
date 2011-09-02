@@ -17,7 +17,7 @@
             <div class="sidebar" id="user-options">
                 <strong>My Account</strong>
                 <ul>
-                    <li><a href="{% url user_account domain request.couch_user.get_id %}">Account Settings</a>
+                    <li><a href="{% url user_account domain request.couch_user.user_id %}">Account Settings</a>
                             {% block account_indicator %}{% endblock %}
                     </li>
                     <li><a href="{% url change_my_password domain %}">Change Password</a></li>

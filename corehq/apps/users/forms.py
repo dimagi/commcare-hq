@@ -12,7 +12,7 @@ class UserForm(forms.Form):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    role = forms.ChoiceField(choices=WebUser.ROLE_LABELS)
+    role = forms.ChoiceField(choices=WebUser.ROLE_LABELS, required=False)
     
     class Meta:
         app_label = 'users'

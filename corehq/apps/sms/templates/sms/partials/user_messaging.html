@@ -7,7 +7,7 @@
 		{% if phone_users %}
 		<SELECT MULTIPLE id="userrecipients" class="checklist" size=20>
 			{% for phone_user in phone_users %}
-                <option value={{phone_user.get_id}}_{{phone_user.default_phone_number}}>
+                <option value={{phone_user.user_id}}_{{phone_user.default_phone_number}}>
                     {{ phone_user.default_account.username_html|safe }} (+{{phone_user.default_phone_number}})
                 </option>
 			{% endfor %}

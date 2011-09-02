@@ -46,7 +46,7 @@ def messaging(request, domain, template="sms/default.html"):
 #                    #users = [m for m in CouchUser.view("users/all_users", keys=user_ids, include_docs=True).all()]
 #                    for user in users:
 #                        success = util.send_sms(domain,
-#                                                user.get_id,
+#                                                user.user_id,
 #                                                user.default_phone_number,
 #                                                text)
 #                        if not success:

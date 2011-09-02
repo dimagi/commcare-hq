@@ -15,7 +15,7 @@
 	<tr><td></td>
 		<td>
             <a href="{% url user_account domain user.couch_id %}">
-                {{ user.web_account.username_html|safe }}
+                {{ user.html_username|safe }}
             </a>
         </td>
 		<td>{{ user.role_label }}</td>

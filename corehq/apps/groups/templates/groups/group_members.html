@@ -12,25 +12,23 @@
 	<h1>Members of {{ group.name }}</h1>
 	<table class='big_border'>
 	{% for member in members %}
-        {% with member.default_account as account %}
-            <tr><td></td>
-                <td>{{ account.username_html|safe }}</td>
-                <td>
-                    <a class="delete_link" href="#"></a>
-                    <div class="dialog delete_dialog" title="Leave {{ group.name }}?">
-                        <form name="leave_group" action="{% url leave_group domain group.get_id member.get_id %}" method="POST">
-                            <table>
-                                <tr><td>
-                                Are you sure you want to drop user {{ account.username_html|safe }} from the group "{{ group.name }}"?
-                                </td></tr>
-                            </table>
-                            <input type="hidden" name="redirect_url" value="group_members" />
-                            <input type="submit" value="Remove" />
-                        </form>
-                    </div>
-                </td>
-            </tr>
-        {% endwith %}
+        <tr><td></td>
+            <td>{{ member.html_username|safe }}</td>
+            <td>
+                <a class="delete_link" href="#"></a>
+                <div class="dialog delete_dialog" title="Leave {{ group.name }}?">
+                    <form name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="POST">
+                        <table>
+                            <tr><td>
+                            Are you sure you want to drop user {{ member.html_username|safe }} from the group "{{ group.name }}"?
+                            </td></tr>
+                        </table>
+                        <input type="hidden" name="redirect_url" value="group_members" />
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
+            </td>
+        </tr>
 	{% endfor %}
 	</table>
 	
@@ -38,24 +36,22 @@
 	<h1>Non-Members</h1>
 	<table class='big_border'>
 	{% for nonmember in nonmembers %}
-        {% with nonmember.default_account as account %}
-            <tr><td></td>
-                <td>{{ account.username_html|safe }}</td>
-                <td><a class="new_link dialog_opener" href="#">Add</a>
-                    <div class="dialog" title="Join {{ group.name }}?">
-                        <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
-                            <table>
-                                <tr><td>
-                                Are you sure you want to add user {{ account.username_html|safe }} to group "{{ group.name }}"?
-                                </td></tr>
-                            </table>
-                            <input type="hidden" name="redirect_url" value="group_members" />
-                            <input type="submit" value="Add" />
-                        </form>
-                    </div>
-                </td>
-            </tr>
-        {% endwith %}
+        <tr><td></td>
+            <td>{{ nonmember.html_username|safe }}</td>
+            <td><a class="new_link dialog_opener" href="#">Add</a>
+                <div class="dialog" title="Join {{ group.name }}?">
+                    <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
+                        <table>
+                            <tr><td>
+                            Are you sure you want to add user {{ nonmember.html_username|safe }} to group "{{ group.name }}"?
+                            </td></tr>
+                        </table>
+                        <input type="hidden" name="redirect_url" value="group_members" />
+                        <input type="submit" value="Add" />
+                    </form>
+                </div>
+            </td>
+        </tr>
 	{% endfor %}
 	</table>	
 </div>

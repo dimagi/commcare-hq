@@ -15,22 +15,22 @@
 	</script>
     <style>
         .next-to-sidebar {
-            padding: 0px;
+            padding: 0;
         }
     </style>
 {% endblock %}
 
 {% block web_users_indicator %}
-    {% if couch_user.get_id != request.couch_user.get_id and couch_user.web_account.login_id %}
+    {% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
         <ul>
-            <li class="selected">{{ couch_user.username_html|safe }}</li>
+            <li class="selected">{{ couch_user.html_username|safe }}</li>
         </ul>
     {% endif %}
 {% endblock %}
 {% block commcare_users_indicator %}
-    {% if couch_user.get_id != request.couch_user.get_id and couch_user.commcare_accounts %}
+    {% if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
         <ul>
-            <li class="selected">{{ couch_user.username_html|safe }}</li>
+            <li class="selected">{{ couch_user.html_username|safe }}</li>
         </ul>
     {% endif %}
 {% endblock %}
@@ -41,10 +41,10 @@
         <ul>
             <li><a href="#basic-info">Basic</a></li>
             <li><a href="#phone-numbers">Phone Numbers</a></li>
-            {% if couch_user.user_data %}
+            {% if couch_user.is_commcare_user and couch_user.user_data %}
             <li><a href="#user-data">Custom Registration Data</a></li>
             {% endif %}
-            {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
+            {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
             <li><a href="#scheduled-reports">My Scheduled Reports</a></li>
             <li><a href="#domains">My Domains</a></li>
             {% endif %}
@@ -55,7 +55,7 @@
                 <table class="edit_single_user">
                     <tr>
                         <th>Username:</th>
-                        <td>{{ couch_user.default_account.username_html|safe }}</td>
+                        <td>{{ couch_user.html_username|safe }}</td>
                     </tr>
                     {{ form.as_table }}
                     <tr>
@@ -68,12 +68,12 @@
         <div id="phone-numbers">
             {% include "users/partial/phone_numbers.html" %}
         </div>
-        {% if couch_user.user_data %}
+        {% if couch_user.is_commcare_user and couch_user.user_data %}
         <div id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
-        {% if couch_user.get_id == request.couch_user.get_id and couch_user.web_account.login_id %}
+        {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <div id="scheduled-reports">
             {% include "users/partial/scheduled_reports.html" %}
         </div>

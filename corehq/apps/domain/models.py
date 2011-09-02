@@ -33,7 +33,7 @@ class Domain(models.Model):
         from corehq.apps.users.models import CouchUser
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.domain_names
+            domain_names = couch_user.get_domains()
             return Domain.objects.filter(name__in=domain_names)
         else:
             return Domain.objects.none()

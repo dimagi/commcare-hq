@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block user-view %}
 <div class='all_users'>
-	<h1>GROUPS ASSOCIATED WITH {{ couch_user.get_id }}</h1>
+	<h1>GROUPS ASSOCIATED WITH {{ couch_user.user_id }}</h1>
 	<table class='big_border'>
 	<tr><td></td>
 		<td>{% trans "Group Name" %}</td>
@@ -38,7 +38,7 @@
 		<td>{{ group.name }}</a></td>
     	<td><a class="add_link" href="#">Join</a>
 	        <div class="add_dialog" title="Add {{ group }}?">
-	            <form  name="join_group" action="{% url join_group domain group.get_id couch_user.couch_id %}" method="POST">
+	            <form  name="join_group" action="{% url join_group domain group.get_id couch_user.user_id %}" method="POST">
 	                <table>
 	                    <tr><td>
 	                    Are you sure you want to join the group "{{ group.name }}"?

@@ -162,7 +162,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     formatted_name = full_name
         
     def get_scheduled_reports(self):
-        return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
+        return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
 
     def delete(self):
         try:
@@ -228,7 +228,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
-            django_user = User(id=self.django_id)
+            django_user = User(id=self.django_id, username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             setattr(django_user, attr, getattr(self, attr))
         django_user.DO_NOT_SAVE_COUCH_USER= True
@@ -266,15 +266,38 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return couch_user
 
     @classmethod
+    def wrap_correctly(cls, source):
+        return {
+            'WebUser': WebUser,
+            'CommCareUser': CommCareUser,
+        }[source['doc_type']].wrap(source)
+
+    @classmethod
     def get_by_django_id(cls, id):
         result = get_db().view('users/by_django_id', key=id, include_docs=True).one()
         if result:
-            return {
-                'WebUser': WebUser,
-                'CommCareUser': CommCareUser,
-            }[result['doc']['doc_type']].wrap(result['doc'])
+            return cls.wrap_correctly(result['doc'])
         else:
             return None
+
+    @classmethod
+    def get_by_user_id(cls, userID, domain=None):
+        couch_user = cls.wrap_correctly(get_db().get(userID))
+        if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
+            raise CouchUser.AccountTypeError()
+        if domain:
+            if hasattr(couch_user, 'domain'):
+                if couch_user.domain != domain:
+                    return None
+            elif hasattr(couch_user, 'domains'):
+                if domain not in couch_user.domains:
+                    return None
+            else:
+                raise CouchUser.AccountTypeError("User %s (%s) has neither domain nor domains" % (
+                    couch_user.username,
+                    couch_user.user_id
+                ))
+        return couch_user
 
     @classmethod
     def from_django_user(cls, django_user):
@@ -411,14 +434,6 @@ class CommCareUser(CouchUser):
                            password=self.password,
                            date_joined=self.date_joined,
                            user_data=self.user_data)
-    @classmethod
-    def get_by_user_id(cls, userID, domain=None):
-        commcare_user = cls.get(userID)
-        if commcare_user.doc_type != cls.__name__:
-            raise CouchUser.AccountTypeError()
-        if domain and commcare_user.domain != domain:
-            return None
-        return commcare_user
 
 class WebUser(CouchUser):
     domains = StringListProperty()
@@ -475,8 +490,7 @@ class WebUser(CouchUser):
         else:
             return False
 
-    @property
-    def domain_names(self):
+    def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
         if set(domains) == set(self.domains):
             return domains
@@ -485,8 +499,8 @@ class WebUser(CouchUser):
 
     def is_member_of(self, domain_qs):
         if isinstance(domain_qs, basestring):
-            return domain_qs in self.domain_names or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.domain_names).count()
+            return domain_qs in self.get_domains() or self.is_superuser
+        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
         if membership_count > 0:
             return True
         return False

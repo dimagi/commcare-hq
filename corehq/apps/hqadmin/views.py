@@ -25,8 +25,14 @@ def domain_list(request):
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
-    webuser_counts.update(dict([(row["key"], row["value"]) for row in get_db().view("users/web_users_by_domain", group=True,group_level=1).all()]))
-    commcare_counts.update(dict([(row["key"], row["value"]) for row in get_db().view("users/commcare_users_by_domain", group=True,group_level=1).all()]))
+    for row in get_db().view('users/by_domain', group=True).all():
+        domain, doc_type = row['key']
+        value = row['value']
+        {
+            'WebUser': webuser_counts,
+            'CommCareUser': commcare_counts
+        }[doc_type][domain] = value
+
     form_counts.update(dict([(row["key"][0], row["value"]) for row in get_db().view("reports/all_submissions", group=True,group_level=1).all()]))
     for dom in domains:
         dom.web_users = webuser_counts[dom.name]
