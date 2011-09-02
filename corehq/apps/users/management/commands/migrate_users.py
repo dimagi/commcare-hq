@@ -39,17 +39,25 @@ class Command(LabelCommand):
         print "Cleaning up references..."
 
         print "* Group"
+        group_ids = set()
         for group in Group.view('groups/by_user', keys=id_map.keys(), include_docs=True):
+            if group._id in group_ids:
+                continue
             for i, user_id in enumerate(group.users):
                 if user_id in id_map:
                     group.users[i] = id_map[user_id]
             group.save()
+            group_ids.add(group._id)
 
         print "* ReportNotification"
+        notification_ids = set()
         for notification in ReportNotification.view('reports/user_notifications',
                                                     keys=id_map.keys(),
                                                     include_docs=True):
+            if notification._id in notification_ids:
+                continue
             for i, user_id in enumerate(notification.user_ids):
                 if user_id in id_map:
                     notification.user_ids[i] = id_map[user_id]
             notification.save()
+            notification_ids.add(notification._id)
