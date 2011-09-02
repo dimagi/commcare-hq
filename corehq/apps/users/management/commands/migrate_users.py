@@ -40,7 +40,7 @@ class Command(LabelCommand):
 
         print "* Group"
         for group in Group.view('groups/by_user', keys=id_map.keys(), include_docs=True):
-            for i, user_id in group.users:
+            for i, user_id in enumerate(group.users):
                 if user_id in id_map:
                     group.users[i] = id_map[user_id]
             group.save()
@@ -49,7 +49,7 @@ class Command(LabelCommand):
         for notification in ReportNotification.view('reports/user_notifications',
                                                     keys=id_map.keys(),
                                                     include_docs=True):
-            for i, user_id in notification.user_ids:
+            for i, user_id in enumerate(notification.user_ids):
                 if user_id in id_map:
                     notification.user_ids[i] = id_map[user_id]
             notification.save()
