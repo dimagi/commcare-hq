@@ -51,7 +51,7 @@ def user_id_to_username(user_id):
         login = get_db().get(user_id)
     except ResourceNotFound:
         return None
-    return raw_username(login['django_user']['username'])
+    return raw_username(login['username'])
 
 def django_user_from_couch_id(id):
     """
