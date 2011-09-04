@@ -16,3 +16,4 @@ djtables
 decorator
 mocker
 xlutils
+pygooglecharts
