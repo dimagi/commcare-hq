@@ -141,7 +141,7 @@ def send_to_recipients(request, domain):
                 phone_numbers.append(recipient)
 
 
-        login_ids = dict([(r['key'], r['value']) for r in get_db().view("users/logins_by_username", keys=usernames).all()])
+        login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames).all()])
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)

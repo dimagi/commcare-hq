@@ -4,6 +4,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.util import format_username
 from dimagi.utils.couch.database import get_db
 
+# This management command was broken by the user refactor
 class Command(LabelCommand):
     help = "Goes through and changes meta.userID to match the UUID for the user given by meta.username and the domain"
     args = ""

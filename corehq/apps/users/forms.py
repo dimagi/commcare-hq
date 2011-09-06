@@ -35,7 +35,7 @@ class CommCareAccountForm(forms.Form):
         username = self.cleaned_data['username']
         domain = self.cleaned_data['domain']
         username = format_username(username, domain)
-        num_couch_users = len(CouchUser.view("users/logins_by_username",
+        num_couch_users = len(CouchUser.view("users/by_username",
                                              key=username))
         if num_couch_users > 0:
             raise forms.ValidationError("CommCare user already exists")
