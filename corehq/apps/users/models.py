@@ -40,8 +40,8 @@ def _add_to_list(list, obj, default):
     else:
         list.append(obj)
     return list
-    
-    
+
+
 def _get_default(list):
     return list[0] if list else None
 
@@ -51,10 +51,10 @@ class Permissions(object):
     EDIT_APPS = 'edit-apps'
     LOG_IN = 'log-in'
     AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_USERS, EDIT_APPS, LOG_IN]
-    
+
 class DomainMembership(DocumentSchema):
     """
-    Each user can have multiple accounts on the 
+    Each user can have multiple accounts on the
     web domain. This is primarily for Dimagi staff.
     """
 
@@ -63,7 +63,7 @@ class DomainMembership(DocumentSchema):
     permissions = StringListProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
-    
+
     class Meta:
         app_label = 'users'
 
@@ -113,7 +113,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('auto_created',     'Automatically created from form submission.'),
 #        ('phone_registered', 'Registered from phone'),
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
-    
+
     status = StringProperty()
 
     _user = None
@@ -139,13 +139,13 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         else:
             html = "<span class='user_username'>%s</span>" % username
         return html
-    
+
     @property
     def userID(self):
         return self._id
 
     user_id = userID
-    
+
     class Meta:
         app_label = 'users'
 
@@ -154,13 +154,13 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def get_email(self):
         return self.email
-    
+
     @property
     def full_name(self):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
-        
+
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
 
@@ -180,7 +180,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         if not isinstance(phone_number, basestring):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
-        
+
     @property
     def default_phone_number(self):
         return _get_default(self.phone_numbers)
@@ -331,19 +331,19 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         django_user.save()
 
     @classmethod
-    def django_user_post_save_signal(cls, django_user, created, **kwargs):
+    def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
             del django_user.DO_NOT_SAVE_COUCH_USER
         elif not created:
-            couch_user = cls.get_by_django_id(django_user.id)
+            couch_user = cls.from_django_user(django_user)
             if not couch_user:
                 raise cls.Inconsistent("Django User has no corresponding CouchUser")
-            couch_user.sync_from_old_couch_user(django_user)
+            couch_user.sync_from_django_user(django_user)
             # avoid triggering cyclical sync
             super(CouchUser, couch_user).save()
 
 class CommCareUser(CouchUser):
-    
+
     domain = StringProperty()
     registering_device_id = StringProperty()
     user_data = DictProperty()
@@ -361,7 +361,7 @@ class CommCareUser(CouchUser):
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
-        
+
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
 
@@ -419,7 +419,7 @@ class CommCareUser(CouchUser):
 
     def is_commcare_user(self):
         return True
-    
+
     def add_commcare_account(self, domain, device_id, user_data=None):
         """
         Adds a commcare account to this.
@@ -511,7 +511,7 @@ class WebUser(CouchUser):
         if membership_count > 0:
             return True
         return False
-    
+
     def set_permission(self, domain, permission, value, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
         if self.has_permission(domain, permission) == value:
@@ -608,7 +608,7 @@ class Invitation(Document):
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
-    
+
     _inviter = None
     def get_inviter(self):
         if self._inviter is None:
@@ -617,13 +617,15 @@ class Invitation(Document):
                 self.invited_by = self._inviter.user_id
                 self.save()
         return self._inviter
-    
+
     def send_activation_email(self):
 
-        url = "http://%s%s" % (Site.objects.get_current().domain, 
+        url = "http://%s%s" % (Site.objects.get_current().domain,
                                reverse("accept_invitation", args=[self.domain, self.get_id]))
         params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name        
+        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, text_content, html_content)
+
+from .signals import *

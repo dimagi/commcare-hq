@@ -1,14 +1,17 @@
 from __future__ import absolute_import
 import logging
+from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from corehq.apps.users.models import CommCareUser, CouchUser
 
 import corehq.apps.users.xml as xml
 from receiver.signals import successful_form_received, ReceiverResult, Certainty
 
-
 # Signal that syncs django_user => couch_user
-post_save.connect(CouchUser.django_user_post_save_signal, CouchUser)
+def django_user_post_save_signal(sender, instance, created, **kwargs):
+    return CouchUser.django_user_post_save_signal(sender, instance, created, **kwargs)
+
+post_save.connect(django_user_post_save_signal, User)
 
 
 """
