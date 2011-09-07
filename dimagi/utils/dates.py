@@ -1,6 +1,8 @@
 from datetime import date, datetime, timedelta, time
+from calendar import month_name
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
+from dateutil.rrule import *
 
 def force_to_date(val):
     """Forces a date, string, or datetime to a date."""
@@ -78,16 +80,30 @@ class DateSpan(object):
     def __str__(self):
         if not self.is_valid():
             return "Invalid date span %s - %s" % (self.startdate_param, self.enddate_param)
-        
+
+        # if the dates comprise a month exactly, use that
+        if self.startdate.day == 1 and (self.enddate + timedelta(days=1)).day == 1:
+            return "%s %s" % (month_name[self.startdate.month], self.startdate.year)
+
         # if the end date is today or tomorrow, use "last N days syntax"  
         today = datetime.combine(datetime.today(), time())
         day_after_tomorrow = today + timedelta (days=2)
         if today <= self.enddate < day_after_tomorrow:
-            return "last %s days" % (self.enddate - self.startdate).days 
+            return "last %s days" % (self.enddate - self.startdate).days
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
         
+    @classmethod
+    def month(cls, year, month, format=DEFAULT_DATE_FORMAT):
+        """
+        Generate a datespan covering a month.
+        """
+        start = datetime(year, month, 1)
+        nextmonth = start + timedelta(days=32)
+        end = datetime(nextmonth.year, nextmonth.month, 1) - timedelta(milliseconds=1)
+        return DateSpan(start, end, format)
+    
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT):
         """
@@ -118,3 +134,62 @@ class DateSpan(object):
         enddate = date_or_nothing(enddate_str)
         return DateSpan(startdate, enddate, format)
         
+
+def is_business_day(day):
+    """
+    Simple method to whether something is a business day, assumes M-F working
+    days.
+    """
+    return day.weekday() < 5
+    
+def get_day_of_month(year, month, count):
+    """
+    For a given month get the Nth day.
+    The only reason this function exists in favor of 
+    just creating the date object is to support negative numbers
+    e.g. pass in -1 for "last"
+    """
+    r = rrule(MONTHLY, dtstart=datetime(year,month, 1),
+              byweekday=(MO, TU, WE, TH, FR, SA, SU),
+              bysetpos=count)
+    res = r[0]
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
+def get_business_day_of_month(year, month, count):
+    """
+    For a given month get the Nth business day by count.
+    Count can also be negative, e.g. pass in -1 for "last"
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month, 1),
+              bysetpos=count)
+    res = r[0]
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
+def get_business_day_of_month_after(year, month, day):
+    """
+    For a given month get the business day of the month 
+    that falls on or after the passed in day
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month, 1))
+    res = r.after(datetime(year, month, day), inc=True)
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()
+
+def get_business_day_of_month_before(year, month, day):
+    """
+    For a given month get the business day of the month 
+    that falls on or before the passed in day
+    """
+    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
+              dtstart=datetime(year,month,1))
+    res = r.before(datetime(year, month, day), inc=True)
+    if (res == None or res.month != month or res.year != year):
+        raise ValueError("No dates found in range. is there a flaw in your logic?")
+    return res.date()

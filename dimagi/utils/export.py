@@ -24,7 +24,7 @@ class CsvWorkBook(WorkBook):
         try:
             writer.writeheader()
         except AttributeError:
-            f.write(",".join(headers))
+            f.write(",".join([h.encode('utf-8') for h in headers]))
             f.write("\n")
 
         self._writers[table] = (f, writer)
