@@ -255,7 +255,6 @@ class FormBase(DocumentSchema):
         return self._app
     
     def refresh(self):
-        pass
         soup = BeautifulStoneSoup(self.source)
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
