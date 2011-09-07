@@ -54,10 +54,12 @@ def simple_post(data, url, content_type="text/xml"):
     
 def post_data(data, url, curl_command="curl", use_curl=False, 
               content_type="text/xml", path=None, use_chunked=False, 
-              is_odk=False):
+              is_odk=False, attachments=[]):
     """
     Do a POST of data with some options.  Returns a tuple of the response
     from the server and any errors
+
+    if it's ODK, then also process any additional attachments that are an array of tuples of the name and the path
     """
     results = None
     errors = None
@@ -84,6 +86,12 @@ def post_data(data, url, curl_command="curl", use_curl=False,
             else:
                 params.append('-F')
                 params.append('xml_submission_file=@%s' % path)
+
+
+                if attachments:
+                    for attach in attachments:
+                        params.append('-F')
+                        params.append('%s=@%s' % (attach[0], attach[1]))
 
             if use_chunked:
                 params.append('--header')
