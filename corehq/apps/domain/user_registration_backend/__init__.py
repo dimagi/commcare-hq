@@ -11,7 +11,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, domain_admi
 from django_user_registration.backends import get_backend
 
 ########################################################################################################
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from dimagi.utils.django.email import send_HTML_email
 
 ########################################################################################################
@@ -124,12 +124,15 @@ To login, navigate to the following link:
 ########################################################################################################
 
 def register_user(domain, first_name, last_name, email, password, is_domain_admin, send_email):
-    new_user = User()
+
+    User.objects.get(username=email)
+
+    new_user = WebUser.create(domain, username=email, password=password, email=email, is_admin=is_domain_admin)
+
     new_user.first_name = first_name
     new_user.last_name  = last_name
     new_user.username = email
     new_user.email = email
-    new_user.set_password(password)
     new_user.is_staff = False # Can't log in to admin site
     new_user.is_active = True
     new_user.is_superuser = False
@@ -142,9 +145,9 @@ def register_user(domain, first_name, last_name, email, password, is_domain_admi
     if send_email:
         _send_user_registration_email(new_user.email, domain, new_user.username, password)
     # Add membership info to Couch
-    couch_user = CouchUser.from_django_user(new_user)
-    couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
-    couch_user.save()
+#    couch_user = WebUser.from_django_user(new_user)
+#    couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
+#    couch_user.save()
     return new_user
 
 ########################################################################################################

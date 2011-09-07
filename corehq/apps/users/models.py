@@ -248,7 +248,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def from_old_couch_user(cls, old_couch_user, copy_id=True):
-        login = old_couch_user.default_account.login
 
         if old_couch_user.account_type == "WebAccount":
             couch_user = WebUser()
@@ -334,13 +333,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
             del django_user.DO_NOT_SAVE_COUCH_USER
-        elif not created:
+        else:
             couch_user = cls.from_django_user(django_user)
-            if not couch_user:
-                raise cls.Inconsistent("Django User has no corresponding CouchUser")
-            couch_user.sync_from_django_user(django_user)
-            # avoid triggering cyclical sync
-            super(CouchUser, couch_user).save()
+            if couch_user:
+                couch_user.sync_from_django_user(django_user)
+                # avoid triggering cyclical sync
+                super(CouchUser, couch_user).save()
 
 class CommCareUser(CouchUser):
 

@@ -17,6 +17,9 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user.is_active = is_active
     user.is_superuser = is_superuser
     user.set_password(password)
+
+    print user.id
+
     user.save()
     return user
 
