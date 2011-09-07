@@ -186,7 +186,7 @@ class CommCareCase(CaseBase):
         """
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
-        return "%(case_id)s::%(date_modified)s" % (self.case_id, self.date_modified)
+        return "%s::%s" % (self.case_id, self.modified_on)
     
     @property
     def attachments(self):
