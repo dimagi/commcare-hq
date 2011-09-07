@@ -414,7 +414,8 @@ def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_r
     # I hate myself for this but this seems to keep a non-deterministic bug from happening
     # Without this, sometimes {% if form.source %} will be false in the template even
     # when it exists...
-    form.source
+    if form:
+        form.source
 
     context = {
         'domain': domain,
