@@ -196,6 +196,7 @@ class FormSource(object):
             if form.dynamic_properties().has_key('contents'):
                 del form.contents
         form.validation_cache = None
+        form.refresh()
 
 class FormBase(DocumentSchema):
     """
@@ -259,7 +260,7 @@ class FormBase(DocumentSchema):
         try:
             self.xmlns = soup.find('instance').findChild()['xmlns']
         except Exception:
-            self.xmlns = hashlib.sha1(self.get_unique_id()).hexdigest()
+            self.xmlns = None
     def get_case_type(self):
         return self._parent.case_type
 
@@ -873,6 +874,7 @@ class Application(ApplicationBase, TranslationMixin):
 #        )
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
+        form.refresh()
         return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
