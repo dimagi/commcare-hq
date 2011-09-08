@@ -42,11 +42,12 @@ class ExportTest(TestCase):
         for form in get_docs([DOMAIN, "http://www.commcarehq.org/export/test"]):
             XFormInstance.wrap(form).delete()
         dom = create_domain(DOMAIN)
-        couch_user = WebUser.create(None, "test", "foobar")
-        couch_user.add_domain_membership(DOMAIN, is_admin=True)
-        couch_user.save()
+        self.couch_user = WebUser.create(None, "test", "foobar")
+        self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
+        self.couch_user.save()
         
     def tearDown(self):
+        self.couch_user.delete()
         for form in get_docs([DOMAIN, "http://www.commcarehq.org/export/test"]):
             XFormInstance.wrap(form).delete()
         
