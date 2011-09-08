@@ -1,20 +1,19 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.domain.shortcuts import create_domain, create_user
-from corehq.apps.users.models import CouchUser
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import WebUser
 
 class Command(LabelCommand):
     help = "Bootstrap a domain and user who owns it."
-    args = "<domain> <user> <pass>"
+    args = "<domain> <email> <password>"
     label = ""
      
     def handle(self, *args, **options):
         if len(args) != 3:
-            raise CommandError('Usage: manage.py bootstrap <domain> <user> <password>')
+            raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
         domain = create_domain(domain_name)
-        user = create_user(username, passwd)
-        couch_user = CouchUser.from_django_user(user)
+        couch_user = WebUser.create(domain_name, username, passwd)
         couch_user.add_domain_membership(domain_name, is_admin=True)
         couch_user.save()
         
-        print "user %s created and added to domain %s" % (user, domain)
+        print "user %s created and added to domain %s" % (couch_user.username, domain)
