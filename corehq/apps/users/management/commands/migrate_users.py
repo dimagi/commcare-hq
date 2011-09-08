@@ -35,6 +35,10 @@ class Command(LabelCommand):
                 pass
             else:
                 id_map[old_id] = couch_user.user_id
+            try:
+                couch_user.save()
+            except Exception as e:
+                print 'Failed to save %s: %s' % (couch_user.user_id, e)
 
         print "Cleaning up references..."
 

@@ -307,7 +307,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def from_django_user(cls, django_user):
-        return cls.get_by_django_id(django_user.id)
+        couch_user = cls.get_by_django_id(django_user.id)
+        if couch_user and django_user.username != couch_user.username:
+            raise cls.Inconsistent("The django and couch users with django_id %s have two different usernames" % django_user.id)
+        return couch_user
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -325,6 +328,15 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return couch_user
 
     def save(self, **params):
+        # test no django_id conflict
+        by_django_id = get_db().view('users/by_django_id', key=self.django_id).one()
+        if by_django_id and by_django_id['id'] != self._id:
+            raise self.Inconsistent("CouchUser with django_id %s already exists" % self.django_id)
+        # test no username conflict
+        by_username = get_db().view('users/by_username', key=self.username).one()
+        if by_username and by_username['id'] != self._id:
+            raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+        
         super(CouchUser, self).save(**params)
         django_user = self.sync_to_django_user()
         django_user.save()

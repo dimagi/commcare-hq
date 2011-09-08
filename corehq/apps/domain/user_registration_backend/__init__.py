@@ -8,6 +8,8 @@ from django.shortcuts import redirect, render_to_response
 from django.template import RequestContext
 
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.profile import profile
 from django_user_registration.backends import get_backend
 
 ########################################################################################################
@@ -124,9 +126,6 @@ To login, navigate to the following link:
 ########################################################################################################
 
 def register_user(domain, first_name, last_name, email, password, is_domain_admin, send_email):
-
-    User.objects.get(username=email)
-
     new_user = WebUser.create(domain, username=email, password=password, email=email, is_admin=is_domain_admin)
 
     new_user.first_name = first_name
@@ -148,6 +147,9 @@ def register_user(domain, first_name, last_name, email, password, is_domain_admi
 #    couch_user = WebUser.from_django_user(new_user)
 #    couch_user.add_domain_membership(domain, is_admin=is_domain_admin)
 #    couch_user.save()
+
+    
+
     return new_user
 
 ########################################################################################################

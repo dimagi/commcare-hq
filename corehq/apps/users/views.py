@@ -97,6 +97,7 @@ def accept_invitation(request, domain, invitation_id):
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your 
         # list of domains
+        print "request.user.is_authenticated()?"
         couch_user = CouchUser.from_django_user(request.user)
         couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
         couch_user.save()
@@ -105,6 +106,7 @@ def accept_invitation(request, domain, invitation_id):
         messages.success(request, "You have been added to the %s domain" % domain)
         return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
     else:
+        print "not request.user.is_authenticated()"
         # if you're not authenticated we need you to fill out your information
         if request.method == "POST":
             form = UserRegistersSelfForm(request.POST)
@@ -122,7 +124,7 @@ def accept_invitation(request, domain, invitation_id):
                 invitation.save()
                 return HttpResponseRedirect(reverse("homepage"))
         else: 
-            form = UserRegistersSelfForm(initial={'email': invitation.email})    
+            form = UserRegistersSelfForm(initial={'email': invitation.email})
         
         return render_to_response(request, "users/accept_invite.html", {"form": form})
 

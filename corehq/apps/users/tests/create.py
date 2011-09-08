@@ -57,29 +57,8 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
         couch_user.add_domain_membership('domain2')
         self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
-
-#        ccu0 = CommCareUser.create(
-#            'domain3', 'username3', 'password3', uuid="sdf", device_id='ewr')
-#        ccu0.save()
-#        self.assertEqual(couch_user.commcare_accounts[0].login.username, 'username3')
-#        self.assertEqual(couch_user.commcare_accounts[0].domain, 'domain3')
-#        self.assertEqual(couch_user.commcare_accounts[0].login_id, 'sdf')
-#        self.assertEqual(couch_user.commcare_accounts[0].registering_device_id, 'ewr')
-#
-#        ccu1 = create_hq_user_from_commcare_registration_info(
-#                'domain4', 'username4', 'password4', uuid="oiu", device_id='wer', user_data={"extra_data": 'extra'})
-#        ccu1.save()
-#        self.assertEqual(couch_user.commcare_accounts[1].login.username, 'username4')
-#        self.assertEqual(couch_user.commcare_accounts[1].domain, 'domain4')
-#        self.assertEqual(couch_user.commcare_accounts[1].login_id, 'oiu')
-#        self.assertEqual(couch_user.commcare_accounts[1].registering_device_id, 'wer')
-#        #TODO: fix
-#        #self.assertEqual(couch_user.commcare_accounts[1].user_data['extra_data'], 'extra')
-#        couch_user.add_device_id('IMEI')
-#        self.assertEqual(couch_user.device_ids[0], 'IMEI')
-#        couch_user.add_phone_number('1234567890')
-#        self.assertEqual(couch_user.phone_numbers[0], '1234567890')
-#        couch_user.save()
+        django_user = couch_user.get_django_user()
+        self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
 
     def testCreateUserFromRegistration(self):
         """ 
@@ -108,6 +87,10 @@ class CreateTestCase(TestCase):
         date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
         self.assertEqual(couch_user.created_on, force_to_datetime(date))
         self.assertEqual(couch_user.device_ids[0], self.registering_device_id)
+
+        django_user = couch_user.get_django_user()
+        self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
+
         
     def testCreateDuplicateUsersFromRegistration(self):
         """ 

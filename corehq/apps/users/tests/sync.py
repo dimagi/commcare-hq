@@ -21,4 +21,4 @@ class SyncTestCase(TestCase):
         self.assertEqual(django_user.email, WebUser.from_django_user(django_user).email)
 
     def tearDown(self):
-        WebUser.get_by_user_id(self.web_user.user_id)
+        WebUser.get_by_user_id(self.web_user.user_id).delete()
