@@ -13,7 +13,7 @@ from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_la
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
 from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 
 from dimagi.utils.web import render_to_response
 from corehq.apps.users.views import require_can_edit_users
@@ -129,32 +129,28 @@ def _create_new_domain_request( request, kind, form, now ):
                      
     ############# User     
     if kind == 'existing_user':   
-        new_user = request.user
-    else:        
-        new_user = User()
+        new_user = CouchUser.from_django_user(request.user)
+        new_user.add_domain_membership(d.name, is_admin=True)
+    else:
+        username = form.cleaned_data['email']
+        assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
+        password = form.cleaned_data['password_1']
+        
+        new_user = WebUser.create(d.name, username, password, is_admin=True)
         new_user.first_name = form.cleaned_data['first_name']
         new_user.last_name  = form.cleaned_data['last_name']
-        new_user.username = form.cleaned_data['email']
         new_user.email = form.cleaned_data['email']
-        assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
-        new_user.set_password(form.cleaned_data['password_1'])                                                        
+
         new_user.is_staff = False # Can't log in to admin site
         new_user.is_active = False # Activated upon receipt of confirmation
         new_user.is_superuser = False           
         new_user.last_login = datetime.datetime(1970,1,1)
         new_user.date_joined = now
         # As above, must save to get id from db before giving to request
-        new_user.save()
+    new_user.save()
    
-    dom_req.new_user = new_user
+    dom_req.new_user = new_user.get_django_user()
 
-    ############# Couch Domain Membership
-    if kind == "new_user":
-        couch_user = CouchUser.from_django_user(new_user)
-    else:
-        couch_user = CouchUser.from_django_user(new_user)
-    couch_user.add_domain_membership(d.name, is_admin=True)
-    couch_user.save()
     # Django docs say "use is_authenticated() to see if you have a valid user"
     # request.user is an AnonymousUser if not, and that always returns False                
     if request.user.is_authenticated():
