@@ -128,96 +128,116 @@
     <h3 class="variable-app_name">{{ app.name }}</h3>
     {% if app.doc_type == "Application" %}
         <h4>Application Settings</h4>
-        <form class="save-button-form" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
-            <div class="config">
-                <div class="save-button-holder"></div>
-                <table>
-                    <tr>
-                        <th>Name</th>
-                        <td>
-                            {% if edit %}
-                                <input type="text" name="name" value="{{ app.name }}" />
-                            {% else %}
-                                {{ app.name }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>CommCare Users</th>
-                        <td>
-                            {% if edit %}
-                                <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                            {% else %}
-                                {{ app.recipients }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="show-user-registration-select">Use a Custom User Registration</label></th>
-                        <td>
-                            {% if edit %}
-                                    <select id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
-                                        <option value="false">* Don't Use</option>
-                                        <option value="true">Use</option>
-                                    </select>
-                            {% else %}
-                                {% if not app.show_user_registration %}Don't Use{% else %}Use{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>CommCare Version</th>
-                        <td>
-                            {% if edit %}
-                                <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
-                                    {% for option in commcare_build_options %}
-                                        <option value='{{ option.build.to_string }}'>
-                                            {{ option.label }}
+    {% else %}
+        <h4>Remote Setup</h4>
+    {% endif %}
+    <form class="save-button-form" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
+        <div class="config">
+            <div class="save-button-holder"></div>
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <td>
+                        {% if edit %}
+                            <input type="text" name="name" value="{{ app.name }}" />
+                        {% else %}
+                            {{ app.name }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% if app.doc_type == "RemoteApp" %}
+                <tr>
+                    <th>Profile URL</th>
+                    <td>
+                        {% if edit %}
+                            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
+                                <input type="text" class="autosave code wide" name="profile_url" value="{{ app.profile_url }}"/>
+                            </form>
+                        {% else %}
+                            {{ app.profile_url }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+                <tr>
+                    <th>CommCare Users</th>
+                    <td>
+                        {% if edit %}
+                            <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                        {% else %}
+                            {{ app.recipients }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% if app.doc_type == "Application" %}
+                <tr>
+                    <th><label for="show-user-registration-select">Use a Custom User Registration</label></th>
+                    <td>
+                        {% if edit %}
+                                <select id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
+                                    <option value="false">* Don't Use</option>
+                                    <option value="true">Use</option>
+                                </select>
+                        {% else %}
+                            {% if not app.show_user_registration %}Don't Use{% else %}Use{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+                <tr>
+                    <th>CommCare Version</th>
+                    <td>
+                        {% if edit %}
+                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
+                                {% for option in commcare_build_options %}
+                                    <option value='{{ option.build.to_string }}'>
+                                        {{ option.label }}
+                                    </option>
+                                {% endfor %}
+                                {% if not is_standard_build %}
+                                    <optgroup label="Custom">
+                                        <option value='{{ app.build_spec.to_string }}'>
+                                            {{ app.build_spec.get_label }}
                                         </option>
-                                    {% endfor %}
-                                    {% if not is_standard_build %}
-                                        <optgroup label="Custom">
-                                            <option value='{{ app.build_spec.to_string }}'>
-                                                {{ app.build_spec.get_label }}
-                                            </option>
-                                        </optgroup>
-                                    {% endif %}
-                                </select>
-                            {% else %}
-                                {{ app.get_build_label }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Text Input</th>
-                        <td>
-                            {% if edit %}
-                                <select name="native_input" data-value="{{ app.native_input|lower }}">
-                                    <option value="false">* Default (Roman)</option>
-                                    <option value="true">Native (International)</option>
-                                </select>
-                            {% else %}
-                                {% if app.native_input %}Native (International){% else %}Default (Roman){% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            Success Message
-                            <span class="help-link" data-help-key="app_manager/success_message"></span>
-                            <div class="help-text" data-help-key="app_manager/success_message"></div>
-                        </th>
-                        <td>
-                            {% if edit %}
-                                <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
-                            {% else %}
-                                <p>{{ app.success_message|trans:langs }}</p>
-                            {% endif %}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </form>
+                                    </optgroup>
+                                {% endif %}
+                            </select>
+                        {% else %}
+                            {{ app.get_build_label }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Text Input</th>
+                    <td>
+                        {% if edit %}
+                            <select name="native_input" data-value="{{ app.native_input|lower }}">
+                                <option value="false">* Default (Roman)</option>
+                                <option value="true">Native (International)</option>
+                            </select>
+                        {% else %}
+                            {% if app.native_input %}Native (International){% else %}Default (Roman){% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Success Message
+                        <span class="help-link" data-help-key="app_manager/success_message"></span>
+                        <div class="help-text" data-help-key="app_manager/success_message"></div>
+                    </th>
+                    <td>
+                        {% if edit %}
+                            <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
+                        {% else %}
+                            <p>{{ app.success_message|trans:langs }}</p>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+    {% if app.doc_type == "Application" %}
         <h4>Supported Languages</h4>
         <div class="config">
             {% if edit %}
@@ -326,36 +346,6 @@
                 <tbody id="other-commcare-settings"></tbody>
             </table>
         </div>
-    {% endif %}
-    {% if app.doc_type == "RemoteApp" %}
-        <h4>Remote Setup</h4>
-        <table class="config">
-            <tr>
-                <th>Name</th>
-                <td>
-                    {% if edit %}
-                        <form method="post" action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id 'name' %}">
-                            <input type="text" name="name" class="autosave" value="{{ app.name }}" />
-                        </form>
-                    {% else %}
-                        {{ app.name }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Profile URL</th>
-                <td>
-                    {% if edit %}
-                        <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
-                            <input type="text" class="autosave code wide" name="profile_url" value="{{ app.profile_url }}"/>
-                        </form>
-                    {% else %}
-                        {{ app.profile_url }}
-                    {% endif %}
-                </td>
-            </tr>
-
-        </table>
     {% endif %}
     <div>
         <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
