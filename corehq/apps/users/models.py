@@ -301,10 +301,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             raise CouchUser.AccountTypeError()
         if domain:
             if hasattr(couch_user, 'domain'):
-                if couch_user.domain != domain:
+                if couch_user.domain != domain and not couch_user.is_superuser:
                     return None
             elif hasattr(couch_user, 'domains'):
-                if domain not in couch_user.domains:
+                if domain not in couch_user.domains and not couch_user.is_superuser:
                     return None
             else:
                 raise CouchUser.AccountTypeError("User %s (%s) has neither domain nor domains" % (

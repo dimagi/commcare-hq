@@ -165,6 +165,9 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context = _users_context(request, domain)
     couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
 
+    if not couch_user:
+        raise Http404
+
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
         phone_number = request.POST['phone_number']
