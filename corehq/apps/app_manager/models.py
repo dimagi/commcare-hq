@@ -170,17 +170,13 @@ class FormActions(DocumentSchema):
 
 
 class FormSource(object):
-    def __init__(self):
-        self._source = {}
     def __get__(self, form, form_cls):
-        unique_id = form.get_unique_id()
-        if not self._source.has_key(unique_id):
-            try:
-                self._source[unique_id] = form.get_app().fetch_attachment('%s.xml' % unique_id)
-            except Exception:
-                self._source[unique_id] = form.dynamic_properties().get('contents', '')
-        # this type of caching isn't threadsafe
-        return self._source[unique_id]
+        try:
+            source = form.get_app().fetch_attachment('%s.xml' % unique_id)
+        except Exception:
+            source = form.dynamic_properties().get('contents', '')
+        
+        return source
 
     def __set__(self, form, value):
         unique_id = form.get_unique_id()
@@ -190,7 +186,6 @@ class FormSource(object):
             form.contents = value
         else:
             app.put_attachment(value, '%s.xml' % unique_id)
-            self._source[unique_id] = value
             # I had a problem where form was an old object
             form = app.get_form(unique_id)
             if form.dynamic_properties().has_key('contents'):
