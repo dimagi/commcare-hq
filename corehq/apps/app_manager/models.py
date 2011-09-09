@@ -171,6 +171,7 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
+        unique_id = form.get_unique_id()
         try:
             source = form.get_app().fetch_attachment('%s.xml' % unique_id)
         except Exception:
