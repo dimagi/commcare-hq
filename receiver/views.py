@@ -43,7 +43,6 @@ def post(request):
     def callback(doc):
         def default_actions(doc):
             """These are always done"""
-            doc['#export_tag'] = ["xmlns"]
             doc['submit_ip'] = request.META['REMOTE_ADDR']
             doc['path'] = request.path
             
