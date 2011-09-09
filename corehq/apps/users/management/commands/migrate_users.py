@@ -19,11 +19,11 @@ class Command(LabelCommand):
                 couch_user.save(force_update=True)
             except Exception as e:
                 print "There was an error migrating CouchUser with _id %s: %s" % (
-                    old_couch_user._id,
-                    e
+                    old_couch_user._id.encode('utf-8'),
+                    str(e)
                 )
             else:
-                print "Migrated %s (%s)" % (couch_user.username.encode('utf-8'), couch_user.user_id)
+                print "Migrated %s (%s)" % (couch_user.username.encode('utf-8'), couch_user.user_id.encode('utf-8'))
 
         print "Creating old => new user _id map"
         couch_users = CouchUser.all()
@@ -38,7 +38,7 @@ class Command(LabelCommand):
             try:
                 couch_user.save()
             except Exception as e:
-                print 'Failed to save %s: %s' % (couch_user.user_id, e)
+                print 'Failed to save %s: %s' % (couch_user.user_id.encode('utf-8'), str(e))
 
         print "Cleaning up references..."
 
