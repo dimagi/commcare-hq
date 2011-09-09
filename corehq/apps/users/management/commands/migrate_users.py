@@ -23,7 +23,7 @@ class Command(LabelCommand):
                     e
                 )
             else:
-                print "Migrated %s (%s)" % (couch_user.username, couch_user.user_id)
+                print "Migrated %s (%s)" % (couch_user.username.encode('utf-8'), couch_user.user_id)
 
         print "Creating old => new user _id map"
         couch_users = CouchUser.all()

@@ -287,6 +287,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             return None
 
     @classmethod
+    def get_by_username(cls, username):
+        result = get_db().view('users/by_username', key=username, include_docs=True).one()
+        if result:
+            return cls.wrap_correctly(result['doc'])
+        else:
+            return None
+
+    @classmethod
     def get_by_user_id(cls, userID, domain=None):
         couch_user = cls.wrap_correctly(get_db().get(userID))
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
