@@ -467,7 +467,7 @@ class WebUser(CouchUser):
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domains            = normalize_domain_name(old_couch_user.domain_names)
+        self.domains            = [normalize_domain_name(domain) for domain in old_couch_user.domain_names]
         self.domain_memberships = old_couch_user.web_account.domain_memberships
 
     @classmethod
