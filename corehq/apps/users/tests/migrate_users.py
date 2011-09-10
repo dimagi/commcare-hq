@@ -19,7 +19,7 @@ COMMCARE_USER = json.loads("""{
    "commcare_accounts": [
        {
            "doc_type": "CommCareAccount",
-           "domain": "test",
+           "domain": "test_domain",
            "registering_device_id": "Generated from HQ",
            "user_data": {
            },
@@ -66,7 +66,7 @@ COMMCARE_USER_TARGET = json.loads("""{
     "doc_type": "CommCareUser",
     "_id": "COMMCARE-USER-LOGIN-DOC-ID",
     "django_id": 206,
-    "domain": "test",
+    "domain": "test-domain",
     "username": "danny@test.commcarehq.org",
     "password": "sha1$salt$hash",
     "first_name": "",
@@ -98,7 +98,7 @@ WEB_USER = json.loads("""{
        "domain_memberships": [
            {
                "doc_type": "DomainMembership",
-               "domain": "test",
+               "domain": "test_domain",
                "last_login": null,
                "is_admin": true,
                "permissions": [
@@ -146,7 +146,7 @@ WEB_USER_TARGET = json.loads("""{
     "doc_type": "WebUser",
     "_id": "WEB-USER-LOGIN-DOC-ID",
     "django_id": 246,
-    "domains": ["test"],
+    "domains": ["test-domain"],
     "username": "aroberts@dimagi.com",
     "first_name": "Alex",
     "last_name": "Roberts",
@@ -161,7 +161,7 @@ WEB_USER_TARGET = json.loads("""{
     "domain_memberships": [
         {
            "doc_type": "DomainMembership",
-           "domain": "test",
+           "domain": "test-domain",
            "last_login": null,
            "is_admin": true,
            "permissions": [

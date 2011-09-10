@@ -467,8 +467,10 @@ class WebUser(CouchUser):
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domains            = [normalize_domain_name(domain) for domain in old_couch_user.domain_names]
-        self.domain_memberships = old_couch_user.web_account.domain_memberships
+        for dm in old_couch_user.web_account.domain_memberships:
+            dm.domain = normalize_domain_name(dm.domain)
+            self.domain_memberships.append(dm)
+            self.domains.append(dm.domain)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
