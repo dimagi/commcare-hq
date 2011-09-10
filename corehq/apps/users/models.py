@@ -18,6 +18,7 @@ from couchdbkit.resource import ResourceNotFound
 from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 
@@ -368,7 +369,7 @@ class CommCareUser(CouchUser):
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domain                 = old_couch_user.default_account.domain
+        self.domain                 = normalize_domain_name(old_couch_user.default_account.domain)
         self.registering_device_id  = old_couch_user.default_account.registering_device_id
         self.user_data              = old_couch_user.default_account.user_data
 
@@ -466,7 +467,7 @@ class WebUser(CouchUser):
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domains            = old_couch_user.domain_names
+        self.domains            = normalize_domain_name(old_couch_user.domain_names)
         self.domain_memberships = old_couch_user.web_account.domain_memberships
 
     @classmethod
