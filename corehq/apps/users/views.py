@@ -268,10 +268,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
     user = WebUser.get_by_user_id(couch_user_id, domain)
-    for i, dm in enumerate(user.domain_memberships):
-        if dm.domain == domain_name:
-            del user.domain_memberships[i]
-            break
+    user.delete_domain_membership(domain_name)
     user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 

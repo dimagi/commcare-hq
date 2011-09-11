@@ -484,13 +484,19 @@ class WebUser(CouchUser):
         return False
 
     def get_domain_membership(self, domain):
-        for d in self.domain_memberships:
-            if d.domain == domain:
-                if domain not in self.domains:
-                    raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
-                return d
-        if domain in self.domains:
-            raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
+        domain_membership = None
+        try:
+            for d in self.domain_memberships:
+                if d.domain == domain:
+                    domain_membership = d
+                    if domain not in self.domains:
+                        raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
+            if domain in self.domains:
+                raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
+        except self.Inconsistent as e:
+            logging.warning(e)
+            self.domains = [d.domain for d in self.domain_memberships]
+        return domain_membership
 
     def add_domain_membership(self, domain, **kwargs):
         for d in self.domain_memberships:
@@ -502,6 +508,16 @@ class WebUser(CouchUser):
                                                         **kwargs))
         self.domains.append(domain)
 
+    def delete_domain_membership(self, domain):
+        for i, dm in enumerate(self.domain_memberships):
+            if dm.domain == domain:
+                del self.domain_memberships[i]
+                break
+        for i, domain_name in enumerate(self.domains):
+            if domain_name == domain:
+                del self.domains[i]
+                break
+    
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template

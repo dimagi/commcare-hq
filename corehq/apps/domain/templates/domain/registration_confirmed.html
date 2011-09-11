@@ -13,7 +13,7 @@ Domain Activated{% endblock title %}
 {% if request.user.is_authenticated %}
     <a href="{% url domain_homepage domain_name %}">Go to Domain</a>
 {% else %}
-    <a href="{% url homepage %}">Login</a>
+    <a href="{% url login %}">Login</a>
 {% endif %}
 {% endblock %}
 
