@@ -3,6 +3,7 @@ from datetime import date, datetime
 from django import template
 from couchforms import util
 from django.utils.html import escape
+from couchforms.models import XFormInstance
 
 register = template.Library()
 
@@ -85,4 +86,10 @@ def render_form_data(form):
 @register.simple_tag
 def render_form_xml(form):
     return '<pre id="formxml">%s</pre>' % escape(form.get_xml())
-        
+
+@register.simple_tag
+def form_inline_display(form_id):
+    form = XFormInstance.get(form_id)
+    if form:
+        return "%s: %s" % (form.received_on.date(), form.xmlns)
+    return "missing form: %s" % form_id         
