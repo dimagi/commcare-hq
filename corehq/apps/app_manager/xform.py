@@ -368,10 +368,15 @@ class XForm(WrappedNode):
         # a list of functions to be applied to the file as a whole after it has been pieced together
         additional_transformations = []
 
-        if not actions:
-            casexml_text, binds = "", []
+
+        if form.requires == 'none' and 'open_case' not in actions and actions:
+            raise CaseError("To perform case actions you must either open a case or require a case to begin with")
+
+
+        binds = []
+        if form.requires == 'none' and not actions:
+            casexml_text = ""
         else:
-            binds = []
             def add_bind(d):
                 binds.append(_make_elem('bind', d))
 
@@ -432,7 +437,7 @@ class XForm(WrappedNode):
                 else:
                     add_bind({
                         "nodeset":"case/create/external_id",
-                        "calculate":"case/create/case_id",
+                        "calculate":"case/case_id",
                     })
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
