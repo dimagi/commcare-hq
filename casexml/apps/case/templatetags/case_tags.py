@@ -16,4 +16,13 @@ def render_case(case):
     return render_to_string("case/partials/single_case.html", {"case": case})
     
     
-        
+@register.simple_tag
+def case_inline_display(case_id):
+    """
+    Given a case id, make a best effort at displaying it.
+    """
+    case = CommCareCase.get(case_id)
+    if case:
+        return "%s (opened: %s)" % (case.name, case.opened_on.date())
+    return "unknown case: %s" % case_id
+    
