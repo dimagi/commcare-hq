@@ -599,8 +599,27 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
     login_doc.save()
     
     return couch_user
-    
 
-    
+# Fake future API for SMS Reminders -- hack
+class CommCareUser(object):
+    @classmethod
+    def get_by_user_id(cls, user_id):
+        commcare_user = cls()
+        commcare_user.user_id = user_id
+        return commcare_user
+
+    @property
+    def user_data(self):
+        account = CommCareAccount.view('users/commcare_users_by_login_id', key=self.user_id).one()
+        return account.user_data
+
+    @property
+    def _couch_user(self):
+        return CouchUser.view('users/commcare_users_by_login_id', key=self.user_id, include_docs=True).one()
+
+    @property
+    def phone_number(self):
+        return self._couch_user.default_phone_number
+
 # make sure our signals are loaded
 import corehq.apps.users.signals

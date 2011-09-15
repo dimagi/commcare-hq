@@ -1,0 +1,36 @@
+{% load hq_shared_tags %}
+<table>
+    <tr>
+        <th>Edit</th>
+        <th>Case Type</th>
+        <th>Method</th>
+        <th>Default Language</th>
+        <th>Language Property</th>
+        <th>Message</th>
+        <th>Start Question</th>
+        <th>Start Offset (Days)</th>
+        <th>Frequency (Days)</th>
+        <th>Stop Question</th>
+        <th>Delete</th>
+    </tr>
+    {% for handler in reminder_handlers %}
+    <tr>
+        <td><a href="{% url edit_reminder domain handler.get_id %}">Edit</a></td>
+        <td>{{ handler.case_type }}</td>
+        <td>{{ handler.method }}</td>
+        <td>{{ handler.default_lang }}</td>
+        <td>{{ handler.lang_property }}</td>
+        <td>{{ handler.message|JSON }}</td>
+        <td>{{ handler.start }}</td>
+        <td>{{ handler.start_offset }}</td>
+        <td>{{ handler.frequency }}</td>
+        <td>{{ handler.until }}</td>
+        <td>
+            <form action="{% url delete_reminder domain handler.get_id %}" method="post" style="display: inline;">
+                <input type="submit" value="Delete"/>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url add_reminder domain %}">Add Reminder</a>
