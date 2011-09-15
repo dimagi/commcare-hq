@@ -1,5 +1,6 @@
 {% extends base_template %}
 {% load xform_tags %}
+{% load case_tags %}
 {% block head %}
     {{block.super}}
     <link rel="stylesheet" href="{{ STATIC_URL }}couchforms/stylesheets/xforms.css" />
@@ -49,7 +50,7 @@
 <div title="Cases" id="cases">
     <ul>
     {% for case in caseblocks %}
-        <li><a href="{% url case_details domain case.case_id %}">{{ case.name|default:case.case_id }}</a></li>
+        <li><a href="{% url case_details domain case.case_id %}">{% case_inline_display case.case_id %}</a></li>
     {% endfor %}
     </ul>
 </div>
