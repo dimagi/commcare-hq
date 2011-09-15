@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
+from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
     couchable_property
 from couchdbkit.schema.properties_proxy import SchemaListProperty
@@ -179,7 +180,18 @@ class CommCareCase(CaseBase):
     def __get_case_id(self):        return self._id
     def __set_case_id(self, id):    self._id = id
     case_id = property(__get_case_id, __set_case_id)
-    
+
+    def get_case_property(self, property):
+        try:
+            return getattr(self, property)
+        except Exception:
+            return None
+    def set_case_property(self, property, value):
+        setattr(self, property, value)
+
+    def case_properties(self):
+        return self.to_json()
+
     def get_version_token(self):
         """
         A unique token for this version. 
@@ -341,5 +353,9 @@ class CommCareCase(CaseBase):
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         return sorted(self.dynamic_properties().items())
+
+    def save(self, **params):
+        super(CommCareCase, self).save(**params)
+        case_post_save.send(CommCareCase, case=self)
 
 import casexml.apps.case.signals

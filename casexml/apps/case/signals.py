@@ -1,3 +1,4 @@
+from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
 
 def process_cases(sender, xform, **kwargs):
@@ -15,3 +16,5 @@ def process_cases(sender, xform, **kwargs):
     map(lambda case: case.save(), cases)
     
 successful_form_received.connect(process_cases)
+
+case_post_save = Signal(providing_args=["case"])
