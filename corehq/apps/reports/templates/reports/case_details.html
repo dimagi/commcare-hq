@@ -1,6 +1,7 @@
 {% extends base_template %}
 
 {% load case_tags %}
+{% load hq_shared_tags %}
 
 {% block head %}
     {{ block.super }}
@@ -29,12 +30,17 @@
         }
     </style>
     <script>
+    var form_lookup_dict = {{ form_lookups|JSON }};
     $(document).ready(function() {
         // this adds a clickable link to our form elements
         var url_base = "{% url render_form_data domain 'placeholder' %}";
         $(".xform_ref").click(function() {
             var url = url_base.replace("placeholder", $(this).data("formid"));
-            window.location = url; 
+            window.location = url;
+        });
+        $(".xform_ref").each(function() {
+            var formid = $(this).data("formid");
+            $(this).text(form_lookup_dict[formid]);
         });
     });
          
