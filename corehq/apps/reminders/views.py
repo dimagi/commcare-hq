@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 import json
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
@@ -57,4 +58,27 @@ def delete_reminder(request, domain, handler_id):
         raise Http404
     handler.retire()
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
-    
+
+@login_and_domain_required
+def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
+    reminders = CaseReminderHandler.get_all_reminders(domain)
+    dates = []
+    today = datetime.utcnow().date()
+    if reminders:
+        start_date = reminders[0].next_fire.date()
+        if today < start_date:
+            start_date = today
+        end_date = reminders[-1].next_fire.date()
+        # make sure start date is a Monday and enddate is a Sunday
+        start_date -= timedelta(days=start_date.weekday())
+        end_date += timedelta(days=6-end_date.weekday())
+        while start_date <= end_date:
+            dates.append(start_date)
+            start_date += timedelta(days=1)
+
+    return render_to_response(request, template, {
+        'domain': domain,
+        'reminders': reminders,
+        'dates': dates,
+        'today': today,
+    })

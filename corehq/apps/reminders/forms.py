@@ -10,10 +10,11 @@ METHOD_CHOICES = (
 )
 
 class CaseReminderForm(Form):
+    nickname = CharField()
     case_type = CharField()
     method = ChoiceField(choices=METHOD_CHOICES)
     default_lang = CharField()
-    lang_property = CharField()
+#    lang_property = CharField()
     message = CharField()
     start = CharField()
     start_offset = IntegerField()

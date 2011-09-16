@@ -55,7 +55,7 @@ html {overflow-y: scroll;}
     padding: 1em;
 }
 td, th, caption {
-    padding: 4px 10px 4px 5px;
+    padding: 5px;
     vertical-align: top;
 }
 

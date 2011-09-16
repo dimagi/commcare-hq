@@ -1,9 +1,11 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 import re
 from couchdbkit.ext.django.schema import *
+from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.util import send_sms
 from corehq.apps.users.models import CommCareUser
+import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 
 def is_true_value(val):
@@ -60,6 +62,8 @@ METHOD_CHOICES = ["sms", "email", "test"]
 class CaseReminderHandler(Document):
     domain = StringProperty()
     case_type = StringProperty()
+
+    nickname = StringProperty()
     
     start = StringProperty()            # e.g. "edd" => create reminder on edd
                                            # | "form_started" => create reminder when form_started = 'ok'
@@ -160,30 +164,56 @@ class CaseReminderHandler(Document):
     def case_changed(self, case, now=None):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        if not reminder:
-            if self.start_offset >= 0:
-                if self.condition_reached(case, self.start, now):
-                    reminder = self.spawn_reminder(case, now)
-            else:
-                try:
-                    start = case.get_case_property(self.start)
+
+        if case.closed or not CommCareUser.get_by_user_id(case.user_id):
+            if reminder:
+                reminder.retire()
+        else:
+            if not reminder:
+                start = case.get_case_property(self.start)
+                try: start = string_to_datetime(start)
                 except Exception:
                     pass
+                if isinstance(start, date) or isinstance(start, datetime):
+                    if isinstance(start, date):
+                        start = datetime(start.year, start.month, start.day, now.hour, now.minute, now.second, now.microsecond)
+                    try:
+                        reminder = self.spawn_reminder(case, start)
+                    except Exception:
+                        if settings.DEBUG:
+                            raise
+                        logging.error(
+                            "Case ({case._id}) submitted against "
+                            "CaseReminderHandler {self.nickname} ({self._id}) "
+                            "but failed to resolve case.{self.start} to a date"
+                        )
                 else:
-                    reminder = self.spawn_reminder(case, self.start)
-        else:
-            active = not self.condition_reached(case, self.until, now)
-            if active and not reminder.active:
-                # if a reminder is reactivated, sending starts over from right now
-                reminder.next_fire = now
-            reminder.active = active
-        if reminder:
-            try:
-                reminder.lang = reminder.user.user_data.get(self.lang_property) or self.default_lang
-            except Exception:
-                reminder.lang = self.default_lang
-            reminder.save()
+                    if self.condition_reached(case, self.start, now):
+                        reminder = self.spawn_reminder(case, now)
+            else:
+                active = not self.condition_reached(case, self.until, now)
+                if active and not reminder.active:
+                    # if a reminder is reactivated, sending starts over from right now
+                    reminder.next_fire = now
+                reminder.active = active
+            if reminder:
+                try:
+                    reminder.lang = reminder.user.user_data.get(self.lang_property) or self.default_lang
+                except Exception:
+                    reminder.lang = self.default_lang
+                reminder.save()
 
+    def save(self, **params):
+        super(CaseReminderHandler, self).save(**params)
+        if not self.deleted():
+            cases = CommCareCase.view('hqcase/open_cases',
+                reduce=False,
+                startkey=[self.domain],
+                endkey=[self.domain, {}],
+                include_docs=True,
+            )
+            for case in cases:
+                self.case_changed(case)
     @classmethod
     def get_handlers(cls, domain, case_type=None):
         key = [domain]
@@ -196,16 +226,23 @@ class CaseReminderHandler(Document):
         )
 
     @classmethod
-    def get_due_reminders(cls, now):
+    def get_all_reminders(cls, domain=None, due_before=None):
+        if due_before:
+            now_json = json_format_datetime(due_before)
+        else:
+            now_json = {}
+
+        # domain=None will actually get them all, so this works smoothly
         return CaseReminder.view('reminders/by_next_fire',
-            endkey=json_format_datetime(now),
+            startkey=[domain],
+            endkey=[domain, now_json],
             include_docs=True
-        )
+        ).all()
     
     @classmethod
     def fire_reminders(cls, now=None):
         now = now or cls.get_now()
-        for reminder in cls.get_due_reminders(now):
+        for reminder in cls.get_all_reminders(due_before=now):
             handler = reminder.handler
             handler.fire(reminder)
             handler.set_next_fire(reminder, now)
@@ -215,9 +252,12 @@ class CaseReminderHandler(Document):
         reminders = self.get_reminders()
         self.doc_type += "-Deleted"
         for reminder in reminders:
-            reminder.doc_type += "-Deleted"
-            reminder.save()
+            print "Retiring %s" % reminder._id
+            reminder.retire()
         self.save()
+
+    def deleted(self):
+        return self.doc_type != 'CaseReminderHandler'
 
 class CaseReminder(Document):
     domain = StringProperty()
@@ -242,4 +282,7 @@ class CaseReminder(Document):
     def user(self):
         return CommCareUser.get_by_user_id(self.user_id)
 
+    def retire(self):
+        self.doc_type += "-Deleted"
+        self.save()
 from .signals import *

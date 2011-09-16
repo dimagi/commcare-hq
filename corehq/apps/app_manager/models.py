@@ -843,7 +843,7 @@ class Application(ApplicationBase, TranslationMixin):
     def post_url(self):
         return "%s%s" % (
             self.url_base,
-            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+            reverse('receiver_post_with_app_id', args=[self.domain, self._id])
         )
     @property
     def ota_restore_url(self):

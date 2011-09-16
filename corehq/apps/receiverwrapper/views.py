@@ -10,5 +10,5 @@ def form_list(request, domain):
 
 @csrf_exempt    
 @require_POST
-def post(request, domain):
+def post(request, domain, app_id=None):
     return rec_views.post(request)

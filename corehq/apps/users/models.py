@@ -604,6 +604,10 @@ def create_hq_user_from_commcare_registration_info(domain, username, password,
 class CommCareUser(object):
     @classmethod
     def get_by_user_id(cls, user_id):
+        try:
+            get_db().get(user_id)
+        except Exception:
+            return None
         commcare_user = cls()
         commcare_user.user_id = user_id
         return commcare_user
@@ -620,6 +624,10 @@ class CommCareUser(object):
     @property
     def phone_number(self):
         return self._couch_user.default_phone_number
+
+    @property
+    def raw_username(self):
+        return self._couch_user.raw_username
 
 # make sure our signals are loaded
 import corehq.apps.users.signals

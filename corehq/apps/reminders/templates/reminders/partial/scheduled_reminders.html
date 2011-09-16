@@ -1,0 +1,117 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block head %}
+    <style>
+        h1 {
+            font-size: 2em;
+            text-align: center;
+        }
+        #scheduled-reminders-container {
+            margin: 10px;
+        }
+        table.calendar {
+            margin: auto;
+        }
+        table.calendar td {
+            border: 1px solid #BBB;
+        }
+        .scheduled-reminders {
+            width: 100%;
+        }
+        .scheduled-reminders li {
+            background-color: #CCF;
+            border: 1px solid #AAF;
+            margin: 2px;
+            padding: 2px;
+        }
+        .calendar-today {
+            background-color: #EEE;
+        }
+        .calendar-past {
+            background-color: #FDD;
+        }
+        .calendar-cell {
+            min-height: 100px;
+        }
+        .date-header {
+            color: #888;
+            text-align: center;
+        }
+        .time-header {
+            color: #888;
+        }
+        #main_container {
+            padding: 10px;
+        }
+
+    </style>
+    <script>
+        $(function () {
+            var reminders = [
+                {% for reminder in reminders %}
+                    {
+                        nickname: "{{ reminder.handler.nickname }}",
+                        date: "{{ reminder.next_fire.date }}",
+                        time: "{{ reminder.next_fire.time }}",
+                        username: "{{ reminder.user.raw_username }}",
+                        case_name: "{{ reminder.case.name }}",
+                        case_url: "{% url case_details domain reminder.case.get_id %}",
+                    },
+                {% endfor %}
+                    null
+                ],
+                i,
+                reminder;
+            for (i = 0; i < reminders.length; i += 1) {
+                reminder = reminders[i];
+                if (reminder) {
+                    $('.calendar [data-date="' + reminder.date + '"]').append(
+                        $('<li/>').append(
+                            $('<p/>').text(reminder.time).addClass('time-header')
+                        ).append(
+                            $('<p/>').html(
+                                "send <u>" + reminder.nickname + "</u><br/>" +
+                                "to <u>" + (reminder.username || "(?)") + "</u><br/>" +
+                                'about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>"
+                            )
+                        )
+                    );
+                }
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id='main_container'>
+        <h1>Scheduled Reminders</h1>
+        <a href="{% url list_reminders domain %}">Reminders</a>
+        <div id='scheduled-reminders-container'>
+            <table class="calendar">
+                <tr>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
+                </tr>
+            {% for date in dates %}
+                {% if date.weekday == 0 %}
+                <tr>
+                {% endif %}
+                    <td {% if date == today %}class="calendar-today"{% endif %}{% if date < today %}class="calendar-past"{% endif %}>
+                        <div class="calendar-cell">
+                            <p class="date-header">{{ date }}</p>
+                            <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
+                        </div>
+                    </td>
+                {% if date.weekday == 6 %}
+                </tr>
+                {% endif %}
+            {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import CaseReminderHandler, Message
+from corehq.apps.users.models import CouchUser
 
 class ReminderTestCase(TestCase):
     @classmethod
@@ -21,13 +22,17 @@ class ReminderTestCase(TestCase):
             default_lang='en',
         )
         cls.handler.save()
+        cls.user_id = "USER-ID-109347"
+        CouchUser(_id=cls.user_id).save()
+
 
     def test_ok(self):
         self.assertEqual(self.handler.message['en'], self.message)
 
         case = CommCareCase(
             domain=self.domain,
-            type=self.case_type
+            type=self.case_type,
+            user_id=self.user_id,
         )
         case.save()
         self.assertEqual(self.handler.get_reminder(case), None)
