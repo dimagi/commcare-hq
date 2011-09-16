@@ -47,6 +47,10 @@ logout
 
 to test go to localhost:8000 or localhost:8000/login
 
+To create a domain and user without going through the signup, use
+
+./manage.py bootstrap <domain> <user> <password>
+
 # note about requirements.txt
 
 If an import isn't working it may well be because we aren't specifying all versions in the requirements.txt and you have

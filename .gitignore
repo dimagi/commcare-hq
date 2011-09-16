@@ -16,3 +16,4 @@ rapidsms.log*
 *.log
 CommCare.ja*
 startover.sh
+celery.db
