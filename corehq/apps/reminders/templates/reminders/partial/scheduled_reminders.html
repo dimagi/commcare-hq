@@ -1,50 +1,7 @@
-{% extends base_template %}
+{% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
 {% block head %}
-    <style>
-        h1 {
-            font-size: 2em;
-            text-align: center;
-        }
-        #scheduled-reminders-container {
-            margin: 10px;
-        }
-        table.calendar {
-            margin: auto;
-        }
-        table.calendar td {
-            border: 1px solid #BBB;
-        }
-        .scheduled-reminders {
-            width: 100%;
-        }
-        .scheduled-reminders li {
-            background-color: #CCF;
-            border: 1px solid #AAF;
-            margin: 2px;
-            padding: 2px;
-        }
-        .calendar-today {
-            background-color: #EEE;
-        }
-        .calendar-past {
-            background-color: #FDD;
-        }
-        .calendar-cell {
-            min-height: 100px;
-        }
-        .date-header {
-            color: #888;
-            text-align: center;
-        }
-        .time-header {
-            color: #888;
-        }
-        #main_container {
-            padding: 10px;
-        }
-
-    </style>
+    {{ block.super }}
     <script>
         $(function () {
             var reminders = [
@@ -82,36 +39,33 @@
     </script>
 {% endblock %}
 
-{% block content %}
-    <div id='main_container'>
-        <h1>Scheduled Reminders</h1>
-        <a href="{% url list_reminders domain %}">Reminders</a>
-        <div id='scheduled-reminders-container'>
-            <table class="calendar">
-                <tr>
-                    <th>Monday</th>
-                    <th>Tuesday</th>
-                    <th>Wednesday</th>
-                    <th>Thursday</th>
-                    <th>Friday</th>
-                    <th>Saturday</th>
-                    <th>Sunday</th>
-                </tr>
-            {% for date in dates %}
-                {% if date.weekday == 0 %}
-                <tr>
-                {% endif %}
-                    <td {% if date == today %}class="calendar-today"{% endif %}{% if date < today %}class="calendar-past"{% endif %}>
-                        <div class="calendar-cell">
-                            <p class="date-header">{{ date }}</p>
-                            <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
-                        </div>
-                    </td>
-                {% if date.weekday == 6 %}
-                </tr>
-                {% endif %}
-            {% endfor %}
-            </table>
-        </div>
+{% block reminders_content %}
+    <h1>Reminder Calendar</h1>
+    <div id='scheduled-reminders-container'>
+        <table class="calendar">
+            <tr>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+            </tr>
+        {% for date in dates %}
+            {% if date.weekday == 0 %}
+            <tr>
+            {% endif %}
+                <td {% if date == today %}class="calendar-today"{% endif %}{% if date < today %}class="calendar-past"{% endif %}>
+                    <div class="calendar-cell">
+                        <p class="date-header">{{ date }}</p>
+                        <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
+                    </div>
+                </td>
+            {% if date.weekday == 6 %}
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </table>
     </div>
 {% endblock %}

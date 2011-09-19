@@ -1,37 +1,92 @@
+{% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
-<a href="{% url scheduled_reminders domain %}">Scheduled Reminders</a>
-<table>
-    <tr>
-        <th>Edit</th>
-        <th>Nickname</th>
-        <th>Case Type</th>
-        <th>Method</th>
-        <th>Default Language</th>
-{#        <th>Language Property</th>#}
-        <th>Message</th>
-        <th>Start</th>
-        <th>Every</th>
-        <th>Until</th>
-        <th>Delete</th>
-    </tr>
-    {% for handler in reminder_handlers %}
-    <tr>
-        <td><a href="{% url edit_reminder domain handler.get_id %}">Edit</a></td>
-        <td>{{ handler.nickname }}</td>
-        <td>{{ handler.case_type }}</td>
-        <td>{{ handler.method }}</td>
-        <td>{{ handler.default_lang }}</td>
-{#        <td>{{ handler.lang_property }}</td>#}
-        <td>{{ handler.message|JSON }}</td>
-        <td>{{ handler.start }}{% if handler.start_offset >= 0 %}+{% endif %} {{ handler.start_offset }} days</td>
-        <td>{{ handler.frequency }} days</td>
-        <td>{{ handler.until }}</td>
-        <td>
-            <form action="{% url delete_reminder domain handler.get_id %}" method="post" style="display: inline;">
-                <input type="submit" value="Delete"/>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-<a href="{% url add_reminder domain %}">Add Reminder</a>
+
+{% block head %}
+    {{ block.super }}
+    <script>
+        $(function () {
+            $('.message-popup').addClass('shadow').find('td').each(function () {
+                var message = $(this).html();
+                message = message.replace(/(\{[^\}]*\})/g, "<code>$1</code>");
+                $(this).html(message);
+            });
+            $('.message-popup-link').click(function (e) {
+                e.preventDefault();
+                InlineHelp.$shield.open(
+                    $(this).prev('.message-popup')
+                );
+            });
+        });
+    </script>
+    <style>
+        .message-popup {
+            position: absolute;
+            z-index: 10;
+            background-color: white;
+            border: 1px solid #CCC;
+            width: 400px;
+            text-align: justify;
+        }
+    </style>
+{% endblock %}
+
+{% block reminders_content %}
+    <h1>Reminders</h1>
+    <table>
+        <tr>
+            <th>Edit</th>
+            <th>Nickname</th>
+{#            <th>Method</th>#}
+{#            <th>Lang.</th>#}
+    {#        <th>Language Property</th>#}
+            <th>Message</th>
+            <th>Start</th>
+            <th>Every</th>
+            <th>Until</th>
+            <th>Delete</th>
+        </tr>
+        {% for handler in reminder_handlers %}
+            {% ifchanged handler.case_type %}
+                <tr class="separator center">
+                    <td colspan="7">For case type <code>{{ handler.case_type }}</code></td>
+                </tr>
+            {% endifchanged %}
+        <tr>
+            <td><a href="{% url edit_reminder domain handler.get_id %}">edit</a></td>
+            <td>{{ handler.nickname }}</td>
+{#            <td>{{ handler.method }}</td>#}
+{#            <td>{{ handler.default_lang }}</td>#}
+    {#        <td>{{ handler.lang_property }}</td>#}
+            <td>
+                <div class="message-popup hidden">
+                    <table>
+                        {% for lang, msg in handler.message.items %}
+                        <tr>
+                            <th>{% if lang == handler.default_lang %}<strong>{{ lang }}</strong>{% else %}{{ lang }}{% endif %}</th>
+                            <td>{{ msg }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                <a class="message-popup-link" href="#">view</a>
+            </td>
+            <td>{{ handler.start }}<span class="light"> +</span> {{ handler.start_offset }}<span class="light"> days</span></td>
+            <td>{{ handler.frequency }}<span class="light"> days</span></td>
+            <td>{{ handler.until }}</td>
+            <td>
+                <form action="{% url delete_reminder domain handler.get_id %}" method="post"
+                      style="display: inline;"
+                      data-title="Delete Reminder?" data-message="Are you sure you want to delete reminder {{ handler.nickname }}?">
+{#                    <input type="submit" value="Delete"/>#}
+                    <a href="#" class="confirm-submit">delete</a>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        <tr class="separator">
+            <td colspan="7">
+                <a href="{% url add_reminder domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder</a>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

@@ -177,6 +177,6 @@
     </menu>
  {% endfor %}
 {% else %}
-    {{ custom_suite }}
+    {{ app.custom_suite|safe }}
 {% endif %}
 </suite>

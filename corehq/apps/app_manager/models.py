@@ -928,11 +928,17 @@ class Application(ApplicationBase, TranslationMixin):
             'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
 
+    @property
+    def custom_suite(self):
+        try:
+            return self.fetch_attachment('custom_suite.xml')
+        except Exception:
+            return ""
+
+    def set_custom_suite(self, value):
+        self.put_attachment(value, 'custom_suite.xml')
+
     def create_suite(self, template='app_manager/suite.xml'):
-        if self.use_custom_suite:
-            custom_suite = self.fetch_attachment('custom_suite.xml')
-        else:
-            custom_suite = ""
             
         return render_to_string(template, {
             'app': self,

@@ -65,7 +65,22 @@ var COMMCAREHQ = (function () {
                 $help_text.addClass('shadow');
                 new InlineHelp($help_link, $help_text, help_key).init();
             });
-            $('.hidden').hide();
+            $('.hidden', $elem).hide();
+            $('.confirm-submit', $elem).click(function () {
+                var $form = $(this).closest('form'),
+                    message = $form.data('message') || function () {
+                        $(this).append($form.find('.dialog-message').html());
+                    },
+                    title = $form.data('title');
+                COMMCAREHQ.confirm({
+                    title: title,
+                    message: message,
+                    ok: function () {
+                        $form.submit();
+                    }
+                });
+                return false;
+            });
         },
         updateDOM: function (update) {
             var key;

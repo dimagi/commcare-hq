@@ -8,6 +8,10 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from dimagi.utils.web import render_to_response
 
 @login_and_domain_required
+def default(request, domain):
+    return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
+
+@login_and_domain_required
 def list_reminders(request, domain, template="reminders/partial/list_reminders.html"):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
     print handlers
