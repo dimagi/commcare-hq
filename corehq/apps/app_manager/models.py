@@ -816,7 +816,7 @@ class Application(ApplicationBase, TranslationMixin):
     name = StringProperty()
     langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
-
+    use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
 
     @classmethod
@@ -929,6 +929,11 @@ class Application(ApplicationBase, TranslationMixin):
         }).decode('utf-8')
 
     def create_suite(self, template='app_manager/suite.xml'):
+        if self.use_custom_suite:
+            custom_suite = self.fetch_attachment('custom_suite.xml')
+        else:
+            custom_suite = ""
+            
         return render_to_string(template, {
             'app': self,
             'langs': ["default"] + self.langs
