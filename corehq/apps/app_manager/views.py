@@ -956,7 +956,8 @@ def edit_app_attr(req, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name', 'success_message', 'use_commcare_sense',
-        'native_input', 'build_spec', 'show_user_registration'
+        'native_input', 'build_spec', 'show_user_registration',
+        'use_custom_suite', 'custom_suite',
         # RemoteApp only
         'profile_url'
     ]
@@ -964,7 +965,7 @@ def edit_app_attr(req, domain, app_id, attr):
         return HttpResponseBadRequest()
     
     def should_edit(attribute):
-        return attribute == attr or ('all' == attr and req.POST.get(attribute))
+        return attribute == attr or ('all' == attr and req.POST.has_key(attribute))
     resp = {"update": {}}
     # For either type of app
     if should_edit("recipients"):
@@ -991,12 +992,15 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit("use_custom_suite"):
         app.use_custom_suite = bool(json.loads(req.POST['use_custom_suite']))
     if should_edit("custom_suite"):
+        # put_attachment drops all changes
+        app.save(increment_version=False)
         app.set_custom_suite(req.POST['custom_suite'])
     # For RemoteApp
     if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.doc_type)
         app['profile_url'] = req.POST['profile_url']
+
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
