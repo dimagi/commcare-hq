@@ -400,6 +400,10 @@ th {
     font-weight: normal;
 }
 
+.hidden {
+    display: none;
+}
+
 /* Inline Help */
 .help-text {
     border: 1px solid #eaeaff;

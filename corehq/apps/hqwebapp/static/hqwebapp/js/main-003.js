@@ -65,7 +65,6 @@ var COMMCAREHQ = (function () {
                 $help_text.addClass('shadow');
                 new InlineHelp($help_link, $help_text, help_key).init();
             });
-            $('.hidden', $elem).hide();
             $('.confirm-submit', $elem).click(function () {
                 var $form = $(this).closest('form'),
                     message = $form.data('message') || function () {
@@ -245,7 +244,6 @@ function setUpIeWarning() {
 
 $(function () {
     'use strict';
-    $('.hidden').hide();
     $('.delete_link').iconify('ui-icon-closethick');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
