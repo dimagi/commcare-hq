@@ -35,6 +35,17 @@
                     );
                 }
             }
+            $('.calendar-first').each(function () {
+                var i = 0, className = 'calendar-first-week', day = $(this);
+                for (i = 0; i < 7; i += 1) {
+                    day.addClass(className);
+                    if (day.next().length) {
+                        day = day.next();
+                    } else if (day.parent().next().find('> td')) {
+                        day = day.parent().next().find('> td').first();
+                    }
+                }
+            });
         });
     </script>
     <style>
@@ -50,6 +61,12 @@
             padding: .5em;
             width: 500px;
             margin: auto;
+        }
+        .calendar-first:not(:first-child) {
+            border-left-width: 3px;
+        }
+        .calendar td.calendar-first-week{
+            border-top-width: 3px;
         }
     </style>
 {% endblock %}
@@ -75,7 +92,9 @@
             {% if date.weekday == 0 %}
             <tr>
             {% endif %}
-                <td {% if date == today %}class="calendar-today"{% endif %}{% if date < today %}class="calendar-past"{% endif %}>
+                <td {% if date == today %}class="calendar-today"{% endif %}
+                    {% if date < today %}class="calendar-past"{% endif %}
+                    {% if date.day == 1 %}class="calendar-first"{% endif %}>
                     <div class="calendar-cell">
                         <p class="date-header">{{ date }}</p>
                         <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
