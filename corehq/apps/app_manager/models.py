@@ -602,7 +602,8 @@ class VersionedDoc(Document):
                 del source[field]
         _attachments = {}
         for name in source.get('_attachments', {}):
-            _attachments[name] = self.fetch_attachment(name)
+            if name.endswith('.xml', 1):
+                _attachments[name] = self.fetch_attachment(name)
         source['_attachments'] = _attachments
         self.scrub_source(source)
 
