@@ -29,4 +29,14 @@ class MultiCaseTest(TestCase):
         self.assertEqual(4, len(CommCareCase.view("case/by_xform_id").all()))
         
         
+    def testCasesInRepeats(self):
+        self.assertEqual(0, len(CommCareCase.view("case/by_xform_id").all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        self.assertEqual(3, len(CommCareCase.view("case/by_xform_id").all()))
+        
+        
         
