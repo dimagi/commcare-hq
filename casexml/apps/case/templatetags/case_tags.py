@@ -23,6 +23,9 @@ def case_inline_display(case_id):
     """
     case = CommCareCase.get(case_id)
     if case:
-        return "%s (opened: %s)" % (case.name, case.opened_on.date())
+        if case.opened_on:
+            return "%s (opened: %s)" % (case.name, case.opened_on.date())
+        else:
+            return case.name
     return "unknown case: %s" % case_id
     
