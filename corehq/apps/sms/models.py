@@ -2,7 +2,7 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django.db import models
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -33,6 +33,9 @@ class MessageLog(models.Model):
     @property
     def username(self):
         if self.couch_recipient:
-            user = CouchUser.get(self.couch_recipient)
-            return user.username
+            try:
+                user = CouchUser.get(self.couch_recipient)
+                return user.username
+            except Exception:
+                return CommCareUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number

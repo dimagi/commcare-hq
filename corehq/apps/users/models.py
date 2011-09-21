@@ -629,5 +629,8 @@ class CommCareUser(object):
     def raw_username(self):
         return self._couch_user.raw_username
 
+    @property
+    def username(self):
+        return self._couch_user.username
 # make sure our signals are loaded
 import corehq.apps.users.signals
