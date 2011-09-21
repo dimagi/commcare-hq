@@ -49,21 +49,33 @@ class DateSpan(object):
     A useful class for representing a date span
     """
     
-    def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT):
+    def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT, inclusive=True):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
+        self.inclusive = inclusive
     
     @property
     def startdate_param(self):
         if self.startdate:
             return self.startdate.strftime(self.format)
-    
+
+    @property
+    def startdate_display(self):
+        if self.startdate:
+            return self.startdate.strftime(self.format)
+
     @property
     def enddate_param(self):
         if self.enddate:
+            # you need to add a day to enddate if your dates are meant to be inclusive
+            offset = timedelta(days=1 if self.inclusive else 0)
+            return (self.enddate + offset).strftime(self.format)
+
+    @property
+    def enddate_display(self):
+        if self.enddate:
             return self.enddate.strftime(self.format)
-        
     
     def is_valid(self):
         # this is a bit backwards but keeps the logic in one place
@@ -114,7 +126,7 @@ class DateSpan(object):
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.utcnow() + timedelta(days=1)
+            enddate = datetime.utcnow()
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
         return DateSpan(start, end, format)
