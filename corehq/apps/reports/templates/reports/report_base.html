@@ -205,9 +205,9 @@
             <form method="get" id="paramSelectorForm">
             {% if show_dates %}
                     <label for="startdate">From Date:</label>
-                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate_param }}">
+                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
                    <label for="enddate">To Date:</label>
-                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate_param }}">
+                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
                    {# oddly enough, this is the only form that needs or has a submit button #}
                    <input type="submit" value="Go!" />
 {#                <p>#}
