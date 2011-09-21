@@ -991,10 +991,6 @@ def edit_app_attr(req, domain, app_id, attr):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     if should_edit("use_custom_suite"):
         app.use_custom_suite = bool(json.loads(req.POST['use_custom_suite']))
-    if should_edit("custom_suite"):
-        # put_attachment drops all changes
-        app.save(increment_version=False)
-        app.set_custom_suite(req.POST['custom_suite'])
     # For RemoteApp
     if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
@@ -1002,6 +998,9 @@ def edit_app_attr(req, domain, app_id, attr):
         app['profile_url'] = req.POST['profile_url']
 
     app.save(resp)
+    # this is a put_attachment, so it has to go after everything is saved
+    if should_edit("custom_suite"):
+        app.set_custom_suite(req.POST['custom_suite'])
     return HttpResponse(json.dumps(resp))
 
 
