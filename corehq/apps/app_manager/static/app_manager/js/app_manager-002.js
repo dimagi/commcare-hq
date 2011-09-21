@@ -280,21 +280,5 @@
                 return false;
             }
         });
-
-        $('.confirm-submit').click(function () {
-            var $form = $(this).closest('form'),
-                message = $form.data('message') || function () {
-                    $(this).append($form.find('.dialog-message').html());
-                },
-                title = $form.data('title');
-            COMMCAREHQ.confirm({
-                title: title,
-                message: message,
-                ok: function () {
-                    $form.submit();
-                }
-            });
-            return false;
-        });
     };
 }());

@@ -568,9 +568,15 @@ def paging_case_list(request, domain, individual):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
+    case = CommCareCase.get(case_id)
+    form_lookups = dict((form.get_id, \
+                         "%s: %s" % (form.received_on.date(), xmlns_to_name(form.xmlns, domain))) \
+                        for form in [XFormInstance.get(id) for id in case.xform_ids] \
+                        if form)
     return render_to_response(request, "reports/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "form_lookups": form_lookups,
         "report": {
             "name": "Case Details"
         }

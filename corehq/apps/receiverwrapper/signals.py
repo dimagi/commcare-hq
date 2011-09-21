@@ -7,7 +7,8 @@ from corehq.apps.receiverwrapper.tasks import send_repeats
 from corehq.apps.receiverwrapper.models import RepeatRecord
 import types
 
-DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver/?.*$')
+DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
+APP_ID_RE = re.compile(r'^/a/\S+/receiver/(.*)/$')
 
 def scrub_meta(sender, xform, **kwargs):
     property_map = {"TimeStart": "timeStart",
@@ -46,14 +47,25 @@ def scrub_meta(sender, xform, **kwargs):
             
 def _get_domain(xform):
     matches = DOMAIN_RE.search(xform.path)
-    if matches and len(matches.groups()) == 1:
+    if matches and len(matches.groups()):
         return normalize_domain_name(matches.groups()[0])
-    
+
+def _get_app_id(xform):
+    matches = APP_ID_RE.search(xform.path)
+    if matches and len(matches.groups()) and matches.groups()[0]:
+        return matches.groups()[0]
+
 def add_domain(sender, xform, **kwargs):
     domain = _get_domain(xform)
     if domain: 
         xform['domain'] = domain
         xform['#export_tag'] = ["domain", "xmlns"]
+        xform.save()
+
+def add_app_id(sender, xform, **kwargs):
+    app_id = _get_app_id(xform)
+    if app_id:
+        xform['app_id'] = app_id
         xform.save()
 
 def send_repeaters(sender, xform, **kwargs):
@@ -71,4 +83,5 @@ def send_repeaters(sender, xform, **kwargs):
         
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
+form_received.connect(add_app_id)
 successful_form_received.connect(send_repeaters)

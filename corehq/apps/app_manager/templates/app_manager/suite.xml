@@ -29,6 +29,7 @@
         </resource>
     </locale>
  {% endfor %}
+{% if not app.use_custom_suite %}
  {% for module in app.get_modules %}
   {% for detail in module.details %}
    {% if detail.columns %}
@@ -175,4 +176,7 @@
      {% endif %}
     </menu>
  {% endfor %}
+{% else %}
+    {{ app.custom_suite|safe }}
+{% endif %}
 </suite>

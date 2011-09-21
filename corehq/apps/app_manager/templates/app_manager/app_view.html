@@ -183,6 +183,33 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if user.is_superuser %}
+                <tr class="superuser-only">
+                    <th><label for="use-custom-suite-select">Use a Custom Suite File</label></th>
+                    <td>
+                        {% if edit %}
+                                <select id="use-custom-suite-select" name="use_custom_suite" data-value="{{ app.use_custom_suite|JSON }}">
+                                    <option value="false">* Don't Use</option>
+                                    <option value="true">Use</option>
+                                </select>
+                        {% else %}
+                            {% if not app.use_custom_suite %}Don't Use{% else %}Use{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if app.use_custom_suite %}
+                <tr class="superuser-only">
+                    <th><label for="custom-suite-textarea">Custom Suite</label></th>
+                    <td>
+                        {% if edit %}
+                            <textarea id="custom-suite-textarea" name="custom_suite">{{ app.custom_suite }}</textarea>
+                        {% else %}
+                            {{ app.custom_suite }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
             {% endif %}
                 <tr>
                     <th>CommCare Version</th>

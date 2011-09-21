@@ -602,7 +602,8 @@ class VersionedDoc(Document):
                 del source[field]
         _attachments = {}
         for name in source.get('_attachments', {}):
-            _attachments[name] = self.fetch_attachment(name)
+            if name.endswith('.xml', 1):
+                _attachments[name] = self.fetch_attachment(name)
         source['_attachments'] = _attachments
         self.scrub_source(source)
 
@@ -816,7 +817,7 @@ class Application(ApplicationBase, TranslationMixin):
     name = StringProperty()
     langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
-
+    use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
 
     @classmethod
@@ -843,7 +844,7 @@ class Application(ApplicationBase, TranslationMixin):
     def post_url(self):
         return "%s%s" % (
             self.url_base,
-            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+            reverse('receiver_post_with_app_id', args=[self.domain, self._id])
         )
     @property
     def ota_restore_url(self):
@@ -928,7 +929,18 @@ class Application(ApplicationBase, TranslationMixin):
             'cc_user_domain': cc_user_domain(self.domain)
         }).decode('utf-8')
 
+    @property
+    def custom_suite(self):
+        try:
+            return self.fetch_attachment('custom_suite.xml')
+        except Exception:
+            return ""
+
+    def set_custom_suite(self, value):
+        self.put_attachment(value, 'custom_suite.xml')
+
     def create_suite(self, template='app_manager/suite.xml'):
+            
         return render_to_string(template, {
             'app': self,
             'langs': ["default"] + self.langs

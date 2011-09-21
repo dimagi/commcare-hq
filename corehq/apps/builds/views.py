@@ -14,7 +14,7 @@ def post(request):
             "and the following meta-data: build_number (i.e. 2348), version (i.e. '1.2.3')")
     try:
         build_number = int(build_number)
-    except:
+    except Exception:
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
 

@@ -1,4 +1,4 @@
-[% if(questions) { %]
+[% if(questions.length) { %]
     <ul>
         <li>
                 Requires
@@ -29,7 +29,6 @@
     </ul>
 [% } else { %]
     <p class="warning">
-        I'm unable to get a list of questions from your form. This may mean that your form is corrupted or
-        malformed.
+        Your form has no usable questions for Case & Referral configuration.
     </p>
 [% } %]

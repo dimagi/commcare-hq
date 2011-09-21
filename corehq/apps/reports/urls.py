@@ -30,7 +30,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url('^active_cases/$', 'active_cases', name="active_case_report"),
     url('^case_activity/$', 'case_activity', name="case_activity_report"),
     url('^case_list/$', 'case_list', name="case_list_report"),
-    url('^case_data/(?P<case_id>\w+)/$', 'case_details', name="case_details"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
 
     url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),

@@ -7,7 +7,7 @@ class BitlyError(Exception):
         self.status_code = status_code
         self.status_txt = status_txt
     def __str__(self):
-        return "Bitly Error %s: %s" % self.status_code, self.status_txt
+        return "Bitly Error %s: %s" % (self.status_code, self.status_txt)
 
 def shorten(url, login=settings.BITLY_LOGIN, api_key=settings.BITLY_APIKEY):
     response = json.load(
