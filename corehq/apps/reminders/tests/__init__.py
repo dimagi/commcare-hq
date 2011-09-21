@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import CaseReminderHandler, Message
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 
 class ReminderTestCase(TestCase):
     @classmethod
@@ -23,7 +23,7 @@ class ReminderTestCase(TestCase):
         )
         cls.handler.save()
         cls.user_id = "USER-ID-109347"
-        CouchUser(_id=cls.user_id).save()
+        CommCareUser.create(cls.domain, 'chw.bob', '****', uuid=cls.user_id)
 
 
     def test_ok(self):

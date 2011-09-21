@@ -1,6 +1,7 @@
 from django.core.management.base import LabelCommand
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import ReportNotification
+from corehq.apps.sms.models import MessageLog
 from corehq.apps.users import old_couch_user_models
 from corehq.apps.users.models import CouchUser
 
@@ -65,3 +66,12 @@ class Command(LabelCommand):
                     notification.user_ids[i] = id_map[user_id]
             notification.save()
             notification_ids.add(notification._id)
+
+        print "* MessageLog"
+        messages = MessageLog.objects.all()
+        count = 0
+        for message in messages:
+            if message.couch_recipient in id_map:
+                message.couch_recipient = id_map[message.couch_recipient]
+                count += 1
+        print "    %s/%s changed (just in case you were curious)" % (count, messages.count())
