@@ -601,7 +601,7 @@ def download_cases(request, domain):
     users = CouchUser.commcare_users_by_domain(domain)
 
     workbook = CsvWorkBook()
-    export_cases_and_referrals(cases, workbook)
+    export_cases_and_referrals(cases, workbook, users=users)
     export_users(users, workbook)
     response = HttpResponse(workbook.to_zip())
     response['Content-Type'] = "application/zip"
