@@ -17,3 +17,4 @@ rapidsms.log*
 CommCare.ja*
 startover.sh
 celery.db
+*.sql
