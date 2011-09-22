@@ -1,4 +1,8 @@
-def export_cases_and_referrals(cases, workbook):
+def export_cases_and_referrals(cases, workbook, users=None):
+    if users:
+        user_ids = set([user.user_id for user in users])
+    else:
+        user_ids = None
     case_static_keys = (
         "case_id",
         "name",
@@ -25,22 +29,23 @@ def export_cases_and_referrals(cases, workbook):
     referral_rows = []
 
     for case in cases:
-        case_row = {'dynamic_properties': {}}
-        for key in case_static_keys:
-            case_row[key] = getattr(case, key)
-        for key in case.dynamic_properties():
-            case_dynamic_keys.add(key)
-            case_row['dynamic_properties'][key] = getattr(case, key)
-        case_rows.append(case_row)
+        if not users or users and case.user_id in user_ids:
+            case_row = {'dynamic_properties': {}}
+            for key in case_static_keys:
+                case_row[key] = getattr(case, key)
+            for key in case.dynamic_properties():
+                case_dynamic_keys.add(key)
+                case_row['dynamic_properties'][key] = getattr(case, key)
+            case_rows.append(case_row)
 
-        for referral in case.referrals:
-            referral_row = {}
-            for key in referral_keys:
-                if key == "case_id":
-                    referral_row[key] = case.case_id
-                else:
-                    referral_row[key] = getattr(referral, key)
-            referral_rows.append(referral_row)
+            for referral in case.referrals:
+                referral_row = {}
+                for key in referral_keys:
+                    if key == "case_id":
+                        referral_row[key] = case.case_id
+                    else:
+                        referral_row[key] = getattr(referral, key)
+                referral_rows.append(referral_row)
 
     case_dynamic_keys = sorted(case_dynamic_keys)
     def tidy_up_case_row(case_row):
