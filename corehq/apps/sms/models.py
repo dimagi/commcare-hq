@@ -33,9 +33,5 @@ class MessageLog(models.Model):
     @property
     def username(self):
         if self.couch_recipient:
-            try:
-                user = CouchUser.get(self.couch_recipient)
-                return user.username
-            except Exception:
-                return CommCareUser.get_by_user_id(self.couch_recipient).username
+            return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number

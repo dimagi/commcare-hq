@@ -69,8 +69,6 @@ class DomainMembership(DocumentSchema):
         app_label = 'users'
 
 class DjangoUserMixin(DocumentSchema):
-    django_id = IntegerProperty()
-
     username = StringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
@@ -174,7 +172,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
     def get_django_user(self):
-        return User.objects.get(pk=self.django_id)
+        return User.objects.get(username=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -193,7 +191,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     # Couch view wrappers
     @classmethod
     def all(cls):
-        return CouchUser.view("users/by_django_id", include_docs=True)
+        return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
     def by_domain(cls, domain):
@@ -218,9 +216,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     # for synching
     def sync_from_django_user(self, django_user):
-        if django_user:
-            self.django_id = django_user.id
-        else:
+        if not django_user:
             django_user = self.get_django_user()
         for attr in DjangoUserMixin.ATTRS:
             setattr(self, attr, getattr(django_user, attr))
@@ -229,7 +225,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
-            django_user = User(id=self.django_id, username=self.username)
+            django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             setattr(django_user, attr, getattr(self, attr))
         django_user.DO_NOT_SAVE_COUCH_USER= True
@@ -280,14 +276,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             }[source['doc_type']].wrap(source)
 
     @classmethod
-    def get_by_django_id(cls, id):
-        result = get_db().view('users/by_django_id', key=id, include_docs=True).one()
-        if result:
-            return cls.wrap_correctly(result['doc'])
-        else:
-            return None
-
-    @classmethod
     def get_by_username(cls, username):
         result = get_db().view('users/by_username', key=username, include_docs=True).one()
         if result:
@@ -316,9 +304,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def from_django_user(cls, django_user):
-        couch_user = cls.get_by_django_id(django_user.id)
-        if couch_user and django_user.username != couch_user.username:
-            raise cls.Inconsistent("The django and couch users with django_id %s have two different usernames" % django_user.id)
+        couch_user = cls.get_by_username(django_user.username)
         return couch_user
 
     @classmethod
@@ -337,10 +323,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return couch_user
 
     def save(self, **params):
-        # test no django_id conflict
-        by_django_id = get_db().view('users/by_django_id', key=self.django_id).one()
-        if by_django_id and by_django_id['id'] != self._id:
-            raise self.Inconsistent("CouchUser with django_id %s already exists" % self.django_id)
         # test no username conflict
         by_username = get_db().view('users/by_username', key=self.username).one()
         if by_username and by_username['id'] != self._id:
