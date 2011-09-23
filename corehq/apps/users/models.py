@@ -482,7 +482,7 @@ class WebUser(CouchUser):
                     domain_membership = d
                     if domain not in self.domains:
                         raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
-            if domain in self.domains:
+            if not domain_membership and domain in self.domains:
                 raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
         except self.Inconsistent as e:
             logging.warning(e)
