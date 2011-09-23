@@ -415,7 +415,13 @@ class CommCareUser(CouchUser):
         return get_or_create_safe(
             domain=xform.domain,
             user_data=user_data_from_registration_form(xform),
-            **xform.form
+            **dict([(arg, xform.form[arg]) for arg in (
+                'username',
+                'password',
+                'uuid',
+                'date',
+                'registering_phone_id'
+            )])
         )
 
     def is_commcare_user(self):
