@@ -219,7 +219,10 @@
                 <select id="individual_select" name="individual">
                     <option  value=''>All CHWs</option>
                     {% for user in users %}
-                        <option {% if user.id == individual %}selected="true"{% endif %} value="{{ user.id }}">{{ user.username }}</option>
+                        {% ifchanged user.is_active %}
+                            {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
+                        {% endifchanged %}
+                        <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
                     {% endfor %}
                 </select>
             {% endif %}

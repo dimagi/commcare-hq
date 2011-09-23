@@ -194,11 +194,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
-            key = [domain]
+            key = [flag, domain]
         else:
-            key = [domain, cls.__name__]
+            key = [flag, domain, cls.__name__]
         return cls.view("users/by_domain",
             reduce=False,
             startkey=key,
