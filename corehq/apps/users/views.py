@@ -462,7 +462,7 @@ def group_members(request, domain, group_name, template="groups/group_members.ht
 @require_can_edit_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = _users_context(request, domain)
-    couch_user = WebUser.get_by_user_id(couch_user_id, domain)
+    couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
     if request.method == "POST" and 'group' in request.POST:
         group = request.POST['group']
         group.add_user(couch_user)

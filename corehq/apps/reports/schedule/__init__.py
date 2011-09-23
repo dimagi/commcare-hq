@@ -29,7 +29,7 @@ class ReportSchedule(object):
         # these three lines are a complicated way of saying request.user = user.
         # could simplify if the abstraction doesn't make sense.
         request = HttpRequest()
-        self._processor.preprocess(request, user=user, domain=domain)
+        self._processor.preprocess(request, user=user.get_django_user(), domain=domain)
         response = self._view_func(request, **self._view_args)
         parser = ReportParser(response.content)
         return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
@@ -60,7 +60,7 @@ class BasicReportSchedule(object):
         # could simplify if the abstraction doesn't make sense.
         processor = RequestProcessor()
         request = HttpRequest()
-        processor.preprocess(request, user=user)
+        processor.preprocess(request, user=user.get_django_user())
         response = self._view_func(request, domain, self._couch_view, self._title)
         parser = ReportParser(response.content)
         return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
