@@ -31,16 +31,25 @@ class SuccessMessage(object):
     @property
     def couch_user(self):
         if not hasattr(self, '_couch_user'):
-            self._couch_user = CommCareUser.get_by_user_id(self.userID)
+            try:
+                self._couch_user = CommCareUser.get_by_user_id(self.userID)
+            except Exception:
+                self._couch_user = None
         return self._couch_user
 
     @property
     def first_name(self):
-        return self.couch_user.first_name
+        try:
+            return self.couch_user.first_name
+        except Exception:
+            return "(?)"
 
     @property
     def name(self):
-        return "%s %s" % (self.couch_user.first_name, self.couch_user.last_name)
+        try:
+            return "%s %s" % (self.couch_user.first_name, self.couch_user.last_name)
+        except Exception:
+            return "(?)"
 
 
     def get_num_forms_since(self, time):
