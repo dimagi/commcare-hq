@@ -285,7 +285,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_user_id(cls, userID, domain=None):
-        couch_user = cls.wrap_correctly(get_db().get(userID))
+        try:
+            couch_user = cls.wrap_correctly(get_db().get(userID))
+        except ResourceNotFound:
+            return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
             raise CouchUser.AccountTypeError()
         if domain:

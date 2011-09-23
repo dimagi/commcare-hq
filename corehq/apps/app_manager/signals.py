@@ -14,17 +14,14 @@ def get_custom_response_message(sender, xform, **kwargs):
     if xform.metadata and xform.metadata.userID:
         userID = xform.metadata.userID
         xmlns = xform.form.get('@xmlns')
-        commcare_account = CommCareUser.get_by_user_id(userID)
-        
+        domain = xform.domain
         lang = xform.openrosa_headers.get(OPENROSA_ACCEPT_LANGUAGE, "en") \
                 if hasattr(xform, "openrosa_headers") else "en"
-        
-        domain = commcare_account.domain
         app = Application.get_by_xmlns(domain, xmlns)
         message = app.success_message.get(lang) if app else None
         if not message:
-            return 
-        success_message = SuccessMessage(message, userID, tz=timedelta(hours=0)).render()
+            return
+        success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
         return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
 
 successful_form_received.connect(get_custom_response_message)

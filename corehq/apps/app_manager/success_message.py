@@ -14,10 +14,12 @@ class SuccessMessage(object):
     
     Valid strings are username, first_name, name, today, week, total
     """
-    def __init__(self, message, userID, tz=timedelta(hours=0)):
+    def __init__(self, message, userID, domain=None, tz=timedelta(hours=0)):
         self.message = message
         self.userID = userID
         self.tz = tz
+        if domain:
+            self.domain = domain
 
 
     def render(self):
@@ -31,10 +33,7 @@ class SuccessMessage(object):
     @property
     def couch_user(self):
         if not hasattr(self, '_couch_user'):
-            try:
-                self._couch_user = CommCareUser.get_by_user_id(self.userID)
-            except Exception:
-                self._couch_user = None
+            self._couch_user = CommCareUser.get_by_user_id(self.userID)
         return self._couch_user
 
     @property
@@ -54,7 +53,8 @@ class SuccessMessage(object):
 
     def get_num_forms_since(self, time):
         if not hasattr(self, 'domain'):
-            self.domain = CommCareUser.get_by_user_id(self.userID).domain
+            self.domain = self.couch_user.domain if self.couch_user else None
+
         r = get_db().view('reports/submit_history',
             startkey=[self.domain, self.userID, json_format_datetime(time)],
             endkey=[self.domain, self.userID, {}],
