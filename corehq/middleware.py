@@ -22,7 +22,7 @@ class OpenRosaMiddleware(object):
         or_headers = {}
         for header in OPENROSA_HEADERS:
             if header in request.META:
-                or_headers[header] = request[header]
+                or_headers[header] = request.META[header]
         request.openrosa_headers = or_headers
         
     def process_response(self, request, response):
