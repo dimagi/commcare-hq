@@ -20,6 +20,7 @@ class CreateTestCase(TestCase):
         self.xform.form['uuid']     = self.uuid         = 'BXPKZLP49P3DDTJH3W0BRM2HV'
         self.xform.form['date']     = self.date_string  = '2010-03-23'
         self.xform.form['registering_phone_id'] = self.registering_device_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
+        self.xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'normal'}]}
         self.xform.domain = self.domain = 'mock'
         self.xform.xmlns = REGISTRATION_XMLNS
         
