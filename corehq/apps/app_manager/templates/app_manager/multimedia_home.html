@@ -26,13 +26,13 @@
                 autoOpen: false,
                 width: 550,
                 open: function(event, ui) {
-                    af = $($(".active_file"));
-                    forms = af.data("formdata");
-                    refs = af.data("module-count");
-                    contents = "<h2>Information for " + af.text() + "</h2>";
+                    var af = $($(".active_file"));
+                    var forms = af.data("formdata");
+                    var refs = af.data("module-count");
+                    var contents = "<h2>Information for " + af.text() + "</h2>";
                     contents += "<p>References: " + refs + "</p>"
                     contents += "<h3>Found in forms:</h3><ul>";
-                    for (i in forms) {
+                    for (var i = 0; i < forms.length; i++) {
                         contents += "<li><a href='" + HOME_URL + "?m=" +forms[i].module + "&f=" + forms[i].form + "'>" + 
                                     forms[i].display + "</a></li>";
                     }
