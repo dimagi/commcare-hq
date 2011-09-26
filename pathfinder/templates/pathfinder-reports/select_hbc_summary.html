@@ -13,7 +13,7 @@
 
 Ward: <select name="ward">
 {% for ward in wards %}
-<option value="{{ ward }}">{{ ward }}</option>
+    <option value="{{ ward.ward }}">{{ ward.district }} - {{ ward.ward }}</option>
 {% endfor %}
 </select>
 
