@@ -383,14 +383,11 @@ class CommCareUser(CouchUser):
     def create_from_xform(cls, xform):
         def get_or_create_safe(username, password, uuid, date, registering_phone_id, domain, user_data, **kwargs):
             # check for uuid conflicts, if one exists, respond with the already-created user
-            try:
-                conflicting_user = CommCareUser.get_by_user_id(uuid)
+            conflicting_user = CommCareUser.get_by_user_id(uuid)
+            if conflicting_user:
                 logging.error("Trying to create a new user %s from form %s!  You can't submit multiple registration xmls for the same uuid." % \
                               (uuid, xform.get_id))
                 return conflicting_user
-            except ResourceNotFound:
-                # Desired outcome
-                pass
             # we need to check for username conflicts, other issues
             # and make sure we send the appropriate conflict response to the phone
             try:
@@ -407,12 +404,13 @@ class CommCareUser(CouchUser):
                 # Come up with a suitable username
                 prefix, suffix = username.split("@")
                 username = get_unique_value(User.objects, "username", prefix, sep="", suffix="@%s" % suffix)
-            return cls.create(domain, username, password,
+            couch_user = cls.create(domain, username, password,
                 uuid=uuid,
                 device_id=registering_phone_id,
                 date=date,
                 user_data=user_data
             )
+            return couch_user
 
         # will raise TypeError if xform.form doesn't have all the necessary params
         return get_or_create_safe(

@@ -175,10 +175,20 @@ class XForm(WrappedNode):
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
         if not text_node.exists():
             return None
+        
         if form:
-            text = text_node.findtext('{f}value[@form="%s"]' % form).strip()
+            text = text_node.findtext('{f}value[@form="%s"]' % form)
         else:
-            text = text_node.findtext('{f}value').strip()
+            text = text_node.findtext('{f}value')
+        if text:
+            text = text.strip()
+        else:
+            try:
+                raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
+                    trans_node.attrib.get('lang'), id
+                ))
+            except Exception:
+                raise XFormError('A translation text node has no value')
 
         return text
 

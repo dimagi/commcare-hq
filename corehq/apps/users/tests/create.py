@@ -68,21 +68,14 @@ class CreateTestCase(TestCase):
         since 
         """
 
-        CommCareUser.create_from_xform(self.xform)
+        couch_user = CommCareUser.create_from_xform(self.xform)
+        self.assertEqual(couch_user.user_id, self.uuid)
         # czue: removed lxml reference
         #uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
         couch_user = CommCareUser.get_by_user_id(self.xform.form['uuid'])
-        # django_user = couch_user.get_django_user()
-        # self.assertEqual(django_user.username, random_uuid)
-        # self.assertEqual(couch_user.web_account.login.username, random_uuid)
 
-        # registered commcare user gets an automatic domain account on server
-        # this is no longer true; should it be?
-        # self.assertEqual(couch_user.web_account.domain_memberships[0].domain, self.domain)
-        # they also get an automatic commcare account
+        self.assertNotEqual(couch_user, None)
         self.assertEqual(couch_user.username, format_username(self.username, self.domain))
-        #unpredictable, given arbitrary salt to hash
-        #self.assertEqual(couch_user.commcare_accounts[0].login.password, 'sha1$29004$678636e813e7909f14b184a5063f80c94b991daf')
         self.assertEqual(couch_user.domain, self.domain)
         self.assertEqual(couch_user.user_id, self.uuid)
         date = datetime.date(datetime.strptime(self.date_string,'%Y-%m-%d'))
