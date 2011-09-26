@@ -2,18 +2,18 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Ward Summary Report" %}
+    {% trans "Provider Summary" %}
 {% endblock %}
 
 {% block content %}
-<h2>Select Report Parameters</h2>
+<h2>Select Provider Summary Report Parameters</h2>
 
-<form action="{% url pathfinder.views.ward_summary domain %}" method="get">
+<form action="{% url pathfinder.views.provider_summary domain %}" method="get">
 {#<input type="hidden" name="domain" value="{{ domain }}" />#}
 
-Ward: <select name="ward">
-{% for ward in wards %}
-<option value="{{ ward.ward }}">{{ ward.district }} - {{ ward.ward }}</option>
+Provider: <select name="name">
+{% for name in names%}
+<option value="{{ name}}">{{ name }}</option>
 {% endfor %}
 </select>
 

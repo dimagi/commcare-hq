@@ -1,8 +1,12 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('pathfinder.views',
-    url('hbc/(?P<ward>.*)/(?P<year>\d*)/(?P<month>\d*)', 'home_based_care'),
-    url('ward/(?P<ward>.*)/(?P<year>\d*)/(?P<month>\d*)', 'ward_summary'),
-    url('provider/(?P<name>.*)/(?P<year>\d*)/(?P<month>\d*)', 'provider_summary'),
+    url(r'select/$', 'selector'),
+    url('select/ward', 'ward_selector'),
+    url('select/provider', 'provider_selector'),
+    url('select/hbc', 'hbc_selector'),
+    url('hbc/', 'home_based_care'),
+    url('ward/', 'ward_summary'),
+    url('provider/', 'provider_summary'),
 )
 

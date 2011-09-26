@@ -2,11 +2,9 @@ from datetime import datetime, date
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.queryable_set import QueryableList
-import string
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-import functools
 
 class PathfinderPatientGroup(QueryableList):
     def __init__(self):
@@ -61,6 +59,41 @@ class PathfinderPatientGroup(QueryableList):
         self._sg = lambda x: x['referrals_hiv'].count('other_services') > 0
         self._tb = lambda x: x['referrals_hiv'].count('tb_clinic') > 0
 
+def selector(request, domain, template="pathfinder-reports/select.html"):
+    return render_to_response(template, {'domain': domain}, context_instance=RequestContext(request))
+
+def ward_selector(request, domain, template="pathfinder-reports/select_ward_summary.html"):
+    results = get_db().view('pathfinder/pathfinder_all_wards', group=True).all()
+    res = [result['key'] for result in results]
+    
+
+    wards = [{"district": result[1], "ward": result[2]} for result in res]
+    return render_to_response(template,
+                             {"wards": wards,
+                              "years": range(2008, datetime.now().year + 1), # less than ideal but works
+                              "domain": domain,},
+                             context_instance=RequestContext(request))
+
+def hbc_selector(request, domain, template="pathfinder-reports/select_hbc_summary.html"):
+    results = get_db().view('pathfinder/pathfinder_all_wards').all()
+    results = set(results)
+    wards = [{"district": result['key'][1], "ward": result['key'][2]} for result in results]
+    return render_to_response(template,
+                             {"wards": wards,
+                              "years": range(2008, datetime.now().year + 1), # less than ideal but works
+                              "domain": domain,},
+                             context_instance=RequestContext(request))
+
+def provider_selector(request, domain, template="pathfinder-reports/select_provider_summary.html"):
+    results = get_db().view('pathfinder/pathfinder_gov_chw_by_name').all()
+    names = [result['key'][1] for result in results]
+    return render_to_response(template,
+                             {"names": names,
+                              "years": range(2008, datetime.now().year + 1), # less than ideal but works
+                              "domain": domain,},
+                             context_instance=RequestContext(request))
+
+
 def retrieve_providers(domain, ward):
     results = get_db().view('pathfinder/pathfinder_gov_chw', keys=[[domain, ward]], include_docs=True).all()
     chws = QueryableList()
@@ -92,10 +125,14 @@ def retrieve_patient_group(user_ids, domain, year, month):
     month = int(month)
     for result in user_ids:
         rform = result['doc']['form'] #shortcut
-        regdate = datetime.strptime(rform['patient']['date_of_registration'], '%Y-%m-%d')
-        pyear, pmonth = regdate.year, regdate.month
-        if pyear > year or (pyear == year and pmonth > month): # Exclude patients newer than this report.
-            continue
+        try:
+            regdate = datetime.strptime(rform['patient']['date_of_registration'], '%Y-%m-%d')
+
+            pyear, pmonth = regdate.year, regdate.month
+            if pyear > year or (pyear == year and pmonth > month): # Exclude patients newer than this report.
+                continue
+        except:
+            pass
         p = dict()
         age_tmp = map(int, rform['patient']['date_of_birth'].split('-'))
         p['age'] = year - age_tmp[0] if age_tmp[1] < month else (year - age_tmp[0]) - 1
@@ -108,10 +145,8 @@ def retrieve_patient_group(user_ids, domain, year, month):
         p['referrals_made'] = 0
         for i in ['provider',
                   'registration_and_followup_hiv',
-#                  'type_of_client',
                   'referrals_hiv',
                   'ctc',
-#                  'followup_this_month',
                   'medication_given',
                   'services',
                   'referrals']:
@@ -119,7 +154,7 @@ def retrieve_patient_group(user_ids, domain, year, month):
         patients[p['case_id'] ] = p
     update_patients_with_followups(domain, patients, caseid_set,year,month)
     update_patients_with_referrals(patients,caseid_set,year,month)
-    #map(lambda x: patients.__delitem__(x), filter(lambda y: not patients[y]['followup_this_month'], patients.keys()))
+#    map(lambda x: patients.__delitem__(x), filter(lambda y: not patients[y]['followup_this_month'], patients.keys()))
     gp =  PathfinderPatientGroup()
     gp += patients.values()
     return gp
@@ -149,10 +184,23 @@ def update_patients_with_followups(domain, patients, caseid_set, year, month):
             p['referrals'] += fp['referrals_hiv'] + " "
         p.update(fp)
 
-def ward_summary(request, domain, ward, year, month, template="pathfinder-reports/ward_summary.html"):
-    # First, get all the registrations for the given ward.
-    user_ids = get_db().view('pathfinder/pathfinder_gov_reg', keys=[[domain, ward]], include_docs=True).all()
 
+def update_patients_with_referrals(patients, ids, year,month):
+    refs = get_db().view('pathfinder/pathfinder_gov_referral', keys=[[x] for x in list(ids)], include_docs=True).all()
+    for p in patients: patients[p]['referrals_completed'] = 0
+    for r in refs:
+        d = datetime.strptime(r['doc']['form']['meta']['timeEnd'], "%Y-%m-%dT%H:%M:%SZ")
+        if d.month == month and d.year == year and r['doc']['form']['client']['referral'] == 'yes':
+            patients[r['doc']['form']['case']['case_id']]['referrals_completed'] += 1
+
+def ward_summary(request, domain,  template="pathfinder-reports/ward_summary.html"):
+    # First, get all the registrations for the given ward.
+    ward = request.GET.get("ward", None)
+    month = request.GET.get("month", None)
+    year = request.GET.get("year", None)
+    if not (ward and month and year):
+        raise Http404
+    user_ids = get_db().view('pathfinder/pathfinder_gov_reg', keys=[[domain, ward]], include_docs=True).all()
     provs = retrieve_providers(domain, ward)
     prov_p = {}
     refs_p = {}
@@ -170,9 +218,15 @@ def ward_summary(request, domain, ward, year, month, template="pathfinder-report
     context['domain'] = domain
     return render_to_response(template, context)
 
-def provider_summary(request, domain, name, year,month, template="pathfinder-reports/provider_summary.html"):
+def provider_summary(request, domain, template="pathfinder-reports/provider_summary.html"):
 #    user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[domain, username]]).all()
 #    return retrieve_patient_group(user_ids, domain, year, month)
+    name = request.GET.get("name", None)
+    month = request.GET.get("month", None)
+    year = request.GET.get("year", None)
+    if not (name and month and year):
+        raise Http404
+
     context = RequestContext(request)
     context['p'] = get_provider_info(domain, name)
     pre = get_patients_by_provider(domain, name)
@@ -189,19 +243,14 @@ def provider_summary(request, domain, name, year,month, template="pathfinder-rep
     context['patients'] = g
     return render_to_response(template,context)
 
-def update_patients_with_referrals(patients, ids, year,month):
-    refs = get_db().view('pathfinder/pathfinder_gov_referral', keys=[[x] for x in list(ids)], include_docs=True).all()
-    for p in patients: patients[p]['referrals_completed'] = 0
-    for r in refs:
-        d = datetime.strptime(r['doc']['form']['meta']['timeEnd'], "%Y-%m-%dT%H:%M:%SZ")
-        if d.month == month and d.year == year and r['doc']['form']['client']['referral'] == 'yes':
-            patients[r['doc']['form']['case']['case_id']]['referrals_completed'] += 1
-
-def hbc_selector(request, domain, template="pathfinder-reports/select_hbc_summary.html"):
-    pass
-
 #@login_and_domain_required
-def home_based_care(request, domain, ward, year, month, template="pathfinder-reports/hbc.html"):
+def home_based_care(request, domain, template="pathfinder-reports/hbc.html"):
+    ward = request.GET.get("ward", None)
+    month = request.GET.get("month", None)
+    year = request.GET.get("year", None)
+    if not (ward and month and year):
+        raise Http404
+
     context = RequestContext(request)
     user_ids = get_db().view('pathfinder/pathfinder_gov_reg', keys=[[domain, ward]], include_docs=True).all()
     context['p'] = retrieve_patient_group(user_ids, domain, year, month)

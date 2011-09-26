@@ -1,0 +1,15 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Pathfinder Reports" %}
+{% endblock %}
+
+{% block content %}
+<h2>Available Reports</h2>
+<ul>
+<li><a href="{% url pathfinder.views.ward_selector domain %}">Ward Summary Report</a></li>
+<li><a href="{% url pathfinder.views.provider_selector domain %}">Provider Summary Report</a></li>
+<li><a href="{% url pathfinder.views.hbc_selector domain %}">Home-Based Care Report</a></li>
+</ul>
+{% endblock %}

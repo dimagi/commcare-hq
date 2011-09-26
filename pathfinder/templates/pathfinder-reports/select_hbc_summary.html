@@ -1,6 +1,15 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Provider Summary" %}
+{% endblock %}
+
+{% block content %}
 <h2>Select Report Parameters</h2>
 
-<form action="{% url reports.views.sum_ward %}" method="get">
+
+<form action="{% url pathfinder.views.home_based_care domain %}" method="get">
 
 Ward: <select name="ward">
 {% for ward in wards %}
@@ -30,3 +39,4 @@ Year: <select name="year">
 </select>
 <input type="submit" value="Get Report" />
 </form>
+{% endblock %}
