@@ -30,6 +30,21 @@ def safe_date_add(startdate, days, force_to_date_flag=True):
         log_exception(e) 
         return None
 
+def months_between(start, end):
+    """
+    Given a start date and enddate return all months between them.
+    Returns a list of (Year, month) tuples, the first one being
+    the year and month of the start date, and the last one being
+    the year and month of the end date.
+    """
+    assert(start <= end)
+    months = []
+    while start <= end:
+        months.append((start.year, start.month))
+        (yearnext, monthnext) = add_months(start.year, start.month, 1)
+        start = datetime(yearnext, monthnext, 1)
+    return months        
+
 def add_months(year, months, offset):
     months = months - 1 # 0 index months coming in
     nextmonths = months + offset
