@@ -20,7 +20,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, json_response
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -152,13 +152,33 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 
 @require_can_edit_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
+    show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
     context = _users_context(request, domain)
     users = CommCareUser.by_domain(domain)
-    users = sorted(users, key=lambda x: x.username)
+    if show_inactive:
+        users = list(users)
+        users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
+        'show_inactive': show_inactive
     })
     return render_to_response(request, template, context)
+
+@require_can_edit_users
+def archive_commcare_user(request, domain, user_id, is_active=False):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    user.is_active = is_active
+    user.save()
+    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+
+@require_can_edit_users
+def delete_commcare_user(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if request.method == "POST":
+        user.retire()
+        messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
+        return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+
 
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
@@ -401,6 +421,7 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 @login_and_domain_required
 @require_POST
 def test_scheduled_report(request, domain, couch_user_id, report_id):
+    print request.c
     rep = ReportNotification.get(report_id)
     user = WebUser.get_by_user_id(couch_user_id, domain)
     try:

@@ -25,8 +25,8 @@ def domain_list(request):
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
-    for row in get_db().view('users/by_domain', group=True).all():
-        domain, doc_type = row['key']
+    for row in get_db().view('users/by_domain', startkey=["active"], endkey=["active", {}], group=True).all():
+        _, domain, doc_type = row['key']
         value = row['value']
         {
             'WebUser': webuser_counts,

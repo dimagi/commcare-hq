@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
 
 from casexml.apps.phone.models import User as CaseXMLUser
 
@@ -21,6 +22,7 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import send_HTML_email
@@ -194,11 +196,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
-            key = [domain]
+            key = [flag, domain]
         else:
-            key = [domain, cls.__name__]
+            key = [flag, domain, cls.__name__]
         return cls.view("users/by_domain",
             reduce=False,
             startkey=key,
@@ -332,8 +335,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
         
         super(CouchUser, self).save(**params)
-        django_user = self.sync_to_django_user()
-        django_user.save()
+        if not self.base_doc.endswith("-Deleted"):
+            django_user = self.sync_to_django_user()
+            django_user.save()
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
@@ -450,6 +454,66 @@ class CommCareUser(CouchUser):
                            date_joined=self.date_joined,
                            user_data=self.user_data)
 
+    def get_forms(self):
+        return XFormInstance.view('couchforms/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            reduce=False,
+            include_docs=True,
+        )
+
+    @property
+    def form_count(self):
+        result = XFormInstance.view('couchforms/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+                group_level=0
+        ).one()
+        if result:
+            return result['value']
+        else:
+            return 0
+
+    def get_cases(self):
+        return CommCareCase.view('case/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            reduce=False,
+            include_docs=True
+        )
+
+    @property
+    def case_count(self):
+        result = CommCareCase.view('case/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            group_level=0
+        ).one()
+        if result:
+            return result['value']
+        else:
+            return 0
+
+    def retire(self):
+        suffix = '-Deleted'
+        # doc_type remains the same, since the views use base_doc instead
+        if not self.base_doc.endswith(suffix):
+            self.base_doc += suffix
+        for form in self.get_forms():
+            form.doc_type += suffix
+            form.save()
+        for case in self.get_cases():
+            case.doc_type += suffix
+            case.save()
+        try:
+            django_user = self.get_django_user()
+        except User.DoesNotExist:
+            pass
+        else:
+            django_user.delete()
+            
+        self.save()
+        
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)

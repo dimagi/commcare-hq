@@ -1,20 +1,162 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
 
-{% block user-view %}
-<div class='all_users'>
-	<h1>CommCare accounts in domain "{{ domain }}"</h1>
-    {% if commcare_users %}
-        <table class='big_border'>
-            {% include "users/partial/commcare_users_table.html" %}
-        </table>
-    {% else %}
-        <p class="big_border">There are no CommCare users in this domain.</p>
-    {% endif %}
-{#	<a href="{% url registration_admin_does_all domain %}">Link duplicate CommCare Users</a><br/>#}
-	<a class="new_link" href="{% url add_commcare_account domain %}">CommCare Account</a>
-</div>
+{% block head %}
+    {{ block.super }}
+    <script>
+        $(function(){
+            $(".reset_password").each(function(){
+                var that = this,
+                    url = $(this).attr('data-src'),
+                    loadingMessage = "<p>Loading...</p>";
+                $(this).find('.no-match-error-text').hide();
+                function setContent(html) {
+                    var $content = $(html);
+                    $(that).find('> div').html($content);
+                    COMMCAREHQ.initBlock($content);
+                }
+                $(this).bind('dialogopen', function(){
+                    $(that).dialog('widget').css({width: "400px"});
+                }).delegate('form', 'submit', function(){
+                    if ($(this).find('[name="new_password1"]').val() !==
+                            $(this).find('[name="new_password2"]').val()) {
+                        $(this).find('.no-match-error-text').show();
+                        return false;
+                    } else {
+                        $(this).find('.no-match-error-text').hide();
+                    }
+                    setContent(loadingMessage);
+                    $.ajax({
+                        url: url,
+                        data: $(this).serialize(),
+                        dataType: "json",
+                        type: "POST",
+                        success: function(data){
+                            if(data.status === "ok") {
+                                window.location.reload();
+                            } else {
+                                setContent(data.formHTML);
+                            }
+                        }
+                    });
+                    return false;
+                });
+            });
+        });
+    </script>
+
 {% endblock %}
 
-
-S
+{% block user-view %}
+<div class='all_users'>
+	<h1>CommCare Users</h1>
+    <table class='big_border'>
+        {% if commcare_users %}
+            <tr>
+                <th>{% trans "Username" %}</th>
+                <th>{% trans "Reset Password" %}</th>
+                <th>{% trans "Date Registered" %}</th>
+                <th>{% trans "Forms" %}</th>
+                <th>{% trans "Cases" %}</th>
+                <th>{% trans "Phone Numbers" %}</th>
+                <th>{% trans "Archive" %}<div class="help-link" data-help-key="users/archive"></div></th>
+                <th>
+                    {% if couch_user.is_domain_admin %}
+                        {% trans "Delete" %}<div class="help-link" data-help-key="users/delete"></div>
+                    {% endif %}
+                </th>
+            </tr>
+            {% for user in commcare_users %}
+                {% ifchanged user.is_active %}
+                    {% if not user.is_active %}
+                    <tr>
+                        <td colspan="6">Inactive Users</td>
+                    </tr>
+                    {% endif %}
+                {% endifchanged %}
+                <tr class="{% cycle "odd" "even" %}">
+                    <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
+                    <td>
+                        <a href="#" class="dialog_opener">reset</a>
+                        <div class="dialog reset_password" title="Reset Password" data-src="{% url change_password domain user.user_id %}">
+                            <p>Reset Password for {{ user.html_username|safe }}</p>
+                            <div>
+                                <form action="">
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <th>
+                                                    <label for="id_new_password1">New password:</label>
+                                                </th>
+                                                <td>
+                                                    <input type="password" name="new_password1" id="id_new_password1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>
+                                                    <label for="id_new_password2">New password confirmation:</label>
+                                                </th>
+                                                <td>
+                                                    <ul class="errorList">
+                                                        <li class="no-match-error-text">The two password fields didn't match.</li>
+                                                    </ul>
+                                                    <input type="password" name="new_password2" id="id_new_password2"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <input type="submit" value="Reset" class="ui-button ui-widget ui-state-default ui-corner-all" role="button">
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.date_joined.date }}</td>
+                    <td>{{ user.form_count }}</td>
+                    <td>{{ user.case_count }}</td>
+                    <td>
+                        {% if user.phone_numbers %}
+                            +{{ user.phone_numbers.0 }}
+                            {% if user.phone_numbers.1 %}
+                                (and more)
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <form action="{% url archive_commcare_user domain user.user_id %}">
+                            <input type="submit" value="archive"/>
+                        </form>
+                        {% else %}
+                            <form action="{% url unarchive_commcare_user domain user.user_id %}" method="post">
+                                <input type="submit" value="restore"/>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if couch_user.is_domain_admin %}
+                            <form action="{% url delete_commcare_user domain user.user_id %}"
+                                  method="post"
+                                  data-title="Delete User?"
+                                  data-message="Are you sure you want to permanently delete {{ user.raw_username }} and all of their form submissions?">
+                                <input type="submit" class="confirm-submit" value="delete"/>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td colspan="6">There are no CommCare users in this domain.</td></tr>
+        {% endif %}
+        {% if not show_inactive %}
+            <tr>
+                <td colspan="6">
+                    <a href="./?show_inactive=true">Show Inactive Users</a>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+    <div>
+        <a class="new_link" href="{% url add_commcare_account domain %}">CommCare User</a>
+    </div>
+</div>
+{% endblock %}

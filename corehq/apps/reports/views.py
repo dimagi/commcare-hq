@@ -445,14 +445,9 @@ def case_activity(request, domain):
     })
 
 def _user_list(domain):
-    user_ids = get_db().view('submituserlist/all_users', startkey=[domain], endkey=[domain, {}], group=True)
-    user_ids = [result['key'][1] for result in user_ids]
-    users = []
-    for user_id in user_ids:
-        username = user_id_to_username(user_id)
-        if username:
-            users.append({'id': user_id, 'username': username})
-    users.sort(key=lambda user: user['username'])
+    users = list(CommCareUser.by_domain(domain))
+    users.extend(CommCareUser.by_domain(domain, is_active=False))
+    users.sort(key=lambda user: (not user.is_active, user.username))
     return users
 
 def _form_list(domain):
@@ -549,12 +544,13 @@ def paging_case_list(request, domain, individual):
         startkey = [domain, individual]
         endkey = [domain, individual, {}]
     else: 
-        startkey = [domain]
-        endkey = [domain, {}]
+        startkey = [domain, {}]
+        endkey = [domain, {}, {}]
     paginator = CouchPaginator(
         "hqcase/all_cases",
         view_to_table,
         search=False,
+        use_reduce_to_count=True,
         view_args=dict(
             reduce=False,
             include_docs=True,
