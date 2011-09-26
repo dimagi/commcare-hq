@@ -1,5 +1,5 @@
 def export_users(users, workbook):
-    user_keys = ('user_id', 'username', )
+    user_keys = ('user_id', 'username', 'is_active')
     user_rows = []
     fields = set()
     for user in users:

@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<h1>CommCare Version Report</h1>
+{% for table in tables %}
+
+    <h2>{{ table.label }} [{{ table.build }}]</h2>
+    <table>
+        <tr>
+            <th>{% trans "Domain" %}</th>
+            <th>{% trans "Application" %}</th>
+        </tr>
+        {% for app in table.apps %}
+            <tr>
+                <td>{{ app.domain }}</td>
+                <td><a href="{% url view_app app.domain app.id %}">{{ app.name }}</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endfor %}

@@ -1,16 +1,16 @@
 from datetime import timedelta, datetime
-from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, render_to_response
 
 require_superuser = permission_required("is_superuser")
 
@@ -25,7 +25,7 @@ def domain_list(request):
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
-    for row in get_db().view('users/by_domain', startkey=["active"], endkey=["active", {}], group=True).all():
+    for row in get_db().view('users/by_domain', startkey=["active"], endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {
@@ -43,7 +43,7 @@ def domain_list(request):
         domain = request.user.selected_domain.name
     except AttributeError:
         domain = None
-    return render_to_response("hqadmin/domain_list.html", 
+    return render_to_response(request, "hqadmin/domain_list.html",
                               {"domains": domains,
                                "domain": domain},
                               context_instance=RequestContext(request))
@@ -75,3 +75,28 @@ def active_users(request):
                 final_count[domain] += 1
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
+
+@require_superuser
+def commcare_version_report(request, template="hqadmin/commcare_version.html"):
+    apps = get_db().view('app_manager/applications_brief').all()
+    menu = CommCareBuildConfig.fetch().menu
+    builds = [item.build.to_string() for item in menu]
+    by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
+
+    for app in apps:
+        app = app['value']
+        app['id'] = app['_id']
+        if app['build_spec']:
+            build_spec = BuildSpec.wrap(app['build_spec'])
+            build = build_spec.to_string()
+            if by_build.has_key(build):
+                by_build[build]['apps'].append(app)
+            else:
+                by_build[build] = {"label": build_spec.get_label(), "apps": [app]}
+                builds.append(build)
+
+    tables = []
+    for build in builds:
+        by_build[build]['build'] = build
+        tables.append(by_build[build])
+    return render_to_response(request, template, {'tables': tables})

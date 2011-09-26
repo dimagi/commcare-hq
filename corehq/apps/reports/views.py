@@ -594,7 +594,8 @@ def download_cases(request, domain):
         cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     else:
         cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
-    users = CommCareUser.by_domain(domain)
+    users = list(CommCareUser.by_domain(domain))
+    users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = CsvWorkBook()
     export_cases_and_referrals(cases, workbook, users=users)
