@@ -11,6 +11,9 @@
     body .syntaxhighlighter .line {
             white-space: pre-wrap !important; /* make code wrap */
     }
+    .error {
+        color: red;
+    }
     </style>
     <script>
     $(function() {
@@ -50,7 +53,12 @@
 <div title="Cases" id="cases">
     <ul>
     {% for case in caseblocks %}
-        <li><a href="{% url case_details domain case.case_id %}">{% case_inline_display case.case_id %}</a></li>
+        <li>{% if case.case_id %}
+        <a href="{% url case_details domain case.case_id %}">{% case_inline_display case.case_id %}</a>
+        {% else %}
+        <span class="error">Unknown or malformed case</span>
+        {% endif %}
+        </li>
     {% endfor %}
     </ul>
 </div>
