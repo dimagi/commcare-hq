@@ -86,7 +86,7 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     for app in apps:
         app = app['value']
         app['id'] = app['_id']
-        if app['build_spec']:
+        if app.get('build_spec'):
             build_spec = BuildSpec.wrap(app['build_spec'])
             build = build_spec.to_string()
             if by_build.has_key(build):
