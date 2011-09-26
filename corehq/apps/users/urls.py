@@ -27,12 +27,16 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='accept_invitation'),    
 
     url(r'^commcare/$', 'commcare_users', name='commcare_users'),
+    url(r'^commcare/archive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
+    url(r'^commcare/unarchive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='unarchive_commcare_user', kwargs={'is_active': True}),
+    url(r'^commcare/delete/(?P<user_id>[\w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
+
     url(r'^httpdigest/?$', 'test_httpdigest'),
     #url(r'my_groups/?$', 'my_groups', name='my_groups'),
     url(r'^group_memberships/(?P<couch_user_id>[\w-]+)/$', 'group_membership', name='group_membership'),
     url(r'^group_members/(?P<group_name>[ \w-]+)/$', 'group_members', name='group_members'),
     url(r'^all_groups/$', 'all_groups', name='all_groups'),
-    url(r'^add_commcare_account/$', 
+    url(r'^add_commcare_account/$',
         'add_commcare_account',
         name='add_commcare_account'),
 

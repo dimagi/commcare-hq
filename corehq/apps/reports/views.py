@@ -544,12 +544,13 @@ def paging_case_list(request, domain, individual):
         startkey = [domain, individual]
         endkey = [domain, individual, {}]
     else: 
-        startkey = [domain]
-        endkey = [domain, {}]
+        startkey = [domain, {}]
+        endkey = [domain, {}, {}]
     paginator = CouchPaginator(
         "hqcase/all_cases",
         view_to_table,
         search=False,
+        use_reduce_to_count=True,
         view_args=dict(
             reduce=False,
             include_docs=True,

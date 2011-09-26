@@ -5,6 +5,7 @@
     {% if couch_user.get_scheduled_reports %}
         <table class='big_border'>
             <tr><th></th>
+                <th>{% trans "Domain" %}</th>
                 <th>{% trans "Report" %}</th>
                 <th>{% trans "Time" %}</th>
                 <th>{% trans "Day of week" %}</th>
@@ -13,6 +14,7 @@
             </tr>
             {% for report in couch_user.get_scheduled_reports %}
                 <tr><td></td>
+                    <td>{{ report.domain }}</td>
                     <td>{{ report.report_slug }}</td>
                     <td>{{ report.hours }}:00</td>
                     <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>

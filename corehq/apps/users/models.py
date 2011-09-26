@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
 
 from casexml.apps.phone.models import User as CaseXMLUser
 
@@ -21,6 +22,7 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import send_HTML_email
@@ -450,6 +452,66 @@ class CommCareUser(CouchUser):
                            date_joined=self.date_joined,
                            user_data=self.user_data)
 
+    def get_forms(self, count=False):
+        return XFormInstance.view('couchforms/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            reduce=False,
+            include_docs=True,
+        )
+
+    @property
+    def form_count(self):
+        result = XFormInstance.view('couchforms/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+                group_level=0
+        ).one()
+        if result:
+            return result['value']
+        else:
+            return 0
+
+    def get_cases(self, count=False):
+        return CommCareCase.view('case/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            reduce=False,
+            include_docs=True
+        )
+
+    @property
+    def case_count(self):
+        result = CommCareCase.view('case/by_user',
+            startkey=[self.user_id],
+            endkey=[self.user_id, {}],
+            group_level=0
+        ).one()
+        if result:
+            return result['value']
+        else:
+            return 0
+
+    def retire(self):
+        suffix = '-Deleted'
+        if not self.doc_type.endswith(suffix):
+            self.doc_type += suffix
+        if not self.base_doc.endswith(suffix):
+            self.base_doc += suffix
+        for form in self.get_forms():
+            form.doc_type += suffix
+            form.save()
+        for case in self.get_cases():
+            case.doc_type += suffix
+            case.save()
+        django_user = self.get_django_user()
+        if django_user:
+            print "delete django_user %s" % django_user.username
+            print User.objects.count()
+            django_user.delete()
+            print User.objects.count()
+        self.save()
+        
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)

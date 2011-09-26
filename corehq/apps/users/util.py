@@ -47,6 +47,8 @@ def raw_username(username):
 def user_id_to_username(user_id):
     if not user_id:
         return user_id
+    elif user_id == "demo_user":
+        return "demo_user"
     try:
         login = get_db().get(user_id)
     except ResourceNotFound:
