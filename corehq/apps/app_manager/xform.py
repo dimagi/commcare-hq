@@ -183,12 +183,10 @@ class XForm(WrappedNode):
         if text:
             text = text.strip()
         else:
-            try:
-                raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
-                    trans_node.attrib.get('lang'), id
-                ))
-            except Exception:
-                raise XFormError('A translation text node has no value')
+            raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
+                trans_node.attrib.get('lang'), id
+            ))
+            
 
         return text
 
