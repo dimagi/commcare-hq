@@ -263,7 +263,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
     if xform and xform.exists():
         try:
             form.validate_form()
-            xform_errors = None
+            if not is_user_registration:
+                xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
             messages.error(request, "%s" % e)
         except AppError, e:
@@ -281,8 +282,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected System Error: %s" % e)
-        else:
-            xform_questions = xform.get_questions(langs) if not is_user_registration else []
+
 
         try:
             xform.add_case_and_meta(form)
