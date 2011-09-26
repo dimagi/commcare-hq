@@ -1,7 +1,8 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 
-class SyncTestCase(TestCase):
+class SyncWebUserTestCase(TestCase):
     def setUp(self):
         domain = 'test'
         username = "mr-danny@dimagi.com"
@@ -22,3 +23,33 @@ class SyncTestCase(TestCase):
 
     def tearDown(self):
         WebUser.get_by_user_id(self.web_user.user_id).delete()
+
+class SyncCommCareUserTestCase(TestCase):
+    def setUp(self):
+        self.domain = 'test'
+        self.username = "mr-danny@test.commcarehq.org"
+        self.password = "s3cr3t"
+        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
+        self.commcare_user.save()
+
+    def test_couch_to_django(self):
+        self.commcare_user.email = "droberts@dimagi.com"
+        self.commcare_user.save()
+        self.assertEqual(self.commcare_user.email, self.commcare_user.get_django_user().email)
+
+    def test_django_to_couch(self):
+        django_user = self.commcare_user.get_django_user()
+        django_user.email = "dr-oberts@dimagi.com"
+        django_user.save()
+        self.assertEqual(django_user.email, CommCareUser.from_django_user(django_user).email)
+
+    def test_retire(self):
+        self.commcare_user.retire()
+        self.assertEqual(User.objects.filter(username=self.commcare_user.username).count(), 0)
+        
+        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
+        self.commcare_user.save()
+        
+    def tearDown(self):
+        CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
+

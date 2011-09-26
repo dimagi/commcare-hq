@@ -50,8 +50,8 @@
 {% block user-view %}
 <div class='all_users'>
 	<h1>CommCare Users</h1>
-    {% if commcare_users %}
-        <table class='big_border'>
+    <table class='big_border'>
+        {% if commcare_users %}
             <tr>
                 <th>{% trans "Username" %}</th>
                 <th>{% trans "Reset Password" %}</th>
@@ -138,17 +138,17 @@
                     </td>
                 </tr>
             {% endfor %}
-            {% if not show_inactive %}
-                <tr>
-                    <td colspan="6">
-                        <a href="./?show_inactive=true">Show Inactive Users</a>
-                    </td>
-                </tr>
-            {% endif %}
-        </table>
-    {% else %}
-        <p class="big_border">There are no CommCare users in this domain.</p>
-    {% endif %}
+        {% else %}
+            <tr><td colspan="6">There are no CommCare users in this domain.</td></tr>
+        {% endif %}
+        {% if not show_inactive %}
+            <tr>
+                <td colspan="6">
+                    <a href="./?show_inactive=true">Show Inactive Users</a>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
     <div>
         <a class="new_link" href="{% url add_commcare_account domain %}">CommCare User</a>
     </div>

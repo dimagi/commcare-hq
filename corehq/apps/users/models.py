@@ -332,8 +332,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
         
         super(CouchUser, self).save(**params)
-        django_user = self.sync_to_django_user()
-        django_user.save()
+        if not self.base_doc.endswith("-Deleted"):
+            django_user = self.sync_to_django_user()
+            django_user.save()
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
@@ -452,7 +453,7 @@ class CommCareUser(CouchUser):
                            date_joined=self.date_joined,
                            user_data=self.user_data)
 
-    def get_forms(self, count=False):
+    def get_forms(self):
         return XFormInstance.view('couchforms/by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
@@ -472,7 +473,7 @@ class CommCareUser(CouchUser):
         else:
             return 0
 
-    def get_cases(self, count=False):
+    def get_cases(self):
         return CommCareCase.view('case/by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
@@ -494,8 +495,7 @@ class CommCareUser(CouchUser):
 
     def retire(self):
         suffix = '-Deleted'
-        if not self.doc_type.endswith(suffix):
-            self.doc_type += suffix
+        # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
         for form in self.get_forms():
@@ -504,12 +504,13 @@ class CommCareUser(CouchUser):
         for case in self.get_cases():
             case.doc_type += suffix
             case.save()
-        django_user = self.get_django_user()
-        if django_user:
-            print "delete django_user %s" % django_user.username
-            print User.objects.count()
+        try:
+            django_user = self.get_django_user()
+        except User.DoesNotExist:
+            pass
+        else:
             django_user.delete()
-            print User.objects.count()
+            
         self.save()
         
 class WebUser(CouchUser):
