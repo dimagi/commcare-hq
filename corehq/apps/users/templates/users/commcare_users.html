@@ -60,7 +60,11 @@
                 <th>{% trans "Cases" %}</th>
                 <th>{% trans "Phone Numbers" %}</th>
                 <th>{% trans "Archive" %}<div class="help-link" data-help-key="users/archive"></div></th>
-                <th>{% trans "Delete" %}<div class="help-link" data-help-key="users/delete"></div></th>
+                <th>
+                    {% if couch_user.is_domain_admin %}
+                        {% trans "Delete" %}<div class="help-link" data-help-key="users/delete"></div>
+                    {% endif %}
+                </th>
             </tr>
             {% for user in commcare_users %}
                 {% ifchanged user.is_active %}
@@ -129,12 +133,14 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form action="{% url delete_commcare_user domain user.user_id %}"
-                              method="post"
-                              data-title="Delete User?"
-                              data-message="Are you sure you want to permanently delete {{ user.raw_username }} and all of his/her form submissions?">
-                            <input type="submit" class="confirm-submit" value="delete"/>
-                        </form>
+                        {% if couch_user.is_domain_admin %}
+                            <form action="{% url delete_commcare_user domain user.user_id %}"
+                                  method="post"
+                                  data-title="Delete User?"
+                                  data-message="Are you sure you want to permanently delete {{ user.raw_username }} and all of their form submissions?">
+                                <input type="submit" class="confirm-submit" value="delete"/>
+                            </form>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
