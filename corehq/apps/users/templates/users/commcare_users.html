@@ -54,15 +54,15 @@
         {% if commcare_users %}
             <tr>
                 <th>{% trans "Username" %}</th>
-                <th>{% trans "Reset Password" %}</th>
+                <th>{% trans "Password" %}</th>
                 <th>{% trans "Date Registered" %}</th>
                 <th>{% trans "Forms" %}</th>
                 <th>{% trans "Cases" %}</th>
-                <th>{% trans "Phone Numbers" %}</th>
-                <th>{% trans "Archive" %}<div class="help-link" data-help-key="users/archive"></div></th>
+                <th>{% trans "Phone" %}</th>
+                <th>{% trans "Archive" %} <span class="help-link" data-help-key="users/archive"></span></th>
                 <th>
                     {% if couch_user.is_domain_admin %}
-                        {% trans "Delete" %}<div class="help-link" data-help-key="users/delete"></div>
+                        {% trans "Delete" %} <span class="help-link" data-help-key="users/delete"></span>
                     {% endif %}
                 </th>
             </tr>
@@ -70,7 +70,7 @@
                 {% ifchanged user.is_active %}
                     {% if not user.is_active %}
                     <tr>
-                        <td colspan="6">Inactive Users</td>
+                        <td colspan="8">Archived Users</td>
                     </tr>
                     {% endif %}
                 {% endifchanged %}
@@ -128,7 +128,7 @@
                         </form>
                         {% else %}
                             <form action="{% url unarchive_commcare_user domain user.user_id %}" method="post">
-                                <input type="submit" value="restore"/>
+                                <input type="submit" value="unarchive"/>
                             </form>
                         {% endif %}
                     </td>
@@ -145,12 +145,12 @@
                 </tr>
             {% endfor %}
         {% else %}
-            <tr><td colspan="6">There are no CommCare users in this domain.</td></tr>
+            <tr><td colspan="8">There are no CommCare users in this domain.</td></tr>
         {% endif %}
         {% if not show_inactive %}
             <tr>
-                <td colspan="6">
-                    <a href="./?show_inactive=true">Show Inactive Users</a>
+                <td colspan="8">
+                    <a href="./?show_inactive=true">Show Archived Users</a>
                 </td>
             </tr>
         {% endif %}
