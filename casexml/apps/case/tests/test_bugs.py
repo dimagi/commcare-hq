@@ -41,4 +41,24 @@ class CaseBugTest(TestCase):
         # before the bug was fixed this call failed
         process_cases(sender="testharness", xform=form)
         
+        
+    def testEmptyCaseId(self):
+        """
+        How do we do when submitting an empty case id?
+        """
+        self.assertEqual(0, len(CommCareCase.view("case/by_xform_id").all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "empty_id.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        # before the bug was fixed this call failed
+        try:
+            process_cases(sender="testharness", xform=form)
+            self.fail("Empty Id should crash")
+        except:
+            pass
+            
+        
+        
+        
     
