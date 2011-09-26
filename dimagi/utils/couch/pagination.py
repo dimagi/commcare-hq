@@ -40,7 +40,7 @@ class CouchPaginator(object):
     """
     
     
-    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x, use_reduce_to_count=0, view_args={}):
+    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x, use_reduce_to_count=False, view_args=None):
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
@@ -51,8 +51,9 @@ class CouchPaginator(object):
         self._generator_func = generator_func
         self._search = search
         self._search_preprocessor = search_preprocessor
-        self._view_args = view_args
-        
+        self._view_args = view_args or {}
+        self.use_reduce_to_count = use_reduce_to_count
+
     def get_ajax_response(self, request, default_display_length=DEFAULT_DISPLAY_LENGTH, 
                           default_start=DEFAULT_START, extras={}):
         """
@@ -86,8 +87,15 @@ class CouchPaginator(object):
                 kwargs.update(skip=params.start, limit=params.count, descending=params.desc)
                 kwargs.update(self._view_args)
             items = get_db().view(self._view, **kwargs)
-            total_rows = items.total_rows
-            total_display_rows = items.total_rows
+
+            if self.use_reduce_to_count:
+                kwargs.update(reduce=True, group_level=0, include_docs=False, skip=0, limit=None)
+                total_display_rows = total_rows = (
+                    get_db().view(self._view, **kwargs).one() or {'value': 0}
+                )['value']
+            else:
+                total_rows = items.total_rows
+                total_display_rows = items.total_rows
 
         
         # this startkey, endkey business is not currently used, 
@@ -107,7 +115,7 @@ class CouchPaginator(object):
                      "iTotalDisplayRecords": total_display_rows,
                      "iTotalRecords": total_rows,
                      "aaData": all_json}
-        
+
         for key, val in extras.items():
             to_return[key] = val
         
