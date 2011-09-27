@@ -85,7 +85,7 @@ def export_data(req, domain):
     if not include_errors:
         kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
     if kwargs['format'] == 'raw':
-        resp = export_raw_data([domain, export_tag], **kwargs)
+        resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
         resp = export_data_shared([domain,export_tag], **kwargs)
     if resp:
