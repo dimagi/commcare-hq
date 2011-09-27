@@ -37,6 +37,7 @@ from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
 from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
+from couchforms.filters import instances
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -83,7 +84,7 @@ def export_data(req, domain):
               "filename": export_tag}
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
     if not include_errors:
-        kwargs["filter"] = lambda doc: doc["doc_type"] == "XFormInstance"
+        kwargs["filter"] = instances
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
@@ -116,11 +117,15 @@ def custom_export(req, domain):
                        for col in cols]
         export_table = ExportTable(index=table, display=req.POST["name"],
                                    columns=export_cols)
+        include_errors = req.POST.get("include-errors", "")
+        filter_function = "couchforms.filters.instances" if not include_errors else ""
+        
         export_def = SavedExportSchema(index=export_tag, 
                                        schema_id=req.POST["schema"],
                                        name=req.POST["name"],
                                        default_format=req.POST["format"] or Format.XLS_2007,
-                                       tables=[export_table])
+                                       tables=[export_table],
+                                       filter_function=filter_function)
         export_def.save()
         messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect(reverse("edit_custom_export", 
@@ -154,10 +159,13 @@ def edit_custom_export(req, domain, export_id):
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
         schema = ExportSchema.get(req.POST["schema"])
-        saved_export.index=schema.index 
-        saved_export.schema_id=req.POST["schema"]
-        saved_export.name=req.POST["name"]
-        saved_export.default_format=req.POST["format"] or Format.XLS_2007
+        saved_export.index = schema.index 
+        saved_export.schema_id = req.POST["schema"]
+        saved_export.name = req.POST["name"]
+        saved_export.default_format = req.POST["format"] or Format.XLS_2007
+        saved_export.filter_function = "couchforms.filters.instances" \
+                if not req.POST.get("include-errors", "") else "" 
+        
         table_dict = dict([t.index, t] for t in saved_export.tables)
         if table in table_dict:
             table_dict[table].columns = export_cols
