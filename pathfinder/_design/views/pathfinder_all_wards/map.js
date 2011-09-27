@@ -1,6 +1,6 @@
 function(doc) {
-  if (doc.doc_type == 'CouchUser' && doc.commcare_accounts[0].domain == 'pathfinder'){
-  var u = doc.commcare_accounts[0].user_data;
-  emit([doc.commcare_accounts[0].domain, u.district, u.ward], null);
+  if (doc.doc_type == 'CommCareUser' && doc.domain == 'pathfinder'){
+  var u = doc.user_data;
+  emit([doc.domain, u.district, u.ward], null);
 }
 }

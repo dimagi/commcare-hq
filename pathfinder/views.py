@@ -149,7 +149,7 @@ def retrieve_providers(domain, ward):
     for result in results:
         p = dict()
         p['reported_this_month'] = False
-        p.update(result['doc']['commcare_accounts'][0]['user_data'])
+        p.update(result['doc']['user_data'])
         providers += [p]
     return providers
 
@@ -158,7 +158,7 @@ def get_provider_info(domain, provider):
     results = get_db().view('pathfinder/pathfinder_gov_chw_by_name', keys=[[domain, provider]], include_docs=True).all()
     if len(results) < 1:
         raise Http404("Couldn't find that provider.")
-    return results[0]['doc']['commcare_accounts'][0]['user_data']
+    return results[0]['doc']['user_data']
 
 
 def get_patients_by_provider(domain, provider):
