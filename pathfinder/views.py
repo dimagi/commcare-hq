@@ -237,7 +237,8 @@ def update_patients_with_followups(domain, patients, caseid_set, year, month):
         # and so on.
 
         if not p.has_key('registration_and_followup_hiv') or p['registration_and_followup_hiv'] == 'continuing' or p['registration_and_followup_hiv'] == '': # don't allow a value of 'dead' to change
-            p['registration_and_followup_hiv'] = fp['reg_followup_hiv']
+            if fp.has_key('reg_followup_hiv'):
+                p['registration_and_followup_hiv'] = fp['reg_followup_hiv']
         p['followup_this_month'] += 1 if (fyear == year and fmonth == month) else 0
         if "medication_given" in fp and fp['medication_given']:
             p['medication_given'] += fp['medication_given'] + " "
