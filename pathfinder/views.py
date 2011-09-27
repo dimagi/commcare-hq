@@ -7,14 +7,14 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from patient_group import PathfinderPatientGroup
 
-
+@login_and_domain_required
 def selector(request, domain, template="pathfinder-reports/select.html"):
     """
     Selector for all reports.
     """
     return render_to_response(template, {'domain': domain}, context_instance=RequestContext(request))
 
-
+@login_and_domain_required
 def ward_selector(request, domain, template="pathfinder-reports/select_ward_summary.html"):
     """
     Select parameters for ward summary report.
@@ -28,6 +28,7 @@ def ward_selector(request, domain, template="pathfinder-reports/select_ward_summ
                               "domain": domain,},
                              context_instance=RequestContext(request))
 
+@login_and_domain_required
 def hbc_selector(request, domain, template="pathfinder-reports/select_hbc_summary.html"):
     """
     Select parameters for HBC summary report.
@@ -42,7 +43,7 @@ def hbc_selector(request, domain, template="pathfinder-reports/select_hbc_summar
                              context_instance=RequestContext(request))
 
 
-
+@login_and_domain_required
 def provider_selector(request, domain, template="pathfinder-reports/select_provider_summary.html"):
     """
     Select parameters for provider report.
@@ -56,7 +57,7 @@ def provider_selector(request, domain, template="pathfinder-reports/select_provi
                              context_instance=RequestContext(request))
 
 
-#@login_and_domain_required
+@login_and_domain_required
 def ward_summary(request, domain,  template="pathfinder-reports/ward_summary.html"):
     """
     Ward summary report.
@@ -83,7 +84,7 @@ def ward_summary(request, domain,  template="pathfinder-reports/ward_summary.htm
     context['domain'] = domain
     return render_to_response(template, context)
 
-#@login_and_domain_required
+@login_and_domain_required
 def provider_summary(request, domain, template="pathfinder-reports/provider_summary.html"):
     """
     Provider summary report.
@@ -110,7 +111,7 @@ def provider_summary(request, domain, template="pathfinder-reports/provider_summ
     context['patients'] = g
     return render_to_response(template,context)
 
-#@login_and_domain_required
+@login_and_domain_required
 def home_based_care(request, domain, template="pathfinder-reports/hbc.html"):
     """
     Home-based care report.
