@@ -3,6 +3,7 @@ from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty
 import json
 from StringIO import StringIO
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.modules import try_import, to_function
 
 class Format(object):
     """
@@ -142,6 +143,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
     index = JsonProperty() # this is stored duplicately in the schema, but is convenient
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
+    filter_function = StringProperty()
     
     _schema = None
     @property
@@ -150,6 +152,13 @@ class SavedExportSchema(Document, UnicodeMixIn):
             self._schema = ExportSchema.get(self.schema_id)
     
         return self._schema
+    
+    @property
+    def filter(self):
+        if self.filter_function:
+            func = to_function(self.filter_function)
+            print "got filter function %s for %s" % (func, self.filter_function)
+            return func
     
     @classmethod
     def default(cls, schema, name=""):
@@ -168,12 +177,14 @@ class SavedExportSchema(Document, UnicodeMixIn):
     
     @property
     def table_configuration(self):
-        return [self.get_table_configuration(index) for index, cols in self.schema.tables]
+        return [self.get_table_configuration(index) \
+                for index, cols in self.schema.tables]
 
     def get_export_tables(self, previous_export=None):
         from couchexport.export import get_full_export_tables
         
-        full_tables, checkpoint = get_full_export_tables(self.index, previous_export)
+        full_tables, checkpoint = get_full_export_tables\
+                                    (self.index, previous_export, self.filter)
         if not full_tables: 
             return None
         
