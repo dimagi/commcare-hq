@@ -1,5 +1,6 @@
 from datetime import timedelta
-from corehq.apps.app_manager.models import Application
+from couchdbkit.exceptions import MultipleResultsFound
+from corehq.apps.app_manager.models import Application, get_app
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.users.models import CouchUser, CommCareUser
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
@@ -15,13 +16,24 @@ def get_custom_response_message(sender, xform, **kwargs):
         userID = xform.metadata.userID
         xmlns = xform.form.get('@xmlns')
         domain = xform.domain
-        lang = xform.openrosa_headers.get(OPENROSA_ACCEPT_LANGUAGE, "en") \
-                if hasattr(xform, "openrosa_headers") else "en"
-        app = Application.get_by_xmlns(domain, xmlns)
-        message = app.success_message.get(lang) if app else None
-        if not message:
-            return
-        success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
-        return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
+        try:
+            app = Application.get_by_xmlns(domain, xmlns)
+        except MultipleResultsFound:
+            try:
+                app = get_app(domain, xform.app_id)
+            except Exception:
+                app = None
+            
+
+        if app and hasattr(app, 'langs'):
+            try:
+                lang = xform.openrosa_headers[OPENROSA_ACCEPT_LANGUAGE]
+            except (AttributeError, KeyError):
+                lang = "default"
+            if lang == "default":
+                lang = app.langs[0] if app.langs else None
+            message = app.success_message.get(lang)
+            success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
+            return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
 
 successful_form_received.connect(get_custom_response_message)
