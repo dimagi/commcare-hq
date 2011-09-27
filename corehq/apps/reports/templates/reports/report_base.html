@@ -183,6 +183,9 @@
             width: 100px;
             text-align: center;
         }
+        .username {
+            font-variant: small-caps;
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -198,7 +201,7 @@
                     </div>
                 </li>
             </ul>
-            <h1>{{ report.name|default:"Unknown Report" }}</h1>
+            <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
         </div>
         <div id="report_header">
             {% if show_dates or show_users or show_forms %}

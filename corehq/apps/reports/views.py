@@ -388,7 +388,7 @@ def case_activity(request, domain):
     display = params.get('display', ['percent'])
     userIDs = params.get('userIDs') or [user.userID for user in CommCareUser.by_domain(domain)]
     userIDs.sort(key=lambda userID: user_id_to_username(userID))
-    landmarks = [timedelta(days=l) for l in params.get('landmarks') or [7,30,90]]
+    landmarks = [timedelta(days=l) for l in params.get('landmarks') or [30,60,120]]
     landmarks.append(None)
     now = datetime.utcnow()
     report = CaseActivity(domain, userIDs, landmarks, now)
@@ -510,13 +510,31 @@ def completion_times(request, domain):
 def case_list(request, domain):
     headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
     individual = request.GET.get('individual', '')
+
+    def get_case_counts():
+        key = [domain]
+        if individual:
+            key.append(individual)
+        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
+            try:
+                yield get_db().view(view_name,
+                    startkey=key,
+                    endkey=key + [{}],
+                    group_level=0
+                ).one()['value']
+            except TypeError:
+                yield 0
+
+    open_cases, all_cases = get_case_counts()
     context = _report_context(domain,
-        title="Case List",
+        title='Case List for %s ' % ('<span class="username">%s</span>' % user_id_to_username(individual) if individual else "All CHWs") +
+              ("(%s/%s open)" % (open_cases, all_cases) if all_cases else "(empty)"),
         individual=individual
     )
     context.update({
         "ajax_source": reverse('paging_case_list', args=[domain, individual]),
     })
+
     context['report'].update({
         "headers": headers,
     })
