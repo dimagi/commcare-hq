@@ -60,8 +60,8 @@ def export_response(file, format, filename, checkpoint=None):
     file.close()
     return response
 
-def export_raw_data(export_tag, format=None, filename=None,
-                       previous_export_id=None, filter=None):
+def export_raw_data(export_tag, filename=None):
+                       
     xform_instances = XFormInstance.view('couchexport/schema_index', key=export_tag, include_docs=True)
     f = StringIO()
     zipfile = ZipFile(f, 'w')
