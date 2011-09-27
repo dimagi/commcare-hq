@@ -547,12 +547,13 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
-            copy.copy_attachments(self)
+            copy.copy_attachments(self, r'.*\.xml')
         return copy
 
-    def copy_attachments(self, other):
+    def copy_attachments(self, other, regexp=None):
         for name in other._attachments or {}:
-            self.put_attachment(other.fetch_attachment(name), name)
+            if regexp is None or re.match(regexp, name):
+                self.put_attachment(other.fetch_attachment(name), name)
     def revert_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
