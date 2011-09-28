@@ -41,4 +41,5 @@ urlpatterns = patterns('corehq.apps.users.views',
         name='add_commcare_account'),
 
     url(r'^test_autocomplete/$', 'test_autocomplete'),
+    url(r'^user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer')
 )

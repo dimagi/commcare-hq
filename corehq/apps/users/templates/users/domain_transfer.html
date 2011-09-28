@@ -1,0 +1,40 @@
+{% extends "users/users_base.html" %}
+
+{% block user-view %}
+    <h1>Transfer CommCare Users</h1>
+
+
+    <form action="" method="post">
+        <table>
+            <tr>
+                <th>Transfer users</th>
+                <td>
+                    {% for user in commcare_users %}
+                        <ul>
+                            <li>
+                                <input type="checkbox" name="user_id" id="u_{{ user.user_id }}" value="{{ user.user_id }}"/>
+                                <label for="u_{{ user.user_id }}">{{ user.username }}</label>
+                            </li>
+                        </ul>
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr>
+                <th>to domain</th>
+                <td>{{ target_domain }}</td>
+            </tr>
+            <tr>
+                <th>submitting to application</th>
+                <td>
+                    <select name="app_id">
+                        {% for app in apps %}
+                            <option value="{{ app.id }}">{{ app.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Transfer "/>
+    </form>
+
+{% endblock %}

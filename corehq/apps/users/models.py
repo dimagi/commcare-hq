@@ -21,7 +21,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -328,6 +328,15 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
+    def change_username(self, username):
+        django_user = self.get_django_user()
+        django_user.DO_NOT_SAVE_COUCH_USER = True
+        django_user.username = username
+        django_user.save()
+        self.username = username
+        self.save()
+
+
     def save(self, **params):
         # test no username conflict
         by_username = get_db().view('users/by_username', key=self.username).one()
@@ -512,6 +521,19 @@ class CommCareUser(CouchUser):
         else:
             django_user.delete()
             
+        self.save()
+
+    def transfer_to_domain(self, domain, app_id):
+        username = format_username(raw_username(self.username), domain)
+        self.change_username(username)
+        self.domain = domain
+        for form in self.get_forms():
+            form.domain = domain
+            form.app_id = app_id
+            form.save()
+        for case in self.get_cases():
+            case.domain = domain
+            case.save()
         self.save()
         
 class WebUser(CouchUser):
