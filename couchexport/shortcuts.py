@@ -5,6 +5,7 @@ from StringIO import StringIO
 from unidecode import unidecode
 from couchforms.models import XFormInstance
 from django.core.cache import cache
+import hashlib
 
 
 def export_data_shared(export_tag, format=None, filename=None,
@@ -20,7 +21,9 @@ def export_data_shared(export_tag, format=None, filename=None,
     
     CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
     def _build_cache_key(tag, prev_export_id, format):
-        return "couchexport_:%s:%s:%s" % (tag, prev_export_id, format)
+        def _human_readable_key(tag, prev_export_id, format):
+            return "couchexport_:%s:%s:%s" % (tag, prev_export_id, format)
+        return hashlib.md5(_human_readable_key(tag, prev_export_id, format)).hexdigest()
     
     cache_hit = False
     # check cache, only supported for filterless queries, currently
