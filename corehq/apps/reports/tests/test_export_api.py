@@ -34,7 +34,8 @@ def get_export_response(client, previous="", include_errors=False):
                             args=[DOMAIN]),
                  {"export_tag": '"http://www.commcarehq.org/export/test"',
                   "previous_export": previous,
-                  "include_errors": include_errors})
+                  "include_errors": include_errors,
+                  "use_cache": False})
 
 class ExportTest(TestCase):
     
