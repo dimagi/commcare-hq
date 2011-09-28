@@ -13,7 +13,7 @@
                         <ul>
                             <li>
                                 <input type="checkbox" name="user_id" id="u_{{ user.user_id }}" value="{{ user.user_id }}"/>
-                                <label for="u_{{ user.user_id }}">{{ user.username }}</label>
+                                <label for="u_{{ user.user_id }}">{{ user.raw_username }}</label>
                             </li>
                         </ul>
                     {% endfor %}

@@ -25,8 +25,11 @@ class Prescription(Document):
             raise PrescriptionDateOutOfRange()
         if not (
             self.type == type and
-            self.domain == domain and
-            user.user_id
+            self.domain == domain and (
+                user.user_id in self.user_ids or
+                (self.all_admin and user.is_domain_admin()) or
+                user.is_superuser
+            )
         ):
             raise PrescriptionUnauthorized()
 
