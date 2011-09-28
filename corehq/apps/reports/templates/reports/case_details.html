@@ -35,7 +35,7 @@
             var formid = $(this).data("formid");
             if (formid) {
                 var text = form_lookup_dict[formid];
-                var url = url_base.replace("placeholder_domain", formid);
+                var url = url_base.replace("placeholder_formid", formid);
                 var body = link_template.replace("placeholder_url", url).replace("placeholder_text", text);
                 $(this).html(body);
             }
