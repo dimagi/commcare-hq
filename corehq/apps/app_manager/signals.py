@@ -33,7 +33,8 @@ def get_custom_response_message(sender, xform, **kwargs):
             if lang == "default":
                 lang = app.langs[0] if app.langs else None
             message = app.success_message.get(lang)
-            success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
-            return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
+            if message:
+                success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
+                return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
 
 successful_form_received.connect(get_custom_response_message)
