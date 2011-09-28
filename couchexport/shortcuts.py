@@ -10,7 +10,7 @@ import hashlib
 
 def export_data_shared(export_tag, format=None, filename=None,
                        previous_export_id=None, filter=None,
-                       use_cache=True):
+                       use_cache=True, max_column_size=2000):
     """
     Shared method for export. If there is data, return an HTTPResponse
     with the appropriate data. If there is not data returns None.
@@ -21,16 +21,18 @@ def export_data_shared(export_tag, format=None, filename=None,
         filename = export_tag
     
     CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
-    def _build_cache_key(tag, prev_export_id, format):
-        def _human_readable_key(tag, prev_export_id, format):
-            return "couchexport_:%s:%s:%s" % (tag, prev_export_id, format)
-        return hashlib.md5(_human_readable_key(tag, prev_export_id, format)).hexdigest()
+    def _build_cache_key(tag, prev_export_id, format, max_column_size):
+        def _human_readable_key(tag, prev_export_id, format, max_column_size):
+            return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
+        return hashlib.md5(_human_readable_key(tag, prev_export_id, 
+                                               format, max_column_size)).hexdigest()
     
     cache_hit = False
     # check cache, only supported for filterless queries, currently
     if use_cache and filter is None:
         _build_cache_key(export_tag, previous_export_id, format)
-        cached_data = cache.get(_build_cache_key(export_tag, previous_export_id, format))
+        cached_data = cache.get(_build_cache_key(export_tag, previous_export_id, 
+                                                 format, max_column_size))
         if cached_data:
             (tmp, checkpoint) = cached_data
             cache_hit = True
@@ -39,10 +41,12 @@ def export_data_shared(export_tag, format=None, filename=None,
         tmp = StringIO()
         checkpoint = export(export_tag, tmp, format=format, 
                             previous_export_id=previous_export_id,
-                            filter=filter)
+                            filter=filter, max_column_size=max_column_size)
     if checkpoint:
         if use_cache:
-            cache.set(_build_cache_key(export_tag, previous_export_id, format), (tmp, checkpoint), CACHE_TIME)
+            cache.set(_build_cache_key(export_tag, previous_export_id, 
+                                       format, max_column_size), 
+                      (tmp, checkpoint), CACHE_TIME)
         return export_response(tmp, format, filename, checkpoint)
         
     else: 
