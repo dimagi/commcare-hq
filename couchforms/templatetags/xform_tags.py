@@ -89,7 +89,9 @@ def render_form_xml(form):
 
 @register.simple_tag
 def form_inline_display(form_id):
-    form = XFormInstance.get(form_id)
-    if form:
-        return "%s: %s" % (form.received_on.date(), form.xmlns)
-    return "missing form: %s" % form_id         
+    if form_id:
+        form = XFormInstance.get(form_id)
+        if form:
+            return "%s: %s" % (form.received_on.date(), form.xmlns)
+        return "missing form: %s" % form_id
+    return "empty form id found"
