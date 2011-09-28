@@ -1,9 +1,14 @@
 import os
 from django.test import TestCase
-from couchforms.models import XFormInstance, XFormDeprecated
+from couchforms.models import XFormDeprecated
 from couchforms.util import post_xform_to_couch
 
 class EditFormTest(TestCase):
+    
+    def setUp(self):
+        for form in XFormDeprecated.view('couchforms/edits', include_docs=True).all():
+            form.delete()
+            
     def testBasicEdit(self):
         first_file = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
         edit_file = os.path.join(os.path.dirname(__file__), "data", "edit.xml")
