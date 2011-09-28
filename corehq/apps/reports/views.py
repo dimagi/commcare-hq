@@ -81,7 +81,8 @@ def export_data(req, domain):
 
     kwargs = {"format": req.GET.get("format", Format.XLS_2007),
               "previous_export_id": req.GET.get("previous_export", None),
-              "filename": export_tag}
+              "filename": export_tag,
+              "use_cache": string_to_boolean(req.GET.get("use_cache", "True"))}
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
     if not include_errors:
         kwargs["filter"] = instances
