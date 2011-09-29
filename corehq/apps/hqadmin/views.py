@@ -115,12 +115,16 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     domains = Domain.objects.all().order_by("name")
 
     for domain in domains:
-        forms = [r['value'] for r in get_db().view('reports/all_submissions', reduce=False).all()]
+        forms = [r['value'] for r in get_db().view('reports/all_submissions',
+            reduce=False,
+            startkey=[domain.name, json_format_datetime(dates[-1])],
+            endkey=[domain.name, json_format_datetime(now)],
+        ).all()]
         domain.user_sets = [dict() for landmark in landmarks]
         domain.users = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain.name)])
 
         for form in forms:
-            user_id = form['user_id']
+            user_id = form.get('user_id')
             time = string_to_datetime(form['time']).replace(tzinfo = None)
             if user_id in domain.users:
                 for i, date in enumerate(dates):
