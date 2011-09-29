@@ -21,17 +21,19 @@ class Prescription(Document):
 
     def check(self, type, domain, user, now=None):
         now = now or datetime.utcnow()
-        if not self.start < now < self.end:
-            raise PrescriptionDateOutOfRange()
-        if not (
-            self.type == type and
-            self.domain == domain and (
-                user.user_id in self.user_ids or
-                (self.all_admin and user.is_domain_admin()) or
-                user.is_superuser
-            )
-        ):
+        if not (self.type == type and self.domain == domain):
             raise PrescriptionUnauthorized()
+
+        if not user.is_superuser:
+            if not self.start < now < self.end:
+                raise PrescriptionDateOutOfRange()
+
+            if not (
+                user.user_id in self.user_ids or
+                (self.all_admin and user.is_domain_admin())
+            ):
+                raise PrescriptionUnauthorized()
+
 
     @classmethod
     def all(cls):
