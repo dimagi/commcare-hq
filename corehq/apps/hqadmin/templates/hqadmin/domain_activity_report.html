@@ -34,13 +34,15 @@
             </thead>
             <tbody>
             {% for domain in domains %}
-                <tr>
-                    <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
-                    {% for users in domain.user_sets %}
-                        <td title="{% for _, user in users.items %}{{ user.raw_username }} {% endfor %}">{{ users|length }}</td>
-                    {% endfor %}
-                    <td title="{% for _, user in domain.users.items %}{{ user.raw_username }} {% endfor %}">{{ domain.users|length }}</td>
-                </tr>
+                {% if domain.users %}
+                    <tr>
+                        <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
+                        {% for users in domain.user_sets %}
+                            <td title="{% for _, user in users.items %}{{ user.raw_username }} {% endfor %}">{{ users|length }}</td>
+                        {% endfor %}
+                        <td title="{% for _, user in domain.users.items %}{{ user.raw_username }} {% endfor %}">{{ domain.users|length }}</td>
+                    </tr>
+                {% endif %}
             {% endfor %}
             </tbody>
             </table>
