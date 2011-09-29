@@ -1,15 +1,17 @@
 from datetime import timedelta, datetime
+import json
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
 from corehq.apps.domain.decorators import login_and_domain_required
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 
 require_superuser = permission_required("is_superuser")
@@ -100,3 +102,31 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
         by_build[build]['build'] = build
         tables.append(by_build[build])
     return render_to_response(request, template, {'tables': tables})
+
+@require_superuser
+def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
+    landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
+    landmarks.sort()
+    now = datetime.utcnow()
+    dates = []
+    for landmark in landmarks:
+        dates.append(now - timedelta(days=landmark))
+
+    domains = Domain.objects.all().order_by("name")
+
+    for domain in domains:
+        forms = [r['value'] for r in get_db().view('reports/all_submissions', reduce=False).all()]
+        domain.user_sets = [dict() for landmark in landmarks]
+        domain.users = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain.name)])
+
+        for form in forms:
+            user_id = form['user_id']
+            time = string_to_datetime(form['time']).replace(tzinfo = None)
+            if user_id in domain.users:
+                for i, date in enumerate(dates):
+                    if time > date:
+                        domain.user_sets[i][user_id] = domain.users[user_id]
+    return render_to_response(request, template, {
+        'domains': domains,
+        'landmarks': landmarks
+    })

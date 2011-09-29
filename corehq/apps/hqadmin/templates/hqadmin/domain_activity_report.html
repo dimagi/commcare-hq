@@ -1,0 +1,49 @@
+{% extends base_template %}
+{% block page_imports %}
+    {% include "imports/datatables.html" %}
+{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        // datatable configuration.
+        $(document).ready(function() {
+            $('.datatable').dataTable({
+                "bJQueryUI": true
+            });
+        });
+    </script>
+    <style>
+        .datatable {
+            width: 100%;
+        }
+    </style>{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <div id="report-title">
+            <h1>Number of Active Users by Domain</h1>
+        </div>
+        <div id="report-content">
+            <table class="datatable">
+            <thead>
+                <tr>
+                    <th>Domain</th>
+                    {% for landmark in landmarks %}
+                        <th>Last {{ landmark }} Days</th>
+                    {% endfor %}
+                    <th>All Users</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for domain in domains %}
+                <tr>
+                    <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
+                    {% for users in domain.user_sets %}
+                        <td title="{% for _, user in users.items %}{{ user.raw_username }} {% endfor %}">{{ users|length }}</td>
+                    {% endfor %}
+                    <td title="{% for _, user in domain.users.items %}{{ user.raw_username }} {% endfor %}">{{ domain.users|length }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
