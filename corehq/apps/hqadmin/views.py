@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
+from django.views.decorators.cache import cache_page
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -104,6 +105,7 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     return render_to_response(request, template, {'tables': tables})
 
 @require_superuser
+@cache_page(60 * 15)
 def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
     landmarks.sort()
