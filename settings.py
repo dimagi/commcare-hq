@@ -4,6 +4,8 @@
 import os, time
 import logging
 
+CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 

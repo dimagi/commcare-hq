@@ -17,3 +17,4 @@ decorator
 mocker
 xlutils
 pygooglechart
+python-memcached
