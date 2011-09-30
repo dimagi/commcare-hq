@@ -22,48 +22,7 @@ from django.contrib import messages
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
-#    if request.method == "POST":
-#        if ('userrecipients[]' not in request.POST and 'grouprecipients[]' not in request.POST) \
-#          or 'text' not in request.POST:
-#            context['errors'] = "Error: must select at least 1 recipient and write a message."
-#        else:
-#            num_errors = 0
-#            text = request.POST["text"]
-#            if 'userrecipients[]' in request.POST:
-#                phone_numbers = request.POST.getlist('userrecipients[]')
-#                for phone_number in phone_numbers:
-#                    id, phone_number = phone_number.split('_')
-#                    success = util.send_sms(domain, id, phone_number, text)
-#                    if not success:
-#                        num_errors = num_errors + 1
-#            else:
-#                groups = request.POST.getlist('grouprecipients[]')
-#                for group_id in groups:
-#                    group = Group.get(group_id)
-#                    users = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
-#                    #user_ids = [m['value'] for m in CouchUser.view("users/by_group", key=[domain, group.name]).all()]
-                    # users/all_users is no longer available
-#                    #users = [m for m in CouchUser.view("users/all_users", keys=user_ids, include_docs=True).all()]
-#                    for user in users:
-#                        success = util.send_sms(domain,
-#                                                user.user_id,
-#                                                user.default_phone_number,
-#                                                text)
-#                        if not success:
-#                            num_errors = num_errors + 1
-#            if num_errors > 0:
-#                context['errors'] = "Could not send %s messages" % num_errors
-#            else:
-#                return HttpResponseRedirect( reverse("messaging", kwargs={ "domain": domain} ) )
-#    phone_users = CouchUser.view("users/phone_users_by_domain",
-#        startkey=[domain],
-#        endkey=[domain, {}],
-#        include_docs=True
-#    )
-#    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
     context['domain'] = domain
-#    context['phone_users'] = phone_users
-#    context['groups'] = groups
     context['messagelog'] = MessageLog.objects.filter(domain=domain).order_by('-pk')
     return render_to_response(request, template, context)
 

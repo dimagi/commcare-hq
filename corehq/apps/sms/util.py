@@ -7,6 +7,8 @@ from datetime import datetime
 from django.conf import settings
 
 from corehq.apps.sms.models import MessageLog, OUTGOING
+from dimagi.utils.couch.database import get_db
+from corehq.apps.users.models import CouchUser
 
 def send_sms(domain, id, phone_number, text):
     """
@@ -48,3 +50,18 @@ def clean_outgoing_sms_text(text):
         return urllib.quote(text)
     except KeyError:
         return urllib.quote(text.encode('utf-8'))
+
+def domains_for_phone(phone):
+    """
+    Get domains attached to a phone number
+    """
+    view_results = get_db().view("sms/phones_to_domains")
+    return [row["value"] for row in view_results]
+
+def users_for_phone(phone):
+    """
+    Get users attached to a phone number
+    """
+    view_results = get_db().view("sms/phones_to_domains")
+    user_ids = set([row["id"] for row in view_results])
+    return [CouchUser.get(id) for id in user_ids]
