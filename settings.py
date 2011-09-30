@@ -346,6 +346,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'reminders',
         'prescriptions',
         'reports',
+        'sms',
         'translations',
         'users',
         'touchforms.formplayer',
