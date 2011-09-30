@@ -173,12 +173,12 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_users
+@require_POST
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    if request.method == "POST":
-        user.retire()
-        messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
-        return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+    user.retire()
+    messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
+    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 
 @require_permission_to_edit_user
@@ -227,7 +227,7 @@ def delete_phone_number(request, domain, couch_user_id):
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    user = WebUser.get_by_user_id(couch_user_id, domain)
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
