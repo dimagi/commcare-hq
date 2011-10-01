@@ -416,11 +416,11 @@ class XForm(WrappedNode):
                 if r != "true()":
                     add_bind({
                         "nodeset":"case",
-                        'relevance': r
+                        'relevant': r
                     })
                 add_bind({
                     "nodeset":"case/create",
-                    'relevance': r
+                    'relevant': r
                 })
                 add_bind({
                     "nodeset":"case/case_id",
