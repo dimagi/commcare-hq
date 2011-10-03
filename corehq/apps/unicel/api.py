@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.sms.util import domains_for_phone, users_for_phone,\
-    clean_phone_number
+    clean_phone_number, clean_outgoing_sms_text
 from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
@@ -77,8 +77,9 @@ def send(message):
     config = _config()
     
     phone_number = clean_phone_number(message.phone_number).replace("+", "")
+    quoted_text = clean_outgoing_sms_text(message.text)
     params =  urlencode([(OutboundParams.DESTINATION, phone_number),
-                         (OutboundParams.MESSAGE, message.text),
+                         (OutboundParams.MESSAGE, quoted_text),
                          (OutboundParams.USERNAME, config["username"]),
                          (OutboundParams.PASSWORD, config["password"]),
                          (OutboundParams.SENDER, config["sender"])])
