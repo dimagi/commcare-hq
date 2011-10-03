@@ -7,7 +7,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
-from dimagi.utils.export import CsvWorkBook
+from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_response, json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
@@ -618,6 +618,7 @@ def case_export(request, domain, template='reports/basic_report.html',
 @login_and_domain_required
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     if include_closed:
         cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
     else:
@@ -625,12 +626,12 @@ def download_cases(request, domain):
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
 
-    workbook = CsvWorkBook()
+    workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users)
     export_users(users, workbook)
-    response = HttpResponse(workbook.to_zip())
-    response['Content-Type'] = "application/zip"
-    response['Content-Disposition'] = "attachment; filename={domain}_data.zip".format(domain=domain)
+    response = HttpResponse(workbook.format(format.slug))
+    response['Content-Type'] = "%s" % format.mimetype
+    response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
     return response
 
 @login_and_domain_required
