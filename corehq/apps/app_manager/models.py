@@ -310,6 +310,8 @@ class FormBase(DocumentSchema):
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+        paths = [question['value'] for question in self.get_questions(langs=[])]
+        
         return errors
 
     def set_requires(self, requires):
@@ -737,10 +739,10 @@ class ApplicationBase(VersionedDoc):
 
         try:
             self.create_all_files()
-        except AppError as e:
+        except (AppError, XFormValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
-            errors.append({'type': 'error', 'message': 'unexpected error'})
+            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
     @property
