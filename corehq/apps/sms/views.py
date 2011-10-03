@@ -8,13 +8,11 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from corehq.apps.sms.util import send_sms
+from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import MessageLog, INCOMING
 from corehq.apps.groups.models import Group
-from corehq.apps.users.util import raw_username
 from dimagi.utils.web import render_to_response
-from . import util
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages

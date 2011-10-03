@@ -3,7 +3,7 @@ import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.util import send_sms
+from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
