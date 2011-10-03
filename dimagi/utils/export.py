@@ -28,7 +28,7 @@ class WorkBook(object):
         tables = self._tables.items()
         f = StringIO()
         export_from_tables(tables, f, format)
-        return f
+        return f.getvalue()
 
 class CsvWorkBook(WorkBook):
     def __init__(self):
