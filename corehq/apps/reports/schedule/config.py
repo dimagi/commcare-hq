@@ -1,4 +1,4 @@
-from corehq.apps.reports.views import daily_submissions, submissions_by_form
+from corehq.apps.reports.views import daily_submissions, submissions_by_form, case_activity
 from corehq.apps.reports.schedule import BasicReportSchedule, ReportSchedule,\
     DomainedReportSchedule
 from corehq.apps.hqadmin.views import domain_list
@@ -7,7 +7,8 @@ from corehq.apps.hqadmin.views import domain_list
 SCHEDULABLE_REPORTS = ["daily_submissions",
                        "daily_completions",
                        "submissions_by_form",
-                       "admin_domains"]
+                       "admin_domains",
+                       "case_activity"]
 
 class ScheduledReportFactory(object):
     """
@@ -38,6 +39,12 @@ class ScheduledReportFactory(object):
     def _submissions_by_form(cls):
         return DomainedReportSchedule(submissions_by_form,
                                       title="Submissions by Form")
+
+    @classmethod
+    def _case_activity(cls):
+        return DomainedReportSchedule(case_activity,
+                                      title="Case Activity")
+
     @classmethod
     def _admin_domains(cls):
         return ReportSchedule(domain_list, 
