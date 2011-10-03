@@ -310,8 +310,25 @@ class FormBase(DocumentSchema):
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
-        paths = [question['value'] for question in self.get_questions(langs=[])]
-        
+        valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+        paths = set()
+        for _, action in self.active_actions().items():
+            if action.condition.type == 'if':
+                paths.add(action.condition.question)
+            if hasattr(action, 'name_path'):
+                paths.add(action.name_path)
+
+        if self.actions.update_case.is_active():
+            for _, path in self.actions.update_case.update.items():
+                paths.add(path)
+        if self.actions.case_preload.is_active():
+            for path, _ in self.actions.case_preload.preload.items():
+                paths.add(path)
+
+        for path in paths:
+            if path not in valid_paths:
+                errors.append({'type': 'path error', 'path': path, })
+
         return errors
 
     def set_requires(self, requires):
