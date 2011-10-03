@@ -422,7 +422,6 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 @login_and_domain_required
 @require_POST
 def test_scheduled_report(request, domain, couch_user_id, report_id):
-    print request.c
     rep = ReportNotification.get(report_id)
     user = WebUser.get_by_user_id(couch_user_id, domain)
     try:
