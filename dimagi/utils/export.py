@@ -1,6 +1,10 @@
 import csv
 from StringIO import StringIO
 import zipfile
+from couchexport.export import export_from_tables
+
+class RowLengthError(Exception):
+    pass
 
 class WorkBook(object):
     _undefined = None
@@ -8,11 +12,22 @@ class WorkBook(object):
     def undefined(self):
         return self._undefined
 
+    def __init__(self):
+        self._tables = {}
+
     def open(self, table, headers):
-        pass
+        self._tables[table] = [[h for h in headers],]
 
     def write_row(self, table, row):
-        pass
+        if len(row) != len(self._tables[table][0]):
+            raise RowLengthError()
+        self._tables[table].append(row)
+
+    def format(self, format):
+        tables = self._tables.items()
+        f = StringIO()
+        export_from_tables(tables, f, format)
+        return f
 
 class CsvWorkBook(WorkBook):
     def __init__(self):
@@ -43,4 +58,3 @@ class CsvWorkBook(WorkBook):
             zip.writestr('{table}.csv'.format(table=table), f.getvalue())
         zip.close()
         return zip_io.getvalue()
-    
