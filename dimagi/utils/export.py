@@ -3,9 +3,6 @@ from StringIO import StringIO
 import zipfile
 from couchexport.export import export_from_tables
 
-class RowLengthError(Exception):
-    pass
-
 class WorkBook(object):
     _undefined = None
     @property
@@ -19,9 +16,13 @@ class WorkBook(object):
         self._tables[table] = [[h for h in headers],]
 
     def write_row(self, table, row):
-        if len(row) != len(self._tables[table][0]):
-            raise RowLengthError()
-        self._tables[table].append(row)
+        headers = self._tables[table][0]
+        for key in row:
+            if key not in headers:
+                raise AttributeError()
+        self._tables[table].append([
+            row.get(h) for h in headers
+        ])
 
     def format(self, format):
         tables = self._tables.items()
