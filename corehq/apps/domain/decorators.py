@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.utils.http import urlquote
@@ -172,10 +173,4 @@ domain_admin_required = domain_admin_required_ex()
 
 ########################################################################################################
     
-def require_superuser(view_func):
-    def _inner(request, *args, **kwargs):
-        if not request.user.is_superuser:
-            raise Http404()
-        else:
-            return view_func(request, *args, **kwargs)
-    return _inner
+require_superuser = permission_required("is_superuser")

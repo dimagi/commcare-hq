@@ -11,16 +11,15 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
-
-require_superuser = permission_required("is_superuser")
 
 @require_superuser
 def default(request):
     return HttpResponseRedirect(reverse("domain_list"))
 
+@cache_page(60 * 15)
 @require_superuser
 def domain_list(request):
     # one wonders if this will eventually have to paginate
@@ -51,7 +50,7 @@ def domain_list(request):
                                "domain": domain},
                               context_instance=RequestContext(request))
 
-
+@cache_page(60 * 15)
 @require_superuser
 def active_users(request):
     keys = []
@@ -79,6 +78,8 @@ def active_users(request):
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
 
+
+@cache_page(60 * 15)
 @require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
@@ -104,8 +105,8 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
         tables.append(by_build[build])
     return render_to_response(request, template, {'tables': tables})
 
-@require_superuser
 @cache_page(60 * 15)
+@require_superuser
 def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
     landmarks.sort()
