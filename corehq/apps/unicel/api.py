@@ -58,7 +58,7 @@ def create_from_request(request):
     domains = domains_for_phone(sender)
     domain = domains[0] if len(domains) == 1 else "" 
     recipients = users_for_phone(sender)
-    recipient = recipients[0] if len(recipients) == 1 else "" 
+    recipient = recipients[0].get_id if len(recipients) == 1 else "" 
     
     log = MessageLog.objects.create(couch_recipient=recipient,
                                     phone_number=sender,
