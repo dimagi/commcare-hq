@@ -262,6 +262,12 @@ COUCHLOG_THRESHOLD = logging.WARNING
 # sofabed
 FORMDATA_MODEL = 'hqsofabed.HQFormData'  
 
+# unicel sms config
+UNICEL_CONFIG = {"username": "Dimagi",
+                 "password": "changeme",
+                 "sender": "Promo" }
+
+
 #auditcare parameters
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
