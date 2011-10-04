@@ -254,9 +254,9 @@ def get_form_view_context(request, form, langs, is_user_registration):
     xform = None
     try:
         xform = form.wrapped_xform()
-    except XFormError, e:
+    except XFormError as e:
         messages.error(request, "Error in form: %s" % e)
-    except Exception, e:
+    except Exception as e:
         logging.exception(e)
         messages.error(request, "Unexpected error in form: %s" % e)
 
@@ -267,32 +267,31 @@ def get_form_view_context(request, form, langs, is_user_registration):
                 xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
             messages.error(request, "%s" % e)
-        except AppError, e:
+        except AppError as e:
             messages.error(request, "Error in application: %s" % e)
-        except XFormValidationError, e:
+        except XFormValidationError as e:
             message = unicode(e)
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
             for msg in message.split("\n")[2:]:
                 messages.error(request, "%s" % msg)
-        except XFormError, e:
+        except XFormError as e:
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
-        except Exception, e:
+        except Exception as e:
             if settings.DEBUG and False:
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected System Error: %s" % e)
 
-
         try:
             xform.add_case_and_meta(form)
             if settings.DEBUG and False:
                 xform.validate()
-        except CaseError, e:
+        except CaseError as e:
             messages.error(request, "Error in Case Management: %s" % e)
-        except XFormValidationError, e:
+        except XFormValidationError as e:
             messages.error(request, "%s" % e)
-        except Exception, e:
+        except Exception as e:
             if settings.DEBUG and False:
                 raise
             logging.exception(e)

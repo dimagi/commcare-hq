@@ -310,6 +310,29 @@ class FormBase(DocumentSchema):
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+        try:
+            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+        except XFormError as e:
+            errors.append({'type': 'invalid xml', 'message': unicode(e)})
+        else:
+            paths = set()
+            for _, action in self.active_actions().items():
+                if action.condition.type == 'if':
+                    paths.add(action.condition.question)
+                if hasattr(action, 'name_path'):
+                    paths.add(action.name_path)
+
+            if self.actions.update_case.is_active():
+                for _, path in self.actions.update_case.update.items():
+                    paths.add(path)
+            if self.actions.case_preload.is_active():
+                for path, _ in self.actions.case_preload.preload.items():
+                    paths.add(path)
+
+            for path in paths:
+                if path not in valid_paths:
+                    errors.append({'type': 'path error', 'path': path})
+
         return errors
 
     def set_requires(self, requires):
@@ -737,10 +760,10 @@ class ApplicationBase(VersionedDoc):
 
         try:
             self.create_all_files()
-        except AppError as e:
+        except (AppError, XFormValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
-            errors.append({'type': 'error', 'message': 'unexpected error'})
+            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
     @property
@@ -1110,7 +1133,7 @@ class Application(ApplicationBase, TranslationMixin):
                 errors.extend(errors_)
                 try:
                     _parse_xml(form.source)
-                except Exception as e:
+                except XFormError as e:
                     errors.append({
                         'type': "invalid xml",
                         "module": {"id": module.id, "name": module.name},
@@ -1141,8 +1164,8 @@ class Application(ApplicationBase, TranslationMixin):
         try:
             self.create_all_files()
         except Exception as e:
-            if settings.DEBUG:
-                raise
+#            if settings.DEBUG:
+#                raise
             errors.append({'type': "form error", 'message': unicode(e)})
         
         return errors
