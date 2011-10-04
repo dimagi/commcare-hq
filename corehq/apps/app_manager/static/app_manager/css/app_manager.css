@@ -64,3 +64,9 @@ input.sms-autocomplete {
     margin-left: 2em;
     padding-bottom: 1em;
 }
+
+.delete-me {
+    position: absolute;
+    right: 1em;
+    top: 1.5em;
+}

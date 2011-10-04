@@ -364,6 +364,7 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
+
 class Form(FormBase, IndexedSchema):
     def get_app(self):
         return self._parent._parent
@@ -607,7 +608,7 @@ class VersionedDoc(Document):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
         copy.delete()
-    
+
     def scrub_source(self, source):
         """
         To be overridden.
@@ -824,7 +825,16 @@ class ApplicationBase(VersionedDoc):
         copy.save(increment_version=False)
 
         return copy
-    
+
+    def delete_app(self):
+        self.doc_type += '-Deleted'
+        record = DeleteApplicationRecord(
+            domain=self.domain,
+            app_id=self.id,
+            datetime=datetime.utcnow()
+        )
+        record.save()
+        return record
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -1039,9 +1049,20 @@ class Application(ApplicationBase, TranslationMixin):
     def new_module_from_source(self, source):
         self.modules.append(Module.wrap(source))
         return self.get_module(-1)
-    
+
+    @parse_int([1])
     def delete_module(self, module_id):
-        del self.modules[int(module_id)]
+        module = self.modules[module_id]
+        record = DeleteModuleRecord(
+            domain=self.domain,
+            app_id=self.id,
+            module_id=module_id,
+            module=module,
+            datetime=datetime.utcnow()
+        )
+        del self.modules[module_id]
+        record.save()
+        return record
 
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
@@ -1064,9 +1085,21 @@ class Application(ApplicationBase, TranslationMixin):
         if len(case_types) == 1 and not module.case_type:
             module.case_type, = case_types
         return form
+    @parse_int([1, 2])
     def delete_form(self, module_id, form_id):
         module = self.get_module(module_id)
-        del module['forms'][int(form_id)]
+        form = module['forms'][form_id]
+        record = DeleteFormRecord(
+            domain=self.domain,
+            app_id=self.id,
+            module_id=module_id,
+            form_id=form_id,
+            form=form,
+            datetime=datetime.utcnow()
+        )
+        record.save()
+        del module['forms'][form_id]
+        return record
 
     def rename_lang(self, old_lang, new_lang):
         if old_lang == new_lang:
@@ -1243,6 +1276,7 @@ class RemoteApp(ApplicationBase):
             files.update((self.fetch_file(location),))
         return files
 
+
 class DomainError(Exception):
     pass
 
@@ -1274,5 +1308,42 @@ def get_app(domain, app_id, wrap_cls=None):
     app = cls.wrap(app)
     return app
 
+class DeleteRecord(Document):
+    base_doc = 'DeleteRecord'
+    domain = StringProperty()
+    datetime = DateTimeProperty()
+
+class DeleteApplicationRecord(DeleteRecord):
+    app_id = StringProperty()
+
+    def undo(self):
+        app = ApplicationBase.get(self.app_id)
+        app.doc_type = app.doc_type.rstrip('-Deleted')
+        app.save()
+
+class DeleteModuleRecord(DeleteRecord):
+    app_id = StringProperty()
+    module_id = IntegerProperty()
+    module = SchemaProperty(Module)
+
+    def undo(self):
+        app = Application.get(self.app_id)
+        modules = app.modules
+        modules.insert(self.module_id, self.module)
+        app.modules = modules
+        app.save()
+
+class DeleteFormRecord(DeleteRecord):
+    app_id = StringProperty()
+    module_id = IntegerProperty()
+    form_id = IntegerProperty()
+    form = SchemaProperty(Form)
+
+    def undo(self):
+        app = Application.get(self.app_id)
+        forms = app.modules[self.module_id].forms
+        forms.insert(self.form_id, self.form)
+        app.modules[self.module_id].forms = forms
+        app.save()
 
 import corehq.apps.app_manager.signals

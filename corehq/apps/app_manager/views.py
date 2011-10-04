@@ -20,7 +20,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words, ApplicationBase
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord
 
 from corehq.apps.app_manager.models import DETAIL_TYPES
 from django.utils.http import urlencode
@@ -54,7 +54,7 @@ require_edit_apps = require_permission(Permissions.EDIT_APPS)
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
 @login_and_domain_required
-def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, error='', **kwargs):
+def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, edit=True, error='', page=None, **kwargs):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -73,11 +73,12 @@ def back_to_main(req, domain, app_id='', module_id='', form_id='', edit=True, er
         params['error'] = error
 
     args = [domain]
-    if app_id:
+
+    if app_id is not None:
         args.append(app_id)
-        if module_id:
+        if module_id is not None:
             args.append(module_id)
-            if form_id:
+            if form_id is not None:
                 args.append(form_id)
     view_name = {
         1: 'default',
@@ -559,29 +560,69 @@ def new_form(req, domain, app_id, module_id):
 @require_permission('edit-apps')
 def delete_app(req, domain, app_id):
     "Deletes an app from the database"
-    get_app(domain, app_id).delete()
+    app = get_app(domain, app_id)
+    record = app.delete_app()
+    messages.success(req,
+        'You have deleted an application. <a href="%s">Undo</a>' % reverse('undo_delete_app', args=[domain, record.get_id]),
+        extra_tags='html'
+    )
+    app.save()
     del app_id
     return back_to_main(**locals())
+
+#@require_POST
+@require_permission('edit-apps')
+def undo_delete_app(request, domain, record_id):
+    record = DeleteApplicationRecord.get(record_id)
+    record.undo()
+    messages.success(request, 'Application successfully restored.')
+    return back_to_main(request, domain, app_id=record.app_id)
 
 @require_POST
 @require_permission('edit-apps')
 def delete_module(req, domain, app_id, module_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
-    app.delete_module(module_id)
+    record = app.delete_module(module_id)
+    messages.success(req,
+        'You have deleted a module. <a href="%s">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+        extra_tags='html'
+    )
     app.save()
     del module_id
     return back_to_main(**locals())
+
+#@require_POST
+@require_permission('edit-apps')
+def undo_delete_module(request, domain, record_id):
+    record = DeleteModuleRecord.get(record_id)
+    record.undo()
+    messages.success(request, 'Module successfully restored.')
+    return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
+
 
 @require_POST
 @require_permission('edit-apps')
 def delete_form(req, domain, app_id, module_id, form_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
-    app.delete_form(module_id, form_id)
+    record = app.delete_form(module_id, form_id)
+    messages.success(req,
+        'You have deleted a form. <a href="%s">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
+        extra_tags='html'
+    )
     app.save()
     del form_id
+    del record
     return back_to_main(**locals())
+
+#@require_POST
+@require_permission('edit-apps')
+def undo_delete_form(request, domain, record_id):
+    record = DeleteFormRecord.get(record_id)
+    record.undo()
+    messages.success(request, 'Form successfully restored.')
+    return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id, form_id=record.form_id)
 
 @require_POST
 @require_permission('edit-apps')

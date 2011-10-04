@@ -127,6 +127,14 @@
                 </select>
                 </li>
                 {% endif %}
+                {% if edit %}
+                <li>
+                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
+                        <span class="ui-icon ui-icon-trash"></span>
+                        <a href="#" class="submit">Delete this application</a>
+                    </form>
+                </li>
+                {% endif %}
             </ul>
         </div>
         <div id="apps-menu-border"></div>
@@ -139,21 +147,6 @@
                             <strong id="app_name" class="variable-app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
-                        {% if edit %}
-                            <li>
-
-                                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}"
-                                          data-title="Delete Application"
-                                          method="POST">
-                                        <span class="hidden dialog-message">
-                                            Are you sure you want to delete application
-                                            "<span class="variable-app_name">{{ app.name }}</span>"
-                                            and all its modules and forms?</td>
-                                        </span>
-                                        <a class="confirm-submit" href="#">Delete this Application</a>
-                                    </form>
-                            </li>
-                        {% endif %}
                     </ul>
                 {% endif %}
             </div>

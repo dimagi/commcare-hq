@@ -31,9 +31,13 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'new_app/$',                                                          'new_app'),
     (r'new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',                      'new_form'),
 
-    (r'delete_app/(?P<app_id>[\w-]+)/$',                                       'delete_app'),
-    (r'delete_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',                 'delete_module'),
-    (r'delete_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',  'delete_form'),
+    (r'^delete_app/(?P<app_id>[\w-]+)/$',                                       'delete_app'),
+ url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',                 'delete_module', name="delete_module"),
+ url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$', 'delete_form', name="delete_form"),
+
+ url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$',    'undo_delete_app',      name='undo_delete_app'),
+ url(r'^undo_delete_module/(?P<record_id>[\w-]+)/$', 'undo_delete_module',   name='undo_delete_module'),
+ url(r'^undo_delete_form/(?P<record_id>[\w-]+)/$',   'undo_delete_form',     name='undo_delete_form'),
 
  url(r'edit_form_attr/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/(?P<attr>[\w-]+)/$',
                                                                             'edit_form_attr',

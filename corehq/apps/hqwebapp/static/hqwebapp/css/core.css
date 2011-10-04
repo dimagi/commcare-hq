@@ -305,6 +305,10 @@ form table {
     padding: 1em;
     margin-bottom: 1em;
 }
+.message a {
+    font-weight: bold !important;
+    text-decoration: underline !important;
+}
 .warning {
     font-style: italic;
     text-indent: 1em;
@@ -329,6 +333,9 @@ table.config th {
 }
 .next-to-sidebar h3{
     text-align: center;
+}
+.next-to-sidebar {
+    position: relative;
 }
 
 input[type='text'], input[type='password'] {

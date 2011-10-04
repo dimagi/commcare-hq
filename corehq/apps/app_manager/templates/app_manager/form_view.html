@@ -85,6 +85,16 @@
     </script>
 {% endblock %}
 {% block form-view %}
+    {% if edit and not is_user_registration %}
+        <div class="delete-me">
+            <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
+                <a class="submit" href="#">
+                    <span class="ui-icon ui-icon-trash"></span>
+                    Delete this form
+                </a>
+            </form>
+        </div>
+    {% endif %}
     {% if is_user_registration %}
         <h3>User Registration</h3>
     {% else %}

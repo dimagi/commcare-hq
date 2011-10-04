@@ -55,18 +55,6 @@
                                     class="selected"{% endif %}{% endifequal %}><!--[M]-->
                                     {% if edit %}
                                         <span class="drag_handle"></span>
-
-                                        <form action="{% url corehq.apps.app_manager.views.delete_module domain app.id module.id %}"
-                                              data-title="Delete Module?"
-                                              method="POST">
-                                            <span class="hidden dialog-message">
-                                                Are you sure you want to delete module "<span
-                                                    {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>{{ module.name|trans:langs }}</span>"
-                                                and all its forms from application "{{ app.name }}"?
-                                            </span>
-
-                                            <a class="delete_link confirm-submit" href="#"></a>
-                                        </form>
                                     {% endif %}
                                     <a href="{% url view_module domain app.id module.id %}?edit={{ edit|JSON }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
@@ -90,17 +78,6 @@
                                                     <div class="index">{{ form.id }}</div>{% endif %}
                                                 {% if edit %}
                                                     <span class="drag_handle"></span>
-                                                    <form action="{% url corehq.apps.app_manager.views.delete_form domain app.id module.id form.id %}"
-                                                          data-title="Delete Form"
-                                                          method="POST">
-                                                        <span class="hidden dialog-message">
-                                                            Are you sure you want to delete form "<span
-                                                                {% if form == selected_form %}class="variable-form_name"{% endif %}>{{ form.name|trans:langs }}</span>"
-                                                            from module "<span
-                                                                {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>{{ module.name|trans:langs }}</span>"?
-                                                        </span>
-                                                        <a class="delete_link confirm-submit" href="#"></a>
-                                                    </form>
                                                 {% endif %}
                                                 <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|JSON }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
