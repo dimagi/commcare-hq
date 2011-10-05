@@ -52,8 +52,10 @@
                 $("#xform-source-opener").click(function (){
                     $("#xform-source").text("Loading...");
                     $.get($(this).attr('href'), function (data) {
-                        brush = new SyntaxHighlighter.brushes.Xml();
+                        var brush = new SyntaxHighlighter.brushes.Xml();
                         brush.init({ toolbar: false });
+                        // brush.getDiv seems to escape inconsistently, so I'm helping it out
+                        data = data.replace(/&/g, '&amp;');
                         $("#xform-source").html(brush.getDiv(data));
                     }, 'json');
                 });
