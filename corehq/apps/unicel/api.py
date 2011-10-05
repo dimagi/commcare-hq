@@ -15,6 +15,8 @@ class InboundParams(object):
     SENDER = "sender"
     MESSAGE = "msg"
     TIMESTAMP = "stime"
+    UDHI = "udhi"
+    DCS = "dcs"
     
 class OutboundParams(object):    
     """
@@ -25,8 +27,11 @@ class OutboundParams(object):
     USERNAME = "uname"
     PASSWORD = "pass"
     DESTINATION = "dest"
-    
-    
+
+# constant additional parameters when sending a unicode message
+UNICODE_PARAMS = [("udhi", 1),
+                  ("dcs", 8)]
+
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 
 def _check_environ():
@@ -54,6 +59,10 @@ def create_from_request(request):
     actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT) \
                             if timestamp else datetime.utcnow()
     
+    # not sure yet if this check is valid
+    is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
+    if is_unicode:
+        message = message.decode("hex").decode("utf_16_be")
     # if you don't have an exact match for either of these fields, save nothing
     domains = domains_for_phone(sender)
     domain = domains[0] if len(domains) == 1 else "" 
@@ -77,11 +86,18 @@ def send(message):
     config = _config()
     
     phone_number = clean_phone_number(message.phone_number).replace("+", "")
-    quoted_text = clean_outgoing_sms_text(message.text)
-    params =  urlencode([(OutboundParams.DESTINATION, phone_number),
-                         (OutboundParams.MESSAGE, quoted_text),
-                         (OutboundParams.USERNAME, config["username"]),
-                         (OutboundParams.PASSWORD, config["password"]),
-                         (OutboundParams.SENDER, config["sender"])])
-    data = urlopen('%s?%s' % (OUTBOUND_URLBASE, params)).read()
+    # these are shared regardless of API
+    params = [(OutboundParams.DESTINATION, phone_number),
+              (OutboundParams.USERNAME, config["username"]),
+              (OutboundParams.PASSWORD, config["password"]),
+              (OutboundParams.SENDER, config["sender"])]
+    try: 
+        text = str(message.text)
+        # it's ascii
+        params.append((OutboundParams.MESSAGE, text))
+    except UnicodeEncodeError:
+        params.extend(UNICODE_PARAMS)
+        encoded = message.text.encode("utf_16_be").encode("hex")
+        params.append((OutboundParams.MESSAGE, encoded))
+    data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
     
