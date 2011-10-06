@@ -14,7 +14,7 @@
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js?version=5"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/help-001.js"></script>
 
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/main.css?version=2" />
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/main.css?version=3" />
         <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon.png" />
 
 
@@ -46,9 +46,12 @@
     </head>
     <body>
         <div id='bug-report-bar'>
-            <a id='bug-report-toggle' class="link-underline" href="#">Report an Issue</a>
+            <a id='bug-report-toggle' class="link-underline" href="#">
+                <span class="ui-icon ui-icon-comment" title="Report an Issue"></span>
+            </a>
         </div>
         <div id="bug-report-body">
+            <p>Report an Issue</p>
             <form id='bug-report-form' action="{% url bug_report %}">
                 <input type="hidden" id="bug-report-url" name="url"/>
                 <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>

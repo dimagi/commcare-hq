@@ -96,8 +96,8 @@ body {
 	padding: 0;
 }
 #bug-report-bar, #bug-report-body {
+    background-color: #FFF;
     position: absolute;
-    background-color: #CEF;
     border-bottom: 1px solid #96989B;
     border-right: 1px solid #96989B;
     padding: 10px;
