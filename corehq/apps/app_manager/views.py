@@ -10,19 +10,19 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import DomainMembership, Permissions
-import current_builds
+
 from dimagi.utils.web import render_to_response, json_response, json_request
 
-from corehq.apps.app_manager.forms import NewXFormForm, NewAppForm, NewModuleForm
+from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 
 from corehq.apps.domain.decorators import login_and_domain_required
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls
 
-from corehq.apps.app_manager.models import DETAIL_TYPES
+from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from django.utils.http import urlencode
 
 from django.views.decorators.http import require_POST, require_GET
@@ -35,10 +35,8 @@ from utilities.profile import profile
 import urllib
 import urlparse
 from collections import defaultdict
-from dimagi.utils.couch.database import get_db
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
-from . import fixtures
 from django.utils.datastructures import SortedDict
 
 try:
@@ -46,8 +44,6 @@ try:
 except ImportError:
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
-
-_str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
 require_edit_apps = require_permission(Permissions.EDIT_APPS)
 
@@ -111,7 +107,7 @@ def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     return _get_xform_source(req, app, form)
-    
+
 @login_and_domain_required
 def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
@@ -138,22 +134,6 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
-EXAMPLE_DOMAIN = 'example'
-
-def _get_or_create_app(app_id):
-    if app_id == "example--hello-world":
-        try:
-            app = Application.get(app_id)
-        except ResourceNotFound:
-            app = Application.wrap(fixtures.hello_world_example)
-            app._id = app_id
-            app.domain = EXAMPLE_DOMAIN
-            app.save()
-            return _get_or_create_app(app_id)
-        return app
-    else:
-        return VersionedDoc.get(app_id)
-
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
@@ -162,23 +142,13 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             source = req.POST.get('source')
             source = json.loads(source)
             assert(source is not None)
+            app = import_app_util(source, domain, name=name)
         except Exception:
             app_id = req.POST.get('app_id')
-            source = _get_or_create_app(app_id)
-            src_dom = source['domain']
-            source = source.export_json()
-            source = json.loads(source)
-            if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
-                return HttpResponseForbidden()
-        try: attachments = source.pop('_attachments')
-        except KeyError: attachments = {}
-        if name:
-            source['name'] = name
-        cls = _str_to_cls[source['doc_type']]
-        app = cls.from_source(source, domain)
-        app.save()
-        for name, attachment in attachments.items():
-            app.put_attachment(attachment, name)
+            def validate_source_domain(src_dom):
+                if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                    return HttpResponseForbidden()
+            app = import_app_util(app_id, domain, name=name, validate_source_domain=validate_source_domain)
 
         app_id = app._id
         return back_to_main(**locals())
@@ -190,14 +160,14 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                 reverse('import_app', args=[redirect_domain])
                 + "?app={app_id}".format(app_id=app_id)
             )
-        
+
         if app_id:
             app = Application.get(app_id)
             assert(app.doc_type in ('Application', 'RemoteApp'))
             assert(req.couch_user.is_member_of(app.domain))
-        else: 
+        else:
             app = None
-        
+
         return render_to_response(req, template, {'domain': domain, 'app': app})
 
 @require_permission('edit-apps')
@@ -208,7 +178,7 @@ def import_factory_app(req, domain):
     name = req.POST.get('name')
     if name:
         source['name'] = name
-    cls = _str_to_cls[source['doc_type']]
+    cls = str_to_cls[source['doc_type']]
     app = cls.from_source(source, domain)
     app.save()
     app_id = app._id
@@ -518,7 +488,7 @@ def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
     type = req.POST["type"]
-    cls = _str_to_cls[type]
+    cls = str_to_cls[type]
     app = cls.new_app(domain, "Untitled Application", lang)
     if cls == Application:
         app.new_module("Untitled Module", lang)
@@ -860,23 +830,23 @@ def multimedia_list_download(req, domain, app_id):
                 filelist.extend(parsed.image_references)
             if include_audio:
                 filelist.extend(parsed.audio_references)
-    
+
     if strip_jr:
         filelist = [s.replace("jr://file/", "") for s in filelist if s]
     response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename=list.txt' 
+    response['Content-Disposition'] = 'attachment; filename=list.txt'
     response.write("\n".join(sorted(set(filelist))))
     return response
-        
+
 @require_permission('edit-apps')
 def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     """
     Edit multimedia for forms
     """
     app = get_app(domain, app_id)
-    
+
     parsed_forms = {}
-    images = {} 
+    images = {}
     audio_files = {}
     # TODO: make this more fully featured
     for m in app.get_modules():
@@ -886,18 +856,18 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
             parsed_forms[f] = parsed
             for i in parsed.image_references:
                 if i not in images: images[i] = []
-                images[i].append((m,f)) 
+                images[i].append((m,f))
             for i in parsed.audio_references:
                 if i not in audio_files: audio_files[i] = []
-                audio_files[i].append((m,f)) 
-    
+                audio_files[i].append((m,f))
+
     sorted_images = SortedDict()
     sorted_audio = SortedDict()
     for k in sorted(images):
         sorted_images[k] = images[k]
     for k in sorted(audio_files):
         sorted_audio[k] = audio_files[k]
-    return render_to_response(req, "app_manager/multimedia_home.html", 
+    return render_to_response(req, "app_manager/multimedia_home.html",
                               {"domain": domain,
                                "app": app,
                                "images": sorted_images,
@@ -1004,7 +974,7 @@ def edit_app_attr(req, domain, app_id, attr):
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
-    
+
     def should_edit(attribute):
         return attribute == attr or ('all' == attr and req.POST.has_key(attribute))
     resp = {"update": {}}

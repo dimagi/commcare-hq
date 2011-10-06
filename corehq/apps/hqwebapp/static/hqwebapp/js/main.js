@@ -254,7 +254,77 @@ $(function () {
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
     $('#main_container').addClass('ui-corner-all container shadow');
+    (function () {
+        var toggle = $('#bug-report-toggle'),
+            body = $('#bug-report-body'),
+            form = $('#bug-report-form'),
+            subject = $('#bug-report-subject'),
+            cancel = $('#bug-report-cancel'),
+            now = $('#bug-report-now'),
+            when = $('#bug-report-when'),
+            message = $('#bug-report-message'),
+            url = $('#bug-report-url'),
+            submit = $('#bug-report-submit'),
+            sendingMessage = $('<p/>').text('Sending...'),
+            errorMessage = $('<p/>').text('We\'re sorry! There was an error sending your bug report.'),
+            sentMessage = $('<p/>').text('Thank you for reporting this issue. We are already hard at work addressing it.');
 
+        url.val(location.href);
+
+        toggle.click(function (e) {
+            e.preventDefault();
+            $(this).toggleClass('link-underline');
+            body.slideToggle();
+            subject.focus();
+        });
+        cancel.click(function(e) {
+            e.preventDefault();
+            toggle.toggleClass('link-underline');
+            body.slideUp();
+        });
+        now.change(function () {
+            if ($(this).val() === 'true') {
+                when.attr('disabled', true).closest('tr').hide();
+            } else {
+                when.attr('disabled', false).closest('tr').show();
+            }
+        }).trigger('change').change(function () {
+            if ($(this).val() === 'true') {
+                message.focus();
+            } else {
+                when.focus();
+            }
+        });
+        submit.click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: form.serialize(),
+                beforeSend: function () {
+                    form.find(':input').not(':hidden').val('');
+                    now.trigger('change');
+                    form.detach();
+                    body.html(sendingMessage);
+                },
+                success: function () {
+                    sendingMessage.detach();
+                    sentMessage.appendTo(body);
+                    setTimeout(function () {
+                        sentMessage.detach();
+                        toggle.removeClass('link-underline');
+                        body.slideUp(function () {
+                            body.html(form);
+                        });
+                    }, 4000);
+                },
+                error: function () {
+                    sendingMessage.detach();
+                    errorMessage.appendTo(body);
+                }
+            });
+        });
+    }());
 
     $(".sidebar").addClass('ui-widget ui-widget-content ui-corner-bl');
     $(".sidebar h2").addClass('ui-corner-all');

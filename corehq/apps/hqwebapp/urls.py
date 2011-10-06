@@ -12,6 +12,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^accounts/login/$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
     (r'^$', 'redirect_to_default'),
+    url(r'^bug_report/$', 'bug_report', name='bug_report'),
 )
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',

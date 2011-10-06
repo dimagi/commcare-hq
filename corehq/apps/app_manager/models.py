@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
+from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
 from corehq.apps.translations.models import TranslationMixin
@@ -1306,6 +1307,47 @@ def get_app(domain, app_id, wrap_cls=None):
         raise Http404
     cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
+    return app
+
+EXAMPLE_DOMAIN = 'example'
+BUG_REPORTS_DOMAIN = 'bug-reports'
+
+def _get_or_create_app(app_id):
+    if app_id == "example--hello-world":
+        try:
+            app = Application.get(app_id)
+        except ResourceNotFound:
+            app = Application.wrap(fixtures.hello_world_example)
+            app._id = app_id
+            app.domain = EXAMPLE_DOMAIN
+            app.save()
+            return _get_or_create_app(app_id)
+        return app
+    else:
+        return VersionedDoc.get(app_id)
+
+str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+
+def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
+    if isinstance(app_id_or_source, basestring):
+        app_id = app_id_or_source
+        source = _get_or_create_app(app_id)
+        src_dom = source['domain']
+        if validate_source_domain:
+            validate_source_domain(src_dom)
+        source = source.export_json()
+        source = json.loads(source)
+    else:
+        source = app_id_or_source
+    try: attachments = source.pop('_attachments')
+    except KeyError: attachments = {}
+    if name:
+        source['name'] = name
+    cls = str_to_cls[source['doc_type']]
+    app = cls.from_source(source, domain)
+    app.save()
+    for name, attachment in attachments.items():
+        app.put_attachment(attachment, name)
     return app
 
 class DeleteRecord(Document):

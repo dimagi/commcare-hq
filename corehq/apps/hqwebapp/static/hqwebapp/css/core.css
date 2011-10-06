@@ -95,7 +95,66 @@ body {
 	margin: 0;
 	padding: 0;
 }
+#bug-report-bar, #bug-report-body {
+    position: absolute;
+    background-color: #8CF;
+    width: 100%;
+    border-bottom: 1px solid #96989B;
+    padding: 10px;
+}
+
+#bug-report-body {
+    display: none;
+    top: 40px;
+    z-index: 1;
+    text-align: left;
+}
+#bug-report-body p {
+    text-align: center;
+    font-size: 1.5em;
+}
+
+a#bug-report-toggle {
+    font-size: 1.5em;
+    text-align: center;
+    color: #000;
+    font-weight: bold;
+    display: block;
+}
+.link-underline {
+    text-decoration: underline;
+}
+
+#bug-report-form {
+    width: 400px;
+    margin: auto;
+    color: #FFF;
+}
+#bug-report-message {
+    height: 10em;
+}
+#bug-report-form label[for="bug-report-message"] {
+    color: #888;
+}
+
+#bug-report-form input,
+#bug-report-form textarea {
+    border:  1px solid #0067B1;
+}
+#bug-report-form label {
+    color: black;
+}
+
+#bug-report-message {
+    width: 100%;
+}
+
+#bug-report-buttons {
+    text-align: right;
+}
+
 #wrapper {
+    padding-top: 40px;
     background-color: #f5f5ff;
     padding-bottom: 60px;
     min-height: 600px;

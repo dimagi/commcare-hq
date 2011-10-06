@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
@@ -6,10 +7,12 @@ from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
+from corehq.apps.app_manager.models import get_app, BUG_REPORTS_DOMAIN
+from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from django.template import loader
@@ -103,3 +106,43 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     response = django_logout(req, **{"template_name" : template_name})
     return HttpResponseRedirect(reverse('login'))
 
+def bug_report(req):
+    report = dict([(key, req.POST.get(key)) for key in (
+        'subject',
+        'username',
+        'domain',
+        'url',
+        'now',
+        'when',
+        'message',
+        'app_id',
+    )])
+    report['datetime'] = datetime.utcnow()
+    report['time_description'] = 'just now' if report['now'] else 'earlier: {when}'.format(**report)
+    if report['app_id']:
+        app = import_app(report['app_id'], BUG_REPORTS_DOMAIN)
+        report['copy_url'] = "%s%s" % (get_url_base(), reverse('view_app', args=[BUG_REPORTS_DOMAIN, app.id]))
+    else:
+        report['copy_url'] = None
+
+    subject = 'CCHQ Bug Report ({domain}): {subject}'.format(**report)
+    message = (
+        "username: {username}\n"
+        "domain: {domain}\n"
+        "url: {url}\n"
+        "copy url: {copy_url}\n"
+        "datetime: {datetime}\n"
+        "error occured: {time_description}\n"
+        "------Description------\n"
+        "{message}\n"
+    ).format(**report)
+
+    from django.core.mail import send_mail
+    
+    send_mail(
+        subject,
+        message,
+        report['username'],
+        settings.BUG_REPORT_RECIPIENTS
+    )
+    return HttpResponse()
