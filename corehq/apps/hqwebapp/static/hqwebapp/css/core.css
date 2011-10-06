@@ -97,17 +97,23 @@ body {
 }
 #bug-report-bar, #bug-report-body {
     position: absolute;
-    background-color: #8CF;
-    width: 100%;
+    background-color: #CEF;
     border-bottom: 1px solid #96989B;
+    border-right: 1px solid #96989B;
     padding: 10px;
+}
+.no-bottom-border {
+   border-bottom: none !important;
+}
+#bug-report-bar {
+    z-index: 1001;
 }
 
 #bug-report-body {
+    z-index: 1000;
     display: none;
-    top: 40px;
-    z-index: 1;
     text-align: left;
+    border-top: 1px solid #96989B;
 }
 #bug-report-body p {
     text-align: center;
@@ -115,7 +121,7 @@ body {
 }
 
 a#bug-report-toggle {
-    font-size: 1.5em;
+    font-size: 1.25em;
     text-align: center;
     color: #000;
     font-weight: bold;
@@ -154,7 +160,6 @@ a#bug-report-toggle {
 }
 
 #wrapper {
-    padding-top: 40px;
     background-color: #f5f5ff;
     padding-bottom: 60px;
     min-height: 600px;

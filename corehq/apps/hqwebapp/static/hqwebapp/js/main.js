@@ -255,7 +255,9 @@ $(function () {
 
     $('#main_container').addClass('ui-corner-all container shadow');
     (function () {
-        var toggle = $('#bug-report-toggle'),
+        var formIsOpen = false,
+            toggle = $('#bug-report-toggle'),
+            bar = $('#bug-report-bar'),
             body = $('#bug-report-body'),
             form = $('#bug-report-form'),
             subject = $('#bug-report-subject'),
@@ -265,22 +267,41 @@ $(function () {
             message = $('#bug-report-message'),
             url = $('#bug-report-url'),
             submit = $('#bug-report-submit'),
-            sendingMessage = $('<p/>').text('Sending...'),
+            sendingMessage = $('<p/>').text('Sending report...'),
             errorMessage = $('<p/>').text('We\'re sorry! There was an error sending your bug report.'),
             sentMessage = $('<p/>').text('Thank you for reporting this issue. We are already hard at work addressing it.');
 
         url.val(location.href);
 
+        body.addClass('shadow');
+        function setFormOpen(value, callback) {
+            formIsOpen = value;
+            if (value) {
+                body.fadeIn(callback);
+                toggle.addClass('link-underline');
+                bar.addClass('no-bottom-border');
+                body.css({top: bar.outerHeight()-1, zIndex:1000});
+                subject.focus();
+            } else {
+                body.css({zIndex: 1002});
+                bar.removeClass('no-bottom-border');
+                body.fadeOut(function () {
+
+                    toggle.removeClass('link-underline');
+                    if (callback) {
+                        callback.apply(this);
+                    }
+                });
+            }
+        }
+
         toggle.click(function (e) {
             e.preventDefault();
-            $(this).toggleClass('link-underline');
-            body.slideToggle();
-            subject.focus();
+            setFormOpen(!formIsOpen);
         });
         cancel.click(function(e) {
             e.preventDefault();
-            toggle.toggleClass('link-underline');
-            body.slideUp();
+            setFormOpen(false);
         });
         now.change(function () {
             if ($(this).val() === 'true') {
@@ -302,25 +323,25 @@ $(function () {
                 url: form.attr('action'),
                 data: form.serialize(),
                 beforeSend: function () {
+                    setFormOpen(false);
                     form.find(':input').not(':hidden').val('');
                     now.trigger('change');
-                    form.detach();
-                    body.html(sendingMessage);
+                    toggle.detach();
+                    bar.html(sendingMessage);
                 },
                 success: function () {
                     sendingMessage.detach();
-                    sentMessage.appendTo(body);
+                    bar.html(sentMessage);
                     setTimeout(function () {
                         sentMessage.detach();
-                        toggle.removeClass('link-underline');
-                        body.slideUp(function () {
-                            body.html(form);
+                        setFormOpen(false, function () {
+                            bar.html(toggle);
                         });
                     }, 4000);
                 },
                 error: function () {
                     sendingMessage.detach();
-                    errorMessage.appendTo(body);
+                    bar.html(errorMessage);
                 }
             });
         });
