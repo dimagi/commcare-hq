@@ -13,7 +13,7 @@ def send(msg):
         'message': outgoing_sms_text,
         'phone_number': urllib.quote(msg.phone_number),
     }
-    url = "%s?%s" % (settings.SMSGATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
+    url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
     # just opening the url is enough to send the message
     # TODO, check response
     resp = urllib2.urlopen(url)
