@@ -4,7 +4,7 @@ from corehq.apps.reports.views import SubmitHistory
 
 paging_reports = patterns('corehq.apps.reports.views',
     url('^submit_history/(?P<individual>.*)/(?P<show_unregistered>.*)/$', protect(SubmitHistory.ajax_view), name='paging_submit_history'),
-    url('^submit_history/(?P<individual>.*)/$', "paging_case_list", name='paging_case_list'),
+    url('^case_list/(?P<case_type>.*)/(?P<individual>.*)/$', "paging_case_list", name='paging_case_list'),
 )
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',

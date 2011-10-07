@@ -518,7 +518,7 @@ def completion_times(request, domain):
 
 @login_and_domain_required
 def case_list(request, domain):
-    headers = ["Case Type", "Name", "User", "Created Date", "Modified Date", "Status"]
+    headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
     individual = request.GET.get('individual', '')
 
     def get_case_counts():
@@ -535,6 +535,32 @@ def case_list(request, domain):
             except TypeError:
                 yield 0
 
+    def get_case_types():
+        case_types = {}
+        key = [domain]
+        for r in get_db().view('hqcase/all_cases',
+            startkey=key,
+            endkey=key + [{}],
+            group_level=2
+        ).all():
+            case_type = r['key'][1]
+            if not individual:
+                case_types[case_type] = r['value']
+            else:
+                key = [domain, case_type, individual]
+                try:
+                    case_types[case_type] = get_db().view('hqcase/all_cases',
+                        startkey=key,
+                        endkey=key + [{}],
+                    ).one()['value']
+                except TypeError:
+                    case_types[case_type] = 0
+        return case_types
+
+    
+    case_types = get_case_types()
+
+
     open_cases, all_cases = get_case_counts()
     context = _report_context(domain,
         title='Case List for %s ' % ('<span class="username">%s</span>' % user_id_to_username(individual) if individual else "All CHWs") +
@@ -542,16 +568,15 @@ def case_list(request, domain):
         individual=individual
     )
     context.update({
-        "ajax_source": reverse('paging_case_list', args=[domain, individual]),
+        'case_types': case_types
     })
-
     context['report'].update({
         "headers": headers,
     })
-    return render_to_response(request, "reports/generic_report.html", context)
+    return render_to_response(request, "reports/case_list.html", context)
     
 @login_and_domain_required
-def paging_case_list(request, domain, individual):
+def paging_case_list(request, domain, case_type, individual):
     def view_to_table(row):
         def date_to_json(date):
             return date.strftime('%Y-%m-%d %H:%M:%S') if date else "",
@@ -562,19 +587,18 @@ def paging_case_list(request, domain, individual):
                      case_name)
         
         case = CommCareCase.wrap(row["doc"])
-        return [case.type,
-                case_data_link(row['id'], case.name),
+        return [case_data_link(row['id'], case.name),
                 user_id_to_username(case.user_id), 
                 date_to_json(case.opened_on), 
                 date_to_json(case.modified_on),
                 yesno(case.closed, "closed,open") ]
     
     if individual:
-        startkey = [domain, {}, individual]
-        endkey = [domain, {}, individual, {}]
+        startkey = [domain, case_type, individual]
+        endkey = [domain, case_type, individual, {}]
     else: 
-        startkey = [domain, {}, {}]
-        endkey = [domain, {}, {}, {}]
+        startkey = [domain, case_type]
+        endkey = [domain, case_type, {}]
     paginator = CouchPaginator(
         "hqcase/all_cases",
         view_to_table,
