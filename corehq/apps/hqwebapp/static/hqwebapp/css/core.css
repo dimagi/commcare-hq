@@ -219,6 +219,9 @@ header {
             border-right: none;
             padding-right: 0px;
         }
+        header nav .active a {
+            color: black;
+        }
     header #logged-in {
         clear: right;
         float: right;
