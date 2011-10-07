@@ -544,6 +544,7 @@ def case_list(request, domain):
             group_level=2
         ).all():
             case_type = r['key'][1]
+            if not case_type: continue
             if not individual:
                 case_types[case_type] = r['value']
             else:
