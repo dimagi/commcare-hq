@@ -364,7 +364,7 @@ def get_active_cases_json(domain, days=31, **kwargs):
         return r['value'] if r else 0
 
     def get_open_cases(userID):
-        open_cases = get_db().view('hqcase/open_cases', key=[domain, userID], group=True).one()
+        open_cases = get_db().view('hqcase/open_cases', key=[domain, {}, userID], group=True).one()
         open_cases = open_cases['value'] if open_cases else 0
         return open_cases
 
@@ -522,7 +522,7 @@ def case_list(request, domain):
     individual = request.GET.get('individual', '')
 
     def get_case_counts():
-        key = [domain]
+        key = [domain, {}]
         if individual:
             key.append(individual)
         for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
@@ -569,11 +569,11 @@ def paging_case_list(request, domain, individual):
                 yesno(case.closed, "closed,open") ]
     
     if individual:
-        startkey = [domain, individual]
-        endkey = [domain, individual, {}]
+        startkey = [domain, {}, individual]
+        endkey = [domain, {}, individual, {}]
     else: 
-        startkey = [domain, {}]
-        endkey = [domain, {}, {}]
+        startkey = [domain, {}, {}]
+        endkey = [domain, {}, {}, {}]
     paginator = CouchPaginator(
         "hqcase/all_cases",
         view_to_table,
@@ -619,10 +619,11 @@ def case_export(request, domain, template='reports/basic_report.html',
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-    if include_closed:
-        cases = CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
-    else:
-        cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+
+    view_name = 'hqcase/open_cases' if include_closed else 'hqcase/all_cases'
+
+    key = [domain, {}]
+    cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
 
