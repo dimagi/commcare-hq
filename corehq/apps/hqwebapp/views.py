@@ -133,7 +133,7 @@ def bug_report(req):
         "copy url: {copy_url}\n"
         "datetime: {datetime}\n"
         "error occured: {time_description}\n"
-        "------Description------\n"
+        "Message:\n\n"
         "{message}\n"
     ).format(**report)
 

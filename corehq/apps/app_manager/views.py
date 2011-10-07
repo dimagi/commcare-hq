@@ -50,7 +50,7 @@ require_edit_apps = require_permission(Permissions.EDIT_APPS)
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
 @login_and_domain_required
-def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, edit=True, error='', page=None, **kwargs):
+def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_form_id=None, edit=True, error='', page=None, **kwargs):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -72,16 +72,29 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, edit=Tr
 
     if app_id is not None:
         args.append(app_id)
+        if unique_form_id is not None:
+            app = get_app(domain, app_id)
+            obj = app.get_form(unique_form_id, bare=False)
+            if obj['type'] == 'user_registration':
+                page = 'view_user_registration'
+            else:
+                module_id = obj['module'].id
+                form_id = obj['form'].id
         if module_id is not None:
             args.append(module_id)
             if form_id is not None:
                 args.append(form_id)
-    view_name = {
-        1: 'default',
-        2: 'view_app',
-        3: 'view_module',
-        4: 'view_form',
-    }[len(args)]
+
+
+    if page:
+        view_name = page
+    else:
+        view_name = {
+            1: 'default',
+            2: 'view_app',
+            3: 'view_module',
+            4: 'view_form',
+        }[len(args)]
     return HttpResponseRedirect("%s%s" % (
         reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""

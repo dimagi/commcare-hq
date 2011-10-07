@@ -1017,18 +1017,25 @@ class Application(ApplicationBase, TranslationMixin):
             self.save(increment_version=False)
         return form
 
-    def get_forms(self):
-        yield self.get_user_registration()
+    def get_forms(self, bare=True):
+        yield self.get_user_registration() if bare else {
+            'type': 'user_registration',
+            'form': self.get_user_registration()
+        }
         for module in self.get_modules():
             for form in module.get_forms():
-                yield form
+                yield form if bare else {
+                    'type': 'module_form',
+                    'module': module,
+                    'form': form
+                }
                 
-    def get_form(self, unique_form_id):
+    def get_form(self, unique_form_id, bare=True):
         def matches(form):
             return form.get_unique_id() == unique_form_id
-        for form in self.get_forms():
-            if matches(form):
-                return form
+        for obj in self.get_forms(bare):
+            if matches(obj if bare else obj['form']):
+                return obj
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
