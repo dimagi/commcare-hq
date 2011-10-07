@@ -45,6 +45,7 @@
         {% endif %}
     </head>
     <body>
+        {% if user.is_authenticated %}
         <div id='bug-report-bar'>
             <a id='bug-report-toggle' class="link-underline" href="#">
                 <span class="ui-icon ui-icon-comment" title="Report an Issue"></span>
@@ -98,6 +99,7 @@
                 </table>
             </form>
         </div>
+        {% endif %}
         <div id="wrapper">
             <header>
                 <div class="fixed-width">
