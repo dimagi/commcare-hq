@@ -95,6 +95,7 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
             3: 'view_module',
             4: 'view_form',
         }[len(args)]
+    
     return HttpResponseRedirect("%s%s" % (
         reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""
@@ -231,7 +232,7 @@ def default(req, domain):
 
 
     """
-    return view_app(req, domain, app_id='')
+    return view_app(req, domain)
 
 def get_form_view_context(request, form, langs, is_user_registration):
     xform_questions = []
@@ -328,14 +329,14 @@ def get_apps_base_context(request, domain, app):
     context.update(get_sms_autocomplete_context(request, domain))
     return context
 
-def view_generic(req, domain, app_id='', module_id=None, form_id=None, is_user_registration=False):
+def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.
 
     """
     def bail():
-        module_id=''
-        form_id=''
+        module_id=None
+        form_id=None
         messages.error(req, 'Oops! We could not complete your request. Please try again')
         return back_to_main(req, domain, app_id)
 
@@ -461,7 +462,7 @@ def view_module(req, domain, app_id, module_id):
     return view_generic(req, domain, app_id, module_id)
 
 @login_and_domain_required
-def view_app(req, domain, app_id=''):
+def view_app(req, domain, app_id=None):
     # redirect old m=&f= urls
     module_id = req.GET.get('m', None)
     form_id = req.GET.get('f', None)

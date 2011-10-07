@@ -127,7 +127,7 @@
                 </select>
                 </li>
                 {% endif %}
-                {% if edit %}
+                {% if edit and app %}
                 <li>
                     <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
                         <span class="ui-icon ui-icon-trash"></span>
