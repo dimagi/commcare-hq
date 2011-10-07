@@ -518,7 +518,7 @@ def completion_times(request, domain):
 
 @login_and_domain_required
 def case_list(request, domain):
-    headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
+    headers = ["Case Type", "Name", "User", "Created Date", "Modified Date", "Status"]
     individual = request.GET.get('individual', '')
 
     def get_case_counts():
@@ -562,7 +562,8 @@ def paging_case_list(request, domain, individual):
                      case_name)
         
         case = CommCareCase.wrap(row["doc"])
-        return [case_data_link(row['id'], case.name), 
+        return [case.type,
+                case_data_link(row['id'], case.name),
                 user_id_to_username(case.user_id), 
                 date_to_json(case.opened_on), 
                 date_to_json(case.modified_on),
