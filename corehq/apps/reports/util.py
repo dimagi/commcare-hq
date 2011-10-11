@@ -18,9 +18,12 @@ def report_context(domain, report_partial=None, title=None, individual=None, cas
             individual=individual,
         )
     if case_type is not None:
+        case_types = get_case_types(domain, individual)
+        if len(case_types) == 1:
+            case_type = case_types.items()[0][0]
         context.update(
             show_case_types=True,
-            case_types=get_case_types(domain, individual),
+            case_types=case_types,
             case_type=case_type,
         )
     if datespan:

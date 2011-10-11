@@ -514,6 +514,10 @@ def case_list(request, domain):
         individual=individual,
         case_type=case_type,
     )
+    context.update({
+        "all_cases": all_cases,
+        "open_cases": open_cases,
+    })
     context['report'].update({
         "headers": headers,
     })
