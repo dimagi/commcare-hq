@@ -531,7 +531,7 @@ def paging_case_list(request, domain, case_type, individual):
                      case_name)
 
         case = CommCareCase.wrap(row["doc"])
-        return ([] if individual else [case_type]) + [
+        return ([] if case_type else [case.type]) + [
             case_data_link(row['id'], case.name),
             user_id_to_username(case.user_id),
             date_to_json(case.opened_on),
