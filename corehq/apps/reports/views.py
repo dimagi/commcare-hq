@@ -531,11 +531,13 @@ def paging_case_list(request, domain, case_type, individual):
                      case_name)
 
         case = CommCareCase.wrap(row["doc"])
-        return [case_data_link(row['id'], case.name),
-                user_id_to_username(case.user_id),
-                date_to_json(case.opened_on),
-                date_to_json(case.modified_on),
-                yesno(case.closed, "closed,open") ]
+        return ([] if individual else [case_type]) + [
+            case_data_link(row['id'], case.name),
+            user_id_to_username(case.user_id),
+            date_to_json(case.opened_on),
+            date_to_json(case.modified_on),
+            yesno(case.closed, "closed,open")
+        ]
 
     key = [domain, case_type or {}, individual or {}]
     while key[-1] == {}: key.pop()
