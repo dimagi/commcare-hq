@@ -32,6 +32,7 @@
     </script>
     <script type="text/javascript">
         function shiftDates(days) {
+            var start, end;
             start = new Date($("#startdate").val());
             start.setDate(start.getDate() + days);
             end = new Date($("#enddate").val());
@@ -108,29 +109,12 @@
             start_datatables();
         }); 
     </script>
-    {% if show_users %}
+    {% if show_users or show_case_types %}
         <script>
             $(function(){
-                $("#individual_select").change(function(){
+                $("#individual_select, #case_type_select").change(function(){
                     $(this).parent().submit();
                 });
-
-                $("#report-tabs").tabs({
-                    cookie: {},
-                    ajaxOptions: {
-                        error: function( xhr, status, index, anchor ) {
-                            $( anchor.hash ).html(
-                                "Couldn't load this tab. We'll try to fix this as soon as possible. "
-                            );
-                        }
-                    },
-                    load: function(event, ui){
-                        $.ui = ui;
-                        start_datatables(ui.panel);
-
-                    }
-                }).removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
-                $("#report-tabs ul").removeClass('ui-corner-all');
             });
         </script>
     {% endif %}
@@ -226,6 +210,15 @@
                             {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
                         {% endifchanged %}
                         <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            {% if show_case_types %}
+                <label for="case_type_select">Select a Case Type</label>
+                <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
+                    <option value="">All Case Types</option>
+                    {% for i_case_type, n_cases in case_types.items %}
+                        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases }})</option>
                     {% endfor %}
                 </select>
             {% endif %}

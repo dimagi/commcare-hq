@@ -1,6 +1,7 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import json
+from corehq.apps.reports import util
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -8,7 +9,7 @@ from corehq.apps.users.util import user_id_to_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_response, json_request, render_to_response
+from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.core.urlresolvers import reverse
@@ -18,8 +19,6 @@ from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
 import couchforms.views as couchforms_views
-from couchexport.export import export
-from StringIO import StringIO
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
@@ -234,7 +233,7 @@ class SubmitHistory(ReportBase):
         rows = []
 
         headings = ["View Form", "Username", "Submit Time", "Form"]
-        context = _report_context(domain, report_partial,
+        context = util.report_context(domain, report_partial,
             title="Submit History",
             individual=individual
         )
@@ -246,7 +245,7 @@ class SubmitHistory(ReportBase):
         return render_to_response(request, template, context)
     def rows(self, skip, limit):
         def format_time(time):
-            "time is an ISO timestamp"
+            """time is an ISO timestamp"""
             return time.replace('T', ' ').replace('Z', '')
         def form_data_link(instance_id):
             return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('render_form_data', args=[self.domain, instance_id])
@@ -426,7 +425,7 @@ def case_activity(request, domain):
         template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
         return template % {"link": reverse("case_list_report", args=[domain]),
                            "user_id": user_id,
-                           "username": user_id_to_username(userID)} 
+                           "username": user_id_to_username(userID)}
     for userID in extra:
         row = [user_id_link(userID)]
         for entry in extra[userID]:
@@ -435,7 +434,7 @@ def case_activity(request, domain):
                 fmt = "{total}"
             else:
                 fmt = "+ {diff} = {total}"
-                
+
             if entry['percent'] and 'percent' in display:
                 fmt += " ({percent:.0%} of {next})"
             formatted = fmt.format(**entry)
@@ -454,21 +453,6 @@ def case_activity(request, domain):
         },
     })
 
-def _user_list(domain):
-    users = list(CommCareUser.by_domain(domain))
-    users.extend(CommCareUser.by_domain(domain, is_active=False))
-    users.sort(key=lambda user: (not user.is_active, user.username))
-    return users
-
-def _form_list(domain):
-    view = get_db().view("formtrends/form_duration_by_user", 
-                         startkey=["xdu", domain, ""],
-                         endkey=["xdu", domain, {}],
-                         group=True,
-                         group_level=3,
-                         reduce=True)
-    return [{"display": xmlns_to_name(r["key"][2], domain), "xmlns": r["key"][2]} for r in view]
-    
 @login_and_domain_required
 @datespan_default
 def completion_times(request, domain):
@@ -480,7 +464,7 @@ def completion_times(request, domain):
         totalsum = totalcount = 0
         def to_minutes(val_in_ms):
             return timedelta(milliseconds=float(val_in_ms))
-        
+
         globalmin = sys.maxint
         globalmax = 0
         for user_id, datadict in data.items():
@@ -495,17 +479,17 @@ def completion_times(request, domain):
             globalmin = min(globalmin, datadict["min"])
             globalmax = max(globalmax, datadict["max"])
         if totalcount != 0:
-            rows.insert(0, ["-- Total --", 
+            rows.insert(0, ["-- Total --",
                             to_minutes(float(totalsum)/float(totalcount)),
                             to_minutes(globalmin),
                             to_minutes(globalmax),
                             totalcount])
-        
+
     return render_to_response(request, "reports/generic_report.html", {
         "domain": domain,
         "show_forms": True,
         "selected_form": form,
-        "forms": _form_list(domain),
+        "forms": util.form_list(domain),
         "show_dates": True,
         "datespan": request.datespan,
         "report": {
@@ -514,92 +498,48 @@ def completion_times(request, domain):
             "rows": rows,
         },
     })
-    
+
 
 @login_and_domain_required
 def case_list(request, domain):
     headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
     individual = request.GET.get('individual', '')
+    case_type = request.GET.get('case_type', '')
 
-    def get_case_counts():
-        key = [domain, {}]
-        if individual:
-            key.append(individual)
-        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
-            try:
-                yield get_db().view(view_name,
-                    startkey=key,
-                    endkey=key + [{}],
-                    group_level=0
-                ).one()['value']
-            except TypeError:
-                yield 0
-
-    def get_case_types():
-        case_types = {}
-        key = [domain]
-        for r in get_db().view('hqcase/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            group_level=2
-        ).all():
-            case_type = r['key'][1]
-            if not case_type: continue
-            if not individual:
-                case_types[case_type] = r['value']
-            else:
-                key = [domain, case_type, individual]
-                try:
-                    case_types[case_type] = get_db().view('hqcase/all_cases',
-                        startkey=key,
-                        endkey=key + [{}],
-                    ).one()['value']
-                except TypeError:
-                    case_types[case_type] = 0
-        return case_types
-
+    open_cases, all_cases = util.get_case_counts(domain, individual)
     
-    case_types = get_case_types()
-
-
-    open_cases, all_cases = get_case_counts()
-    context = _report_context(domain,
+    context = util.report_context(domain,
         title='Case List for %s ' % ('<span class="username">%s</span>' % user_id_to_username(individual) if individual else "All CHWs") +
               ("(%s/%s open)" % (open_cases, all_cases) if all_cases else "(empty)"),
-        individual=individual
+        individual=individual,
+        case_type=case_type,
     )
-    context.update({
-        'case_types': case_types
-    })
     context['report'].update({
         "headers": headers,
     })
     return render_to_response(request, "reports/case_list.html", context)
-    
+
 @login_and_domain_required
 def paging_case_list(request, domain, case_type, individual):
     def view_to_table(row):
         def date_to_json(date):
             return date.strftime('%Y-%m-%d %H:%M:%S') if date else "",
-        
+
         def case_data_link(case_id, case_name):
             return "<a class='ajax_dialog' href='%s'>%s</a>" % \
                     (reverse('case_details', args=[domain, case_id]),
                      case_name)
-        
+
         case = CommCareCase.wrap(row["doc"])
         return [case_data_link(row['id'], case.name),
-                user_id_to_username(case.user_id), 
-                date_to_json(case.opened_on), 
+                user_id_to_username(case.user_id),
+                date_to_json(case.opened_on),
                 date_to_json(case.modified_on),
                 yesno(case.closed, "closed,open") ]
+
+    key = [domain, case_type or {}, individual or {}]
+    while key[-1] == {}: key.pop()
     
-    if individual:
-        startkey = [domain, case_type, individual]
-        endkey = [domain, case_type, individual, {}]
-    else: 
-        startkey = [domain, case_type]
-        endkey = [domain, case_type, {}]
     paginator = CouchPaginator(
         "hqcase/all_cases",
         view_to_table,
@@ -610,8 +550,8 @@ def paging_case_list(request, domain, case_type, individual):
             include_docs=True,
             # this is horrible, but the paginator currently automatically
             # adds descending=True so we have to swap these.
-            startkey=endkey,
-            endkey=startkey,
+            startkey=key + [{}],
+            endkey=key,
         )
     )
     return paginator.get_ajax_response(request)
@@ -619,7 +559,7 @@ def paging_case_list(request, domain, case_type, individual):
 @login_and_domain_required
 def case_details(request, domain, case_id):
     case = CommCareCase.get(case_id)
-    form_lookups = dict((form.get_id, \
+    form_lookups = dict((form.get_id,
                          "%s: %s" % (form.received_on.date(), xmlns_to_name(form.xmlns, domain))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
@@ -635,7 +575,7 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 def case_export(request, domain, template='reports/basic_report.html',
                                     report_partial='reports/partials/case_export.html'):
-    context = _report_context(domain, report_partial,
+    context = util.report_context(domain, report_partial,
         title="Export cases, referrals, and users"
     )
     return render_to_response(request, template, context)
@@ -667,7 +607,7 @@ def submit_time_punchcard(request, domain, template="reports/basic_report.html",
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    context = _report_context(domain, report_partial, "Submit Times")
+    context = util.report_context(domain, report_partial, "Submit Times")
     context.update({
         "chart_url": url,
     })
@@ -688,7 +628,7 @@ def submit_trends(request, domain, template="reports/basic_report.html",
 def submit_distribution(request, domain, template="reports/basic_report.html",
                                          report_partial="reports/partials/generic_piechart.html"):
     individual = request.GET.get("individual", '')
-    context = _report_context(domain, report_partial,
+    context = util.report_context(domain, report_partial,
         title="Submit Distribution",
         individual=individual
     )
@@ -700,38 +640,16 @@ def submit_distribution(request, domain, template="reports/basic_report.html",
     })
     return render_to_response(request, template, context)
 
-def _report_context(domain, report_partial=None, title=None, individual=None, datespan=None):
-    context = {
-        "domain": domain,
-        "report": {
-            "name": title
-        }
-    }
-    if report_partial:
-        context.update(report_partial=report_partial)
-    if individual is not None:
-        context.update(
-            show_users=True,
-            users= _user_list(domain),
-            individual=individual,
-        )
-    if datespan:
-        context.update(
-            show_dates=True,
-            datespan=datespan
-        )
-    return context
-
 @login_and_domain_required
 def submission_log(request, domain):
     individual = request.GET.get('individual', '')
     show_unregistered = request.GET.get('show_unregistered', 'false')
-    
+
     return render_to_response(request, "reports/submission_log.html", {
         "domain": domain,
         "show_users": True,
         "individual": individual,
-        "users": _user_list(domain),
+        "users": util.user_list(domain),
         "report": {
             "name": "Submission Log",
             "header": [],
@@ -748,14 +666,14 @@ def daily_submissions(request, domain, view_name, title):
         messages.error(request, "Sorry, that's not a valid date range because: %s" % \
                        request.datespan.get_validation_reason())
         request.datespan = DateSpan.since(7, format="%Y-%m-%d")
-    
+
     results = get_db().view(
         view_name,
         group=True,
         startkey=[domain, request.datespan.startdate.isoformat()],
         endkey=[domain, request.datespan.enddate.isoformat(), {}]
     ).all()
-    
+
     all_users_results = get_db().view("submituserlist/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
     user_ids = [result['key'][1] for result in all_users_results]
     dates = [request.datespan.startdate]
@@ -763,7 +681,7 @@ def daily_submissions(request, domain, view_name, title):
         dates.append(dates[-1] + timedelta(days=1))
     date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(dates)])
     user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
-    rows = [[0]*(1+len(date_map)) for i in range(len(user_ids) + 1)]
+    rows = [[0]*(1+len(date_map)) for _ in range(len(user_ids) + 1)]
     for result in results:
         _, date, user_id = result['key']
         val = result['value']
@@ -846,16 +764,16 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 
 
     # add saved exports. because of the way in which the key is stored
-    # (serialized json) this is a little bit hacky, but works. 
+    # (serialized json) this is a little bit hacky, but works.
     startkey = json.dumps([domain, ""])[:-3]
     endkey = "%s{" % startkey
-    exports = SavedExportSchema.view("couchexport/saved_exports", 
+    exports = SavedExportSchema.view("couchexport/saved_exports",
                                      startkey=startkey, endkey=endkey,
                                      include_docs=True)
     for export in exports:
         export.formname = xmlns_to_name(export.index[1], domain)
 
-    context = _report_context(domain, title="Export Data to Excel", #datespan=request.datespan
+    context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
     )
     context.update({
         "forms": forms,
@@ -869,7 +787,7 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
-    return render_to_response(request, "reports/form_data.html", 
+    return render_to_response(request, "reports/form_data.html",
                               dict(domain=domain,instance=instance,
                                    caseblocks=extract_case_blocks(instance)))
 
@@ -884,7 +802,7 @@ def download_attachment(request, domain, instance_id, attachment):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
-    
+
 # Weekly submissions by xmlns
 
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
@@ -929,14 +847,14 @@ def submissions_by_form(request, domain):
                 count = counts[userID][form_type]
                 row.append(count)
                 totals_by_form[form_type] += count
-            except:
+            except Exception:
                 row.append(0)
         rows.append([user.raw_username] + row + ["* %s" % sum(row)])
 
     totals_by_form = [totals_by_form[form_type] for form_type in form_types]
-    
+
     rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
-    context = _report_context(domain, datespan=datespan)
+    context = util.report_context(domain, datespan=datespan)
     context.update({
         'report': {
             "name": "Submissions by Form",
@@ -987,7 +905,7 @@ def submissions_by_form_json(domain, datespan, userIDs=None):
             userID = sub['form']['meta']['userID']
             if (userIDs is None) or (userID in userIDs):
                 counts[userID][sub['xmlns']] += 1
-        except:
+        except Exception:
             # if a form don't even have a userID, don't even bother tryin'
             pass
     return counts

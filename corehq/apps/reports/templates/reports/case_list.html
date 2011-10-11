@@ -1,5 +1,6 @@
 {% extends "reports/report_base.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
@@ -25,23 +26,21 @@
 
 {% block reportcontent %}
 <div id="report-content">
-    {% for case_type, count in case_types.items %}
-        <h3>Case Type: {{ case_type }} ({{ count }})</h3>
-        <table class="datatable" data-source="{% url paging_case_list domain case_type individual %}">
-            <thead>
-                <tr>
-                    {% for header in report.headers %}
-                        <th data-sort="{{ header.sort_type }}">
-                            {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                        </th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-    {% empty %}
-        <p style="text-align: center;">No cases</p>
-    {% endfor %}
+    <table class="datatable" data-source="{% url paging_case_list domain case_type individual %}">
+        <thead>
+            <tr>
+                {% if not case_type %}
+                    <th>{% trans "Case Type" %}</th>
+                {% endif %}
+                {% for header in report.headers %}
+                    <th data-sort="{{ header.sort_type }}">
+                        {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 </div>
 {% endblock %}
