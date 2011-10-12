@@ -21,9 +21,11 @@ def report_context(domain, report_partial=None, title=None, individual=None, cas
         case_types = get_case_types(domain, individual)
         if len(case_types) == 1:
             case_type = case_types.items()[0][0]
+        open_count, all_count = get_case_counts(domain, individual=individual)
         context.update(
             show_case_types=True,
             case_types=case_types,
+            n_all_case_types={'all': all_count, 'open': open_count},
             case_type=case_type,
         )
     if datespan:
@@ -57,24 +59,13 @@ def get_case_types(domain, individual=None):
         group_level=2
     ).all():
         case_type = r['key'][1]
-        if not case_type: continue
-        if not individual:
-            case_types[case_type] = r['value']
-        else:
-            key = [domain, case_type, individual]
-            try:
-                case_types[case_type] = get_db().view('hqcase/all_cases',
-                    startkey=key,
-                    endkey=key + [{}],
-                ).one()['value']
-            except TypeError:
-                case_types[case_type] = 0
+        if case_type:
+            open_count, all_count = get_case_counts(domain, case_type, individual)
+            case_types[case_type] = {'open': open_count, 'all': all_count}
     return case_types
 
-def get_case_counts(domain, individual=None):
-    key = [domain, {}]
-    if individual:
-        key.append(individual)
+def get_case_counts(domain, case_type=None, individual=None):
+    key = [domain, case_type or {}, individual or {}]
     for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
         try:
             yield get_db().view(view_name,

@@ -5,23 +5,10 @@
 {% block head %}
     {{ block.super }}
     <style>
-        #report-content {
-            padding:  10px;
-        }
         .dataTables_wrapper {
             min-height: 0 !important;
         }
-        h3 {
-            margin: 10px 0;
-        }
     </style>
-    <script>
-        $(function () {
-            'use strict';
-            // embarrassing, but this is just to undo something that is done in report_base.html
-            $('.datatable').parent().find('.fg-toolbar').addClass('ui-corner-tr ui-corner-tl');
-        });
-    </script>
 {% endblock %}
 
 {% block reportcontent %}

@@ -204,7 +204,7 @@
             {% if show_users %}
                 <label for="individual_select">Select a CHW: </label>
                 <select id="individual_select" name="individual">
-                    <option  value=''>All CHWs</option>
+                    <option value=''>All CHWs</option>
                     {% for user in users %}
                         {% ifchanged user.is_active %}
                             {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
@@ -217,10 +217,10 @@
                 <label for="case_type_select">Select a Case Type</label>
                 <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
                     <option value="">
-                        All Case Types ({{ all_cases }})
+                        All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
                     </option>
                     {% for i_case_type, n_cases in case_types.items %}
-                        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases }})</option>
+                        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
                     {% endfor %}
                 </select>
             {% endif %}
