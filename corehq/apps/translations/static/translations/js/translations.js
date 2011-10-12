@@ -153,13 +153,13 @@ var mk_translation_ui = function (spec) {
                 translation = translation_ui.translations[key];
                 translation.ui.appendTo($table);
             }
-            $home.html($table);
-        } else {
-            translation_ui.$home.html($("<p>No translations</p>"));
+        } else if (!translation_ui.edit) {
+            $home.append($("<p>No translations</p>"));
         }
         if (translation_ui.edit) {
             translation_ui.appendAdder();
         }
+        $home.append($table);
     };
     translation_ui.render();
 };
