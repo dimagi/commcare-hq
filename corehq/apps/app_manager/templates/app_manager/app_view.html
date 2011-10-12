@@ -5,7 +5,7 @@
     {{ block.super }}
     {% if app.doc_type == "Application" %}
         <script src="{{ STATIC_URL }}app_manager/js/commcareProperties-001.js"></script>
-        <script src="{{ STATIC_URL }}translations/js/translations-001.js"></script>
+        <script src="{{ STATIC_URL }}translations/js/translations.js?version=2"></script>
         <script>
             $(function () {
                 var $translation_ui = $("#translations_ui");
@@ -349,9 +349,10 @@
         </div>
         <div class="scary-settings">
             <div id="translations_ui">
-                <p>See lists of keys for
+                <p>Refer to
                     <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa</a>
                     and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare</a>
+                    for a list of supported keys.
                 </p>
                 <br/>
             </div>
