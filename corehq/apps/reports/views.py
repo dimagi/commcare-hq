@@ -544,7 +544,6 @@ def paging_case_list(request, domain, case_type, individual):
         ]
 
     key = [domain, case_type or {}, individual or {}]
-    while key[-1] == {}: key.pop()
     
     paginator = CouchPaginator(
         "hqcase/all_cases",
