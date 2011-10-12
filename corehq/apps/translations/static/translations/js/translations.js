@@ -8,6 +8,8 @@ var mk_translation_ui = function (spec) {
             doc_id: spec.doc_id,
             edit: spec.edit
         },
+        suggestionURL = '/translations/api/suggestions/',
+        suggestionCache = {},
         key,
         Translation = (function () {
             var Translation = function (key, value) {
@@ -24,6 +26,7 @@ var mk_translation_ui = function (spec) {
                 this.$add = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
                         translation_ui.addTranslation(that);
+                        translation_ui.appendAdder();
                     } else {
                         that.key.$edit_view.focus();
                     }
@@ -46,6 +49,32 @@ var mk_translation_ui = function (spec) {
                         translation_ui.saveButton.fire('change');
                     }
                 });
+                this.value.ui.find('input').focus(function () {
+                    var input = $(this);
+                    if (!suggestionCache.hasOwnProperty('-' + that.key.val())) {
+                        $.ajax({
+                            type: "get",
+                            url: suggestionURL,
+                            data: {
+                                lang: translation_ui.lang,
+                                key: that.key.val()
+                            },
+                            dataType: "json",
+                            success: function (data) {
+                                suggestionCache['-' + that.key.val()] = data;
+                                input.autocomplete({
+                                    source: function(request, response) {
+                                        response($.ui.autocomplete.filter(suggestionCache['-' + that.key.val()], ''));
+                                    },
+                                    minLength: 0
+                                });
+                                input.autocomplete('search');
+                            }
+                        });
+                    } else {
+                        input.autocomplete('search');
+                    }
+                })
                 
             };
             Translation.init = function (key, value) {
@@ -68,7 +97,30 @@ var mk_translation_ui = function (spec) {
             return Translation;
         }()),
         $home = $('<div/>'),
-        $table = $("<table></table>");
+        $table = $("<table></table>"),
+        $list_tbody = $('<tbody/>').appendTo($table),
+        $adder_tbody = $('<tbody/>').appendTo($table),
+        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations').click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: "get",
+                url: suggestionURL,
+                dataType: "json",
+                data: {
+                    lang: translation_ui.lang,
+                    one: true
+                },
+                success: function (data) {
+                    var key;
+                    console.log(data);
+                    for (key in data) {
+                        if (data.hasOwnProperty(key) && !translation_ui.translations[key]) {
+                            translation_ui.addTranslation(Translation.init(key, data[key]));
+                        }
+                    }
+                }
+            });
+        });
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
@@ -125,16 +177,16 @@ var mk_translation_ui = function (spec) {
     translation_ui.addTranslation = function (translation) {
         translation_ui.saveButton.fire('change');
         translation_ui.translations[translation.key.val()] = translation;
-        translation.ui.hide();
+        translation.ui.detach();
         translation.setSolid(true);
-        translation_ui.appendAdder();
+        $list_tbody.append(translation.ui.hide());
         translation.ui.fadeIn();
     };
 
     translation_ui.appendAdder = function () {
         var adder = Translation.init("", "");
         adder.setSolid(false);
-        $table.append(adder.ui);
+        $adder_tbody.append(adder.ui);
     };
     translation_ui.render = function () {
         var key,
@@ -151,12 +203,13 @@ var mk_translation_ui = function (spec) {
             for (i = 0; i < keys.length; i += 1) {
                 key = keys[i];
                 translation = translation_ui.translations[key];
-                translation.ui.appendTo($table);
+                translation.ui.appendTo($list_tbody);
             }
         } else if (!translation_ui.edit) {
             $home.append($("<p>No translations</p>"));
         }
         if (translation_ui.edit) {
+            $home.append($bootstrap);
             translation_ui.appendAdder();
         }
         $home.append($table);
