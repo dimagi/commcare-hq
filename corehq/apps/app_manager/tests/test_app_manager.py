@@ -7,7 +7,7 @@ Replace these with more appropriate tests for your application.
 import os
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn
+from corehq.apps.app_manager.models import Application, DetailColumn, import_app
 from corehq.apps.builds.models import CommCareBuild, BuildSpec
 from corehq.apps.domain.models import Domain
 
@@ -16,8 +16,11 @@ class AppManagerTest(TestCase):
         xform_str = f.read()
 
     def setUp(self):
-        Domain.objects.get_or_create(name="test_domain")
+        self.domain = 'test-domain'
+        Domain.objects.get_or_create(name=self.domain)
         self.app = Application.new_app("test_domain", "TestApp")
+
+
 
         for i in range(3):
             module = self.app.new_module("Module%d" % i, "en")
@@ -82,3 +85,7 @@ class AppManagerTest(TestCase):
         self.failUnlessEqual(self.app.modules[1].name['en'], m0)
 
 
+    def testImportApp(self):
+        self.failUnless(self.app._attachments)
+        new_app = import_app(self.app.id, self.domain)
+        self.failUnlessEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())

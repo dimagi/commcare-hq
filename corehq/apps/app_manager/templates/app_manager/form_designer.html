@@ -79,11 +79,11 @@
 {% block app-content %}
     <div id="breadcrumbs">
         <ul>
-            <li>{{ app.name }}</li>
+            <li><a href="{% url view_app domain app.id %}?edit=true">{{ app.name }}</a></li>
             {% if is_user_registration %}
                 <li><a href="../?edit=true">User Registration</a></li>
             {% else %}
-                <li>{{ module.name|trans:langs }}</li>
+                <li><a href="{% url view_module domain app.id module.id%}?edit=true">{{ module.name|trans:langs }}</a></li>
                 <li><a href="../?edit=true">{{ form.name|trans:langs }}</a></li>
             {% endif %}
             <li>Vellum</li>

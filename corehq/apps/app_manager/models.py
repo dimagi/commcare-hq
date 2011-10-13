@@ -619,7 +619,7 @@ class VersionedDoc(Document):
         application source, such as ids, etc.
         
         """
-        pass
+        raise NotImplemented()
 
     def export_json(self, dump_json=True):
         source = deepcopy(self.to_json())
@@ -1076,11 +1076,13 @@ class Application(ApplicationBase, TranslationMixin):
         module = self.get_module(module_id)
         form = Form(
             name={lang if lang else "en": name if name else "Untitled Form"},
-            source=attachment,
         )
         module.forms.append(form)
         form = module.get_form(-1)
         form.refresh()
+        self.save(increment_version=False)
+        form.source = attachment
+
         case_types = module.infer_case_type()
         if len(case_types) == 1 and not module.case_type:
             module.case_type, = case_types
@@ -1307,11 +1309,12 @@ def get_app(domain, app_id, wrap_cls=None):
     except:
         raise Http404
 
-    try:    Domain.objects.get(name=domain)
-    except: raise Http404
+    if domain:
+        try:    Domain.objects.get(name=domain)
+        except: raise Http404
 
-    if app['domain'] != domain:
-        raise Http404
+        if app['domain'] != domain:
+            raise Http404
     cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
     app = cls.wrap(app)
     return app
@@ -1331,7 +1334,7 @@ def _get_or_create_app(app_id):
             return _get_or_create_app(app_id)
         return app
     else:
-        return VersionedDoc.get(app_id)
+        return get_app(None, app_id)
 
 str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
 
