@@ -33,7 +33,7 @@ def send_sms(domain, id, phone_number, text):
                      couch_recipient=id, 
                      phone_number=phone_number,
                      direction=OUTGOING,
-                     date = datetime.now(),
+                     date = datetime.utcnow(),
                      text = text)
     try:
         get_backend_api(msg).send(msg)

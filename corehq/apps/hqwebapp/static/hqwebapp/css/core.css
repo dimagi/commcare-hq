@@ -505,3 +505,18 @@ th {
     font-weight: bold;
     text-decoration: underline;
 }
+
+.current-datetime {
+    text-decoration: underline;
+    color: #000;
+}
+
+.time-notice {
+    text-align: center;
+    border: 1px solid #CFC;
+    color: #575;
+    background: #EFE;
+    padding: .5em;
+    width: 500px;
+    margin: 1em auto;
+}

@@ -37,27 +37,6 @@
 
 {% block content %}
     <div id="main_container">
-{#        <div id="sms-tabs">#}
-{#            <ul>#}
-{#                <li><a href="#tabs-1">People</a></li>#}
-{#                <li><a href="#tabs-2">Groups</a></li>#}
-{#            </ul>#}
-{##}
-{#            {% if errors %}#}
-{#            <div class="errors">{{errors}}</div>#}
-{#            {% endif %}#}
-{#            #}
-{#            <div id="tabs-1">#}
-{#                {% include "sms/partials/user_messaging.html" %}#}
-{#            </div>#}
-{#            <div id="tabs-2">#}
-{#                {% include "sms/partials/group_messaging.html" %}#}
-{#            </div>#}
-{#        </div>#}
-{#        <div class="padded">#}
-{#            {% block sms_content %}#}
-{#            {% endblock %}#}
-{#        </div>#}
 
         <form action="{% url corehq.apps.sms.views.send_to_recipients domain %}" method="post">
             <div>
@@ -76,9 +55,9 @@
             </div>
         </form>
         <div>
+            {% include "hqwebapp/partials/time-notice.html" %}
             {% include "sms/partials/messagelog.html" %}
         </div>
         <br style="clear: both;" />
-        </div>
     </div>
 {% endblock %}

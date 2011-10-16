@@ -22,6 +22,7 @@ def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['messagelog'] = MessageLog.objects.filter(domain=domain).order_by('-pk')
+    context['now'] = datetime.utcnow()
     return render_to_response(request, template, context)
 
 def post(request, domain):

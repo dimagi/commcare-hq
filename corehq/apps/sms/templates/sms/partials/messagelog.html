@@ -1,8 +1,9 @@
 <table class="datatable"  width="100%">
 	<thead>
 		<tr>
-			<th><a href="">ID</a></th>
-			<th><a href="">Direction</a></th>
+			<th><a href="">Username</a></th>
+			<th><a href="">Phone number</a></th>
+			<th><a href="">Type</a></th>
 			<th><a href="">Time</a></th>
 			<th><a href="">Message</a></th>
 		</tr>
@@ -11,9 +12,8 @@
 	<tbody>{% if messagelog %}
 		{% for message in messagelog %}
 		<tr>
-			<td>{% if message.username %}{{message.username}}
-				{% else %}{{ message.phone_number }}{% endif %}
-			</td>
+            <td>{{ message.username }}</td>
+			<td>{{ message.phone_number }}</td>
 			<td>{% if message.direction == "I" %}Received
 				{% else %}Sent
 				{% endif %}
@@ -24,6 +24,7 @@
 		{% endfor %}
 		{% else %}
 		<tr class="no-data">
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>

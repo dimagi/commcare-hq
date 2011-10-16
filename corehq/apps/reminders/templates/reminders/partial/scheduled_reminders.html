@@ -49,19 +49,6 @@
         });
     </script>
     <style>
-        .current-datetime {
-            text-decoration: underline;
-            color: #000;
-        }
-        .time-notice {
-            text-align: center;
-            border: 1px solid #CFC;
-            color: #575;
-            background: #EFE;
-            padding: .5em;
-            width: 500px;
-            margin: auto;
-        }
         .calendar-first:not(:first-child) {
             border-left-width: 3px;
         }
@@ -73,10 +60,7 @@
 
 {% block reminders_content %}
     <h1>Reminder Calendar</h1>
-    <div class="time-notice">
-        <p>The current date and time is <span class="current-datetime">{{ now }}</span> GMT.</p>
-        <p>(All dates are in GMT.)</p>
-    </div>
+    {% include "hqwebapp/partials/time-notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">
             <tr>

@@ -280,7 +280,11 @@ class CaseReminder(Document):
 
     @property
     def user(self):
-        return CommCareUser.get_by_user_id(self.user_id)
+        try:
+            return CommCareUser.get_by_user_id(self.user_id)
+        except Exception:
+            self.retire()
+            return None
 
     def retire(self):
         self.doc_type += "-Deleted"

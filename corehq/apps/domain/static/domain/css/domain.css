@@ -15,9 +15,6 @@
     .col-1 col { width: 1%; }
     .col-1 col:last-child { width: auto; }
 
-#send_message {
-    padding-bottom: 10px;
-}
 
 #header {
     padding: 5px;

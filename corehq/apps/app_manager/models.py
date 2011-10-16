@@ -173,27 +173,28 @@ class FormActions(DocumentSchema):
 class FormSource(object):
     def __get__(self, form, form_cls):
         unique_id = form.get_unique_id()
-        try:
-            source = form.get_app().fetch_attachment('%s.xml' % unique_id)
-        except Exception:
-            source = form.dynamic_properties().get('contents', '')
-        
+        source = form.dynamic_properties().get('contents')
+        if source is None:
+            try:
+                source = form.get_app().fetch_attachment('%s.xml' % unique_id)
+            except Exception:
+                source = ''
         return source
 
     def __set__(self, form, value):
         unique_id = form.get_unique_id()
-        try:
-            app = form.get_app()
-        except KeyError:
-            form.contents = value
-        else:
-            app.put_attachment(value, '%s.xml' % unique_id)
-            # I had a problem where form was an old object
-            form = app.get_form(unique_id)
+        form.contents = value
+        app = form.get_app()
+        def pre_save():
             if form.dynamic_properties().has_key('contents'):
                 del form.contents
+        def post_save():
+            app.put_attachment(value, '%s.xml' % unique_id)
         form.validation_cache = None
         form.refresh()
+        app.register_pre_save(pre_save)
+        app.register_post_save(post_save)
+
 
 class FormBase(DocumentSchema):
     """
@@ -868,6 +869,31 @@ class Application(ApplicationBase, TranslationMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         return super(Application, cls).wrap(data)
 
+    def register_pre_save(self, fn):
+        if not hasattr(self, '_PRE_SAVE'):
+            self._PRE_SAVE = []
+        self._PRE_SAVE.append(fn)
+
+    def register_post_save(self, fn):
+        if not hasattr(self, '_POST_SAVE'):
+            self._POST_SAVE = []
+        self._POST_SAVE.append(fn)
+
+    def save(self, response_json=None, **kwargs):
+        if hasattr(self, '_PRE_SAVE'):
+            for pre_save in self._PRE_SAVE:
+                pre_save()
+            def del_pre_save():
+                del self._PRE_SAVE
+            self.register_post_save(del_pre_save)
+
+        super(Application, self).save(**kwargs)
+        if hasattr(self, '_POST_SAVE'):
+            for post_save in self._POST_SAVE:
+                post_save()
+
+            del self._POST_SAVE
+
     @property
     def url_base(self):
         if self.force_http:
@@ -1014,7 +1040,6 @@ class Application(ApplicationBase, TranslationMixin):
                 get_url_base(),
                 reverse('view_user_registration', args=[self.domain, self.id])
             ))
-            self.save(increment_version=False)
         return form
 
     def get_forms(self, bare=True):
@@ -1079,14 +1104,13 @@ class Application(ApplicationBase, TranslationMixin):
         )
         module.forms.append(form)
         form = module.get_form(-1)
-        form.refresh()
-        self.save(increment_version=False)
         form.source = attachment
-
+        form.refresh()
         case_types = module.infer_case_type()
         if len(case_types) == 1 and not module.case_type:
             module.case_type, = case_types
         return form
+
     def new_form_from_source(self, module_id, source):
         module = self.get_module(module_id)
         module.forms.append(Form.wrap(source))

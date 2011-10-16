@@ -20,12 +20,11 @@ class AppManagerTest(TestCase):
         Domain.objects.get_or_create(name=self.domain)
         self.app = Application.new_app("test_domain", "TestApp")
 
-
-
         for i in range(3):
             module = self.app.new_module("Module%d" % i, "en")
             for j in range(3):
-                self.app.new_form(module.id, name="Form%d-%d" % (i,j), attachment=self.xform_str, lang="en")
+                self.app.new_form(module.id, name="Form%s-%s" % (i,j), attachment=self.xform_str, lang="en")
+            module = self.app.get_module(i)
             detail = module.get_detail("ref_short")
             detail.append_column(
                 DetailColumn(name={"en": "test"}, model="case", field="test", format="plain", enum={})
@@ -33,8 +32,8 @@ class AppManagerTest(TestCase):
             detail.append_column(
                 DetailColumn(name={"en": "age"}, model="case", field="age", format="years-ago", enum={})
             )
-
         self.app.save()
+
     def tearDown(self):
         self.app.delete()
         #for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
