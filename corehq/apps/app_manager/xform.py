@@ -374,7 +374,7 @@ class XForm(WrappedNode):
             if translation.attrib.get('lang') == lang:
                 translation.attrib['default'] = ""
             else:
-                del translation.attrib['default']
+                translation.attrib.pop('default', None)
 
 
     def create_casexml(self, form):
