@@ -75,6 +75,8 @@
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}
     <div id="main_container">
+
+        {% if app %}
         {% if error %}
         <div id="error">
             {% ifequal error 'app_exists' %}
@@ -165,7 +167,6 @@
             {% endif %}
 
         </div>
-        {% if app %}
         <div id="form-tabs">
             <ul>
                 <li><a href='#forms'>Structure and Configuration</a></li>
@@ -362,6 +363,16 @@
                 </table>
             </div>
         </div>
+        {% else %}
+            <div style="padding: 1em; text-align: center">
+                <p style="font-size: 1.5em">
+                    Welcome to the CommCare Application Builder.
+                </p>
+                <form action="{% url new_app domain %}">
+                    <input type="hidden" name="type" value="Application">
+                    <a href="#" class="submit">Click here to create your first app.</a>
+                </form>
+            </div>
         {% endif %}
     </div>
     <div class="jqmWindow" id="odk-install-placeholder">
