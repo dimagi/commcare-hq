@@ -185,6 +185,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     @property
     def default_phone_number(self):
         return _get_default(self.phone_numbers)
+    phone_number = default_phone_number
 
     @property
     def couch_id(self):

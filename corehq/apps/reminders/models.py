@@ -142,7 +142,7 @@ class CaseReminderHandler(Document):
             except Exception:
                 phone_number = ''
 
-            send_sms(reminder.domain, reminder.user_id, phone_number, message)
+            return send_sms(reminder.domain, reminder.user_id, phone_number, message)
         
 
     @classmethod
@@ -244,9 +244,9 @@ class CaseReminderHandler(Document):
         now = now or cls.get_now()
         for reminder in cls.get_all_reminders(due_before=now):
             handler = reminder.handler
-            handler.fire(reminder)
-            handler.set_next_fire(reminder, now)
-            reminder.save()
+            if handler.fire(reminder):
+                handler.set_next_fire(reminder, now)
+                reminder.save()
 
     def retire(self):
         reminders = self.get_reminders()
