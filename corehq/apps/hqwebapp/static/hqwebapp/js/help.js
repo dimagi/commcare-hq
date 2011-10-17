@@ -1,28 +1,4 @@
 var InlineHelp = (function($){
-    var $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}),
-        $window = $(window),
-        initShield = function () {
-            $shield.css({top: $window.scrollTop(),width: $window.width(), height: $window.height()});
-        },
-        $currentlyOpen;
-    $shield.open = function (div) {
-        $currentlyOpen = div.css({zIndex: 1001}).show();
-        $shield.show();
-    };
-    $shield.close = function () {
-        $shield.hide();
-        $currentlyOpen.fadeOut();
-    };
-    $(function () {
-        $shield.appendTo("body");
-        initShield();
-        $window.resize(initShield);
-        $window.scroll(initShield);
-        $shield.hide();
-    });
-    $shield.click(function () {
-        $shield.close();
-    });
     function InlineHelp(link, text, key) {
         this.$link = $(link);
         this.$text = $(text).addClass('ui-corner-all');
@@ -54,11 +30,9 @@ var InlineHelp = (function($){
         self.$text.hide();
         self.$link.click(function(e){
             e.preventDefault();
-            $shield.open(self.$text);
+            Shield.open(self.$text);
         });
 
     });
-    InlineHelp.$shield = $shield;
-    InlineHelp.$currentlyOpen = $currentlyOpen;
     return InlineHelp;
 })(jQuery);

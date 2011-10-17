@@ -42,9 +42,7 @@
     <script>
         $(function () {
 
-            $("#edit a").button('disable').click(function (e) {
-                e.preventDefault();
-            });
+            $("#edit").hide();
 
             $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
 

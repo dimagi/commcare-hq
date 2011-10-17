@@ -340,7 +340,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         messages.error(req, 'Oops! We could not complete your request. Please try again')
         return back_to_main(req, domain, app_id)
 
-    edit = (req.GET.get('edit', '') == 'true') and req.couch_user.can_edit_apps(domain)
+    edit = (req.GET.get('edit', 'true') == 'true') and req.couch_user.can_edit_apps(domain)
 
     if form_id and not module_id:
         return bail()
@@ -363,7 +363,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if not app and applications:
         app_id = applications[0]['id']
         del edit
-        return back_to_main(edit=False, **locals())
+        return back_to_main(**locals())
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))

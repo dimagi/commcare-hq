@@ -10,7 +10,7 @@
     <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js"></script>
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager-002.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=3"></script>
     <script type="text/javascript">
     $().ready(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
@@ -154,12 +154,13 @@
             </div>
             {% if applications and request.couch_user|can_edit_apps:domain %}
                 <div id="edit">
-                    {% if edit  %}
-                        <a class="button" href="{% urlencode request.path request.GET with "edit" as "false" %}">
-                            Done Editing
+                    Switch to: 
+                    {% if edit %}
+                        <a href="{% urlencode request.path request.GET with "edit" as "false" %}">
+                            Read Only
                         </a>
                     {% else %}
-                        <a class="button" href="{% urlencode request.path request.GET with "edit" as "true" %}">
+                        <a href="{% urlencode request.path request.GET with "edit" as "true" %}">
                             Edit
                         </a>
                     {% endif %}

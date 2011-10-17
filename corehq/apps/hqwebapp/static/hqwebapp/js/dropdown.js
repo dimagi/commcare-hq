@@ -3,10 +3,8 @@
 (function ($) {
     jQuery.fn.dropdown = function () {
         var $dropdown = this.addClass('dropdown'),
-            $button = $('> *:first-child', this).addClass('ui-corner ui-corner-top'),
+            $button = $('> *:first-child', this).addClass('ui-corner ui-corner-top').disableSelection(),
             $list = $button.next().css({zIndex: 1001, left: 0}).addClass("shadow ui-corner ui-corner-bottom"),
-            $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}).appendTo('body'),
-            $window = $(window),
             isOpen,
             open = function (val) {
                 if (val === undefined) {
@@ -16,24 +14,18 @@
                     if (isOpen) {
                         $dropdown.addClass('dropdown-open');
                         $button.addClass('shadow').removeClass('ui-corner-bottom');
-                        $list.css({top: $button.outerHeight(true)-1}).show();
-                        $shield.show();
+                        Shield.open($list.css({top: $button.outerHeight(true)-1}), function () {
+                            open(false);
+                        });
                     } else {
                         $dropdown.removeClass('dropdown-open');
                         $button.removeClass('shadow').addClass('ui-corner-bottom');
-                        $list.hide();
-                        $shield.hide();
+                        Shield.close();
                     }
                 }
             },
-            initShield = function () {
-                $shield.css({top: $window.scrollTop(), width: $window.width(), height: $window.height()});
-            },
             downIcon = 'ui-icon-triangle-1-s';
         $('<div class="ui-icon" />').addClass(downIcon).prependTo($button);
-        initShield();
-        $(window).resize(initShield);
-        $(window).scroll(initShield);
         open(false);
 
         $list.hide();
@@ -51,11 +43,6 @@
         $button.click(function () {
             open(!open());
             return false;
-        });
-        $shield.click(function () {
-            if (open()) {
-                open(false);
-            }
         });
     };
     
