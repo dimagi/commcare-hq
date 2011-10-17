@@ -280,18 +280,18 @@ $(function () {
                 body.fadeIn(callback);
                 toggle.addClass('link-underline');
                 bar.addClass('no-bottom-border');
-                body.css({top: bar.outerHeight()-1, zIndex:1000});
+                Shield.open(body.css({top: bar.outerHeight()-1}), function () {
+                    setFormOpen(false);
+                });
                 subject.focus();
             } else {
-                body.css({zIndex: 1002});
+                body.css({zIndex: 1003});
                 bar.removeClass('no-bottom-border');
-                body.fadeOut(function () {
-
-                    toggle.removeClass('link-underline');
-                    if (callback) {
-                        callback.apply(this);
-                    }
-                });
+                Shield.close();
+                toggle.removeClass('link-underline');
+                if (callback) {
+                    callback.apply(this);
+                }
             }
         }
 

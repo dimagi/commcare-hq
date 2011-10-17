@@ -20,6 +20,10 @@ Shield = (function () {
         if ($currentlyOpen) {
             $currentlyOpen.fadeOut();
             $currentlyOpen = undefined;
+            if (onClose) {
+                onClose();
+                onClose = undefined;
+            }
         }
     };
     Shield.getCurrent = function () {
@@ -35,9 +39,6 @@ Shield = (function () {
     });
     $shield.click(function () {
         Shield.close();
-        if (onClose) {
-            onClose();
-        }
     });
     return Shield;
 }());

@@ -143,6 +143,8 @@ class CaseReminderHandler(Document):
                 phone_number = ''
 
             return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+        elif reminder.method == "test":
+            return True
         
 
     @classmethod
