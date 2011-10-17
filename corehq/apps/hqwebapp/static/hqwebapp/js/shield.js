@@ -1,9 +1,9 @@
 Shield = (function () {
     var Shield = {},
-        $shield = $('<div />').css({position: "absolute", top: "0", left: "0", zIndex: 1000, background: null}),
+        $shield = $('<div />').css({position: "fixed", bottom: "0", left: "0", zIndex: 1000, background: null}),
         $window = $(window),
         initShield = function () {
-            $shield.css({top: $window.scrollTop(),width: $window.width(), height: $window.height()});
+            $shield.css({width: $window.width(), height: $window.height()});
         },
         $currentlyOpen,
         onClose;

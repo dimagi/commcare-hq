@@ -97,13 +97,14 @@ body {
 }
 #bug-report-bar, #bug-report-body {
     background-color: #FFF;
-    position: absolute;
-    border-bottom: 1px solid #96989B;
-    border-right: 1px solid #96989B;
+    position: fixed;
+    border: 1px solid #96989B;
+    bottom: -1px;
+    left: -1px;
     padding: 10px;
 }
-.no-bottom-border {
-   border-bottom: none !important;
+.no-top-border {
+   border-top: 1px solid white !important;
 }
 #bug-report-bar {
     z-index: 1002;
@@ -113,7 +114,6 @@ body {
     z-index: 1001;
     display: none;
     text-align: left;
-    border-top: 1px solid #96989B;
 }
 #bug-report-body p {
     text-align: center;
@@ -121,7 +121,7 @@ body {
 }
 
 a#bug-report-toggle {
-    font-size: 1.25em;
+    font-size: 1em;
     text-align: center;
     color: #000;
     font-weight: bold;
@@ -217,7 +217,7 @@ header {
         }
         header nav li:last-child {
             border-right: none;
-            padding-right: 0px;
+            padding-right: 0;
         }
         header nav .active a {
             color: black;
@@ -233,6 +233,7 @@ header {
 footer {
     padding: 10px 0;
     border-top: 1px solid #ddd;
+    min-height: 60px;
 }
     #copyright {
         color: #555;

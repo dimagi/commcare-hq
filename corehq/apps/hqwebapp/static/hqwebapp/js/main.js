@@ -258,7 +258,7 @@ $(function () {
         var formIsOpen = false,
             toggle = $('#bug-report-toggle'),
             bar = $('#bug-report-bar'),
-            body = $('#bug-report-body'),
+            body = $('#bug-report-body').css({bottom: bar.outerHeight() - 2}),
             form = $('#bug-report-form'),
             subject = $('#bug-report-subject'),
             cancel = $('#bug-report-cancel'),
@@ -278,17 +278,15 @@ $(function () {
             formIsOpen = value;
             if (value) {
                 body.fadeIn(callback);
-                toggle.addClass('link-underline');
-                bar.addClass('no-bottom-border');
-                Shield.open(body.css({top: bar.outerHeight()-1}), function () {
+                bar.addClass('no-top-border');
+                Shield.open(body, function () {
                     setFormOpen(false);
                 });
                 subject.focus();
             } else {
                 body.css({zIndex: 1003});
-                bar.removeClass('no-bottom-border');
+                bar.removeClass('no-top-border');
                 Shield.close();
-                toggle.removeClass('link-underline');
                 if (callback) {
                     callback.apply(this);
                 }
