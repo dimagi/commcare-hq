@@ -1,59 +1,81 @@
-{% extends "users/users_base.html" %}
+{% extends "groups/all_groups.html" %}
 {% load i18n %}
 
-{% block groups_indicator %}
-<ul>
-    <li class="selected">{{ group.name }}</li>
-</ul>
+{% block head %}
+    {{ block.super }}
+    <style>
+        h2 {
+            font-weight: normal;
+            font-size: 1.5em;
+        }
+        .user-bubbles {
+            margin: 1.5em;
+        }
+        .user-bubble {
+            float: left;
+            padding: .5em;
+            margin:  .25em;
+            cursor: pointer;
+        }
+        .non-member:hover, .member {
+            background-color: #eee;
+            border: 1px solid #888;
+            color: black;
+        }
+        .non-member, .member:hover {
+            background-color: white;
+            border: 1px solid #eee;
+            color: #666;
+        }
+        .delete_this_group {
+            float: right;
+        }
+
+        #group-layout > tbody > tr > td:first-child {
+            border-right: 1px solid #CCC;
+        }
+    </style>
 {% endblock %}
 
-{% block user-view %}
-<div class='all_users'>
-	<h1>Members of {{ group.name }}</h1>
-	<table class='big_border'>
-	{% for member in members %}
-        <tr><td></td>
-            <td>{{ member.html_username|safe }}</td>
-            <td>
-                <a class="delete_link" href="#"></a>
-                <div class="dialog delete_dialog" title="Leave {{ group.name }}?">
-                    <form name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="POST">
-                        <table>
-                            <tr><td>
-                            Are you sure you want to drop user {{ member.html_username|safe }} from the group "{{ group.name }}"?
-                            </td></tr>
-                        </table>
-                        <input type="hidden" name="redirect_url" value="group_members" />
-                        <input type="submit" value="Remove" />
-                    </form>
+{% block group-view %}
+<div>
+    <div class="delete_this_group">
+        <a href="#" class="dialog_opener"><span class="ui-icon ui-icon-trash" href="#"></span>Delete this group</a>
+        <div class="dialog delete_dialog" title="Delete {{ group.name }}?">
+          <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
+              <table>
+                  <tr><td>
+                  Are you sure you want to delete the group: "{{ group.name }}"?
+                  </td></tr>
+              </table>
+              <input type="submit" value="Delete" />
+          </form>
+        </div>
+    </div>
+    <br style="clear: both;"/>
+    <div class="user-bubbles">
+        {% for member in members %}
+            <form name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="POST">
+                <div class="user-bubble member ui-corner-all submit">
+                    <input type="hidden" name="redirect_url" value="group_members" />
+                    <a class="delete_link submit" href="#"></a>
+                    <span>{{ member.raw_username }}</span>
                 </div>
-            </td>
-        </tr>
-	{% endfor %}
-	</table>
-	
-	
-	<h1>Non-Members</h1>
-	<table class='big_border'>
-	{% for nonmember in nonmembers %}
-        <tr><td></td>
-            <td>{{ nonmember.html_username|safe }}</td>
-            <td><a class="new_link dialog_opener" href="#">Add</a>
-                <div class="dialog" title="Join {{ group.name }}?">
-                    <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
-                        <table>
-                            <tr><td>
-                            Are you sure you want to add user {{ nonmember.html_username|safe }} to group "{{ group.name }}"?
-                            </td></tr>
-                        </table>
-                        <input type="hidden" name="redirect_url" value="group_members" />
-                        <input type="submit" value="Add" />
-                    </form>
+            </form>
+        {% endfor %}
+        <br style="clear: both;">
+    </div>
+    <div class="user-bubbles">
+        {% for nonmember in nonmembers %}
+            <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
+                <div class="user-bubble non-member ui-corner-all submit">
+                    <input type="hidden" name="redirect_url" value="group_members" />
+                    <a class="new_link" href="#"></a>
+                    <span>{{ nonmember.raw_username }}</span>
                 </div>
-            </td>
-        </tr>
-	{% endfor %}
-	</table>	
+            </form>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
 

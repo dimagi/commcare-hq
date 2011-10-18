@@ -1,8 +1,9 @@
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 
-def report_context(domain, report_partial=None, title=None, individual=None, case_type=None, datespan=None):
+def report_context(domain, report_partial=None, title=None, individual=None, case_type=None, group=None, datespan=None):
     context = {
         "domain": domain,
         "report": {
@@ -16,6 +17,13 @@ def report_context(domain, report_partial=None, title=None, individual=None, cas
             show_users=True,
             users= user_list(domain),
             individual=individual,
+        )
+    if group is not None:
+        context.update(
+            show_groups=True,
+            group=group,
+            groups=Group.by_domain(domain),
+
         )
     if case_type is not None:
         case_types = get_case_types(domain, individual)

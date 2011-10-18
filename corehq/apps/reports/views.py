@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import json
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
@@ -395,7 +396,12 @@ def get_active_cases_json(domain, days=31, **kwargs):
 def case_activity(request, domain):
     params = json_request(request.GET)
     display = params.get('display', ['percent'])
-    userIDs = params.get('userIDs') or [user.userID for user in CommCareUser.by_domain(domain)]
+    group = params.get('group', '')
+    if group:
+        group = Group.get(group)
+        userIDs = group.get_user_ids()
+    else:
+        userIDs = params.get('userIDs') or [user.userID for user in CommCareUser.by_domain(domain)]
     userIDs.sort(key=lambda userID: user_id_to_username(userID))
     landmarks = [timedelta(days=l) for l in params.get('landmarks') or [30,60,120]]
     landmarks.append(None)
@@ -444,14 +450,13 @@ def case_activity(request, domain):
                 pass
             row.append({"html": formatted, "sort_key": unformatted})
         rows.append(row)
-    return render_to_response(request, "reports/generic_report.html", {
-        "domain": domain,
-        "report": {
-            "name": "Case Activity",
-            "headers": headers,
-            "rows": rows,
-        },
+    context = util.report_context(domain, title="Case Activity", group=group)
+    context['report'].update({
+        "headers": headers,
+        "rows": rows,
     })
+    print context
+    return render_to_response(request, "reports/generic_report.html", context)
 
 @login_and_domain_required
 @datespan_default

@@ -8,7 +8,7 @@
 	{% for dom in domains %}
 	<tr><td></td>
 		<td><a href="{% url domain_homepage dom %}">{{ dom }}</a></td>
-    	<td><a class="delete_link" href="domain_accounts.html#"></a>
+    	<td><a class="delete_link dialog_opener" href="domain_accounts.html#"></a>
 	        <div class="dialog delete_dialog" title="Leave {{ dom }}?">
 	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>

@@ -12,7 +12,7 @@ def add_group(request, domain):
     if not group:
         group = Group(name=group_name, domain=domain)
         group.save()
-    return HttpResponseRedirect(reverse("all_groups", args=(domain, )))
+    return HttpResponseRedirect(reverse("group_members", args=(domain, group.get_id)))
 
 @require_can_edit_groups
 def delete_group(request, domain, group_id):
@@ -29,7 +29,7 @@ def join_group(request, domain, couch_user_id, group_id):
         #messages.success(request, 'User "%s" added to group "%s"' % (couch_user.username, group.name))
 
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.name)))
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.get_id)))
     else:
         return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
 
@@ -39,6 +39,6 @@ def leave_group(request, domain, group_id, couch_user_id):
     if group:
         group.remove_user(couch_user_id)
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.name)))
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.get_id)))
     else:
         return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))

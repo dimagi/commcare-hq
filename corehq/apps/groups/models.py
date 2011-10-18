@@ -73,7 +73,16 @@ class Group(Document):
                 break
         self.path = self.path[index:]
         self.save()
+
+    def get_user_ids(self):
+        return [user_id for user_id in self.users]
+    
     def save(self, *args, **kwargs):
-        # forcibly replace all non alphanumeric characters with '-'
-        self.name = re.sub(r'[^\w-]', '-', self.name)
+        # forcibly replace empty name with '-'
+        self.name = self.name or '-'
         super(Group, self).save()
+
+    @classmethod
+    def by_domain(cls, domain):
+        key = [domain]
+        return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)

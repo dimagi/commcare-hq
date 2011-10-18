@@ -39,6 +39,16 @@ var COMMCAREHQ = (function () {
                 e.preventDefault();
                 $(this).closest('form').submit();
             });
+
+            $('.submit').click(function (e) {
+                var $form = $(this).closest('.form, form'),
+                    data = $form.my_serialize(),
+                    action = $form.attr('action') || $form.data('action');
+
+                e.preventDefault();
+                $.postGo(action, $.unparam(data));
+            });
+
             // trick to give a select menu an initial value
             $('select[data-value]', $elem).each(function () {
                 var val = $(this).attr('data-value');
@@ -398,4 +408,13 @@ $(function () {
             return params;
         }
     });
+
+    $.fn.closest_form = function () {
+        return this.closest('form, .form');
+    };
+    $.fn.my_serialize = function () {
+        var data = this.find('[name]').serialize();
+        return data;
+    };
+
 }());

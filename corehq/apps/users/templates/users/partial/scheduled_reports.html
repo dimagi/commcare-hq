@@ -18,7 +18,7 @@
                     <td>{{ report.report_slug }}</td>
                     <td>{{ report.hours }}:00</td>
                     <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>
-                    <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
+                    <td><a class="delete_link dialog_opener" href="#">{% trans "Stop" %}</a>
                         <div class="dialog delete_dialog" title="Drop Report Schedule?">
                             <form name="drop_report" action="{% url drop_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
                                 <table>

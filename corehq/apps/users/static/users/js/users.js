@@ -2,7 +2,7 @@ $(function(){
 
     $('#user-options li').each(function(){
         var url = $(this).find('a').attr('href');
-        if(location.pathname == url) {
+        if (location.pathname.indexOf(url) == 0) {
             $(this).addClass('selected'); 
         }
     });
@@ -70,9 +70,7 @@ $(function(){
     $("#new_module").addClass("dialog_opener");
     $("#new_module_dialog").addClass("dialog");
 
-    $(".delete_link").addClass("dialog_opener");
     $(".add_link").addClass("dialog_opener");
-    $(".delete_dialog").addClass("dialog");
     $(".add_dialog").addClass("dialog");
 
 
@@ -110,27 +108,6 @@ $(function(){
         });
         $row.addClass('selected');
         $row.find('.immutable').hide().prev().show().trigger('change');
-    });
-    $('.form a.submit').click(function(e){
-        e.preventDefault();
-        var $row = $(this).closest('tr');
-        var $form = $('<form method="post" action="' + $(this).attr('href') + '" enctype="multipart/form-data"></form>');
-        $row.find('[name]').each(function(){
-            if($(this).attr('type') == 'file'){
-                var $input = $(this);
-                $input.hide();
-                $form.append($input);
-            }
-            else {
-                var $input = $('<input type="text" />');
-                $input.attr('name', $(this).attr('name'));
-                $input.attr('value', $(this).attr('value'));
-                $input.hide();
-                $form.append($input);
-            }
-        });
-        $('body').append($form);
-        $form.submit();
     });
 
     // Auto set input and select values according to the following 'div.immutable'
