@@ -39,6 +39,20 @@ var COMMCAREHQ = (function () {
                 e.preventDefault();
                 $(this).closest('form').submit();
             });
+
+            $('.submit').click(function (e) {
+                var $form = $(this).closest('.form, form'),
+                    data = $form.my_serialize(),
+                    action = $form.attr('action') || $form.data('action');
+
+                e.preventDefault();
+                $.postGo(action, $.unparam(data));
+            });
+            $('.post-link').click(function (e) {
+                e.preventDefault();
+                $.postGo($(this).attr('href'), {});
+            });
+
             // trick to give a select menu an initial value
             $('select[data-value]', $elem).each(function () {
                 var val = $(this).attr('data-value');
@@ -256,9 +270,9 @@ $(function () {
     $('#main_container').addClass('ui-corner-all container shadow');
     (function () {
         var formIsOpen = false,
-            toggle = $('#bug-report-toggle'),
-            bar = $('#bug-report-bar'),
-            body = $('#bug-report-body').css({bottom: bar.outerHeight() - 2}),
+            footer = $('footer'),
+            button = $('#bug-report-button'),
+            body = $('#bug-report-body'),
             form = $('#bug-report-form'),
             subject = $('#bug-report-subject'),
             cancel = $('#bug-report-cancel'),
@@ -267,33 +281,31 @@ $(function () {
             message = $('#bug-report-message'),
             url = $('#bug-report-url'),
             submit = $('#bug-report-submit'),
-            sendingMessage = $('<p/>').text('Sending report...'),
-            errorMessage = $('<p/>').text('We\'re sorry! There was an error sending your bug report.'),
-            sentMessage = $('<p/>').text('Thank you for reporting this issue. We are already hard at work addressing it.');
-
+            createDialog = function (div) {
+                return div.detach().addClass('shadow ui-corner-all');
+            },
+            sendingMessage = createDialog($('<div/>').text('Sending report...')),
+            errorMessage = createDialog($('<div/>').text('We\'re sorry! There was an error sending your bug report.')),
+            sentMessage = createDialog($('<div/>').text('Thank you for reporting this issue. We are already hard at work addressing it.'));
+        COMMCAREHQ.initBlock(createDialog(body));
         url.val(location.href);
-
-        body.addClass('shadow');
+        
         function setFormOpen(value, callback) {
             formIsOpen = value;
             if (value) {
-                body.fadeIn(callback);
-                bar.addClass('no-top-border');
                 Shield.open(body, function () {
                     setFormOpen(false);
                 });
                 subject.focus();
             } else {
-                body.css({zIndex: 1003});
-                bar.removeClass('no-top-border');
-                Shield.close();
+                Shield.close('hide');
                 if (callback) {
                     callback.apply(this);
                 }
             }
         }
 
-        toggle.click(function (e) {
+        button.click(function (e) {
             e.preventDefault();
             setFormOpen(!formIsOpen);
         });
@@ -321,25 +333,21 @@ $(function () {
                 url: form.attr('action'),
                 data: form.serialize(),
                 beforeSend: function () {
-                    setFormOpen(false);
                     form.find(':input').not(':hidden').val('');
                     now.trigger('change');
-                    toggle.detach();
-                    bar.html(sendingMessage);
+                    Shield.close('hide');
+                    Shield.open(sendingMessage);
                 },
                 success: function () {
-                    sendingMessage.detach();
-                    bar.html(sentMessage);
+                    Shield.close('hide');
+                    Shield.open(sentMessage);
                     setTimeout(function () {
-                        sentMessage.detach();
-                        setFormOpen(false, function () {
-                            bar.html(toggle);
-                        });
+                        Shield.close();
                     }, 4000);
                 },
                 error: function () {
-                    sendingMessage.detach();
-                    bar.html(errorMessage);
+                    Shield.close('hide');
+                    Shield.open(errorMessage);
                 }
             });
         });
@@ -398,4 +406,13 @@ $(function () {
             return params;
         }
     });
+
+    $.fn.closest_form = function () {
+        return this.closest('form, .form');
+    };
+    $.fn.my_serialize = function () {
+        var data = this.find('[name]').serialize();
+        return data;
+    };
+
 }());

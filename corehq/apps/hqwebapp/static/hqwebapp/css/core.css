@@ -95,38 +95,29 @@ body {
 	margin: 0;
 	padding: 0;
 }
-#bug-report-bar, #bug-report-body {
-    background-color: #FFF;
-    position: fixed;
-    border: 1px solid #96989B;
-    bottom: -1px;
-    left: -1px;
-    padding: 10px;
-}
-.no-top-border {
-   border-top: 1px solid white !important;
-}
-#bug-report-bar {
-    z-index: 1002;
+
+.no-bottom-border {
+   border-bottom: 1px solid white !important;
 }
 
-#bug-report-body {
-    z-index: 1001;
-    display: none;
+#bug-report-button {
+    z-index: 1002;
+    cursor: pointer;
+}
+
+#shield > div {
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
     text-align: left;
+    width: 450px;
+    margin: 20px auto;
 }
 #bug-report-body p {
     text-align: center;
     font-size: 1.5em;
 }
 
-a#bug-report-toggle {
-    font-size: 1em;
-    text-align: center;
-    color: #000;
-    font-weight: bold;
-    display: block;
-}
 .link-underline {
     text-decoration: underline;
 }
@@ -231,9 +222,12 @@ header {
 
 
 footer {
+    background-color: white;
+    position: fixed;
+    bottom: 0;
     padding: 10px 0;
     border-top: 1px solid #ddd;
-    min-height: 60px;
+    width: 100%;
 }
     #copyright {
         color: #555;
@@ -391,7 +385,7 @@ form table {
 table.config {
     margin: 1em;
     /*width: 100%;*/
-    
+
 }
 table.config td, table.config, th {
     padding: 5px;
