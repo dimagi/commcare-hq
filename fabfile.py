@@ -63,8 +63,7 @@ def deploy():
         sudo('git pull', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
-        sudo('git submodule init', user=env.sudo_user)
-        sudo('git submodule update', user=env.sudo_user)
+        sudo('git submodule update --init --recursive', user=env.sudo_user)
         with enter_virtualenv():
             sudo('pip install -r requirements.txt')
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
