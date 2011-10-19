@@ -167,5 +167,14 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
 def json_response(obj, **kwargs):
     return HttpResponse(json.dumps(obj, **kwargs))
 
-def json_request(params):
-    return dict([(str(key), json.loads(val)) for (key,val) in params.items()])
+def json_request(params, lenient=True):
+    d = {}
+    for key, val in params.items():
+        try:
+            d[key] = json.loads(val)
+        except ValueError:
+            if lenient:
+                d[key] = val
+            else:
+                raise
+    return d
