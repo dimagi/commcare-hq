@@ -6,8 +6,9 @@ http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 from __future__ import absolute_import
 import re
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
-class Group(Document):
+class Group(UndoableDocument):
     """
     The main use case for these 'groups' of users is currently
     so that we can break down reports by arbitrary regions.
@@ -86,3 +87,10 @@ class Group(Document):
     def by_domain(cls, domain):
         key = [domain]
         return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+
+    def create_delete_record(self, *args, **kwargs):
+        return DeleteGroupRecord(*args, **kwargs)
+    
+class DeleteGroupRecord(DeleteDocRecord):
+    def get_doc(self):
+        return Group.get(self.doc_id)

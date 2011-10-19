@@ -1,6 +1,6 @@
 {% extends "groups/all_groups.html" %}
 {% load i18n %}
-
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     <style>
@@ -34,23 +34,53 @@
         #group-layout > tbody > tr > td:first-child {
             border-right: 1px solid #CCC;
         }
+        .edit-group-name-popup {
+            border: 1px solid #ccc;
+            position: absolute;
+            background-color: white;
+            padding: 10px;
+        }
+        .edit-group-name-popup div {
+            padding-top: 10px;
+        }
     </style>
+    <script>
+        $(function () {
+            var groupName = {{ group.name|JSON }},
+                selectedGroupTab = $('#group-list > .selected'),
+                pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),
+                editLink = $('<a href="#"/>').append(pencil).click(function (e) {
+                        e.preventDefault();
+                        var offset = pencil.offset();
+                        offset.top -= editorPopup.outerHeight();
+                        offset.left += pencil.outerWidth();
+                        Shield.open(editorPopup.css(offset));
+                        $("#group-name-input").focus().select();
+                    }).prependTo(selectedGroupTab),
+                editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');
+            $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(
+                $('<label for="group-name-input"/>').text('Group Name: '),
+                $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName),
+                $('<div/>').append(
+                    $('<a href="#"/>').addClass('submit button').text("Save").css('float', 'right'),
+                    $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {
+                        e.preventDefault();
+                        Shield.close();
+                    })
+                )
+            ).appendTo(editorPopup);
+            editorPopup.appendTo($('body')).hide();
+            COMMCAREHQ.initBlock(editorPopup);
+        });
+    </script>
 {% endblock %}
 
 {% block group-view %}
 <div>
     <div class="delete_this_group">
-        <a href="#" class="dialog_opener"><span class="ui-icon ui-icon-trash" href="#"></span>Delete this group</a>
-        <div class="dialog delete_dialog" title="Delete {{ group.name }}?">
           <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
-              <table>
-                  <tr><td>
-                  Are you sure you want to delete the group: "{{ group.name }}"?
-                  </td></tr>
-              </table>
-              <input type="submit" value="Delete" />
+              <a href="#" class="submit"><span class="ui-icon ui-icon-trash" href="#"></span>Delete this group</a>
           </form>
-        </div>
     </div>
     <br style="clear: both;"/>
     <div class="user-bubbles">

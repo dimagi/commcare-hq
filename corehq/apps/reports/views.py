@@ -455,7 +455,6 @@ def case_activity(request, domain):
         "headers": headers,
         "rows": rows,
     })
-    print context
     return render_to_response(request, "reports/generic_report.html", context)
 
 @login_and_domain_required
