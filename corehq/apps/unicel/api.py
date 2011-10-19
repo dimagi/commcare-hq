@@ -97,7 +97,8 @@ def send(message):
         params.append((OutboundParams.MESSAGE, text))
     except UnicodeEncodeError:
         params.extend(UNICODE_PARAMS)
-        encoded = message.text.encode("utf_16_be").encode("hex")
+        encoded = message.text.encode("utf_16_be").encode("hex").upper()
         params.append((OutboundParams.MESSAGE, encoded))
     data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+    
     
