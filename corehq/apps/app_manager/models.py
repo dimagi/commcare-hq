@@ -244,9 +244,14 @@ class FormBase(DocumentSchema):
             raise XFormValidationError(self.validation_cache)
         return self
     def get_unique_id(self):
+        """
+        Return unique_id if it exists, otherwise initialize it
+
+        Does _not_ force a save, so it's the caller's responsibility to save the app
+
+        """
         if not self.unique_id:
             self.unique_id = FormBase.generate_id()
-            self.get_app().save(increment_version=False)
         return self.unique_id
     
     def get_app(self):
