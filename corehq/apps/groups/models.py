@@ -6,6 +6,7 @@ http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 from __future__ import absolute_import
 import re
 from couchdbkit.ext.django.schema import *
+from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 class Group(UndoableDocument):
@@ -77,6 +78,9 @@ class Group(UndoableDocument):
 
     def get_user_ids(self):
         return [user_id for user_id in self.users]
+
+    def get_users(self):
+        return [CouchUser.get_by_user_id(user_id) for user_id in self.users]
     
     def save(self, *args, **kwargs):
         # forcibly replace empty name with '-'

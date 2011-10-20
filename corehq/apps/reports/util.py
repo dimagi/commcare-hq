@@ -1,6 +1,7 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import user_id_to_username
 from dimagi.utils.couch.database import get_db
 
 def report_context(domain, report_partial=None, title=None, individual=None, case_type=None, group=None, datespan=None):
@@ -83,3 +84,13 @@ def get_case_counts(domain, case_type=None, individual=None):
             ).one()['value']
         except TypeError:
             yield 0
+
+def get_group_params(domain, group='', users=None, **kwargs):
+    if group:
+        group = Group.get(group)
+        users = group.get_users()
+    else:
+        users = users or []
+        users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
+    users = sorted(users, key=lambda user: user.user_id)
+    return group, users

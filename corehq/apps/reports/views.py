@@ -44,7 +44,7 @@ DATE_FORMAT = "%Y-%m-%d"
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate", 
-    default_days=7
+    default_days=7,
 )
 
 def login_or_digest(fn):
@@ -395,13 +395,8 @@ def get_active_cases_json(domain, days=31, **kwargs):
 def case_activity(request, domain):
     params = json_request(request.GET)
     display = params.get('display', ['percent'])
-    group = params.get('group', '')
-    if group:
-        group = Group.get(group)
-        userIDs = group.get_user_ids()
-    else:
-        userIDs = params.get('userIDs') or [user.userID for user in CommCareUser.by_domain(domain)]
-    userIDs.sort(key=lambda userID: user_id_to_username(userID))
+    group, users = util.get_group_params(domain, **params)
+    userIDs = [user.user_id for user in users]
     landmarks = [timedelta(days=l) for l in params.get('landmarks') or [30,60,120]]
     landmarks.append(None)
     now = datetime.utcnow()
@@ -675,6 +670,8 @@ def daily_submissions(request, domain, view_name, title):
                        request.datespan.get_validation_reason())
         request.datespan = DateSpan.since(7, format="%Y-%m-%d")
 
+    group, users = util.get_group_params(domain, **json_request(request.GET))
+
     results = get_db().view(
         view_name,
         group=True,
@@ -682,14 +679,12 @@ def daily_submissions(request, domain, view_name, title):
         endkey=[domain, request.datespan.enddate.isoformat(), {}]
     ).all()
 
-    all_users_results = get_db().view("submituserlist/all_users", startkey=[domain], endkey=[domain, {}], group=True).all()
-    user_ids = [result['key'][1] for result in all_users_results]
     dates = [request.datespan.startdate]
     while dates[-1] < request.datespan.enddate:
         dates.append(dates[-1] + timedelta(days=1))
     date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(dates)])
-    user_map = dict([(user_id, i) for (i, user_id) in enumerate(user_ids)])
-    rows = [[0]*(1+len(date_map)) for _ in range(len(user_ids) + 1)]
+    user_map = dict([(user.user_id, i) for (i, user) in enumerate(users)])
+    rows = [[0]*(1+len(date_map)) for _ in range(len(users) + 1)]
     for result in results:
         _, date, user_id = result['key']
         val = result['value']
@@ -698,8 +693,8 @@ def daily_submissions(request, domain, view_name, title):
         else:
             rows[-1][date_map[date]] = val # use the last row for unknown data
             rows[-1][0] = "UNKNOWN USER" # use the last row for unknown data
-    for i,user_id in enumerate(user_ids):
-        rows[i][0] = user_id_to_username(user_id)
+    for i,user in enumerate(users):
+        rows[i][0] = user.raw_username
 
     valid_rows = []
     for row in rows:
@@ -708,16 +703,15 @@ def daily_submissions(request, domain, view_name, title):
             valid_rows.append(row)
     rows = valid_rows
     headers = ["Username"] + [d.strftime(DATE_FORMAT) for d in dates]
-    return render_to_response(request, "reports/generic_report.html", {
-        "domain": domain,
-        "show_dates": True,
-        "datespan": request.datespan,
-        "report": {
-            "name": title,
-            "headers": headers,
-            "rows": rows,
-        }
+
+    context = util.report_context(domain, title=title, group=group, datespan=request.datespan)
+
+    context['report'].update({
+        "headers": headers,
+        "rows": rows,
     })
+
+    return render_to_response(request, "reports/generic_report.html", context)
 
 @login_and_domain_required
 @datespan_default
@@ -833,8 +827,9 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 @datespan_default
 def submissions_by_form(request, domain):
     datespan = request.datespan
-    users = CommCareUser.by_domain(domain)
-    userIDs = [user.userID for user in users]
+    params = json_request(request.GET)
+    group, users = util.get_group_params(domain, **params)
+    userIDs = [user.user_id for user in users]
     counts = submissions_by_form_json(domain=domain, userIDs=userIDs, datespan=datespan)
     form_types = _relevant_form_types(domain=domain, userIDs=userIDs, datespan=datespan)
     form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
@@ -862,7 +857,7 @@ def submissions_by_form(request, domain):
     totals_by_form = [totals_by_form[form_type] for form_type in form_types]
 
     rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
-    context = util.report_context(domain, datespan=datespan)
+    context = util.report_context(domain, datespan=datespan, group=group)
     context.update({
         'report': {
             "name": "Submissions by Form",
