@@ -1,3 +1,4 @@
+import logging
 from zipfile import ZipFile
 from couchdbkit.ext.django.schema import Document
 from django.http import HttpResponse
@@ -62,8 +63,18 @@ def export_response(file, format, filename, checkpoint=None):
     
     format = Format.from_format(format)
     response = HttpResponse(mimetype=format.mimetype)
-    response['Content-Disposition'] = 'attachment; filename=%s.%s' % \
-                                    (unidecode(filename), format.extension)
+
+    try:
+        filename = unidecode(filename)
+    except TypeError as e:
+        logging.error("Error (%s) in filename: %r" % (e, filename))
+        filename = "data"
+    finally:
+        response['Content-Disposition'] = 'attachment; filename={filename}.{format.extension}'.format(
+            filename=filename,
+            format=format
+        )
+
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
     response.write(file.getvalue())
