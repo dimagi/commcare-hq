@@ -66,8 +66,8 @@ def export_response(file, format, filename, checkpoint=None):
 
     try:
         filename = unidecode(filename)
-    except TypeError as e:
-        logging.error("Error (%s) in filename: %r" % (e, filename))
+    except Exception:
+        logging.exception("Error with filename: %r" % filename)
         filename = "data"
     finally:
         response['Content-Disposition'] = 'attachment; filename={filename}.{format.extension}'.format(
