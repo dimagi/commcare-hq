@@ -72,9 +72,17 @@ class Constant(UnicodeMixIn):
         self.message = message
     def __unicode__(self):
         return self.message
-    
-scalar_never_was = Constant("---")
-list_never_was = Constant("this list never existed")
+
+SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
+                    if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS") \
+                    else "---"
+
+LIST_NEVER_WAS = settings.COUCHEXPORT_LIST_NEVER_WAS \
+                    if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS") \
+                    else "this list never existed"
+
+scalar_never_was = Constant(SCALAR_NEVER_WAS)
+list_never_was = Constant(LIST_NEVER_WAS)
 
 def render_never_was(schema):
     if isinstance(schema, dict):

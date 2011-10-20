@@ -8,7 +8,40 @@ from couchforms.models import XFormInstance
 from django.core.cache import cache
 import hashlib
 
-
+def get_export_files(export_tag, format=None, previous_export_id=None, filter=None,
+                     use_cache=True, max_column_size=2000):
+    # the APIs of how these methods are broken down suck, but at least
+    # it's DRY
+    
+    from couchexport.export import export
+    
+    CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
+    def _build_cache_key(tag, prev_export_id, format, max_column_size):
+        def _human_readable_key(tag, prev_export_id, format, max_column_size):
+            return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
+        return hashlib.md5(_human_readable_key(tag, prev_export_id, 
+                                               format, max_column_size)).hexdigest()
+    
+    # check cache, only supported for filterless queries, currently
+    cache_key = _build_cache_key(export_tag, previous_export_id, 
+                                 format, max_column_size)
+    if use_cache and filter is None:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            (tmp, checkpoint) = cached_data
+            return (tmp, checkpoint)
+    
+    tmp = StringIO()
+    checkpoint = export(export_tag, tmp, format=format, 
+                        previous_export_id=previous_export_id,
+                        filter=filter, max_column_size=max_column_size)
+    if checkpoint:
+        if use_cache:
+            cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
+        return (tmp, checkpoint)
+    
+    return (None, None) # hacky empty case
+    
 def export_data_shared(export_tag, format=None, filename=None,
                        previous_export_id=None, filter=None,
                        use_cache=True, max_column_size=2000):
@@ -21,35 +54,12 @@ def export_data_shared(export_tag, format=None, filename=None,
     if not filename:
         filename = export_tag
     
-    CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
-    def _build_cache_key(tag, prev_export_id, format, max_column_size):
-        def _human_readable_key(tag, prev_export_id, format, max_column_size):
-            return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
-        return hashlib.md5(_human_readable_key(tag, prev_export_id, 
-                                               format, max_column_size)).hexdigest()
+    tmp, checkpoint = get_export_files(export_tag, format, 
+                                       previous_export_id, filter, 
+                                       use_cache, max_column_size)
     
-    cache_hit = False
-    # check cache, only supported for filterless queries, currently
-    if use_cache and filter is None:
-        _build_cache_key(export_tag, previous_export_id, format)
-        cached_data = cache.get(_build_cache_key(export_tag, previous_export_id, 
-                                                 format, max_column_size))
-        if cached_data:
-            (tmp, checkpoint) = cached_data
-            cache_hit = True
-    
-    if not cache_hit:
-        tmp = StringIO()
-        checkpoint = export(export_tag, tmp, format=format, 
-                            previous_export_id=previous_export_id,
-                            filter=filter, max_column_size=max_column_size)
     if checkpoint:
-        if use_cache:
-            cache.set(_build_cache_key(export_tag, previous_export_id, 
-                                       format, max_column_size), 
-                      (tmp, checkpoint), CACHE_TIME)
         return export_response(tmp, format, filename, checkpoint)
-        
     else: 
         return None
     
