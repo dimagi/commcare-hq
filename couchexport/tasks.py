@@ -29,9 +29,13 @@ def export_async(download_id, export_tag, format=None, filename=None,
         os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | \
                  stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH) 
         format = Format.from_format(format)
+        try:
+            filename = unidecode(filename)
+        except Exception: 
+            pass
         cache.set(download_id, FileDownload(path, mimetype=format.mimetype,
                                             content_disposition='attachment; filename=%s.%s' % \
-                                            (unidecode(filename), format.extension),
+                                            (filename, format.extension),
                                             extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}),
                                             expiry)
     else:
