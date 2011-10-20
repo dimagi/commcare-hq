@@ -1,13 +1,12 @@
 {% extends "soil/base.html" %}
 {% block title %}
-    File Download
+    File Downloader
 {% endblock title %}
 {% block extrahead %}
     <script type="text/javascript">
         var autoRefresh = '';
         var pollDownloader =
                                 function() {
-                                    console.log($('#ready_{{ download_id }}'));
                                     if ($('#ready_{{ download_id }}').length == 0)
                                     {
                                         $.get("{% url ajax_job_poll download_id %}", function(data) {
@@ -26,7 +25,7 @@
     </script>
 {% endblock extrahead %}
 {% block content %}
-    <h2>File Downloader</h2>
+    <h2>Preparing download. This may take some time...</h2>
     <div id="downloader_container">
     </div>
 {% endblock content %}
