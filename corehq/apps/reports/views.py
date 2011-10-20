@@ -43,7 +43,6 @@ DATE_FORMAT = "%Y-%m-%d"
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate", 
-    format_string=DATE_FORMAT,
     default_days=7
 )
 
