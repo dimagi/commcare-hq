@@ -1,9 +1,9 @@
-from django.http import HttpRequest
-from dimagi.utils.dates import DateSpan
 from datetime import datetime
+from django.http import HttpRequest, HttpResponseBadRequest
+from django.utils.formats import get_format
+from dimagi.utils.dates import DateSpan
 
-def datespan_in_request(from_param="from", to_param="to", 
-                        format_string="%m/%d/%Y", default_days=30):
+def datespan_in_request(from_param="from", to_param="to", default_days=30):
     """
     Wraps a request with dates based on url params or defaults and
     Checks date validity.
@@ -27,16 +27,28 @@ def datespan_in_request(from_param="from", to_param="to",
                         break
             if req:
                 dict = req.POST if req.method == "POST" else req.GET
+                date_input_formats = get_format('DATE_INPUT_FORMATS')
+                default_format = date_input_formats[0]
                 def date_or_nothing(param):
-                    return datetime.strptime(dict[param], format_string)\
-                             if param in dict and dict[param] else None
-                startdate = date_or_nothing(from_param)
-                enddate = date_or_nothing(to_param)
+                    if param not in dict or not dict[param]:
+                        return None, None
+                    for format in date_input_formats:
+                        try:
+                            return datetime.strptime(dict[param], format), format
+                        except ValueError:
+                            continue
+                    raise ValueError('Improperly formatted date. Please enter dates in the format %(format)s' % 
+                                     {'format': default_format})
+                try:             
+                    startdate, start_format = date_or_nothing(from_param)
+                    enddate, end_format = date_or_nothing(to_param)
+                except ValueError, e:
+                    return HttpResponseBadRequest(unicode(e))
                 if startdate or enddate:
-                    req.datespan = DateSpan(startdate, enddate, format_string)
-                else:        
+                    req.datespan = DateSpan(startdate, enddate, start_format)
+                else:
                     # default to the last N days
-                    req.datespan = DateSpan.since(default_days, format=format_string)
+                    req.datespan = DateSpan.since(default_days, format=default_format)
                     
             return f(*args, **kwargs) 
         if hasattr(f, "func_name"):
