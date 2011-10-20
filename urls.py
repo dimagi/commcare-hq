@@ -57,6 +57,7 @@ urlpatterns = patterns('',
     (r'^unicel/', include('corehq.apps.unicel.urls')),
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
+    (r'^downloads/temp/', include('soil.urls')),
     (r'^translations/', include('corehq.apps.translations.urls')),
 ) + patterns('', *LOCAL_APP_URLS)
 
