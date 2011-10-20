@@ -59,6 +59,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # export data
     url(r"^export/$", 'export_data'),
+    url(r"^export_async/$", 'export_data_async'),
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
     
     url(r"^export/customize/$", 'custom_export', name="custom_export"),

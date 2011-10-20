@@ -34,6 +34,7 @@ import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
+from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
@@ -98,6 +99,20 @@ def export_data(req, domain):
             next = reverse('excel_export_data_report', args=[domain])
         return HttpResponseRedirect(next)
 
+@login_and_domain_required
+@datespan_default
+def export_data_async(req, domain):
+    """
+    Download all data for a couchdbkit model
+    """
+    try:
+        export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
+    except ValueError:
+        return HttpResponseBadRequest()
+
+    assert(export_tag[0] == domain)
+    return couchexport_views.export_data_async(req)
+    
 @login_and_domain_required
 def custom_export(req, domain):
     """
