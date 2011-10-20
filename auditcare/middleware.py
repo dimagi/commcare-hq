@@ -57,6 +57,7 @@ class AuditMiddleware(object):
         Simple centralized manner to audit views without having to modify the requisite code.  This is an alternate
         way to manage audit events rather than using the decorator.
         """
+
         if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
             fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
         else:

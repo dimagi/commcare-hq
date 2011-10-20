@@ -1,0 +1,23 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Audited Model Changes" %}
+{% endblock %}
+
+{% block content %}
+    <div class="module">
+        <div class="span-6 last">
+        <h2>Models {{ model }}.{{ model_uuid }} Changes</h2>
+        </div>
+        <div class="span-24 last">
+            <dl>
+            {% for d in changes %}
+                <dt>{{ d.0 }}
+                    <dd>by {{d.1.user}} on {{ d.1.event_date }}</dd>
+            {% endfor %}
+            </dl>
+
+        </div>
+    </div>
+{% endblock %}

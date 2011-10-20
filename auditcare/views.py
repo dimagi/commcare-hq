@@ -1,5 +1,6 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
+from django.contrib.auth.decorators import login_required
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 
@@ -22,6 +23,7 @@ LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
+@login_required
 def auditAll(request, template="auditcare/index.html"):
     auditEvents = couchmodels.AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     realEvents = [{'user': a.user, 
@@ -80,4 +82,39 @@ def audited_logout (request, *args, **kwargs):
     # call the logout function
     response = func(request, *args, **kwargs)
     return response
+
+@login_required()
+def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
+    #it's for a particular model
+    context=RequestContext(request)
+    db = AccessAudit.get_db()
+    changes=db.view('auditcare/model_actions_by_id', reduce=False, key=[model_name, model_uuid], include_docs=True).all()
+    context['changes']= sorted([(x['value'], x['doc']) for x in changes], key=lambda y: y[1]['event_date'], reverse=True)
+    context['model'] = model_name
+    context['model_uuid'] = model_uuid
+    return render_to_response('auditcare/model_instance_history.html', context)
+
+@login_required()
+def single_model_history(request, model_name, *args, **kwargs):
+    #it's for a particular model
+    context=RequestContext(request)
+    db = AccessAudit.get_db()
+    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name,u''], endkey=[model_name,u'z']).all()
+    model_dict= {x['key'][1]: x['value'] for x in vals}
+    context['instances_dict']=model_dict
+    context['model'] = model_name
+    return render_to_response('auditcare/single_model_changes.html', context)
+
+@login_required()
+def model_histories(request, *args, **kwargs):
+    """
+    Looks at all the audit model histories and shows for a given model
+    """
+    context=RequestContext(request)
+    db = AccessAudit.get_db()
+    vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
+    #do a dict comprehension here because we know all the keys in this reduce are unique
+    model_dict= {x['key'][0]: x['value'] for x in vals}
+    context['model_dict']=model_dict
+    return render_to_response('auditcare/model_changes.html', context)
 

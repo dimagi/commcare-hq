@@ -55,6 +55,34 @@ def get_ip(request):
     return ip_address
 
 
+#source:
+# http://stackoverflow.com/questions/715234/python-dict-update-diff
+
+def dict_diff(a, b):
+    """Return differences from dictionaries a to b.
+
+    Return a tuple of three dicts: (removed, added, changed).
+    'removed' has all keys and values removed from a. 'added' has
+    all keys and values that were added to b. 'changed' has all
+    keys and their values in b that are different from the corresponding
+    key in a.
+    """
+
+    removed = dict()
+    added = dict()
+    changed = dict()
+
+    for key, value in a.iteritems():
+        if key not in b:
+            removed[key] = value
+        elif b[key] != value:
+            changed[key] = b[key]
+    for key, value in b.iteritems():
+        if key not in a:
+            added[key] = value
+    return removed, added, changed
+
+
 
 #
 #def get_timeout():
