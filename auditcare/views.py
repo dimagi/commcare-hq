@@ -100,7 +100,7 @@ def single_model_history(request, model_name, *args, **kwargs):
     context=RequestContext(request)
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name,u''], endkey=[model_name,u'z']).all()
-    model_dict= {x['key'][1]: x['value'] for x in vals}
+    model_dict= dict((x['key'][1], x['value']) for x in vals)
     context['instances_dict']=model_dict
     context['model'] = model_name
     return render_to_response('auditcare/single_model_changes.html', context)
@@ -114,7 +114,7 @@ def model_histories(request, *args, **kwargs):
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
     #do a dict comprehension here because we know all the keys in this reduce are unique
-    model_dict= {x['key'][0]: x['value'] for x in vals}
+    model_dict= dict((x['key'][0], x['value']) for x in vals)
     context['model_dict']=model_dict
     return render_to_response('auditcare/model_changes.html', context)
 
