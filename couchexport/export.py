@@ -3,7 +3,7 @@ import csv
 import zipfile
 from StringIO import StringIO
 from django.conf import settings
-from couchexport.models import ExportSchema, Format, SavedExportSchema
+from couchexport.models import ExportSchema, Format
 from couchdbkit.client import Database
 import re
 from dimagi.utils.mixins import UnicodeMixIn
@@ -42,18 +42,19 @@ def get_full_export_tables(schema_index, previous_export, filter=None):
     
     
 
-def export_from_tables(tables, file, format):
+def export_from_tables(tables, file, format, max_column_size=2000):
+    
     if format == Format.CSV:
-        _export_csv(tables, file)
+        _export_csv(tables, file, max_column_size)
     elif format == Format.XLS:
-        _export_excel(tables).save(file)
+        _export_excel(tables, max_column_size).save(file)
     elif format == Format.XLS_2007:
-        _export_excel_2007(tables).save(file)
+        _export_excel_2007(tables, max_column_size).save(file)
     else:
         raise Exception("Unsupported export format: %s!" % format)
     
 def export(schema_index, file, format=Format.XLS_2007, 
-           previous_export_id=None, filter=None):
+           previous_export_id=None, filter=None, max_column_size=2000):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
@@ -63,7 +64,7 @@ def export(schema_index, file, format=Format.XLS_2007,
     tables, checkpoint = get_full_export_tables(schema_index, previous_export, filter)
     if not tables:
         return None
-    export_from_tables(tables, file, format)
+    export_from_tables(tables, file, format, max_column_size)
     return checkpoint
 
 class Constant(UnicodeMixIn):
@@ -203,7 +204,7 @@ def format_tables(tables, id_label='id', separator='.'):
         answ.append((separator.join(table_name), new_table))
     return answ
 
-def _export_csv(tables, file):
+def _export_csv(tables, file, max_column_size):
     #temp = tempfile.TemporaryFile()
     temp = file
     archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
@@ -211,11 +212,20 @@ def _export_csv(tables, file):
     # write forms
     used_names = []
     for table_name, table in tables:
+        used_headers = []
         table_name_truncated = _clean_name(_next_unique(table_name, used_names))
         used_names.append(table_name_truncated)
         table_file = StringIO()
         writer = csv.writer(table_file, dialect=csv.excel)
-        for row in table:
+        def _truncate(val):
+            ret = _next_unique(val, used_headers, max_column_size)
+            used_headers.append(ret)
+            return ret
+        
+        for rowcount, row in enumerate(table):
+            if rowcount == 0:
+                # make sure we trim the headers
+                row = map(_truncate, row)
             for i, val in enumerate(row):
                 if isinstance(val, unicode):
                     row[i] = val.encode("utf8")
@@ -227,7 +237,7 @@ def _export_csv(tables, file):
     return temp
 
     
-def _export_excel(tables):
+def _export_excel(tables, max_column_size):
     try:
         import xlwt
     except ImportError:
@@ -237,17 +247,27 @@ def _export_excel(tables):
     book = xlwt.Workbook()
     used_names = []
     for table_name, table in tables:
-        # this is in case the first 20 characters are the same, but we	
-        # should do something smarter.	
+        used_headers = []
+        def _truncate(val):
+            ret = _next_unique(val, used_headers, max_column_size)
+            used_headers.append(ret)
+            return ret
+
+        # this is in case the first 20 characters are the same, but we    
+        # should do something smarter.    
         table_name_truncated = _next_unique(table_name, used_names, 20)
         used_names.append(table_name_truncated)
         sheet = book.add_sheet(_clean_name(table_name_truncated))
+        
         for i,row in enumerate(table):
+            if i == 0:
+                # make sure we trim the headers
+                row = map(_truncate, row)
             for j,val in enumerate(row):
                 sheet.write(i,j,unicode(val))
     return book
 
-def _export_excel_2007(tables):
+def _export_excel_2007(tables, max_column_size):
     try:
         import openpyxl
     except ImportError:
@@ -258,6 +278,12 @@ def _export_excel_2007(tables):
     book.remove_sheet(book.worksheets[0])
     used_names = []
     for table_name, table in tables:
+        used_headers = []
+        def _truncate(val):
+            ret = _next_unique(val, used_headers, max_column_size)
+            used_headers.append(ret)
+            return ret
+
         # this is in case the first 20 characters are the same, but we    
         # should do something smarter.    
         table_name_truncated = _next_unique(table_name, used_names, 31)
@@ -265,6 +291,9 @@ def _export_excel_2007(tables):
         sheet = book.create_sheet()
         sheet.title = _clean_name(table_name_truncated)
         for i,row in enumerate(table):
+            if i == 0:
+                # make sure we trim the headers
+                row = map(_truncate, row)
             # the docs claim this should work but the source claims it doesn't 
             #sheet.append(row) 
             for j,val in enumerate(row):
