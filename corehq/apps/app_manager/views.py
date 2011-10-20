@@ -507,8 +507,6 @@ def new_app(req, domain):
     if cls == Application:
         app.new_module("Untitled Module", lang)
         app.new_form(0, "Untitled Form", lang)
-        module_id = 0
-        form_id = 0
     app.save()
     app_id = app.id
 

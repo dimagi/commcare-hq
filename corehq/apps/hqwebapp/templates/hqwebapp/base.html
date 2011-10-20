@@ -7,14 +7,17 @@
         <meta charset="utf-8" />
         <title>CommCare HQ</title>
 
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/main.css?version=4" />
-    
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.2.min.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.14.min.js"></script>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=7"/>
+
+
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js?version=7"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/shield.js?version=2"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js?version=8"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/shield.js?version=3"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/help.js?version=2"></script>
 
         <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon.png" />
@@ -47,61 +50,6 @@
         {% endif %}
     </head>
     <body>
-        {% if user.is_authenticated %}
-        <div id='bug-report-bar'>
-            <a id='bug-report-toggle' href="#">
-                <span class="ui-icon ui-icon-comment" title="Report an Issue"></span>Report an Issue
-            </a>
-        </div>
-        <div id="bug-report-body">
-            <p>Report an Issue</p>
-            <form id='bug-report-form' action="{% url bug_report %}">
-                <input type="hidden" id="bug-report-url" name="url"/>
-                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
-                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
-                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
-                <table>
-                    <tr>
-                        <th><label for="bug-report-subject">Short Description:</label></th>
-                        <td><input type='text' id='bug-report-subject' name='subject'/></td>
-                    </tr>
-                    <tr>
-                        <th><label for="bug-report-now">Time of Occurrence:</label></th>
-                        <td>
-                            <select id='bug-report-now' name='now'>
-                                <option value="true">Just Now</option>
-                                <option value="false">Earlier</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            <label for="bug-report-when">When:</label>
-                        </th>
-                        <td>
-                            <input type="text" id="bug-report-when" name="when"/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="bug-report-message">Message:</label></th>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <textarea id="bug-report-message" name="message"></textarea>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <div id="bug-report-buttons">
-                                <a href="#" id="bug-report-cancel" class="button">Cancel</a>
-                                <a href="#" id="bug-report-submit" class="button">Send Report</a>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </form>
-        </div>
-        {% endif %}
         <div id="wrapper">
             <header>
                 <div class="fixed-width">
@@ -178,15 +126,69 @@
                 {% endblock %}
             </div>
         </div>
-        <footer>
-            <div class="fixed-width span-12">
-                {% if domain %}
-                <p id="help">Need help? Try the <a href="http://wiki.commcarehq.org">wiki</a> and join the <a href="http://groups.google.com/group/commcare-users">commcare-users</a> mailing list.</p>
-                {% endif %}
-            </div>
-            <div class="fixed-width span-12 last">
-                <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
+        <footer class="shadow">
+            <div class="fixed-width">
+                {% if user.is_authenticated %}
+                <div id="help">
+                    <a href="#" id='bug-report-button' style="margin-right: 20px;">
+                        <span class="ui-icon ui-icon-comment" title="Report an Issue"></span>Report an Issue
+                    </a>
+                    <span>Need help? Try the <a href="http://wiki.commcarehq.org" target="_blank">CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank">commcare-users</a> mailing list.</span>
+                </div>
+            {% endif %}
+
+                <div>
+                    <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
+                </div>
             </div>
         </footer>
+        <div id="bug-report-body">
+            <p>Report an Issue</p>
+            <form id='bug-report-form' action="{% url bug_report %}">
+                <input type="hidden" id="bug-report-url" name="url"/>
+                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+                <table>
+                    <tr>
+                        <th><label for="bug-report-subject">Short Description:</label></th>
+                        <td><input type='text' id='bug-report-subject' name='subject'/></td>
+                    </tr>
+                    <tr>
+                        <th><label for="bug-report-now">Time of Occurrence:</label></th>
+                        <td>
+                            <select id='bug-report-now' name='now'>
+                                <option value="true">Just Now</option>
+                                <option value="false">Earlier</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <label for="bug-report-when">When:</label>
+                        </th>
+                        <td>
+                            <input type="text" id="bug-report-when" name="when"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="bug-report-message">Message:</label></th>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <textarea id="bug-report-message" name="message"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div id="bug-report-buttons">
+                                <a href="#" id="bug-report-cancel" class="button">Cancel</a>
+                                <a href="#" id="bug-report-submit" class="button">Send Report</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
     </body>
 </html>
