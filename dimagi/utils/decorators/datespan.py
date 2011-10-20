@@ -1,5 +1,5 @@
 from datetime import datetime
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseBadRequest
 from django.utils.formats import get_format
 from dimagi.utils.dates import DateSpan
 
@@ -39,8 +39,11 @@ def datespan_in_request(from_param="from", to_param="to", default_days=30):
                             continue
                     raise ValueError('Improperly formatted date. Please enter dates in the format %(format)s' % 
                                      {'format': default_format})
-                startdate, start_format = date_or_nothing(from_param)
-                enddate, end_format = date_or_nothing(to_param)
+                try:             
+                    startdate, start_format = date_or_nothing(from_param)
+                    enddate, end_format = date_or_nothing(to_param)
+                except ValueError, e:
+                    return HttpResponseBadRequest(unicode(e))
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, start_format)
                 else:
