@@ -157,6 +157,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.couchapps',
     'sofabed.forms',
+    'soil',
     'corehq.apps.hqsofabed',
     'xep_hq_server',
     'touchforms.formplayer',
