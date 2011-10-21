@@ -340,6 +340,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'builds',
         'case',
         'cleanup',
+        'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
         'couchlog',
