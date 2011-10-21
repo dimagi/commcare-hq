@@ -15,6 +15,7 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
+from dimagi.utils.couch.undo import DeleteRecord
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
@@ -1389,11 +1390,6 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     for name, attachment in attachments.items():
         app.put_attachment(attachment, name)
     return app
-
-class DeleteRecord(Document):
-    base_doc = 'DeleteRecord'
-    domain = StringProperty()
-    datetime = DateTimeProperty()
 
 class DeleteApplicationRecord(DeleteRecord):
     app_id = StringProperty()

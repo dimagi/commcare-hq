@@ -3,7 +3,7 @@
         {% for phone_number in phone_numbers %}
             <tr>
                 <th>{% if forloop.first %}Registered Phone Numbers: {% endif %}</th>
-                <td>+{{ phone_number }} <a class="delete_link" href="phone_numbers.html#"></a>
+                <td>+{{ phone_number }} <a class="delete_link dialog_opener" href="phone_numbers.html#"></a>
                     <div class="dialog delete_dialog" title="Delete {{ phone_number }}?">
                         <form  name="delete_phone_number" action="{% url delete_phone_number domain couch_user.couch_id %}?phone_number={{phone_number|urlencode}}" method="POST">
                             <table>

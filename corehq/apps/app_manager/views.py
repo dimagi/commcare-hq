@@ -545,14 +545,14 @@ def delete_app(req, domain, app_id):
     app = get_app(domain, app_id)
     record = app.delete_app()
     messages.success(req,
-        'You have deleted an application. <a href="%s">Undo</a>' % reverse('undo_delete_app', args=[domain, record.get_id]),
+        'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_app', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()
     del app_id
     return back_to_main(**locals())
 
-#@require_POST
+@require_POST
 @require_permission('edit-apps')
 def undo_delete_app(request, domain, record_id):
     record = DeleteApplicationRecord.get(record_id)
@@ -567,14 +567,14 @@ def delete_module(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     record = app.delete_module(module_id)
     messages.success(req,
-        'You have deleted a module. <a href="%s">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+        'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()
     del module_id
     return back_to_main(**locals())
 
-#@require_POST
+@require_POST
 @require_permission('edit-apps')
 def undo_delete_module(request, domain, record_id):
     record = DeleteModuleRecord.get(record_id)
@@ -590,7 +590,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     record = app.delete_form(module_id, form_id)
     messages.success(req,
-        'You have deleted a form. <a href="%s">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
+        'You have deleted a form. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()
@@ -598,7 +598,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     del record
     return back_to_main(**locals())
 
-#@require_POST
+@require_POST
 @require_permission('edit-apps')
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)

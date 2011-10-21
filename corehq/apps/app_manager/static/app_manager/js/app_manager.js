@@ -212,13 +212,6 @@
         // autosave forms have one input only, and when that input loses focus,
         // the form is automatically sent AJAX style
 
-        $.fn.closest_form = function () {
-            return this.closest('form, .form');
-        };
-        $.fn.my_serialize = function () {
-            var data = this.find('[name]').serialize();
-            return data;
-        };
         $(".autosave").closest('form').append($("<span />"));
         $(".autosave").closest('.form').append("<td />");
         $(".autosave").closest_form().each(function () {
@@ -247,15 +240,6 @@
         });
         $(".autosave").live('change', function () {
             $(this).closest_form().submit();
-        });
-
-        $('.submit').click(function (e) {
-            var $form = $(this).closest('.form, form'),
-                data = $form.my_serialize(),
-                action = $form.attr('action') || $form.data('action');
-
-            e.preventDefault();
-            $.postGo(action, $.unparam(data));
         });
 
 

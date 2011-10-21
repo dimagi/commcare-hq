@@ -1,13 +1,31 @@
+from datetime import datetime
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import user_id_to_username
 from dimagi.utils.couch.database import get_db
 
-def report_context(domain, report_partial=None, title=None, individual=None, case_type=None, datespan=None):
+def report_context(domain,
+            report_partial=None,
+            title=None,
+            headers=None,
+            rows=None,
+            individual=None,
+            case_type=None,
+            group=None,
+            form=None,
+            datespan=None,
+            show_time_notice=False
+        ):
     context = {
         "domain": domain,
         "report": {
-            "name": title
-        }
+            "name": title,
+            "headers": headers or [],
+            "rows": rows or []
+        },
+        "show_time_notice": show_time_notice,
+        "now": datetime.utcnow()
     }
     if report_partial:
         context.update(report_partial=report_partial)
@@ -16,6 +34,19 @@ def report_context(domain, report_partial=None, title=None, individual=None, cas
             show_users=True,
             users= user_list(domain),
             individual=individual,
+        )
+    if form is not None:
+        context.update(
+            show_forms=True,
+            selected_form=form,
+            forms=form_list(domain),
+        )
+        
+    if group is not None:
+        context.update(
+            show_groups=True,
+            group=group,
+            groups=Group.by_domain(domain),
         )
     if case_type is not None:
         case_types = get_case_types(domain, individual)
@@ -75,3 +106,13 @@ def get_case_counts(domain, case_type=None, individual=None):
             ).one()['value']
         except TypeError:
             yield 0
+
+def get_group_params(domain, group='', users=None, **kwargs):
+    if group:
+        group = Group.get(group)
+        users = group.get_users()
+    else:
+        users = users or []
+        users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
+    users = sorted(users, key=lambda user: user.user_id)
+    return group, users

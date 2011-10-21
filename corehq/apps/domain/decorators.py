@@ -60,7 +60,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                 couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domains):
                     return view_func(req, domain_name, *args, **kwargs)
-                elif user.is_superuser and domains.count():
+                elif user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 else:

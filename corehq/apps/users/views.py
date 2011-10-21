@@ -439,9 +439,10 @@ GROUP VIEWS
 
 
 def _get_groups(domain):
-    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
+    key = [domain]
+    groups = Group.view("groups/by_name", startkey=key, endkey=key + [{}], include_docs=True)
     for group in groups:
-        name = re.sub(r'[^\w-]', '-', group.name) if group.name else '-'
+        name = group.name if group.name else '-'
         if group.name != name:
             group.name = name
             group.save()
@@ -459,18 +460,22 @@ def all_groups(request, domain, template="groups/all_groups.html"):
     return render_to_response(request, template, context)
 
 @require_can_edit_users
-def group_members(request, domain, group_name, template="groups/group_members.html"):
+def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    group = Group.view("groups/by_name", key=[domain, group_name], include_docs=True).one()
+    all_groups = _get_groups(domain)
+    group = Group.get(group_id)
     if group is None:
         raise Http404("Group %s does not exist" % group_name)
-    members = CouchUser.view("users/by_group", key=[domain, group.name], include_docs=True).all()
-    member_ids = set([member.user_id for member in members])
+    member_ids = group.get_user_ids()
+    members = CouchUser.view("_all_docs", keys=member_ids, include_docs=True).all()
+    members.sort(key=lambda user: user.username)
     all_users = CommCareUser.by_domain(domain)
+    member_ids = set(member_ids)
     nonmembers = [user for user in all_users if user.user_id not in member_ids]
 
     context.update({"domain": domain,
                     "group": group,
+                    "all_groups": all_groups,
                     "members": members,
                     "nonmembers": nonmembers,
                     })
@@ -493,7 +498,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
     all_groups = Group.view("groups/by_domain", key=domain, include_docs=True).all()
     other_groups = []
     for group in all_groups:
-        if group.name not in [g.name for g in my_groups]:
+        if group.get_id not in [g.get_id for g in my_groups]:
             other_groups.append(group)
     #other_groups = [group for group in all_groups if group not in my_groups]
     context.update({"domain": domain,

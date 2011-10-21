@@ -109,11 +109,11 @@
             start_datatables();
         }); 
     </script>
-    {% if show_users or show_case_types %}
+    {% if show_users or show_case_types  or show_groups %}
         <script>
             $(function(){
-                $("#individual_select, #case_type_select").change(function(){
-                    $(this).parent().submit();
+                $("#individual_select, #case_type_select, #group_select").change(function(){
+                    $(this).closest('form').submit();
                 });
             });
         </script>
@@ -126,7 +126,7 @@
             });
         });
     </script>
-    {% endif %}    
+    {% endif %}
     
     <style>
         h1 {
@@ -188,19 +188,9 @@
             <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
         </div>
         <div id="report_header">
-            {% if show_dates or show_users or show_forms %}
+            {% if show_dates or show_users or show_groups or show_forms %}
             <form method="get" id="paramSelectorForm">
-            {% if show_dates %}
-                    <label for="startdate">From Date:</label>
-                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
-                   <label for="enddate">To Date:</label>
-                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
-                   {# oddly enough, this is the only form that needs or has a submit button #}
-                   <input type="submit" value="Go!" />
-{#                <p>#}
-{#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
-{#                </p>#}
-            {% endif %}
+            <fieldset>
             {% if show_users %}
                 <label for="individual_select">Select a CHW: </label>
                 <select id="individual_select" name="individual">
@@ -224,8 +214,18 @@
                     {% endfor %}
                 </select>
             {% endif %}
+            {% if show_groups %}
+                <label for="group_select">Select a Group</label>
+                <select id="group_select" name="group" data-value="{{ group.get_id }}">
+                    <option value="">
+                        Everybody
+                    </option>
+                    {% for group in groups %}
+                        <option value="{{ group.get_id }}">{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
             {% if show_forms %}
-                <p>
                 <label for="form_select">Choose Form: </label>
                 <select id="form_select" name="form">
                     {% if all_forms_selectable %}
@@ -237,11 +237,23 @@
                         <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
                     {% endfor %}
                 </select>
-                </p>
+            {% endif %}
+            </fieldset>
+            {% if show_dates %}
+                    <label for="startdate">From Date:</label>
+                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
+                   <label for="enddate">To Date:</label>
+                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
+                   {# oddly enough, this is the only form that needs or has a submit button #}
+                   <input type="submit" value="Go!" />
+{#                <p>#}
+{#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
+{#                </p>#}
             {% endif %}
                 </form>
             {% endif %}
         </div>
+        {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}
     </div>
 {% endblock %}

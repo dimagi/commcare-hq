@@ -1,38 +1,75 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% block page_title %}<h1>Groups</h1>{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    <style>
+        .next-to-sidebar {
+            padding: 0;
+        }
+        .group-name-input {
+            width: 100px !important;
+        }
+        #group-list {
+            margin: 0;
+        }
+        #group-list > div {
+            border: 1px solid white;
+            padding: 5px 10px;
+        }
+        #group-list > div.selected {
+            border: 1px solid #BBB;
+            border-right: 1px solid white;
+            background: white;
+            position: relative;
+            left: 2px;
+            padding-left: 8px;
+            padding-right: 12px;
+        }
+        #group-list > div.selected a {
+            color: #000000;
+        }
+        #group-layout {
+            width: 100%;
+        }
+        #group-layout > tbody > tr > td {
+        }
+        #group-layout > tbody > tr > td:first-child {
+            padding: 5px 0 5px 5px;
+        }
+    </style>
+
+{% endblock %}
 {% block user-view %}
 <div class='all_users'>
-        <table class='big_border'>
-            {% for group in all_groups %}
-                <tr>
-                    <th>{% if forloop.first %}{% trans "Groups" %}:{% endif %}</th>
-                    <td><a href="{% url group_members domain group.name %}">{{ group.name }}</a></td>
-                    <td>
-                        <a class="delete_link" href="#"></a>
-                        <div class="dialog delete_dialog" title="Delete {{ group.name }}?">
-                          <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
-                              <table>
-                                  <tr><td>
-                                  Are you sure you want to delete the group: "{{ group.name }}"?
-                                  </td></tr>
-                              </table>
-                              <input type="submit" value="Delete" />
-                          </form>
-                        </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            <tr>
-                <th>{% trans "Add New Group" %}:</th>
-				<td>
-                    <form name="add_group" method="POST" action="{% url add_group domain %}">
-                        <input type="text" name="group_name"></input>
-                        <input type="submit" class="small" value="Add"/>
+    {% if not all_groups %}
+        <div style="padding: 10px 5px 2px 15px; color: #666">No groups</div>
+    {% endif %}
+    <table id="group-layout"><tr>
+        <td style="width: 150px;">
+            <div id="group-list">
+                {% with group as this_group %}
+                {% for group in all_groups %}
+                    <div class="ui-corner-left {% if this_group.get_id == group.get_id %}selected{% endif %}">
+                        <a href="{% url group_members domain group.get_id %}">{{ group.name }}</a>
+                    </div>
+                {% endfor %}
+                {% endwith %}
+                <p style="margin-top: 5px;">Add a new group:</p>
+                <div>
+                    <form method="POST" action="{% url add_group domain %}">
+                        <input type="text" class="group-name-input" style="float: left;" name="group_name"/>
+                        <a class="submit" href="#"><span class="ui-icon ui-icon-plusthick"></span></a>
                     </form>
-                </td>
-				<td></td>
-			</tr>
-        </table>
+                </div>
+            </div>
+        </td>
+        <td>
+            {% block group-view %}
+            {% endblock %}
+            </td>
+    </tr></table>
 </div>
 {% endblock %}
 
