@@ -23,6 +23,7 @@ function (doc) {
             emit(["dx", domain, form_date, xmlns], duration);
             emit(["udx", domain, userID, form_date, xmlns], duration);
             emit(["xdu", domain, xmlns, form_date, userID], duration);
+            emit(["uxd", domain, userID, xmlns, form_date], duration);
         }
     }
 }

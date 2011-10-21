@@ -253,6 +253,7 @@
                 </form>
             {% endif %}
         </div>
+        {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}
     </div>
 {% endblock %}

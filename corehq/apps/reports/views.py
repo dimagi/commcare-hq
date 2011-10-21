@@ -456,18 +456,24 @@ def case_activity(request, domain):
 def completion_times(request, domain):
     headers = ["User", "Average duration", "Shortest", "Longest", "# Forms"]
     form = request.GET.get('form', '')
+    group, users = util.get_group_params(domain, **json_request(request.GET))
     rows = []
+    
     if form:
-        data = entrytimes.get_user_data(domain, form, request.datespan)
         totalsum = totalcount = 0
-        def to_minutes(val_in_ms):
-            return timedelta(milliseconds=float(val_in_ms))
+        def to_minutes(val_in_ms, d=None):
+            if val_in_ms is None or d == 0:
+                return None
+            elif d:
+                val_in_ms /= d
+            return timedelta(seconds=int((val_in_ms + 500)/1000))
 
         globalmin = sys.maxint
         globalmax = 0
-        for user_id, datadict in data.items():
-            rows.append([user_id_to_username(user_id),
-                         to_minutes(float(datadict["sum"]) / float(datadict["count"])),
+        for user in users:
+            datadict = entrytimes.get_user_data(domain, user.user_id, form, request.datespan)
+            rows.append([user.raw_username,
+                         to_minutes(float(datadict["sum"]), float(datadict["count"])),
                          to_minutes(datadict["min"]),
                          to_minutes(datadict["max"]),
                          datadict["count"]
@@ -476,26 +482,47 @@ def completion_times(request, domain):
             totalcount = totalcount + datadict["count"]
             globalmin = min(globalmin, datadict["min"])
             globalmax = max(globalmax, datadict["max"])
-        if totalcount != 0:
+        if totalcount:
             rows.insert(0, ["-- Total --",
-                            to_minutes(float(totalsum)/float(totalcount)),
+                            to_minutes(float(totalsum), float(totalcount)),
                             to_minutes(globalmin),
                             to_minutes(globalmax),
                             totalcount])
+#    if form:
+#        data = entrytimes.get_user_data(domain, form, request.datespan)
+#        totalsum = totalcount = 0
+#        def to_minutes(val_in_ms):
+#            return timedelta(milliseconds=float(val_in_ms))
+#
+#        globalmin = sys.maxint
+#        globalmax = 0
+#        for user_id, datadict in data.items():
+#            rows.append([user_id_to_username(user_id),
+#                         to_minutes(float(datadict["sum"]) / float(datadict["count"])),
+#                         to_minutes(datadict["min"]),
+#                         to_minutes(datadict["max"]),
+#                         datadict["count"]
+#                         ])
+#            totalsum = totalsum + datadict["sum"]
+#            totalcount = totalcount + datadict["count"]
+#            globalmin = min(globalmin, datadict["min"])
+#            globalmax = max(globalmax, datadict["max"])
+#        if totalcount != 0:
+#            rows.insert(0, ["-- Total --",
+#                            to_minutes(float(totalsum)/float(totalcount)),
+#                            to_minutes(globalmin),
+#                            to_minutes(globalmax),
+#                            totalcount])
 
-    return render_to_response(request, "reports/generic_report.html", {
-        "domain": domain,
-        "show_forms": True,
-        "selected_form": form,
-        "forms": util.form_list(domain),
-        "show_dates": True,
-        "datespan": request.datespan,
-        "report": {
-            "name": "Completion Times",
-            "headers": headers,
-            "rows": rows,
-        },
-    })
+    context = util.report_context(domain,
+        title="Form Completion Trends",
+        headers=headers,
+        rows=rows,
+        form=form,
+        group=group,
+        datespan=request.datespan,
+    )
+    return render_to_response(request, "reports/generic_report.html", context)
 
 
 @login_and_domain_required
@@ -610,7 +637,7 @@ def submit_time_punchcard(request, domain, template="reports/basic_report.html",
     individual = request.GET.get("individual", '')
     data = punchcard.get_data(domain, individual)
     url = get_punchcard_url(data)
-    context = util.report_context(domain, report_partial, "Submit Times")
+    context = util.report_context(domain, report_partial, "Submission Times", individual=individual, show_time_notice=True)
     context.update({
         "chart_url": url,
     })

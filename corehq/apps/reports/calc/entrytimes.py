@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.display import xmlns_to_name
@@ -42,38 +43,33 @@ def get_data(domain, user=None, datespan=None):
             data[date][key] = data[date][key] + thisrow[key]
     return all_data
 
-def get_user_data(domain, xmlns, datespan=None):
+def get_user_data(domain, user_id, xmlns, datespan):
     """
     Returns a data structure like:
     
-    { <user>: { count: <count>, 
-                max: <time in ms>, 
-                min: <time in ms>,
-                sum: <time in ms> 
-              }
+    {
+        count: <count>,
+        max: <time in ms>,
+        min: <time in ms>,
+        sum: <time in ms>
     }
     
     """
-    if datespan is None:
-        datespan = DateSpan.since(days=30, format="%Y-%m-%dT%H:%M:%S")
     
-    all_data = {}
-    startkey = ["xdu", domain, xmlns, datespan.startdate_param] 
-    endkey = ["xdu", domain, xmlns, datespan.enddate_param]
-    view = get_db().view("formtrends/form_duration_by_user", 
-                         startkey=startkey,
-                         endkey=endkey,
-                         group=True,
-                         reduce=True)
-    for row in view:
-        user = row["key"][4]
-        if not user in all_data:
-            all_data[user] = {"count": 0, "min": sys.maxint, "max": 0, "sum": 0}
-        xmlns = row["key"][2]
-        thisrow = row["value"]
-        all_data[user]["count"] = all_data[user]["count"] + thisrow["count"]
-        all_data[user]["sum"] = all_data[user]["sum"] + thisrow["sum"]
-        all_data[user]["min"] = min(all_data[user]["min"], thisrow["min"])
-        all_data[user]["max"] = max(all_data[user]["max"], thisrow["max"])
+    startkey = ["uxd", domain, user_id, xmlns, datespan.startdate_param]
+    endkey = ["uxd", domain, user_id, xmlns, datespan.enddate_param]
+    print "startkey=%s&endkey=%s" % (json.dumps(startkey), json.dumps(endkey))
+    try:
+        return get_db().view("formtrends/form_duration_by_user",
+             startkey=startkey,
+             endkey=endkey,
+             group_level=None
+        ).one()["value"]
+    except TypeError:
+        return {
+            "count": 0,
+            "max": None,
+            "min": None,
+            "sum": 0,
+        }
     
-    return all_data
