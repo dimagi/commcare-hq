@@ -41,6 +41,7 @@ def datespan_in_request(from_param="from", to_param="to",
                 else:        
                     # default to the last N days
                     req.datespan = DateSpan.since(default_days, format=format_string)
+                    req.datespan.is_default = True
                     
             return f(*args, **kwargs) 
         if hasattr(f, "func_name"):

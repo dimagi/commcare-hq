@@ -69,6 +69,7 @@ class DateSpan(object):
         self.enddate = enddate
         self.format = format
         self.inclusive = inclusive
+        self.is_default = False
     
     @property
     def startdate_param(self):
@@ -86,6 +87,13 @@ class DateSpan(object):
             # you need to add a day to enddate if your dates are meant to be inclusive
             offset = timedelta(days=1 if self.inclusive else 0)
             return (self.enddate + offset).strftime(self.format)
+
+    @property
+    def end_of_end_day(self):
+        if self.enddate:
+            # if we are doing a 'day' query, we want to make sure 
+            # the end date is the last second of the end day
+            return self.enddate.replace(hour=23, minute=59, second=59, microsecond=1000000-1)
 
     @property
     def enddate_display(self):
