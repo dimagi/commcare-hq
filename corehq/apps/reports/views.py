@@ -631,9 +631,9 @@ def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
 
-    view_name = 'hqcase/open_cases' if include_closed else 'hqcase/all_cases'
+    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
 
-    key = [domain, {}]
+    key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
