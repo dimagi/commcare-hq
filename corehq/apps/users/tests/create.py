@@ -5,6 +5,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.signals import REGISTRATION_XMLNS
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
+from django.contrib.auth.models import User
 
 
 class CreateTestCase(TestCase):
@@ -63,9 +64,8 @@ class CreateTestCase(TestCase):
 
     def testCreateUserFromRegistration(self):
         """ 
-        test creating of couch user from a registration xmlns
-        this is more of an integration test than a unit test,
-        since 
+        test creating of couch user from a registration xmlns.
+        this is more of an integration test than a unit test.
         """
 
         couch_user = CommCareUser.create_from_xform(self.xform)
@@ -90,20 +90,71 @@ class CreateTestCase(TestCase):
         """ 
         use case: chw on phone registers a username/password/domain triple somewhere 
         another chw somewhere else somehow registers the same username/password/domain triple 
-        outcome: 2 distinct users on hq with the same info, with one marked 'is_duplicate'
-        (BUT ota restore should return a 'too many duplicate users' error)
-        
-        ADDENDUM: this use case is deprecated. HQ should disallow creation of duplicate
-        users, even if it means throwing an angry error to the mobile side on duplicate
-        user registration. This test needs to be updated to demonstrate that error.
+        outcome: 2 distinct users on hq with the same info, but the usernames should be 
+        updated appropriately to not be duplicates.
         """
-#        sender = "post"
-#        doc_id = create_user_from_commcare_registration(sender, self.xform)
-#        first_user = CouchUser.get(doc_id)
-#        # switch uuid so that we don't violate unique key constraints on django use creation
-#        xform = self.xform
-#        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
-#        dupe_id = create_user_from_commcare_registration(sender, xform)
-#        second_user = CouchUser.get(dupe_id)
-#        self.assertFalse(hasattr(first_user, 'is_duplicate'))
-#        self.assertTrue(second_user.is_duplicate)
+        first_user = CommCareUser.create_from_xform(self.xform)
+        # switch uuid so that we don't violate unique key constraints on django use creation
+        xform = self.xform
+        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
+        second_user = CommCareUser.create_from_xform(xform) 
+        # make sure they got different usernames
+        self.assertEqual("test_reg", first_user.username.split("@")[0])
+        self.assertEqual("test_reg2", second_user.username.split("@")[0])
+        
+        
+    def testEditUserFromRegistration(self):
+        """
+        Edit a user via registration XML 
+        """
+        # really this should be in the "update" test but all the infrastructure
+        # for dealing with the xml payload is here. 
+        original_user = CommCareUser.create_from_xform(self.xform)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        original_django_user = original_user.get_django_user()
+        original_count = User.objects.count()
+        
+        xform = self.xform
+        xform.form['username'] = 'a_new_username'
+        xform.form['password'] = "foobar"
+        self.xform.form['registering_phone_id'] = 'phone_edit'
+        xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'boss'}]}
+        updated_user = CommCareUser.create_from_xform(xform) 
+        
+        # make sure they got different usernames
+        self.assertEqual("a_new_username", updated_user.username.split("@")[0])
+        self.assertEqual("phone_edit", updated_user.device_id)
+        self.assertEqual("boss", updated_user.user_data["user_type"])
+        
+        # make sure we didn't create a new django user and updated
+        # the old one correctly
+        updated_django_user = updated_user.get_django_user()
+        self.assertEqual(original_count, User.objects.count())
+        self.assertEqual(original_django_user.pk, updated_django_user.pk)
+        self.assertNotEqual(original_django_user.username, updated_django_user.username)
+        self.assertNotEqual(original_django_user.password, updated_django_user.password)
+    
+    def testEditUserFromRegistrationWithConflicts(self):
+        original_user = CommCareUser.create_from_xform(self.xform)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        xform = self.xform
+        
+        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
+        xform.form['username'] = 'new_user'
+        second_user = CommCareUser.create_from_xform(xform) 
+        
+        # try to set it to a conflict
+        xform.form['username'] = 'test_reg'
+        updated_user = CommCareUser.create_from_xform(xform) 
+        
+        # make sure they got different usernames
+        self.assertEqual(second_user.get_id, updated_user.get_id)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        self.assertEqual("test_reg2", updated_user.username.split("@")[0])
+        
+        # since we changed it we should be able to back to the original id
+        xform.form['username'] = 'new_user'
+        updated_user = CommCareUser.create_from_xform(xform) 
+        self.assertEqual(second_user.get_id, updated_user.get_id)
+        self.assertEqual("new_user", updated_user.username.split("@")[0])
+                

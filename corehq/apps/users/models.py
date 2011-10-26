@@ -330,6 +330,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return couch_user
 
     def change_username(self, username):
+        if username == self.username:
+            return
+        
+        if User.objects.filter(username=username).exists():
+            raise self.Inconsistent("User with username %s already exists" % self.username)
+        
         django_user = self.get_django_user()
         django_user.DO_NOT_SAVE_COUCH_USER = True
         django_user.username = username
@@ -395,13 +401,14 @@ class CommCareUser(CouchUser):
 
     @classmethod
     def create_from_xform(cls, xform):
-        def get_or_create_safe(username, password, uuid, date, registering_phone_id, domain, user_data, **kwargs):
+        # if we have 1,000,000 users with the same name in a domain
+        # then we have bigger problems then duplicate user accounts
+        MAX_DUPLICATE_USERS = 1000000
+        
+        def create_or_update_safe(username, password, uuid, date, registering_phone_id, domain, user_data, **kwargs):
             # check for uuid conflicts, if one exists, respond with the already-created user
             conflicting_user = CommCareUser.get_by_user_id(uuid)
-            if conflicting_user:
-                logging.error("Trying to create a new user %s from form %s!  You can't submit multiple registration xmls for the same uuid." % \
-                              (uuid, xform.get_id))
-                return conflicting_user
+            
             # we need to check for username conflicts, other issues
             # and make sure we send the appropriate conflict response to the phone
             try:
@@ -409,6 +416,33 @@ class CommCareUser(CouchUser):
             except ValidationError:
                 raise Exception("Username (%s) is invalid: valid characters include [a-z], "
                                 "[0-9], period, underscore, and single quote" % username)
+            
+            if conflicting_user:
+                # try to update. If there are username conflicts, we have to resolve them
+                if conflicting_user.domain != domain:
+                    raise Exception("Found a conflicting user in another domain. This is not allowed!")
+                
+                saved = False
+                to_append = 2
+                prefix, suffix = username.split("@")
+                while not saved and to_append < MAX_DUPLICATE_USERS:
+                    try:
+                        conflicting_user.change_username(username)
+                        conflicting_user.password = password
+                        conflicting_user.date = date
+                        conflicting_user.device_id = registering_phone_id
+                        conflicting_user.user_data = user_data
+                        conflicting_user.save()
+                        saved = True
+                    except CouchUser.Inconsistent:
+                        username = "%(pref)s%(count)s@%(suff)s" % {
+                                     "pref": prefix, "count": to_append,
+                                     "suff": suffix}
+                        to_append = to_append + 1
+                if not saved:
+                    raise Exception("There are over 1,000,000 users with that base name in your domain. REALLY?!? REALLY?!?!")
+                return conflicting_user
+                
             try:
                 User.objects.get(username=username)
             except User.DoesNotExist:
@@ -427,7 +461,7 @@ class CommCareUser(CouchUser):
             return couch_user
 
         # will raise TypeError if xform.form doesn't have all the necessary params
-        return get_or_create_safe(
+        return create_or_update_safe(
             domain=xform.domain,
             user_data=user_data_from_registration_form(xform),
             **dict([(arg, xform.form[arg]) for arg in (
