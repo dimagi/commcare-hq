@@ -79,14 +79,46 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
+    group, users = util.get_group_params(domain, **json_request(req.GET))
+    include_errors = string_to_boolean(req.GET.get("include_errors", False))
+
     kwargs = {"format": req.GET.get("format", Format.XLS_2007),
               "previous_export_id": req.GET.get("previous_export", None),
               "filename": export_tag,
               "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
               "max_column_size": int(req.GET.get("max_column_size", 2000))}
-    include_errors = string_to_boolean(req.GET.get("include_errors", False))
-    if not include_errors:
-        kwargs["filter"] = instances
+
+    print group, include_errors
+    def generate_filter():
+        if group:
+            user_ids = set([user.user_id for user in users])
+            def group_filter(doc):
+                try:
+                    return doc['form']['meta']['userID'] in user_ids
+                except KeyError:
+                    return False
+        else:
+            group_filter = None
+
+        if include_errors:
+            errors_filter = None
+        else:
+            errors_filter = instances
+
+        if group_filter or errors_filter:
+            def filter(doc):
+                for fn in (group_filter, errors_filter):
+                    if (fn is not None) and not fn(doc):
+                        print "filter failed"
+                        print fn, fn(doc)
+                        return False
+                return True
+        else:
+            filter = None
+        print filter
+        return filter
+    kwargs['filter'] = generate_filter()
+
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
@@ -758,6 +790,7 @@ def daily_submissions(request, domain, view_name, title):
 @login_and_domain_required
 @datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
+    group, users = util.get_group_params(domain, **json_request(request.GET))
     forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
     forms = [x['value'] for x in forms]
 
@@ -818,6 +851,7 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
         export.formname = xmlns_to_name(export.index[1], domain)
 
     context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
+        group=group
     )
     context.update({
         "forms": forms,

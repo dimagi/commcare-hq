@@ -944,6 +944,14 @@ class Application(ApplicationBase, TranslationMixin):
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
+
+            custom = render_to_string(template, {
+                'app': self,
+                'langs': [lang] + self.langs,
+            })
+            custom = commcare_translations.loads(custom)
+            messages.update(custom)
+            
             # include language code names
             for lc in self.langs:
                 name = langcodes.get_name(lc) or lc
@@ -954,14 +962,6 @@ class Application(ApplicationBase, TranslationMixin):
             messages.update(cc_trans)
 
             messages.update(self.translations.get(lang, {}))
-
-            custom = render_to_string(template, {
-                'app': self,
-                'langs': [lang] + self.langs,
-            })
-            custom = commcare_translations.loads(custom)
-
-            messages.update(custom)
         else:
             messages = {}
             for lc in reversed(self.langs):
@@ -1050,10 +1050,11 @@ class Application(ApplicationBase, TranslationMixin):
         return form
 
     def get_forms(self, bare=True):
-        yield self.get_user_registration() if bare else {
-            'type': 'user_registration',
-            'form': self.get_user_registration()
-        }
+        if self.show_user_registration:
+            yield self.user_registration if bare else {
+                'type': 'user_registration',
+                'form': self.user_registration
+            }
         for module in self.get_modules():
             for form in module.get_forms():
                 yield form if bare else {
@@ -1197,51 +1198,59 @@ class Application(ApplicationBase, TranslationMixin):
             needs_case_detail = False
             needs_referral_detail = False
 
-            for form in module.get_forms():
-                errors_ = form.check_actions()
-                for error_ in errors_:
-                    error_.update(
-                        module={"id": module.id, "name": module.name},
-                        form={"id": form.id, "name": form.name}
-                    )
-                errors.extend(errors_)
-                try:
-                    _parse_xml(form.source)
-                except XFormError as e:
-                    errors.append({
-                        'type': "invalid xml",
-                        "module": {"id": module.id, "name": module.name},
-                        "form": {"id": form.id, "name": form.name},
-                        'message': unicode(e),
-                    })
-                xmlns_count[form.xmlns] += 1
-                if form.requires_case():
-                    needs_case_detail = True
-                    needs_case_type = True
-                if form.requires_case_type():
-                    needs_case_type = True
-                if form.requires_referral():
-                    needs_referral_detail = True
-                
-            if needs_case_type and not module.case_type:
-                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-            if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
-                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-            if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
-                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+        for obj in self.get_forms(bare=False):
+            module = obj.get('module')
+            form = obj.get('form')
+            form_type = obj.get('type')
+            meta = dict(
+                form_type=form_type,
+                module={"id": module.id, "name": module.name} if module else {},
+                form={"id": form.id if hasattr(form, 'id') else None, "name": form.name}
+            )
+            errors_ = form.check_actions()
+            for error_ in errors_:
+                error_.update(meta)
+            errors.extend(errors_)
+
+            try:
+                if not form.source:
+                _parse_xml(form.source)
+            except XFormError as e:
+                errors.append(dict(
+                    type="invalid xml",
+                    message=unicode(e),
+                    **meta
+                ))
+            xmlns_count[form.xmlns] += 1
+            if form.requires_case():
+                needs_case_detail = True
+                needs_case_type = True
+            if form.requires_case_type():
+                needs_case_type = True
+            if form.requires_referral():
+                needs_referral_detail = True
+
+            if module:
+                if needs_case_type and not module.case_type:
+                    errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
+                if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+                    errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
+                if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+                    errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
 
             # make sure that there aren't duplicate xmlns's
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
         # Make sure that putting together all the files actually works
-        try:
-            self.create_all_files()
-        except Exception as e:
-#            if settings.DEBUG:
-#                raise
-            errors.append({'type': "form error", 'message': unicode(e)})
-        
+        if not errors:
+            try:
+                self.create_all_files()
+            except Exception as e:
+                if settings.DEBUG:
+                    raise
+                errors.append({'type': "form error", 'message': unicode(e)})
+
         return errors
 
     @classmethod

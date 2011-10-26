@@ -107,8 +107,11 @@
                             {% endif %}
                     </td>
                     <td>
-                        <a class="export-ajax" href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% if form.app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}'>
+                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag="{{ form.xmlns }}"&filename={% if form.app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>
                             Download
+                        </a><br>
+                        <a class="export-ajax" href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% if form.app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>
+                            Download Async
                         </a><br>
                         {% if form.xmlns != None %}
                         <a href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'>

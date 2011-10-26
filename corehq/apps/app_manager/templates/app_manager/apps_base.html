@@ -190,14 +190,12 @@
                             {% for error in build_errors %}
                                 <li>
                                     {% if error.type == "invalid xml" %}
-                                        {% if eror.form.content %}
+                                        {% if error.form.content %}
                                             Invalid xml in form
                                         {% else %}
                                             Blank form
                                         {% endif %}
-                                        <a href="{% url view_form domain app.id error.module.id error.form.id %}">
-                                            {{ error.form.name|trans:langs }}</a>
-                                        in module "{{ error.module.name|trans:langs }}"
+                                        {% include "app_manager/partials/form_error_message.html" %}
                                     {% else %}
                                     {% if error.type == "no ref detail" %}
                                         Module
@@ -235,20 +233,16 @@
                                     {% else %}
                                     {% if error.type == "update_case uses reserved word" %}
                                         Case Update uses reserved word "{{ error.word }}"
-                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
-                                            {{ error.form.name|trans:langs }}</a>
-                                        in module "{{ error.module.name|trans:langs }}"
+                                        in form
+                                        {% include "app_manager/partials/form_error_message.html" %}
                                     {% else %}
                                     {% if error.type == "update_case word illegal" %}
                                         Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                                        in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
-                                            {{ error.form.name|trans:langs }}</a>
-                                        in module "{{ error.module.name|trans:langs }}"
+                                        in form {% include "app_manager/partials/form_error_message.html" %}
                                     {% else %}
                                     {% if error.type == "path error" %}
-                                        The case configuration in form <a href="{% url view_form domain app.id error.module.id error.form.id %}">
-                                            {{ error.form.name|trans:langs }}</a>
-                                        in module "{{ error.module.name|trans:langs }}"
+                                        The case configuration in form
+                                        {% include "app_manager/partials/form_error_message.html" %}
                                         contains the invalid path "{{ error.path }}".
                                     {% else %}
                                     {% if error.type == "remote error" %}
