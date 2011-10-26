@@ -63,9 +63,8 @@ class CreateTestCase(TestCase):
 
     def testCreateUserFromRegistration(self):
         """ 
-        test creating of couch user from a registration xmlns
-        this is more of an integration test than a unit test,
-        since 
+        test creating of couch user from a registration xmlns.
+        this is more of an integration test than a unit test.
         """
 
         couch_user = CommCareUser.create_from_xform(self.xform)
@@ -90,20 +89,15 @@ class CreateTestCase(TestCase):
         """ 
         use case: chw on phone registers a username/password/domain triple somewhere 
         another chw somewhere else somehow registers the same username/password/domain triple 
-        outcome: 2 distinct users on hq with the same info, with one marked 'is_duplicate'
-        (BUT ota restore should return a 'too many duplicate users' error)
-        
-        ADDENDUM: this use case is deprecated. HQ should disallow creation of duplicate
-        users, even if it means throwing an angry error to the mobile side on duplicate
-        user registration. This test needs to be updated to demonstrate that error.
+        outcome: 2 distinct users on hq with the same info, but the usernames should be 
+        updated appropriately to not be duplicates.
         """
-#        sender = "post"
-#        doc_id = create_user_from_commcare_registration(sender, self.xform)
-#        first_user = CouchUser.get(doc_id)
-#        # switch uuid so that we don't violate unique key constraints on django use creation
-#        xform = self.xform
-#        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
-#        dupe_id = create_user_from_commcare_registration(sender, xform)
-#        second_user = CouchUser.get(dupe_id)
-#        self.assertFalse(hasattr(first_user, 'is_duplicate'))
-#        self.assertTrue(second_user.is_duplicate)
+        first_user = CommCareUser.create_from_xform(self.xform)
+        # switch uuid so that we don't violate unique key constraints on django use creation
+        xform = self.xform
+        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
+        second_user = CommCareUser.create_from_xform(xform) 
+        # make sure they got different usernames
+        self.assertEqual("test_reg", first_user.username.split("@")[0])
+        self.assertEqual("test_reg2", second_user.username.split("@")[0])
+        
