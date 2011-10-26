@@ -88,7 +88,6 @@ def export_data(req, domain):
               "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
               "max_column_size": int(req.GET.get("max_column_size", 2000))}
 
-    print group, include_errors
     def generate_filter():
         if group:
             user_ids = set([user.user_id for user in users])
@@ -109,13 +108,10 @@ def export_data(req, domain):
             def filter(doc):
                 for fn in (group_filter, errors_filter):
                     if (fn is not None) and not fn(doc):
-                        print "filter failed"
-                        print fn, fn(doc)
                         return False
                 return True
         else:
             filter = None
-        print filter
         return filter
     kwargs['filter'] = generate_filter()
 
