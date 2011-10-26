@@ -5,6 +5,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.signals import REGISTRATION_XMLNS
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
+from django.contrib.auth.models import User
 
 
 class CreateTestCase(TestCase):
@@ -101,3 +102,59 @@ class CreateTestCase(TestCase):
         self.assertEqual("test_reg", first_user.username.split("@")[0])
         self.assertEqual("test_reg2", second_user.username.split("@")[0])
         
+        
+    def testEditUserFromRegistration(self):
+        """
+        Edit a user via registration XML 
+        """
+        # really this should be in the "update" test but all the infrastructure
+        # for dealing with the xml payload is here. 
+        original_user = CommCareUser.create_from_xform(self.xform)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        original_django_user = original_user.get_django_user()
+        original_count = User.objects.count()
+        
+        xform = self.xform
+        xform.form['username'] = 'a_new_username'
+        xform.form['password'] = "foobar"
+        self.xform.form['registering_phone_id'] = 'phone_edit'
+        xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'boss'}]}
+        updated_user = CommCareUser.create_from_xform(xform) 
+        
+        # make sure they got different usernames
+        self.assertEqual("a_new_username", updated_user.username.split("@")[0])
+        self.assertEqual("phone_edit", updated_user.device_id)
+        self.assertEqual("boss", updated_user.user_data["user_type"])
+        
+        # make sure we didn't create a new django user and updated
+        # the old one correctly
+        updated_django_user = updated_user.get_django_user()
+        self.assertEqual(original_count, User.objects.count())
+        self.assertEqual(original_django_user.pk, updated_django_user.pk)
+        self.assertNotEqual(original_django_user.username, updated_django_user.username)
+        self.assertNotEqual(original_django_user.password, updated_django_user.password)
+    
+    def testEditUserFromRegistrationWithConflicts(self):
+        original_user = CommCareUser.create_from_xform(self.xform)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        xform = self.xform
+        
+        xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
+        xform.form['username'] = 'new_user'
+        second_user = CommCareUser.create_from_xform(xform) 
+        
+        # try to set it to a conflict
+        xform.form['username'] = 'test_reg'
+        updated_user = CommCareUser.create_from_xform(xform) 
+        
+        # make sure they got different usernames
+        self.assertEqual(second_user.get_id, updated_user.get_id)
+        self.assertEqual("test_reg", original_user.username.split("@")[0])
+        self.assertEqual("test_reg2", updated_user.username.split("@")[0])
+        
+        # since we changed it we should be able to back to the original id
+        xform.form['username'] = 'new_user'
+        updated_user = CommCareUser.create_from_xform(xform) 
+        self.assertEqual(second_user.get_id, updated_user.get_id)
+        self.assertEqual("new_user", updated_user.username.split("@")[0])
+                
