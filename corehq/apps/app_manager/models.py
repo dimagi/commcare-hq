@@ -1213,7 +1213,6 @@ class Application(ApplicationBase, TranslationMixin):
             errors.extend(errors_)
 
             try:
-                if not form.source:
                 _parse_xml(form.source)
             except XFormError as e:
                 errors.append(dict(
