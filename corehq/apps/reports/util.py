@@ -120,7 +120,6 @@ def get_group_params(domain, group='', users=None, **kwargs):
 def create_group_filter(group):
     if group:
         user_ids = set(group.get_user_ids())
-        print user_ids
         def group_filter(doc):
             try:
                 return doc['form']['meta']['userID'] in user_ids
