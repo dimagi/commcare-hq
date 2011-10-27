@@ -5,27 +5,22 @@
 {% block extrahead %}
     <script type="text/javascript">
         var autoRefresh = '';
-        var pollDownloader =
-                                function() {
-                                    if ($('#ready_{{ download_id }}').length == 0)
-                                    {
-                                        $.get("{% url ajax_job_poll download_id %}", function(data) {
-                                            $("#downloader_container").html(data);
-                                        });
-                                    } else {
-                                        clearInterval(autoRefresh);
-                                    }
-                                };
-        $(document).ready(
-                function() {
-                    autoRefresh = setInterval(pollDownloader, 2000);
-
-                }
-        );
+        var pollDownloader = function () {
+            if ($('#ready_{{ download_id }}').length == 0)
+	        {
+	            $.get("{% url ajax_job_poll download_id %}", function(data) {
+	                $("#display_{{ download_id }}").html(data);
+	            });
+	        } else {
+	            clearInterval(autoRefresh);
+	        }
+        };
+        $(document).ready(function () {
+            autoRefresh = setInterval(pollDownloader, 2000);
+        });
     </script>
 {% endblock extrahead %}
 {% block content %}
     <h2>Preparing download. This may take some time...</h2>
-    <div id="downloader_container">
-    </div>
+    <div class="downloader_container" id="display_{{ download_id }}"></div>
 {% endblock content %}
