@@ -8,17 +8,19 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_request, json_response
 
 class CaseActivity(object):
-    def __init__(self, domain, chws, landmarks, now):
+    def __init__(self, domain, chws, case_type, landmarks, now):
         self.domain = domain
         self.chws = chws
+        self.case_type = case_type
         self.landmarks = landmarks
         self.now = now
 
     def get_number_cases_updated(self, chw, landmark=None):
         start_time_json = json_format_datetime(self.now - landmark) if landmark else ""
+        key = [self.domain, self.case_type or {}, chw]
         r = get_db().view('case/by_last_date',
-            startkey=[self.domain, chw, start_time_json],
-            endkey=[self.domain, chw, json_format_datetime(self.now)],
+            startkey=key + [start_time_json],
+            endkey=key + [json_format_datetime(self.now)],
             group=True,
             group_level=0
         ).one()

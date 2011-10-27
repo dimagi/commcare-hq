@@ -12,6 +12,7 @@ def report_context(domain,
             rows=None,
             individual=None,
             case_type=None,
+            show_case_type_counts=True,
             group=None,
             form=None,
             datespan=None,
@@ -49,10 +50,18 @@ def report_context(domain,
             groups=Group.by_domain(domain),
         )
     if case_type is not None:
-        case_types = get_case_types(domain, individual)
+        if individual:
+            user_ids = [individual]
+        elif group is not None:
+            _, user_ids = get_group_params(domain, group=group, user_id_only=True)
+        else:
+            user_ids = None
+
+        case_types = get_case_types(domain, user_ids)
         if len(case_types) == 1:
             case_type = case_types.items()[0][0]
-        open_count, all_count = get_case_counts(domain, individual=individual)
+
+        open_count, all_count = get_case_counts(domain, user_ids=user_ids)
         context.update(
             show_case_types=True,
             case_types=case_types,
@@ -81,7 +90,7 @@ def form_list(domain):
                          reduce=True)
     return [{"display": xmlns_to_name(r["key"][2], domain), "xmlns": r["key"][2]} for r in view]
 
-def get_case_types(domain, individual=None):
+def get_case_types(domain, user_ids=None):
     case_types = {}
     key = [domain]
     for r in get_db().view('hqcase/all_cases',
@@ -91,30 +100,39 @@ def get_case_types(domain, individual=None):
     ).all():
         case_type = r['key'][1]
         if case_type:
-            open_count, all_count = get_case_counts(domain, case_type, individual)
+            open_count, all_count = get_case_counts(domain, case_type, user_ids)
             case_types[case_type] = {'open': open_count, 'all': all_count}
     return case_types
 
-def get_case_counts(domain, case_type=None, individual=None):
-    key = [domain, case_type or {}, individual or {}]
+def get_case_counts(domain, case_type=None, user_ids=None):
+    user_ids = user_ids or [{}]
     for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
-        try:
-            yield get_db().view(view_name,
-                startkey=key,
-                endkey=key + [{}],
-                group_level=0
-            ).one()['value']
-        except TypeError:
-            yield 0
+        def individual_counts():
+            for user_id in user_ids:
+                key = [domain, case_type or {}, user_id]
+                try:
+                    yield get_db().view(view_name,
+                        startkey=key,
+                        endkey=key + [{}],
+                        group_level=0
+                    ).one()['value']
+                except TypeError:
+                    yield 0
+        yield sum(individual_counts())
 
-def get_group_params(domain, group='', users=None, **kwargs):
+def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     if group:
-        group = Group.get(group)
-        users = group.get_users()
+        if not isinstance(group, Group):
+            group = Group.get(group)
+        users = group.get_user_ids() if user_id_only else group.get_users()
     else:
         users = users or []
-        users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
-    users = sorted(users, key=lambda user: user.user_id)
+        if user_id_only:
+            users = users or [user.user_id for user in CommCareUser.by_domain(domain)]
+        else:
+            users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
+    if not user_id_only:
+        users = sorted(users, key=lambda user: user.user_id)
     return group, users
 
 def create_group_filter(group):

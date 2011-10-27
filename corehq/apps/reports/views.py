@@ -419,13 +419,14 @@ def get_active_cases_json(domain, days=31, **kwargs):
 @login_and_domain_required
 def case_activity(request, domain):
     params = json_request(request.GET)
+    case_type = params.get('case_type', '')
     display = params.get('display', ['percent'])
     group, users = util.get_group_params(domain, **params)
     userIDs = [user.user_id for user in users]
     landmarks = [timedelta(days=l) for l in params.get('landmarks') or [30,60,120]]
     landmarks.append(None)
     now = datetime.utcnow()
-    report = CaseActivity(domain, userIDs, landmarks, now)
+    report = CaseActivity(domain, userIDs, case_type, landmarks, now)
     data = report.get_data()
     headers = ["User"] + [{"html": "Last %s Days" % l.days if l else "Ever", "sort_type": "title-numeric"} for l in landmarks]
     rows = []
@@ -469,7 +470,7 @@ def case_activity(request, domain):
                 pass
             row.append({"html": formatted, "sort_key": unformatted})
         rows.append(row)
-    context = util.report_context(domain, title="Case Activity", group=group)
+    context = util.report_context(domain, title="Case Activity", group=group, case_type=case_type)
     context['report'].update({
         "headers": headers,
         "rows": rows,
@@ -556,7 +557,7 @@ def case_list(request, domain):
     individual = request.GET.get('individual', '')
     case_type = request.GET.get('case_type', '')
 
-    open_cases, all_cases = util.get_case_counts(domain, case_type, individual)
+    open_cases, all_cases = util.get_case_counts(domain, case_type, [individual])
     
     context = util.report_context(domain,
         title='Case List for %s ' % ('<span class="username">%s</span>' % user_id_to_username(individual) if individual else "All CHWs") +
