@@ -7,6 +7,7 @@ from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.util import user_id_to_username
+import couchexport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
@@ -88,32 +89,10 @@ def export_data(req, domain):
               "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
               "max_column_size": int(req.GET.get("max_column_size", 2000))}
 
-    def generate_filter():
-        if group:
-            user_ids = set([user.user_id for user in users])
-            def group_filter(doc):
-                try:
-                    return doc['form']['meta']['userID'] in user_ids
-                except KeyError:
-                    return False
-        else:
-            group_filter = None
+    group_filter = util.create_group_filter(group)
+    errors_filter = instances if not include_errors else None
 
-        if include_errors:
-            errors_filter = None
-        else:
-            errors_filter = instances
-
-        if group_filter or errors_filter:
-            def filter(doc):
-                for fn in (group_filter, errors_filter):
-                    if (fn is not None) and not fn(doc):
-                        return False
-                return True
-        else:
-            filter = None
-        return filter
-    kwargs['filter'] = generate_filter()
+    kwargs['filter'] = couchexport.util.filter_intersection(group_filter, errors_filter)
 
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
@@ -248,12 +227,15 @@ def export_custom_data(req, domain, export_id):
     Export data from a saved export schema
     """
     saved_export = SavedExportSchema.get(export_id)
+    group, users = util.get_group_params(domain, **json_request(req.GET))
     format = req.GET.get("format", "")
     next = req.GET.get("next", "")
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
-    
-    resp = saved_export.download_data(format)
+
+    filter = util.create_group_filter(group)
+
+    resp = saved_export.download_data(format, filter=filter)
     if resp:
         return resp
     else:
@@ -648,8 +630,10 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 def case_export(request, domain, template='reports/basic_report.html',
                                     report_partial='reports/partials/case_export.html'):
+    group, users = util.get_group_params(domain, **json_request(request.GET))
     context = util.report_context(domain, report_partial,
-        title="Export cases, referrals, and users"
+        title="Export cases, referrals, and users",
+        group=group,
     )
     return render_to_response(request, template, context)
 
@@ -663,8 +647,9 @@ def download_cases(request, domain):
 
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
-    users = list(CommCareUser.by_domain(domain))
-    users.extend(CommCareUser.by_domain(domain, is_active=False))
+    group, users = util.get_group_params(domain, **json_request(request.GET))
+    if not group:
+        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users)

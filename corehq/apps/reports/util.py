@@ -116,3 +116,16 @@ def get_group_params(domain, group='', users=None, **kwargs):
         users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
     users = sorted(users, key=lambda user: user.user_id)
     return group, users
+
+def create_group_filter(group):
+    if group:
+        user_ids = set(group.get_user_ids())
+        print user_ids
+        def group_filter(doc):
+            try:
+                return doc['form']['meta']['userID'] in user_ids
+            except KeyError:
+                return False
+    else:
+        group_filter = None
+    return group_filter

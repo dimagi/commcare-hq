@@ -9,6 +9,7 @@
 
 <div id="case_export">
     <form action="{% url download_cases domain %}" method="get">
+        <input type="hidden" name="group" value="{{ group.get_id }}"/>
         Download
         <select name="include_closed">
             <option value="false">all open</option>
