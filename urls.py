@@ -58,6 +58,7 @@ urlpatterns = patterns('',
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
+    (r'^test/CommCare.jar', 'corehq.apps.app_manager.views.download_test_jar'),
     (r'^translations/', include('corehq.apps.translations.urls')),
 ) + patterns('', *LOCAL_APP_URLS)
 
