@@ -1,7 +1,9 @@
 import logging
+import os
 
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+import sys
 from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
@@ -1248,6 +1250,16 @@ def download_jar(req, domain, app_id):
     except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
         return back_to_main(**locals())
+    return response
+
+def download_test_jar(request):
+    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
+        jar = f.read()
+    
+    response = HttpResponse(mimetype="application/java-archive")
+    response['Content-Disposition'] = "filename=CommCare.jar"
+    response['Content-Length'] = len(jar)
+    response.write(jar)
     return response
 
 @safe_download
