@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty
     Property, DocumentSchema, StringProperty, SchemaListProperty
 import json
 from StringIO import StringIO
+from couchexport import util
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import try_import, to_function
 
@@ -180,11 +181,11 @@ class SavedExportSchema(Document, UnicodeMixIn):
         return [self.get_table_configuration(index) \
                 for index, cols in self.schema.tables]
 
-    def get_export_tables(self, previous_export=None):
+    def get_export_tables(self, previous_export=None, filter=None):
         from couchexport.export import get_full_export_tables
         
         full_tables, checkpoint = get_full_export_tables\
-                                    (self.index, previous_export, self.filter)
+                                    (self.index, previous_export, util.intersect_filters(self.filter, filter))
         if not full_tables: 
             return None
         
@@ -197,7 +198,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
         
         return trimmed_tables
     
-    def download_data(self, format="", previous_export=None):
+    def download_data(self, format="", previous_export=None, filter=None):
         """
         If there is data, return an HTTPResponse with the appropriate data. 
         If there is not data returns None.
@@ -208,7 +209,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
         if not format:
             format = self.default_format or Format.XLS_2007
         
-        tables = self.get_export_tables(previous_export)
+        tables = self.get_export_tables(previous_export, filter=filter)
         if not tables:
             return None
         
