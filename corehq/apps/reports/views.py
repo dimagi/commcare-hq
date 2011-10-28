@@ -92,7 +92,7 @@ def export_data(req, domain):
     group_filter = util.create_group_filter(group)
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.filter_intersection(group_filter, errors_filter)
+    kwargs['filter'] = couchexport.util.intersect_filters(group_filter, errors_filter)
 
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
