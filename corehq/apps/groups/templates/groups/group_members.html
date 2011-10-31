@@ -8,11 +8,17 @@
             font-weight: normal;
             font-size: 1.5em;
         }
+        .user-columns {
+            vertical-align: top;
+        }
         .user-bubbles {
             margin: 1.5em;
+            float: left;
+        }
+        #members form {
+            display: inline-block;
         }
         .user-bubble {
-            float: left;
             padding: .5em;
             margin:  .25em;
             cursor: pointer;
@@ -72,6 +78,25 @@
             editorPopup.appendTo($('body')).hide();
             COMMCAREHQ.initBlock(editorPopup);
         });
+        $(function () {
+            var i, j, index,
+                wrapper = $('#non-members'),
+                users = wrapper.find(' > *'),
+                nCols = 3,
+                nNames = Math.ceil(users.length*1.0/nCols),
+                col;
+            for (i = 0; i < nCols; i += 1) {
+                console.log("Column " + i);
+                col = $('<div/>').addClass('user-bubbles').appendTo(wrapper);
+                for (j = 0; j < nNames; j += 1) {
+                    index = i * nNames + j;
+                    console.log(index);
+                    if (index < users.length) {
+                        users.slice(index, index + 1).appendTo(col);
+                    }
+                }
+            }
+        });
     </script>
 {% endblock %}
 
@@ -83,7 +108,7 @@
           </form>
     </div>
     <br style="clear: both;"/>
-    <div class="user-bubbles">
+    <div class="user-bubbles" id="members">
         {% for member in members %}
             <form name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="POST">
                 <div class="user-bubble member ui-corner-all submit">
@@ -93,9 +118,9 @@
                 </div>
             </form>
         {% endfor %}
-        <br style="clear: both;">
     </div>
-    <div class="user-bubbles">
+    <br style="clear: both;">
+    <div class="user-columns" id="non-members">
         {% for nonmember in nonmembers %}
             <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
                 <div class="user-bubble non-member ui-corner-all submit">
