@@ -1090,7 +1090,10 @@ def save_copy(req, domain, app_id):
         next = urlparse.urlunparse(url)
         return next
     if not errors:
-        app.save_copy(comment=comment)
+        try:
+            app.save_copy(comment=comment)
+        except Exception as e:
+            messages.error(req, "Unexpected error saving build:\n%s" % e)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()
