@@ -13,7 +13,9 @@ from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from dimagi.utils.modules import to_function
+from django.conf import settings
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.core.urlresolvers import reverse
 from django_digest.decorators import httpdigest
 from .googlecharts import get_punchcard_url
@@ -486,7 +488,6 @@ def completion_times(request, domain):
     rows = []
     
     if form:
-        totalsum = totalcount = 0
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
                 return None
@@ -996,4 +997,15 @@ def emailtest(request, domain, report_slug):
     report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
-    
+
+@login_and_domain_required
+def report_dispatcher(request, domain, report_slug):
+    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
+    if not mapping or not domain in mapping:
+        return Http404("Sorry, no reports have been configured for this domain.")
+    for model in mapping[domain]:
+        klass = to_function(model)
+        if klass.slug == report_slug:
+            k = klass(domain, request)
+            return k.as_view()
+    return Http404("Can't find that report.")

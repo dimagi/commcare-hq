@@ -1,3 +1,4 @@
+{% load report_tags %}
 
 {% block head %}
 
@@ -81,6 +82,11 @@
         <ul>
             <li><a href="{% url excel_export_data_report domain %}">Export submissions to excel</a></li>
             <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
+        </ul>
+    </li>
+    <li><h2>Custom</h2>
+        <ul>
+            {% custom_report_list domain %}
         </ul>
     </li>
 </ul>

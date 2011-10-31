@@ -75,7 +75,7 @@ def report_context(domain,
         )
     return context
 
-def user_list(domain):
+def user_list(domain): 
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
     users.sort(key=lambda user: (not user.is_active, user.username))
