@@ -57,7 +57,7 @@ def delta_secs(td):
     return 86400. * td.days + td.seconds + 1.0e-6 * td.microseconds
 
 
-DEFAULT_DATE_FORMAT = "%m/%d/%Y"
+DEFAULT_DATE_FORMAT = "%Y-%m-%d"
     
 class DateSpan(object):
     """
