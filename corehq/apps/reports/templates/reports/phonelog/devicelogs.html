@@ -1,0 +1,27 @@
+{% extends 'reports/report_base.html' %}
+{% block head %}
+    {{ block.super }}
+    <style>
+        .duplicate {
+            background: #ccc;
+            display: none;
+        }
+        .nobr {
+            white-space: nowrap;
+        }
+        th {
+            white-space: nowrap;
+        }
+        .fullversion {
+            display: none;
+        }
+    .devicelogs {
+        margin: 1em;
+    }
+    </style>
+{% endblock %}
+{% block reportcontent %}
+    <div class="devicelogs">
+        {% include 'phonelog/devicelogs.html' %}
+    </div>
+{% endblock %}

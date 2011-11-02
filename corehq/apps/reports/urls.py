@@ -12,6 +12,24 @@ dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification/$', 'household_verification'),
 )
 
+_phonelog_context = {
+    'report': {
+        'name': "Device Logs",
+    }
+}
+
+phonelog_reports = patterns('',
+    url(r'^$', 'phonelog.views.devices', name="phonelog_devices", kwargs={
+        'template': 'reports/phonelog/devicelist.html',
+        'context': _phonelog_context
+    }),
+    url(r'^(?P<device>\w+)/$', 'phonelog.views.device_log', name="device_log", kwargs={
+        'template': 'reports/phonelog/devicelogs.html',
+        'context': _phonelog_context
+    }),
+)
+
+
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="default_report"),
     url(
@@ -68,5 +86,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/custom/(?P<export_id>\w+)/download/$", 'export_custom_data', name="export_custom_data"),
     
     url(r'^case_export/$', 'case_export', name='case_export'),
-    url(r'^download/cases/$', 'download_cases', name='download_cases')
+    url(r'^download/cases/$', 'download_cases', name='download_cases'),
+
+    url(r'^phonelog/', include(phonelog_reports)),
 )
+
