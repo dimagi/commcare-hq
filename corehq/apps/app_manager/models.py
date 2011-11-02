@@ -847,7 +847,11 @@ class ApplicationBase(VersionedDoc):
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
-    
+
+def validate_lang(lang):
+    if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
+        raise ValueError("Invalid Language")
+
 class Application(ApplicationBase, TranslationMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
@@ -1144,6 +1148,7 @@ class Application(ApplicationBase, TranslationMixin):
         return record
 
     def rename_lang(self, old_lang, new_lang):
+        validate_lang(new_lang)
         if old_lang == new_lang:
             return
         if new_lang in self.langs:

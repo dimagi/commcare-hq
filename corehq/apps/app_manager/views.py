@@ -22,7 +22,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang
 
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from django.utils.http import urlencode
@@ -929,12 +929,19 @@ def edit_app_lang(req, domain, app_id):
         if lang in app.langs:
             messages.error(req, "Language %s already exists" % lang)
         else:
-            app.langs.append(lang)
-            app.save()
+            try:
+                validate_lang(lang)
+            except ValueError as e:
+                messages.error(req, unicode(e))
+            else:
+                app.langs.append(lang)
+                app.save()
     else:
         try:
             app.rename_lang(app.langs[lang_id], lang)
         except AppError as e:
+            messages.error(req, unicode(e))
+        except ValueError as e:
             messages.error(req, unicode(e))
         else:
             app.save()
