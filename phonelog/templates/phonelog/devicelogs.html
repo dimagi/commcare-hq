@@ -1,3 +1,70 @@
+
+{% if more_prev %}
+<span style="float: left;"><a href="?limit={{ limit }}&skip={{ earlier_skip }}"><b>&laquo; earlier &laquo;</b></a></span>
+{% else %}
+<span style="float: left; color: #888;">| earlier &laquo;</span>
+{% endif %}
+
+{% if more_next %}
+<span style="float: right;"><a href="?limit={{ limit }}&skip={{ later_skip }}"><b>&raquo; later &raquo;</b></a></span>
+{% else %}
+<span style="float: right; color: #888;">&raquo; later |</span>
+{% endif %}
+
+<div style="text-align: center;"><a href="{% url phonelog_devices domain=domain %}">back to device list</a></div>
+
+<div style="clear: both;"><br>
+
+<table>
+    <thead>
+        <tr>
+            <th>Received on&hellip;</th>
+            <th>Phone Timestamp</th>
+            <th>Type</th>
+            <th>Message</th>
+            <th>App Version</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for l in logs %}
+            {% ifequal l.rowtype "log" %}
+
+                {% if l.dup %}
+                    <tr class="duplicate dup-{{ l.dupgroup }}">
+                {% else %}
+                    <tr>
+                {% endif %}
+
+                    <td class="nobr"><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></td>
+                    <td class="nobr"><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></td>
+                    <td>{{ l.type }}</td>
+                    <td>{{ l.msg }}</td>
+                    <td class="nobr" align="right">
+                        <span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span>
+                        <span class="fullversion">{{ l.full_version }}</span>
+                    </td>
+                </tr>
+
+            {% else %}
+                {% ifequal l.rowtype "duphdr" %}
+
+                    <tr><td colspan="5" align="center" style="background: #ddd;">hiding <b>{{ l.total }}</b> duplicate log entries (<b>{{ l.uniq }}</b> unique) first received on <b>{{ l.recv }}</b> <a href="#" onclick="showdups({{ l.i }}); return false;">(show)</a></td></tr>
+
+                {% else %}
+
+                    {% if l.regress %}
+                        <tr><td colspan="5" align="center" style="font-style: italic; color: #888; background: #faa;">phone time discrepancy</td></tr>
+                    {% else %}
+                        <tr><td colspan="5" align="center" style="font-style: italic; color: #888;">{% if l.fdiff > 0 %}&hellip; time passes: {{ l.diff }} &hellip;{% else %}logs out of order?{% endif %}</td></tr>
+                    {% endif %}
+
+                {% endifequal %}
+            {% endifequal %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% comment %}
 {% extends "layout.html" %}
 {% block page_imports %}
     {% include "imports/jquery-ui.html" %}
@@ -56,8 +123,8 @@ function showdups(i) {
 <td>Type</td>
 <td>Message</td>
 <td align="right">App Version
-<span class="shortversion"><a href="#" onclick="toggle(true); return false;"><nobr>(show full)</nobr></a></span>
-<span class="fullversion"><a href="#" onclick="toggle(false); return false;"><nobr>(hide full)</nobr></a></span>
+<span class="shortversion"><a href="#" onclick="toggle(true); return false;">(show full)</a></span>
+<span class="fullversion"><a href="#" onclick="toggle(false); return false;">(hide full)</a></span>
 </td>
 </tr>
 {% for l in logs %}
@@ -69,11 +136,11 @@ function showdups(i) {
 <tr>
 {% endif %}
 
-<td><nobr><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></nobr></td>
-<td><nobr><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></nobr></td>
+<td><span style="color: #888;">{{ l.recvd|date:"Y-" }}</span><b>{{ l.recvd|date:"m-d" }}</b> {{ l.recvd|date:"H:i" }}<span style="color: #888;">{{ l.recvd|date:":s" }}</span></td>
+<td><span style="color: #888;">{{ l.date|date:"Y-" }}</span><b>{{ l.date|date:"m-d" }}</b> {{ l.date|date:"H:i" }}<span style="color: #888;">{{ l.date|date:":s" }}</span></td>
 <td>{{ l.type }}</td>
 <td>{{ l.msg }}</td>
-<td align="right"><nobr><span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span><span class="fullversion">{{ l.full_version }}</span></nobr></td>
+<td align="right"><span class="shortversion">{{ l.version|default:"<i>???</i>" }}</span><span class="fullversion">{{ l.full_version }}</span></td>
 </tr>
 
 {% else %}{% ifequal l.rowtype "duphdr" %}
@@ -109,3 +176,21 @@ function showdups(i) {
 <div style="clear: both;"><br>
 
 {% endblock %}
+
+{% endcomment %}
+
+{% if more_prev %}
+<span style="float: left;"><a href="?limit={{ limit }}&skip={{ earlier_skip }}"><b>&laquo; earlier &laquo;</b></a></span>
+{% else %}
+<span style="float: left; color: #888;">| earlier &laquo;</span>
+{% endif %}
+
+{% if more_next %}
+<span style="float: right;"><a href="?limit={{ limit }}&skip={{ later_skip }}"><b>&raquo; later &raquo;</b></a></span>
+{% else %}
+<span style="float: right; color: #888;">&raquo; later |</span>
+{% endif %}
+
+<div style="text-align: center;"><a href="{% url phonelog.views.devices domain=domain %}">back to device list</a></div>
+
+<div style="clear: both;"><br>

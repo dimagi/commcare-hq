@@ -61,22 +61,25 @@ def overview_list(db, domain):
     return entries
 
 @login_and_domain_required
-def devices(request, domain):
+def devices(request, domain, template='phonelog/devicelist.html', context=None):
+    context = context or {}
     entries = overview_list(get_db(), domain)
-    return render_to_response(request, 'phonelog/devicelist.html', {'entries': entries, 'domain': domain})
+    context.update({'entries': entries, 'domain': domain})
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
-def device_log(request, domain, device):
+def device_log(request, domain, device, template='phonelog/devicelogs.html', context=None):
+    context = context or {}
     db = get_db()
 
     try:
         limit = int(request.GET.get('limit'))
-    except:
+    except Exception:
         limit = 1000
 
     try:
         skip = int(request.GET.get('skip'))
-    except:
+    except Exception:
         skip = 0
 
     logdata = db.view('phonelog/device_logs',
@@ -202,7 +205,7 @@ def device_log(request, domain, device):
                     
             yield r
 
-    return render_to_response(request, 'phonelog/devicelogs.html', {
+    context.update({
         'logs': annotate_logs(logdata),
         'limit': limit,
         'more_next': more_next,
@@ -211,6 +214,8 @@ def device_log(request, domain, device):
         'later_skip': later_skip,
         'domain': domain,
     })
+
+    return render_to_response(request, template, context)
 
 def parse_isodate(datestr):
     return datetime.strptime(datestr[:19], '%Y-%m-%dT%H:%M:%S')
