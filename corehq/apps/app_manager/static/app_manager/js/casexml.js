@@ -238,7 +238,7 @@ var CaseXML = (function(undefined){
     };
 
     CaseXML.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
-        showSuggestion = showSuggestion === undefined ? true : showSuggestion;
+        showSuggestion = showSuggestion === undefined ? false : showSuggestion;
         return this.propertyList_ejs.render({
             map: map,
             keyType: keyType,

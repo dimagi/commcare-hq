@@ -912,7 +912,7 @@ class Application(ApplicationBase, TranslationMixin):
     def post_url(self):
         return "%s%s" % (
             self.url_base,
-            reverse('receiver_post_with_app_id', args=[self.domain, self._id])
+            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
         )
     @property
     def ota_restore_url(self):
