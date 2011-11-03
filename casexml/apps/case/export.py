@@ -1,19 +1,20 @@
 def export_cases_and_referrals(cases, workbook, users=None):
     if users:
-        user_ids = set([user.user_id for user in users])
+        by_user_id = dict([(user.user_id, user) for user in users])
     else:
-        user_ids = None
+        by_user_id = None
     case_static_keys = (
         "case_id",
+        "username",
+        "user_id",
+        "type",
         "name",
         "opened_on",
         "modified_on",
-        "type",
         "closed",
         "closed_on",
         "domain",
         "external_id",
-        "user_id",
     )
     referral_keys = (
         "case_id",
@@ -29,10 +30,13 @@ def export_cases_and_referrals(cases, workbook, users=None):
     referral_rows = []
 
     for case in cases:
-        if not users or users and case.user_id in user_ids:
+        if not users or users and case.user_id in by_user_id:
             case_row = {'dynamic_properties': {}}
             for key in case_static_keys:
-                case_row[key] = getattr(case, key)
+                if key == 'username':
+                    case_row[key] = by_user_id[case.user_id].raw_username
+                else:
+                    case_row[key] = getattr(case, key)
             for key in case.dynamic_properties():
                 case_dynamic_keys.add(key)
                 case_row['dynamic_properties'][key] = getattr(case, key)
