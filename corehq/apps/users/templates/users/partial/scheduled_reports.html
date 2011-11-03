@@ -23,10 +23,10 @@
                             <form name="drop_report" action="{% url drop_scheduled_report domain couch_user.couch_id report.get_id %}" method="POST">
                                 <table>
                                     <tr><td>
-                                    Are you sure you want to cancel this report?
+                                    Are you sure you want to stop sending this report?
                                     </td></tr>
                                 </table>
-                                <input type="submit" value="Drop" />
+                                <input type="submit" value="{% trans 'Stop Sending' %}" />
                             </form>
                         </div>
                     </td>
