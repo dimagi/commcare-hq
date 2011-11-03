@@ -54,7 +54,7 @@ def login_or_digest(fn):
         if not request.user.is_authenticated():
             def _inner(request, domain, *args, **kwargs):
                 couch_user = CouchUser.from_django_user(request.user)
-                if couch_user.is_member_of(domain):
+                if couch_user.is_web_user() and couch_user.is_member_of(domain):
                     return fn(request, domain, *args, **kwargs)
                 else:
                     return HttpResponseForbidden()

@@ -476,6 +476,9 @@ class CommCareUser(CouchUser):
     def is_commcare_user(self):
         return True
 
+    def is_web_user(self):
+        return False
+
     def add_commcare_account(self, domain, device_id, user_data=None):
         """
         Adds a commcare account to this.
@@ -593,6 +596,9 @@ class WebUser(CouchUser):
     def is_commcare_user(self):
         return False
 
+    def is_web_user(self):
+        return True
+    
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
