@@ -289,7 +289,7 @@ class SubmitHistory(ReportBase):
                 username = user_id_to_username(self.individual)
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain, html=True)
+                xmlns = xmlns_to_name(xmlns, self.domain)
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
@@ -308,7 +308,7 @@ class SubmitHistory(ReportBase):
                 fake_name = row['value'].get('username')
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain, html=True)
+                xmlns = xmlns_to_name(xmlns, self.domain)
                 username = user_id_to_username(user_id)
                 if username:
                     return [form_data_link(row['id']), username, time, xmlns]
@@ -506,8 +506,10 @@ def completion_times(request, domain):
                          ])
             totalsum = totalsum + datadict["sum"]
             totalcount = totalcount + datadict["count"]
-            globalmin = min(globalmin, datadict["min"])
-            globalmax = max(globalmax, datadict["max"])
+            if datadict['min'] is not None:
+                globalmin = min(globalmin, datadict["min"])
+            if datadict['max'] is not None:
+                globalmax = max(globalmax, datadict["max"])
         if totalcount:
             rows.insert(0, ["-- Total --",
                             to_minutes(float(totalsum), float(totalcount)),
