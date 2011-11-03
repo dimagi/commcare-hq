@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
@@ -137,12 +138,19 @@ def bug_report(req):
         "{message}\n"
     ).format(**report)
 
+    from django.core.mail.message import EmailMessage
     from django.core.mail import send_mail
-    
-    send_mail(
-        subject,
-        message,
-        report['username'],
-        settings.BUG_REPORT_RECIPIENTS
-    )
+
+    try:
+        email = EmailMessage(
+            subject,
+            message,
+            report['username'],
+            settings.BUG_REPORT_RECIPIENTS,
+            headers = {'Reply-To': report['username']}
+        )
+        email.send(fail_silently=False)
+    except Exception, e:
+        logging.exception("Problem sending bug report email")
+        
     return HttpResponse()

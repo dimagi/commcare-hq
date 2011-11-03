@@ -39,8 +39,8 @@ from utilities.profile import profile as profile_decorator, profile
 import logging
 
 MISSING_DEPENDECY = \
-"""Aw shucks, someone forgot to install the google chart library 
-on this machine and this feature needs it. To get it, run 
+"""Aw shucks, someone forgot to install the google chart library
+on this machine and this feature needs it. To get it, run
 easy_install pygooglechart.  Until you do that this won't work.
 """
 
@@ -153,12 +153,12 @@ class UpdateReferralAction(FormAction):
 
 class OpenReferralAction(UpdateReferralAction):
     name_path       = StringProperty()
-    
+
 class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
 
-    
+
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
     update_case     = SchemaProperty(UpdateCaseAction)
@@ -254,10 +254,10 @@ class FormBase(DocumentSchema):
         if not self.unique_id:
             self.unique_id = FormBase.generate_id()
         return self.unique_id
-    
+
     def get_app(self):
         return self._app
-    
+
     def refresh(self):
         soup = BeautifulStoneSoup(self.source)
         try:
@@ -280,14 +280,14 @@ class FormBase(DocumentSchema):
             if a.is_active():
                 actions[action_type] = a
         return actions
-    
+
     def active_actions(self):
         return self._get_active_actions((
             'open_case', 'update_case', 'close_case',
             'open_referral', 'update_referral', 'close_referral',
             'case_preload', 'referral_preload'
         ))
-            
+
     def active_non_preloader_actions(self):
         return self._get_active_actions((
             'open_case', 'update_case', 'close_case',
@@ -295,14 +295,14 @@ class FormBase(DocumentSchema):
 
     def get_questions(self, langs):
         return XForm(self.source).get_questions(langs)
-    
+
     def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
         return json.dumps(source) if dump_json else source
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
-        
+
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
         source.rename_language(old_code, new_code)
@@ -363,13 +363,13 @@ class FormBase(DocumentSchema):
         self.requires = requires
 
     def requires_case(self):
-        # all referrals also require cases 
+        # all referrals also require cases
         return self.requires in ("case", "referral")
-    
+
     def requires_case_type(self):
         return self.requires_case() or \
                bool(self.active_non_preloader_actions())
-    
+
     def requires_referral(self):
         return self.requires == "referral"
 
@@ -402,7 +402,7 @@ class DetailColumn(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
-            
+
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -419,7 +419,7 @@ class Detail(DocumentSchema):
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
-    
+
     def append_column(self, column):
         self.columns.append(column)
     def update_column(self, column_id, column):
@@ -621,11 +621,11 @@ class VersionedDoc(Document):
     def scrub_source(self, source):
         """
         To be overridden.
-        
+
         Use this to scrub out anything
         that should be shown in the
         application source, such as ids, etc.
-        
+
         """
         raise NotImplemented()
 
@@ -650,7 +650,7 @@ class VersionedDoc(Document):
         source['domain'] = domain
         app = cls.wrap(source)
         return app
-        
+
 
 
 class ApplicationBase(VersionedDoc):
@@ -664,7 +664,7 @@ class ApplicationBase(VersionedDoc):
     # is a tag like "1.1" that we use to look up the latest build of that type
     # deprecated
     # commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
-    
+
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
     native_input = BooleanProperty(default=False)
@@ -692,7 +692,7 @@ class ApplicationBase(VersionedDoc):
 
         if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
             data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
-            
+
         return super(ApplicationBase, cls).wrap(data)
 
     def get_build(self):
@@ -778,12 +778,12 @@ class ApplicationBase(VersionedDoc):
 
     @property
     def odk_profile_url(self):
-        
+
         return "%s%s" % (
             get_url_base(),
             reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
         )
-        
+
     def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
@@ -796,7 +796,7 @@ class ApplicationBase(VersionedDoc):
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url)
-            
+
             # "Level H" error correction with a 0 pixel margin
             code.set_ec('H', 0)
             f, fname = tempfile.mkstemp()
@@ -806,7 +806,7 @@ class ApplicationBase(VersionedDoc):
                 png_data = f.read()
                 self.put_attachment(png_data, "qrcode.png", content_type="image/png")
             return png_data
-        
+
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -955,7 +955,7 @@ class Application(ApplicationBase, TranslationMixin):
             })
             custom = commcare_translations.loads(custom)
             messages.update(custom)
-            
+
             # include language code names
             for lc in self.langs:
                 name = langcodes.get_name(lc) or lc
@@ -988,7 +988,7 @@ class Application(ApplicationBase, TranslationMixin):
             if property['id'] not in app_profile[type]:
                 if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
                     app_profile[type][property['id']] = property['default']
-                    
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -1012,12 +1012,12 @@ class Application(ApplicationBase, TranslationMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self, template='app_manager/suite.xml'):
-            
+
         return render_to_string(template, {
             'app': self,
             'langs': ["default"] + self.langs
         })
-    
+
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
@@ -1066,7 +1066,7 @@ class Application(ApplicationBase, TranslationMixin):
                     'module': module,
                     'form': form
                 }
-                
+
     def get_form(self, unique_form_id, bare=True):
         def matches(form):
             return form.get_unique_id() == unique_form_id
@@ -1090,7 +1090,7 @@ class Application(ApplicationBase, TranslationMixin):
             )
         )
         return self.get_module(-1)
-        
+
     def new_module_from_source(self, source):
         self.modules.append(Module.wrap(source))
         return self.get_module(-1)
@@ -1160,7 +1160,7 @@ class Application(ApplicationBase, TranslationMixin):
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
-        
+
     def rearrange_langs(self, i, j):
         langs = self.langs
         langs.insert(i, langs.pop(j))
@@ -1186,7 +1186,7 @@ class Application(ApplicationBase, TranslationMixin):
             form['unique_id'] = new_unique_id
             if source['_attachments'].has_key("%s.xml" % unique_id):
                 source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
-        
+
         change_unique_id(source['user_registration'])
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
@@ -1261,7 +1261,7 @@ class Application(ApplicationBase, TranslationMixin):
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
-        
+
 
 class NotImplementedYet(Exception):
     pass
@@ -1295,7 +1295,7 @@ class RemoteApp(ApplicationBase):
             return urlopen(self.profile_url).read()
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
-        
+
     def fetch_file(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
         if location.startswith('./'):
@@ -1329,7 +1329,8 @@ class RemoteApp(ApplicationBase):
         for location in locations:
             files.update((self.fetch_file(location),))
         return files
-
+    def scrub_source(self, source):
+        pass
 
 class DomainError(Exception):
     pass
@@ -1338,7 +1339,7 @@ class AppError(Exception):
     pass
 
 class BuildErrors(Document):
-    
+
     errors = ListProperty()
 
 def get_app(domain, app_id, wrap_cls=None):

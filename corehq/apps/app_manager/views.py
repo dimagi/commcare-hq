@@ -178,7 +178,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             )
 
         if app_id:
-            app = Application.get(app_id)
+            app = get_app(None, app_id)
             assert(app.doc_type in ('Application', 'RemoteApp'))
             assert(req.couch_user.is_member_of(app.domain))
         else:
