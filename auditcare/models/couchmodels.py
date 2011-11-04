@@ -312,7 +312,12 @@ class AccessAudit(AuditEvent):
         audit = cls.create_audit(cls, user)
         audit.ip_address = utils.get_ip(request)
 
-        audit.description = "Logout %s" % (user.username)
+        if user == AnonymousUser:
+            audit.description = "Logout anonymous"
+        elif user is None:
+            audit.description = "None"
+        else:
+            audit.description = "Logout %s" % (user.username)
         audit.access_type = 'logout'
         audit.session_key = request.session.session_key
         audit.save()
