@@ -14,7 +14,11 @@
             <dl>
             {% for d in changes %}
                 <dt>{{ d.0 }}
-                    <dd>by {{d.1.user}} on {{ d.1.event_date }}</dd>
+                    <dd>by {{d.1.user}} on {{ d.1.event_date }}<br>
+                        {% for k in d.1.changed.keys %}
+                            {{ k }}<br>
+                        {% endfor %}
+                    </dd>
             {% endfor %}
             </dl>
 
