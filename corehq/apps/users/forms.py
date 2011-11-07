@@ -30,16 +30,27 @@ class CommCareAccountForm(forms.Form):
         app_label = 'users'
     
     def clean(self):
-        if self.cleaned_data['password'] != self.cleaned_data['password_2']:
-            raise forms.ValidationError("Passwords do not match")
-        username = self.cleaned_data['username']
-        domain = self.cleaned_data['domain']
-        username = format_username(username, domain)
-        num_couch_users = len(CouchUser.view("users/by_username",
-                                             key=username))
-        if num_couch_users > 0:
-            raise forms.ValidationError("CommCare user already exists")
+        try:
+            password = self.cleaned_data['password']
+            password_2 = self.cleaned_data['password_2']
+        except KeyError:
+            pass
+        else:
+            if password != password_2:
+                raise forms.ValidationError("Passwords do not match")
 
-        # set the cleaned username to user@domain.commcarehq.org
-        self.cleaned_data['username'] = username
+        try:
+            username = self.cleaned_data['username']
+        except KeyError:
+            pass
+        else:
+            domain = self.cleaned_data['domain']
+            username = format_username(username, domain)
+            num_couch_users = len(CouchUser.view("users/by_username",
+                                                 key=username))
+            if num_couch_users > 0:
+                raise forms.ValidationError("CommCare user already exists")
+
+            # set the cleaned username to user@domain.commcarehq.org
+            self.cleaned_data['username'] = username
         return self.cleaned_data
