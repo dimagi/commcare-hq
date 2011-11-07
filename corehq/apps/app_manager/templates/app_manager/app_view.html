@@ -4,7 +4,7 @@
 {% block head %}
     {{ block.super }}
     {% if app.doc_type == "Application" %}
-        <script src="{{ STATIC_URL }}app_manager/js/commcareProperties-001.js"></script>
+        <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js?version=2"></script>
         <script src="{{ STATIC_URL }}translations/js/translations.js?version=4"></script>
         <script>
             $(function () {
@@ -255,7 +255,7 @@
                     </th>
                     <td>
                         {% if edit %}
-                            <textarea class="autosave" name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
+                            <textarea name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
                         {% else %}
                             <p>{{ app.success_message|trans:langs }}</p>
                         {% endif %}

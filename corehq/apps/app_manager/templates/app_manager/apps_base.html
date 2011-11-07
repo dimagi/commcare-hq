@@ -7,11 +7,12 @@
 {% block head %}
     {% include "imports/jqmodal.html" %}
     <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css?version=2"/>
-    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js?version=1"></script>
+    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js?version=2"></script>
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=5"></script>
-    <script type="text/javascript">
+    <script src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=5"></script>
+    <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery.textchange.min.js"></script>
+    <script>
     $().ready(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
                                    ajaxText: "Please wait while we load that for you..." });

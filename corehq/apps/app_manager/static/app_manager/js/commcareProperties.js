@@ -224,7 +224,7 @@ var CommcareSettings = {
                 
                 for (i = 0; i < that.length; i += 1) {
                     that[i].render();
-                    that[i].on('change', function(){
+                    that[i].on('change textchange', function(){
                         that.saveButton.fire('change');
                     });
                 }

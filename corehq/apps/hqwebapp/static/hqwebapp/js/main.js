@@ -162,6 +162,9 @@ var COMMCAREHQ = (function () {
                         }
                     },
                     setState: function (state) {
+                        if (this.state === state) {
+                            return;
+                        }
                         this.state = state;
                         this.$save.detach();
                         this.$saving.detach();
@@ -228,10 +231,12 @@ var COMMCAREHQ = (function () {
                                 success: options.success
                             });
                         }
-                    });
-                $form.find('*').change(function () {
-                    button.fire('change');
-                });
+                    }),
+                    fireChange = function () {
+                        button.fire('change');
+                    };
+                $form.find('*').change(fireChange);
+                $form.find('input, textarea').bind('textchange', fireChange);
                 return button;
             },
             message: {

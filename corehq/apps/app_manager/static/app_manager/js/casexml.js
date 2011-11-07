@@ -71,7 +71,7 @@ var CaseXML = (function(undefined){
     CaseXML.prototype.init = function(){
         var casexml = this;
         if(this.questions.length && this.edit) {
-            this.home.delegate('input, select', 'change', function(){
+            this.home.delegate('input, select', 'change textchange', function(){
                 // recompute casexml_json
                 casexml.refreshActions();
                 casexml.render();
