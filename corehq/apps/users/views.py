@@ -18,7 +18,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.web import render_to_response, json_response
@@ -85,6 +85,27 @@ def create_web_user(request, domain, template="users/create_web_user.html"):
         registration_form=form
     )
     return render_to_response(request, template, context)
+
+@require_can_edit_users
+@require_POST
+def remove_web_user(request, domain, couch_user_id):
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    record = user.delete_domain_membership(domain, create_record=True)
+    user.save()
+    messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
+            username=user.username,
+            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+        ), extra_tags="html")
+    return HttpResponseRedirect(reverse('web_users', args=[domain]))
+
+@require_can_edit_users
+def undo_remove_web_user(request, domain, record_id):
+    record = RemoveWebUserRecord.get(record_id)
+    record.undo()
+    messages.success(request, 'You have successfully restored {username}.'.format(
+        username=WebUser.get_by_user_id(record.user_id).username
+    ))
+    return HttpResponseRedirect(reverse('web_users', args=[domain]))
 
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):

@@ -1,5 +1,6 @@
 $(function(){
 
+    $('#user-options').addClass('ui-corner-left');
     $('#user-options li').each(function(){
         var url = $(this).find('a').attr('href');
         if (location.pathname.indexOf(url) == 0) {

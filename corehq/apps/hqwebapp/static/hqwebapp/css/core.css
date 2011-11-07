@@ -320,17 +320,17 @@ footer {
     border: 1px solid #bbb;
 }
 
-/* make join .sidebar and .next-to-sidebar horizontally */
+/* make join .sidebar and .sidebar + * horizontally */
 .sidebar-wrapper {
     display: table;
     width: 100%;
 }
-.sidebar, .next-to-sidebar {
+.sidebar, .sidebar + * {
     display: table-cell;
     border-top: none;
     vertical-align: top;
 }
-.next-to-sidebar {
+.sidebar + * {
     border: none;
     padding: 1em;
 }
@@ -393,10 +393,10 @@ table.config td, table.config, th {
 table.config th {
     text-align: left;
 }
-.next-to-sidebar h3{
+.sidebar + * h3{
     text-align: center;
 }
-.next-to-sidebar {
+.sidebar + * {
     position: relative;
 }
 

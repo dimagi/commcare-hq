@@ -8,11 +8,6 @@
 {% endblock %}
 {% block content %}
     <div id="main_container">
-        <div id="title-bar" class="container">
-            <div class="page-title">
-                {% block page_title %}<h1>Users</h1>{% endblock %}
-            </div>
-        </div>
         <div class="sidebar-wrapper">
             <div class="sidebar" id="user-options">
                 <strong>My Account</strong>
@@ -23,7 +18,7 @@
                     <li><a href="{% url change_my_password domain %}">Change Password</a></li>
                 </ul>
                 {% if request.couch_user.is_domain_admin or request.user.is_superuser %}
-                    <strong>Domain "{{ domain }}"</strong>
+                    <strong>User Management</strong>
                     <ul>
                         <li><a href="{% url web_users domain %}">Web Users</a>
                             {% block web_users_indicator %}{% endblock %}
@@ -38,16 +33,16 @@
                 {% endif %}
             </div>
 
-            <div class="next-to-sidebar">
+            <article id="user-view">
                 {% block user-view %}
-                    <h2 class="message">Click on the menu to the left to edit your settings.</h2>
+                    <p class="message">Click on the menu to the left to edit your settings.</p>
                 {% endblock %}
                 {% if error %}
                     <div id="error_msg">
                         {{ error }}
                     </div>
                 {% endif %}
-            </div>
+            </article>
 
         </div>
     </div>

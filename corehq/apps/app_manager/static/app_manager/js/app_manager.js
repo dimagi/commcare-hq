@@ -58,6 +58,8 @@
             }());
         }
 
+        $('.sidebar').addClass('ui-corner-bl');
+
         $("#form-tabs").tabs({
             cookie: {},
             select: function (event, ui) {

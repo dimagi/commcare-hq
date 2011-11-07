@@ -48,7 +48,6 @@
 {% endblock %}
 
 {% block user-view %}
-<div class='all_users'>
 	<h1>CommCare Users</h1>
     <table class='big_border'>
         {% if commcare_users %}
@@ -158,5 +157,4 @@
     <div>
         <a class="new_link" href="{% url add_commcare_account domain %}">CommCare User</a>
     </div>
-</div>
 {% endblock %}

@@ -353,7 +353,7 @@ $(function () {
         });
     }());
 
-    $(".sidebar").addClass('ui-widget ui-widget-content ui-corner-bl');
+    $(".sidebar").addClass('ui-widget ui-widget-content');
     $(".sidebar h2").addClass('ui-corner-all');
     $(".sidebar ul li").addClass('ui-corner-all');
     $(".sidebar ul li div").addClass('ui-corner-top');

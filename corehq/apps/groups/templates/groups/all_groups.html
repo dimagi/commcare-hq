@@ -1,6 +1,5 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
-{% block page_title %}<h1>Groups</h1>{% endblock %}
 
 {% block head %}
     {{ block.super }}
@@ -42,7 +41,7 @@
 
 {% endblock %}
 {% block user-view %}
-<div class='all_users'>
+    <h1>Groups</h1>
     {% if not all_groups %}
         <div style="padding: 10px 5px 2px 15px; color: #666">No groups</div>
     {% endif %}
@@ -70,6 +69,5 @@
             {% endblock %}
             </td>
     </tr></table>
-</div>
 {% endblock %}
 

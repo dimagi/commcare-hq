@@ -25,6 +25,7 @@ from corehq.apps.users.util import normalize_username, user_data_from_registrati
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.undo import DeleteRecord
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
@@ -624,15 +625,24 @@ class WebUser(CouchUser):
                                                         **kwargs))
         self.domains.append(domain)
 
-    def delete_domain_membership(self, domain):
+    def delete_domain_membership(self, domain, create_record=False):
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
+                if create_record:
+                    record = RemoveWebUserRecord(
+                        domain=domain,
+                        user_id=self.user_id,
+                        domain_membership=dm,
+                    )
                 del self.domain_memberships[i]
                 break
         for i, domain_name in enumerate(self.domains):
             if domain_name == domain:
                 del self.domains[i]
                 break
+        if create_record:
+            record.save()
+            return record
     
     def is_domain_admin(self, domain=None):
         if not domain:
@@ -781,4 +791,12 @@ class Invitation(Document):
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, text_content, html_content)
 
+class RemoveWebUserRecord(DeleteRecord):
+    user_id = StringProperty()
+    domain_membership = SchemaProperty(DomainMembership)
+
+    def undo(self):
+        user = WebUser.get_by_user_id(self.user_id)
+        user.add_domain_membership(**self.domain_membership._doc)
+        user.save()
 from .signals import *
