@@ -6,7 +6,7 @@
     <script src="{{ STATIC_URL }}hqwebapp/javascripts/underscore-1.1.7.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/lcs-merge.js"></script>
     <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/detail-screen-config.css"/>
-    <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config-003.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config.js?version=4"></script>
     <script>
         $(function () {
             var $home = $("#detail-screen-config");
@@ -22,6 +22,7 @@
                     referral: ["id", "type", "date-due", "date-created"]
                 },
                 lang: {{ lang|JSON }},
+                langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
                 saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}"
             });

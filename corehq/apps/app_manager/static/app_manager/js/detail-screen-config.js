@@ -1,16 +1,32 @@
-/*globals $, _, uiElement, eventize, lcsMerge */
+/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column;
-    function formatEnum(obj, lang) {
-        var key, parts = [];
+    function formatEnum(obj, lang, langs) {
+        var key, visibleParts = [], invisibleParts = [], visibleValue, invisibleValue, i;
         for (key in obj) {
             if (obj.hasOwnProperty(key)) {
-                parts.push(key + '=' + (obj[key][lang] || ""));
+                visibleValue = "";
+                invisibleValue = "";
+                if (obj[key][lang]) {
+                    visibleValue = obj[key][lang];
+                    invisibleValue = obj[key][lang];
+                } else {
+                    for (i = 0; i < langs.length; i += 1) {
+                        if (obj[key][langs[i]]) {
+                            visibleValue = obj[key][langs[i]] + " [" + langs[i] + "]";
+                        }
+                    }
+                }
+                visibleParts.push(key + '=' + visibleValue);
+                invisibleParts.push(key + '=' + invisibleValue);
             }
         }
-        return parts.join(',\n');
+        return {
+            visible: visibleParts.join(',\n'),
+            invisible: invisibleParts.join(',\n')
+        };
     }
     function unformatEnum(text, lang, original) {
         var json, mapping, key,
@@ -81,7 +97,23 @@ var DetailScreenConfig = (function () {
                 {label: "Referral", value: "referral"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field);
-            this.header = uiElement.input().val(this.original.header ? this.original.header[this.lang] || "" : "");
+
+            (function () {
+                var i, lang, visibleVal = "", invisibleVal = "";
+                if (that.original.header && that.original.header[that.lang]) {
+                    visibleVal = invisibleVal = that.original.header[that.lang];
+                } else {
+                    for (i = 0; i < that.screen.langs.length; i += 1) {
+                        lang = that.screen.langs[i];
+                        if (that.original.header[lang]) {
+                            visibleVal = that.original.header[lang] + " [" + lang + "]";
+                            break;
+                        }
+                    }
+                }
+                that.header = uiElement.input().val(invisibleVal);
+                that.header.setVisibleValue(visibleVal);
+            }());
             this.format = uiElement.select([
                 {value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
                 {value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
@@ -92,8 +124,12 @@ var DetailScreenConfig = (function () {
                 {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT}
             ]).val(this.original.format || null);
 
-            this.enum_extra = uiElement.textarea().val(formatEnum(this.original['enum'], this.lang) || "");
-            this.enum_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+            (function () {
+                var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
+                that.enum_extra = uiElement.textarea().val(f.invisible);
+                that.enum_extra.setVisibleValue(f.visible);
+                that.enum_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+            }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
             elements = [
@@ -110,7 +146,7 @@ var DetailScreenConfig = (function () {
             function fireChange() {
                 that.fire('change');
             }
-            
+
             for (i = 0; i < elements.length; i += 1) {
                 this[elements[i]].on('change', fireChange);
             }
@@ -198,6 +234,7 @@ var DetailScreenConfig = (function () {
             this.suggestedColumns = [];
             this.model = spec.short.type === "ref_short" ? "referral" : "case";
             this.lang = options.lang;
+            this.langs = options.langs || [];
             this.properties = options.properties;
 
             function fireChange() {
@@ -229,13 +266,13 @@ var DetailScreenConfig = (function () {
                 column.setGrip(false);
                 return column;
             }
-            
+
             function toTitleCase(str) {
                 return str.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\w\S*/g, function (txt) {
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
             }
-            
+
             columns = lcsMerge(spec.short.columns, spec.long.columns, _.isEqual).merge;
 
             // set up the columns
@@ -269,7 +306,7 @@ var DetailScreenConfig = (function () {
                 $(this).val("").trigger('change');
                 $(this).autocomplete('search');
             });
-            
+
             // set up suggestion columns
             for (model in this.properties) {
                 if (this.properties.hasOwnProperty(model) && !(this.model === 'case' && model === 'referral')) {
@@ -393,7 +430,7 @@ var DetailScreenConfig = (function () {
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
-                
+
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInShort.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
 
@@ -422,7 +459,7 @@ var DetailScreenConfig = (function () {
                 var $table, $columns, $suggestedColumns, $tr, i, $box;
                 $('<h1/>').text(sectionLabels[this.model]).appendTo(this.$home);
                 $box = $("<div/>").addClass('config').appendTo(this.$home);
-                
+
                 // this is a not-so-elegant way to get the styling right
                 COMMCAREHQ.initBlock(this.$home);
 
@@ -510,12 +547,14 @@ var DetailScreenConfig = (function () {
             this.properties = spec.properties;
             this.screens = [];
             this.lang = spec.lang;
+            this.langs = spec.langs || [];
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
             function addScreen(short, long) {
                 var screen = Screen.init($('<div/>'), {'short': short, 'long': long}, {
                     lang: that.lang,
+                    langs: that.langs,
                     edit: that.edit,
                     properties: that.properties,
                     saveUrl: that.saveUrl
@@ -560,6 +599,6 @@ var DetailScreenConfig = (function () {
 
         UNSAVED_MESSAGE: 'You have unsaved detail screen configurations.'
     };
-    
+
     return DetailScreenConfig;
 }());

@@ -33,10 +33,13 @@ var uiElement;
                 return this.value;
             } else {
                 this.value = value;
-                this.setElemValue(this.value);
-                this.$noedit_view.text(this.value);
+                this.setVisibleValue(this.value);
                 return this;
             }
+        },
+        setVisibleValue: function (value) {
+            this.setElemValue(value);
+            this.$noedit_view.text(value);
         },
         setEdit: function (edit) {
             this.edit = edit;
