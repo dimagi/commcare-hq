@@ -114,13 +114,13 @@
     "id": "cc-entry-mode",
     "requires": "{features.sense}='false'",
     "values": ["cc-entry-quick", "cc-entry-review"],
-    "value_names": ["Quick", "Review"],
-    "values_txt": "Review mode will display information about questions for longer and require more input from the user. Quick will proceed to the next question whenever enough information is provided.",
+    "value_names": ["Normal Scrolling", "Numeric Selection"],
+    "values_txt": "Numeric Selection mode will display information about questions for longer and require more input from the user. Normal Scrolling will proceed to the next question whenever enough information is provided.",
     "default": "cc-entry-quick",
     "contingent_default": [{"condition": "{features.sense}='false'", "value": "cc-entry-review"}],
     "group": "sense"
 }, {
-    "name": "Send Unsent Style",
+    "name": "Send Forms Mode",
     "description": "How Send All Unsent functionality is presented to the user",
     "id": "cc-send-unsent",
     "requires": "{features.sense}='false' && {properties.server-tether}='push-only'",
