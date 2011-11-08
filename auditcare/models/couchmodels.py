@@ -134,6 +134,31 @@ class ModelActionAudit(AuditEvent):
     def compute_changes(self, save=False):
         pass
 
+    def get_changed_fields(self, filters=None, excludes=None):
+        changed_keys = self.changed.keys()
+        added_keys = self.added.keys()
+        removed_keys = self.removed.keys()
+
+        if filters is not None and len(filters) > 0:
+            are_changed = filter(lambda x: x in changed_keys, filters)
+            are_added = filter(lambda x: x in added_keys, filters)
+            are_removed = filter(lambda x: x in removed_keys, filters)
+        else:
+            are_changed=changed_keys[:]
+            are_added=added_keys[:]
+            are_removed=removed_keys[:]
+
+        if excludes is not None and len(excludes) > 0:
+            final_changed = filter(lambda x: x not in excludes, are_changed)
+            final_added = filter(lambda x: x not in excludes, are_added)
+            final_removed = filter(lambda x: x not in excludes, are_removed)
+        else:
+            final_changed=are_changed
+            final_added=are_added
+            final_removed=are_removed
+
+        return final_changed, final_added, final_removed
+
     @classmethod
     def _save_model_audit(cls, audit, instance_id, instance_json, revision_id, model_class_name, is_django=False):
         prior_revs = get_db().view('auditcare/model_actions', key=['model_types', model_class_name, instance_id]).all()
