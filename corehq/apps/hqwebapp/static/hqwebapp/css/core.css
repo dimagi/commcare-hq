@@ -228,6 +228,7 @@ footer {
     padding: 10px 0;
     border-top: 1px solid #ddd;
     width: 100%;
+    z-index: 5;
 }
     #copyright {
         color: #555;
