@@ -130,6 +130,8 @@ var CommcareProperty = {
                     $input.attr('name', that.id).change(function () {
                         that.val($(this).val());
                         that.save();
+                    }).bind('textchange', function () {
+                        that.fire('change');
                     }).appendTo($td);
                     // initialize value without saving to server
 
@@ -224,7 +226,7 @@ var CommcareSettings = {
                 
                 for (i = 0; i < that.length; i += 1) {
                     that[i].render();
-                    that[i].on('change textchange', function(){
+                    that[i].on('change', function(){
                         that.saveButton.fire('change');
                     });
                 }
