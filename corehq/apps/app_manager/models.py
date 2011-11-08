@@ -177,7 +177,10 @@ class FormSource(object):
         source = form.dynamic_properties().get('contents')
         if source is None:
             try:
-                source = form.get_app().fetch_attachment('%s.xml' % unique_id)
+                app = form.get_app()
+                filename = "%s.xml" % unique_id
+                if filename in app._attachments and app._attachments[filename]["length"] > 0:
+                    source = form.get_app().fetch_attachment(filename)
             except Exception:
                 source = ''
         return source
