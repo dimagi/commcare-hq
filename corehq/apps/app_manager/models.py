@@ -901,7 +901,7 @@ class Application(ApplicationBase, TranslationMixin):
                 del self._PRE_SAVE
             self.register_post_save(del_pre_save)
 
-        super(Application, self).save(**kwargs)
+        super(Application, self).save(response_json, **kwargs)
         if hasattr(self, '_POST_SAVE'):
             for post_save in self._POST_SAVE:
                 post_save()
