@@ -80,6 +80,10 @@
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }}
             });
+            formdesigner.on('form-saved', function (args) {
+                var response = JSON.parse(args.response);
+                COMMCAREHQ.app_manager.updateDOM(response.update);
+            });
         });
     </script>
 {% endblock %}
