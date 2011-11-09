@@ -12,6 +12,7 @@
     "xform_id",
     "xform_ids",
     "user_id",
+    "owner_id",
     "referrals",
     "actions"
 ]
