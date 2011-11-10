@@ -8,7 +8,7 @@ python-dateutil<2.0
 BeautifulSoup
 lxml
 django-staticfiles
-django-celery
+django-celery==2.2.4
 django-kombu
 openpyxl
 unidecode
