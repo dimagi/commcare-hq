@@ -1147,10 +1147,9 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
-    app = get_app(domain, app_id)
     return render_to_response(req, template, {
-        'app': app,
-        'files': sorted(app.create_all_files().items()),
+        'app': req.app,
+        'files': sorted(req.app.create_all_files().items()),
     })
 
 @safe_download
@@ -1160,15 +1159,15 @@ def download_profile(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_profile()
+        req.app.create_profile()
     )
 
 def odk_install(req, domain, app_id):
     return render_to_response(req, "app_manager/odk_install.html",
-                              {"domain": domain, "app": get_app(domain, app_id)})
+                              {"domain": domain, "app": req.app})
 
 def odk_qr_code(req, domain, app_id):
-    qr_code = get_app(domain, app_id).get_odk_qr_code()
+    qr_code = req.app.get_odk_qr_code()
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
@@ -1178,7 +1177,7 @@ def download_odk_profile(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_profile(is_odk=True),
+        req.app.create_profile(is_odk=True),
         mimetype="commcare/profile"
     )
 
@@ -1189,7 +1188,7 @@ def download_suite(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_suite()
+        req.app.create_suite()
     )
 
 @safe_download
@@ -1199,7 +1198,7 @@ def download_app_strings(req, domain, app_id, lang):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_app_strings(lang)
+        req.app.create_app_strings(lang)
     )
 
 @safe_download
@@ -1209,14 +1208,14 @@ def download_xform(req, domain, app_id, module_id, form_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).fetch_xform(module_id, form_id)
+        req.app.fetch_xform(module_id, form_id)
     )
 
 @safe_download
 def download_user_registration(req, domain, app_id):
     """See Application.fetch_xform"""
     return HttpResponse(
-        get_app(domain, app_id).get_user_registration().render_xform()
+        req.app.get_user_registration().render_xform()
     )
 
 @safe_download
@@ -1225,7 +1224,7 @@ def download_jad(req, domain, app_id):
     See ApplicationBase.create_jadjar
 
     """
-    app = get_app(domain, app_id)
+    app = req.app
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -1251,7 +1250,7 @@ def download_jar(req, domain, app_id):
 
     """
     response = HttpResponse(mimetype="application/java-archive")
-    app = get_app(domain, app_id)
+    app = req.app
     _, jar = app.create_jadjar()
     response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
     response['Content-Length'] = len(jar)
@@ -1279,7 +1278,7 @@ def download_raw_jar(req, domain, app_id):
 
     """
     response = HttpResponse(
-        get_app(domain, app_id).fetch_jar()
+        req.app.fetch_jar()
     )
     response['Content-Type'] = "application/java-archive"
     return response

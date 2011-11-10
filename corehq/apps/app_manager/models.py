@@ -727,9 +727,9 @@ class ApplicationBase(VersionedDoc):
         )
     @property
     def profile_url(self):
-        return "%s%s" % (
+        return "%s%s?latest=true" % (
             get_url_base(),
-            reverse('corehq.apps.app_manager.views.download_profile', args=[self.domain, self._id])
+            reverse('download_profile', args=[self.domain, self.copy_of or self._id])
         )
     @property
     def profile_loc(self):
@@ -930,9 +930,9 @@ class Application(ApplicationBase, TranslationMixin):
 
     @property
     def suite_url(self):
-        return "%s%s" % (
+        return "%s%s?latest=true" % (
             self.url_base,
-            reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
+            reverse('download_suite', args=[self.domain, self.copy_of or self.get_id])
         )
     @property
     def suite_loc(self):
@@ -1345,17 +1345,30 @@ class BuildErrors(Document):
 
     errors = ListProperty()
 
-def get_app(domain, app_id, wrap_cls=None):
+def get_app(domain, app_id, wrap_cls=None, latest=False):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
 
     """
 
-    try:
-        app = get_db().get(app_id)
-    except:
-        raise Http404
+    if latest:
+        if not domain:
+            try:
+                domain = get_db().get(app_id)['domain']
+            except Exception:
+                raise Http404
+        app = get_db().view('app_manager/applications',
+            startkey=[domain, app_id, {}],
+            limit=1,
+            descending=True,
+            include_docs=True
+        ).one()['doc']
+    else:
+        try:
+            app = get_db().get(app_id)
+        except Exception:
+            raise Http404
 
     if domain:
         try:    Domain.objects.get(name=domain)

@@ -1,4 +1,4 @@
-<profile version="{{ app.version }}" update="jr://resource/profile.xml">
+<profile version="{{ app.version }}" update="{{ app.profile_url }}">
     <property key="BackupMode" value="file_mode"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>
@@ -34,9 +34,8 @@
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
-    {% if is_odk %}
         <location authority="remote">{{ suite_url }}</location>
-    {% else %}
+    {% if not is_odk %}
         <location authority="local">jr://resource/{{ suite_loc }}</location>
     {% endif %}
     </resource></suite>

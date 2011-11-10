@@ -2,7 +2,7 @@ import logging
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from corehq.apps.app_manager.models import AppError
+from corehq.apps.app_manager.models import AppError, get_app
 
 
 def safe_download(f):
@@ -15,7 +15,10 @@ def safe_download(f):
     def _safe_download(req, *args, **kwargs):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
+        latest = True if req.GET.get('latest') == 'true' else False
+        
         try:
+            req.app = get_app(domain, app_id, latest=latest)
             return f(req, *args, **kwargs)
         except AppError, e:
             logging.exception(e)

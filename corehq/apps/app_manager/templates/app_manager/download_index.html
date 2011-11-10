@@ -3,34 +3,34 @@
     <table>
         <tr>
             <td>CommCare.jad</td>
-            <td>{% url corehq.apps.app_manager.views.download_jad app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url download_jad app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
         <tr>
             <td>CommCare.jar</td>
-            <td>{% url corehq.apps.app_manager.views.download_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url download_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
         <tr>
             <td>profile.xml</td>
-            <td>{% url corehq.apps.app_manager.views.download_profile app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url download_profile app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
     </table>
     <p>Resource Files:</p>
     <ul>
         {% for path,source in files %}
             <li>
-                <div class="toggle-next">{{ path }}</div>
-                <code>
-                    <pre>{{ source|force_escape }}</pre>
-                </code>
+                <a class="toggle-next" href="{{ path }}">{{ path }}</a>
+                <div style="background-color: white; border: 1px solid #CCC; overflow: scroll; padding: 30px;">
+                    <code style="white-space: pre;">{{ source|force_escape }}</code>
+                </div>
             </li>
         {% endfor %}
     </ul>
     <script>
         $(function(){
-            $('.toggle-next').next().hide().end()
-            .click(function(){
-                $(this).next().toggle();
-            });
+            $('.toggle-next').click(function(e){
+                e.preventDefault();
+                $(this).next().slideToggle();
+            }).trigger('click');
 
         });
     </script>
