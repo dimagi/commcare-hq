@@ -41,8 +41,7 @@ class HQReport(object):
         for f in self.fields:
             klass = to_function(f)
             field_classes.append(klass(self.request))
-        tmp_context = {'fields': [f.render() for f in field_classes]}
-        self.context['selector'] = render_to_string("reports/partials/selector_form.html", tmp_context)
+        self.context['custom_fields'] = [f.render() for f in field_classes]
 
     def get_report_context(self):
         # circular import
