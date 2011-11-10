@@ -1,5 +1,9 @@
+from datetime import datetime
+from django.conf import settings
 from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.template.context import RequestContext, Context
+from django.template.loader import render_to_string
+from dimagi.utils.modules import to_function
 
 class HQReport(object):
     name = ""
@@ -16,6 +20,7 @@ class HQReport(object):
     form = None,
     datespan = None
     show_time_notice = False
+    fields = []
 
     def __init__(self, domain, request, base_context = {}):
         if not self.name or not self.slug:
@@ -30,18 +35,28 @@ class HQReport(object):
                             template_name = self.template_name,
         )
 
+    def build_selector_form(self):
+        if not self.fields: return
+        field_classes = []
+        for f in self.fields:
+            klass = to_function(f)
+            field_classes.append(klass(self.request))
+        tmp_context = {'fields': [f.render() for f in field_classes]}
+        self.context['selector'] = render_to_string("reports/partials/selector_form.html", tmp_context)
+
     def get_report_context(self):
         # circular import
         from .util import report_context
+        self.build_selector_form()
         self.context.update(report_context(self.domain,
                                         report_partial = self.report_partial,
-                                        title = self.title,
+                                        title = self.name,
                                         headers = self.headers,
                                         rows = self.rows,
                                         individual = self.individual,
                                         case_type = self.case_type,
                                         group = self.group,
-                                        form = self.form,
+                                        form = None, #self.form,
                                         datespan = self.datespan,
                                         show_time_notice = self.show_time_notice
                                       ))
@@ -61,7 +76,39 @@ class HQReport(object):
     def as_view(self):
         self.get_report_context()
         self.calc()
-        return render_to_response("reports/generic_report.html", self.context, context_instance=RequestContext(self.request))
+        return render_to_response(self.get_template(), self.context, context_instance=RequestContext(self.request))
+
+class ReportField(object):
+    slug = ""
+    template = ""
+    context = Context()
+
+    def __init__(self, request):
+        self.request = request
+
+    def render(self):
+        if not self.template: return ""
+        self.update_context()
+        return render_to_string(self.template, self.context)
+
+    def update_context(self):
+        pass
+
+class MonthField(ReportField):
+    slug = "month"
+    template = "reports/partials/month-select.html"
+
+    def update_context(self):
+        self.context['month'] = self.request.GET.get('month', datetime.utcnow().month)
+
+class YearField(ReportField):
+    slug = "year"
+    template = "reports/partials/year-select.html"
+
+    def update_context(self):
+        year = getattr(settings, 'START_YEAR', 2008)
+        self.context['years'] = range(year, datetime.utcnow().year + 1)
+        self.context['year'] = int(self.request.GET.get('year', datetime.utcnow().year))
 
 class SampleHQReport(HQReport):
     name = "Sample Report"
@@ -69,11 +116,7 @@ class SampleHQReport(HQReport):
     description = "Sample report that just gets a list of users."
 
     def calc(self):
-        from util import user_list
-        users = user_list(self.domain)
-        rows = [user.name for user in users]
-        self.context['rows'] = rows
-
+        pass
 
 
 
