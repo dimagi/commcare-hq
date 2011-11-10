@@ -165,6 +165,7 @@ class CommCareCase(CaseBase):
 
     external_id = StringProperty()
     user_id = StringProperty()
+    owner_id = StringProperty()
     
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
