@@ -35,5 +35,5 @@ def get(request, version, build_number, path):
 @require_GET
 @require_superuser
 def get_all(request):
-    builds = CommCareBuild.all_builds()
+    builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)
     return render_to_response(request, 'builds/all.html', {'builds': builds})
