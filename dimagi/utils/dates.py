@@ -57,6 +57,9 @@ def delta_secs(td):
     return 86400. * td.days + td.seconds + 1.0e-6 * td.microseconds
 
 
+def utcnow_sans_milliseconds():
+    return datetime.utcnow().replace(microsecond=0)
+    
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
     
 class DateSpan(object):
