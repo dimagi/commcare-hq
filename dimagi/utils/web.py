@@ -171,10 +171,10 @@ def json_request(params, lenient=True):
     d = {}
     for key, val in params.items():
         try:
-            d[key] = json.loads(val)
+            d[str(key)] = json.loads(val)
         except ValueError:
             if lenient:
-                d[key] = val
+                d[str(key)] = val
             else:
                 raise
     return d
