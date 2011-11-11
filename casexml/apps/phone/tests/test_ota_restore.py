@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from django.test.client import Client
@@ -12,6 +13,7 @@ from casexml.apps.phone import xml, views
 from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.restore import generate_restore_payload
 from django.http import HttpRequest
+from casexml.apps.phone.tests import const
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
@@ -205,6 +207,55 @@ class OtaRestoreTest(TestCase):
 </case>"""
         check_xml_line_by_line(self, expected_response, response.content)
         
+        
+        
+    def testSyncToken(self):
+        """
+        Tests sync token / sync mode support
+        """
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        
+        time.sleep(1)
+        restore_payload = generate_restore_payload(self._dummy_user())
+        # implicit length assertion
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT), 
+                               restore_payload)
+        
+        
+        time.sleep(1)
+        sync_restore_payload = generate_restore_payload(self._dummy_user(), sync_log.get_id)
+        # implicit length assertion
+        [latest_log] = [log for log in \
+                        SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
+                        if log.get_id != sync_log.get_id]
+        
+        # should no longer have a case block in the restore XML
+        check_xml_line_by_line(self, self._dummy_restore_xml(latest_log.get_id), 
+                               sync_restore_payload)
+        
+        # apply an update
+        time.sleep(1)
+        file_path = os.path.join(os.path.dirname(__file__), "data", "update_short.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        
+        time.sleep(1)
+        sync_restore_payload = generate_restore_payload(self._dummy_user(), latest_log.get_id)
+        [even_latest_log] = [log for log in \
+                             SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
+                             if log.get_id != sync_log.get_id and log.get_id != latest_log.get_id]
+        
+        # case block should come back
+        check_xml_line_by_line(self, self._dummy_restore_xml(even_latest_log.get_id, const.UPDATE_SHORT), 
+                               sync_restore_payload)
         
         
         

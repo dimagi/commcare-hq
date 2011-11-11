@@ -165,10 +165,13 @@ class CommCareCase(CaseBase):
 
     external_id = StringProperty()
     user_id = StringProperty()
+    owner_id = StringProperty()
     
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
+    
+    server_modified_on = DateTimeProperty()
     
     class Meta:
         app_label = 'case'
@@ -181,6 +184,12 @@ class CommCareCase(CaseBase):
     def __set_case_id(self, id):    self._id = id
     case_id = property(__get_case_id, __set_case_id)
 
+    def get_server_modified_date(self):
+        # gets (or adds) the server modified timestamp
+        if not self.server_modified_on:
+            self.save()
+        return self.server_modified_on
+        
     def get_case_property(self, property):
         try:
             return getattr(self, property)
@@ -355,6 +364,7 @@ class CommCareCase(CaseBase):
         return sorted(self.dynamic_properties().items())
 
     def save(self, **params):
+        self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
 
