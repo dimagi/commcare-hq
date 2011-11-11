@@ -26,7 +26,7 @@ def get_open_cases_to_send(user, last_sync):
     
     # first pull down the full list (TODO: we could in the future only pull down 
     # IDs for speed improvements during sync mode)
-    cases = CommCareCase.view("case/by_owner", keys=keys, reduce=False,
+    cases = CommCareCase.view("case/by_owner", keys=keys,
                               include_docs=True).all()
     
     
