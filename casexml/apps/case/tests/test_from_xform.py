@@ -27,6 +27,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(original_case.name, "test case name")
         # we don't need to bother checking all the properties because this is
         # the exact same workflow as above.
+        
         case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         self.assertEqual(False, case.closed)
         
