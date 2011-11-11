@@ -5,7 +5,7 @@
     "doc_type",
     "domain",
     "opened_on",
-    "modified_on",
+    "modified_on", "server_modified_on",
     "type",
     "closed",
     "closed_on",
