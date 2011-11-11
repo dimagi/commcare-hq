@@ -2,6 +2,8 @@ from django.http import HttpResponseBadRequest, HttpResponse
 from django.views.decorators.http import require_GET
 from corehq.apps.api.models import require_api_user
 from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.domain.decorators import require_superuser
+from dimagi.utils.web import render_to_response
 
 @require_api_user
 def post(request):
@@ -29,3 +31,9 @@ def get(request, version, build_number, path):
     response = HttpResponse(file)
     response['Content-Disposition'] = "attachment; filename=%s" % path.split("/")[-1]
     return response
+
+@require_GET
+@require_superuser
+def get_all(request):
+    builds = CommCareBuild.all_builds()
+    return render_to_response(request, 'builds/all.html', {'builds': builds})
