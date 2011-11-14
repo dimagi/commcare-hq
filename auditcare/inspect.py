@@ -18,7 +18,7 @@ class ObjectHistoryWrapper(object):
 
         if isinstance(obj, Model):
             #it's a django model, search by content_type
-            key = [obj.__class__.__name__, obj.id]
+            key = [obj.__class__.__name__, str(obj.id)]
         elif isinstance(obj, Document):
             #it's a couchdbkit document, search by __class__
             key = [obj.__class__.__name__, obj._id]

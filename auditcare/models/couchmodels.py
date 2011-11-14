@@ -276,7 +276,7 @@ class ModelActionAudit(AuditEvent):
 
                 audit.next_id = None #this is the head
                 audit.prev_id = sorted_revs[-1]['id']
-                self.compute_changes(save=False)
+                audit.compute_changes(save=False)
                 audit.save()
 
                 prev_doc = cls.get(sorted_revs[-1]['id'])

@@ -26,7 +26,7 @@ def django_audit_save(sender, instance, created, **kwargs):
     usr = get_current_user()
 
     # a silly wrap the instance in an array to serialize it, then pull it out of the array to get the json data standalone
-    instance_json = json.loads(json_serializer.serialize([instance], ensure_ascii=False))[0]
+    instance_json = json.loads(json_serializer.serialize([instance], ensure_ascii=False))[0]['fields']
 
     #really stupid sanity check for unit tests when threadlocals doesn't update and user model data is updated.
     if usr != None:
