@@ -7,7 +7,69 @@ from auditcare.models.couchmodels import ModelActionAudit
 
 default_excludes = ['_rev']
 
-def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter_fields=None, exclude_fields=None):
+
+class ObjectHistoryWrapper(object):
+    def __init__(self, obj, filter_fields=None, exclude_fields=None, start_date=None, end_date=None, **kwargs):
+        self.object = obj
+        self.filter_fields = filter_fields
+        self.exclude_fields = exclude_fields
+        self.start_date = start_date
+        self.end_date = end_date
+
+        if isinstance(obj, Model):
+            #it's a django model, search by content_type
+            key = [obj.__class__.__name__, obj.id]
+        elif isinstance(obj, Document):
+            #it's a couchdbkit document, search by __class__
+            key = [obj.__class__.__name__, obj._id]
+        elif isinstance(obj, dict):
+            #it's a couchdbkit document, search by __class__
+            key = [obj['doc_type'], obj['_id']]
+
+
+        final_fields = []
+        if len(filter_fields) > 0:
+            final_fields = filter_fields[:]
+        else:
+            pass
+        self.final_fields = final_fields
+
+        revisions=ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all()
+        #need a better view to filter by date
+
+        #todo: filter by date ranges
+        #return sorted(revisions, key=lambda x: x.event_date, reverse=True)
+
+        self.revisions=sorted(ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all(), key=lambda x: x.event_date)
+    def filtered_changes(self):
+        """
+        Generator for the filtered fields for a given instance.
+
+        Returns a generator of dictionaries:
+        key: revision, value: model audit log
+        key: changed_fields, value: a tuple of field names ([changed fields], [added fields], [removed fields])
+        """
+        for rev in self.revisions:
+            yield {"revision": rev, 'changed_fields': rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields) }
+
+
+    def change_narratives(self):
+        """
+        Return a list of dicts:
+        key: Revision, value: the model audit revision log
+        key: changes, value: a generator of tuples (field_name, (from_value, to_value))
+        """
+        ret = []
+        for rev in self.revisions:
+            changed, added, removed  = rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)
+            if len(changed) > 0:
+                #yield {'revision': rev, 'changes': list(rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields))}
+                ret.append({'revision': rev, 'changes': rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)})
+        return ret
+
+
+
+def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter_fields=[], exclude_fields=[]):
     """
     Get an audit history for a given object
 
@@ -25,12 +87,7 @@ def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter
 
     returns a list of all the deltas by field and value
     """
-    if isinstance(obj, Model):
-        #it's a django model, search by content_type
-        key = [obj.__class__.__name__, obj.id]
-    elif isinstance(obj, Document):
-        #it's a couchdbkit document, search by __class__
-        key = [obj.__class__.__name__, obj._id]
+
 
 
     #parameter/date range checking
@@ -57,15 +114,5 @@ def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter
             end_date = datetime.utcnow()
             start_date = end_date - timedelta(days=abs(date_range))
 
-    final_fields = []
-    if len(filter_fields) > 0:
-        final_fields = filter_fields[:]
-    else:
-        pass
 
-
-    revisions=ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all()
-    #need a better view to filter by date
-
-    #todo: filter by date ranges
-    return sorted(revisions, key=lambda x: x.event_date, reverse=True)
+    return ObjectHistoryWrapper(obj, filter_fields=filter_fields, exclude_fields=exclude_fields, start_date=start_date, end_date=end_date)

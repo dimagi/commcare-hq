@@ -58,7 +58,7 @@ def get_ip(request):
 #source:
 # http://stackoverflow.com/questions/715234/python-dict-update-diff
 
-def dict_diff(a, b):
+def dict_diff(current, prev):
     """Return differences from dictionaries a to b.
 
     Return a tuple of three dicts: (removed, added, changed).
@@ -66,21 +66,35 @@ def dict_diff(a, b):
     all keys and values that were added to b. 'changed' has all
     keys and their values in b that are different from the corresponding
     key in a.
+
+
+    modified due to added/removed reversal assumptions, now assuming current and previous are what they are.
+
+    Goal is to have added/removed be accurate and the changed be the PREVIOUS values in prev that are changed and reflected in current.
+
+    returns:
+    tuple of (added, removed, changed)
+
+    where
+
+    Added:  fields:values not in prev now in current
+    Removed: field:values not in current that were in prev
+    Changed: field:values that changed from prev to current, and returning prev's values
     """
 
     removed = dict()
     added = dict()
     changed = dict()
 
-    for key, value in a.iteritems():
-        if key not in b:
+    for key, value in current.iteritems():
+        if key not in prev:
             removed[key] = value
-        elif b[key] != value:
-            changed[key] = b[key]
-    for key, value in b.iteritems():
-        if key not in a:
+        elif prev[key] != value:
+            changed[key] = prev[key]
+    for key, value in prev.iteritems():
+        if key not in current:
             added[key] = value
-    return removed, added, changed
+    return added, removed, changed
 
 
 

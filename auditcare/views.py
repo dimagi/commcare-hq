@@ -1,8 +1,10 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
+from auditcare.inspect import history_for_doc
 
 try:
     from functools import wraps
@@ -89,7 +91,15 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     context=RequestContext(request)
     db = AccessAudit.get_db()
     changes=db.view('auditcare/model_actions_by_id', reduce=False, key=[model_name, model_uuid], include_docs=True).all()
-    context['changes']= sorted([(x['value'], x['doc']) for x in changes], key=lambda y: y[1]['event_date'], reverse=True)
+    #context['changes']= sorted([(x['doc']['_id'], x['doc']) for x in changes], key=lambda y: y[1]['event_date'], reverse=True)
+
+    if ContentType.objects.filter(name=model_name).count() == 0:
+        #it's couchdbkit
+        obj = db.get(model_uuid)
+    else:
+        obj = ContentType.objects.filter(name=model_name)[0].model_class().objects.get(id=model_uuid)
+
+    context['change_history'] = history_for_doc(obj)
     context['model'] = model_name
     context['model_uuid'] = model_uuid
     return render_to_response('auditcare/model_instance_history.html', context)
@@ -114,7 +124,7 @@ def model_histories(request, *args, **kwargs):
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
     #do a dict comprehension here because we know all the keys in this reduce are unique
-    model_dict= dict((x['key'][0], x['value']) for x in vals)
+    model_dict= dict((x['value'][0], x['value']) for x in vals)
     context['model_dict']=model_dict
     return render_to_response('auditcare/model_changes.html', context)
 

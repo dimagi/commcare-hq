@@ -108,9 +108,27 @@ class ModelActionAudit(AuditEvent):
     revision_id = StringProperty()
     archived_data = DictProperty() # the instance data of the model at this rev.  So at any given moment, the CURRENT instance of this model will be equal to this.
 
-    removed = DictProperty() #data/properties removed in this revision
+    #PRIOR values are stored here so as to show the delta of data.
+    removed = DictProperty() #data/properties removed in this revision.
     added = DictProperty() # data/properties added in this revision
     changed = DictProperty() # data/properties changed in this revision
+
+
+    next_id = StringProperty() #the doc_id of the next revision
+    prev_id = StringProperty() #the doc_id of the previous revision
+
+
+    def next(self):
+        if self.next_id is not None:
+            return self.__class__.get(self.next_id)
+        else:
+            return None
+
+    def prev(self):
+        if self.prev_id is not None:
+            return self.__class__.get(self.prev_id)
+        else:
+            return None
 
     @property
     def summary(self):
@@ -132,9 +150,64 @@ class ModelActionAudit(AuditEvent):
         return hashlib.sha1(json_string).hexdigest()
 
     def compute_changes(self, save=False):
-        pass
+        """
+        Instance method to compute the deltas for a given audit instance.
+        Assumes two things:
+        1:  self.archived_data must be set
+        2:  self.prev_id must be set too.
+
+        returns None
+        """
+        if self.prev_id is None:
+            logging.error("Error, trying to compute changes where a previous pointer isn't set")
+            return None
+        if self.archived_data is None:
+            logging.error("Error, trying to compute changes when the archived_data for CURRENT has not been set")
+            return None
+        prev_rev = self.prev()
+
+        #sanity check
+        if prev_rev.revision_checksum == self.revision_checksum:
+            return None
+
+        if (self.archived_data.get('doc_type', None) =='XFormInstance' and prev_rev.archived_data.get('doc_type', None) == 'XFormInstance'):
+            #it's an xforminstance - hackishly just inspect the form instance
+            removed, added, changed = utils.dict_diff(self.archived_data['form'], prev_rev.archived_data['form'])
+        else:
+            #all other models compare the json directly
+            removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.archived_data)
+        self.removed = removed
+        self.added = added
+        self.changed = changed
+        if save:
+            self.save()
+
+
+    def resolved_changed_fields(self, filters=None, excludes=None):
+        """
+        Generator for changed field values yielding
+        (field_key, (from_val, to_val))
+        This answers the question
+        'Field X was changed from_val to to_val'
+        """
+        changed, added, removed = self.get_changed_fields(filters=filters, excludes=excludes)
+        #returns generated tuples of (field, (from_val, to_val))
+        for ckey in changed:
+            #get self's archived value, which is the "old" value
+            prior_val = self.changed[ckey]
+            next_val = self.archived_data[ckey]
+            if next_val != prior_val:
+                yield (ckey, (prior_val, next_val))
+
+
+
 
     def get_changed_fields(self, filters=None, excludes=None):
+        """
+        Gets all the changed fields for an audit event.
+
+        Returns a tuple of field KEYS that lets you access the changed fields and also get the values from them programmatically later.
+        """
         changed_keys = self.changed.keys()
         added_keys = self.added.keys()
         removed_keys = self.removed.keys()
@@ -161,7 +234,12 @@ class ModelActionAudit(AuditEvent):
 
     @classmethod
     def _save_model_audit(cls, audit, instance_id, instance_json, revision_id, model_class_name, is_django=False):
-        prior_revs = get_db().view('auditcare/model_actions', key=['model_types', model_class_name, instance_id]).all()
+        """
+
+        """
+
+        db = get_db()
+        prior_revs = db.view('auditcare/model_actions', key=['model_types', model_class_name, instance_id]).all()
 
         audit.description += "Save %s" % (model_class_name)
         audit.object_type = model_class_name
@@ -177,13 +255,13 @@ class ModelActionAudit(AuditEvent):
             audit.save()
         else:
             #this has been archived before.  Get the last one and compare the checksum.
-            sorted_revs = sorted(prior_revs, key=lambda x: x['value']['rev'])
-            last_rev = sorted_revs[-1]['value']['rev']
+            sorted_revs = sorted(prior_revs, key=lambda x: x['value']['event_date'])
+            #last_rev = sorted_revs[-1]['value']['rev']
             last_checksum = sorted_revs[-1]['value']['checksum']
             if is_django:
                 #for django models, increment an integral counter.
                 try:
-                    audit.revision_id = str(int(last_rev) + 1)
+                    audit.revision_id = str(len(prior_revs) + 1) #str(int(last_rev) + 1)
                 except:
                     logging.error("Error, last revision for object %s is not an integer, resetting to one")
                     audit.revision_id = "1"
@@ -195,7 +273,15 @@ class ModelActionAudit(AuditEvent):
                 #no actual changes made on this save, do nothing
                 logging.debug("No data change, not creating audit event")
             else:
+
+                audit.next_id = None #this is the head
+                audit.prev_id = sorted_revs[-1]['id']
+                self.compute_changes(save=False)
                 audit.save()
+
+                prev_doc = cls.get(sorted_revs[-1]['id'])
+                prev_doc.next_id = audit._id
+                prev_doc.save()
 
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
