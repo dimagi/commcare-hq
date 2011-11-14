@@ -132,24 +132,22 @@
     {% if nav_form %}
         <h4>Form Settings</h4>
         <div class="config">
-            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder"></div>
                 <table>
-                    {% if edit %}
-                        <tr>
-                            <th>Form Name</th>
-                            <td>
+                    <tr>
+                        <th>Form Name</th>
+                        <td>
+                            {% if edit %}
                                 <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <th>Form Name</th>
-                            <td>
+                            {% else %}
                                 {{ form.name|trans:langs }}
-                            </td>
-                        </tr>
-                    {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% with form as item %}
+                        {% include "app_manager/partials/nav_menu_media.html" %}
+                    {% endwith %}
                 </table>
             </form>
         </div>

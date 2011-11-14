@@ -93,8 +93,8 @@
   {% for form in module.get_forms %}
     <entry>
         <form>{{ form.xmlns }}</form>
-        <command id="m{{ module.id }}-f{{ form.id }}">
-            <text><locale id="forms.m{{ module.id }}f{{ form.id }}"/></text>
+        <command id="{{ form.get_command_id }}">
+            {% include "app_manager/suite/display.xml" with item=form locale_id=form.get_locale_id %}
         </command>
      {% if form.requires == "case" or form.requires == "referral" %}
         <entity>
@@ -161,9 +161,9 @@
   {% else %}
     <menu id="m{{ module.id }}">
   {% endif %}
-    	<text><locale id="modules.m{{ module.id }}"/></text>
+     {% include "app_manager/suite/display.xml" with item=module locale_id=module.get_locale_id %}
      {% for form in module.get_forms %}
-    	<command id="m{{ module.id }}-f{{ form.id }}"/>
+    	<command id="{{ form.get_command_id }}"/>
      {% endfor %}
      {% if module.case_list.show %}
          <command id="m{{ module.id }}-case-list"/>

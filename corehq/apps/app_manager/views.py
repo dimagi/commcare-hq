@@ -624,6 +624,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None,
         "name": None, "case_label": None, "referral_label": None,
+        'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
     }
 
@@ -640,7 +641,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
                         return False
                 return True
             else:
-                return req.POST.get(attribute)
+                return req.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -659,6 +660,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("case_list"):
         module["case_list"].show = json.loads(req.POST['case_list-show'])
         module["case_list"].label[lang] = req.POST['case_list-label']
+
+    _handle_media_edits(req, module, should_edit, resp)
+
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
@@ -753,6 +757,28 @@ def delete_module_detail(req, domain, app_id, module_id):
     return HttpResponse(json.dumps(resp))
     #return back_to_main(**locals())
 
+def _handle_media_edits(request, item, should_edit, resp):
+    if not resp.has_key('corrections'):
+        resp['corrections'] = {}
+    for attribute in ('media_image', 'media_audio'):
+        if should_edit(attribute):
+            val = request.POST.get(attribute)
+            if val:
+                if val.startswith('jr://'):
+                    pass
+                elif val.startswith('/file/'):
+                    val = 'jr:/' + val
+                elif val.startswith('file/'):
+                    val = 'jr://' + val
+                elif val.startswith('/'):
+                    val = 'jr://file' + val
+                else:
+                    val = 'jr://file/' + val
+                resp['corrections'][attribute] = val
+            else:
+                val = None
+            setattr(item, attribute, val)
+
 @require_POST
 @require_permission('edit-apps')
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
@@ -760,6 +786,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     Called to edit any (supported) form attribute, given by attr
 
     """
+    
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -767,14 +794,22 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 
     resp = {}
 
-    if   "requires" == attr:
+    def should_edit(attribute):
+        if req.POST.has_key(attribute):
+            return True
+        elif req.FILES.has_key(attribute):
+            return True
+        else:
+            return False
+
+    if should_edit("requires"):
         requires = req.POST['requires']
         form.set_requires(requires)
-    elif "name" == attr:
+    if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
         resp['update'] = {'.variable-form_name': form.name[lang]}
-    elif "xform" == attr:
+    if should_edit("xform"):
         try:
             # support FILES for upload and POST for ajax post from Vellum
             try:
@@ -797,12 +832,15 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                 return HttpResponseBadRequest(unicode(e))
             else:
                 messages.error(req, unicode(e))
-    elif "show_count" == attr:
+    if should_edit("show_count"):
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False
-    elif "put_in_root" == attr:
+    if should_edit("put_in_root"):
         put_in_root = req.POST['put_in_root']
         form.put_in_root = True if put_in_root == "True" else False
+
+    _handle_media_edits(req, form, should_edit, resp)
+    
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1001,7 +1039,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'native_input', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         # RemoteApp only
-        'profile_url'
+        'profile_url',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -1050,7 +1088,7 @@ def edit_app_attr(req, domain, app_id, attr):
 @require_permission('edit-apps')
 def rearrange(req, domain, app_id, key):
     """
-    This function handels any request to switch two items in a list.
+    This function handles any request to switch two items in a list.
     Key tells us the list in question and must be one of
     'forms', 'modules', 'detail', or 'langs'. The two POST params
     'to' and 'from' give us the indicies of the items to be rearranged.

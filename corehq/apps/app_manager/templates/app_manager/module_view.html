@@ -60,6 +60,9 @@
                             <input type="text" name="name" value="{{ module.name|trans:langs }}" />
                         </td>
                     </tr>
+                    {% with module as item %}
+                        {% include "app_manager/partials/nav_menu_media.html" %}
+                    {% endwith %}
                     <tr class="form editable">
                         <th>
                             Case Type <span class="help-link" data-help-key="app_manager/case_type"></span>

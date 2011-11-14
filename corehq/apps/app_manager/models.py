@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -375,10 +376,23 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
+class JRResourceProperty(StringProperty):
+    def validate(self, value, required=True):
+        super(JRResourceProperty, self).validate(value, required)
+        if value is not None and not value.startswith('jr://'):
+            raise BadValueError("JR Resources must start with 'jr://")
+        return value
+    
+class NavMenuItemMediaMixin(DocumentSchema):
+    media_image = JRResourceProperty(required=False)
+    media_audio = JRResourceProperty(required=False)
 
-class Form(FormBase, IndexedSchema):
+
+class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def get_app(self):
         return self._parent._parent
+    def get_module(self):
+        return self._parent
 
 class DetailColumn(IndexedSchema):
     """
@@ -461,7 +475,7 @@ class CaseList(IndexedSchema):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
 
-class Module(IndexedSchema):
+class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
     Translates to a top-level menu on the phone.
@@ -1274,7 +1288,6 @@ class Application(ApplicationBase, TranslationMixin):
         r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
-
 class NotImplementedYet(Exception):
     pass
 class RemoteApp(ApplicationBase):
@@ -1463,4 +1476,14 @@ class DeleteFormRecord(DeleteRecord):
         app.modules[self.module_id].forms = forms
         app.save()
 
+Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
+Form.get_locale_id = lambda self: "forms.m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
+
+Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+
+Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
+Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+
+Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
+Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 import corehq.apps.app_manager.signals
