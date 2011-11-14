@@ -19,7 +19,8 @@ class Command(NoArgsCommand):
         db = AccessAudit.get_db()
         vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
         #get all model types
-        model_dict= {x['key'][0]: x['value'] for x in vals}
+        #model_dict= {x['key'][0]: x['value'] for x in vals}
+        model_dict= dict((x['key'][0], x['value']) for x in vals)
 
         for model, count in model_dict.items():
             #for each model type, query ALL audit instances.
