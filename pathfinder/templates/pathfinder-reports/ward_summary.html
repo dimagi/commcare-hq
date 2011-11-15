@@ -1,152 +1,151 @@
-{% extends base_template %}
+{% extends "reports/report_base.html" %}
 {% load hq_shared_tags %}
 {% load mainreport_tags %}
 
 {% load i18n %}
 
-{% block title %}
-    {% trans "Audit Viewer" %}
-{% endblock %}
+{% block reportcontent %}
+    {#<div id="government-report">#}
+    {% if ward %}
+        <h2 align="center">Ward Summary Report</h2>
 
-{% block content %}
-{#<div id="government-report">#}
-<h2 align="center">Ward Summary Report</h2>
+        <h5 align="center">Ward: {{ ward }}</h5>
+        <h5 align="center">Month: {{ month }}</h5>
+        <h5 align="center">Year: {{ year }}</h5>
 
-
-<h5 align="center">Ward: {{ ward }}</h5>
-<h5 align="center">Month: {{ month }}</h5>
-<h5 align="center">Year: {{ year }}</h5>
-
-<div align="center"><a href="{% url pathfinder.views.home_based_care domain %}?domain={{ domain }}&ward={{ ward }}&year={{ year }}&month={{ month }}">
-    View HBC summary for {{ ward }}, {{ month }} {{ year }}</a></div>
+        <div align="center"><a href="{% url pathfinder.views.home_based_care domain %}?domain={{ domain }}&ward={{ ward }}&year={{ year }}&month={{ month }}">
+            View HBC summary for {{ ward }}, {{ month }} {{ year }}</a></div>
 
 
-<table>
-	<thead>
-	<tr>
-		<th rowspan=2></th>
-		<th rowspan=2></th>
-		<th rowspan=2></th>
-		<th rowspan=2></th>
-		<th rowspan=2></th>
-		<th colspan=8 style="vertical-align:bottom;">Type of Patient visited</th>
-		<th colspan=4 rowspan=2>Age</th>
-		<th colspan=4 rowspan=2>Deaths</th>
-		<th colspan=4 rowspan=2>Transfer</th>
-		<th colspan=7 rowspan=2>Type of referrals</th>
-		<th rowspan=2>confirmed referrals for this month</th>
-	</tr>
-	<tr>
-		<th colspan=4>New</th>
-		<th colspan=4>Existing</th>
-	</tr>
-	<tr>
-		<th>Region</th>
-		<th>District</th>
-		<th>Ward</th>
-		<th>Provider Name</th>
-		<th>Provider ID</th>
-		<th colspan=2>PLWHAs</th>
-		<th colspan=2>CIP</th>
-		<th colspan=2>PLWHAs</th>
-		<th colspan=2>CIP</th>
-		<th colspan=2>>18yrs</th>
-		<th colspan=2><=18yrs</th>
-		<th colspan=2>PLWHAs</th>
-		<th colspan=2>CIP</th>
-		<th colspan=2>PLWHAs</th>
-		<th colspan=2>CIP</th>
-		<th>VCT</th>
-		<th>OIS</th>
-		<th>CTC</th>
-		<th>PMTCT</th>
-		<th>FP</th>
-		<th>SG</th>
-		<th>TB</th>
-		<th></th>
-	</tr>
-	<tr>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th>M</th>
-		<th>F</th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-		<th></th>
-	</tr>
-	</thead>
-<tbody>
-	{% for chw in provs %}
-	<tr class="{% cycle 'odd' 'even' %}">
-		<td>{{ chw.region }}</td>
-		<td>{{ chw.district }}</td>
-		<td>{{ chw.ward }}</td>
-		<td><a href="{% url pathfinder.views.provider_summary domain %}?name={{ chw.full_name }}&year={{ year }}&month={{ month }}">{{ chw.full_name }}</a></td>
-{#		<td>{{ chw.full_name }}</td>#}
-		<td>{{ chw.chw_id }}</td>
-        {% with chw.full_name as n %}
-        {% with prov_p|dict_lookup:n as pats %}
+        <table>
+            <thead>
+            <tr>
+                <th rowspan=2></th>
+                <th rowspan=2></th>
+                <th rowspan=2></th>
+                <th rowspan=2></th>
+                <th rowspan=2></th>
+                <th colspan=8 style="vertical-align:bottom;">Type of Patient visited</th>
+                <th colspan=4 rowspan=2>Age</th>
+                <th colspan=4 rowspan=2>Deaths</th>
+                <th colspan=4 rowspan=2>Transfer</th>
+                <th colspan=7 rowspan=2>Type of referrals</th>
+                <th rowspan=2>confirmed referrals for this month</th>
+            </tr>
+            <tr>
+                <th colspan=4>New</th>
+                <th colspan=4>Existing</th>
+            </tr>
+            <tr>
+                <th>Region</th>
+                <th>District</th>
+                <th>Ward</th>
+                <th>Provider Name</th>
+                <th>Provider ID</th>
+                <th colspan=2>PLWHAs</th>
+                <th colspan=2>CIP</th>
+                <th colspan=2>PLWHAs</th>
+                <th colspan=2>CIP</th>
+                <th colspan=2>>18yrs</th>
+                <th colspan=2><=18yrs</th>
+                <th colspan=2>PLWHAs</th>
+                <th colspan=2>CIP</th>
+                <th colspan=2>PLWHAs</th>
+                <th colspan=2>CIP</th>
+                <th>VCT</th>
+                <th>OIS</th>
+                <th>CTC</th>
+                <th>PMTCT</th>
+                <th>FP</th>
+                <th>SG</th>
+                <th>TB</th>
+                <th></th>
+            </tr>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th>M</th>
+                <th>F</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for chw in provs %}
+                <tr class="{% cycle 'odd' 'even' %}">
+                    <td>{{ chw.region }}</td>
+                    <td>{{ chw.district }}</td>
+                    <td>{{ chw.ward }}</td>
+                    <td><a href="{% url pathfinder.views.provider_summary domain %}?name={{ chw.full_name }}&year={{ year }}&month={{ month }}">{{ chw.full_name }}</a></td>
+                    {#		<td>{{ chw.full_name }}</td>#}
+                    <td>{{ chw.chw_id }}</td>
+                    {% with chw.full_name as n %}
+                        {% with prov_p|dict_lookup:n as pats %}
 
-   		<td>{{ pats.new__hiv_pos__m|length }}</td>
-		<td>{{ pats.new__hiv_pos__f|length }}</td>
-		<td>{{ pats.new__hiv_neg__m|length }}</td>
-		<td>{{ pats.new__hiv_neg__f|length }}</td>
-		<td>{{ pats.not_new__hiv_pos__f|length }}</td>
-		<td>{{ pats.not_new__hiv_pos__f|length }}</td>
-		<td>{{ pats.not_new__hiv_neg__m|length }}</td>
-		<td>{{ pats.not_new__hiv_neg__f|length }}</td>
-		<td>{{ pats.adult__m|length }}</td>
-		<td>{{ pats.adult__f|length }}</td>
-		<td>{{ pats.child__m|length }}</td>
-		<td>{{ pats.child__f|length }}</td>
-		<td>{{ pats.deaths__hiv_pos__m|length }}</td>
-		<td>{{ pats.deaths__hiv_pos__f|length }}</td>
-		<td>{{ pats.deaths__hiv_neg__m|length }}</td>
-		<td>{{ pats.deaths__hiv_neg__f|length }}</td>
-		<td>{{ pats.transfers__plha_m|length }}</td>
-		<td>{{ pats.transfer_plha_f|length }}</td>
-		<td>{{ pats.transfer_cip_m|length }}</td>
-		<td>{{ pats.transfer_cip_f|length }}</td>
-		<td>{{ pats.vct|length }}</td>
-		<td>{{ pats.ois|length }}</td>
-		<td>{{ pats.ctc|length }}</td>
-		<td>{{ pats.pmtct|length }}</td>
-		<td>{{ pats.fp|length }}</td>
-		<td>{{ pats.sg|length }}</td>
-		<td>{{ pats.tb|length }}</td>
-		<td>{{ refs_p|dict_lookup:n }}</td>
-    {% endwith %}
-    {% endwith %}
-	</tr>
-	{% endfor %}
-</tbody> 
-</table>
-{#</div>#}
+                            <td>{{ pats.new__hiv_pos__m|length }}</td>
+                            <td>{{ pats.new__hiv_pos__f|length }}</td>
+                            <td>{{ pats.new__hiv_neg__m|length }}</td>
+                            <td>{{ pats.new__hiv_neg__f|length }}</td>
+                            <td>{{ pats.not_new__hiv_pos__f|length }}</td>
+                            <td>{{ pats.not_new__hiv_pos__f|length }}</td>
+                            <td>{{ pats.not_new__hiv_neg__m|length }}</td>
+                            <td>{{ pats.not_new__hiv_neg__f|length }}</td>
+                            <td>{{ pats.adult__m|length }}</td>
+                            <td>{{ pats.adult__f|length }}</td>
+                            <td>{{ pats.child__m|length }}</td>
+                            <td>{{ pats.child__f|length }}</td>
+                            <td>{{ pats.deaths__hiv_pos__m|length }}</td>
+                            <td>{{ pats.deaths__hiv_pos__f|length }}</td>
+                            <td>{{ pats.deaths__hiv_neg__m|length }}</td>
+                            <td>{{ pats.deaths__hiv_neg__f|length }}</td>
+                            <td>{{ pats.transfers__plha_m|length }}</td>
+                            <td>{{ pats.transfer_plha_f|length }}</td>
+                            <td>{{ pats.transfer_cip_m|length }}</td>
+                            <td>{{ pats.transfer_cip_f|length }}</td>
+                            <td>{{ pats.vct|length }}</td>
+                            <td>{{ pats.ois|length }}</td>
+                            <td>{{ pats.ctc|length }}</td>
+                            <td>{{ pats.pmtct|length }}</td>
+                            <td>{{ pats.fp|length }}</td>
+                            <td>{{ pats.sg|length }}</td>
+                            <td>{{ pats.tb|length }}</td>
+                            <td>{{ refs_p|dict_lookup:n }}</td>
+                        {% endwith %}
+                    {% endwith %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {#</div>#}
+    {% else %}
+        You need to select a ward.
+    {% endif %}
 {% endblock %}
 
