@@ -1170,10 +1170,10 @@ def download_profile(req, domain, app_id):
 
 def odk_install(req, domain, app_id):
     return render_to_response(req, "app_manager/odk_install.html",
-                              {"domain": domain, "app": req.app})
+                              {"domain": domain, "app": get_app(domain, app_id)})
 
 def odk_qr_code(req, domain, app_id):
-    qr_code = req.app.get_odk_qr_code()
+    qr_code = get_app(domain, app_id).get_odk_qr_code()
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
