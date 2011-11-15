@@ -34,9 +34,9 @@
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
-        <location authority="remote">{{ suite_url }}</location>
-    {% if not is_odk %}
+        {% if not is_odk %}
         <location authority="local">jr://resource/{{ suite_loc }}</location>
-    {% endif %}
+        {% endif %}
+        <location authority="remote">{{ suite_url }}</location>
     </resource></suite>
 </profile>
