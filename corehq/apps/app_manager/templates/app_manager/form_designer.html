@@ -48,6 +48,22 @@
         #breadcrumbs > ul > li {
             display: table-cell;
         }
+        #forms {
+            position: relative;
+        }
+        #purcforms-link {
+            position: absolute;
+            right: 10px;
+            margin-top: 4px;
+            font-size: .8em;
+        }
+        #forms:after {
+          content: ".";
+          display: block;
+          height: 0;
+          clear: both;
+          visibility: hidden;
+        }
     </style>
     <script>
         $(function () {
@@ -56,22 +72,6 @@
 
             $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
 
-{#            $("#save-xform").button().click(function () {#}
-{#                $.ajax({#}
-{#                    url: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',#}
-{#                    data: {#}
-{#                        xform: $("#xform-source").val(),#}
-{#                        ajax: true#}
-{#                    },#}
-{#                    type: "POST",#}
-{#                    success: function () {#}
-{#                        alert("Success!");#}
-{#                    },#}
-{#                    error: function () {#}
-{#                        alert("Error");#}
-{#                    }#}
-{#                });#}
-{#            });#}
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
@@ -85,6 +85,11 @@
                 COMMCAREHQ.app_manager.updateDOM(response.update);
             });
         });
+        (function configNonChromeWarning() {
+            if (!$.browser.webkit) {
+                $("#purcforms-link").hide();
+            }
+        }());
     </script>
 {% endblock %}
 
@@ -101,12 +106,14 @@
             <li>Vellum</li>
         </ul>
     </div>
+    {% if not is_user_registration %}
+        <form method="POST" id="purcforms-link" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+            <input type="hidden" name="editor" value="{{ editor_url }}" />
+            <a class="submit" href="#">Looking for the old form designer?</a>
+        </form>
+    {% endif %}
     <h3>Vellum</h3>
-
-{#    <div>#}
-{#        <textarea id="xform-source">{{ form.source }}</textarea>#}
-{#    </div>#}
-{#    <span id="save-xform">Save</span>#}
     <div id="formdesigner"></div>
-    <div style="clear: both"></div>
 {% endblock %}
