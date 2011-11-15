@@ -91,6 +91,13 @@ class Group(UndoableDocument):
     def by_domain(cls, domain):
         key = [domain]
         return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+    @classmethod
+    def by_user(cls, user, wrap=True):
+        results = cls.view('groups/by_user', key=user.user_id, include_docs=wrap)
+        if wrap:
+            return results
+        else:
+            return [r['id'] for r in results]
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)

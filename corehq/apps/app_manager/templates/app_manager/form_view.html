@@ -14,11 +14,22 @@
         input[type="radio"]{
             margin: 3px 5px 5px 0px;
         }
+        #xform-links ul {
+            display: block;
+        }
+        #xform-links li {
+            display: inline-block;
+            border-left: 1px solid #CCC;
+            padding: 5px;
+        }
+        #xform-links li:first-child {
+            border-left: none
+        }
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
 {#    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>#}
     <script src="{{ STATIC_URL }}app_manager/js/casexml.js?version=6"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier-6214661a.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier.js?version=2"></script>
 
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
@@ -38,16 +49,6 @@
                     }
                 }).trigger('change');
             })();
-            (function configNonChromeWarning() {
-                
-                if ($.browser.webkit) {
-                    $("#nonChromeWarning").hide();
-                } else {
-                    $("#nonChromeWarning").show();
-                    $("#editXFormWrapper").css({backgroundColor: "yellow"}).
-                            find('input[type="submit"]').button('disable');
-                }
-            }());
             (function configXFormSourceAjax(){
                 $("#xform-source-opener").click(function (){
                     $("#xform-source").text("Loading...");
@@ -102,12 +103,7 @@
     {% else %}
         <h3 class="variable-form_name">{{ form.name|trans:langs }}</h3>
     {% endif %}
-    {% if xform_errors %}
-        <div class="warning padded">
-            <p>Your XForm is not valid XML:</p>
-            <p>{{ xform_errors }}</p>
-        </div>
-    {% endif %}
+
     {% if nav_form %}
         <h4>Form Settings</h4>
         <div class="config">
@@ -134,28 +130,12 @@
         </div>
     {% endif %}
 
+    {% if edit %}
         <h4>XForm</h4>
-    <table class="config">
-        {% if edit %}
-            <tr>
-                <th>Edit XForm</th>
-                <td>
-                    <a href="./source/">{% if form.source %}Edit{% else %}Create{% endif %} in Vellum (New!)</a>
-                        or
-                    {% if not is_user_registration %}
-                        <form method="POST" id="editXFormWrapper" action="{% url xep_hq_server.views.initiate form.get_unique_id %}" style="display: inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                            <input type="hidden" name="editor" value="{{ editor_url }}" />
-
-                            <input type="submit" value="{% if form.source %}Edit{% else %}Create{% endif %}…" />
-                            <span id="nonChromeWarning" style="font-size: .9em; display: none">
-                                Google Chrome only
-                            </span>
-                        </form>
-                      or
-                    {% endif %}
-                    <a class="dialog_opener" href="#">Upload XForm</a>
+        <div class="config" id="xform-links">
+            <ul>
+                <li>
+                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload XForm</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
                             <input id="xform_file_input" type="file" name="xform" />
@@ -163,63 +143,25 @@
                             <input id="xform_file_submit"type="submit" value="Upload" />
                         </form>
                     </div>
-                </td>
-            </tr>
-        {% endif %}
-        {% if form.source %}
-            <tr>
-                <th>Demo this form</th>
-                <td>
-                    <form method="POST" action="{{ XFORMPLAYER_URL }}" style="display: inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                        <input type="hidden" name="data" value="{}" />
-                        <textarea class="hidden" name="xform">{{ form.source }}</textarea>
-                        <input type="radio" name="input_mode" value="type" checked="checked" /> Web Entry &nbsp;&nbsp;
-                        <input type="radio" name="input_mode" value="touch" /> Touchscreen Entry &nbsp;&nbsp;
-                        <input type="submit" value="Try it!" />
-                    </form>
-                </td>
-            </tr>
-            <tr>
-                <th>
-                    View XForm
-                </th>
-                <td>
-                    <a id="xform-source-opener" class="dialog_opener"
-                    {% if is_user_registration %}
-                       href="{% url get_user_registration_source domain app.id %}">
-                    {% else %}
-                       href="{% url get_xform_source domain app.id module.id form.id %}">
-                    {% endif %}
-                        View Source XML
-                    </a>
-                    <div class="xml-source dialog" title="XML Source">
-                        Double-click to select all.
-                        <pre id="xform-source" class="brush: xml;"></pre>
-                    </div>
-                    or
-                    {% if is_user_registration %}
-                       <a href="{% url get_user_registration_source domain app.id %}?download=true">Download XForm</a>
-                    {% else %}
-                       <a href="{% url get_xform_source domain app.id module.id form.id %}?download=true">Download XForm</a>
-                    {% endif %}
+                </li>
+                <li>
+                    <a {% if is_user_registration %}
+                            href="{% url get_user_registration_source domain app.id %}?download=true"
+                        {% else %}
+                            href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
+                        {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
+                </li>
+                <li>
+                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
+                </li>
+            </ul>
+        </div>
+    {% endif %}
 
-                </td>
-            <tr>
-                <th>Languages in this XForm</th>
-                <td>
-                    <div id="langcode_validator"></div>
-                </td>
-            </tr>
-        {% else %}
-            {% if not edit %}
-                <tr><td class="warning">
-                    You have not yet created or uploaded a form.
-                </td></tr>
-            {% endif %}
-        {% endif %}
-    </table>
+    <h4>Languages Checker</h4>
+    <div class="config">
+        <div id="langcode_validator"></div>
+    </div>
 
     {% if form.source and not is_user_registration %}
         <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>

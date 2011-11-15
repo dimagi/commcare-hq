@@ -103,6 +103,10 @@ class CommCareBuild(Document):
             )))
         return self
 
+    @classmethod
+    def all_builds(cls):
+        return cls.view('builds/all', include_docs=True)
+
 class BuildSpec(DocumentSchema):
     version = StringProperty()
     build_number = IntegerProperty(required=False)

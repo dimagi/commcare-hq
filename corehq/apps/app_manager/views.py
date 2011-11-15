@@ -327,8 +327,13 @@ def get_apps_base_context(request, domain, app):
         ).all()
     else:
         saved_apps = []
+
+
     context = locals()
     context.update(get_sms_autocomplete_context(request, domain))
+    context.update({
+        'URL_BASE': get_url_base()
+    })
     return context
 
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
@@ -412,10 +417,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'edit': edit,
 
 #        'factory_apps': factory_apps,
-        'editor_url': settings.EDITOR_URL,
-        'URL_BASE': get_url_base(),
-        'XFORMPLAYER_URL': reverse('xform_play_remote'),
-
         'build_errors': build_errors,
     }
     context.update(base_context)
@@ -490,10 +491,15 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
         module = app.get_module(module_id)
         form = module.get_form(form_id)
 
-    edit = True
+
+
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
+    context.update({
+        'edit': True,
+        'editor_url': settings.EDITOR_URL,
+    })
     return render_to_response(req, 'app_manager/form_designer.html', context)
 
 

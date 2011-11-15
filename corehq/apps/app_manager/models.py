@@ -816,7 +816,11 @@ class ApplicationBase(VersionedDoc):
     def fetch_emulator_commcare_jar(self):
 #        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
 #        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
-        jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar("Generic/WebDemo")
+        path = "Generic/WebDemo"
+        try:
+            jadjar = self.get_build().get_jadjar(path)
+        except Exception:
+            jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar(path)
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
