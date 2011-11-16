@@ -1232,6 +1232,8 @@ class Application(ApplicationBase, TranslationMixin):
                     message=unicode(e),
                     **meta
                 ))
+            except ValueError:
+                logging.error("Failed: _parse_xml(string=%r)" % form.source)
             xmlns_count[form.xmlns] += 1
             if form.requires_case():
                 needs_case_detail = True

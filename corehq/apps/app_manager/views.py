@@ -265,7 +265,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
         except Exception as e:
-            if settings.DEBUG and False:
+            if settings.DEBUG:
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected System Error: %s" % e)

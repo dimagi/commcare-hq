@@ -162,9 +162,10 @@ abbr {
 .fixed-width {
     width: 1000px;
     margin: auto;
+    position: relative;
 }
 #logo {
-    float: left;
+    position: absolute;
     /*background: url('../img/commcarehq-logo.png') no-repeat scroll 0 0 transparent; width: 450px; height: 70px;*/
     /*background: url('../img/monstertruck-cc-logo.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
     /*background: url('../img/monstertruck-overlap.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
@@ -172,11 +173,16 @@ abbr {
     /*background: url('../img/hq-stamp-tilt.png') no-repeat scroll 0 0 transparent; width: 462px; height: 130px;*/
     background: url('../img/HQ-Blue-2.png') no-repeat scroll 0 0 transparent; width: 462px; height: 130px;
     text-indent: -10000%;
+    z-index: 0;
 }
 ul#top-nav{
+    position: absolute;
+    right: 0;
+    z-index: 1;
     list-style-type: none;
     border-collapse: collapse;
     font-size: 1.2em;
+    background-color: white;
 }
 ul#top-nav li {
     display: inline;

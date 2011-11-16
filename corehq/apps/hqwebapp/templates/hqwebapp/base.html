@@ -9,7 +9,7 @@
 
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=8"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=9"/>
 
 
         <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
@@ -67,19 +67,11 @@
                                             {# hack for domain admins only seeing domain tab #}
                                             {% ifequal tab.caption "My Domain" %}
                                             {% if request.couch_user and request.couch_user|is_admin:domain %}
-                                            {% if tab.is_active %}
-                                                <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% else %}
-                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% endif %}
+                                                <li class="app-{{ tab.name }}{% if tab.is_active %} active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>
                                             {% endif %}
                                             {# endhack for domain admins only seeing domain tab #}
                                             {% else %}
-                                            {% if tab.is_active %}
-                                                <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% else %}
-                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% endif %}
+                                                <li class="app-{{ tab.name }}{% if tab.is_active %} active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>
                                             {% endifequal %}
                                             {% endif %}
                                         {% endfor %}

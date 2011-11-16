@@ -19,11 +19,31 @@
         }
         #xform-links li {
             display: inline-block;
-            border-left: 1px solid #CCC;
-            padding: 5px;
+            border-left: 1px solid #DDD;
+            padding: 0 5px;
         }
         #xform-links li:first-child {
-            border-left: none
+            border-left: none;
+            padding-left: 0;
+        }
+        #xform-links a {
+            display: inline-block;
+            border: 1px solid transparent;
+            padding: 5px 10px;
+            vertical-align: middle;
+
+            border-radius: 15px;
+            -moz-border-radius: 15px;
+        }
+        #xform-links a:hover {
+            border: 1px solid #BBB;
+            background: #EEE;
+            text-decoration: none;
+        }
+        #xform-links a:active {
+            border: 1px solid #BBB;
+            background: #DDD;
+            text-decoration: none;
         }
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
@@ -135,7 +155,23 @@
         <div class="config" id="xform-links">
             <ul>
                 <li>
-                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload XForm</a>
+                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
+                </li><li>
+                    <a id="xform-source-opener" class="dialog_opener"
+                    {% if is_user_registration %}
+                       href="{% url get_user_registration_source domain app.id %}">
+                    {% else %}
+                       href="{% url get_xform_source domain app.id module.id form.id %}">
+                    {% endif %}
+                        <span class="ui-icon ui-icon-search"></span>
+                        View
+                    </a>
+                    <div class="xml-source dialog" title="XML Source">
+                        Double-click to select all.
+                        <pre id="xform-source" class="brush: xml;"></pre>
+                    </div>
+                </li><li>
+                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
                             <input id="xform_file_input" type="file" name="xform" />
@@ -143,16 +179,12 @@
                             <input id="xform_file_submit"type="submit" value="Upload" />
                         </form>
                     </div>
-                </li>
-                <li>
+                </li><li>
                     <a {% if is_user_registration %}
                             href="{% url get_user_registration_source domain app.id %}?download=true"
                         {% else %}
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
                         {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
-                </li>
-                <li>
-                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
                 </li>
             </ul>
         </div>

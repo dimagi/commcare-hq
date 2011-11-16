@@ -199,8 +199,10 @@ class XForm(WrappedNode):
                     label = self.localize(label_node.attrib['ref'], lang, form)
                     if label is not None:
                         break
-            else:
+            elif label_node.text:
                 label = label_node.text.strip()
+            else:
+                label = ""
 
         return label
 
