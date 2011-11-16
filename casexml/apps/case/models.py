@@ -248,19 +248,19 @@ class CommCareCase(CaseBase):
     def apply_create_block(self, create_block, xformdoc, modified_on):
         # create case from required fields in the case/create block
         # create block
-        def _safe_replace(me, attr, dict, key):
+        def _safe_replace_and_force_to_string(me, attr, dict, key):
             if getattr(me, attr, None):
                 # attr exists and wasn't empty or false, for now don't do anything, 
                 # though in the future we want to do a date-based modification comparison
                 return
             rep = dict[key] if key in dict else None
             if rep:
-                setattr(me, attr, rep)
+                setattr(me, attr, unicode(rep))
             
-        _safe_replace(self, "type", create_block, const.CASE_TAG_TYPE_ID)
-        _safe_replace(self, "name", create_block, const.CASE_TAG_NAME)
-        _safe_replace(self, "external_id", create_block, const.CASE_TAG_EXTERNAL_ID)
-        _safe_replace(self, "user_id", create_block, const.CASE_TAG_USER_ID)
+        _safe_replace_and_force_to_string(self, "type", create_block, const.CASE_TAG_TYPE_ID)
+        _safe_replace_and_force_to_string(self, "name", create_block, const.CASE_TAG_NAME)
+        _safe_replace_and_force_to_string(self, "external_id", create_block, const.CASE_TAG_EXTERNAL_ID)
+        _safe_replace_and_force_to_string(self, "user_id", create_block, const.CASE_TAG_USER_ID)
         create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
                                                              modified_on, modified_on.date(),
                                                              xformdoc,

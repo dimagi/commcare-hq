@@ -1,0 +1,46 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="pih_cholera_survey"
+	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/771770C3-F7CB-4AF2-8A89-0D7C18922E31">
+	<locality>Balandry</locality>
+	<survey_date>2011-11-16</survey_date>
+	<qty_soap>8</qty_soap>
+	<num_soap>5</num_soap>
+	<qty_aquatabs>8</qty_aquatabs>
+	<num_aquatabs>5</num_aquatabs>
+	<qty_pur_packets>5</qty_pur_packets>
+	<num_pur_packets>8</num_pur_packets>
+	<qty_chlorox_powder>8</qty_chlorox_powder>
+	<num_chlorox_powder>9</num_chlorox_powder>
+	<qty_ors_packets>8</qty_ors_packets>
+	<num_water_treatment>8</num_water_treatment>
+	<num_households>5</num_households>
+	<num_students>5</num_students>
+	<num_males_under_5>5</num_males_under_5>
+	<num_males_over_5>5</num_males_over_5>
+	<num_females_under_5>5</num_females_under_5>
+	<num_females_over_5>5</num_females_over_5>
+	<num_males_under_5_deaths>8</num_males_under_5_deaths>
+	<num_males_over_5_deaths>5</num_males_over_5_deaths>
+	<num_females_under_5_deaths>8</num_females_under_5_deaths>
+	<num_females_over_5_deaths>5</num_females_over_5_deaths>
+	<survey_complete>OK</survey_complete>
+	<case>
+		<case_id>UER2A6KJKTG3SMQ0P1EEJ2JFF</case_id>
+		<date_modified>2011-11-16T10:08:46.085-05</date_modified>
+		<create>
+			<case_type_id>survey</case_type_id>
+			<case_name>2011-11-16</case_name>
+			<user_id>5463YB9DV8CPCJHRJ6RO9PGJU</user_id>
+			<external_id />
+		</create>
+	</case>
+	<meta>
+		<deviceID>5463YB9DV8CPCJHRJ6RO9PGJU</deviceID>
+		<timeStart>2011-11-16T10:06:54.055-05</timeStart>
+		<timeEnd>2011-11-16T10:08:46.093-05</timeEnd>
+		<username>admin</username>
+		<userID>5463YB9DV8CPCJHRJ6RO9PGJU</userID>
+		<instanceID>UTK8Q3WKLEF8SGLPODFWZO7DZ</instanceID>
+	</meta>
+</data>
