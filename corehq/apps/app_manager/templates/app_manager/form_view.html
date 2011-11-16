@@ -54,7 +54,7 @@
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
 {#    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>#}
     <script src="{{ STATIC_URL }}app_manager/js/casexml.js?version=6"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier.js?version=2"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/langcodeValidator.js?version=3"></script>
 
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
@@ -196,9 +196,11 @@
     {% endif %}
 
     {% if form.source %}
-        <h4>Languages Checker</h4>
+        <h4>Language Checker</h4>
         <div class="config">
-            <div id="langcode_validator"></div>
+            <div id="langcode_validator">
+                <p>This form does not use internationalized text.</p>
+            </div>
         </div>
     {% endif %}
     {% if form.source and not is_user_registration %}

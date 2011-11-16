@@ -22,6 +22,9 @@ var LangcodeValidator = (function () {
             validationsComplete += 1;
             that.render();
         }
+        if (this.langcodes.length) {
+            this.$home.html("");
+        }
         for (i = 0; i < this.langcodes.length; i += 1) {
             LangcodeValidator.validate(this.langcodes[i], validateCallback);
         }
