@@ -45,6 +45,11 @@
             background: #DDD;
             text-decoration: none;
         }
+        #xform-links a.disabled {
+            pointer-events: none;
+            cursor: default;
+            color: #888;
+        }
     </style>
     <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
 {#    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>#}
@@ -157,7 +162,7 @@
                 <li>
                     <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
                 </li><li>
-                    <a id="xform-source-opener" class="dialog_opener"
+                    <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
                     {% if is_user_registration %}
                        href="{% url get_user_registration_source domain app.id %}">
                     {% else %}
@@ -180,7 +185,7 @@
                         </form>
                     </div>
                 </li><li>
-                    <a {% if is_user_registration %}
+                    <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
                             href="{% url get_user_registration_source domain app.id %}?download=true"
                         {% else %}
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
@@ -190,11 +195,12 @@
         </div>
     {% endif %}
 
-    <h4>Languages Checker</h4>
-    <div class="config">
-        <div id="langcode_validator"></div>
-    </div>
-
+    {% if form.source %}
+        <h4>Languages Checker</h4>
+        <div class="config">
+            <div id="langcode_validator"></div>
+        </div>
+    {% endif %}
     {% if form.source and not is_user_registration %}
         <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
         <div class="help-text" data-help-key="app_manager/casexml_overview"></div>

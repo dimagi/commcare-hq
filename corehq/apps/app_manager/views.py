@@ -871,7 +871,9 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     # TODO: make this more fully featured
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.source)
+            parsed = f.wrapped_xform()
+            if not parsed.exists():
+                continue
             parsed.validate()
             parsed_forms[f] = parsed
             for i in parsed.image_references:
