@@ -67,7 +67,7 @@ class CommCareCaseAction(Document):
         Get a new create action
         """
         if not date: date = datetime.utcnow()
-        return CommCareCaseAction(action_type=const.CASE_ACTION_CLOSE, 
+        return CommCareCaseAction(action_type=const.CASE_ACTION_CREATE, 
                                   date=date, 
                                   opened_on=date)
     
@@ -202,6 +202,9 @@ class CommCareCase(CaseBase):
     def case_properties(self):
         return self.to_json()
 
+    def get_actions_for_form(self, form_id):
+        return [a for a in self.actions if a.xform_id == form_id]
+        
     def get_version_token(self):
         """
         A unique token for this version. 
