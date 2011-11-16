@@ -176,12 +176,11 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         source = form.dynamic_properties().get('contents')
         if source is None:
-            try:
-                app = form.get_app()
-                filename = "%s.xml" % unique_id
-                if filename in app._attachments and app._attachments[filename]["length"] > 0:
-                    source = form.get_app().fetch_attachment(filename)
-            except Exception:
+            app = form.get_app()
+            filename = "%s.xml" % unique_id
+            if filename in app._attachments and app._attachments[filename]["length"] > 0:
+                source = form.get_app().fetch_attachment(filename)
+            else:
                 source = ''
         return source
 
@@ -1062,9 +1061,9 @@ class Application(ApplicationBase, TranslationMixin):
 
     def get_forms(self, bare=True):
         if self.show_user_registration:
-            yield self.user_registration if bare else {
+            yield self.get_user_registration() if bare else {
                 'type': 'user_registration',
-                'form': self.user_registration
+                'form': self.get_user_registration()
             }
         for module in self.get_modules():
             for form in module.get_forms():

@@ -486,7 +486,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     app = get_app(domain, app_id)
 
     if is_user_registration:
-        form = app.user_registration
+        form = app.get_user_registration()
     else:
         module = app.get_module(module_id)
         form = module.get_form(form_id)
