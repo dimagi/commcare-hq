@@ -37,9 +37,10 @@ class SyncLog(Document, UnicodeMixIn):
     
     date = DateTimeProperty()
     user_id = StringProperty()
-    previous_log_id = StringProperty() # previous sync log, forming a chain
-    last_seq = IntegerProperty() # the last_seq of couch during this sync
+    previous_log_id = StringProperty()  # previous sync log, forming a chain
+    last_seq = IntegerProperty()        # the last_seq of couch during this sync
     cases = StringListProperty()
+    purged_cases = StringListProperty() # cases that were purged during this sync. 
     
     @classmethod
     def last_for_user(cls, user_id):
@@ -55,23 +56,44 @@ class SyncLog(Document, UnicodeMixIn):
         """
         Get the previous sync log, if there was one.  Otherwise returns nothing.
         """
-        if self.previous_log_id:    
-            return SyncLog.get(self.previous_log_id)
-        return None
+        if not hasattr(self, "_previous_log_ref"):
+            self._previous_log_ref = SyncLog.get(self.previous_log_id) if self.previous_log_id else None
+        return self._previous_log_ref
     
+    def _walk_the_chain(self, func):
+        """
+        Given a function that takes in a log and returns a list, 
+        walk up the chain to extend the list by calling the function
+        on all parents.
+        
+        Used to generate case id lists for synced and purged cases
+        """
+        chain = func(self)
+        previous_log = self.get_previous_log()
+        if previous_log:
+            chain.extend(previous_log._walk_the_chain(func))
+        # remove duplicates
+        return list(set(chain))
+        
     def get_synced_case_ids(self):
         """
         All cases that have been touched, either by this or
         any previous syncs that this knew about.
         """
         if not hasattr(self, "_touched_case_ids"):
-            cases = [case for case in self.cases]
-            previous_log = self.get_previous_log()
-            if previous_log:
-                cases.extend(previous_log.get_synced_case_ids())
-            # remove duplicates
-            self._touched_case_ids = list(set(cases))
+            self._touched_case_ids = self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.cases])
         return self._touched_case_ids
+    
+    def get_purged_case_ids(self):
+        """
+        All cases that have been purged, either by this or
+        any previous syncs that this knew about.
+        """
+        if not hasattr(self, "_purged_case_ids"):
+            self._purged_case_ids = self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.purged_cases])
+        return self._purged_case_ids
     
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.chw_id, self.date.date(), self.get_id)

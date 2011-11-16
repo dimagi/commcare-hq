@@ -1,14 +1,20 @@
 import os
 import uuid
 
+from datetime import datetime, timedelta
+
 from couchforms.util import post_xform_to_couch
 from couchforms.models import XFormInstance
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import process_cases
+from dimagi.utils.dates import utcnow_sans_milliseconds
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
+    
+    starttime = utcnow_sans_milliseconds()
+    
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
@@ -17,6 +23,8 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     doc = XFormInstance.get(doc_id)
     process_cases(sender="testharness", xform=doc)
     case = CommCareCase.get(case_id)
+    test_class.assertTrue(starttime <= case.server_modified_on)
+    test_class.assertTrue(datetime.utcnow() >= case.server_modified_on)
     test_class.assertEqual(case_id, case.case_id)
     return case
             
