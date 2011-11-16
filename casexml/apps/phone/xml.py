@@ -8,6 +8,19 @@ def escape(o):
     else:
         return saxutils.escape(unicode(o))
 
+def render_element(key, val):
+    if isinstance(val, dict):
+        elem_val = val.get('#text', '')
+        attr_list = ['%s="%s"' % (x[1:], val[x]) for x in filter(lambda x: x != '#text', val.keys())]
+        if len(attr_list) == 0:
+            attr_string = ''
+        else:
+            attr_string = ' ' + ' '.join(attr_list)
+        return "<%(key)s%(attrs)s>%(val)s</%(key)s>" % {"key": key, 'attrs': attr_string, "val": escape(elem_val)}
+    else:
+        return "<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(val)}
+
+
 # Response template according to 
 # https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
 
@@ -124,7 +137,7 @@ def get_case_xml(case, create=True):
         create_block = ""
         update_base_data = base_data
     
-    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(val)} \
+    update_custom_data = "\n\t".join([render_element(key,val)  \
                                     for key, val in case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
                                     "update_custom_data": update_custom_data}
@@ -163,6 +176,6 @@ def get_registration_xml(user):
 def get_user_data_xml(dict):
     if not dict:  return ""
     return USER_DATA_TEMPLATE % \
-        {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
+        {"data": "\n\t".join('<data key="%(key)s">%(value)s</data>' % \
                                        {"key": key, "value": escape(val) } for key, val in dict.items())}
 
