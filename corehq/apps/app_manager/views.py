@@ -776,14 +776,15 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
         try:
-            xform = req.FILES.get('xform').read()
-        except Exception:
-            xform = req.POST.get('xform')
-        try:
             try:
-                xform = unicode(xform, encoding="utf-8")
+                xform = req.FILES.get('xform').read()
             except Exception:
-                raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+                xform = req.POST.get('xform')
+            else:
+                try:
+                    xform = unicode(xform, encoding="utf-8")
+                except Exception:
+                    raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
 
             if xform:
                 form.source = xform
