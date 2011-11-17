@@ -11,7 +11,10 @@ from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.dummy import dummy_user
 
 class SyncTokenUpdateTest(TestCase):
-    """Tests OTA Restore"""
+    """
+    Tests sync token updates on submission
+    """
+        
     
     def setUp(self):
         # clear cases
@@ -44,14 +47,15 @@ class SyncTokenUpdateTest(TestCase):
         self._checkLists(log.updated_cases, update_list)
         self._checkLists(log.closed_cases, close_list)
         
-    def testTokenAssociation(self):
-        """
-        Tests sync token udpates on submission
-        """
+    def testInitialEmpty(self):
         restore_payload = generate_restore_payload(dummy_user())
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
         self._testUpdate(sync_log.get_id, [], [], [])
+        
+    def testTokenAssociation(self):
+        restore_payload = generate_restore_payload(dummy_user())
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
         cases = ["asdf"]
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
@@ -62,8 +66,37 @@ class SyncTokenUpdateTest(TestCase):
         
         self._postWithSyncToken("close_short.xml", sync_log.get_id)
         self._testUpdate(sync_log.get_id, cases, cases, cases)
+    
+    def testMultipleUpdates(self):
+        restore_payload = generate_restore_payload(dummy_user())
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
-        more_cases = ["asdf", "IKA9G79J4HDSPJLG3ER2OHQUY"]
+        cases = ["asdf"]
+        self._postWithSyncToken("create_short.xml", sync_log.get_id)
+        self._postWithSyncToken("update_short.xml", sync_log.get_id)
+        self._testUpdate(sync_log.get_id, cases, cases, [])
+        
+        self._postWithSyncToken("update_short_2.xml", sync_log.get_id)
+        self._testUpdate(sync_log.get_id, cases, cases, [])
+        
+    def testMultiplePartsSingleSubmit(self):
+        restore_payload = generate_restore_payload(dummy_user())
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        
+        cases = ["IKA9G79J4HDSPJLG3ER2OHQUY"]
         self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, more_cases, more_cases, cases)
+        self._testUpdate(sync_log.get_id, cases, cases, [])
+
+    def testMultipleForms(self):
+        restore_payload = generate_restore_payload(dummy_user())
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        
+        cases = ["asdf"]
+        self._postWithSyncToken("create_short.xml", sync_log.get_id)
+        self._testUpdate(sync_log.get_id, cases, [], [])
+        
+        new_cases = ["IKA9G79J4HDSPJLG3ER2OHQUY"]
+        both_cases = ["asdf", "IKA9G79J4HDSPJLG3ER2OHQUY"]
+        self._postWithSyncToken("case_create.xml", sync_log.get_id)
+        self._testUpdate(sync_log.get_id, both_cases, new_cases, [])
 
