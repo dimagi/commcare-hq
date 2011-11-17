@@ -559,7 +559,7 @@ def case_list(request, domain):
     individual = request.GET.get('individual', '')
     case_type = request.GET.get('case_type', '')
 
-    open_cases, all_cases = util.get_case_counts(domain, case_type, [individual])
+    open_cases, all_cases = util.get_case_counts(domain, case_type, [individual] if individual else None)
     
     context = util.report_context(domain,
         title='Case List for %s ' % ('<span class="username">%s</span>' % user_id_to_username(individual) if individual else "All CHWs") +
