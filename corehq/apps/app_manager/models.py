@@ -178,7 +178,7 @@ class FormSource(object):
         if source is None:
             app = form.get_app()
             filename = "%s.xml" % unique_id
-            if filename in app._attachments and app._attachments[filename]["length"] > 0:
+            if app._attachments and filename in app._attachments and app._attachments[filename]["length"] > 0:
                 source = form.get_app().fetch_attachment(filename)
             else:
                 source = ''
