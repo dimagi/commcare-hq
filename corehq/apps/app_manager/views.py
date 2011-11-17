@@ -776,6 +776,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         resp['update'] = {'.variable-form_name': form.name[lang]}
     elif "xform" == attr:
         try:
+            # support FILES for upload and POST for ajax post from Vellum
             try:
                 xform = req.FILES.get('xform').read()
             except Exception:

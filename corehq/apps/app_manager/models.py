@@ -449,6 +449,9 @@ class Detail(DocumentSchema):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
+    @property
+    def display(self):
+        return "short" if self.type.endswith('short') else 'long'
 
 class CaseList(IndexedSchema):
     label = DictProperty()
