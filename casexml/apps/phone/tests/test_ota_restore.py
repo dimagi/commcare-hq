@@ -14,6 +14,8 @@ from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.restore import generate_restore_payload
 from django.http import HttpRequest
 from casexml.apps.phone.tests import const
+from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
+    dummy_user_xml
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
@@ -25,36 +27,6 @@ class OtaRestoreTest(TestCase):
         for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
             log.delete()
         
-    def _dummy_user(self):
-        return User(user_id="foo", username="mclovin", 
-                    password="changeme", date_joined=datetime(2011, 6, 9), 
-                    user_data={"something": "arbitrary"})
-    
-    def _dummy_user_xml(self):
-        return """
-    <Registration xmlns="http://openrosa.org/user/registration">
-        <username>mclovin</username>
-        <password>changeme</password>
-        <uuid>foo</uuid>
-        <date>2011-06-09</date>
-        <user_data>
-            <data key="something">arbitrary</data>
-        </user_data>
-    </Registration>"""
-    
-    def _dummy_restore_xml(self, restore_id, case_xml=""):
-        return """<?xml version='1.0' encoding='UTF-8'?>
-<OpenRosaResponse xmlns="http://openrosa.org/http/response">
-    <message>Successfully restored account mclovin!</message>
-    <Sync xmlns="http://commcarehq.org/sync">
-        <restore_id>%(restore_id)s</restore_id> 
-    </Sync>
-    %(user_xml)s
-    %(case_xml)s
-</OpenRosaResponse>""" % {"restore_id": restore_id,
-                          "user_xml": self._dummy_user_xml(),
-                          "case_xml": case_xml}
-    
     def testFromDjangoUser(self):
         django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
         django_user.save()
@@ -67,15 +39,15 @@ class OtaRestoreTest(TestCase):
         
         
     def testRegistrationXML(self):
-        check_xml_line_by_line(self, self._dummy_user_xml(), 
-                               xml.get_registration_xml(self._dummy_user()))
+        check_xml_line_by_line(self, dummy_user_xml(), 
+                               xml.get_registration_xml(dummy_user()))
         
     def testUserRestore(self):
         self.assertEqual(0, len(SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()))
-        restore_payload = generate_restore_payload(self._dummy_user())
+        restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id), restore_payload)
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id), restore_payload)
         
         
     def testUserRestoreWithCase(self):
@@ -84,7 +56,7 @@ class OtaRestoreTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        user = self._dummy_user()
+        user = dummy_user()
         
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
@@ -104,10 +76,10 @@ class OtaRestoreTest(TestCase):
         </case>"""
         check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, create=True))
         
-        restore_payload = generate_restore_payload(self._dummy_user())
+        restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id, expected_case_block), 
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, expected_case_block), 
                                restore_payload)
         
     def testWithReferrals(self):
@@ -221,22 +193,22 @@ class OtaRestoreTest(TestCase):
         process_cases(sender="testharness", xform=form)
         
         time.sleep(1)
-        restore_payload = generate_restore_payload(self._dummy_user())
+        restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, self._dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT), 
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT), 
                                restore_payload)
         
         
         time.sleep(1)
-        sync_restore_payload = generate_restore_payload(self._dummy_user(), sync_log.get_id)
+        sync_restore_payload = generate_restore_payload(dummy_user(), sync_log.get_id)
         # implicit length assertion
         [latest_log] = [log for log in \
                         SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
                         if log.get_id != sync_log.get_id]
         
         # should no longer have a case block in the restore XML
-        check_xml_line_by_line(self, self._dummy_restore_xml(latest_log.get_id), 
+        check_xml_line_by_line(self, dummy_restore_xml(latest_log.get_id), 
                                sync_restore_payload)
         
         # apply an update
@@ -248,13 +220,13 @@ class OtaRestoreTest(TestCase):
         process_cases(sender="testharness", xform=form)
         
         time.sleep(1)
-        sync_restore_payload = generate_restore_payload(self._dummy_user(), latest_log.get_id)
+        sync_restore_payload = generate_restore_payload(dummy_user(), latest_log.get_id)
         [even_latest_log] = [log for log in \
                              SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
                              if log.get_id != sync_log.get_id and log.get_id != latest_log.get_id]
         
         # case block should come back
-        check_xml_line_by_line(self, self._dummy_restore_xml(even_latest_log.get_id, const.UPDATE_SHORT), 
+        check_xml_line_by_line(self, dummy_restore_xml(even_latest_log.get_id, const.UPDATE_SHORT), 
                                sync_restore_payload)
         
         

@@ -1,5 +1,6 @@
 from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
+from casexml.apps.phone.models import SyncLog
 
 def process_cases(sender, xform, **kwargs):
     """Creates or updates case objects which live outside of the form"""
@@ -14,6 +15,12 @@ def process_cases(sender, xform, **kwargs):
             return case
         cases = [attach_domain(case) for case in cases]
     map(lambda case: case.save(), cases)
+    
+    # handle updating the sync records for apps that use sync mode
+    if hasattr(xform, "last_sync_token") and xform.last_sync_token:
+        relevant_log = SyncLog.get(xform.last_sync_token)
+        relevant_log.update_submitted_case_list(xform, cases)
+        
     
 successful_form_received.connect(process_cases)
 
