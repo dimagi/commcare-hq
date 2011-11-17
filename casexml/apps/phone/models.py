@@ -51,6 +51,7 @@ class SyncLog(Document, UnicodeMixIn):
     created_cases = StringListProperty() 
     updated_cases = StringListProperty() 
     closed_cases = StringListProperty() 
+    submitted_forms = StringListProperty()
     
     @classmethod
     def last_for_user(cls, user_id):
@@ -76,15 +77,17 @@ class SyncLog(Document, UnicodeMixIn):
         walk up the chain to extend the list by calling the function
         on all parents.
         
-        Used to generate case id lists for synced and purged cases
+        Returns a set object, stripping all duplicate ids
+        
+        Used to generate case id lists for synced, purged, and other cases
         """
-        chain = func(self)
+        chain = set(func(self))
         previous_log = self.get_previous_log()
         if previous_log:
-            chain.extend(previous_log._walk_the_chain(func))
-        # remove duplicates
-        return list(set(chain))
+            chain = chain | previous_log._walk_the_chain(func)
+        return chain
         
+    
     def get_synced_case_ids(self):
         """
         All cases that have been touched, either by this or
@@ -105,10 +108,64 @@ class SyncLog(Document, UnicodeMixIn):
                 (lambda synclog: [id for id in synclog.purged_cases])
         return self._purged_case_ids
     
-    def update_submitted_case_list(self, xform, case_list):
+    def get_created_case_ids(self):
+        # TODO: cache if necessary
+        return self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.created_cases])
+    
+    def get_updated_case_ids(self):
+        # TODO: cache if necessary
+        return self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.updated_cases])
+    
+    def get_closed_case_ids(self):
+        # TODO: cache if necessary
+        return self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.closed_cases])
+    
+    def get_submitted_case_ids(self):
+        # TODO: cache if necessary
+        ret = self.get_created_case_ids()
+        ret = ret | self.get_updated_case_ids()
+        ret = ret | self.get_closed_case_ids()
+        return ret
+        
+    def get_submitted_form_ids(self):
+        # TODO: cache if necessary
+        return self._walk_the_chain\
+                (lambda synclog: [id for id in synclog.submitted_forms])
+        
+    def get_all_cases_seen(self):
+        """
+        All cases the phone has ever seen.
+        Union of:
+         - any case previously synced.
+         - any case that has ever been submitted to.
+        """
+        ret = self.get_synced_case_ids()
+        ret = ret | self.get_submitted_case_ids()
+        return ret
+    
+    def get_open_cases_on_phone(self):
+        """
+        The current list of open cases on the phone.
+        The formula is:
+         - Cases synced down PLUS cases submitted by phone 
+           MINUS (cases closed by phone PLUS cases already purged) 
+        """
+        ret = self.get_all_cases_seen() 
+        # TODO: Asserts? Anything in the latter two sets
+        # should have already been in the original list
+        ret = ret - self.get_closed_case_ids()
+        ret = ret - self.get_purged_case_ids()
+        return ret
+    
+    def update_submitted_lists(self, xform, case_list):
         # for all the cases update the relevant lists in the sync log
         # so that we can build a historical record of what's associated
         # with the phone
+        if xform.get_id not in self.submitted_forms:
+            self.submitted_forms.append(xform.get_id)
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -118,6 +175,7 @@ class SyncLog(Document, UnicodeMixIn):
                 elif action.action_type == const.CASE_ACTION_UPDATE \
                    and case.get_id not in self.updated_cases:
                     self.updated_cases.append(case.get_id)
+           
                 elif action.action_type == const.CASE_ACTION_CLOSE \
                    and case.get_id not in self.closed_cases:
                     self.closed_cases.append(case.get_id)

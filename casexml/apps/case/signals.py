@@ -19,7 +19,7 @@ def process_cases(sender, xform, **kwargs):
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
-        relevant_log.update_submitted_case_list(xform, cases)
+        relevant_log.update_submitted_lists(xform, cases)
         
     
 successful_form_received.connect(process_cases)
