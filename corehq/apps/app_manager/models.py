@@ -1477,7 +1477,7 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
-Form.get_locale_id = lambda self: "forms.m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
+Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
 Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
