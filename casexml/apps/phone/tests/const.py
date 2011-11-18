@@ -13,8 +13,7 @@ CREATE_SHORT = """
             <case_name>test case name</case_name> 
             <external_id>someexternal</external_id>
         </create>
-        <update>
-        </update>
+        <update />
     </case>"""
     
 UPDATE_SHORT = """

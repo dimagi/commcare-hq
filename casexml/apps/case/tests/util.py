@@ -9,6 +9,8 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import process_cases
 from dimagi.utils.dates import utcnow_sans_milliseconds
+import xml.dom.minidom
+from lxml import etree
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
@@ -42,18 +44,22 @@ def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=N
     doc = post_xform_to_couch(xml_data)
     return (doc.get_id, uid, case_id, ref_id)
     
-def check_xml_line_by_line(test_case, expected, actual, ignore_whitespace=True, delimiter="\n"):
+def check_xml_line_by_line(test_case, expected, actual):
     """Does what it's called, hopefully parameters are self-explanatory"""
-    if ignore_whitespace:
-        expected = expected.strip()
-        actual = actual.strip()
-    expected_lines = expected.split(delimiter)
-    actual_lines = actual.split(delimiter)
-    if ignore_whitespace:
-        # remove empty lines, strip lines.
-        expected_lines = [l.strip() for l in expected_lines if l.strip()]
-        actual_lines = [l.strip() for l in actual_lines if l.strip()]
-    test_case.assertEqual(len(expected_lines), len(actual_lines)) 
+    
+    # this is totally wacky, but elementtree strips needless
+    # whitespace that mindom will preserve in the original string
+    parser = etree.XMLParser(remove_blank_text=True)
+    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True)
+    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True)
+    
+    if parsed_expected == parsed_actual:
+        return
+    
+    expected_lines =  parsed_expected.split("\n")
+    actual_lines = parsed_actual.split("\n")
+    test_case.assertEqual(len(expected_lines), len(actual_lines), "Parsed xml files are different lengths\n" + 
+                          "Expected: \n%s\nActual:\n%s" % (parsed_expected, parsed_actual)) 
     for i in range(len(expected_lines)):
         test_case.assertEqual(expected_lines[i], actual_lines[i])
         

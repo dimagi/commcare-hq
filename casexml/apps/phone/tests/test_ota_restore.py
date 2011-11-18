@@ -72,8 +72,7 @@ class OtaRestoreTest(TestCase):
                 <case_name>test case name</case_name> 
                 <external_id>someexternal</external_id>
             </create>
-            <update>
-            </update>
+            <update />
         </case>"""
         check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, [case_const.CASE_ACTION_CREATE,
                                                                                      case_const.CASE_ACTION_UPDATE]))

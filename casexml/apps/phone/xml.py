@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import logging
 from xml.sax import saxutils
+from xml.etree import ElementTree
 from casexml.apps.case import const
 
 def escape(o):
@@ -9,17 +10,29 @@ def escape(o):
     else:
         return saxutils.escape(unicode(o))
 
-def render_element(key, val):
-    if isinstance(val, dict):
-        elem_val = val.get('#text', '')
-        attr_list = ['%s="%s"' % (x[1:], val[x]) for x in filter(lambda x: x != '#text', val.keys())]
-        if len(attr_list) == 0:
-            attr_string = ''
-        else:
-            attr_string = ' ' + ' '.join(attr_list)
-        return "<%(key)s%(attrs)s>%(val)s</%(key)s>" % {"key": key, 'attrs': attr_string, "val": escape(elem_val)}
+def _safe_el(tag, text=None):
+    # save some typing/space
+    if text:
+        e = ElementTree.Element(tag)
+        e.text = unicode(text)
+        return e
     else:
-        return "<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(val)}
+        return ElementTree.Element(tag)
+        
+def get_element(key, val):
+    """
+    Gets an element from a key/value pair assumed to be pulled from 
+    a case object (usually in the dynamic properties)
+    """ 
+    element = ElementTree.Element(key)
+    if isinstance(val, dict):
+        element.text = val.get('#text', '')
+        element.attrs = dict([(x[1:], val[x]) for x in \
+                              filter(lambda x: x and x.startswith("@"), val.keys())])
+    else:
+        # assume it's a string. Hopefully this is valid
+        element.text = unicode(val)
+    return element
 
 
 # Response template according to 
@@ -50,113 +63,85 @@ SYNC_TEMPLATE =\
 def get_sync_xml(restore_id):
     return SYNC_TEMPLATE % {"restore_id": escape(restore_id)}
 
-CASE_TEMPLATE = \
-"""
-<case>
-    <case_id>%(case_id)s</case_id> 
-    <date_modified>%(date_modified)s</date_modified>%(create_block)s%(update_block)s%(referral_block)s
-</case>"""
-
-CREATE_BLOCK = \
-"""
-    <create>%(base_data)s
-    </create>"""
-
-BASE_DATA = \
-"""
-        <case_type_id>%(case_type_id)s</case_type_id> 
-        <user_id>%(user_id)s</user_id> 
-        <case_name>%(case_name)s</case_name> 
-        <external_id>%(external_id)s</external_id>"""
-
-UPDATE_BLOCK = \
-"""
-    <update>%(update_base_data)s
-        %(update_custom_data)s
-    </update>"""
-
-
-REFERRAL_BLOCK = \
-"""
-    <referral> 
-        <referral_id>%(ref_id)s</referral_id>
-        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s
-    </referral>"""
-
-REFERRAL_OPEN_BLOCK = \
-"""
-        <open>
-            <referral_types>%(ref_type)s</referral_types>
-        </open>"""
-
-REFERRAL_UPDATE_BLOCK = \
-"""
-    <update>
-        <referral_type>%(ref_type)s</referral_type>%(close_data)s
-    </update>"""
-
-REFERRAL_CLOSE_BLOCK = \
-"""
-        <date_closed>%(close_date)s</date_closed>"""
      
 def date_to_xml_string(date):
     if date: return date.strftime("%Y-%m-%d")
     return ""
 
-def get_referral_xml(referral):
+def get_referral_element(referral):
+    elem = _safe_el("referral")
+    elem.append(_safe_el("referral_id", referral.referral_id))
+    elem.append(_safe_el("followup_date", date_to_xml_string(referral.followup_on)))
+    
     # TODO: support referrals not always opening, this will
     # break with sync
-    open_block = REFERRAL_OPEN_BLOCK % {"ref_type": escape(referral.type)}
+    open_block = _safe_el("open")
+    open_block.append(_safe_el("referral_types", referral.type))
+    elem.append(open_block)
     
     if referral.closed:
-        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": escape(date_to_xml_string(referral.closed_on))}
-        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": escape(referral.type),
-                                                "close_data": close_data}
-    else:
-        update_block = "" # TODO
-    return REFERRAL_BLOCK % {"ref_id": escape(referral.referral_id),
-                             "fu_date": escape(date_to_xml_string(referral.followup_on)),
-                             "open_block": open_block,
-                             "update_block": update_block,
-                             }
+        update = _safe_el("update")
+        update.append(_safe_el("referral_type", referral.type))
+        update.append(_safe_el("date_closed", date_to_xml_string(referral.closed_on)))
+        elem.append(update)
+    
+    return elem
 
-def get_case_xml(case, updates):
+def get_case_element(case, updates):
     if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
     
-    base_data = BASE_DATA % {"case_type_id": escape(case.type),
-                             "user_id": escape(case.user_id),
-                             "case_name": escape(case.name),
-                             "external_id": escape(case.external_id) }
+    root = _safe_el("case")
+    root.append(_safe_el("case_id", case.get_id))
+    root.append(_safe_el("date_modified", date_to_xml_string(case.modified_on)))
+    
+    def _add_base_properties(element, case):
+        element.append(_safe_el("case_type_id", case.type))
+        element.append(_safe_el("user_id", case.user_id))
+        element.append(_safe_el("case_name", case.name))
+        element.append(_safe_el("external_id", case.external_id))
+    
     # if creating, the base data goes there, otherwise it goes in the
     # update block
-    if const.CASE_ACTION_CREATE in updates:
+    do_create = const.CASE_ACTION_CREATE in updates
+    do_update = const.CASE_ACTION_UPDATE in updates
+    do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
+    if do_create:
         # currently the below code relies on the assumption that
         # every create also includes an update
-        assert(const.CASE_ACTION_UPDATE in updates)
-        create_block = CREATE_BLOCK % {"base_data": base_data }
-        update_base_data = ""
-    elif const.CASE_ACTION_UPDATE in updates:
-        create_block = ""
-        update_base_data = base_data
-    elif const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates:
+        create_block = _safe_el("create")
+        _add_base_properties(create_block, case)
+        root.append(create_block)
+    
+    if do_update:
+        update_block = _safe_el("update")
+        # if we don't have a create block, also put the base properties
+        # in the update block, in case they changed
+        if not do_create:
+            _add_base_properties(update_block, case)
+        
+        # custom properties
+        for k, v, in case.dynamic_case_properties():
+            update_block.append(get_element(k, v))
+        root.append(update_block)
+    if do_purge:
         # likewise, for now we assume that you can't both create/update and close/purge  
         assert(const.CASE_ACTION_UPDATE not in updates)
         assert(const.CASE_ACTION_CREATE not in updates)
-        raise NotImplemented("Need to do purging")
+        purge_block = _safe_el("close")
+        root.append(purge_block)
         
-    update_custom_data = "\n\t".join([render_element(key,val)  \
-                                    for key, val in case.dynamic_case_properties()])
-    update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
-                                    "update_custom_data": update_custom_data}
-    referral_block = "".join([get_referral_xml(ref) for ref in case.referrals])
-    return CASE_TEMPLATE % {"case_id": escape(case.case_id),
-                            "date_modified": escape(date_to_xml_string(case.modified_on)),
-                            "create_block": create_block,
-                            "update_block": update_block,
-                            "referral_block": referral_block
-                            } 
+    if not do_purge:
+        # only send down referrals if the case is not being purged
+        for ref_elem in [get_referral_element(ref) for ref in case.referrals]:
+            root.append(ref_elem)
+        
+    
+    return root
+
+def get_case_xml(case, updates):
+    return ElementTree.tostring(get_case_element(case, updates))
     
 REGISTRATION_TEMPLATE = \
 """
