@@ -15,15 +15,15 @@ class User(object):
         self.date_joined = date_joined
         self.user_data = user_data
     
-    def get_open_cases(self, last_sync):
+    def get_case_updates(self, last_sync):
         """
         Get open cases associated with the user. This method
         can be overridden to change case-syncing behavior
         
         returns: list of (CommCareCase, previously_synced) tuples
         """
-        from casexml.apps.phone.caselogic import get_open_cases_to_send
-        return get_open_cases_to_send(self, last_sync)
+        from casexml.apps.phone.caselogic import get_case_updates
+        return get_case_updates(self, last_sync)
     
     @classmethod
     def from_django_user(cls, django_user):

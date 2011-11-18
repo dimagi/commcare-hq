@@ -8,9 +8,9 @@ def generate_restore_payload(user, restore_id=""):
     """
     Gets an XML payload suitable for OTA restore. If you need to do something
     other than find all cases matching user_id = user.user_id then you have
-    to pass in a user object that overrides the get_open_cases() method.
+    to pass in a user object that overrides the get_case_updates() method.
     
-    It should match the same signature as models.user.get_open_cases():
+    It should match the same signature as models.user.get_case_updates():
     
         args:    sync token
         returns: list of (CommCareCase, previously_synced) tuples
@@ -22,8 +22,8 @@ def generate_restore_payload(user, restore_id=""):
         except Exception:
             logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
     
-    cases_to_send = user.get_open_cases(last_sync)
-    case_xml_blocks = [xml.get_case_xml(case, create) for case, create in cases_to_send]
+    cases_to_send = user.get_case_updates(last_sync)
+    case_xml_blocks = [xml.get_case_xml(case, updates) for case, updates in cases_to_send]
     
     saved_case_ids = [case.case_id for case, _ in cases_to_send]
     last_seq = get_db().info()["update_seq"]

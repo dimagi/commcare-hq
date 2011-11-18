@@ -5,6 +5,7 @@ from dimagi.utils.timeout import TimeoutException
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.phone.models import User
+from casexml.apps.case import const
 
 
 
@@ -25,5 +26,6 @@ def xml_for_case(request, case_id):
     Test view to get the xml for a particular case
     """
     case = CommCareCase.get(case_id)
-    return HttpResponse(xml.get_case_xml(case), mimetype="text/xml")
+    return HttpResponse(xml.get_case_xml(case, [const.CASE_ACTION_CREATE,
+                                                const.CASE_ACTION_UPDATE]), mimetype="text/xml")
     

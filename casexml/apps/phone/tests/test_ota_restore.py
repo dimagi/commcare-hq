@@ -14,6 +14,7 @@ from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.restore import generate_restore_payload
 from django.http import HttpRequest
 from casexml.apps.phone.tests import const
+from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
     dummy_user_xml
 
@@ -60,7 +61,7 @@ class OtaRestoreTest(TestCase):
         
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
-        self.assertEqual(1, len(user.get_open_cases(None)))
+        self.assertEqual(1, len(user.get_case_updates(None)))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id> 
@@ -74,7 +75,8 @@ class OtaRestoreTest(TestCase):
             <update>
             </update>
         </case>"""
-        check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, create=True))
+        check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, [case_const.CASE_ACTION_CREATE,
+                                                                                     case_const.CASE_ACTION_UPDATE]))
         
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion

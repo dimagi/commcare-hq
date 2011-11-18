@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import logging
 from xml.sax import saxutils
+from casexml.apps.case import const
 
 def escape(o):
     if o is None:
@@ -119,7 +120,7 @@ def get_referral_xml(referral):
                              "update_block": update_block,
                              }
 
-def get_case_xml(case, create=True):
+def get_case_xml(case, updates):
     if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
@@ -130,13 +131,21 @@ def get_case_xml(case, create=True):
                              "external_id": escape(case.external_id) }
     # if creating, the base data goes there, otherwise it goes in the
     # update block
-    if create:
+    if const.CASE_ACTION_CREATE in updates:
+        # currently the below code relies on the assumption that
+        # every create also includes an update
+        assert(const.CASE_ACTION_UPDATE in updates)
         create_block = CREATE_BLOCK % {"base_data": base_data }
         update_base_data = ""
-    else:
+    elif const.CASE_ACTION_UPDATE in updates:
         create_block = ""
         update_base_data = base_data
-    
+    elif const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates:
+        # likewise, for now we assume that you can't both create/update and close/purge  
+        assert(const.CASE_ACTION_UPDATE not in updates)
+        assert(const.CASE_ACTION_CREATE not in updates)
+        raise NotImplemented("Need to do purging")
+        
     update_custom_data = "\n\t".join([render_element(key,val)  \
                                     for key, val in case.dynamic_case_properties()])
     update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,

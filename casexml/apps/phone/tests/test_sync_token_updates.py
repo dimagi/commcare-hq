@@ -16,7 +16,6 @@ class SyncTokenUpdateTest(TestCase):
     Tests sync token updates on submission
     """
         
-    
     def setUp(self):
         # clear cases
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
