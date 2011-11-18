@@ -4,6 +4,9 @@ from xml.sax import saxutils
 from xml.etree import ElementTree
 from casexml.apps.case import const
 
+USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
+
+
 def escape(o):
     if o is None:
         return ""
@@ -143,33 +146,25 @@ def get_case_element(case, updates):
 def get_case_xml(case, updates):
     return ElementTree.tostring(get_case_element(case, updates))
     
-REGISTRATION_TEMPLATE = \
-"""
-    <Registration xmlns="http://openrosa.org/user/registration">
-        <username>%(username)s</username>
-        <password>%(password)s</password>
-        <uuid>%(uuid)s</uuid>
-        <date>%(date)s</date>%(user_data)s
-    </Registration>"""
 
-USER_DATA_TEMPLATE = \
-"""
-        <user_data>
-            %(data)s
-        </user_data>"""
+def get_registration_element(user):
+    root = _safe_el("Registration")
+    root.attrib = { "xmlns": USER_REGISTRATION_XMLNS }
+    root.append(_safe_el("username", user.username))
+    root.append(_safe_el("password", user.password))
+    root.append(_safe_el("uuid", user.user_id))
+    root.append(_safe_el("date", date_to_xml_string(user.date_joined)))
+    if user.user_data:
+        root.append(get_user_data_element(user.user_data))
+    return root
 
 def get_registration_xml(user):
-    # TODO: this doesn't feel like a final way to do this
-    # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
-    return REGISTRATION_TEMPLATE % {"username":  escape(user.username),
-                                    "password":  escape(user.password),
-                                    "uuid":      escape(user.user_id),
-                                    "date":      escape(user.date_joined.strftime("%Y-%m-%d")),
-                                    "user_data": get_user_data_xml(user.user_data)
-                                    }
-def get_user_data_xml(dict):
-    if not dict:  return ""
-    return USER_DATA_TEMPLATE % \
-        {"data": "\n\t".join('<data key="%(key)s">%(value)s</data>' % \
-                                       {"key": key, "value": escape(val) } for key, val in dict.items())}
-
+    return ElementTree.tostring(get_registration_element(user))
+    
+def get_user_data_element(dict):
+    elem = _safe_el("user_data")
+    for k, v in dict.items():
+        sub_el = _safe_el("data", v)
+        sub_el.attrib = {"key": k}
+        elem.append(sub_el)
+    return elem
