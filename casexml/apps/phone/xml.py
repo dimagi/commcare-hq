@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 from casexml.apps.case import const
 
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
-
+SYNC_XMLNS = "http://commcarehq.org/sync"
 
 def escape(o):
     if o is None:
@@ -14,14 +14,18 @@ def escape(o):
         return saxutils.escape(unicode(o))
 
 def _safe_el(tag, text=None):
-    # save some typing/space
+    # shortcut for commonly used functionality
     if text:
         e = ElementTree.Element(tag)
         e.text = unicode(text)
         return e
     else:
         return ElementTree.Element(tag)
-        
+
+def tostring(element):
+    # save some typing, force UTF-8
+    return ElementTree.tostring(element, encoding="utf-8")
+
 def get_element(key, val):
     """
     Gets an element from a key/value pair assumed to be pulled from 
@@ -38,35 +42,13 @@ def get_element(key, val):
     return element
 
 
-# Response template according to 
-# https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
 
-RESPONSE_TEMPLATE = \
-'''<?xml version='1.0' encoding='UTF-8'?>
-<OpenRosaResponse xmlns="http://openrosa.org/http/response">
-    <message>%(message)s</message>%(extra_xml)s
-</OpenRosaResponse>'''
+def get_sync_element(restore_id):
+    elem = _safe_el("Sync")
+    elem.attrib = {"xmlns": SYNC_XMLNS}
+    elem.append(_safe_el("restore_id", restore_id))
+    return elem
 
-def get_response(message, extra_xml=""):
-    return RESPONSE_TEMPLATE % {"message": escape(message),
-                                "extra_xml": extra_xml}
-
-
-RESTOREDATA_TEMPLATE =\
-"""%(sync_info)s%(registration)s%(case_list)s
-"""
-
-SYNC_TEMPLATE =\
-"""
-    <Sync xmlns="http://commcarehq.org/sync">
-        <restore_id>%(restore_id)s</restore_id> 
-    </Sync>"""
-    
-
-def get_sync_xml(restore_id):
-    return SYNC_TEMPLATE % {"restore_id": escape(restore_id)}
-
-     
 def date_to_xml_string(date):
     if date: return date.strftime("%Y-%m-%d")
     return ""
@@ -140,11 +122,10 @@ def get_case_element(case, updates):
         for ref_elem in [get_referral_element(ref) for ref in case.referrals]:
             root.append(ref_elem)
         
-    
     return root
 
 def get_case_xml(case, updates):
-    return ElementTree.tostring(get_case_element(case, updates))
+    return tostring(get_case_element(case, updates))
     
 
 def get_registration_element(user):
@@ -159,7 +140,7 @@ def get_registration_element(user):
     return root
 
 def get_registration_xml(user):
-    return ElementTree.tostring(get_registration_element(user))
+    return tostring(get_registration_element(user))
     
 def get_user_data_element(dict):
     elem = _safe_el("user_data")

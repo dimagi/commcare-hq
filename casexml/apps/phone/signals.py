@@ -32,9 +32,9 @@ def send_default_response(sender, xform, **kwargs):
                    (to,
                     forms_submitted_today_count(xform.metadata.userID), 
                     forms_submitted_count(xform.metadata.userID))
-        return ReceiverResult(xml.get_response(message), Certainty.MILD)
+        return ReceiverResult(xml.get_simple_response_xml(message), Certainty.MILD)
     else:
-        return ReceiverResult(xml.get_response("Thanks for submitting!"), Certainty.MILD)
+        return ReceiverResult(xml.get_simple_response_xml("Thanks for submitting!"), Certainty.MILD)
 
 
 successful_form_received.connect(send_default_response)

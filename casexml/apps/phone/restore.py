@@ -3,6 +3,7 @@ import logging
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml
 from datetime import datetime
+from receiver.xml import get_response_element
 
 def generate_restore_payload(user, restore_id=""):
     """
@@ -23,8 +24,9 @@ def generate_restore_payload(user, restore_id=""):
             logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
     
     cases_to_send = user.get_case_updates(last_sync)
-    case_xml_blocks = [xml.get_case_xml(case, updates) for case, updates in cases_to_send]
+    case_xml_elements = [xml.get_case_element(case, updates) for case, updates in cases_to_send]
     
+    # TODO: update purged lists
     saved_case_ids = [case.case_id for case, _ in cases_to_send]
     last_seq = get_db().info()["update_seq"]
     
@@ -35,9 +37,16 @@ def generate_restore_payload(user, restore_id=""):
                       cases=saved_case_ids)
     synclog.save()
     
-    reg_xml = xml.get_registration_xml(user)
+    # start with standard response
+    response = get_response_element("Successfully restored account %s!" % user.username)
     
-    return xml.get_response("Successfully restored account %s!" % user.username, 
-                            xml.RESTOREDATA_TEMPLATE % {"registration": reg_xml, 
-                                                        "sync_info": xml.get_sync_xml(synclog.get_id), 
-                                                        "case_list": "".join(case_xml_blocks)})
+    # add sync token info
+    response.append(xml.get_sync_element(synclog.get_id))
+    # registration block
+    response.append(xml.get_registration_element(user))
+    # case blocks
+    for case_elem in case_xml_elements:
+        response.append(case_elem)
+    
+    return xml.tostring(response)
+    
