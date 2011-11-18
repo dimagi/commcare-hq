@@ -19,7 +19,7 @@ def dummy_user_xml():
     </Registration>"""
     
 def dummy_restore_xml(restore_id, case_xml=""):
-        return """<?xml version='1.0' encoding='UTF-8'?>
+        return """
 <OpenRosaResponse xmlns="http://openrosa.org/http/response">
     <message>Successfully restored account mclovin!</message>
     <Sync xmlns="http://commcarehq.org/sync">
