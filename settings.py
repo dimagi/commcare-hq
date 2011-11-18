@@ -135,7 +135,6 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
-    'corehq.apps.help',
     'couchforms',
     'couchexport',
     'couchlog',
