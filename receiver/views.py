@@ -50,6 +50,10 @@ def post(request):
             if hasattr(request, 'openrosa_headers'):
                 doc['openrosa_headers'] = request.openrosa_headers 
             
+            # if you have SyncTokenMiddleware running the headers appear here
+            if hasattr(request, 'last_sync_token'):
+                doc['last_sync_token'] = request.last_sync_token 
+            
             # a hack allowing you to specify the submit time to use
             # instead of the actual time receiver
             # useful for migrating data
@@ -124,6 +128,8 @@ def post(request):
 
         # this hack is required for ODK
         response["Location"] = get_location(request)
+        
+        # this is a magic thing that we add
         response['X-CommCareHQ-FormID'] = doc.get_id
         return response
 
