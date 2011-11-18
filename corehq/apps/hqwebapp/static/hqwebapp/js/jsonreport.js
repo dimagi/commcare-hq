@@ -30,7 +30,7 @@ var cssText =
   ".jsonreport .desc B { border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 5px solid #333; border-top: none; }\r\n" +
   ".jsonreport H3 { font-size: 18px; margin: 0 0 10px 0; }";
 
-document.write('<style type="text/css">' + cssText + '</style>\r\n');
+document.write('<style>' + cssText + '</style>\r\n');
 
 if (!_) var _ = {};
 _.jsonreport = (function(){

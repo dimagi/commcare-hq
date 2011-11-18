@@ -2,35 +2,63 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{{ STATIC_URL }}formdesigner/js/jquery.jstree.js"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/jquery.fancybox-1.3.4.pack.js"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/chosen.jquery.min.js"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/jquery-ui-timepicker-addon.js"></script>
+
+    <script src="{{ STATIC_URL }}formdesigner/lib/tokeninput/jquery.tokeninput.js"></script>
+    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/biginteger.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/schemeNumber.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/models.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/xpath.js?version=115"></script>
+
+
+    <script src="{{ STATIC_URL }}formdesigner/js/XMLWriter-1.0.0.js"></script>
+
+    <script src="{{ STATIC_URL }}formdesigner/js/ui.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/util.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/model.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/controller.js?version=115"></script>
+    <script src="{{ STATIC_URL }}formdesigner/js/widgets.js?version=115"></script>
+
+    <script>
+        $(function () {
+
+            $("#edit").hide();
+
+            $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
+
+            formdesigner.launch({
+                rootElement: $("#formdesigner"),
+                staticPrefix: '/static/formdesigner/',
+                iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
+                saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
+                form: {{ form.source|JSON }},
+                langs: {{ app.langs|JSON }}
+            });
+            formdesigner.on('form-saved', function (args) {
+                var response = JSON.parse(args.response);
+                COMMCAREHQ.app_manager.updateDOM(response.update);
+            });
+        });
+        (function configNonChromeWarning() {
+            if (!$.browser.webkit) {
+                $("#purcforms-link").hide();
+            }
+        }());
+    </script>
+
+{% endblock %}
 
 {% block head %}
     {{ block.super }}
 
-    <link href="{{ STATIC_URL }}formdesigner/css/chosen.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/lib/tokeninput/token-input-facebook.css?version=115" type="text/css" />
-    <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css?version=115" rel="stylesheet" type="text/css" media="screen, projection" />
-    
-
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.jstree.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery.fancybox-1.3.4.pack.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/chosen.jquery.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/jquery-ui-timepicker-addon.js"></script>
-
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/lib/tokeninput/jquery.tokeninput.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/biginteger.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/schemeNumber.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/lib/xpath/models.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/lib/xpath/xpath.js?version=115"></script>
-    
-        
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/XMLWriter-1.0.0.js"></script>
-
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/ui.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/util.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/model.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/controller.js?version=115"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}formdesigner/js/widgets.js?version=115"></script>
+    <link href="{{ STATIC_URL }}formdesigner/css/chosen.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" media="screen" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/lib/tokeninput/token-input-facebook.css?version=115" />
+    <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css?version=115" rel="stylesheet" media="screen, projection" />
     
     <style>
         #forms {
@@ -65,32 +93,6 @@
           visibility: hidden;
         }
     </style>
-    <script>
-        $(function () {
-
-            $("#edit").hide();
-
-            $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
-
-            formdesigner.launch({
-                rootElement: $("#formdesigner"),
-                staticPrefix: '/static/formdesigner/',
-                iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
-                saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
-                form: {{ form.source|JSON }},
-                langs: {{ app.langs|JSON }}
-            });
-            formdesigner.on('form-saved', function (args) {
-                var response = JSON.parse(args.response);
-                COMMCAREHQ.app_manager.updateDOM(response.update);
-            });
-        });
-        (function configNonChromeWarning() {
-            if (!$.browser.webkit) {
-                $("#purcforms-link").hide();
-            }
-        }());
-    </script>
 {% endblock %}
 
 {% block app-content %}

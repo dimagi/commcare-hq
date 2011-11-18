@@ -1,12 +1,14 @@
 {% extends base_template %}
-{% block head %}
-    {{ block.super }}
+{% block js %}{{ block.super }}
     <script>
         $(function(){
             $("#emu-back").addClass('ui-corner-top');
             $("#emu-info").addClass('ui-corner-bottom');
         });
     </script>
+{% endblock %}
+{% block head %}
+    {{ block.super }}
     <style>
         #main_container {
             width: 266px;

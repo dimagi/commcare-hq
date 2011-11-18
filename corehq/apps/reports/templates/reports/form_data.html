@@ -1,12 +1,13 @@
 {% extends base_template %}
 {% load xform_tags %}
 {% load case_tags %}
-{% block head %}
-    {{block.super}}
+{% block head %}{{ block.super }}
     <link rel="stylesheet" href="{{ STATIC_URL }}couchforms/stylesheets/xforms.css" />
+
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
-    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+
     <style>
     body .syntaxhighlighter .line {
             white-space: pre-wrap !important; /* make code wrap */

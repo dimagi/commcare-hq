@@ -4,16 +4,13 @@
     {% include "imports/datatables.html" %}
     {% include "imports/checklist.html" %}
 {% endblock %}
-{% block head %}
-    {{ block.super }}
-    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}sms/css/sms.css" />
-    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
-    <script type="text/javascript" charset="utf-8">
+{% block js-inline %}{{ block.super }}
+    <script>
     $(function(){
         $("#sms-tabs").tabs().removeClass('ui-corner-all ui-widget-content').addClass('ui-corner-bottom').css('padding', '0');
         $("#sms-tabs ul").removeClass('ui-corner-all');
     });
-    
+
     // datatable configuration.
     function start_datatables(elem){
         if(!elem){
@@ -29,9 +26,14 @@
             addSearchBox : true,
             showSelectedItems : true,
         });
-    }); 
+    });
     </script>
     {% include "sms/partials/sms_autocomplete.html" %}
+{% endblock %}
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}sms/css/sms.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
 {% endblock %}
 
 

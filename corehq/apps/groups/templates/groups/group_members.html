@@ -1,8 +1,56 @@
 {% extends "groups/all_groups.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% block head %}
-    {{ block.super }}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            var groupName = {{ group.name|JSON }},
+                selectedGroupTab = $('#group-list > .selected'),
+                pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),
+                editLink = $('<a href="#"/>').append(pencil).click(function (e) {
+                        e.preventDefault();
+                        var offset = pencil.offset();
+                        offset.top -= editorPopup.outerHeight();
+                        offset.left += pencil.outerWidth();
+                        Shield.open(editorPopup.css(offset));
+                        $("#group-name-input").focus().select();
+                    }).prependTo(selectedGroupTab),
+                editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');
+            $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(
+                $('<label for="group-name-input"/>').text('Group Name: '),
+                $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName),
+                $('<div/>').append(
+                    $('<a href="#"/>').addClass('submit button').text("Save").css('float', 'right'),
+                    $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {
+                        e.preventDefault();
+                        Shield.close();
+                    })
+                )
+            ).appendTo(editorPopup);
+            editorPopup.appendTo($('body')).hide();
+            COMMCAREHQ.initBlock(editorPopup);
+        });
+        $(function () {
+            var i, j, index,
+                wrapper = $('#non-members'),
+                users = wrapper.find(' > *'),
+                nCols = 3,
+                nNames = Math.ceil(users.length*1.0/nCols),
+                col;
+            for (i = 0; i < nCols; i += 1) {
+                col = $('<div/>').addClass('user-bubbles').appendTo(wrapper);
+                for (j = 0; j < nNames; j += 1) {
+                    index = i * nNames + j;
+                    if (index < users.length) {
+                        users.slice(index, index + 1).appendTo(col);
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}
+{% block head %}{{ block.super }}
     <style>
         h2 {
             font-weight: normal;
@@ -50,54 +98,6 @@
             padding-top: 10px;
         }
     </style>
-    <script>
-        $(function () {
-            var groupName = {{ group.name|JSON }},
-                selectedGroupTab = $('#group-list > .selected'),
-                pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),
-                editLink = $('<a href="#"/>').append(pencil).click(function (e) {
-                        e.preventDefault();
-                        var offset = pencil.offset();
-                        offset.top -= editorPopup.outerHeight();
-                        offset.left += pencil.outerWidth();
-                        Shield.open(editorPopup.css(offset));
-                        $("#group-name-input").focus().select();
-                    }).prependTo(selectedGroupTab),
-                editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');
-            $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(
-                $('<label for="group-name-input"/>').text('Group Name: '),
-                $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName),
-                $('<div/>').append(
-                    $('<a href="#"/>').addClass('submit button').text("Save").css('float', 'right'),
-                    $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {
-                        e.preventDefault();
-                        Shield.close();
-                    })
-                )
-            ).appendTo(editorPopup);
-            editorPopup.appendTo($('body')).hide();
-            COMMCAREHQ.initBlock(editorPopup);
-        });
-        $(function () {
-            var i, j, index,
-                wrapper = $('#non-members'),
-                users = wrapper.find(' > *'),
-                nCols = 3,
-                nNames = Math.ceil(users.length*1.0/nCols),
-                col;
-            for (i = 0; i < nCols; i += 1) {
-                console.log("Column " + i);
-                col = $('<div/>').addClass('user-bubbles').appendTo(wrapper);
-                for (j = 0; j < nNames; j += 1) {
-                    index = i * nNames + j;
-                    console.log(index);
-                    if (index < users.length) {
-                        users.slice(index, index + 1).appendTo(col);
-                    }
-                }
-            }
-        });
-    </script>
 {% endblock %}
 
 {% block group-view %}

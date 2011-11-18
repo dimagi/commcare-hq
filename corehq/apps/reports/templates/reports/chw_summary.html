@@ -5,7 +5,7 @@
 {% block page_javascripts %}
     {{ block.super }}
 {% if main_chw %}
-    <script type="text/javascript">
+    <script>
         {% case_plot_js main_chw.get_id %}
         {% formentry_plot_js main_chw.current_clinic_id main_chw.get_id %}
         $(function() {

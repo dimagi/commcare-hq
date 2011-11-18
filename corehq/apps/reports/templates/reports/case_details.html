@@ -3,6 +3,26 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
+{% block js-inline %}{{ block.super }}
+    <script>
+    $(document).ready(function() {
+        // this adds a clickable link to our form elements
+        var form_lookup_dict = {{ form_lookups|JSON }};
+        var url_base = "{% url render_form_data domain 'placeholder_formid' %}";
+        var link_template = '<a href="placeholder_url">placeholder_text</a>'
+        $(".xform_ref").each(function() {
+            var formid = $(this).data("formid");
+            if (formid) {
+                var text = form_lookup_dict[formid];
+                var url = url_base.replace("placeholder_formid", formid);
+                var body = link_template.replace("placeholder_url", url).replace("placeholder_text", text);
+                $(this).html(body);
+            }
+        });
+    });
+    </script>
+{% endblock %}
+
 {% block head %}
     {{ block.super }}
     {% include "imports/datatables.html" %}
@@ -25,24 +45,6 @@
             width: 100%;
         }
     </style>
-    <script>
-    var form_lookup_dict = {{ form_lookups|JSON }};
-    $(document).ready(function() {
-        // this adds a clickable link to our form elements
-        var url_base = "{% url render_form_data domain 'placeholder_formid' %}";
-        var link_template = '<a href="placeholder_url">placeholder_text</a>'
-        $(".xform_ref").each(function() {
-            var formid = $(this).data("formid");
-            if (formid) {
-                var text = form_lookup_dict[formid];
-                var url = url_base.replace("placeholder_formid", formid);
-                var body = link_template.replace("placeholder_url", url).replace("placeholder_text", text);
-                $(this).html(body);
-            }
-        });
-    });
-         
-    </script>
 {% endblock %}
 
 {% block content %}

@@ -70,3 +70,20 @@ input.sms-autocomplete {
     right: 1em;
     top: 1.5em;
 }
+
+.scary-settings {
+    background-color: #FEFEFE;
+    border: 1px solid #CCC;
+    border-top: none;
+    padding: 1em;
+}
+.scary-settings-toggle {
+    margin-top: 1em;
+    border: 1px solid transparent;
+    padding: .5em;
+}
+.scary-settings-toggle-open {
+    border: 1px solid #CCC;
+    background-color: #EEE;
+
+}

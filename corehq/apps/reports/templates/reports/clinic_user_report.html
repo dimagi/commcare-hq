@@ -3,7 +3,7 @@
 {% block page_javascripts %}
     {{ block.super }}
     {% if clinic_id %}
-    <script type="text/javascript">
+    <script>
         $("#clinic").live("change", 
         function () {
             button = $(this)[0];

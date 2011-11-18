@@ -1,7 +1,7 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block head %}
+{% block js %}
     {{ block.super }}
     {% if app.doc_type == "Application" %}
         <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js?version=3"></script>
@@ -94,24 +94,6 @@
                 });
             });
         </script>
-        <style>
-            .scary-settings {
-                background-color: #FEFEFE;
-                border: 1px solid #CCC;
-                border-top: none;
-                padding: 1em;
-            }
-            .scary-settings-toggle {
-                margin-top: 1em;
-                border: 1px solid transparent;
-                padding: .5em;
-            }
-            .scary-settings-toggle-open {
-                border: 1px solid #CCC;
-                background-color: #EEE;
-
-            }
-        </style>
     {% endif %}
     <script>
         $(function(){
