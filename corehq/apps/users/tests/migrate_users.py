@@ -169,7 +169,8 @@ WEB_USER_TARGET = json.loads("""{
     ],
     "status": null,
     "device_ids": [],
-    "phone_numbers": []
+    "phone_numbers": [],
+    "betahack": false
 }""")
 
 

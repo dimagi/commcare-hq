@@ -1,13 +1,8 @@
 {% extends "reports/report_base.html" %}
 {% load report_tags %}
 
-{% block head %}
-    {{ block.super }}
-    <script>
-        $(function(){
-        });
-    </script>
-    <style type="text/css">
+{% block head %}{{ block.super }}
+    <style>
         .null-entry {
             color: #ccc;
         }

@@ -1,40 +1,12 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block head %}
-    {{ block.super }}
-    <style>
-        .casexml ul {
-            margin-left: 15px;
-        }
-        .no-edit-select {
-            font-weight: bold;
-            color: #444;
-        }
-        input[type="radio"]{
-            margin: 3px 5px 5px 0px;
-        }
-        #xform-links ul {
-            display: block;
-        }
-        #xform-links li {
-            display: inline-block;
-            border-left: 1px solid #CCC;
-            padding: 5px;
-        }
-        #xform-links li:first-child {
-            border-left: none
-        }
-    </style>
-    <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
-{#    <script src="{{ STATIC_URL }}app_manager/js/ejs_fulljslint.js"></script>#}
-    <script src="{{ STATIC_URL }}app_manager/js/casexml.js?version=6"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/langcodeVerifier.js?version=2"></script>
 
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
-    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    
+{% block js %}{{ block.super }}
+    <script src="{{ STATIC_URL }}app_manager/js/ejs.min.js"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/casexml.js?version=6"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/langcodeValidator.js?version=3"></script>
+
     <script>
         $(function(){
             (function doStyling() {
@@ -87,6 +59,60 @@
         });
     </script>
 {% endblock %}
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <style>
+        .casexml ul {
+            margin-left: 15px;
+        }
+        .no-edit-select {
+            font-weight: bold;
+            color: #444;
+        }
+        input[type="radio"]{
+            margin: 3px 5px 5px 0px;
+        }
+        #xform-links ul {
+            display: block;
+        }
+        #xform-links li {
+            display: inline-block;
+            border-left: 1px solid #DDD;
+            padding: 0 5px;
+        }
+        #xform-links li:first-child {
+            border-left: none;
+            padding-left: 0;
+        }
+        #xform-links a {
+            display: inline-block;
+            border: 1px solid transparent;
+            padding: 5px 10px;
+            vertical-align: middle;
+
+            border-radius: 15px;
+            -moz-border-radius: 15px;
+        }
+        #xform-links a:hover {
+            border: 1px solid #BBB;
+            background: #EEE;
+            text-decoration: none;
+        }
+        #xform-links a:active {
+            border: 1px solid #BBB;
+            background: #DDD;
+            text-decoration: none;
+        }
+        #xform-links a.disabled {
+            pointer-events: none;
+            cursor: default;
+            color: #888;
+        }
+    </style>
+{% endblock %}
 {% block form-view %}
     {% if edit and not is_user_registration %}
         <div class="delete-me">
@@ -107,24 +133,22 @@
     {% if nav_form %}
         <h4>Form Settings</h4>
         <div class="config">
-            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'name' %}">
+            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder"></div>
                 <table>
-                    {% if edit %}
-                        <tr>
-                            <th>Form Name</th>
-                            <td>
+                    <tr>
+                        <th>Form Name</th>
+                        <td>
+                            {% if edit %}
                                 <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <th>Form Name</th>
-                            <td>
+                            {% else %}
                                 {{ form.name|trans:langs }}
-                            </td>
-                        </tr>
-                    {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% with form as item %}
+                        {% include "app_manager/partials/nav_menu_media.html" %}
+                    {% endwith %}
                 </table>
             </form>
         </div>
@@ -135,7 +159,23 @@
         <div class="config" id="xform-links">
             <ul>
                 <li>
-                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload XForm</a>
+                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
+                </li><li>
+                    <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
+                    {% if is_user_registration %}
+                       href="{% url get_user_registration_source domain app.id %}">
+                    {% else %}
+                       href="{% url get_xform_source domain app.id module.id form.id %}">
+                    {% endif %}
+                        <span class="ui-icon ui-icon-search"></span>
+                        View
+                    </a>
+                    <div class="xml-source dialog" title="XML Source">
+                        Double-click to select all.
+                        <pre id="xform-source" class="brush: xml;"></pre>
+                    </div>
+                </li><li>
+                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
                             <input id="xform_file_input" type="file" name="xform" />
@@ -143,26 +183,25 @@
                             <input id="xform_file_submit"type="submit" value="Upload" />
                         </form>
                     </div>
-                </li>
-                <li>
-                    <a {% if is_user_registration %}
+                </li><li>
+                    <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
                             href="{% url get_user_registration_source domain app.id %}?download=true"
                         {% else %}
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
                         {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
                 </li>
-                <li>
-                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
-                </li>
             </ul>
         </div>
     {% endif %}
 
-    <h4>Languages Checker</h4>
-    <div class="config">
-        <div id="langcode_validator"></div>
-    </div>
-
+    {% if form.source %}
+        <h4>Language Checker</h4>
+        <div class="config">
+            <div id="langcode_validator">
+                <p>This form does not use internationalized text.</p>
+            </div>
+        </div>
+    {% endif %}
     {% if form.source and not is_user_registration %}
         <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
         <div class="help-text" data-help-key="app_manager/casexml_overview"></div>

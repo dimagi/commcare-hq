@@ -9,16 +9,16 @@
 
 {% block hq-stylesheets %}
 
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}domain/stylesheets/sfb.css?version=3"/>
-<link rel="stylesheet" href="{{STATIC_URL}}domain/javascripts/nyroModal/styles/nyroModal.css" type="text/css" media="screen" />
-<script type="text/javascript" src="{{STATIC_URL}}domain/javascripts/nyroModal/js/jquery.nyroModal-1.5.5.pack.js"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}domain/stylesheets/sfb.css?version=3"/>
+<link rel="stylesheet" href="{{STATIC_URL}}domain/javascripts/nyroModal/styles/nyroModal.css" media="screen" />
+<script src="{{STATIC_URL}}domain/javascripts/nyroModal/js/jquery.nyroModal-1.5.5.pack.js"></script>
 
 {% endblock hq-stylesheets %}
 
 {#################################################################################################################}           
 {% block content %}
 
-<script type="text/javascript">
+<script>
 $(function() {
   $.nyroModalSettings({
     height:500,

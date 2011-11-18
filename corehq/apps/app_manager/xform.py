@@ -138,15 +138,19 @@ class XForm(WrappedNode):
     def case_node(self):
         return self.data_node.find('{x}case')
 
+    def media_references(self, form):
+        try:
+            nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
+            return [n.text for n in nodes]
+        except XFormError:
+            return []
     @property
     def image_references(self):
-        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="image"]')
-        return [n.text for n in nodes]
-        
+        return self.media_references(form="image")
+
     @property
     def audio_references(self):
-        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="audio"]')
-        return [n.text for n in nodes]
+        return self.media_references(form="image")
     
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
@@ -199,8 +203,10 @@ class XForm(WrappedNode):
                     label = self.localize(label_node.attrib['ref'], lang, form)
                     if label is not None:
                         break
-            else:
+            elif label_node.text:
                 label = label_node.text.strip()
+            else:
+                label = ""
 
         return label
 

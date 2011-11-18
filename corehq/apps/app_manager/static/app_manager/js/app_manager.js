@@ -52,7 +52,13 @@
                 COMMCAREHQ.SaveButton.initForm($form, {
                     unsavedMessage: "You have unchanged settings",
                     success: function (data) {
+                        var key;
                         COMMCAREHQ.app_manager.updateDOM(data.update);
+                        for (key in data.corrections) {
+                            if (data.corrections.hasOwnProperty(key)) {
+                                $form.find('[name="' + key + '"]').val(data.corrections[key]);
+                            }
+                        }
                     }
                 }).ui.appendTo($buttonHolder);
             }());

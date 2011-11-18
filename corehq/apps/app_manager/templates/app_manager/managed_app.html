@@ -2,8 +2,7 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
-{% block head %}
-    {{ block.super }}
+{% block js-inline %}{{ block.super }}
     {% if app.doc_type == "Application" %}
     <script>
         $(function () {

@@ -1,10 +1,22 @@
 from datetime import datetime
+import logging
 from zipfile import ZipFile
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound, BadValueError
 from couchdbkit.ext.django.schema import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 
+class SemanticVersionProperty(StringProperty):
+    def validate(self, value, required=True):
+        super(SemanticVersionProperty, self).validate(value, required)
+        try:
+            major, minor, _ = value.split('.')
+            int(major)
+            int(minor)
+        except Exception:
+            raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
+        return value
+    
 class CommCareBuild(Document):
     """
     #python manage.py shell
@@ -14,7 +26,7 @@ class CommCareBuild(Document):
     """
 
     build_number = IntegerProperty()
-    version = StringProperty()
+    version = SemanticVersionProperty()
     time = DateTimeProperty()
     
     def put_file(self, payload, path, filename=None):
@@ -71,6 +83,10 @@ class CommCareBuild(Document):
             raise
         z.close()
         return self
+
+    def minor_release(self):
+        major, minor, _ = self.version.split('.')
+        return int(major), int(minor)
 
     @classmethod
     def get_build(cls, version, build_number=None, latest=False):

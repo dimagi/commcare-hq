@@ -1,147 +1,78 @@
-<!DOCTYPE html>
-{% load tabs_tags %}
-{% load permissions %}
-{% load i18n %}
-<html lang="en">
+{% load tabs_tags %}{% load permissions %}{% load i18n %}<!DOCTYPE html>
+<html>
     <head>
-        <meta charset="utf-8" />
+        <meta charset="utf-8"/>
         <title>CommCare HQ</title>
-
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=8"/>
-
-
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/main.js?version=10"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/shield.js?version=3"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/help.js?version=2"></script>
 
         <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon.png" />
 
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=10"/>
+
+        <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
 
         {% block head %}
         {% endblock %}
-
-        <script>
-            $(function () {
-                $("#main").show();
-            })
-        </script>
-
+    
         {% block page_imports %}
         {% endblock %}
-
-        {% if GOOGLE_ANALYTICS_ID %}
-            <script type="text/javascript">
-                var _gaq = _gaq || [];
-                _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
-                _gaq.push(['_trackPageview']);
-
-                (function() {
-                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-              })();
-            </script>
-        {% endif %}
     </head>
     <body>
-        <div id="wrapper">
-            <header>
-                <div class="fixed-width">
-                    <a id="logo" href="{% url homepage %}">
-                        CommCare HQ
-                    </a>
-                    <nav>
-                        <ul id="top-nav">
-                            {% block tabs %}
-                                <ul id="tabs">
-                                    {% if domain %}
-                                        {% get_tabs as tabs %}
-                                        {% for tab in tabs %}
-                                            {% if tab.visible %}
-                                            {# hack for domain admins only seeing domain tab #}
-                                            {% ifequal tab.caption "My Domain" %}
-                                            {% if request.couch_user and request.couch_user|is_admin:domain %}
-                                            {% if tab.is_active %}
-                                                <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% else %}
-                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% endif %}
-                                            {% endif %}
-                                            {# endhack for domain admins only seeing domain tab #}
-                                            {% else %}
-                                            {% if tab.is_active %}
-                                                <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% else %}
-                                                <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% endif %}
-                                            {% endifequal %}
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
-                                </ul>
-                            {% endblock %}
-                        </ul>
-                    </nav>
-                    {% if request.user.is_authenticated %}
-                        <div id="logged-in">
-                            <p>
-                            Signed in
-                            {% if domain %}
-                                to <strong>{{ domain }}</strong>
-                            {% endif %}
-                            as <strong>{{ user.username }}</strong>
-                            {% with request.couch_user.role_label as role %}
-                                {% if role %}
-                                    ({{ role }})
+        <header class="fixed-width">
+            <a id="logo" href="{% url homepage %}">CommCare HQ</a>
+            <nav>
+                <ul id="top-nav">
+                    {% block tabs %}
+                    <ul id="tabs">
+                        {% if domain %}
+                            {% get_tabs as tabs %}
+                            {% for tab in tabs %}
+                                {% if tab.visible %}
+                                {# hack for domain admins only seeing domain tab #}
+                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user|is_admin:domain%}
+                                    <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>
                                 {% endif %}
-                            {% endwith %}
-                             | <a href='/accounts/logout'>Sign Out</a>
-                            </p>
-                        </div>
-                        
-                    {% else %}
-                    	<p style="float:right;">Already have an account? <a href="{% url login %}">Sign in</a></p>
-                    {% endif %}
-                </div>
-            </header>
-            <div id="main" class="fixed-width">
-                {% block messages %}
-                {% if messages %}
-                    <ul class="message">
-                        {% for message in messages %}
-                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-                                {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                            </li>
-                        {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
                     </ul>
+                    {% endblock %}
+                </ul>
+            </nav>
+            {% if request.user.is_authenticated %}
+                <p id="logged-in">
+                Signed in
+                {% if domain %}
+                    to <strong>{{ domain }}</strong>
                 {% endif %}
-                {% endblock %}
-                {% block content %}
-                {% endblock %}
-            </div>
-        </div>
-        <footer class="shadow">
-            <div class="fixed-width">
-                {% if user.is_authenticated %}
-                <div id="help">
-                    <a href="#" id='bug-report-button' style="margin-right: 20px;">
-                        <span class="ui-icon ui-icon-comment" title="Report an Issue"></span>Report an Issue
-                    </a>
-                    <span>Need help? Try the <a href="http://wiki.commcarehq.org" target="_blank">CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank">commcare-users</a> mailing list.</span>
-                </div>
+                as <strong>{{ user.username }}</strong>
+                {% with request.couch_user.role_label as role %}
+                    {% if role %}
+                        ({{ role }})
+                    {% endif %}
+                {% endwith %}
+                 | <a href='/accounts/logout'>Sign Out</a>
+                </p>
+            {% else %}
+                <p id="logged-in">Already have an account? <a href="{% url login %}">Sign in</a></p>
             {% endif %}
-
-                <div>
-                    <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
-                </div>
-            </div>
-        </footer>
+        </header>
+        <div id="main" class="fixed-width">
+            {% block messages %}
+            {% if messages %}
+                <ul class="message">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% endblock %}
+            {% block content %}
+            {% endblock %}
+        </div>
         <div id="bug-report-body">
             <p>Report an Issue</p>
             <form id='bug-report-form' action="{% url bug_report %}">
@@ -190,5 +121,48 @@
                 </table>
             </form>
         </div>
+        <footer>
+            {% if user.is_authenticated %}
+            <div id="help">
+                <a href="#" id='bug-report-button'>
+                    <span class="ui-icon ui-icon-comment"></span>Report an Issue
+                </a>
+                <span>Need help? Try the <a href="http://wiki.commcarehq.org" target="_blank">CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank">commcare-users</a> mailing list.</span>
+            </div>
+            {% endif %}
+            <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
+        </footer>
+
+        {% block js %}
+        <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js"></script>
+        <script src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
+        <script src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
+        <script src="{{ STATIC_URL }}hqwebapp/js/main.js?version=10"></script>
+        <script src="{{ STATIC_URL }}hqwebapp/js/shield.js?version=3"></script>
+        <script src="{{ STATIC_URL }}hqwebapp/js/help.js?version=2"></script>
+        {% endblock %}
+        
+        {% block js-inline %}
+        {% endblock %}
+
+        <script>
+            $(function () {
+                $("#main").show();
+                $("#bug-report-body").show();
+            })
+        </script>
+        {% if GOOGLE_ANALYTICS_ID %}
+        <script>
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
+            _gaq.push(['_trackPageview']);
+
+            (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>
+        {% endif %}
     </body>
 </html>

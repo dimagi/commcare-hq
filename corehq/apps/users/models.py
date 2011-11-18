@@ -586,6 +586,7 @@ class CommCareUser(CouchUser):
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+    betahack = BooleanProperty(default=False)
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)

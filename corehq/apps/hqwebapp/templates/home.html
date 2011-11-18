@@ -1,21 +1,24 @@
 {% extends base_template %}
 {% block title %}Welcome to CommCareHQ!{% endblock title %}
-{% block head %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}hqwebapp/css/mainlogin.css"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
-	<link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/css/blueprint/print.css" type="text/css" media="print">	
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}hqwebapp/css/landingpage.css"/>
-    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
-    <script src="{{ STATIC_URL }}domain/js/login.js"></script>
-    <style>
-        #main_container { margin-top: 1em; }
-    </style>
-    <script type="text/javascript">
+{% block js-inline %}{{ block.super }}
+    <script>
         $(function() {
             $('#main_container').removeClass('container');
         });
-    
     </script>
+{% endblock %}
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/mainlogin.css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/screen.css" media="screen, projection">
+	<link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/print.css" media="print">
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/landingpage.css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
+    <style>
+        #main_container { margin-top: 1em; }
+        body {
+            background-color: #f5f5ff;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}

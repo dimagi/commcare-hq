@@ -3,12 +3,12 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>nyroModal :: Demo</title>
-	<link rel="stylesheet" href="styles/nyroModal.css" type="text/css" media="screen" />
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-	<!--script type="text/javascript" src="js/jquery.mousewheel.pack.js"></script-->
-	<!--script type="text/javascript" src="js/jquery.color.js"></script-->
-	<script type="text/javascript" src="js/jquery.nyroModal-1.5.5.pack.js"></script>
-	<script type="text/javascript">
+	<link rel="stylesheet" href="styles/nyroModal.css" media="screen" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+	<!--script src="js/jquery.mousewheel.pack.js"></script-->
+	<!--script src="js/jquery.color.js"></script-->
+	<script src="js/jquery.nyroModal-1.5.5.pack.js"></script>
+	<script>
 	//<![CDATA[
 	// Demo NyroModal
 	$(function() {
@@ -114,7 +114,7 @@
 	
 	//]]>
 	</script>
-	<style type="text/css">
+	<style>
 		#blocker {
 			width: 300px;
 			height: 300px;
@@ -170,7 +170,7 @@
 
 <p><a href="http://www.youtube.com/watch?v=lddUnv1R5y0" class="nyroModal">Youtube Via Process Handler</a></p>
 <pre>
-&lt;script type="text/javascript">
+&lt;script>
 $(function() {
   $.fn.nyroModal.settings.processHandler = function(settings) {
     var from = settings.from;
@@ -197,7 +197,7 @@ $(function() {
 	</form>
 </p>
 <pre>
-&lt;script type="text/javascript">
+&lt;script>
 $(function() {
   $('#manual').click(function(e) {
     e.preventDefault();
@@ -303,7 +303,7 @@ $(function() {
 <pre>
 &lt;div id="blocker">&lt;/div>
 &lt;a href="demoSent.html" id="block">blocker Modal&lt;/a>
-&lt;script type="text/javascript">
+&lt;script>
 $(function() {
   $('#block').nyroModal({
     'blocker': '#blocker'
@@ -327,7 +327,7 @@ $(function() {
 <p>Preloading Images is not considered to be a part of the plugin, as you probably need to preload other images for your website.<br />
 If you need to do so, you can use this code:</p>
 <pre>
-&lt;script type="text/javascript">
+&lt;script>
 $(function() {
   function preloadImg(image) {
     var img = new Image();

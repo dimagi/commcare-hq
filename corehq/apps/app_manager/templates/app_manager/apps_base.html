@@ -5,15 +5,20 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block head %}
+    {{ block.super }}
     {% include "imports/jqmodal.html" %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css?version=2"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css?version=3"/>
+{% endblock %}
+{% block js %}
+    {{ block.super }}
     <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js?version=2"></script>
     <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
     <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=5"></script>
+    <script src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=6"></script>
     <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery.textchange.min.js"></script>
+
     <script>
-    $().ready(function() {
+    $(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
                                    ajaxText: "Please wait while we load that for you..." });
     });
@@ -70,7 +75,6 @@
         });
     });
     </script>
-   
 {% endblock %}
 {% block content %}
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
