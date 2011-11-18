@@ -86,13 +86,12 @@ def post_xform_to_couch(instance, attachments={}):
             existing_doc = XFormInstance.get(conflict_id)
 
             # compare md5s
-            existing_attachment = existing_doc.fetch_attachment('form.xml')
             existing_md5 = existing_doc.xml_md5()
             new_md5 = hashlib.md5(instance).hexdigest()
 
-            #if not same:
+            # if not same:
             # Deprecate old form (including changing ID)
-            #to deprecate, copy new instance into a XFormDeprecated
+            # to deprecate, copy new instance into a XFormDeprecated
             if existing_md5 != new_md5:
                 doc_copy = XFormInstance.get_db().copy_doc(conflict_id)
                 xfd = XFormDeprecated.get(doc_copy['id'])
@@ -100,11 +99,11 @@ def post_xform_to_couch(instance, attachments={}):
                 xfd.doc_type=XFormDeprecated.__name__
                 xfd.save()
 
-                #after that delete the original document and resubmit.
+                # after that delete the original document and resubmit.
                 XFormInstance.get_db().delete_doc(conflict_id)
                 return post_xform_to_couch(instance, attachments=attachments)
             else:
-                #follow standard dupe handling
+                # follow standard dupe handling
                 new_doc_id = uid.new()
                 log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
                                                  " %s, duplicate instance %s" % (conflict_id, new_doc_id)))

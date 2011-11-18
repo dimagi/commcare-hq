@@ -32,7 +32,6 @@ def post(request, callback=None):
         #todo, multipart raw submissions need further parsing capacity.
         instance = request.raw_post_data
 
-    #todo:  also multipart submissions be it odk or j2me need to be attached to instance after the document is created in couch.
     try:
         doc = post_xform_to_couch(instance, attachments=attachments)
         if callback:
