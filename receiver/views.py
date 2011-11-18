@@ -100,20 +100,20 @@ def post(request):
                 # in the event of errors, respond with the errors, and mark the problem
                 doc.problem = ", ".join(errors)
                 doc.save()
-                response = HttpResponse(xml.get_response(message=doc.problem), status=201)
+                response = HttpResponse(xml.get_simple_response_xml(message=doc.problem), status=201)
             elif responses:
                 # use the response with the highest priority if we got any
                 responses.sort()
                 response = HttpResponse(responses[-1].response, status=201)
             else:
                 # default to something generic 
-                response = HttpResponse(xml.get_response(message="Success! Received XForm id is: %s\n" % doc['_id']), 
+                response = HttpResponse(xml.get_simple_response_xml(message="Success! Received XForm id is: %s\n" % doc['_id']), 
                                         status=201)
             return response
             
         
         def fail_actions_and_respond(doc):
-            response = HttpResponse(xml.get_response(message=doc.problem), status=201)
+            response = HttpResponse(xml.get_simple_response_xml(message=doc.problem), status=201)
             return response
         
         
