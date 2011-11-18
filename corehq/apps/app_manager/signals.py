@@ -35,6 +35,6 @@ def get_custom_response_message(sender, xform, **kwargs):
             message = app.success_message.get(lang)
             if message:
                 success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
-                return ReceiverResult(xml.get_response(success_message), Certainty.STRONG)
+                return ReceiverResult(xml.get_simple_response_xml(success_message), Certainty.STRONG)
 
 successful_form_received.connect(get_custom_response_message)
