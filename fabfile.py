@@ -69,7 +69,13 @@ def deploy():
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
-            sudo('python manage.py printstatic > tmp.sh; rm resource_versions.py; bash tmp.sh > resource_versions.py; rm tmp.sh', user=env.sudo_user)
+            try: sudo('rm tmp.sh', user=env.sudo_user)
+            except Exception:
+                pass
+            try: sudo('rm resource_versions.py', user=env.sudo_user)
+            except Exception:
+                pass
+            sudo('python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
         
