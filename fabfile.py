@@ -69,8 +69,6 @@ def deploy():
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
-            sudo('mv tmp.sh tmp.pyc', user=env.sudo_user)
-            sudo('mv resource_versions.py resource_versions.pyc', user=env.sudo_user)
             sudo('python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
