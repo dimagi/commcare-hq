@@ -49,7 +49,7 @@ def enter_virtualenv():
             run('python script.py')
 
     """
-    return prefix('PATH=%(virtualenv_root)s/bin/:/bin/:PATH' % env)
+    return prefix('PATH=%(virtualenv_root)s/bin/:$PATH' % env)
 
 
 def deploy():
@@ -69,7 +69,7 @@ def deploy():
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
-            sudo('python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
+            sudo('rm tmp.sh; python manage.py printstatic > tmp.sh; rm resource_versions.py; bash tmp.sh > resource_versions.py', user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
         
