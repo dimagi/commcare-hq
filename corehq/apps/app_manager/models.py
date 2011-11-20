@@ -518,7 +518,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
 
     def infer_case_type(self):
         case_types = []
-        for form in self.forms:
+        for form in self.get_forms():
             xform = form.source
             soup = BeautifulStoneSoup(xform)
             try:
@@ -1141,18 +1141,12 @@ class Application(ApplicationBase, TranslationMixin):
         form = module.get_form(-1)
         form.source = attachment
         form.refresh()
-        case_types = module.infer_case_type()
-        if len(case_types) == 1 and not module.case_type:
-            module.case_type, = case_types
         return form
 
     def new_form_from_source(self, module_id, source):
         module = self.get_module(module_id)
         module.forms.append(Form.wrap(source))
         form = module.get_form(-1)
-        case_types = module.infer_case_type()
-        if len(case_types) == 1 and not module.case_type:
-            module.case_type, = case_types
         return form
     @parse_int([1, 2])
     def delete_form(self, module_id, form_id):
