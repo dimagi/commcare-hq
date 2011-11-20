@@ -3,26 +3,25 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{{ STATIC_URL }}formdesigner/js/jquery.jstree.js"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/jquery.fancybox-1.3.4.pack.js"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/chosen.jquery.min.js"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/jquery-ui-timepicker-addon.js"></script>
+    <script src="{% static 'formdesigner/js/jquery.jstree.js' %}"></script>
+    <script src="{% static 'formdesigner/js/jquery.fancybox-1.3.4.pack.js' %}"></script>
+    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
+    <script src="{% static 'formdesigner/js/jquery-ui-timepicker-addon.js' %}"></script>
+    <script src="{% static 'formdesigner/lib/tokeninput/jquery.tokeninput.js' %}"></script>
+    <script src="{% static 'formdesigner/lib/xpath/lib/biginteger.js' %}"></script>
+    <script src="{% static 'formdesigner/lib/xpath/lib/schemeNumber.js' %}"></script>
+    <script src="{% static 'formdesigner/lib/xpath/models.js' %}"></script>
+    <script src="{% static 'formdesigner/lib/xpath/xpath.js' %}"></script>
 
-    <script src="{{ STATIC_URL }}formdesigner/lib/tokeninput/jquery.tokeninput.js"></script>
-    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/biginteger.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/lib/schemeNumber.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/models.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/lib/xpath/xpath.js?version=115"></script>
+    <script src="{% static 'formdesigner/js/XMLWriter-1.0.0.js' %}"></script>
+    <script src="{% static 'formdesigner/js/ui.js' %}"></script>
+    <script src="{% static 'formdesigner/js/util.js' %}"></script>
+    <script src="{% static 'formdesigner/js/model.js' %}"></script>
+    <script src="{% static 'formdesigner/js/controller.js' %}"></script>
+    <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
+{% endblock %}
 
-
-    <script src="{{ STATIC_URL }}formdesigner/js/XMLWriter-1.0.0.js"></script>
-
-    <script src="{{ STATIC_URL }}formdesigner/js/ui.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/util.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/model.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/controller.js?version=115"></script>
-    <script src="{{ STATIC_URL }}formdesigner/js/widgets.js?version=115"></script>
-
+{% block js-inline %}{{ block.super }}
     <script>
         $(function () {
 
@@ -49,17 +48,16 @@
             }
         }());
     </script>
-
 {% endblock %}
 
 {% block head %}
     {{ block.super }}
 
-    <link href="{{ STATIC_URL }}formdesigner/css/chosen.css" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/css/jquery.fancybox-1.3.4.css" media="screen" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}formdesigner/lib/tokeninput/token-input-facebook.css?version=115" />
-    <link href="{{ STATIC_URL }}formdesigner/css/formdesigner.css?version=115" rel="stylesheet" media="screen, projection" />
-    
+    <link href="{% static 'formdesigner/css/chosen.css" rel="stylesheet' %}" />
+    <link rel="stylesheet" href="{% static 'formdesigner/css/jquery.fancybox-1.3.4.css' %}" media="screen" />
+    <link rel="stylesheet" href="{% static 'formdesigner/lib/tokeninput/token-input-facebook.css' %}" />
+    <link href="{% static 'formdesigner/css/formdesigner.css' %}" rel="stylesheet" media="screen, projection" />
+
     <style>
         #forms {
             padding:  10px;
