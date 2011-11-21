@@ -191,7 +191,7 @@
             <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
         </div>
         <div id="report_header">
-            {% if show_dates or show_users or show_groups or show_forms or fields %}
+            {% if show_dates or show_users or show_groups or show_forms or custom_fields %}
             <form method="get" id="paramSelectorForm">
             <fieldset>
             {% if show_users %}
@@ -256,6 +256,7 @@
                     {% if custom_fields or show_dates %}
                         <input type="submit" value="Go!" />
                    {% endif %}
+          {% endif %}
         </div>
         {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}
