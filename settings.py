@@ -315,8 +315,6 @@ if not os.path.isdir(os.path.join(root,'data','schemas')):
     os.mkdir(os.path.join(root,'data','schemas'))
 
 
-XFORMS_FORM_TRANSLATE_JAR="submodules/formtranslate-src/formtranslate/lib/form_translate.jar"
-
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
