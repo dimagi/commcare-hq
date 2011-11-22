@@ -152,6 +152,7 @@ HQ_APPS = (
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
+    'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.builds',
     'corehq.apps.api',
