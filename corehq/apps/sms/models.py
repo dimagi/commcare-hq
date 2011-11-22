@@ -36,6 +36,32 @@ class MessageLog(Document, UnicodeMixIn):
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
+    # Couch view wrappers
+    @classmethod
+    def all(cls):
+        return CouchUser.view("sms/by_domain", include_docs=True)
+
+    @classmethod
+    def by_domain_asc(cls, domain):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain],
+                    endkey=[domain] + [{}],
+                    include_docs=True,
+                    descending=False)
+
+    @classmethod
+    def by_domain_dsc(cls, domain):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain] + [{}],
+                    endkey=[domain],
+                    include_docs=True,
+                    descending=True)
+
+
+
+
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()
     phone_number       = models.TextField()
