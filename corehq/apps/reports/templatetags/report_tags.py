@@ -252,5 +252,5 @@ def custom_report_list(domain):
     lst = []
     for model in mapping[domain]:
         klass = to_function(model)
-        lst.append("<li><a href='%s' title='%s'>%s</a>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+        lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
     return "\n".join(lst)

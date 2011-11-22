@@ -52,7 +52,14 @@
                 } else {
                     $(this).addClass('report-link-other');
                 }
-            })
+            });
+        });
+        $(function () {
+            'use strict';
+            var customReports = $('#report-list-custom');
+            if (!customReports.find('li').length) {
+                customReports.hide();
+            }
         });
     </script>
 {% endblock %}
@@ -84,7 +91,7 @@
             <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
         </ul>
     </li>
-    <li><h2>Custom</h2>
+    <li id="report-list-custom"><h2>Custom</h2>
         <ul>
             {% custom_report_list domain %}
         </ul>
