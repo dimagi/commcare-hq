@@ -30,6 +30,9 @@ class MessageLog(Document, UnicodeMixIn):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "%s (%s %s)" % (str, to_from, self.phone_number)
 
+    def delete(self):
+        super(MessageLog, self).delete() # Call the "real" delete() method.
+
     @property
     def username(self):
         if self.couch_recipient:
@@ -39,7 +42,7 @@ class MessageLog(Document, UnicodeMixIn):
     # Couch view wrappers
     @classmethod
     def all(cls):
-        return CouchUser.view("sms/by_domain", include_docs=True)
+        return MessageLog.view("sms/by_domain", include_docs=True, reduce=False)
 
     @classmethod
     def by_domain_asc(cls, domain):
@@ -58,6 +61,14 @@ class MessageLog(Document, UnicodeMixIn):
                     endkey=[domain],
                     include_docs=True,
                     descending=True)
+
+    @classmethod
+    def count_by_domain(cls, domain):
+        reduced = MessageLog.view("sms/by_domain",
+                            startkey=[domain],
+                            endkey=[domain,{}],
+                            reduce=True).all()
+        return reduced[0]['value']
 
 
 
