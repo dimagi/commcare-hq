@@ -8,12 +8,12 @@ class User(object):
     find cases and generate the user XML.
     """
     
-    def __init__(self, user_id, username, password, date_joined, user_data={}):
+    def __init__(self, user_id, username, password, date_joined, user_data=None):
         self.user_id = user_id
         self.username = username
         self.password = password
         self.date_joined = date_joined
-        self.user_data = user_data
+        self.user_data = user_data or {}
     
     def get_case_updates(self, last_sync):
         """

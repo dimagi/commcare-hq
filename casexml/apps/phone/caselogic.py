@@ -29,10 +29,10 @@ def get_case_updates(user, last_sync):
     Given a user, get the open/updated cases since the 
     last sync operation.  This returns tuples of phone_case objects, and flags 
     that say whether or not they should be created.
-    """ 
+    """
     try:
         keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
-    except Exception:
+    except AttributeError:
         keys = [[user.user_id, False],]
     
     to_return = []
@@ -42,10 +42,10 @@ def get_case_updates(user, last_sync):
     # if there are any duplicates
     
     case_ids = set()
-    
+
     cases = CommCareCase.view("case/by_owner", keys=keys,
                               include_docs=True).all()
-    
+
     # handle create/update of new material for the phone
     for case in cases:
         if case.case_id in case_ids:

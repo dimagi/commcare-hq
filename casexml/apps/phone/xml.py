@@ -109,6 +109,9 @@ def get_case_element(case, updates):
         # custom properties
         for k, v, in case.dynamic_case_properties():
             update_block.append(get_element(k, v))
+        if case.owner_id:
+            update_block.append(get_element('owner_id', case.owner_id))
+            
         root.append(update_block)
     if do_purge:
         # likewise, for now we assume that you can't both create/update and close/purge  
