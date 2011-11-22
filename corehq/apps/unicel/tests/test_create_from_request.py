@@ -19,7 +19,7 @@ class IncomingPostTest(TestCase):
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
         self.dcs = '8'
-        self.message_ascii = 'Test Message'
+        self.message_ascii = 'It Works'
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
 
     def tearDown(self):
@@ -35,15 +35,18 @@ class IncomingPostTest(TestCase):
         response = client.post('/unicel/in/', fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, MessageLog.count_by_domain(self.domain))
+        self.assertEqual(self.message_ascii,
+                         MessageLog.by_domain_dsc(self.domain).all()[0].text)
 
     def testPostToIncomingUtf(self):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_utf_hex,
                      InboundParams.TIMESTAMP: datetime.now().strftime("%m/%d/%Y %H:%M:%S %p"),
                      InboundParams.DCS: self.dcs,
-                     InboundParams.UDHI: '2'}
+                     InboundParams.UDHI: '1'}
         client = Client()
         response = client.get('/unicel/in/', fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, MessageLog.count_by_domain(self.domain))
-
+        self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
+                        MessageLog.by_domain_dsc(self.domain).all()[0].text)
