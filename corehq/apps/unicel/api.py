@@ -69,12 +69,13 @@ def create_from_request(request):
     recipients = users_for_phone(sender)
     recipient = recipients[0].get_id if len(recipients) == 1 else "" 
     
-    log = MessageLog.objects.create(couch_recipient=recipient,
-                                    phone_number=sender,
-                                    direction=INCOMING,
-                                    date=actual_timestamp,
-                                    text=message,
-                                    domain=domain)
+    log = MessageLog(couch_recipient=recipient,
+                        phone_number=sender,
+                        direction=INCOMING,
+                        date=actual_timestamp,
+                        text=message,
+                        domain=domain)
+    log.save()
     
     return log
     
