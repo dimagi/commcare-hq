@@ -488,6 +488,7 @@ def completion_times(request, domain):
     rows = []
     
     if form:
+        totalsum = totalcount = 0
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
                 return None
