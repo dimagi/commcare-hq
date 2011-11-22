@@ -9,9 +9,14 @@
 
     <script>
         $(function(){
-            (function doStyling() {
-                $(".xml-source").dialog({height: 700, width: 900});
-            })();
+            (function styleSourcePopup() {
+                var $dialog = $(".xml-source");
+                if ($dialog.hasClass('ui-dialog-content')) {
+                    $dialog.dialog({height: 700, width: 900})
+                } else {
+                    window.setTimeout(styleSourcePopup, 1000);
+                }
+            }());
             (function doFileUploadCheck(){
                 $("#xform_file_input").change(function(){
                     if ($(this).val()) {
@@ -20,7 +25,7 @@
                         $("#xform_file_submit").hide();
                     }
                 }).trigger('change');
-            })();
+            }());
             (function configXFormSourceAjax(){
                 $("#xform-source-opener").click(function (){
                     $("#xform-source").text("Loading...");
